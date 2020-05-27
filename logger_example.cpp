@@ -45,7 +45,9 @@ int main(int argc, char *argv[]) {
            "04.10.2019");
   int count = 0;
   while (running) {
+    LOG_REPEAT("count++");
     LOG_TRACE("count={}", count++);
+    LOG_REPEAT("count++");
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   return 0;

@@ -4,12 +4,15 @@
 /**
  * Logger class for easier logging in process itself
  */
+#include "Scheduler.h"
 #include <chrono>
 #include <filesystem>
 #include <fmt/format.h>
+#include <iostream>
 #include <log4cxx/log4cxx.h>
 #include <log4cxx/logger.h>
 #include <log4cxx/spi/loggingevent.h>
+#include <map>
 #include <mutex>
 #include <thread>
 
@@ -18,9 +21,23 @@ private:
   // constexpr constants
   constexpr static std::string_view templateConfig = "template_log4cxx.xml";
   constexpr static std::string_view templateMarker = "template.log";
+  Scheduler scheduler = Scheduler(1);
 
   // variables
   const std::string &processName;
+  struct LOG_INFO {
+    uint32_t logCount;
+    std::chrono::steady_clock::time_point timePoint;
+    std::string function;
+    std::string file;
+    int line;
+    std::string logString;
+    LOG_INFO(std::string function, std::string file, int line, std::string logString)
+        : logCount(1), timePoint(std::chrono::steady_clock::now()),
+          function(std::move(function)), file(std::move(file)), line(line), logString(std::move(logString)) {}
+  };
+  std::mutex mutex;
+  std::map<std::string, LOG_INFO> repeatLogs;
   log4cxx::LoggerPtr logger;
 
   void configure();
@@ -31,6 +48,8 @@ private:
 
   static Logger *instance;
   static std::once_flag initInstanceFlag;
+
+  void logRepeatLog();
 
 public:
   explicit Logger(const std::string &processName);
@@ -81,6 +100,18 @@ public:
   }
 
   template <class... Args>
+  void repeat(const std::string &function, const std::string &file, int line,
+              const std::string &message, Args... args) {
+    std::string logString = fmt::format(message, args...);
+    std::string key = logString + "_" + function + "_" + file + "_" + std::to_string(line);
+    auto found = repeatLogs.find(key);
+    if (found == repeatLogs.end()) {
+      repeatLogs.insert({key, LOG_INFO(function, file, line, logString)});
+    }
+    (*found).second.logCount = (*found).second.logCount + 1;
+  }
+
+  template <class... Args>
   void warn(const std::string &function, const std::string &file, int line,
             const std::string &message, Args... args) {
     logger->warn(
@@ -107,5 +138,8 @@ public:
 #define LOG_WARN(message, ...)                                                 \
   Logger::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,            \
                      ##__VA_ARGS__)
+#define LOG_REPEAT(message, ...)                                               \
+  Logger::get().repeat(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,          \
+                       ##__VA_ARGS__)
 
 #endif // LOGGING_LOGGER_H

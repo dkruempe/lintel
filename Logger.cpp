@@ -17,6 +17,24 @@ Logger::Logger(const std::string &processName)
     : processName(processName),
       logger(log4cxx::Logger::getLogger(processName)) {
   configure();
+  std::function<void()> call = [&](){logRepeatLog();};
+  scheduler.schedule_at_fixed_rate(std::chrono::seconds(30),
+                                   std::chrono::seconds(30), call);
+}
+
+void Logger::logRepeatLog() {
+  std::map<std::string, LOG_INFO> tmp;
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    for (auto &iter : repeatLogs) {
+      tmp.insert(iter);
+    }
+    repeatLogs.clear();
+  }
+  for (auto &[key, info] : tmp) {
+    debug(info.function, info.file, info.line,
+          "[" + std::to_string(info.logCount) + "] - " + info.logString);
+  }
 }
 
 Logger::~Logger() = default;
