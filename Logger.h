@@ -32,9 +32,11 @@ private:
     std::string file;
     int line;
     std::string logString;
-    LOG_INFO(std::string function, std::string file, int line, std::string logString)
+    LOG_INFO(std::string function, std::string file, int line,
+             std::string logString)
         : logCount(1), timePoint(std::chrono::steady_clock::now()),
-          function(std::move(function)), file(std::move(file)), line(line), logString(std::move(logString)) {}
+          function(std::move(function)), file(std::move(file)), line(line),
+          logString(std::move(logString)) {}
   };
   std::mutex mutex;
   std::map<std::string, LOG_INFO> repeatLogs;
@@ -103,7 +105,8 @@ public:
   void repeat(const std::string &function, const std::string &file, int line,
               const std::string &message, Args... args) {
     std::string logString = fmt::format(message, args...);
-    std::string key = logString + "_" + function + "_" + file + "_" + std::to_string(line);
+    std::string key =
+        logString + "_" + function + "_" + file + "_" + std::to_string(line);
     auto found = repeatLogs.find(key);
     if (found == repeatLogs.end()) {
       repeatLogs.insert({key, LOG_INFO(function, file, line, logString)});

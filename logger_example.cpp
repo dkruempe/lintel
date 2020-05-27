@@ -10,7 +10,8 @@ private:
   std::string information;
 
 public:
-  [[maybe_unused]] explicit ExampleClass(std::string information) : information(std::move(information)) {}
+  [[maybe_unused]] explicit ExampleClass(std::string information)
+      : information(std::move(information)) {}
 
   void hello() {
     LOG_DEBUG("Hello World {} {}", 4711, information);

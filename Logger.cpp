@@ -17,7 +17,7 @@ Logger::Logger(const std::string &processName)
     : processName(processName),
       logger(log4cxx::Logger::getLogger(processName)) {
   configure();
-  std::function<void()> call = [&](){logRepeatLog();};
+  std::function<void()> call = [&]() { logRepeatLog(); };
   scheduler.schedule_at_fixed_rate(std::chrono::seconds(30),
                                    std::chrono::seconds(30), call);
 }
