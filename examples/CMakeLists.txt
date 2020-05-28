@@ -1,0 +1,4 @@
+add_executable(logger_example logger_example.cpp)
+target_link_libraries(logger_example base)
+add_executable(scheduler_example scheduler_example.cpp)
+target_link_libraries(scheduler_example base)

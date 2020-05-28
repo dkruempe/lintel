@@ -1,6 +1,6 @@
 #include "Logger.h"
 
-#include "config.h"
+#include "../config.h"
 
 #include <algorithm>
 #include <filesystem>

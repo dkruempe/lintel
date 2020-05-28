@@ -2,3 +2,4 @@ cmake-build-debug
 .idea
 log
 cfg
+include/config.h
