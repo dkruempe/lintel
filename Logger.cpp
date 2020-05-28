@@ -32,8 +32,8 @@ void Logger::logRepeatLog() {
     repeatLogs.clear();
   }
   for (auto &[key, info] : tmp) {
-    debug(info.function, info.file, info.line,
-          "[" + std::to_string(info.logCount) + "] - " + info.logString);
+    const std::string logString = fmt::format("[{}] times  - {}", info.logCount, info.logString);
+    debug(info.function, info.file, info.line, logString);
   }
 }
 

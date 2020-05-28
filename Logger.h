@@ -27,16 +27,14 @@ private:
   const std::string &processName;
   struct LOG_INFO {
     uint32_t logCount;
-    std::chrono::steady_clock::time_point timePoint;
     std::string function;
     std::string file;
     int line;
     std::string logString;
     LOG_INFO(std::string function, std::string file, int line,
              std::string logString)
-        : logCount(1), timePoint(std::chrono::steady_clock::now()),
-          function(std::move(function)), file(std::move(file)), line(line),
-          logString(std::move(logString)) {}
+        : logCount(1), function(std::move(function)), file(std::move(file)),
+          line(line), logString(std::move(logString)) {}
   };
   std::mutex mutex;
   std::map<std::string, LOG_INFO> repeatLogs;
