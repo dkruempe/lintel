@@ -11,7 +11,8 @@ find_library(FMT NAMES fmt)
 find_path(FMT_INCLUDES NAMES fmt/format.h)
 
 include_directories(include ${LOG4CXX_INCLUDES} ${FMT_INCLUDES})
-add_library(base src/Logger.cpp include/Logger.h src/Scheduler.cpp include/Scheduler.h)
+add_library(base src/Logger.cpp include/Logger.h src/Scheduler.cpp include/Scheduler.h
+        include/File.h src/File.cpp include/Directory.h src/Directory.cpp)
 target_link_libraries(base ${LOG4CXX} ${FMT})
 
 # Examples

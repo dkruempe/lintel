@@ -1,7 +1,8 @@
 #include "Logger.h"
 
-#include "../config.h"
+#include "config.h"
 
+#include <File.h>
 #include <algorithm>
 #include <filesystem>
 #include <fmt/format.h>
@@ -32,7 +33,8 @@ void Logger::logRepeatLog() {
     repeatLogs.clear();
   }
   for (auto &[key, info] : tmp) {
-    const std::string logString = fmt::format("[{}] times  - {}", info.logCount, info.logString);
+    const std::string logString =
+        fmt::format("[{}] times  - {}", info.logCount, info.logString);
     debug(info.function, info.file, info.line, logString);
   }
 }
@@ -40,24 +42,21 @@ void Logger::logRepeatLog() {
 Logger::~Logger() = default;
 
 void Logger::configure() {
-  // I check if configuration file exists
-  std::filesystem::path fileTemplate =
-      std::string(CONFIG_DIRECTORY) + "/" + std::string(templateConfig);
-  std::filesystem::path fileConfig =
-      std::string(CONFIG_DIRECTORY) + "/" + processName + "_log4cxx.xml";
-
-  bool foundConfig = std::filesystem::exists(fileConfig);
-  bool foundTemplate = std::filesystem::exists(fileTemplate);
   bool createError = false;
 
-  if (!foundConfig && foundTemplate) {
-    std::string content = readFile(fileTemplate);
+  File templateFile(std::string(CONFIG_DIRECTORY) + "/" +
+                    std::string(templateConfig));
+  File configFile(std::string(CONFIG_DIRECTORY) + "/" + processName +
+                  "_log4cxx.xml");
+
+  if (!configFile.exists() && templateFile.exists()) {
+    std::string content = templateFile.readFile();
     auto found = content.find(templateMarker);
     if (found != std::string::npos) {
       content.replace(found, std::string(templateMarker).length(),
                       std::string(LOG_DIRECTORY) + std::string("/") +
                           processName + std::string(".log"));
-      writeToFile(fileConfig, content);
+      configFile.writeToFile(content);
     } else {
       createError = true;
     }
@@ -65,31 +64,19 @@ void Logger::configure() {
 
   // II load configuration file or load basic configuration if no configuration
   // file found
-  if (!foundTemplate || createError) {
-    if (!foundTemplate) {
+  if (!templateFile.exists() || createError) {
+    if (!templateFile.exists()) {
       std::cerr << "Template not found" << std::endl;
     } else {
       std::cerr << "Parse error with template config" << std::endl;
     }
     log4cxx::BasicConfigurator::configure();
   } else {
-    std::cout << "Template found and file created" << std::endl;
-    log4cxx::xml::DOMConfigurator::configureAndWatch(fileConfig.string(),
-                                                     30000);
+    log4cxx::xml::DOMConfigurator::configureAndWatch(
+        configFile.getPath().string(), 30000);
   }
 }
 
-std::string Logger::readFile(const std::filesystem::path &path) {
-  std::ifstream file(path.string());
-  std::stringstream buffer;
-  buffer << file.rdbuf();
-  return buffer.str();
-}
-void Logger::writeToFile(const std::filesystem::path &path,
-                         const std::string &content) {
-  std::ofstream out(path.string());
-  out << content;
-}
 Logger &Logger::getOrCreate(const std::string &processName) {
   if (!processName.empty()) {
     std::call_once(initInstanceFlag, &Logger::initSingleton, processName);
