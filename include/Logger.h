@@ -41,10 +41,6 @@ private:
   log4cxx::LoggerPtr logger;
 
   void configure();
-  static std::string readFile(const std::filesystem::path &path);
-
-  static void writeToFile(const std::filesystem::path &path,
-                          const std::string &content);
 
   static Logger *instance;
   static std::once_flag initInstanceFlag;
