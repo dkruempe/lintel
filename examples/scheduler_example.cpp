@@ -1,10 +1,10 @@
 #include "Logger.h"
-#include "Scheduler.h"
+#include "services/SchedulerService.h"
 #include <libgen.h>
 
 int main(int argc, char *argv[]) {
   DECLARE_LOGGER(basename(argv[0]));
-  Scheduler scheduler(10);
+  SchedulerService scheduler(10);
 
   LOG_DEBUG("before scheduler start");
   std::function<void()> func = [&]() { LOG_INFO("Hello World"); };

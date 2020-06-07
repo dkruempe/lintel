@@ -4,7 +4,7 @@
 /**
  * Logger class for easier logging in process itself
  */
-#include "Scheduler.h"
+#include "services/SchedulerService.h"
 #include <chrono>
 #include <filesystem>
 #include <fmt/format.h>
@@ -21,7 +21,7 @@ private:
   // constexpr constants
   constexpr static std::string_view templateConfig = "template_log4cxx.xml";
   constexpr static std::string_view templateMarker = "template.log";
-  Scheduler scheduler = Scheduler(1);
+  SchedulerService scheduler = SchedulerService(1);
 
   // variables
   const std::string &processName;

@@ -1,11 +1,11 @@
-#include "Scheduler.h"
+#include "services/SchedulerService.h"
 
-void Scheduler::clear() {
+void SchedulerService::clear() {
   std::lock_guard<std::mutex> lock(mutex);
   tasks.clear();
 }
 
-void Scheduler::run() {
+void SchedulerService::run() {
 
   while (!exit || !tasks.empty()) {
     auto time = tasks.empty() ? std::chrono::steady_clock::now() +
@@ -44,7 +44,7 @@ void Scheduler::run() {
   }
 }
 
-Scheduler::Scheduler(int numberOfThreads)
+SchedulerService::SchedulerService(int numberOfThreads)
     : exit(false), numberOfThreads(numberOfThreads) {
   threads.reserve(numberOfThreads);
   for (int i = 0; i < numberOfThreads; i++) {
@@ -52,7 +52,7 @@ Scheduler::Scheduler(int numberOfThreads)
   }
 }
 
-Scheduler::~Scheduler() {
+SchedulerService::~SchedulerService() {
   {
     std::unique_lock<std::mutex> lock(mutex);
     exit = true;

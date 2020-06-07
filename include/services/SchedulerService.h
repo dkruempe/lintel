@@ -1,5 +1,5 @@
-#ifndef LOGGING_SCHEDULER_H
-#define LOGGING_SCHEDULER_H
+#ifndef LOGGING_SCHEDULERSERVICE_H
+#define LOGGING_SCHEDULERSERVICE_H
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -7,7 +7,7 @@
 #include <thread>
 #include <vector>
 
-class Scheduler {
+class SchedulerService {
 
 private:
   struct Task {
@@ -65,15 +65,15 @@ public:
 
   void clear();
 
-  explicit Scheduler(int numberOfThreads);
+  explicit SchedulerService(int numberOfThreads);
 
-  ~Scheduler();
+  ~SchedulerService();
 };
 
 template <class F, class... Args>
 std::future<typename std::result_of<
     typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
-Scheduler::schedule(F &&f, Args &&... args) {
+SchedulerService::schedule(F &&f, Args &&... args) {
   return schedule_at(std::chrono::steady_clock::now(), std::forward<F>(f),
                      std::forward<Args>(args)...);
 }
@@ -81,14 +81,14 @@ Scheduler::schedule(F &&f, Args &&... args) {
 template <class F, class... Args>
 std::future<typename std::result_of<
     typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
-Scheduler::schedule_after(const std::chrono::steady_clock::duration &d, F &&f,
+SchedulerService::schedule_after(const std::chrono::steady_clock::duration &d, F &&f,
                           Args &&... args) {
   return schedule_at(std::chrono::steady_clock::now() + d, std::forward<F>(f),
                      std::forward<Args>(args)...);
 }
 
 template <class F, class... Args>
-void Scheduler::schedule_at_fixed_rate(
+void SchedulerService::schedule_at_fixed_rate(
     const std::chrono::steady_clock::duration &d,
     const std::chrono::steady_clock::duration &period, F &&f, Args &&... args) {
   {
@@ -104,7 +104,7 @@ void Scheduler::schedule_at_fixed_rate(
 template <class F, class... Args>
 std::future<typename std::result_of<
     typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
-Scheduler::schedule_at(const std::chrono::steady_clock::time_point &t, F &&f,
+SchedulerService::schedule_at(const std::chrono::steady_clock::time_point &t, F &&f,
                        Args &&... args) {
   auto func = std::make_shared<
       std::packaged_task<typename std::result_of<typename std::decay<F>::type(
@@ -121,4 +121,4 @@ Scheduler::schedule_at(const std::chrono::steady_clock::time_point &t, F &&f,
   return future;
 }
 
-#endif // LOGGING_SCHEDULER_H
+#endif // LOGGING_SCHEDULERSERVICE_H
