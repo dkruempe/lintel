@@ -20,7 +20,7 @@ void createExampleProperties(PropertyService &propertyService) {
 TEST_CASE("test create/get of PropertyService") {
   PropertyService propertyService;
   createExampleProperties(propertyService);
-  REQUIRE(propertyService.allProperties().size() == 3);
+  REQUIRE(propertyService.allProperties().size() == 4);
 }
 TEST_CASE("test setValue for Property") {
   PropertyService propertyService;

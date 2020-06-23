@@ -2,6 +2,7 @@
 #define LOGGING_PROPERTYBASE_H
 
 #include <string>
+#include <utility>
 
 class PropertyBase {
 private:

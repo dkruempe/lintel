@@ -27,10 +27,13 @@ IMPLEMENT_STRINGIFY_SERVICE_FOR(uint64_t, std::to_string, std::stoul)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(float, std::to_string, std::stof)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(double, std::to_string, std::stod)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(
-    std::string, [](const std::string &string) { return string; },
-    [](const std::string &string) { return string; })
+    std::string,
+    [](const std::string &string) -> std::string { return string; },
+    [](const std::string &string) -> std::string { return string; })
 IMPLEMENT_STRINGIFY_SERVICE_FOR(
-    bool, [](bool value) { return value ? "true" : "false"; },
-    [](const std::string &string) { return string == "true" ? true : false; })
+    bool, [](bool value) -> std::string { return value ? "true" : "false"; },
+    [](const std::string &string) -> bool {
+      return string == "true" ? true : false;
+    })
 
 #endif // LOGGING_STRINGIFYSERVICE_H

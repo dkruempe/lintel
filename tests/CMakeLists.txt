@@ -2,6 +2,10 @@ ADD_EXECUTABLE(PropertyTest models/PropertyTest.cpp)
 TARGET_LINK_LIBRARIES(PropertyTest base)
 ADD_TEST(propertyTest PropertyTest)
 
+ADD_EXECUTABLE(PropertyFactoryTest factories/PropertyFactoryTest.cpp)
+TARGET_LINK_LIBRARIES(PropertyFactoryTest base)
+ADD_TEST(propertyFactoryTest PropertyFactoryTest)
+
 ADD_EXECUTABLE(PropertyServiceTest services/PropertyServiceTest.cpp)
 TARGET_LINK_LIBRARIES(PropertyServiceTest base)
 ADD_TEST(propertyServiceTest PropertyServiceTest)

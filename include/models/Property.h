@@ -1,32 +1,70 @@
 #ifndef PROPERTY_H
 #define PROPERTY_H
 
+#include "factories/PropertyFactory.h"
 #include "models/PropertyBase.h"
 #include "services/StringifyService.h"
 #include "utils/TypeName.h"
+#include <memory>
 #include <string>
 
-template <class T> class Property : public PropertyBase {
-private:
-  T value;
+class PropertyService;
 
-protected:
-  virtual void setValue(const T &value) { this->value = value; }
-  Property(const std::string &name, const std::string &instanceName,
-           const std::string &processName, T value)
-      : PropertyBase(name, instanceName, processName), value(std::move(value)) {
-  }
+template <class T> class Property;
 
-public:
-  Property(const std::string &name, const std::string &instanceName,
-           const std::string &processName)
-      : PropertyBase(name, instanceName, processName) {}
-  [[nodiscard]] std::string toString() const override {
-    return StringifyService<T>::serializeToString(value);
-  }
-  [[nodiscard]] std::string getType() const override {
-    return std::string(type_name<T>());
-  }
-  T getValue() const { return value; }
-};
+#define IMPLEMENT_PROPERTY(type, convertToString, convertToValue)              \
+  template <> class Property<type> : public PropertyBase {                     \
+  private:                                                                     \
+    type value;                                                                \
+    static bool Registration() {                                               \
+      PropertyFactory::TCreateMethod func =                                    \
+          [&](const std::string &name, const std::string &instanceName,        \
+              const std::string &processName,                                  \
+              const std::string &value) -> std::shared_ptr<PropertyBase> {     \
+        return std::make_shared<Property<type>>(                               \
+            name, instanceName, processName,                                   \
+            StringifyService<type>::deserializeFromString(value));             \
+      };                                                                       \
+      return PropertyFactory::Register(#type, func);                           \
+    }                                                                          \
+    static bool registered;                                                    \
+                                                                               \
+    void setValue(const type &value) { this->value = value; }                  \
+                                                                               \
+  public:                                                                      \
+    Property(const std::string &name, const std::string &instanceName,         \
+             const std::string &processName, type value)                       \
+        : PropertyBase(name, instanceName, processName),                       \
+          value(std::move(value)) {}                                           \
+    [[nodiscard]] std::string getType() const override { return #type; }       \
+    type getValue() const { return value; }                                    \
+    std::string toString() const override { return convertToString(value); }   \
+    friend class PropertyService;                                              \
+  };
+IMPLEMENT_PROPERTY(int8_t, StringifyService<int8_t>::serializeToString,
+                   StringifyService<int8_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(int16_t, StringifyService<int16_t>::serializeToString,
+                   StringifyService<int16_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(int32_t, StringifyService<int32_t>::serializeToString,
+                   StringifyService<int32_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(int64_t, StringifyService<int64_t>::serializeToString,
+                   StringifyService<int64_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(uint8_t, StringifyService<uint8_t>::serializeToString,
+                   StringifyService<uint8_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(uint16_t, StringifyService<uint16_t>::serializeToString,
+                   StringifyService<uint16_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(uint32_t, StringifyService<uint32_t>::serializeToString,
+                   StringifyService<uint32_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(uint64_t, StringifyService<uint64_t>::serializeToString,
+                   StringifyService<uint64_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(float, StringifyService<float>::serializeToString,
+                   StringifyService<float>::deserializeFromString)
+IMPLEMENT_PROPERTY(double, StringifyService<double>::serializeToString,
+                   StringifyService<double>::deserializeFromString)
+IMPLEMENT_PROPERTY(std::string,
+                   StringifyService<std::string>::serializeToString,
+                   StringifyService<std::string>::deserializeFromString)
+IMPLEMENT_PROPERTY(bool, StringifyService<bool>::serializeToString,
+                   StringifyService<bool>::deserializeFromString)
+
 #endif /* PROPERTY_H */
