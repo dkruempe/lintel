@@ -10,14 +10,13 @@ bool PropertyFactory::Register(const std::string &type,
   return false;
 }
 
-std::shared_ptr<PropertyBase> PropertyFactory::Create(const std::string &name,
-                                                      const std::string &instanceName,
-                                                      const std::string &processName,
-                                                      const std::string &type,
-                                                      const std::string &value) {
+std::shared_ptr<PropertyBase> PropertyFactory::Create(
+    const std::string &name, const std::string &instanceName,
+    const std::string &className, const std::string &processName,
+    const std::string &type, const std::string &value) {
   auto it = GetMap().find(type);
   if (it != GetMap().end()) {
-    return it->second(name, instanceName, processName, value);
+    return it->second(name, instanceName, className, processName, value);
   }
 
   return nullptr;

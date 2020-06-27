@@ -1,8 +1,7 @@
 #include "services/PropertyService.h"
 #include "exceptions/PropertyNotFoundException.h"
 #include <algorithm>
-std::vector<std::shared_ptr<PropertyBase>>
-PropertyService::allProperties() {
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   std::transform(properties.begin(), properties.end(),
                  std::back_inserter(propertiesVector),
@@ -11,17 +10,21 @@ PropertyService::allProperties() {
 }
 std::string PropertyService::createIdentifier(const std::string &name,
                                               const std::string &instanceName,
+                                              const std::string &className,
                                               const std::string &processName) {
-  return name + "_" + instanceName + "_" + processName;
+  return name + "_" + instanceName + "_" + className + "_" + processName;
 }
-std::shared_ptr<PropertyBase> PropertyService::get(const std::string &name,
-                                   const std::string &instanceName,
-                                   const std::string &processName) {
+std::shared_ptr<PropertyBase>
+PropertyService::get(const std::string &name, const std::string &instanceName,
+                     const std::string &className,
+                     const std::string &processName) {
   const std::string &identifier =
-      createIdentifier(name, instanceName, processName);
+      createIdentifier(name, instanceName, className, processName);
   auto found = properties.find(identifier);
   if (found == properties.end()) {
-    throw PropertyNotFoundException(name, instanceName, processName);
+    throw PropertyNotFoundException(name, instanceName, className, processName);
   }
   return found->second;
 }
+PropertyService::PropertyService(const std::string &processName)
+    : AbstractService(processName, "PropertyService") {}

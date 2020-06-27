@@ -8,16 +8,17 @@ class PropertyBase {
 private:
   std::string name;
   std::string instanceName;
+  std::string className;
   std::string processName;
   std::string identifier;
 
 protected:
   PropertyBase(std::string name, std::string instanceName,
-               std::string processName)
+               std::string className, std::string processName)
       : name(std::move(name)), instanceName(std::move(instanceName)),
-        processName(std::move(processName)),
+        className(std::move(className)), processName(std::move(processName)),
         identifier(this->name + "_" + this->instanceName + "_" +
-                   this->processName) {}
+                   this->className + "_" + this->processName) {}
 
 public:
   PropertyBase() = delete;
@@ -27,6 +28,7 @@ public:
   [[nodiscard]] const std::string &getInstanceName() const {
     return instanceName;
   }
+  [[nodiscard]] const std::string &getClassName() const { return className; }
   [[nodiscard]] const std::string &getProcessName() const {
     return processName;
   }

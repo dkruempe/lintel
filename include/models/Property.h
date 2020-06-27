@@ -19,10 +19,10 @@ template <class T> class Property;
     static bool Registration() {                                               \
       PropertyFactory::TCreateMethod func =                                    \
           [&](const std::string &name, const std::string &instanceName,        \
-              const std::string &processName,                                  \
+              const std::string &className, const std::string &processName,    \
               const std::string &value) -> std::shared_ptr<PropertyBase> {     \
         return std::make_shared<Property<type>>(                               \
-            name, instanceName, processName,                                   \
+            name, instanceName, className, processName,                        \
             StringifyService<type>::deserializeFromString(value));             \
       };                                                                       \
       return PropertyFactory::Register(#type, func);                           \
@@ -33,8 +33,9 @@ template <class T> class Property;
                                                                                \
   public:                                                                      \
     Property(const std::string &name, const std::string &instanceName,         \
-             const std::string &processName, type value)                       \
-        : PropertyBase(name, instanceName, processName),                       \
+             const std::string &className, const std::string &processName,     \
+             type value)                                                       \
+        : PropertyBase(name, instanceName, className, processName),            \
           value(std::move(value)) {}                                           \
     [[nodiscard]] std::string getType() const override { return #type; }       \
     type getValue() const { return value; }                                    \
