@@ -5,39 +5,40 @@
 void createExampleProperties(PropertyService &propertyService) {
   std::shared_ptr<Property<int32_t>> intProperty =
       propertyService.getOrCreate<int32_t>("intProperty", "instanceName",
-                                           "processName", 4712);
+                                           "testClass", "processName", 4712);
   std::shared_ptr<Property<std::string>> stringProperty =
       propertyService.getOrCreate<std::string>("stringProperty", "instanceName",
-                                               "processName", "Hallo Welt!");
+                                               "testClass", "processName",
+                                               "Hallo Welt!");
   std::shared_ptr<Property<double>> doubleProperty =
       propertyService.getOrCreate<double>("doubleProperty", "instanceName",
-                                          "processName", 3.421);
+                                          "testClass", "processName", 3.421);
   std::shared_ptr<Property<std::string>> emptyStringProperty =
-      propertyService.getOrCreate<std::string>("emptyStringProperty",
-                                               "instanceName", "processName");
+      propertyService.getOrCreate<std::string>(
+          "emptyStringProperty", "instanceName", "testClass", "processName");
 }
 
 TEST_CASE("test create/get of PropertyService") {
-  PropertyService propertyService;
+  PropertyService propertyService("main");
   createExampleProperties(propertyService);
   REQUIRE(propertyService.allProperties().size() == 4);
 }
 TEST_CASE("test setValue for Property") {
-  PropertyService propertyService;
+  PropertyService propertyService("main");
   createExampleProperties(propertyService);
   auto intProperty = propertyService.getOrCreate<int32_t>(
-      "intProperty", "instanceName", "processName", 4713);
+      "intProperty", "instanceName", "class", "processName", 4713);
   propertyService.changeValueOf<int32_t>(intProperty, 4711);
   REQUIRE(intProperty->getValue() == 4711);
   auto properties = propertyService.allProperties();
   for (const auto &property : properties) {
-    if (property->getName() == "intProperty") {
+    if (property->getName() == "intProperty" && property->getClassName() == "class") {
       REQUIRE(property->toString() == "4711");
     }
   }
 }
 TEST_CASE("test create with no defined default value") {
-  PropertyService propertyService;
+  PropertyService propertyService("main");
   createExampleProperties(propertyService);
   auto property = propertyService.getOrCreate<std::string>(
       "emptyStringProperty", "instanceName", "processName", "not empty");
