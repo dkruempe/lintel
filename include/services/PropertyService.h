@@ -9,8 +9,9 @@
 #include <vector>
 
 #define DEFINE_PROPERTY(name, type, defaultValue)                              \
-  Property<type> name =                                                        \
-      Property<type>(name, getInstanceName(), getProcessName(), defaultValue);
+  std::shared_ptr<Property<type>> name = registerProperty<type>(#name, defaultValue);
+#define LOAD_PROPERTIES() \
+  propertyService.getOrCreate(properties);
 
 class PropertyService : public AbstractService<PropertyService> {
 private:
@@ -30,6 +31,7 @@ public:
   getOrCreate(const std::string &name, const std::string &instanceName,
               const std::string &className, const std::string &processName,
               const T &defaultValue = T());
+  void getOrCreate(const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
   std::shared_ptr<PropertyBase> get(const std::string &name,
                                     const std::string &instanceName,
                                     const std::string &className,

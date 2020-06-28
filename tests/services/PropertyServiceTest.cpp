@@ -18,6 +18,36 @@ void createExampleProperties(PropertyService &propertyService) {
           "emptyStringProperty", "instanceName", "testClass", "processName");
 }
 
+class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
+public:
+  explicit PropertyExampleClass(PropertyService &propertyService)
+      : AbstractService("testProcess", "testInstance") {
+    LOAD_PROPERTIES()
+  }
+
+  DEFINE_PROPERTY(string, std::string, "Ich bin eine Test Property")
+  DEFINE_PROPERTY(enable, bool, false)
+};
+
+TEST_CASE("test example service with properties") {
+  PropertyService propertyService("testProcess");
+  PropertyExampleClass propertyExampleClass (propertyService);
+  REQUIRE(propertyService.allProperties().size() == 2);
+  REQUIRE(propertyExampleClass.enable->getValue() == false);
+  auto propertyBase = propertyService.get(
+      "enable", "testInstance", "PropertyExampleClass", "testProcess");
+  std::shared_ptr<Property<bool>> property = std::static_pointer_cast<Property<bool>>(propertyBase);
+  propertyService.changeValueOf<bool>(property, true);
+  REQUIRE(property->getValue() == true);
+  REQUIRE(propertyExampleClass.enable->getValue() == true);
+
+  propertyService.changeValueOf<std::string>(propertyExampleClass.string, "Ich liebe dich Anna Krümpelmann <3!");
+  REQUIRE(propertyExampleClass.string->getValue() == "Ich liebe dich Anna Krümpelmann <3!");
+  auto stringProperty = propertyService.get(
+      "string", "testInstance", "PropertyExampleClass", "testProcess");
+  REQUIRE(stringProperty->toString() == "Ich liebe dich Anna Krümpelmann <3!");
+}
+
 TEST_CASE("test create/get of PropertyService") {
   PropertyService propertyService("main");
   createExampleProperties(propertyService);
@@ -32,7 +62,8 @@ TEST_CASE("test setValue for Property") {
   REQUIRE(intProperty->getValue() == 4711);
   auto properties = propertyService.allProperties();
   for (const auto &property : properties) {
-    if (property->getName() == "intProperty" && property->getClassName() == "class") {
+    if (property->getName() == "intProperty" &&
+        property->getClassName() == "class") {
       REQUIRE(property->toString() == "4711");
     }
   }

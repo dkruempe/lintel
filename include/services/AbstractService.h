@@ -1,10 +1,11 @@
 #ifndef LOGGING_ABSTRACTSERVICE_H
 #define LOGGING_ABSTRACTSERVICE_H
 
+#include "models/Property.h"
+#include "utils/TypeName.h"
 #include <ostream>
 #include <string>
 #include <utility>
-#include "utils/TypeName.h"
 /**
  * Every Service must be derived from this service to make sure that basic
  * information gets provided
@@ -15,6 +16,19 @@ template <class T> class AbstractService {
 private:
   const std::string processName;
   const std::string instanceName;
+
+protected:
+  std::vector<std::shared_ptr<PropertyBase>> properties;
+
+  template <class type>
+  std::shared_ptr<Property<type>> registerProperty(std::string name,
+                                                   type defaultValue) {
+    std::shared_ptr<Property<type>> property = std::make_shared<Property<type>>(
+        name, getInstanceName(), std::string(getClassName()), getProcessName(),
+        defaultValue);
+    properties.push_back(property);
+    return property;
+  }
 
 public:
   AbstractService() = delete;
