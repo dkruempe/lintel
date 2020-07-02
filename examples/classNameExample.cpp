@@ -1,3 +1,4 @@
+#include "repositories/NoPropertyRepository.h"
 #include "services/AbstractService.h"
 #include "services/PropertyService.h"
 #include <iostream>
@@ -14,7 +15,8 @@ public:
 int main(int argc, char *argv[]) {
   Example example;
   std::cout << example << "\n";
-  PropertyService propertyService ("classNameExample");
+  NoPropertyRepository propertyRepository;
+  PropertyService propertyService(propertyRepository, "classNameExample");
   std::cout << propertyService << "\n";
   return 0;
 }

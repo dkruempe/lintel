@@ -1,8 +1,8 @@
 #include "services/PropertyService.h"
 #include "exceptions/PropertyNotFoundException.h"
 #include <algorithm>
-PropertyService::PropertyService(const std::string &processName)
-    : AbstractService(processName, "PropertyService") {}
+PropertyService::PropertyService(PropertyRepository &propertyRepository, const std::string &processName)
+    : AbstractService(processName, "PropertyService"), propertyRepository(propertyRepository) {}
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   std::transform(properties.begin(), properties.end(),

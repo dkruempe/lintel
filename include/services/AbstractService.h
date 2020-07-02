@@ -6,6 +6,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
+#include <vector>
 /**
  * Every Service must be derived from this service to make sure that basic
  * information gets provided

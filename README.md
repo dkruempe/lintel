@@ -19,8 +19,11 @@ currently provided:
 
     This class implements a basic SchedulerService for schedule tasks to avoid endless loops 
     or polling.
+
+4. Property Implementation for easy usage of properties
     
 ##2 Dependencies
 
 1. Log4cxx library (Logging library)
 2. Fmt library (Will be removed with c++20 if available)
+3. Catch2 UnitTest Framework

@@ -16,7 +16,8 @@ add_library(base SHARED src/Logger.cpp include/Logger.h src/services/SchedulerSe
         include/File.h src/File.cpp include/Directory.h src/Directory.cpp include/models/Property.h
         include/models/PropertyBase.h include/services/PropertyService.h src/services/PropertyService.cpp
         include/services/StringifyService.h tests/models/PropertyTest.cpp include/utils/TypeName.h
-        include/exceptions/PropertyNotFoundException.h src/models/Property.cpp include/factories/PropertyFactory.h src/factories/PropertyFactory.cpp include/services/AbstractService.h include/repositories/PropertyRepository.h src/repositories/PropertyRepository.cpp)
+        include/exceptions/PropertyNotFoundException.h src/models/Property.cpp include/factories/PropertyFactory.h
+        src/factories/PropertyFactory.cpp include/services/AbstractService.h include/repositories/PropertyRepository.h include/repositories/NoPropertyRepository.h src/repositories/NoPropertyRepository.cpp)
 target_link_libraries(base ${LOG4CXX} ${FMT})
 
 # Examples
