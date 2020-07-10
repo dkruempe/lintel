@@ -10,6 +10,8 @@ find_path(LOG4CXX_INCLUDES NAMES log4cxx/log4cxx.h)
 find_library(FMT NAMES fmt)
 find_path(FMT_INCLUDES NAMES fmt/format.h)
 find_path(CATCH2_INCLUDES catch2)
+find_library(fswatch NAMES fswatch)
+find_path(fswatch_INCLUDES fswatch)
 
 include_directories(include ${LOG4CXX_INCLUDES} ${FMT_INCLUDES} ${CATCH2_INCLUDES})
 add_library(base SHARED src/Logger.cpp include/Logger.h src/services/SchedulerService.cpp include/services/SchedulerService.h
@@ -18,7 +20,7 @@ add_library(base SHARED src/Logger.cpp include/Logger.h src/services/SchedulerSe
         include/services/StringifyService.h tests/models/PropertyTest.cpp include/utils/TypeName.h
         include/exceptions/PropertyNotFoundException.h src/models/Property.cpp include/factories/PropertyFactory.h
         src/factories/PropertyFactory.cpp include/services/AbstractService.h include/repositories/PropertyRepository.h include/repositories/NoPropertyRepository.h src/repositories/NoPropertyRepository.cpp)
-target_link_libraries(base ${LOG4CXX} ${FMT})
+target_link_libraries(base ${LOG4CXX} ${FMT} ${fswatch})
 
 # Examples
 ADD_SUBDIRECTORY(examples)
