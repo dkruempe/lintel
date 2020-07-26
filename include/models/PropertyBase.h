@@ -33,6 +33,22 @@ public:
     return processName;
   }
   [[nodiscard]] const std::string &getIdentifier() const { return identifier; }
+
+  bool operator<(const PropertyBase &rhs) const {
+    if (getProcessName() < rhs.getProcessName()) {
+      return true;
+    }
+    if (rhs.getProcessName() < getProcessName()) {
+      return false;
+    }
+    if (getClassName() < rhs.getClassName()) {
+      return true;
+    }
+    if (rhs.getClassName() < getClassName()) {
+      return false;
+    }
+    return getInstanceName() < rhs.getInstanceName();
+  }
 };
 
 #endif // LOGGING_PROPERTYBASE_H

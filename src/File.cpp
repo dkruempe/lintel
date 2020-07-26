@@ -27,8 +27,14 @@ std::string File::getName() { return path.filename(); }
 
 std::filesystem::path File::getPath() { return path; }
 
-void File::writeToFile(const std::string &content) {
-  std::ofstream out(path.string());
+void File::writeToFile(const std::string &content,
+                       bool overwrite /* default = false */) {
+  std::ofstream out;
+  if (overwrite) {
+    out = std::ofstream(path, std::ofstream::trunc | std::ofstream::out);
+  } else {
+    out = std::ofstream(path);
+  }
   out << content;
 }
 
@@ -53,4 +59,10 @@ File::Stream File::createStream() {
     throw std::runtime_error(path.string() + ": is no file or does not exists");
   }
   return Stream(path);
+}
+void File::deleteFile() {
+  if (!exists()) {
+    return;
+  }
+  std::filesystem::remove(path);
 }

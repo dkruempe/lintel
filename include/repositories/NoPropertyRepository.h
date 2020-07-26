@@ -5,19 +5,15 @@
 
 class NoPropertyRepository : public PropertyRepository {
 public:
-
-  struct EmptyNotification : public Notification {
-    void notifyChangeOf(std::shared_ptr<PropertyBase> property) override {}
-  };
-
-  EmptyNotification emptyNotification;
-
-  NoPropertyRepository() : PropertyRepository(emptyNotification) {}
+  NoPropertyRepository() : PropertyRepository() {}
 
   /**
    * save property to repository
    */
   void save(std::shared_ptr<PropertyBase> property) override;
+
+  void
+  save(const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
 
   /**
    * load all properties from repository and return result

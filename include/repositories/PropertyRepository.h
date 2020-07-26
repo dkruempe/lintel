@@ -7,19 +7,14 @@ class PropertyBase;
 
 class PropertyRepository {
 public:
+
+  PropertyRepository() = default;
+
   /**
-   * Notification class support the possiblity to get notified in case of
-   * change of the property in the repository.
+   * save properties to repository
    */
-  struct Notification {
-  public:
-    virtual void notifyChangeOf(std::shared_ptr<PropertyBase> property) = 0;
-  };
-
-  PropertyRepository() = delete;
-
-  explicit PropertyRepository(Notification &notification)
-      : notification(notification) {}
+  virtual void
+  save(const std::vector<std::shared_ptr<PropertyBase>> &properties) = 0;
 
   /**
    * save property to repository
@@ -30,9 +25,6 @@ public:
    * load all properties from repository and return result
    */
   virtual std::vector<std::shared_ptr<PropertyBase>> awake() = 0;
-
-protected:
-  Notification &notification;
 };
 
 #endif // LOGGING_PROPERTYREPOSITORY_H

@@ -106,14 +106,14 @@ std::future<typename std::result_of<
     typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
 SchedulerService::schedule_at(const std::chrono::steady_clock::time_point &t, F &&f,
                        Args &&... args) {
-  auto func = std::make_shared<
+  auto function = std::make_shared<
       std::packaged_task<typename std::result_of<typename std::decay<F>::type(
           typename std::decay<Args>::type...)>::type()>>(
       std::bind(std::forward<F>(f), std::forward<Args>(args)...));
-  auto future = func->get_future();
+  auto future = function->get_future();
   {
     std::unique_lock<std::mutex> lock(mutex);
-    tasks.emplace_back(Task(t, [=, func = std::move(func)] { (*func)(); }));
+    tasks.emplace_back(Task(t, [=, func = std::move(function)] { (*func)(); }));
     std::push_heap(tasks.begin(), tasks.end(), TaskComperator());
   }
 

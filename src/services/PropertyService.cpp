@@ -1,8 +1,20 @@
 #include "services/PropertyService.h"
 #include "exceptions/PropertyNotFoundException.h"
 #include <algorithm>
-PropertyService::PropertyService(PropertyRepository &propertyRepository, const std::string &processName)
-    : AbstractService(processName, "PropertyService"), propertyRepository(propertyRepository) {}
+
+std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
+    const std::vector<std::shared_ptr<PropertyBase>> &properties) {
+  std::map<std::string, std::shared_ptr<PropertyBase>> propertiesMap;
+  for (const auto &property : properties) {
+    propertiesMap.insert({property->getIdentifier(), property});
+  }
+  return propertiesMap;
+}
+PropertyService::PropertyService(PropertyRepository &propertyRepository,
+                                 const std::string &processName)
+    : AbstractService(processName, "PropertyService"),
+      propertyRepository(propertyRepository),
+      properties(init(propertyRepository.awake())) {}
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   std::transform(properties.begin(), properties.end(),
@@ -28,14 +40,21 @@ PropertyService::get(const std::string &name, const std::string &instanceName,
   }
   return found->second;
 }
-void PropertyService::getOrCreate(const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
+void PropertyService::getOrCreate(
+    const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
+  bool updateRepository = false;
   for (std::shared_ptr<PropertyBase> property : propertiesVec) {
     try {
-      auto newProperty= get(property->getName(), property->getInstanceName(),
-                     property->getClassName(), property->getProcessName());
+      auto newProperty =
+          get(property->getName(), property->getInstanceName(),
+              property->getClassName(), property->getProcessName());
       property = newProperty;
     } catch (PropertyNotFoundException &exception) {
       properties.insert({property->getIdentifier(), property});
+      updateRepository = true;
     }
+  }
+  if (updateRepository) {
+    propertyRepository.save(allProperties());
   }
 }

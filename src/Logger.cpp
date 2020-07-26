@@ -56,7 +56,7 @@ void Logger::configure() {
       content.replace(found, std::string(templateMarker).length(),
                       std::string(LOG_DIRECTORY) + std::string("/") +
                           processName + std::string(".log"));
-      configFile.writeToFile(content);
+      configFile.writeToFile(content, false);
     } else {
       createError = true;
     }

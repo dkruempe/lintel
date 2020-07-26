@@ -25,6 +25,8 @@ private:
                                       const std::string &instanceName,
                                       const std::string &className,
                                       const std::string &processName);
+  static std::map<std::string, std::shared_ptr<PropertyBase>>
+  init(const std::vector<std::shared_ptr<PropertyBase>>& properties);
 
 public:
   PropertyService(PropertyRepository &propertyRepository,
@@ -72,5 +74,4 @@ void PropertyService::changeValueOf(
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
   propertyRepository.save(propertyBase);
 }
-
 #endif // LOGGING_PROPERTYSERVICE_H

@@ -58,6 +58,10 @@ public:
    */
   bool exists();
   /**
+   * delete file
+   */
+   void deleteFile();
+  /**
    * reads whole file in total (not good for big files)
    * @return content of whole file in one string
    */
@@ -76,7 +80,7 @@ public:
    * write content to file in total
    * @param content to be written in file
    */
-  void writeToFile(const std::string &content);
+  void writeToFile(const std::string &content, bool overwrite = false);
   /**
    * creates symlink of file to given path
    * @param to path where to create the sysmlink
