@@ -27,10 +27,12 @@ private:
                                       const std::string &processName);
   static std::map<std::string, std::shared_ptr<PropertyBase>>
   init(const std::vector<std::shared_ptr<PropertyBase>>& properties);
+  bool updateRepository = false;
 
 public:
   PropertyService(PropertyRepository &propertyRepository,
                   const std::string &processName);
+  void onInitialize() override;
   template <class T>
   std::shared_ptr<Property<T>>
   getOrCreate(const std::string &name, const std::string &instanceName,

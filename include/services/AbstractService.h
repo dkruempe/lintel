@@ -36,6 +36,7 @@ public:
   AbstractService(std::string processName, std::string instanceName)
       : processName(std::move(processName)),
         instanceName(std::move(instanceName)) {}
+  virtual void onInitialize() {}
   [[nodiscard]] const std::string &getProcessName() const {
     return processName;
   }

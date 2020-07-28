@@ -26,7 +26,7 @@ std::vector<std::shared_ptr<PropertyBase>> createProperties() {
   return properties;
 }
 
-void test() {
+void testSerializeDeserialize() {
   auto properties = createProperties();
   std::sort(properties.begin(), properties.end(),
             [](const std::shared_ptr<PropertyBase> &rhs,
@@ -50,21 +50,36 @@ void test() {
 
 class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
 public:
-  explicit PropertyExampleClass(PropertyService &propertyService, std::string instanceName, std::string processName)
+  explicit PropertyExampleClass(PropertyService &propertyService,
+                                std::string instanceName,
+                                std::string processName)
       : AbstractService(processName, instanceName) {
     LOAD_PROPERTIES();
+  }
+
+  void printProperty() {
+    std::cout << *extra << std::endl;
+    std::cout << *string << std::endl;
+    std::cout << *enable << std::endl;
   }
   DEFINE_PROPERTY(extra, int32_t, 4711);
   DEFINE_PROPERTY(string, std::string, "Ich bin eine Test Property");
   DEFINE_PROPERTY(enable, bool, false);
 };
 
-int main(int argc, char *argv[]) {
+void testPropertyService(std::string processName) {
   XMLConfigSerializationStrategy xmlConfigSerializationStrategy;
   FilePropertyRepository filePropertyRepository("/Users/dkruempe/cfg/test.xml",
                                                 xmlConfigSerializationStrategy);
-  PropertyService propertyService(filePropertyRepository, basename(argv[0]));
-  PropertyExampleClass A (propertyService, "A", basename(argv[0]));
-  PropertyExampleClass B (propertyService, "B", basename(argv[0]));
+  PropertyService propertyService(filePropertyRepository, processName);
+  PropertyExampleClass A(propertyService, "A", processName);
+  PropertyExampleClass B(propertyService, "B", processName);
+  propertyService.onInitialize();
+  A.printProperty();
+  B.printProperty();
+}
+
+int main(int argc, char *argv[]) {
+  testPropertyService(basename(argv[0]));
   return 0;
 }

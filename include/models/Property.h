@@ -6,6 +6,8 @@
 #include "services/StringifyService.h"
 #include "utils/TypeName.h"
 #include <memory>
+#include <mutex>
+#include <shared_mutex>
 #include <string>
 
 class PropertyService;
@@ -16,6 +18,7 @@ template <class T> class Property;
   template <> class Property<type> : public PropertyBase {                     \
   private:                                                                     \
     type value;                                                                \
+    std::shared_mutex mutex;                                                   \
     static bool Registration() {                                               \
       PropertyFactory::TCreateMethod func =                                    \
           [&](const std::string &name, const std::string &instanceName,        \
@@ -29,7 +32,10 @@ template <class T> class Property;
     }                                                                          \
     static bool registered;                                                    \
                                                                                \
-    void setValue(const type &value) { this->value = value; }                  \
+    void setValue(const type &value) {                                         \
+      std::unique_lock<std::shared_mutex> lock(mutex);                         \
+      this->value = value;                                                     \
+    }                                                                          \
                                                                                \
   public:                                                                      \
     Property(const std::string &name, const std::string &instanceName,         \
@@ -38,8 +44,14 @@ template <class T> class Property;
         : PropertyBase(name, instanceName, className, processName),            \
           value(std::move(value)) {}                                           \
     [[nodiscard]] std::string getType() const override { return #type; }       \
-    type getValue() const { return value; }                                    \
-    std::string toString() const override { return convertToString(value); }   \
+    type getValue() {                                                    \
+      std::shared_lock<std::shared_mutex> lock(mutex);                         \
+      return value;                                                            \
+    }                                                                          \
+    std::string toString() override {                                    \
+      std::shared_lock<std::shared_mutex> lock(mutex);                         \
+      return convertToString(value);                                           \
+    }                                                                          \
     friend class PropertyService;                                              \
   };
 IMPLEMENT_PROPERTY(int8_t, StringifyService<int8_t>::serializeToString,

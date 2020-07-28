@@ -1,6 +1,7 @@
 #ifndef LOGGING_PROPERTYBASE_H
 #define LOGGING_PROPERTYBASE_H
 
+#include <ostream>
 #include <string>
 #include <utility>
 
@@ -22,7 +23,7 @@ protected:
 
 public:
   PropertyBase() = delete;
-  [[nodiscard]] virtual std::string toString() const = 0;
+  [[nodiscard]] virtual std::string toString() = 0;
   [[nodiscard]] virtual std::string getType() const = 0;
   [[nodiscard]] const std::string &getName() const { return name; }
   [[nodiscard]] const std::string &getInstanceName() const {
@@ -33,6 +34,13 @@ public:
     return processName;
   }
   [[nodiscard]] const std::string &getIdentifier() const { return identifier; }
+
+  friend std::ostream &operator<<(std::ostream &os, const PropertyBase &base) {
+    os << "name: " << base.name << " instanceName: " << base.instanceName
+       << " className: " << base.className
+       << " processName: " << base.processName;
+    return os;
+  }
 
   bool operator<(const PropertyBase &rhs) const {
     if (getProcessName() < rhs.getProcessName()) {

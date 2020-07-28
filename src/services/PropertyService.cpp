@@ -42,7 +42,6 @@ PropertyService::get(const std::string &name, const std::string &instanceName,
 }
 void PropertyService::getOrCreate(
     const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
-  bool updateRepository = false;
   for (std::shared_ptr<PropertyBase> property : propertiesVec) {
     try {
       auto newProperty =
@@ -54,6 +53,9 @@ void PropertyService::getOrCreate(
       updateRepository = true;
     }
   }
+}
+void PropertyService::onInitialize() {
+  AbstractService::onInitialize();
   if (updateRepository) {
     propertyRepository.save(allProperties());
   }
