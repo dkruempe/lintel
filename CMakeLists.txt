@@ -10,8 +10,6 @@ find_path(LOG4CXX_INCLUDES NAMES log4cxx/log4cxx.h)
 find_library(FMT NAMES fmt)
 find_path(FMT_INCLUDES NAMES fmt/format.h)
 find_path(CATCH2_INCLUDES catch2)
-find_library(fswatch NAMES fswatch)
-find_path(fswatch_INCLUDES fswatch)
 find_path(tinyxml2 tinymxl2.h)
 find_library(tinyxml2 tinyxml2)
 

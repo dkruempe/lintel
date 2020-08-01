@@ -27,3 +27,4 @@ currently provided:
 1. Log4cxx library (Logging library)
 2. Fmt library (Will be removed with c++20 if available)
 3. Catch2 UnitTest Framework
+4. tinyxml2 Library

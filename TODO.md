@@ -2,11 +2,11 @@
 
 - [ ] Property
     - [ ] Implement Property Repository
-        - [ ] Implement NoPropertyRepository to not save properties and just have it in memory
+        - [x] Implement NoPropertyRepository to not save properties and just have it in memory
         - [ ] Implement DatabasePropertyRepository with trigger in case of database change
-        - [ ] Implement FilePropertyRepository
-    - [ ] Integration of PropertyRepository into PropertyService
-    - [ ] Implement Marcros and AbstractService for easy initialization
+        - [x] Implement FilePropertyRepository
+    - [x] Integration of PropertyRepository into PropertyService
+    - [x] Implement Marcros and AbstractService for easy initialization
     - [ ] Implement Property Controller via REST for easy change of properties 
 - [ ] Logger    
     - [ ] MultiFileLogger

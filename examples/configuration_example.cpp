@@ -6,6 +6,7 @@
 #include <iostream>
 #include <libgen.h>
 #include <memory>
+#include <utility>
 #include <vector>
 
 std::vector<std::shared_ptr<PropertyBase>> createProperties() {
@@ -53,11 +54,11 @@ public:
   explicit PropertyExampleClass(PropertyService &propertyService,
                                 std::string instanceName,
                                 std::string processName)
-      : AbstractService(processName, instanceName) {
+      : AbstractService(std::move(processName), std::move(instanceName)) {
     LOAD_PROPERTIES();
   }
 
-  void printProperty() {
+  void printProperty() const {
     std::cout << *extra << std::endl;
     std::cout << *string << std::endl;
     std::cout << *enable << std::endl;
@@ -67,7 +68,7 @@ public:
   DEFINE_PROPERTY(enable, bool, false);
 };
 
-void testPropertyService(std::string processName) {
+void testPropertyService(const std::string& processName) {
   XMLConfigSerializationStrategy xmlConfigSerializationStrategy;
   FilePropertyRepository filePropertyRepository("/Users/dkruempe/cfg/test.xml",
                                                 xmlConfigSerializationStrategy);
@@ -81,5 +82,6 @@ void testPropertyService(std::string processName) {
 
 int main(int argc, char *argv[]) {
   testPropertyService(basename(argv[0]));
+  testSerializeDeserialize();
   return 0;
 }
