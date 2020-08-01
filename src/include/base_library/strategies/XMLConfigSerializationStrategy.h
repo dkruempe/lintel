@@ -1,7 +1,7 @@
 #ifndef LOGGING_XMLCONFIGSERIALIZATIONSTRATEGY_H
 #define LOGGING_XMLCONFIGSERIALIZATIONSTRATEGY_H
 
-#include "strategies/ConfigSerializationStrategy.h"
+#include "ConfigSerializationStrategy.h"
 
 class XMLConfigSerializationStrategy : public ConfigSerializationStrategy {
 public:

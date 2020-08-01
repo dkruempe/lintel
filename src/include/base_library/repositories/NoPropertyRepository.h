@@ -1,7 +1,7 @@
 #ifndef LOGGING_NOPROPERTYREPOSITORY_H
 #define LOGGING_NOPROPERTYREPOSITORY_H
 
-#include "repositories/PropertyRepository.h"
+#include "PropertyRepository.h"
 
 class NoPropertyRepository : public PropertyRepository {
 public:

@@ -1,7 +1,7 @@
 #ifndef LOGGING_CONFIGSERIALIZATIONSTRATEGY_H
 #define LOGGING_CONFIGSERIALIZATIONSTRATEGY_H
 
-#include "models/PropertyBase.h"
+#include "base_library/models/PropertyBase.h"
 
 /**
  * Strategy for serialize/deserialize a list of properties or a property

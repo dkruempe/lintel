@@ -1,10 +1,10 @@
 #ifndef PROPERTY_H
 #define PROPERTY_H
 
-#include "factories/PropertyFactory.h"
-#include "models/PropertyBase.h"
-#include "services/StringifyService.h"
-#include "utils/TypeName.h"
+#include "PropertyBase.h"
+#include "base_library/factories/PropertyFactory.h"
+#include "base_library/services/StringifyService.h"
+#include "base_library/utils/TypeName.h"
 #include <memory>
 #include <mutex>
 #include <shared_mutex>

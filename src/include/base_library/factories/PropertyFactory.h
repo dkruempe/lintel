@@ -1,7 +1,7 @@
 #ifndef LOGGING_PROPERTYFACTORY_H
 #define LOGGING_PROPERTYFACTORY_H
 
-#include "models/PropertyBase.h"
+#include "base_library/models/PropertyBase.h"
 #include <functional>
 #include <map>
 #include <string>

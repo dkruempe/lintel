@@ -1,8 +1,8 @@
 #ifndef LOGGING_ABSTRACTSERVICE_H
 #define LOGGING_ABSTRACTSERVICE_H
 
-#include "models/Property.h"
-#include "utils/TypeName.h"
+#include "base_library/models/Property.h"
+#include "base_library/utils/TypeName.h"
 #include <ostream>
 #include <string>
 #include <utility>

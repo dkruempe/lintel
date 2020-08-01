@@ -1,5 +1,5 @@
-#include "strategies/XMLConfigSerializationStrategy.h"
-#include "factories/PropertyFactory.h"
+#include "base_library/strategies/XMLConfigSerializationStrategy.h"
+#include "base_library/factories/PropertyFactory.h"
 #include <tinyxml2.h>
 #include <vector>
 

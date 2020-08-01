@@ -1,8 +1,8 @@
-#include "factories/PropertyFactory.h"
-#include "models/PropertyBase.h"
-#include "repositories/FilePropertyRepository.h"
-#include "services/PropertyService.h"
-#include "strategies/XMLConfigSerializationStrategy.h"
+#include <base_library/factories/PropertyFactory.h>
+#include <base_library/models/PropertyBase.h>
+#include <base_library/repositories/FilePropertyRepository.h>
+#include <base_library/services/PropertyService.h>
+#include <base_library/strategies/XMLConfigSerializationStrategy.h>
 #include <iostream>
 #include <libgen.h>
 #include <memory>
@@ -68,7 +68,7 @@ public:
   DEFINE_PROPERTY(enable, bool, false);
 };
 
-void testPropertyService(const std::string& processName) {
+void testPropertyService(const std::string &processName) {
   XMLConfigSerializationStrategy xmlConfigSerializationStrategy;
   FilePropertyRepository filePropertyRepository("/Users/dkruempe/cfg/test.xml",
                                                 xmlConfigSerializationStrategy);

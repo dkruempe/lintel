@@ -1,4 +1,4 @@
-#include "repositories/FilePropertyRepository.h"
+#include "base_library/repositories/FilePropertyRepository.h"
 
 FilePropertyRepository::FilePropertyRepository(
     const std::filesystem::path &configurationPath,

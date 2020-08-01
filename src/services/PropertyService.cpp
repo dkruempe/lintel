@@ -1,5 +1,5 @@
-#include "services/PropertyService.h"
-#include "exceptions/PropertyNotFoundException.h"
+#include "base_library/services/PropertyService.h"
+#include "base_library/exceptions/PropertyNotFoundException.h"
 #include <algorithm>
 
 std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(

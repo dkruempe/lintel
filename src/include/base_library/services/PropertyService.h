@@ -1,10 +1,10 @@
 #ifndef LOGGING_PROPERTYSERVICE_H
 #define LOGGING_PROPERTYSERVICE_H
 
-#include "exceptions/PropertyNotFoundException.h"
-#include "models/Property.h"
-#include "repositories/PropertyRepository.h"
-#include "services/AbstractService.h"
+#include "AbstractService.h"
+#include "base_library/exceptions/PropertyNotFoundException.h"
+#include "base_library/models/Property.h"
+#include "base_library/repositories/PropertyRepository.h"
 #include <functional>
 #include <map>
 #include <vector>

@@ -1,5 +1,5 @@
 #define CATCH_CONFIG_MAIN
-#include "models/Property.h"
+#include <base_library/models/Property.h>
 #include <catch2/catch.hpp>
 
 TEST_CASE("basic test of property") {

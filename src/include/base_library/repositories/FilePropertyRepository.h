@@ -1,10 +1,10 @@
 #ifndef LOGGING_FILEPROPERTYREPOSITORY_H
 #define LOGGING_FILEPROPERTYREPOSITORY_H
 
-#include "File.h"
-#include "repositories/PropertyRepository.h"
-#include "services/ExecutorService.h"
-#include "strategies/ConfigSerializationStrategy.h"
+#include "PropertyRepository.h"
+#include "base_library/File.h"
+#include "base_library/services/ExecutorService.h"
+#include "base_library/strategies/ConfigSerializationStrategy.h"
 
 /**
  * implementation of file repository for properties
