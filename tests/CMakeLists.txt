@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 project(base_examples)
 cmake_policy(SET CMP0025 NEW)
 
+enable_testing()
 #dependencies
 if (NOT TARGET kruempelmann::base_library)
     find_package(base_library REQUIRED)
@@ -27,14 +28,14 @@ conan_cmake_run(REQUIRES catch2/2.13.0
 
 include_directories(${CONAN_INCLUDE_DIRS})
 
-ADD_EXECUTABLE(PropertyTest models/PropertyTest.cpp)
-TARGET_LINK_LIBRARIES(PropertyTest kruempelmann::base_library)
-ADD_TEST(propertyTest PropertyTest)
+ADD_EXECUTABLE(propertyTest models/PropertyTest.cpp)
+TARGET_LINK_LIBRARIES(propertyTest PRIVATE kruempelmann::base_library)
+ADD_TEST(NAME BaseLibrary.PropertyTest COMMAND propertyTest)
 
-ADD_EXECUTABLE(PropertyFactoryTest factories/PropertyFactoryTest.cpp)
-TARGET_LINK_LIBRARIES(PropertyFactoryTest kruempelmann::base_library)
-ADD_TEST(propertyFactoryTest PropertyFactoryTest)
+ADD_EXECUTABLE(propertyFactoryTest factories/PropertyFactoryTest.cpp)
+TARGET_LINK_LIBRARIES(propertyFactoryTest PRIVATE kruempelmann::base_library)
+ADD_TEST(NAME BaseLibrary.PropertyFactoryTest COMMAND propertyFactoryTest)
 
-ADD_EXECUTABLE(PropertyServiceTest services/PropertyServiceTest.cpp)
-TARGET_LINK_LIBRARIES(PropertyServiceTest kruempelmann::base_library)
-ADD_TEST(propertyServiceTest PropertyServiceTest)
+ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
+TARGET_LINK_LIBRARIES(propertyServiceTest PRIVATE kruempelmann::base_library)
+ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
