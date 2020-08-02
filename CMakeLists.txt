@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 project(Logging)
 
-
 # Library
 ADD_SUBDIRECTORY(src)
 # Examples

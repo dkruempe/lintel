@@ -26,16 +26,20 @@ conan_cmake_run(REQUIRES catch2/2.13.0
         BUILD
         missing)
 
-include_directories(${CONAN_INCLUDE_DIRS})
-
 ADD_EXECUTABLE(propertyTest models/PropertyTest.cpp)
+target_compile_features(propertyTest PUBLIC cxx_std_17)
+TARGET_INCLUDE_DIRECTORIES(propertyTest PRIVATE ${CONAN_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(propertyTest PRIVATE kruempelmann::base_library)
 ADD_TEST(NAME BaseLibrary.PropertyTest COMMAND propertyTest)
 
 ADD_EXECUTABLE(propertyFactoryTest factories/PropertyFactoryTest.cpp)
+target_compile_features(propertyFactoryTest PUBLIC cxx_std_17)
+TARGET_INCLUDE_DIRECTORIES(propertyFactoryTest PRIVATE ${CONAN_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(propertyFactoryTest PRIVATE kruempelmann::base_library)
 ADD_TEST(NAME BaseLibrary.PropertyFactoryTest COMMAND propertyFactoryTest)
 
 ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
+target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
+TARGET_INCLUDE_DIRECTORIES(propertyServiceTest PRIVATE ${CONAN_INCLUDE_DIRS})
 TARGET_LINK_LIBRARIES(propertyServiceTest PRIVATE kruempelmann::base_library)
 ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
