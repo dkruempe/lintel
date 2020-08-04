@@ -8,7 +8,22 @@ if (NOT TARGET kruempelmann::base_library)
     include_directories(${base_library_INCLUDE_DIRS})
 endif ()
 
-message("base_include_dirs = ${base_library_INCLUDE_DIRS}")
+# Download automatically, you can also just copy the conan.cmake file
+if (NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
+    message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
+    file(DOWNLOAD "https://github.com/conan-io/cmake-conan/raw/v0.15/conan.cmake"
+            "${CMAKE_BINARY_DIR}/conan.cmake")
+endif ()
+
+include(${CMAKE_BINARY_DIR}/conan.cmake)
+
+conan_cmake_run(REQUIRES fmt/6.2.0 spdlog/1.6.1
+        OPTIONS
+        ${CONAN_EXTRA_OPTIONS}
+        BASIC_SETUP
+        CMAKE_TARGETS # individual targets to link to
+        BUILD
+        missing)
 
 add_executable(logger_example logger_example.cpp)
 target_compile_features(logger_example PUBLIC cxx_std_17)
@@ -33,3 +48,7 @@ target_link_libraries(executor_example PUBLIC kruempelmann::base_library)
 add_executable(configuration_example configuration_example.cpp)
 target_compile_features(configuration_example PUBLIC cxx_std_17)
 target_link_libraries(configuration_example PUBLIC kruempelmann::base_library)
+add_executable(spdlogExample spdlogExample.cpp)
+target_include_directories(spdlogExample PUBLIC "${CONAN_INCLUDE_DIRS}")
+target_compile_features(spdlogExample PUBLIC cxx_std_17)
+target_link_libraries(spdlogExample PUBLIC CONAN_PKG::fmt CONAN_PKG::spdlog)
