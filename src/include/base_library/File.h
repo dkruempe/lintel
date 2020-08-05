@@ -58,6 +58,10 @@ public:
    */
   bool exists();
   /**
+   * returns size of file
+   */
+  std::size_t getSize();
+  /**
    * delete file
    */
    void deleteFile();
@@ -81,6 +85,10 @@ public:
    * @param content to be written in file
    */
   void writeToFile(const std::string &content, bool overwrite = false);
+  /**
+   * creates empty with give file size
+   */
+  void createFile(std::size_t sizeOfFile);
   /**
    * creates symlink of file to given path
    * @param to path where to create the sysmlink

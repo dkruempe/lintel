@@ -66,3 +66,15 @@ void File::deleteFile() {
   }
   std::filesystem::remove(path);
 }
+std::size_t File::getSize() { return std::filesystem::file_size(path); }
+void File::createFile(std::size_t sizeOfFile) {
+  if (exists()) {
+    throw std::runtime_error(path.string() + ": file exists");
+  }
+  std::filebuf fbuf;
+  fbuf.open(path, std::ios_base::in | std::ios_base::out |
+                      std::ios_base::trunc | std::ios_base::binary);
+  // Set the size
+  fbuf.pubseekoff(sizeOfFile - 1, std::ios_base::beg);
+  fbuf.sputc(0);
+}
