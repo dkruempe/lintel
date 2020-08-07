@@ -2,12 +2,12 @@
 #define LOGGING_PROPERTYREPOSITORY_H
 
 #include <memory>
+#include <vector>
 
 class PropertyBase;
 
 class PropertyRepository {
 public:
-
   PropertyRepository() = default;
 
   /**

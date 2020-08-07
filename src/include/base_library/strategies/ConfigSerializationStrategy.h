@@ -2,6 +2,8 @@
 #define LOGGING_CONFIGSERIALIZATIONSTRATEGY_H
 
 #include "base_library/models/PropertyBase.h"
+#include <memory>
+#include <vector>
 
 /**
  * Strategy for serialize/deserialize a list of properties or a property

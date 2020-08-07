@@ -28,6 +28,8 @@ private:
       return "Anna";
     case Dominik:
       return "Dominik";
+    default:
+      return "";
     }
   }
 };

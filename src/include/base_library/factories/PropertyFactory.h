@@ -4,6 +4,7 @@
 #include "base_library/models/PropertyBase.h"
 #include <functional>
 #include <map>
+#include <memory>
 #include <string>
 
 class PropertyFactory {

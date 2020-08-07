@@ -5,6 +5,7 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <functional>
 
 class ExecutorService {
 private:

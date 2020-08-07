@@ -47,7 +47,7 @@ target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include;${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         "$<INSTALL_INTERFACE:include;${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>")
-target_link_libraries(base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2)
+target_link_libraries(base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets
