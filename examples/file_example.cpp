@@ -3,7 +3,7 @@
 #include <iostream>
 
 int main(int argc, char *argv[]) {
-  File file (std::string(CONFIG_DIRECTORY) + "/template_log4cxx.cfg");
+  File file (std::string(CONFIG_DIRECTORY) + "/template_log4cxx.xml");
   std::cout << "test stream \n";
   {
     File::Stream stream = file.createStream();
@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
   }
   std::cout << "test matching function \n";
   {
-    const std::regex regex(".*\\.template.*");
+    const std::regex regex(".*template.*");
     auto vector = file.matches(regex);
     for (const auto &iter : vector) {
       std::cout << iter << "\n";
