@@ -21,31 +21,15 @@ private:
   // constexpr constants
   constexpr static std::string_view templateConfig = "template_log4cxx.xml";
   constexpr static std::string_view templateMarker = "template.log";
-  SchedulerService scheduler = SchedulerService(1);
 
   // variables
   const std::string &processName;
-  struct LOG_INFO {
-    uint32_t logCount;
-    std::string function;
-    std::string file;
-    int line;
-    std::string logString;
-    LOG_INFO(std::string function, std::string file, int line,
-             std::string logString)
-        : logCount(1), function(std::move(function)), file(std::move(file)),
-          line(line), logString(std::move(logString)) {}
-  };
-  std::mutex mutex;
-  std::map<std::string, LOG_INFO> repeatLogs;
   log4cxx::LoggerPtr logger;
 
   void configure();
 
   static LoggerService *instance;
   static std::once_flag initInstanceFlag;
-
-  void logRepeatLog();
 
 public:
   explicit LoggerService(const std::string &processName);
@@ -96,19 +80,6 @@ public:
   }
 
   template <class... Args>
-  void repeat(const std::string &function, const std::string &file, int line,
-              const std::string &message, Args... args) {
-    std::string logString = fmt::format(message, args...);
-    std::string key =
-        logString + "_" + function + "_" + file + "_" + std::to_string(line);
-    auto found = repeatLogs.find(key);
-    if (found == repeatLogs.end()) {
-      repeatLogs.insert({key, LOG_INFO(function, file, line, logString)});
-    }
-    (*found).second.logCount = (*found).second.logCount + 1;
-  }
-
-  template <class... Args>
   void warn(const std::string &function, const std::string &file, int line,
             const std::string &message, Args... args) {
     logger->warn(
@@ -135,8 +106,4 @@ public:
 #define LOG_WARN(message, ...)                                                 \
   LoggerService::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,            \
                      ##__VA_ARGS__)
-#define LOG_REPEAT(message, ...)                                               \
-  LoggerService::get().repeat(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,          \
-                       ##__VA_ARGS__)
-
 #endif // LOGGING_LOGGER_H

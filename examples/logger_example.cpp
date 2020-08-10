@@ -70,9 +70,7 @@ int main(int argc, char *argv[]) {
   log4cxx::MDC::put("rce", "2");
   log4cxx::MDC::put("unit", "4711");
   while (running) {
-    LOG_REPEAT("count++");
     LOG_TRACE("count={}", count++);
-    LOG_REPEAT("count++");
     std::this_thread::sleep_for(std::chrono::seconds(1));
   }
   return 0;
