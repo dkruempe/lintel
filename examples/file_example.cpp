@@ -1,12 +1,12 @@
-#include <base_library/File.h>
 #include <base_library/config.h>
+#include <base_library/services/FileService.h>
 #include <iostream>
 
 int main(int argc, char *argv[]) {
-  File file (std::string(CONFIG_DIRECTORY) + "/template_log4cxx.xml");
+  FileService file (std::string(CONFIG_DIRECTORY) + "/template_log4cxx.xml");
   std::cout << "test stream \n";
   {
-    File::Stream stream = file.createStream();
+    FileService::Stream stream = file.createStream();
     while (!stream.isEndOfFile()) {
       auto line = stream.getLine();
       std::cout << line << "\n";

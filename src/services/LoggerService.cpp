@@ -1,18 +1,18 @@
-#include "base_library/Logger.h"
+#include "base_library/services/LoggerService.h"
 
 #include "base_library/config.h"
 
 #include <algorithm>
-#include <base_library/File.h>
+#include <base_library/services/FileService.h>
 #include <fmt/format.h>
 #include <iostream>
 #include <log4cxx/basicconfigurator.h>
 #include <log4cxx/xml/domconfigurator.h>
 // initialization of static variables
-Logger *Logger::instance = nullptr;
-std::once_flag Logger::initInstanceFlag;
+LoggerService *LoggerService::instance = nullptr;
+std::once_flag LoggerService::initInstanceFlag;
 
-Logger::Logger(const std::string &processName)
+LoggerService::LoggerService(const std::string &processName)
     : processName(processName),
       logger(log4cxx::Logger::getLogger(processName)) {
   configure();
@@ -21,7 +21,7 @@ Logger::Logger(const std::string &processName)
                                    std::chrono::seconds(30), call);
 }
 
-void Logger::logRepeatLog() {
+void LoggerService::logRepeatLog() {
   std::map<std::string, LOG_INFO> tmp;
   {
     std::unique_lock<std::mutex> lock(mutex);
@@ -37,14 +37,14 @@ void Logger::logRepeatLog() {
   }
 }
 
-Logger::~Logger() = default;
+LoggerService::~LoggerService() = default;
 
-void Logger::configure() {
+void LoggerService::configure() {
   bool createError = false;
 
-  File templateFile(std::string(CONFIG_DIRECTORY) + "/" +
+  FileService templateFile(std::string(CONFIG_DIRECTORY) + "/" +
                     std::string(templateConfig));
-  File configFile(std::string(CONFIG_DIRECTORY) + "/" + processName +
+  FileService configFile(std::string(CONFIG_DIRECTORY) + "/" + processName +
                   "_log4cxx.xml");
 
   if (!configFile.exists() && templateFile.exists()) {
@@ -75,20 +75,20 @@ void Logger::configure() {
   }
 }
 
-Logger &Logger::getOrCreate(const std::string &processName) {
+LoggerService &LoggerService::getOrCreate(const std::string &processName) {
   if (!processName.empty()) {
-    std::call_once(initInstanceFlag, &Logger::initSingleton, processName);
+    std::call_once(initInstanceFlag, &LoggerService::initSingleton, processName);
   }
   return get();
 }
 
-Logger &Logger::get() {
+LoggerService &LoggerService::get() {
   if (instance == nullptr) {
     throw std::runtime_error(
-        "Logger not initialized. Please call Marco DECLARE_LOGGER");
+        "LoggerService not initialized. Please call Marco DECLARE_LOGGER");
   }
   return *instance;
 }
-void Logger::initSingleton(const std::string &processName) {
-  instance = new Logger(processName);
+void LoggerService::initSingleton(const std::string &processName) {
+  instance = new LoggerService(processName);
 }

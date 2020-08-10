@@ -32,8 +32,8 @@ conan_cmake_run(REQUIRES fmt/7.0.1 tinyxml2/7.1.0
 find_library(LOG4CXX NAMES log4cxx)
 find_path(LOG4CXX_INCLUDES NAMES log4cxx/log4cxx.h)
 
-add_library(base_library SHARED Logger.cpp include/base_library/Logger.h services/SchedulerService.cpp include/base_library/services/SchedulerService.h
-        include/base_library/File.h File.cpp include/base_library/Directory.h Directory.cpp include/base_library/models/Property.h
+add_library(base_library SHARED services/LoggerService.cpp include/base_library/services/LoggerService.h services/SchedulerService.cpp include/base_library/services/SchedulerService.h
+        include/base_library/services/FileService.h services/FileService.cpp include/base_library/services/DirectoryService.h services/DirectoryService.cpp include/base_library/models/Property.h
         include/base_library/models/PropertyBase.h include/base_library/services/PropertyService.h services/PropertyService.cpp
         include/base_library/services/StringifyService.h include/base_library/utils/TypeName.h
         include/base_library/exceptions/PropertyNotFoundException.h models/Property.cpp include/base_library/factories/PropertyFactory.h
@@ -42,7 +42,8 @@ add_library(base_library SHARED Logger.cpp include/base_library/Logger.h service
         include/base_library/repositories/FilePropertyRepository.h repositories/FilePropertyRepository.cpp
         include/base_library/services/ExecutorService.h services/ExecutorService.cpp
         include/base_library/strategies/ConfigSerializationStrategy.h include/base_library/strategies/XMLConfigSerializationStrategy.h
-        strategies/XMLConfigSerializationStrategy.cpp)
+        strategies/XMLConfigSerializationStrategy.cpp include/base_library/utils/JsonSocketAppender.h utils/JsonSocketAppender.cpp
+        include/base_library/utils/JsonLayout.h utils/JsonLayout.cpp)
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include;${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"

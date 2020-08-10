@@ -27,7 +27,7 @@
 class LoggingService {
 private:
   std::string processName;
-  std::shared_ptr<spdlog::logger> logger; // process Logger
+  std::shared_ptr<spdlog::logger> logger; // process LoggerService
   std::map<std::string, std::shared_ptr<spdlog::logger>> loggers;
   static LoggingService *instance;
   static std::once_flag initInstanceFlag;

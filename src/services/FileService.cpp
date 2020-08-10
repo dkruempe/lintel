@@ -1,33 +1,33 @@
-#include "base_library/File.h"
+#include "base_library/services/FileService.h"
 
-File::Stream::Stream(const std::filesystem::path &path) : file(path.string()) {}
+FileService::Stream::Stream(const std::filesystem::path &path) : file(path.string()) {}
 
-bool File::Stream::isEndOfFile() const { return endOfFile; }
+bool FileService::Stream::isEndOfFile() const { return endOfFile; }
 
-std::string File::Stream::getLine() {
+std::string FileService::Stream::getLine() {
   std::string line;
   endOfFile = !std::getline(file, line);
   return line;
 }
 
-File::File(std::filesystem::path path) : path(std::move(path)) {}
+FileService::FileService(std::filesystem::path path) : path(std::move(path)) {}
 
-bool File::isFile() { return std::filesystem::is_regular_file(path); }
+bool FileService::isFile() { return std::filesystem::is_regular_file(path); }
 
-bool File::exists() { return std::filesystem::exists(path) && isFile(); }
+bool FileService::exists() { return std::filesystem::exists(path) && isFile(); }
 
-std::string File::readFile() {
+std::string FileService::readFile() {
   std::ifstream file(path.string());
   std::stringstream buffer;
   buffer << file.rdbuf();
   return buffer.str();
 }
 
-std::string File::getName() { return path.filename(); }
+std::string FileService::getName() { return path.filename(); }
 
-std::filesystem::path File::getPath() { return path; }
+std::filesystem::path FileService::getPath() { return path; }
 
-void File::writeToFile(const std::string &content,
+void FileService::writeToFile(const std::string &content,
                        bool overwrite /* default = false */) {
   std::ofstream out;
   if (overwrite) {
@@ -38,12 +38,12 @@ void File::writeToFile(const std::string &content,
   out << content;
 }
 
-void File::createSymlinkTo(const std::filesystem::path &to) {
+void FileService::createSymlinkTo(const std::filesystem::path &to) {
   return std::filesystem::create_symlink(path, to);
 }
 
-std::vector<std::string> File::matches(const std::regex &regex) {
-  File::Stream stream(path.string());
+std::vector<std::string> FileService::matches(const std::regex &regex) {
+  FileService::Stream stream(path.string());
   std::vector<std::string> matches;
   while (!stream.isEndOfFile()) {
     const std::string &line = stream.getLine();
@@ -54,20 +54,20 @@ std::vector<std::string> File::matches(const std::regex &regex) {
   return matches;
 }
 
-File::Stream File::createStream() {
+FileService::Stream FileService::createStream() {
   if (!isFile()) {
     throw std::runtime_error(path.string() + ": is no file or does not exists");
   }
   return Stream(path);
 }
-void File::deleteFile() {
+void FileService::deleteFile() {
   if (!exists()) {
     return;
   }
   std::filesystem::remove(path);
 }
-std::size_t File::getSize() { return std::filesystem::file_size(path); }
-void File::createFile(std::size_t sizeOfFile) {
+std::size_t FileService::getSize() { return std::filesystem::file_size(path); }
+void FileService::createFile(std::size_t sizeOfFile) {
   if (exists()) {
     throw std::runtime_error(path.string() + ": file exists");
   }

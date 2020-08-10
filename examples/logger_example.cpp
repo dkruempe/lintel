@@ -1,4 +1,4 @@
-#include <base_library/Logger.h>
+#include <base_library/services/LoggerService.h>
 #include <chrono>
 #include <csignal>
 #include <libgen.h>
@@ -45,6 +45,8 @@ int main(int argc, char *argv[]) {
   LOG_INFO("Hello World {} {}.{}.{} und {}", "Ich liebe dich Anna!", 3, 9, 2016,
            "04.10.2019");
   int count = 0;
+  log4cxx::MDC::put("rce", "2");
+  log4cxx::MDC::put("unit", "4711");
   while (running) {
     LOG_REPEAT("count++");
     LOG_TRACE("count={}", count++);

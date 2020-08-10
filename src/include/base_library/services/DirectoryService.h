@@ -4,9 +4,9 @@
 #include <filesystem>
 
 /**
- * Directory class wraps default operations with the directory
+ * DirectoryService class wraps default operations with the directory
  */
-class Directory {
+class DirectoryService {
 private:
   std::filesystem::path path;
 
@@ -14,10 +14,10 @@ public:
   /**
    * Constructor
    */
-  explicit Directory(std::filesystem::path path);
+  explicit DirectoryService(std::filesystem::path path);
 
   /**
-   * Checks if Directory is available
+   * Checks if DirectoryService is available
    * @return true if directory exists and is directory
    */
   bool exists();

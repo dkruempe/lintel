@@ -12,7 +12,7 @@
 /**
  * class for wrapping general operations with a normal file
  */
-class File {
+class FileService {
 private:
   std::filesystem::path path;
 
@@ -47,7 +47,7 @@ public:
    * constructor
    * @param path of file
    */
-  explicit File(std::filesystem::path path);
+  explicit FileService(std::filesystem::path path);
   /**
    * checks if for the given path is a file
    * @return
@@ -95,20 +95,20 @@ public:
    */
   void createSymlinkTo(const std::filesystem::path &to);
   /**
-   * searches matching string of file via File::Stream
+   * searches matching string of file via FileService::Stream
    * @param regex for searching matching strings
    * @return list of matching lines in right sequence
    */
   std::vector<std::string> matches(const std::regex &regex);
   /**
-   * creates File::Stream for file
+   * creates FileService::Stream for file
    * @return stream
    */
-  File::Stream createStream();
+  FileService::Stream createStream();
   /**
    * to string method
    */
-  friend std::ostream &operator<<(std::ostream &os, const File &file) {
+  friend std::ostream &operator<<(std::ostream &os, const FileService &file) {
     os << "path: " << file.path;
     return os;
   }

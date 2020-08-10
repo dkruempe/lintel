@@ -2,8 +2,8 @@
 #define LOGGING_FILEPROPERTYREPOSITORY_H
 
 #include "PropertyRepository.h"
-#include "base_library/File.h"
 #include "base_library/services/ExecutorService.h"
+#include "base_library/services/FileService.h"
 #include "base_library/strategies/ConfigSerializationStrategy.h"
 
 /**

@@ -2,7 +2,7 @@
 #define LOGGING_LOGGER_H
 
 /**
- * Logger class for easier logging in process itself
+ * LoggerService class for easier logging in process itself
  */
 #include "base_library/services/SchedulerService.h"
 #include <chrono>
@@ -16,7 +16,7 @@
 #include <mutex>
 #include <thread>
 
-class Logger {
+class LoggerService {
 private:
   // constexpr constants
   constexpr static std::string_view templateConfig = "template_log4cxx.xml";
@@ -42,17 +42,17 @@ private:
 
   void configure();
 
-  static Logger *instance;
+  static LoggerService *instance;
   static std::once_flag initInstanceFlag;
 
   void logRepeatLog();
 
 public:
-  explicit Logger(const std::string &processName);
-  ~Logger();
+  explicit LoggerService(const std::string &processName);
+  ~LoggerService();
 
-  static Logger &getOrCreate(const std::string &processName);
-  static Logger &get();
+  static LoggerService &getOrCreate(const std::string &processName);
+  static LoggerService &get();
   static void initSingleton(const std::string &processName);
 
   template <class... Args>
@@ -116,27 +116,27 @@ public:
         log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
   }
 };
-#define DECLARE_LOGGER(processName) Logger::getOrCreate(processName)
+#define DECLARE_LOGGER(processName) LoggerService::getOrCreate(processName)
 #define LOG_INFO(message, ...)                                                 \
-  Logger::get().info(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,            \
+  LoggerService::get().info(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,            \
                      ##__VA_ARGS__)
 #define LOG_DEBUG(message, ...)                                                \
-  Logger::get().debug(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
+  LoggerService::get().debug(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
                       ##__VA_ARGS__)
 #define LOG_TRACE(message, ...)                                                \
-  Logger::get().trace(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
+  LoggerService::get().trace(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
                       ##__VA_ARGS__)
 #define LOG_ERROR(message, ...)                                                \
-  Logger::get().error(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
+  LoggerService::get().error(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
                       ##__VA_ARGS__)
 #define LOG_FATAL(message, ...)                                                \
-  Logger::get().fatal(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
+  LoggerService::get().fatal(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
                       ##__VA_ARGS__)
 #define LOG_WARN(message, ...)                                                 \
-  Logger::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,            \
+  LoggerService::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,            \
                      ##__VA_ARGS__)
 #define LOG_REPEAT(message, ...)                                               \
-  Logger::get().repeat(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,          \
+  LoggerService::get().repeat(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,          \
                        ##__VA_ARGS__)
 
 #endif // LOGGING_LOGGER_H
