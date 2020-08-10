@@ -35,6 +35,28 @@ void receiveSignal(int signal) {
   }
 }
 
+/*
+ * input {
+ *   tcp {
+ *     port => 4560
+ *     codec => json
+ *   }
+ * }
+ * filter {
+ *   date {
+ *     timezone=>"UTC"
+ *     match=>["timestamp", "UNIX_MS"]
+ *     target=>"@timestamp1"
+ *   }
+ * }
+ * output {
+ *   file {
+ *     path => "/var/log/file_logs/app_%{logger}.log"
+ *     codec => line { format => "[%{@timestamp1}] [%{logger}] [%{@severity}] [%{file}:%{line}] %{message}"}
+ *  }
+ * }
+*/
+
 int main(int argc, char *argv[]) {
   ExampleClass exampleClass(">Information<");
   signal(SIGINT, receiveSignal);

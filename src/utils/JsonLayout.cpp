@@ -34,7 +34,7 @@ void JsonLayout::format(LogString &output, const spi::LoggingEventPtr &event,
   output.append(LOG4CXX_STR("\""));
   output.append(LOG4CXX_STR(event->getLoggerName()));
   output.append(LOG4CXX_STR("\", \"timestamp\":\""));
-  output.append(LOG4CXX_STR(std::to_string(event->getTimeStamp())));
+  output.append(LOG4CXX_STR(std::to_string(event->getTimeStamp() / 1000)));
   output.append(LOG4CXX_STR("\", \"@severity\":\""));
   output.append(LOG4CXX_STR(event->getLevel()->toString()));
   output.append(LOG4CXX_STR("\", \"thread\":\""));
