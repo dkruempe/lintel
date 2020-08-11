@@ -44,11 +44,11 @@ template <class T> class Property;
         : PropertyBase(name, instanceName, className, processName),            \
           value(std::move(value)) {}                                           \
     [[nodiscard]] std::string getType() const override { return #type; }       \
-    type getValue() {                                                    \
+    type getValue() {                                                          \
       std::shared_lock<std::shared_mutex> lock(mutex);                         \
       return value;                                                            \
     }                                                                          \
-    std::string toString() override {                                    \
+    std::string toString() override {                                          \
       std::shared_lock<std::shared_mutex> lock(mutex);                         \
       return convertToString(value);                                           \
     }                                                                          \

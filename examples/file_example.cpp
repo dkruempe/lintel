@@ -3,7 +3,7 @@
 #include <iostream>
 
 int main(int argc, char *argv[]) {
-  FileService file (std::string(CONFIG_DIRECTORY) + "/template_log4cxx.xml");
+  FileService file(std::string(CONFIG_DIRECTORY) + "/template_log4cxx.xml");
   std::cout << "test stream \n";
   {
     FileService::Stream stream = file.createStream();

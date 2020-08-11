@@ -52,10 +52,11 @@ void receiveSignal(int signal) {
  * output {
  *   file {
  *     path => "/var/log/file_logs/app_%{logger}.log"
- *     codec => line { format => "[%{@timestamp1}] [%{logger}] [%{@severity}] [%{file}:%{line}] %{message}"}
+ *     codec => line { format => "[%{@timestamp1}] [%{logger}] [%{@severity}]
+ * [%{file}:%{line}] %{message}"}
  *  }
  * }
-*/
+ */
 
 int main(int argc, char *argv[]) {
   ExampleClass exampleClass(">Information<");

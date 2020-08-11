@@ -81,8 +81,8 @@ SchedulerService::schedule(F &&f, Args &&... args) {
 template <class F, class... Args>
 std::future<typename std::result_of<
     typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
-SchedulerService::schedule_after(const std::chrono::steady_clock::duration &d, F &&f,
-                          Args &&... args) {
+SchedulerService::schedule_after(const std::chrono::steady_clock::duration &d,
+                                 F &&f, Args &&... args) {
   return schedule_at(std::chrono::steady_clock::now() + d, std::forward<F>(f),
                      std::forward<Args>(args)...);
 }
@@ -104,8 +104,8 @@ void SchedulerService::schedule_at_fixed_rate(
 template <class F, class... Args>
 std::future<typename std::result_of<
     typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
-SchedulerService::schedule_at(const std::chrono::steady_clock::time_point &t, F &&f,
-                       Args &&... args) {
+SchedulerService::schedule_at(const std::chrono::steady_clock::time_point &t,
+                              F &&f, Args &&... args) {
   auto function = std::make_shared<
       std::packaged_task<typename std::result_of<typename std::decay<F>::type(
           typename std::decay<Args>::type...)>::type()>>(

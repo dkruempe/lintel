@@ -86,7 +86,8 @@ XMLConfigSerializationStrategy::deserialize(const std::string &content) {
     }
     std::string processName =
         std::string(processElement->Attribute(ELEMENT_NAME));
-    for (tinyxml2::XMLElement *classElement = processElement->FirstChildElement();
+    for (tinyxml2::XMLElement *classElement =
+             processElement->FirstChildElement();
          classElement != nullptr;
          classElement = classElement->NextSiblingElement()) {
       if (std::string(classElement->Name()) != CLASS_ROOT) {
@@ -95,7 +96,7 @@ XMLConfigSerializationStrategy::deserialize(const std::string &content) {
       std::string className =
           std::string(classElement->Attribute(ELEMENT_NAME));
       for (tinyxml2::XMLElement *instanceElement =
-          classElement->FirstChildElement();
+               classElement->FirstChildElement();
            instanceElement != nullptr;
            instanceElement = instanceElement->NextSiblingElement()) {
         if (std::string(instanceElement->Name()) != INSTANCE_ROOT) {
@@ -104,7 +105,7 @@ XMLConfigSerializationStrategy::deserialize(const std::string &content) {
         std::string instanceName =
             std::string(instanceElement->Attribute(ELEMENT_NAME));
         for (tinyxml2::XMLElement *propertyElement =
-            instanceElement->FirstChildElement();
+                 instanceElement->FirstChildElement();
              propertyElement != nullptr;
              propertyElement = propertyElement->NextSiblingElement()) {
           if (std::string(propertyElement->Name()) != PROPERTY_ROOT) {

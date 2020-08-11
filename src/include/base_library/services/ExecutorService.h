@@ -1,11 +1,11 @@
 #ifndef LOGGING_EXECUTORSERVICE_H
 #define LOGGING_EXECUTORSERVICE_H
 
+#include <functional>
 #include <future>
 #include <mutex>
 #include <queue>
 #include <thread>
-#include <functional>
 
 class ExecutorService {
 private:
@@ -19,8 +19,7 @@ private:
   void run();
 
 public:
-  ExecutorService() : runnable([&]() { run(); }) {
-  }
+  ExecutorService() : runnable([&]() { run(); }) {}
 
   ~ExecutorService() {
     exit = true;
@@ -46,7 +45,6 @@ ExecutorService::execute(F &&f, Args &&... args) {
     std::unique_lock<std::mutex> lock(mutex);
     tasks.push([=, func = std::move(func)]() { (*func)(); });
   }
-
   conditionVariable.notify_one();
   return future;
 }

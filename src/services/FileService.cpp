@@ -1,6 +1,7 @@
 #include "base_library/services/FileService.h"
 
-FileService::Stream::Stream(const std::filesystem::path &path) : file(path.string()) {}
+FileService::Stream::Stream(const std::filesystem::path &path)
+    : file(path.string()) {}
 
 bool FileService::Stream::isEndOfFile() const { return endOfFile; }
 
@@ -28,7 +29,7 @@ std::string FileService::getName() { return path.filename(); }
 std::filesystem::path FileService::getPath() { return path; }
 
 void FileService::writeToFile(const std::string &content,
-                       bool overwrite /* default = false */) {
+                              bool overwrite /* default = false */) {
   std::ofstream out;
   if (overwrite) {
     out = std::ofstream(path, std::ofstream::trunc | std::ofstream::out);

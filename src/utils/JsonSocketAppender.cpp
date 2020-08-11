@@ -28,7 +28,8 @@ JsonSocketAppender::JsonSocketAppender()
   layout = new XMLLayout();
 }
 
-JsonSocketAppender::JsonSocketAppender(const InetAddressPtr& address1, int port1)
+JsonSocketAppender::JsonSocketAppender(const InetAddressPtr &address1,
+                                       int port1)
     : SocketAppenderSkeleton(address1, port1, DEFAULT_RECONNECTION_DELAY) {
   layout = new XMLLayout();
   Pool p;

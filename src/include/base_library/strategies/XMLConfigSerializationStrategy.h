@@ -5,9 +5,11 @@
 
 class XMLConfigSerializationStrategy : public ConfigSerializationStrategy {
 public:
-  std::string serialize(std::vector<std::shared_ptr<PropertyBase>> properties) override;
+  std::string
+  serialize(std::vector<std::shared_ptr<PropertyBase>> properties) override;
 
-  std::vector<std::shared_ptr<PropertyBase>> deserialize(const std::string &content) override;
+  std::vector<std::shared_ptr<PropertyBase>>
+  deserialize(const std::string &content) override;
 };
 
 #endif // LOGGING_XMLCONFIGSERIALIZATIONSTRATEGY_H

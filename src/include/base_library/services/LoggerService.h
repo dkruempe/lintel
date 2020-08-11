@@ -89,21 +89,21 @@ public:
 };
 #define DECLARE_LOGGER(processName) LoggerService::getOrCreate(processName)
 #define LOG_INFO(message, ...)                                                 \
-  LoggerService::get().info(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,            \
-                     ##__VA_ARGS__)
+  LoggerService::get().info(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,     \
+                            ##__VA_ARGS__)
 #define LOG_DEBUG(message, ...)                                                \
-  LoggerService::get().debug(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
-                      ##__VA_ARGS__)
+  LoggerService::get().debug(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,    \
+                             ##__VA_ARGS__)
 #define LOG_TRACE(message, ...)                                                \
-  LoggerService::get().trace(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
-                      ##__VA_ARGS__)
+  LoggerService::get().trace(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,    \
+                             ##__VA_ARGS__)
 #define LOG_ERROR(message, ...)                                                \
-  LoggerService::get().error(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
-                      ##__VA_ARGS__)
+  LoggerService::get().error(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,    \
+                             ##__VA_ARGS__)
 #define LOG_FATAL(message, ...)                                                \
-  LoggerService::get().fatal(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,           \
-                      ##__VA_ARGS__)
+  LoggerService::get().fatal(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,    \
+                             ##__VA_ARGS__)
 #define LOG_WARN(message, ...)                                                 \
-  LoggerService::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,            \
-                     ##__VA_ARGS__)
+  LoggerService::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,     \
+                            ##__VA_ARGS__)
 #endif // LOGGING_LOGGER_H

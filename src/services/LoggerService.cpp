@@ -24,9 +24,9 @@ void LoggerService::configure() {
   bool createError = false;
 
   FileService templateFile(std::string(CONFIG_DIRECTORY) + "/" +
-                    std::string(templateConfig));
+                           std::string(templateConfig));
   FileService configFile(std::string(CONFIG_DIRECTORY) + "/" + processName +
-                  "_log4cxx.xml");
+                         "_log4cxx.xml");
 
   if (!configFile.exists() && templateFile.exists()) {
     std::string content = templateFile.readFile();
@@ -58,7 +58,8 @@ void LoggerService::configure() {
 
 LoggerService &LoggerService::getOrCreate(const std::string &processName) {
   if (!processName.empty()) {
-    std::call_once(initInstanceFlag, &LoggerService::initSingleton, processName);
+    std::call_once(initInstanceFlag, &LoggerService::initSingleton,
+                   processName);
   }
   return get();
 }

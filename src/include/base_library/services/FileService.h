@@ -64,7 +64,7 @@ public:
   /**
    * delete file
    */
-   void deleteFile();
+  void deleteFile();
   /**
    * reads whole file in total (not good for big files)
    * @return content of whole file in one string

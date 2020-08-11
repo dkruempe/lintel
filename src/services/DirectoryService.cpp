@@ -1,5 +1,6 @@
 #include <base_library/services/DirectoryService.h>
-DirectoryService::DirectoryService(std::filesystem::path path) : path(std::move(path)) {}
+DirectoryService::DirectoryService(std::filesystem::path path)
+    : path(std::move(path)) {}
 
 bool DirectoryService::exists() {
   return std::filesystem::is_directory(path) && std::filesystem::exists(path);

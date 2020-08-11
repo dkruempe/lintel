@@ -26,7 +26,7 @@ private:
                                       const std::string &className,
                                       const std::string &processName);
   static std::map<std::string, std::shared_ptr<PropertyBase>>
-  init(const std::vector<std::shared_ptr<PropertyBase>>& properties);
+  init(const std::vector<std::shared_ptr<PropertyBase>> &properties);
   bool updateRepository = false;
 
 public:
