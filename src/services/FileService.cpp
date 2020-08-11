@@ -1,4 +1,6 @@
 #include "base_library/services/FileService.h"
+#include "base_library/exceptions/FileServiceFileExists.h"
+#include "base_library/exceptions/FileServiceIsNotFileException.h"
 
 FileService::Stream::Stream(const std::filesystem::path &path)
     : file(path.string()) {}
@@ -57,7 +59,7 @@ std::vector<std::string> FileService::matches(const std::regex &regex) {
 
 FileService::Stream FileService::createStream() {
   if (!isFile()) {
-    throw std::runtime_error(path.string() + ": is no file or does not exists");
+    throw FileServiceIsNotFileException(path);
   }
   return Stream(path);
 }
@@ -70,7 +72,7 @@ void FileService::deleteFile() {
 std::size_t FileService::getSize() { return std::filesystem::file_size(path); }
 void FileService::createFile(std::size_t sizeOfFile) {
   if (exists()) {
-    throw std::runtime_error(path.string() + ": file exists");
+    throw FileServiceFileExists(path);
   }
   std::filebuf fbuf;
   fbuf.open(path, std::ios_base::in | std::ios_base::out |

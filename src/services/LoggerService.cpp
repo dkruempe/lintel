@@ -1,7 +1,6 @@
 #include "base_library/services/LoggerService.h"
-
 #include "base_library/config.h"
-
+#include "base_library/exceptions/LoggerServiceNotInitialized.h"
 #include <algorithm>
 #include <base_library/services/FileService.h>
 #include <fmt/format.h>
@@ -66,8 +65,7 @@ LoggerService &LoggerService::getOrCreate(const std::string &processName) {
 
 LoggerService &LoggerService::get() {
   if (instance == nullptr) {
-    throw std::runtime_error(
-        "LoggerService not initialized. Please call Marco DECLARE_LOGGER");
+    throw LoggerServiceNotInitialized();
   }
   return *instance;
 }
