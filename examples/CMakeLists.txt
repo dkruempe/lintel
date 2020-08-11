@@ -17,7 +17,7 @@ endif ()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-conan_cmake_run(REQUIRES fmt/6.2.0 spdlog/1.6.1
+conan_cmake_run(REQUIRES fmt/7.0.3 spdlog/1.7.0
         OPTIONS
         ${CONAN_EXTRA_OPTIONS}
         BASIC_SETUP

@@ -20,7 +20,7 @@ endif ()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-conan_cmake_run(REQUIRES fmt/7.0.1 tinyxml2/7.1.0
+conan_cmake_run(REQUIRES fmt/7.0.3 tinyxml2/7.1.0
         OPTIONS
         ${CONAN_EXTRA_OPTIONS}
         BASIC_SETUP
