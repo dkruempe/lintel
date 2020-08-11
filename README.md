@@ -1,4 +1,4 @@
-# cpp-basic-libraries
+# cpp-base-library
 
 ##1 Description
 
