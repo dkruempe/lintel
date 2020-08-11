@@ -11,7 +11,7 @@ private:
 public:
   explicit FileServiceFileExists(const std::filesystem::path &path)
       : path(path),
-        message(fmt::format("No Operation possible bc. {} exists", path)) {}
+        message(fmt::format("No Operation possible bc. {} exists", path.string())) {}
 
   [[nodiscard]] const char *what() const noexcept override {
     return message.c_str();
