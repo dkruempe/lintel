@@ -44,7 +44,8 @@ add_library(base_library SHARED services/LoggerService.cpp include/base_library/
         include/base_library/strategies/ConfigSerializationStrategy.h include/base_library/strategies/XMLConfigSerializationStrategy.h
         strategies/XMLConfigSerializationStrategy.cpp include/base_library/utils/JsonSocketAppender.h utils/JsonSocketAppender.cpp
         include/base_library/utils/JsonLayout.h utils/JsonLayout.cpp include/base_library/exceptions/FileServiceIsNotFileException.h
-        include/base_library/exceptions/FileServiceFileExists.h include/base_library/exceptions/LoggerServiceNotInitialized.h)
+        include/base_library/exceptions/FileServiceFileExists.h include/base_library/exceptions/LoggerServiceNotInitialized.h
+        include/base_library/services/StopWatchService.h services/StopWatchService.cpp)
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include;${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"

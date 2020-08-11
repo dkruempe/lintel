@@ -1,8 +1,9 @@
 #include "base_library/services/LoggerService.h"
 #include "base_library/config.h"
 #include "base_library/exceptions/LoggerServiceNotInitialized.h"
+#include "base_library/services/DirectoryService.h"
+#include "base_library/services/FileService.h"
 #include <algorithm>
-#include <base_library/services/FileService.h>
 #include <fmt/format.h>
 #include <iostream>
 #include <log4cxx/basicconfigurator.h>
@@ -26,7 +27,10 @@ void LoggerService::configure() {
                            std::string(templateConfig));
   FileService configFile(std::string(CONFIG_DIRECTORY) + "/" + processName +
                          "_log4cxx.xml");
-
+  DirectoryService logDir(std::string(LOG_DIRECTORY));
+  if (!logDir.exists()) {
+    logDir.createDirectories();
+  }
   if (!configFile.exists() && templateFile.exists()) {
     std::string content = templateFile.readFile();
     auto found = content.find(templateMarker);
