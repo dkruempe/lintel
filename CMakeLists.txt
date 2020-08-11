@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(cpp-basic-libraries)
+project(cpp-base-library)
 
 # Library
 ADD_SUBDIRECTORY(src)
