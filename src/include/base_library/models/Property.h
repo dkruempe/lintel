@@ -1,58 +1,61 @@
 #ifndef PROPERTY_H
 #define PROPERTY_H
 
-#include "PropertyBase.h"
-#include "base_library/factories/PropertyFactory.h"
-#include "base_library/services/StringifyService.h"
-#include "base_library/utils/TypeName.h"
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
 #include <string>
 
+#include "PropertyBase.h"
+#include "base_library/factories/PropertyFactory.h"
+#include "base_library/services/StringifyService.h"
+#include "base_library/utils/TypeName.h"
+
 class PropertyService;
 
-template <class T> class Property;
+template <class T>
+class Property;
 
-#define IMPLEMENT_PROPERTY(type, convertToString, convertToValue)              \
-  template <> class Property<type> : public PropertyBase {                     \
-  private:                                                                     \
-    type value;                                                                \
-    std::shared_mutex mutex;                                                   \
-    static bool Registration() {                                               \
-      PropertyFactory::TCreateMethod func =                                    \
-          [&](const std::string &name, const std::string &instanceName,        \
-              const std::string &className, const std::string &processName,    \
-              const std::string &value) -> std::shared_ptr<PropertyBase> {     \
-        return std::make_shared<Property<type>>(                               \
-            name, instanceName, className, processName,                        \
-            StringifyService<type>::deserializeFromString(value));             \
-      };                                                                       \
-      return PropertyFactory::Register(#type, func);                           \
-    }                                                                          \
-    static bool registered;                                                    \
-                                                                               \
-    void setValue(const type &value) {                                         \
-      std::unique_lock<std::shared_mutex> lock(mutex);                         \
-      this->value = value;                                                     \
-    }                                                                          \
-                                                                               \
-  public:                                                                      \
-    Property(const std::string &name, const std::string &instanceName,         \
-             const std::string &className, const std::string &processName,     \
-             type value)                                                       \
-        : PropertyBase(name, instanceName, className, processName),            \
-          value(std::move(value)) {}                                           \
-    [[nodiscard]] std::string getType() const override { return #type; }       \
-    type getValue() {                                                          \
-      std::shared_lock<std::shared_mutex> lock(mutex);                         \
-      return value;                                                            \
-    }                                                                          \
-    std::string toString() override {                                          \
-      std::shared_lock<std::shared_mutex> lock(mutex);                         \
-      return convertToString(value);                                           \
-    }                                                                          \
-    friend class PropertyService;                                              \
+#define IMPLEMENT_PROPERTY(type, convertToString, convertToValue)           \
+  template <>                                                               \
+  class Property<type> : public PropertyBase {                              \
+   private:                                                                 \
+    type value;                                                             \
+    std::shared_mutex mutex;                                                \
+    static bool Registration() {                                            \
+      PropertyFactory::TCreateMethod func =                                 \
+          [&](const std::string &name, const std::string &instanceName,     \
+              const std::string &className, const std::string &processName, \
+              const std::string &value) -> std::shared_ptr<PropertyBase> {  \
+        return std::make_shared<Property<type>>(                            \
+            name, instanceName, className, processName,                     \
+            StringifyService<type>::deserializeFromString(value));          \
+      };                                                                    \
+      return PropertyFactory::Register(#type, func);                        \
+    }                                                                       \
+    static bool registered;                                                 \
+                                                                            \
+    void setValue(const type &value) {                                      \
+      std::unique_lock<std::shared_mutex> lock(mutex);                      \
+      this->value = value;                                                  \
+    }                                                                       \
+                                                                            \
+   public:                                                                  \
+    Property(const std::string &name, const std::string &instanceName,      \
+             const std::string &className, const std::string &processName,  \
+             type value)                                                    \
+        : PropertyBase(name, instanceName, className, processName),         \
+          value(std::move(value)) {}                                        \
+    [[nodiscard]] std::string getType() const override { return #type; }    \
+    type getValue() {                                                       \
+      std::shared_lock<std::shared_mutex> lock(mutex);                      \
+      return value;                                                         \
+    }                                                                       \
+    std::string toString() override {                                       \
+      std::shared_lock<std::shared_mutex> lock(mutex);                      \
+      return convertToString(value);                                        \
+    }                                                                       \
+    friend class PropertyService;                                           \
   };
 IMPLEMENT_PROPERTY(int8_t, StringifyService<int8_t>::serializeToString,
                    StringifyService<int8_t>::deserializeFromString)

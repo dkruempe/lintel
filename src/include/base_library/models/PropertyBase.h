@@ -6,22 +6,24 @@
 #include <utility>
 
 class PropertyBase {
-private:
+ private:
   std::string name;
   std::string instanceName;
   std::string className;
   std::string processName;
   std::string identifier;
 
-protected:
+ protected:
   PropertyBase(std::string name, std::string instanceName,
                std::string className, std::string processName)
-      : name(std::move(name)), instanceName(std::move(instanceName)),
-        className(std::move(className)), processName(std::move(processName)),
+      : name(std::move(name)),
+        instanceName(std::move(instanceName)),
+        className(std::move(className)),
+        processName(std::move(processName)),
         identifier(this->name + "_" + this->instanceName + "_" +
                    this->className + "_" + this->processName) {}
 
-public:
+ public:
   PropertyBase() = delete;
   [[nodiscard]] virtual std::string toString() = 0;
   [[nodiscard]] virtual std::string getType() const = 0;
@@ -35,10 +37,11 @@ public:
   }
   [[nodiscard]] const std::string &getIdentifier() const { return identifier; }
 
-  friend std::ostream &operator<<(std::ostream &os, const PropertyBase &base) {
+  friend std::ostream &operator<<(std::ostream &os, PropertyBase &base) {
     os << "name: " << base.name << " instanceName: " << base.instanceName
        << " className: " << base.className
-       << " processName: " << base.processName;
+       << " processName: " << base.processName << " type: " << base.getType()
+       << " value: " << base.toString();
     return os;
   }
 
@@ -59,4 +62,4 @@ public:
   }
 };
 
-#endif // LOGGING_PROPERTYBASE_H
+#endif  // LOGGING_PROPERTYBASE_H
