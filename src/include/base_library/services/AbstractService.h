@@ -1,24 +1,31 @@
 #ifndef LOGGING_ABSTRACTSERVICE_H
 #define LOGGING_ABSTRACTSERVICE_H
 
-#include "base_library/models/Property.h"
-#include "base_library/utils/TypeName.h"
 #include <ostream>
 #include <string>
 #include <utility>
 #include <vector>
+
+#include "base_library/models/Property.h"
+#include "base_library/utils/TypeName.h"
+
+class AbstractServiceInterface {
+ public:
+  virtual void onInitialize() = 0;
+};
 /**
  * Every Service must be derived from this service to make sure that basic
  * information gets provided
  *
  * These information are for example needed for initializing the Properties
  */
-template <class T> class AbstractService {
-private:
+template <class T>
+class AbstractService : public AbstractServiceInterface {
+ private:
   const std::string processName;
   const std::string instanceName;
 
-protected:
+ protected:
   std::vector<std::shared_ptr<PropertyBase>> properties;
 
   template <class type>
@@ -31,12 +38,12 @@ protected:
     return property;
   }
 
-public:
+ public:
   AbstractService() = delete;
   AbstractService(std::string processName, std::string instanceName)
       : processName(std::move(processName)),
         instanceName(std::move(instanceName)) {}
-  virtual void onInitialize() {}
+  void onInitialize() override {}
   [[nodiscard]] const std::string &getProcessName() const {
     return processName;
   }
@@ -55,4 +62,4 @@ public:
   }
 };
 
-#endif // LOGGING_ABSTRACTSERVICE_H
+#endif  // LOGGING_ABSTRACTSERVICE_H
