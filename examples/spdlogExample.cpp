@@ -10,6 +10,7 @@
 #include <utility>
 
 /*
+ * netcat -l -p 4560
  * LoggingService
  *
  * Aufgaben:
@@ -210,7 +211,7 @@ std::once_flag LoggingService::initInstanceFlag;
 int main(int argc, char *argv[]) {
   std::vector<spdlog::sink_ptr> sinks = {
       LoggingService::createColourConsoleSink(spdlog::level::trace),
-      LoggingService::createTcpSink("10.0.1.13", 4560)};
+      LoggingService::createTcpSink("localhost", 4560)};
   std::vector<std::string> tasks;
   tasks.reserve(1000);
   for (int i = 0; i < 1000; i++) {

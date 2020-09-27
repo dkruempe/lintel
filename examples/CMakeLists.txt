@@ -17,7 +17,7 @@ endif ()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-conan_cmake_run(REQUIRES fmt/7.0.3 spdlog/1.7.0
+conan_cmake_run(REQUIRES fmt/7.0.3 spdlog/1.8.0
         OPTIONS
         ${CONAN_EXTRA_OPTIONS}
         BASIC_SETUP
@@ -43,12 +43,10 @@ target_link_libraries(executor_example PUBLIC kruempelmann::base_library)
 add_executable(configuration_example configuration_example.cpp)
 target_compile_features(configuration_example PUBLIC cxx_std_17)
 target_link_libraries(configuration_example PUBLIC kruempelmann::base_library)
-if (NOT APPLE)
-    add_executable(spdlogExample spdlogExample.cpp)
-    target_include_directories(spdlogExample PUBLIC "${CONAN_INCLUDE_DIRS}")
-    target_compile_features(spdlogExample PUBLIC cxx_std_17)
-    target_link_libraries(spdlogExample PUBLIC CONAN_PKG::fmt CONAN_PKG::spdlog)
-endif ()
+add_executable(spdlogExample spdlogExample.cpp)
+target_include_directories(spdlogExample PUBLIC "${CONAN_INCLUDE_DIRS}")
+target_compile_features(spdlogExample PUBLIC cxx_std_17)
+target_link_libraries(spdlogExample PUBLIC CONAN_PKG::fmt CONAN_PKG::spdlog)
 add_executable(stringifyExtensionExample stringifyExtensionExample.cpp)
 target_compile_features(stringifyExtensionExample PUBLIC cxx_std_17)
 target_link_libraries(stringifyExtensionExample PUBLIC kruempelmann::base_library)
