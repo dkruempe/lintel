@@ -48,9 +48,13 @@ add_library(base_library SHARED services/LoggerService.cpp include/base_library/
         include/base_library/services/StopWatchService.h services/StopWatchService.cpp)
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include;${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
-        "$<INSTALL_INTERFACE:include;${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>")
-target_link_libraries(base_library PUBLIC ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:include>"
+        PRIVATE
+        "$<BUILD_INTERFACE:${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
+        "$<INSTALL_INTERFACE:${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
+        )
+target_link_libraries(base_library PRIVATE ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets
