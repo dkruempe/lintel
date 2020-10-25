@@ -82,3 +82,9 @@ add_executable(stopWatchExample stopWatchExample.cpp)
 target_compile_features(stopWatchExample PUBLIC cxx_std_17)
 target_include_directories(stopWatchExample PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
 target_link_libraries(stopWatchExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
+
+# signal example
+add_executable(signalExample signalExample.cpp)
+target_compile_features(signalExample PUBLIC cxx_std_17)
+target_include_directories(signalExample PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
+target_link_libraries(signalExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
