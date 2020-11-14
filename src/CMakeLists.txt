@@ -32,20 +32,12 @@ conan_cmake_run(REQUIRES fmt/7.0.3 tinyxml2/7.1.0
 find_library(LOG4CXX NAMES log4cxx)
 find_path(LOG4CXX_INCLUDES NAMES log4cxx/log4cxx.h)
 
-add_library(base_library SHARED services/LoggerService.cpp include/base_library/services/LoggerService.h services/SchedulerService.cpp include/base_library/services/SchedulerService.h
-        include/base_library/services/FileService.h services/FileService.cpp include/base_library/services/DirectoryService.h services/DirectoryService.cpp include/base_library/models/Property.h
-        include/base_library/models/PropertyBase.h include/base_library/services/PropertyService.h services/PropertyService.cpp
-        include/base_library/services/StringifyService.h include/base_library/utils/TypeName.h
-        include/base_library/exceptions/PropertyNotFoundException.h models/Property.cpp include/base_library/factories/PropertyFactory.h
-        factories/PropertyFactory.cpp include/base_library/services/AbstractService.h include/base_library/repositories/PropertyRepository.h
-        include/base_library/repositories/NoPropertyRepository.h repositories/NoPropertyRepository.cpp
-        include/base_library/repositories/FilePropertyRepository.h repositories/FilePropertyRepository.cpp
-        include/base_library/services/ExecutorService.h services/ExecutorService.cpp
-        include/base_library/strategies/ConfigSerializationStrategy.h include/base_library/strategies/XMLConfigSerializationStrategy.h
-        strategies/XMLConfigSerializationStrategy.cpp include/base_library/utils/JsonSocketAppender.h utils/JsonSocketAppender.cpp
-        include/base_library/utils/JsonLayout.h utils/JsonLayout.cpp include/base_library/exceptions/FileServiceIsNotFileException.h
-        include/base_library/exceptions/FileServiceFileExists.h include/base_library/exceptions/LoggerServiceNotInitialized.h
-        include/base_library/services/StopWatchService.h services/StopWatchService.cpp include/base_library/services/SignalService.h)
+find_package(Threads REQUIRED)
+
+FILE(GLOB_RECURSE headers include/*.h)
+FILE(GLOB_RECURSE sources *.cpp)
+
+add_library(base_library SHARED ${headers} ${sources})
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
@@ -54,7 +46,7 @@ target_include_directories(base_library PUBLIC
         "$<BUILD_INTERFACE:${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         "$<INSTALL_INTERFACE:${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         )
-target_link_libraries(base_library PRIVATE ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
+target_link_libraries(base_library PRIVATE ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets
