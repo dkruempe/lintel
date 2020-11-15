@@ -43,6 +43,9 @@ class AbstractService : public AbstractServiceInterface {
   AbstractService(std::string processName, std::string instanceName)
       : processName(std::move(processName)),
         instanceName(std::move(instanceName)) {}
+
+  explicit AbstractService(std::string processName)
+      : processName(std::move(processName)), instanceName("__DEFAULT") {}
   void onInitialize() override {}
   [[nodiscard]] const std::string &getProcessName() const {
     return processName;

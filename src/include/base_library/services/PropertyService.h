@@ -12,11 +12,11 @@
 #define DEFINE_PROPERTY(name, type, defaultValue)                              \
   std::shared_ptr<Property<type>> name =                                       \
       registerProperty<type>(#name, defaultValue)
-#define LOAD_PROPERTIES() propertyService.getOrCreate(properties)
+#define LOAD_PROPERTIES() propertyService->getOrCreate(properties)
 
 class PropertyService : public AbstractService<PropertyService> {
 private:
-  PropertyRepository &propertyRepository;
+  std::shared_ptr<PropertyRepository> propertyRepository;
   // variables
   std::map<std::string, std::shared_ptr<PropertyBase>>
       properties; // identifier (name_instanceName_processName), Property
@@ -30,8 +30,8 @@ private:
   bool updateRepository = false;
 
 public:
-  PropertyService(PropertyRepository &propertyRepository,
-                  const std::string &processName);
+  PropertyService(const std::shared_ptr<PropertyRepository>& propertyRepository,
+                  const std::shared_ptr<std::string> &processName);
   void onInitialize() override;
   template <class T>
   std::shared_ptr<Property<T>>
@@ -63,7 +63,7 @@ std::shared_ptr<Property<T>> PropertyService::getOrCreate(
     auto property = std::make_shared<Property<T>>(name, instanceName, className,
                                                   processName, defaultValue);
     properties.insert({property->getIdentifier(), property});
-    propertyRepository.save(property);
+    propertyRepository->save(property);
     return property;
   }
 }
@@ -74,6 +74,6 @@ void PropertyService::changeValueOf(
       get(property->getName(), property->getInstanceName(),
           property->getClassName(), property->getProcessName());
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
-  propertyRepository.save(propertyBase);
+  propertyRepository->save(propertyBase);
 }
 #endif // LOGGING_PROPERTYSERVICE_H

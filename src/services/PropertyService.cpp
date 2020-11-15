@@ -10,11 +10,11 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
   }
   return propertiesMap;
 }
-PropertyService::PropertyService(PropertyRepository &propertyRepository,
-                                 const std::string &processName)
-    : AbstractService(processName, "PropertyService"),
+PropertyService::PropertyService(const std::shared_ptr<PropertyRepository>& propertyRepository,
+                                 const std::shared_ptr<std::string> &processName)
+    : AbstractService(*processName, "PropertyService"),
       propertyRepository(propertyRepository),
-      properties(init(propertyRepository.awake())) {}
+      properties(init(propertyRepository->awake())) {}
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   std::transform(properties.begin(), properties.end(),
@@ -57,6 +57,6 @@ void PropertyService::getOrCreate(
 void PropertyService::onInitialize() {
   AbstractService::onInitialize();
   if (updateRepository) {
-    propertyRepository.save(allProperties());
+    propertyRepository->save(allProperties());
   }
 }
