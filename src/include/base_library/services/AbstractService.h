@@ -12,6 +12,7 @@
 class AbstractServiceInterface {
  public:
   virtual void onInitialize() = 0;
+  virtual void onShutdown() = 0;
 };
 /**
  * Every Service must be derived from this service to make sure that basic
@@ -47,6 +48,7 @@ class AbstractService : public AbstractServiceInterface {
   explicit AbstractService(std::string processName)
       : processName(std::move(processName)), instanceName("__DEFAULT") {}
   void onInitialize() override {}
+  void onShutdown() override {}
   [[nodiscard]] const std::string &getProcessName() const {
     return processName;
   }
