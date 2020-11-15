@@ -1,10 +1,11 @@
 #ifndef LOGGING_PROPERTYSERVICE_H
 #define LOGGING_PROPERTYSERVICE_H
 
-#include "AbstractService.h"
 #include "base_library/exceptions/PropertyNotFoundException.h"
+#include "base_library/models/ProcessName.h"
 #include "base_library/models/Property.h"
 #include "base_library/repositories/PropertyRepository.h"
+#include "base_library/services/AbstractService.h"
 #include <functional>
 #include <map>
 #include <vector>
@@ -30,8 +31,8 @@ private:
   bool updateRepository = false;
 
 public:
-  PropertyService(const std::shared_ptr<PropertyRepository>& propertyRepository,
-                  const std::shared_ptr<std::string> &processName);
+  PropertyService(const std::shared_ptr<PropertyRepository> &propertyRepository,
+                  const std::shared_ptr<ProcessName> &processName);
   void onInitialize() override;
   template <class T>
   std::shared_ptr<Property<T>>

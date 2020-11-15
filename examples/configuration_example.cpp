@@ -51,9 +51,9 @@ void testSerializeDeserialize() {
 
 class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
 public:
-  explicit PropertyExampleClass(const std::shared_ptr<PropertyService>& propertyService,
-                                std::string instanceName,
-                                std::string processName)
+  explicit PropertyExampleClass(
+      const std::shared_ptr<PropertyService> &propertyService,
+      std::string instanceName, std::string processName)
       : AbstractService(std::move(processName), std::move(instanceName)) {
     LOAD_PROPERTIES();
   }
@@ -68,20 +68,24 @@ public:
   DEFINE_PROPERTY(enable, bool, false);
 };
 
-void testPropertyService(const std::string &processName) {
+void testPropertyService(std::shared_ptr<ProcessName> processName) {
   XMLConfigSerializationStrategy xmlConfigSerializationStrategy;
-  std::shared_ptr<FilePropertyRepository> filePropertyRepository = std::make_shared<FilePropertyRepository>("/Users/dkruempe/cfg/test.xml",
-                                                xmlConfigSerializationStrategy);
-  std::shared_ptr<PropertyService> propertyService = std::make_shared<PropertyService>(filePropertyRepository, std::make_shared<std::string>(processName));
-  PropertyExampleClass A(propertyService, "A", processName);
-  PropertyExampleClass B(propertyService, "B", processName);
+  std::shared_ptr<FilePropertyRepository> filePropertyRepository =
+      std::make_shared<FilePropertyRepository>("/Users/dkruempe/cfg/test.xml",
+                                               xmlConfigSerializationStrategy);
+  std::shared_ptr<PropertyService> propertyService =
+      std::make_shared<PropertyService>(filePropertyRepository, processName);
+  PropertyExampleClass A(propertyService, "A", processName->getProcessName());
+  PropertyExampleClass B(propertyService, "B", processName->getProcessName());
   propertyService->onInitialize();
   A.printProperty();
   B.printProperty();
 }
 
 int main(int argc, char *argv[]) {
-  testPropertyService(basename(argv[0]));
+  std::shared_ptr<ProcessName> processName =
+      std::make_shared<ProcessName>(argc, argv);
+  testPropertyService(processName);
   testSerializeDeserialize();
   return 0;
 }

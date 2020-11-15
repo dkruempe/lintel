@@ -14,8 +14,8 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
 }
 PropertyService::PropertyService(
     const std::shared_ptr<PropertyRepository> &propertyRepository,
-    const std::shared_ptr<std::string> &processName)
-    : AbstractService(*processName, "PropertyService"),
+    const std::shared_ptr<ProcessName> &processName)
+    : AbstractService(processName->getProcessName(), "PropertyService"),
       propertyRepository(propertyRepository),
       properties(init(propertyRepository->awake())) {}
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
@@ -31,9 +31,10 @@ std::string PropertyService::createIdentifier(const std::string &name,
                                               const std::string &processName) {
   return name + "_" + instanceName + "_" + className + "_" + processName;
 }
-std::shared_ptr<PropertyBase> PropertyService::get(
-    const std::string &name, const std::string &instanceName,
-    const std::string &className, const std::string &processName) {
+std::shared_ptr<PropertyBase>
+PropertyService::get(const std::string &name, const std::string &instanceName,
+                     const std::string &className,
+                     const std::string &processName) {
   const std::string &identifier =
       createIdentifier(name, instanceName, className, processName);
   auto found = properties.find(identifier);
