@@ -51,7 +51,7 @@ void testSerializeDeserialize() {
 
 class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
 public:
-  explicit PropertyExampleClass(PropertyService &propertyService,
+  explicit PropertyExampleClass(const std::shared_ptr<PropertyService>& propertyService,
                                 std::string instanceName,
                                 std::string processName)
       : AbstractService(std::move(processName), std::move(instanceName)) {
@@ -70,12 +70,12 @@ public:
 
 void testPropertyService(const std::string &processName) {
   XMLConfigSerializationStrategy xmlConfigSerializationStrategy;
-  FilePropertyRepository filePropertyRepository("/Users/dkruempe/cfg/test.xml",
+  std::shared_ptr<FilePropertyRepository> filePropertyRepository = std::make_shared<FilePropertyRepository>("/Users/dkruempe/cfg/test.xml",
                                                 xmlConfigSerializationStrategy);
-  PropertyService propertyService(filePropertyRepository, processName);
+  std::shared_ptr<PropertyService> propertyService = std::make_shared<PropertyService>(filePropertyRepository, std::make_shared<std::string>(processName));
   PropertyExampleClass A(propertyService, "A", processName);
   PropertyExampleClass B(propertyService, "B", processName);
-  propertyService.onInitialize();
+  propertyService->onInitialize();
   A.printProperty();
   B.printProperty();
 }

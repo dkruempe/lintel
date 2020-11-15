@@ -15,8 +15,8 @@ public:
 int main(int argc, char *argv[]) {
   Example example;
   std::cout << example << "\n";
-  NoPropertyRepository propertyRepository;
-  PropertyService propertyService(propertyRepository, "classNameExample");
+  std::shared_ptr<NoPropertyRepository> propertyRepository = std::make_shared<NoPropertyRepository>();
+  PropertyService propertyService(propertyRepository, std::make_shared<std::string>("classNameExample"));
   std::cout << propertyService << "\n";
   return 0;
 }

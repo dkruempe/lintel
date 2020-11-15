@@ -21,7 +21,7 @@ void createExampleProperties(PropertyService &propertyService) {
 
 class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
 public:
-  explicit PropertyExampleClass(PropertyService &propertyService)
+  explicit PropertyExampleClass(const std::shared_ptr<PropertyService>& propertyService)
       : AbstractService("testProcess", "testInstance") {
     LOAD_PROPERTIES();
   }
@@ -30,37 +30,37 @@ public:
 };
 
 TEST_CASE("test example service with properties") {
-  NoPropertyRepository noPropertyRepository;
-  PropertyService propertyService(noPropertyRepository, "testProcess");
+  std::shared_ptr<NoPropertyRepository> noPropertyRepository = std::make_shared<NoPropertyRepository>();
+  std::shared_ptr<PropertyService> propertyService = std::make_shared<PropertyService>(noPropertyRepository, std::make_shared<std::string>("testProcess"));
   PropertyExampleClass propertyExampleClass(propertyService);
-  REQUIRE(propertyService.allProperties().size() == 2);
+  REQUIRE(propertyService->allProperties().size() == 2);
   REQUIRE(propertyExampleClass.enable->getValue() == false);
-  auto propertyBase = propertyService.get(
+  auto propertyBase = propertyService->get(
       "enable", "testInstance", "PropertyExampleClass", "testProcess");
   std::shared_ptr<Property<bool>> property =
       std::static_pointer_cast<Property<bool>>(propertyBase);
-  propertyService.changeValueOf<bool>(property, true);
+  propertyService->changeValueOf<bool>(property, true);
   REQUIRE(property->getValue() == true);
   REQUIRE(propertyExampleClass.enable->getValue() == true);
 
-  propertyService.changeValueOf<std::string>(
+  propertyService->changeValueOf<std::string>(
       propertyExampleClass.string, "Ich liebe dich Anna Krümpelmann <3!");
   REQUIRE(propertyExampleClass.string->getValue() ==
           "Ich liebe dich Anna Krümpelmann <3!");
-  auto stringProperty = propertyService.get(
+  auto stringProperty = propertyService->get(
       "string", "testInstance", "PropertyExampleClass", "testProcess");
   REQUIRE(stringProperty->toString() == "Ich liebe dich Anna Krümpelmann <3!");
 }
 
 TEST_CASE("test create/get of PropertyService") {
-  NoPropertyRepository noPropertyRepository;
-  PropertyService propertyService(noPropertyRepository, "main");
+  std::shared_ptr<NoPropertyRepository> noPropertyRepository = std::make_shared<NoPropertyRepository>();
+  PropertyService propertyService(noPropertyRepository, std::make_shared<std::string>("main"));
   createExampleProperties(propertyService);
   REQUIRE(propertyService.allProperties().size() == 4);
 }
 TEST_CASE("test setValue for Property") {
-  NoPropertyRepository noPropertyRepository;
-  PropertyService propertyService(noPropertyRepository, "main");
+  std::shared_ptr<NoPropertyRepository> noPropertyRepository = std::make_shared<NoPropertyRepository>();
+  PropertyService propertyService(noPropertyRepository, std::make_shared<std::string>("main"));
   createExampleProperties(propertyService);
   auto intProperty = propertyService.getOrCreate<int32_t>(
       "intProperty", "instanceName", "class", "processName", 4713);
@@ -75,8 +75,8 @@ TEST_CASE("test setValue for Property") {
   }
 }
 TEST_CASE("test create with no defined default value") {
-  NoPropertyRepository noPropertyRepository;
-  PropertyService propertyService(noPropertyRepository, "main");
+  std::shared_ptr<NoPropertyRepository> noPropertyRepository;
+  PropertyService propertyService(noPropertyRepository, std::make_shared<std::string>("main"));
   createExampleProperties(propertyService);
   auto property = propertyService.getOrCreate<std::string>(
       "emptyStringProperty", "instanceName", "processName", "not empty");
