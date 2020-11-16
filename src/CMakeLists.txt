@@ -4,8 +4,13 @@ project(base_library VERSION 0.0.1)
 set(CMAKE_MACOSX_RPATH OFF)
 
 # configuration of default path
-set(CONFIG_DIRECTORY "${PROJECT_SOURCE_DIR}/../cfg")
-set(LOG_DIRECTORY "${PROJECT_SOURCE_DIR}/../log")
+if (NOT DEFINED CONFIG_DIRECTORY)
+    set(CONFIG_DIRECTORY "${PROJECT_SOURCE_DIR}/../cfg")
+endif ()
+
+if (NOT DEFINED LOG_DIRECTORY)
+    set(LOG_DIRECTORY "${PROJECT_SOURCE_DIR}/../log")
+endif ()
 
 configure_file(
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h.in
