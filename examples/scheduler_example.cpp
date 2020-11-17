@@ -4,7 +4,8 @@
 
 int main(int argc, char *argv[]) {
   DECLARE_LOGGER(basename(argv[0]));
-  SchedulerService scheduler(10);
+  SchedulerService scheduler(nullptr, std::make_shared<ProcessName>(""));
+  scheduler.onInitialize();
   LOG_DEBUG("before scheduler start");
   std::function<void()> func = [&]() { LOG_INFO("Hello World"); };
   std::function<void()> schedule_after = [&]() { LOG_DEBUG("schedule after"); };

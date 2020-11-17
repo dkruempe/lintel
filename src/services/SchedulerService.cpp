@@ -1,4 +1,5 @@
 #include "base_library/services/SchedulerService.h"
+#include "base_library/services/LoggerService.h"
 
 void SchedulerService::clear() {
   std::lock_guard<std::mutex> lock(mutex);
@@ -6,7 +7,6 @@ void SchedulerService::clear() {
 }
 
 void SchedulerService::run() {
-
   while (!exit || !tasks.empty()) {
     auto time = tasks.empty() ? std::chrono::steady_clock::now() +
                                     std::chrono::seconds(60)
@@ -44,12 +44,20 @@ void SchedulerService::run() {
   }
 }
 
-SchedulerService::SchedulerService(int numberOfThreads)
-    : exit(false), numberOfThreads(numberOfThreads) {
-  threads.reserve(numberOfThreads);
-  for (int i = 0; i < numberOfThreads; i++) {
+void SchedulerService::onInitialize() {
+  LOG_INFO("start Scheduler with {} threads", numberOfThreads->getValue());
+  threads.reserve(numberOfThreads->getValue());
+  for (int i = 0; i < numberOfThreads->getValue(); i++) {
     threads.emplace_back([&] { run(); });
   }
+}
+
+SchedulerService::SchedulerService(
+    const std::shared_ptr<PropertyService> &propertyService,
+    const std::shared_ptr<ProcessName> &processName)
+    : AbstractService<SchedulerService>(processName->getProcessName()),
+      exit(false) {
+  LOAD_PROPERTIES();
 }
 
 SchedulerService::~SchedulerService() {

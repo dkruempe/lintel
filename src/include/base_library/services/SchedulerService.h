@@ -7,9 +7,11 @@
 #include <thread>
 #include <vector>
 
-class SchedulerService {
+#include "base_library/services/AbstractService.h"
+#include "base_library/services/PropertyService.h"
 
-private:
+class SchedulerService : public AbstractService<SchedulerService> {
+ private:
   struct Task {
     Task(std::chrono::steady_clock::time_point time, std::function<void()> func)
         : time(time), func(std::move(func)), period(std::chrono::seconds(0)) {}
@@ -18,8 +20,8 @@ private:
          std::chrono::steady_clock::duration period)
         : time(time), func(std::move(func)), period(period) {}
 
-    std::chrono::steady_clock::time_point time; // next execute
-    std::function<void()> func;                 // task to be executed
+    std::chrono::steady_clock::time_point time;  // next execute
+    std::function<void()> func;                  // task to be executed
     // period 0 => no period > 0 period schedule until process end
     std::chrono::steady_clock::duration period;
   };
@@ -35,12 +37,13 @@ private:
   std::mutex mutex;
   std::condition_variable conditionVariable;
   volatile bool exit;
-  int numberOfThreads;
   std::vector<std::thread> threads;
 
   void run();
 
-public:
+  DEFINE_PROPERTY(numberOfThreads, int, 40);
+
+ public:
   template <class F, class... Args>
   std::future<typename std::result_of<
       typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
@@ -65,7 +68,11 @@ public:
 
   void clear();
 
-  explicit SchedulerService(int numberOfThreads);
+  explicit SchedulerService(
+      const std::shared_ptr<PropertyService> &propertyService,
+      const std::shared_ptr<ProcessName> &processName);
+
+  void onInitialize() override;
 
   ~SchedulerService();
 };
@@ -121,4 +128,4 @@ SchedulerService::schedule_at(const std::chrono::steady_clock::time_point &t,
   return future;
 }
 
-#endif // LOGGING_SCHEDULERSERVICE_H
+#endif  // LOGGING_SCHEDULERSERVICE_H

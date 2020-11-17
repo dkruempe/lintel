@@ -45,18 +45,20 @@ PropertyService::get(const std::string &name, const std::string &instanceName,
 }
 void PropertyService::getOrCreate(
     const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
-  for (std::shared_ptr<PropertyBase> property : propertiesVec) {
+  for (const std::shared_ptr<PropertyBase>& property : propertiesVec) {
     try {
       auto newProperty =
           get(property->getName(), property->getInstanceName(),
               property->getClassName(), property->getProcessName());
-      property = newProperty;
+      property->setValueString(newProperty->toString());
+      newProperty = property;
     } catch (PropertyNotFoundException &exception) {
       properties.insert({property->getIdentifier(), property});
       updateRepository = true;
     }
   }
 }
+
 void PropertyService::onInitialize() {
   AbstractService::onInitialize();
   if (updateRepository) {

@@ -40,6 +40,11 @@ class Property;
       this->value = value;                                                  \
     }                                                                       \
                                                                             \
+    void setValueString(const std::string &value) override {                \
+      std::unique_lock<std::shared_mutex> lock(mutex);                      \
+      this->value = convertToValue(value);                                  \
+    }                                                                       \
+                                                                            \
    public:                                                                  \
     Property(const std::string &name, const std::string &instanceName,      \
              const std::string &className, const std::string &processName,  \

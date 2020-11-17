@@ -37,6 +37,8 @@ class PropertyBase {
   }
   [[nodiscard]] const std::string &getIdentifier() const { return identifier; }
 
+  virtual void setValueString(const std::string &value) = 0;
+
   friend std::ostream &operator<<(std::ostream &os, PropertyBase &base) {
     os << "name: " << base.name << " instanceName: " << base.instanceName
        << " className: " << base.className

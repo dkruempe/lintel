@@ -1,46 +1,53 @@
 #ifndef LOGGING_PROPERTYSERVICE_H
 #define LOGGING_PROPERTYSERVICE_H
 
+#include <functional>
+#include <map>
+#include <vector>
+
 #include "base_library/exceptions/PropertyNotFoundException.h"
 #include "base_library/models/ProcessName.h"
 #include "base_library/models/Property.h"
 #include "base_library/repositories/PropertyRepository.h"
 #include "base_library/services/AbstractService.h"
-#include <functional>
-#include <map>
-#include <vector>
+#include "base_library/services/PropertyService.h"
 
-#define DEFINE_PROPERTY(name, type, defaultValue)                              \
-  std::shared_ptr<Property<type>> name =                                       \
-      registerProperty<type>(#name, defaultValue)
-#define LOAD_PROPERTIES() propertyService->getOrCreate(properties)
+#define DEFINE_PROPERTY(name, type, defaultValue) \
+  std::shared_ptr<Property<type>> name =          \
+      registerProperty<type>(std::string(#name), defaultValue);
+#define LOAD_PROPERTIES()                     \
+  if (propertyService != nullptr) {           \
+    propertyService->getOrCreate(properties); \
+  }
 
 class PropertyService : public AbstractService<PropertyService> {
-private:
+ private:
   std::shared_ptr<PropertyRepository> propertyRepository;
   // variables
   std::map<std::string, std::shared_ptr<PropertyBase>>
-      properties; // identifier (name_instanceName_processName), Property
+      properties;  // identifier (name_instanceName_processName), Property
   // functions
   static std::string createIdentifier(const std::string &name,
                                       const std::string &instanceName,
                                       const std::string &className,
                                       const std::string &processName);
-  static std::map<std::string, std::shared_ptr<PropertyBase>>
-  init(const std::vector<std::shared_ptr<PropertyBase>> &properties);
+  static std::map<std::string, std::shared_ptr<PropertyBase>> init(
+      const std::vector<std::shared_ptr<PropertyBase>> &properties);
   bool updateRepository = false;
 
-public:
+ public:
   PropertyService(const std::shared_ptr<PropertyRepository> &propertyRepository,
                   const std::shared_ptr<ProcessName> &processName);
+
   void onInitialize() override;
   template <class T>
-  std::shared_ptr<Property<T>>
-  getOrCreate(const std::string &name, const std::string &instanceName,
-              const std::string &className, const std::string &processName,
-              const T &defaultValue = T());
-  void
-  getOrCreate(const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
+  std::shared_ptr<Property<T>> getOrCreate(const std::string &name,
+                                           const std::string &instanceName,
+                                           const std::string &className,
+                                           const std::string &processName,
+                                           const T &defaultValue = T());
+  void getOrCreate(
+      const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
   std::shared_ptr<PropertyBase> get(const std::string &name,
                                     const std::string &instanceName,
                                     const std::string &className,
@@ -77,4 +84,4 @@ void PropertyService::changeValueOf(
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
   propertyRepository->save(propertyBase);
 }
-#endif // LOGGING_PROPERTYSERVICE_H
+#endif  // LOGGING_PROPERTYSERVICE_H
