@@ -48,7 +48,7 @@ class PropertyService : public AbstractService<PropertyService> {
                                            const T &defaultValue = T());
   void getOrCreate(
       const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
-  std::shared_ptr<PropertyBase> get(const std::string &name,
+  std::shared_ptr<PropertyBase>& get(const std::string &name,
                                     const std::string &instanceName,
                                     const std::string &className,
                                     const std::string &processName);

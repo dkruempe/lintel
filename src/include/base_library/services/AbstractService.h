@@ -8,6 +8,7 @@
 
 #include "base_library/models/Property.h"
 #include "base_library/utils/TypeName.h"
+#include "base_library/services/LoggerService.h"
 
 class AbstractServiceInterface {
  public:
@@ -32,6 +33,7 @@ class AbstractService : public AbstractServiceInterface {
   template <class type>
   std::shared_ptr<Property<type>> registerProperty(std::string name,
                                                    type defaultValue) {
+    LOG_INFO("Property<{}> {} = {}", type_name<type>(), name, defaultValue);
     std::shared_ptr<Property<type>> property = std::make_shared<Property<type>>(
         name, getInstanceName(), std::string(getClassName()), getProcessName(),
         defaultValue);

@@ -31,7 +31,7 @@ std::string PropertyService::createIdentifier(const std::string &name,
                                               const std::string &processName) {
   return name + "_" + instanceName + "_" + className + "_" + processName;
 }
-std::shared_ptr<PropertyBase>
+std::shared_ptr<PropertyBase>&
 PropertyService::get(const std::string &name, const std::string &instanceName,
                      const std::string &className,
                      const std::string &processName) {
@@ -47,7 +47,7 @@ void PropertyService::getOrCreate(
     const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
   for (const std::shared_ptr<PropertyBase>& property : propertiesVec) {
     try {
-      auto newProperty =
+      auto &newProperty =
           get(property->getName(), property->getInstanceName(),
               property->getClassName(), property->getProcessName());
       property->setValueString(newProperty->toString());
