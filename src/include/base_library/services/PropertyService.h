@@ -56,6 +56,8 @@ class PropertyService : public AbstractService<PropertyService> {
   template <class T>
   void changeValueOf(const std::shared_ptr<PropertyBase> &property,
                      const T &value);
+
+  void changeStringValueOf(const std::shared_ptr<PropertyBase> &property, const std::string &value);
 };
 // template functions implementations
 template <class T>

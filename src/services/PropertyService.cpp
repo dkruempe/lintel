@@ -31,10 +31,9 @@ std::string PropertyService::createIdentifier(const std::string &name,
                                               const std::string &processName) {
   return name + "_" + instanceName + "_" + className + "_" + processName;
 }
-std::shared_ptr<PropertyBase>&
-PropertyService::get(const std::string &name, const std::string &instanceName,
-                     const std::string &className,
-                     const std::string &processName) {
+std::shared_ptr<PropertyBase> &PropertyService::get(
+    const std::string &name, const std::string &instanceName,
+    const std::string &className, const std::string &processName) {
   const std::string &identifier =
       createIdentifier(name, instanceName, className, processName);
   auto found = properties.find(identifier);
@@ -45,7 +44,7 @@ PropertyService::get(const std::string &name, const std::string &instanceName,
 }
 void PropertyService::getOrCreate(
     const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
-  for (const std::shared_ptr<PropertyBase>& property : propertiesVec) {
+  for (const std::shared_ptr<PropertyBase> &property : propertiesVec) {
     try {
       auto &newProperty =
           get(property->getName(), property->getInstanceName(),
@@ -57,6 +56,15 @@ void PropertyService::getOrCreate(
       updateRepository = true;
     }
   }
+}
+
+void PropertyService::changeStringValueOf(
+    const std::shared_ptr<PropertyBase> &property, const std::string &value) {
+  std::shared_ptr<PropertyBase> propertyBase =
+      get(property->getName(), property->getInstanceName(),
+          property->getClassName(), property->getProcessName());
+  propertyBase->setValueString(value);
+  propertyRepository->save(propertyBase);
 }
 
 void PropertyService::onInitialize() {
