@@ -40,10 +40,11 @@ class PropertyBase {
   virtual void setValueString(const std::string &value) = 0;
 
   friend std::ostream &operator<<(std::ostream &os, PropertyBase &base) {
-    os << "name: " << base.name << " instanceName: " << base.instanceName
-       << " className: " << base.className
-       << " processName: " << base.processName << " type: " << base.getType()
-       << " value: " << base.toString();
+    os << "Property{"
+       << "name:" << base.name << ", value:" << base.toString()
+       << ", processName:" << base.processName
+       << ", className:" << base.className
+       << ", instanceName:" << base.instanceName << "}";
     return os;
   }
 

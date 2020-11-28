@@ -63,6 +63,12 @@ void PropertyService::changeStringValueOf(
   std::shared_ptr<PropertyBase> propertyBase =
       get(property->getName(), property->getInstanceName(),
           property->getClassName(), property->getProcessName());
+  if (propertyBase->toString() == value) {
+    return;
+  }
+  std::stringstream ss;
+  ss << *property;
+  LOG_INFO("{} change to {}", ss.str(), value);
   propertyBase->setValueString(value);
   propertyRepository->save(propertyBase);
 }
