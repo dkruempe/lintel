@@ -14,13 +14,19 @@
  * we
  */
 class FilePropertyRepository : public PropertyRepository {
-public:
+ public:
+
+  explicit FilePropertyRepository(std::shared_ptr<ConfigSerializationStrategy> configSerializationStrategy);
+
   /**
-   * constructor
+   * returns priority of repository
    */
-  FilePropertyRepository(
-      const std::filesystem::path &configurationPath,
-      ConfigSerializationStrategy &configSerializationStrategy);
+  PropertyRepositoryPriority getPriority() override;
+
+  /**
+   * returns if save operations are supported or not
+   */
+  bool isMutable() override;
 
   /**
    * save property to repository
@@ -40,19 +46,19 @@ public:
    * save properties to repository
    * @param properties
    */
-  void
-  save(const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
+  void save(
+      const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
 
   /**
    * load all properties from repository and return result
    */
   std::vector<std::shared_ptr<PropertyBase>> awake() override;
 
-private:
+ private:
   // members of class
   std::string content = "";
   const std::filesystem::path configurationPath;
-  ConfigSerializationStrategy &configSerializationStrategy;
+  std::shared_ptr<ConfigSerializationStrategy> configSerializationStrategy;
 };
 
-#endif // LOGGING_FILEPROPERTYREPOSITORY_H
+#endif  // LOGGING_FILEPROPERTYREPOSITORY_H

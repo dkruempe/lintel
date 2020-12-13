@@ -7,3 +7,7 @@ std::vector<std::shared_ptr<PropertyBase>> NoPropertyRepository::awake() {
 }
 void NoPropertyRepository::save(
     const std::vector<std::shared_ptr<PropertyBase>> &properties) {}
+PropertyRepositoryPriority NoPropertyRepository::getPriority() {
+  return PropertyRepositoryPriority::DEFAULT;
+}
+bool NoPropertyRepository::isMutable() { return false; }

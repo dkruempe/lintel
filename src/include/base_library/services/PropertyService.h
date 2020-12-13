@@ -32,11 +32,15 @@ class PropertyService : public AbstractService<PropertyService> {
                                       const std::string &className,
                                       const std::string &processName);
   static std::map<std::string, std::shared_ptr<PropertyBase>> init(
-      const std::vector<std::shared_ptr<PropertyBase>> &properties);
+      const std::vector<std::shared_ptr<PropertyRepository>> &repoProperties);
+  static std::shared_ptr<PropertyRepository> searchRuntimeRepository(
+      const std::vector<std::shared_ptr<PropertyRepository>>
+          &propertyRepository);
   bool updateRepository = false;
 
  public:
-  PropertyService(const std::shared_ptr<PropertyRepository> &propertyRepository,
+  PropertyService(const std::vector<std::shared_ptr<PropertyRepository>>
+                      &propertyRepositories,
                   const std::shared_ptr<ProcessName> &processName);
 
   void onInitialize() override;
@@ -48,16 +52,17 @@ class PropertyService : public AbstractService<PropertyService> {
                                            const T &defaultValue = T());
   void getOrCreate(
       const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
-  std::shared_ptr<PropertyBase>& get(const std::string &name,
-                                    const std::string &instanceName,
-                                    const std::string &className,
-                                    const std::string &processName);
+  std::shared_ptr<PropertyBase> &get(const std::string &name,
+                                     const std::string &instanceName,
+                                     const std::string &className,
+                                     const std::string &processName);
   std::vector<std::shared_ptr<PropertyBase>> allProperties();
   template <class T>
   void changeValueOf(const std::shared_ptr<PropertyBase> &property,
                      const T &value);
 
-  void changeStringValueOf(const std::shared_ptr<PropertyBase> &property, const std::string &value);
+  void changeStringValueOf(const std::shared_ptr<PropertyBase> &property,
+                           const std::string &value);
 };
 // template functions implementations
 template <class T>
@@ -73,7 +78,9 @@ std::shared_ptr<Property<T>> PropertyService::getOrCreate(
     auto property = std::make_shared<Property<T>>(name, instanceName, className,
                                                   processName, defaultValue);
     properties.insert({property->getIdentifier(), property});
-    propertyRepository->save(property);
+    if (propertyRepository != nullptr) {
+      propertyRepository->save(property);
+    }
     return property;
   }
 }
@@ -84,6 +91,8 @@ void PropertyService::changeValueOf(
       get(property->getName(), property->getInstanceName(),
           property->getClassName(), property->getProcessName());
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
-  propertyRepository->save(propertyBase);
+  if (propertyRepository != nullptr) {
+    propertyRepository->save(propertyBase);
+  }
 }
 #endif  // LOGGING_PROPERTYSERVICE_H

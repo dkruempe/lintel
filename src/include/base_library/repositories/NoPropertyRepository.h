@@ -7,6 +7,10 @@ class NoPropertyRepository : public PropertyRepository {
 public:
   NoPropertyRepository() : PropertyRepository() {}
 
+  PropertyRepositoryPriority getPriority() override;
+
+  bool isMutable() override;
+
   /**
    * save property to repository
    */

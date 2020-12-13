@@ -4,17 +4,29 @@
 #include <memory>
 #include <vector>
 
+#include "base_library/models/PropertyRepositoryPriority.h"
+
 class PropertyBase;
 
 class PropertyRepository {
-public:
+ public:
   PropertyRepository() = default;
+
+  /**
+   * returns priority of repository
+   */
+  virtual PropertyRepositoryPriority getPriority() = 0;
+
+  /**
+   * returns if save operations are supported or not
+   */
+  virtual bool isMutable() = 0;
 
   /**
    * save properties to repository
    */
-  virtual void
-  save(const std::vector<std::shared_ptr<PropertyBase>> &properties) = 0;
+  virtual void save(
+      const std::vector<std::shared_ptr<PropertyBase>> &properties) = 0;
 
   /**
    * save property to repository
@@ -27,4 +39,4 @@ public:
   virtual std::vector<std::shared_ptr<PropertyBase>> awake() = 0;
 };
 
-#endif // LOGGING_PROPERTYREPOSITORY_H
+#endif  // LOGGING_PROPERTYREPOSITORY_H

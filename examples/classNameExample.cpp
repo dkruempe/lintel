@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
   Example example;
   std::cout << example << "\n";
   std::shared_ptr<NoPropertyRepository> propertyRepository = std::make_shared<NoPropertyRepository>();
-  PropertyService propertyService(propertyRepository, std::make_shared<ProcessName>(argc, argv));
+  PropertyService propertyService({propertyRepository}, std::make_shared<ProcessName>(argc, argv));
   std::cout << propertyService << "\n";
   return 0;
 }
