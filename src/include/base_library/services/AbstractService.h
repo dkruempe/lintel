@@ -32,11 +32,13 @@ class AbstractService : public AbstractServiceInterface {
 
   template <class type>
   std::shared_ptr<Property<type>> registerProperty(std::string name,
-                                                   type defaultValue) {
+                                                   type defaultValue,
+                                                   std::string description,
+                                                   bool runtime) {
     LOG_INFO("Property<{}> {} = {}", type_name<type>(), name, defaultValue);
     std::shared_ptr<Property<type>> property = std::make_shared<Property<type>>(
         name, getInstanceName(), std::string(getClassName()), getProcessName(),
-        defaultValue);
+        defaultValue, description, runtime);
     properties.push_back(property);
     return property;
   }

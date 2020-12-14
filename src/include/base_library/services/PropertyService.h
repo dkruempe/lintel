@@ -5,6 +5,7 @@
 #include <map>
 #include <vector>
 
+#include "base_library/exceptions/PropertyNoRuntimeChangeSupported.h"
 #include "base_library/exceptions/PropertyNotFoundException.h"
 #include "base_library/models/ProcessName.h"
 #include "base_library/models/Property.h"
@@ -12,9 +13,9 @@
 #include "base_library/services/AbstractService.h"
 #include "base_library/services/PropertyService.h"
 
-#define DEFINE_PROPERTY(name, type, defaultValue) \
-  std::shared_ptr<Property<type>> name =          \
-      registerProperty<type>(std::string(#name), defaultValue);
+#define DEFINE_PROPERTY(name, type, defaultValue, description, runtime) \
+  std::shared_ptr<Property<type>> name = registerProperty<type>(        \
+      std::string(#name), defaultValue, description, runtime);
 #define LOAD_PROPERTIES()                     \
   if (propertyService != nullptr) {           \
     propertyService->getOrCreate(properties); \
@@ -49,6 +50,8 @@ class PropertyService : public AbstractService<PropertyService> {
                                            const std::string &instanceName,
                                            const std::string &className,
                                            const std::string &processName,
+                                           const std::string &description,
+                                           bool runtimeChange,
                                            const T &defaultValue = T());
   void getOrCreate(
       const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
@@ -69,6 +72,7 @@ template <class T>
 std::shared_ptr<Property<T>> PropertyService::getOrCreate(
     const std::string &name, const std::string &instanceName,
     const std::string &className, const std::string &processName,
+    const std::string &description, bool runtimeChange,
     const T &defaultValue /* T() default Value */) {
   auto id = createIdentifier(name, instanceName, className, processName);
   try {
@@ -76,7 +80,8 @@ std::shared_ptr<Property<T>> PropertyService::getOrCreate(
     return std::static_pointer_cast<Property<T>>(propertyBase);
   } catch (PropertyNotFoundException &exception) {
     auto property = std::make_shared<Property<T>>(name, instanceName, className,
-                                                  processName, defaultValue);
+                                                  processName, defaultValue,
+                                                  description, runtimeChange);
     properties.insert({property->getIdentifier(), property});
     if (propertyRepository != nullptr) {
       propertyRepository->save(property);
@@ -90,6 +95,9 @@ void PropertyService::changeValueOf(
   std::shared_ptr<PropertyBase> propertyBase =
       get(property->getName(), property->getInstanceName(),
           property->getClassName(), property->getProcessName());
+  if (!propertyBase->isRuntimeChange()) {
+    throw PropertyNoRuntimeChangeSupported(propertyBase);
+  }
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
   if (propertyRepository != nullptr) {
     propertyRepository->save(propertyBase);

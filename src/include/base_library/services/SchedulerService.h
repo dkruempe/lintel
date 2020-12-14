@@ -41,7 +41,7 @@ class SchedulerService : public AbstractService<SchedulerService> {
 
   void run();
 
-  DEFINE_PROPERTY(numberOfThreads, int, 40);
+  DEFINE_PROPERTY(numberOfThreads, int, 40, "Number of Scheduler Threads", false);
 
  public:
   template <class F, class... Args>

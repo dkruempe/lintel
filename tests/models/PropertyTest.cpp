@@ -4,7 +4,7 @@
 
 TEST_CASE("basic test of property") {
   Property<int32_t> intProperty("testProperty", "testInstance", "testClass",
-                                "testProcess", 4711);
+                                "testProcess", 4711, "", true);
   REQUIRE(intProperty.getValue() == 4711);
   REQUIRE(intProperty.toString() == "4711");
   REQUIRE(intProperty.getType() == "int32_t");
@@ -14,7 +14,7 @@ TEST_CASE("basic test of property") {
   REQUIRE(intProperty.getName() == "testProperty");
 
   Property<int8_t> int8Property("int8Property", "testInstance", "testClass",
-                                "testProcess", 3);
+                                "testProcess", 3, "", true);
   REQUIRE(int8Property.getValue() == 3);
   REQUIRE(int8Property.toString() == "3");
   REQUIRE(int8Property.getType() == "int8_t");
@@ -25,7 +25,7 @@ TEST_CASE("basic test of property") {
 
   Property<std::string> stringProperty("stringProperty", "testInstance",
                                        "testClass", "testProcess",
-                                       "Hallo Welt!");
+                                       "Hallo Welt!", "", true);
   REQUIRE(stringProperty.getValue() == "Hallo Welt!");
   REQUIRE(stringProperty.toString() == "Hallo Welt!");
   REQUIRE(stringProperty.getType() == "std::string");

@@ -3,8 +3,8 @@
 #include <base_library/repositories/FilePropertyRepository.h>
 #include <base_library/services/PropertyService.h>
 #include <base_library/strategies/XMLConfigSerializationStrategy.h>
+
 #include <iostream>
-#include <libgen.h>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -19,7 +19,8 @@ std::vector<std::shared_ptr<PropertyBase>> createProperties() {
               "name" + std::to_string(i) + "_" + std::to_string(j) + "_" +
                   std::to_string(k) + "_" + std::to_string(l),
               std::to_string(k), std::to_string(j), std::to_string(i),
-              "std::string", "anna_" + std::to_string(i + j * k * (l + 1))));
+              "std::string", "anna_" + std::to_string(i + j * k * (l + 1)), "",
+              true));
         }
       }
     }
@@ -50,7 +51,7 @@ void testSerializeDeserialize() {
 }
 
 class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
-public:
+ public:
   explicit PropertyExampleClass(
       const std::shared_ptr<PropertyService> &propertyService,
       std::string instanceName, std::string processName)
@@ -63,18 +64,21 @@ public:
     std::cout << *string << std::endl;
     std::cout << *enable << std::endl;
   }
-  DEFINE_PROPERTY(extra, int32_t, 4711);
-  DEFINE_PROPERTY(string, std::string, "Ich bin eine Test Property");
-  DEFINE_PROPERTY(enable, bool, false);
+  DEFINE_PROPERTY(extra, int32_t, 4711, "", true);
+  DEFINE_PROPERTY(string, std::string, "Ich bin eine Test Property", "", true);
+  DEFINE_PROPERTY(enable, bool, false, "", true);
 };
 
 void testPropertyService(std::shared_ptr<ProcessName> processName) {
-  XMLConfigSerializationStrategy xmlConfigSerializationStrategy;
+  std::shared_ptr<XMLConfigSerializationStrategy>
+      xmlConfigSerializationStrategy =
+          std::make_shared<XMLConfigSerializationStrategy>();
   std::shared_ptr<FilePropertyRepository> filePropertyRepository =
-      std::make_shared<FilePropertyRepository>("/Users/dkruempe/cfg/test.xml",
-                                               xmlConfigSerializationStrategy);
+      std::make_shared<FilePropertyRepository>(xmlConfigSerializationStrategy);
+  std::vector<std::shared_ptr<PropertyRepository>> repositories(
+      {filePropertyRepository});
   std::shared_ptr<PropertyService> propertyService =
-      std::make_shared<PropertyService>(filePropertyRepository, processName);
+      std::make_shared<PropertyService>(repositories, processName);
   PropertyExampleClass A(propertyService, "A", processName->getProcessName());
   PropertyExampleClass B(propertyService, "B", processName->getProcessName());
   propertyService->onInitialize();

@@ -109,6 +109,9 @@ void PropertyService::changeStringValueOf(
   std::shared_ptr<PropertyBase> propertyBase =
       get(property->getName(), property->getInstanceName(),
           property->getClassName(), property->getProcessName());
+  if (!propertyBase->isRuntimeChange()) {
+    throw PropertyNoRuntimeChangeSupported(propertyBase);
+  }
   if (propertyBase->toString() == value) {
     return;
   }

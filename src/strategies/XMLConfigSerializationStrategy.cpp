@@ -29,9 +29,11 @@ std::string XMLConfigSerializationStrategy::serialize(
     propertyElement->SetAttribute(ELEMENT_NAME, property->getName().c_str());
     propertyElement->SetAttribute(PROPERTY_TYPE, property->getType().c_str());
     propertyElement->SetAttribute(PROPERTY_VALUE, property->toString().c_str());
-    propertyElement->SetAttribute(PROPERTY_ROOT, property->getProcessName().c_str());
+    propertyElement->SetAttribute(PROPERTY_ROOT,
+                                  property->getProcessName().c_str());
     propertyElement->SetAttribute(CLASS_ROOT, property->getClassName().c_str());
-    propertyElement->SetAttribute(INSTANCE_ROOT, property->getInstanceName().c_str());
+    propertyElement->SetAttribute(INSTANCE_ROOT,
+                                  property->getInstanceName().c_str());
     element->InsertEndChild(propertyElement);
   }
   document.InsertEndChild(element);
@@ -67,9 +69,11 @@ XMLConfigSerializationStrategy::deserialize(const std::string &content) {
         std::string(propertyElement->Attribute(PROPERTY_TYPE));
     std::string propertyValue =
         std::string(propertyElement->Attribute(PROPERTY_VALUE));
-    properties.push_back(PropertyFactory::Create(propertyName, instanceName,
-                                                 className, processName,
-                                                 propertyType, propertyValue));
+    // default no description and runtime change not allowed => default set is
+    // overwritten later via orignal properties
+    properties.push_back(PropertyFactory::Create(
+        propertyName, instanceName, className, processName, propertyType,
+        propertyValue, "", false));
   }
-return properties;
+  return properties;
 }

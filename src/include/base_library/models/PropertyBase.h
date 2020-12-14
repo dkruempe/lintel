@@ -12,16 +12,21 @@ class PropertyBase {
   std::string className;
   std::string processName;
   std::string identifier;
+  const bool runtimeChange;
+  const std::string description;
 
  protected:
   PropertyBase(std::string name, std::string instanceName,
-               std::string className, std::string processName)
+               std::string className, std::string processName,
+               std::string description, bool runtimeChange)
       : name(std::move(name)),
         instanceName(std::move(instanceName)),
         className(std::move(className)),
         processName(std::move(processName)),
         identifier(this->name + "_" + this->instanceName + "_" +
-                   this->className + "_" + this->processName) {}
+                   this->className + "_" + this->processName),
+        runtimeChange(runtimeChange),
+        description(std::move(description)) {}
 
  public:
   PropertyBase() = delete;
@@ -35,6 +40,8 @@ class PropertyBase {
   [[nodiscard]] const std::string &getProcessName() const {
     return processName;
   }
+  [[nodiscard]] bool isRuntimeChange() const { return runtimeChange; }
+  [[nodiscard]] const std::string &getDescription() const { return description; }
   [[nodiscard]] const std::string &getIdentifier() const { return identifier; }
 
   virtual void setValueString(const std::string &value) = 0;
@@ -44,7 +51,9 @@ class PropertyBase {
        << "name:" << base.name << ", value:" << base.toString()
        << ", processName:" << base.processName
        << ", className:" << base.className
-       << ", instanceName:" << base.instanceName << "}";
+       << ", instanceName:" << base.instanceName
+       << ", runtimeChange:" << base.runtimeChange
+       << ", description:" << base.description << "}";
     return os;
   }
 

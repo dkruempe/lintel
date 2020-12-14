@@ -12,7 +12,7 @@ public:
   typedef std::function<std::shared_ptr<PropertyBase>(
       const std::string &name, const std::string &instanceName,
       const std::string &className, const std::string &processName,
-      const std::string &value)>
+      const std::string &value, const std::string &description, bool runtimeChange)>
       TCreateMethod;
 
   PropertyFactory() = delete;
@@ -23,7 +23,7 @@ public:
   static std::shared_ptr<PropertyBase>
   Create(const std::string &name, const std::string &instanceName,
          const std::string &className, const std::string &processName,
-         const std::string &type, const std::string &value);
+         const std::string &type, const std::string &value, const std::string &description, bool runtime);
 
   static std::map<std::string, TCreateMethod> &GetMap();
 };

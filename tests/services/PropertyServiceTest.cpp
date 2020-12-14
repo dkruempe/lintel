@@ -6,17 +6,17 @@
 void createExampleProperties(PropertyService &propertyService) {
   std::shared_ptr<Property<int32_t>> intProperty =
       propertyService.getOrCreate<int32_t>("intProperty", "instanceName",
-                                           "testClass", "processName", 4712);
+                                           "testClass", "processName", "", true, 4712);
   std::shared_ptr<Property<std::string>> stringProperty =
       propertyService.getOrCreate<std::string>("stringProperty", "instanceName",
                                                "testClass", "processName",
-                                               "Hallo Welt!");
+                                               "", true, "Hallo Welt!");
   std::shared_ptr<Property<double>> doubleProperty =
       propertyService.getOrCreate<double>("doubleProperty", "instanceName",
-                                          "testClass", "processName", 3.421);
+                                          "testClass", "processName", "", true, 3.421);
   std::shared_ptr<Property<std::string>> emptyStringProperty =
       propertyService.getOrCreate<std::string>(
-          "emptyStringProperty", "instanceName", "testClass", "processName");
+          "emptyStringProperty", "instanceName", "testClass", "processName", "", true);
 }
 
 class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
@@ -25,8 +25,8 @@ public:
       : AbstractService("testProcess", "testInstance") {
     LOAD_PROPERTIES();
   }
-  DEFINE_PROPERTY(string, std::string, "Ich bin eine Test Property");
-  DEFINE_PROPERTY(enable, bool, false);
+  DEFINE_PROPERTY(string, std::string, "Ich bin eine Test Property", "", true);
+  DEFINE_PROPERTY(enable, bool, false, "", true);
 };
 
 TEST_CASE("test example service with properties") {
@@ -64,7 +64,7 @@ TEST_CASE("test setValue for Property") {
   PropertyService propertyService({noPropertyRepository}, std::make_shared<ProcessName>("main"));
   createExampleProperties(propertyService);
   auto intProperty = propertyService.getOrCreate<int32_t>(
-      "intProperty", "instanceName", "class", "processName", 4713);
+      "intProperty", "instanceName", "class", "processName", "", true, 4713);
   propertyService.changeValueOf<int32_t>(intProperty, 4711);
   REQUIRE(intProperty->getValue() == 4711);
   auto properties = propertyService.allProperties();
@@ -80,6 +80,6 @@ TEST_CASE("test create with no defined default value") {
   PropertyService propertyService({noPropertyRepository}, std::make_shared<ProcessName>("main"));
   createExampleProperties(propertyService);
   auto property = propertyService.getOrCreate<std::string>(
-      "emptyStringProperty", "instanceName", "processName", "not empty");
+      "emptyStringProperty", "instanceName", "className", "processName", "", true, "not empty");
   REQUIRE(property->getValue().empty());
 }

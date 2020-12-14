@@ -6,7 +6,7 @@
 TEST_CASE("basic propertyFactoryTest") {
   auto property =
       PropertyFactory::Create("testProperty", "testInstance", "testClass",
-                              "testProcess", "int32_t", "4711");
+                              "testProcess", "int32_t", "4711", "", true);
   REQUIRE(property != nullptr);
   std::shared_ptr<Property<int32_t>> intProperty =
       std::static_pointer_cast<Property<int32_t>>(property);
@@ -20,7 +20,7 @@ TEST_CASE("basic propertyFactoryTest") {
 
   auto createInt8Property =
       PropertyFactory::Create("int8Property", "testInstance", "testClass",
-                              "testProcess", "int8_t", "3");
+                              "testProcess", "int8_t", "3", "", true);
   std::shared_ptr<Property<int8_t>> int8Property =
       std::static_pointer_cast<Property<int8_t>>(createInt8Property);
   REQUIRE(int8Property->getValue() == 3);
@@ -33,7 +33,7 @@ TEST_CASE("basic propertyFactoryTest") {
 
   auto createStringProperty =
       PropertyFactory::Create("stringProperty", "testInstance", "testClass",
-                              "testProcess", "std::string", "Hallo Welt!");
+                              "testProcess", "std::string", "Hallo Welt!", "", true);
   std::shared_ptr<Property<std::string>> stringProperty =
       std::static_pointer_cast<Property<std::string>>(createStringProperty);
   REQUIRE(stringProperty->getValue() == "Hallo Welt!");
