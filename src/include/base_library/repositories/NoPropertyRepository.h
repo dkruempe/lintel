@@ -1,6 +1,8 @@
 #ifndef LOGGING_NOPROPERTYREPOSITORY_H
 #define LOGGING_NOPROPERTYREPOSITORY_H
 
+#include <base_library/models/DataStorage.h>
+
 #include "PropertyRepository.h"
 
 class NoPropertyRepository : public PropertyRepository {
@@ -8,6 +10,8 @@ public:
   NoPropertyRepository() : PropertyRepository() {}
 
   PropertyRepositoryType getType() override;
+
+  DataStorage getDataStorage() override;
 
   bool isMutable() override;
 

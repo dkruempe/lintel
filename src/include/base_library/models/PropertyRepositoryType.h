@@ -25,7 +25,7 @@ class PropertyRepositoryType {
     return std::set<Value>(values.begin(), values.end());
   }
 
-  std::string toString() { return std::string(magic_enum::enum_name<>(value)); }
+  std::string toString() const { return std::string(magic_enum::enum_name<>(value)); }
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const PropertyRepositoryType &propertyRepositoryPriority) {

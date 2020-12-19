@@ -1,4 +1,5 @@
 #include "base_library/strategies/XMLConfigSerializationStrategy.h"
+#include "base_library/services/FileService.h"
 
 #include <tinyxml2.h>
 
@@ -29,7 +30,7 @@ std::string XMLConfigSerializationStrategy::serialize(
     propertyElement->SetAttribute(ELEMENT_NAME, property->getName().c_str());
     propertyElement->SetAttribute(PROPERTY_TYPE, property->getType().c_str());
     propertyElement->SetAttribute(PROPERTY_VALUE, property->toString().c_str());
-    propertyElement->SetAttribute(PROPERTY_ROOT,
+    propertyElement->SetAttribute(PROCESS_ROOT,
                                   property->getProcessName().c_str());
     propertyElement->SetAttribute(CLASS_ROOT, property->getClassName().c_str());
     propertyElement->SetAttribute(INSTANCE_ROOT,
@@ -41,8 +42,15 @@ std::string XMLConfigSerializationStrategy::serialize(
   document.Print(&printer);
   return std::string(printer.CStr());
 }
+std::vector<std::shared_ptr<PropertyBase>> XMLConfigSerializationStrategy::deserialize(const std::filesystem::path &path) {
+  FileService file (path);
+  if (!file.exists()) {
+    return {};
+  }
+  return deserialize(file.getName(), file.readFile());
+}
 std::vector<std::shared_ptr<PropertyBase>>
-XMLConfigSerializationStrategy::deserialize(const std::string &content) {
+XMLConfigSerializationStrategy::deserialize(const std::string &fileName, const std::string &content) {
   std::vector<std::shared_ptr<PropertyBase>> properties;
   tinyxml2::XMLDocument document;
   document.Parse(content.c_str());
@@ -59,7 +67,7 @@ XMLConfigSerializationStrategy::deserialize(const std::string &content) {
       continue;
     }
     std::string processName =
-        std::string(propertyElement->Attribute(PROPERTY_ROOT));
+        std::string(propertyElement->Attribute(PROCESS_ROOT));
     std::string className = std::string(propertyElement->Attribute(CLASS_ROOT));
     std::string instanceName =
         std::string(propertyElement->Attribute(INSTANCE_ROOT));
@@ -71,9 +79,11 @@ XMLConfigSerializationStrategy::deserialize(const std::string &content) {
         std::string(propertyElement->Attribute(PROPERTY_VALUE));
     // default no description and runtime change not allowed => default set is
     // overwritten later via orignal properties
-    properties.push_back(PropertyFactory::Create(
+    auto property = PropertyFactory::Create(
         propertyName, instanceName, className, processName, propertyType,
-        propertyValue, "", false));
+        propertyValue, "", false);
+    property->setDataStorage(DataStorage(PropertyRepositoryType::FILE_REPOSITORY, fileName + ":" + std::to_string(propertyElement->GetLineNum())));
+    properties.push_back(property);
   }
   return properties;
 }

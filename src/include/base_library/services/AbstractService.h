@@ -7,8 +7,8 @@
 #include <vector>
 
 #include "base_library/models/Property.h"
-#include "base_library/utils/TypeName.h"
 #include "base_library/services/LoggerService.h"
+#include "base_library/utils/TypeName.h"
 
 class PropertyService;
 
@@ -16,6 +16,7 @@ class AbstractServiceInterface {
  public:
   virtual void onInitialize() = 0;
   virtual void onShutdown() = 0;
+
  private:
   virtual std::vector<std::shared_ptr<PropertyBase>> getProperties() = 0;
   friend class PropertyService;
@@ -40,14 +41,18 @@ class AbstractService : public AbstractServiceInterface {
   std::vector<std::shared_ptr<PropertyBase>> properties;
 
   template <class type>
-  std::shared_ptr<Property<type>> registerProperty(std::string name,
-                                                   type defaultValue,
-                                                   std::string description,
-                                                   bool runtime) {
+  std::shared_ptr<Property<type>> registerProperty(
+      std::string name, type defaultValue, std::string description,
+      bool runtime, const std::string &fileName, int32_t position) {
     LOG_INFO("Property<{}> {} = {}", type_name<type>(), name, defaultValue);
     std::shared_ptr<Property<type>> property = std::make_shared<Property<type>>(
         name, getInstanceName(), std::string(getClassName()), getProcessName(),
         defaultValue, description, runtime);
+    const std::filesystem::path &path(fileName);
+
+    property->setDataStorage(DataStorage(
+        PropertyRepositoryType::DEFAULT,
+        path.filename().generic_string() + ":" + std::to_string(position)));
     properties.push_back(property);
     return property;
   }

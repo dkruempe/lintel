@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "base_library/models/PropertyRepositoryType.h"
+#include "base_library/models/DataStorage.h"
 
 class PropertyBase;
 
@@ -16,6 +17,8 @@ class PropertyRepository {
    * returns priority of repository
    */
   virtual PropertyRepositoryType getType() = 0;
+
+  virtual DataStorage getDataStorage() = 0;
 
   /**
    * returns if save operations are supported or not

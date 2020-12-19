@@ -11,3 +11,7 @@ PropertyRepositoryType NoPropertyRepository::getType() {
   return PropertyRepositoryType::DEFAULT;
 }
 bool NoPropertyRepository::isMutable() { return false; }
+
+DataStorage NoPropertyRepository::getDataStorage() {
+  return DataStorage(getType(), "");
+}

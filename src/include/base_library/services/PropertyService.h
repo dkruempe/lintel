@@ -14,9 +14,10 @@
 #include "base_library/services/AbstractService.h"
 #include "base_library/services/PropertyService.h"
 
-#define DEFINE_PROPERTY(name, type, defaultValue, description, runtime) \
-  std::shared_ptr<Property<type>> name = registerProperty<type>(        \
-      std::string(#name), defaultValue, description, runtime);
+#define DEFINE_PROPERTY(name, type, defaultValue, description, runtime)     \
+  std::shared_ptr<Property<type>> name =                                    \
+      registerProperty<type>(std::string(#name), defaultValue, description, \
+                             runtime, __FILE__, __LINE__);
 #define LOAD_PROPERTIES()                     \
   if (propertyService != nullptr) {           \
     propertyService->getOrCreate(properties); \
@@ -43,7 +44,8 @@ class PropertyService {
   PropertyService(const std::vector<std::shared_ptr<PropertyRepository>>
                       &propertyRepositories,
                   const std::shared_ptr<ProcessName> &processName,
-                  const std::vector<std::shared_ptr<AbstractServiceInterface>> &abstractServices);
+                  const std::vector<std::shared_ptr<AbstractServiceInterface>>
+                      &abstractServices);
 
   template <class T>
   std::shared_ptr<Property<T>> getOrCreate(const std::string &name,
@@ -99,7 +101,8 @@ void PropertyService::changeValueOf(
     throw PropertyNoRuntimeChangeSupported(propertyBase);
   }
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
-  std::static_pointer_cast<Property<T>>(propertyBase)->setDataStorage(DataStorage(propertyRepository->getType(), ""));
+  std::static_pointer_cast<Property<T>>(propertyBase)
+      ->setDataStorage(propertyRepository->getDataStorage());
   if (propertyRepository != nullptr) {
     propertyRepository->save(propertyBase);
   }

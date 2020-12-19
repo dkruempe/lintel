@@ -17,18 +17,15 @@ void FilePropertyRepository::save(
 }
 
 std::vector<std::shared_ptr<PropertyBase>> FilePropertyRepository::awake() {
-  FileService file(configurationPath);
-  if (!file.exists()) {
-    // throw ConfigurationNotFoundException
-    return std::vector<std::shared_ptr<PropertyBase>>();
-  }
-  content = file.readFile();
-
-  return configSerializationStrategy->deserialize(content);
+  return configSerializationStrategy->deserialize(configurationPath);
 }
 
 PropertyRepositoryType FilePropertyRepository::getType() {
   return PropertyRepositoryType::FILE_REPOSITORY;
+}
+
+DataStorage FilePropertyRepository::getDataStorage() {
+  return DataStorage(getType(), configurationPath.filename());
 }
 
 bool FilePropertyRepository::isMutable() { return true; }

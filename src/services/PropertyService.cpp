@@ -13,21 +13,18 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
   std::sort(repositories.begin(), repositories.end(),
             [](const std::shared_ptr<PropertyRepository> &r1,
                const std::shared_ptr<PropertyRepository> &r2) {
-              return r1->getType() > r2->getType();
+              return r1->getType() < r2->getType();
             });
 
   // create local map store
   std::map<std::string, std::shared_ptr<PropertyBase>> propertiesMap;
 
   // function to add properties to map
-  std::function<void(std::vector<std::shared_ptr<PropertyBase>>,
-                     const PropertyRepositoryType &)>
+  std::function<void(std::vector<std::shared_ptr<PropertyBase>>)>
       addProperties =
           [&propertiesMap](
-              const std::vector<std::shared_ptr<PropertyBase>> &repoProperties,
-              const PropertyRepositoryType &type) {
+              const std::vector<std::shared_ptr<PropertyBase>> &repoProperties) {
             for (const auto &property : repoProperties) {
-              property->setDataStorage(DataStorage(type, ""));
               auto found = propertiesMap.find(property->getIdentifier());
               if (found != propertiesMap.end()) {
                 found->second = property;
@@ -40,7 +37,7 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
   // add properties to map
   for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
     // highest property wins, bc. std::map insert only if not available
-    addProperties(repository->awake(), repository->getType());
+    addProperties(repository->awake());
   }
   return propertiesMap;
 }
@@ -131,7 +128,7 @@ void PropertyService::changeStringValueOf(
   ss << *property;
   LOG_INFO("{} change to {}", ss.str(), value);
   propertyBase->setValueString(value);
-  propertyBase->setDataStorage(DataStorage(propertyRepository->getType(), ""));
+  propertyBase->setDataStorage(DataStorage(propertyRepository->getDataStorage()));
   if (propertyRepository != nullptr) {
     propertyRepository->save(propertyBase);
   }

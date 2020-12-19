@@ -1,10 +1,11 @@
 #ifndef LOGGING_FILEPROPERTYREPOSITORY_H
 #define LOGGING_FILEPROPERTYREPOSITORY_H
 
-#include "PropertyRepository.h"
+#include "base_library/repositories/PropertyRepository.h"
 #include "base_library/services/ExecutorService.h"
 #include "base_library/services/FileService.h"
 #include "base_library/strategies/ConfigSerializationStrategy.h"
+#include "base_library/models/DataStorage.h"
 
 /**
  * implementation of file repository for properties
@@ -17,6 +18,11 @@ class FilePropertyRepository : public PropertyRepository {
  public:
 
   explicit FilePropertyRepository(std::shared_ptr<ConfigSerializationStrategy> configSerializationStrategy);
+
+  /**
+   * returns basic data storage information of repository
+   */
+  DataStorage getDataStorage() override;
 
   /**
    * returns priority of repository
