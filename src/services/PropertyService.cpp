@@ -13,26 +13,34 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
   std::sort(repositories.begin(), repositories.end(),
             [](const std::shared_ptr<PropertyRepository> &r1,
                const std::shared_ptr<PropertyRepository> &r2) {
-              return r1->getPriority() > r2->getPriority();
+              return r1->getType() > r2->getType();
             });
 
   // create local map store
   std::map<std::string, std::shared_ptr<PropertyBase>> propertiesMap;
 
   // function to add properties to map
-  std::function<void(std::vector<std::shared_ptr<PropertyBase>>)>
+  std::function<void(std::vector<std::shared_ptr<PropertyBase>>,
+                     const PropertyRepositoryType &)>
       addProperties =
-          [&propertiesMap](const std::vector<std::shared_ptr<PropertyBase>>
-                               &repoProperties) {
+          [&propertiesMap](
+              const std::vector<std::shared_ptr<PropertyBase>> &repoProperties,
+              const PropertyRepositoryType &type) {
             for (const auto &property : repoProperties) {
-              propertiesMap.insert({property->getIdentifier(), property});
+              property->setDataStorage(DataStorage(type, ""));
+              auto found = propertiesMap.find(property->getIdentifier());
+              if (found != propertiesMap.end()) {
+                found->second = property;
+              } else {
+                propertiesMap.insert({property->getIdentifier(), property});
+              }
             }
           };
 
   // add properties to map
   for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
     // highest property wins, bc. std::map insert only if not available
-    addProperties(repository->awake());
+    addProperties(repository->awake(), repository->getType());
   }
   return propertiesMap;
 }
@@ -45,7 +53,7 @@ std::shared_ptr<PropertyRepository> PropertyService::searchRuntimeRepository(
   std::sort(repositories.begin(), repositories.end(),
             [](const std::shared_ptr<PropertyRepository> &r1,
                const std::shared_ptr<PropertyRepository> &r2) {
-              return r1->getPriority() > r2->getPriority();
+              return r1->getType() > r2->getType();
             });
 
   for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
@@ -61,8 +69,7 @@ PropertyService::PropertyService(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
     const std::shared_ptr<ProcessName> &processName)
-    : AbstractService(processName->getProcessName(), "PropertyService"),
-      propertyRepository(searchRuntimeRepository(propertyRepositories)),
+    : propertyRepository(searchRuntimeRepository(propertyRepositories)),
       properties(init(propertyRepositories)) {}
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
@@ -96,10 +103,10 @@ void PropertyService::getOrCreate(
           get(property->getName(), property->getInstanceName(),
               property->getClassName(), property->getProcessName());
       property->setValueString(newProperty->toString());
+      property->setDataStorage(newProperty->getDataStorage());
       newProperty = property;
     } catch (PropertyNotFoundException &exception) {
       properties.insert({property->getIdentifier(), property});
-      updateRepository = true;
     }
   }
 }
@@ -119,14 +126,8 @@ void PropertyService::changeStringValueOf(
   ss << *property;
   LOG_INFO("{} change to {}", ss.str(), value);
   propertyBase->setValueString(value);
+  propertyBase->setDataStorage(DataStorage(propertyRepository->getType(), ""));
   if (propertyRepository != nullptr) {
     propertyRepository->save(propertyBase);
-  }
-}
-
-void PropertyService::onInitialize() {
-  AbstractService::onInitialize();
-  if (updateRepository && propertyRepository != nullptr) {
-    propertyRepository->save(allProperties());
   }
 }

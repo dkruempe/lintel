@@ -5,6 +5,8 @@
 #include <string>
 #include <utility>
 
+#include "base_library/models/DataStorage.h"
+
 class PropertyBase {
  private:
   std::string name;
@@ -14,6 +16,7 @@ class PropertyBase {
   std::string identifier;
   const bool runtimeChange;
   const std::string description;
+  DataStorage dataStorage;
 
  protected:
   PropertyBase(std::string name, std::string instanceName,
@@ -36,12 +39,20 @@ class PropertyBase {
   [[nodiscard]] const std::string &getInstanceName() const {
     return instanceName;
   }
+  [[nodiscard]] const DataStorage &getDataStorage() const {
+    return dataStorage;
+  }
+  void setDataStorage(const DataStorage &newDataStorage) {
+    PropertyBase::dataStorage = newDataStorage;
+  }
   [[nodiscard]] const std::string &getClassName() const { return className; }
   [[nodiscard]] const std::string &getProcessName() const {
     return processName;
   }
   [[nodiscard]] bool isRuntimeChange() const { return runtimeChange; }
-  [[nodiscard]] const std::string &getDescription() const { return description; }
+  [[nodiscard]] const std::string &getDescription() const {
+    return description;
+  }
   [[nodiscard]] const std::string &getIdentifier() const { return identifier; }
 
   virtual void setValueString(const std::string &value) = 0;
@@ -53,8 +64,16 @@ class PropertyBase {
        << ", className:" << base.className
        << ", instanceName:" << base.instanceName
        << ", runtimeChange:" << base.runtimeChange
-       << ", description:" << base.description << "}";
+       << ", description:" << base.description
+       << ", dataStorage:" << base.dataStorage
+       << "}";
     return os;
+  }
+
+  operator std::string() {
+    std::ostringstream out;
+    out << *this;
+    return out.str();
   }
 
   bool operator<(const PropertyBase &rhs) const {

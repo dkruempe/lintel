@@ -27,8 +27,8 @@ std::vector<std::shared_ptr<PropertyBase>> FilePropertyRepository::awake() {
   return configSerializationStrategy->deserialize(content);
 }
 
-PropertyRepositoryPriority FilePropertyRepository::getPriority() {
-  return PropertyRepositoryPriority::FILE_REPOSITORY;
+PropertyRepositoryType FilePropertyRepository::getType() {
+  return PropertyRepositoryType::FILE_REPOSITORY;
 }
 
 bool FilePropertyRepository::isMutable() { return true; }

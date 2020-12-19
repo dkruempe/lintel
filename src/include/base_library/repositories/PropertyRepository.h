@@ -4,7 +4,7 @@
 #include <memory>
 #include <vector>
 
-#include "base_library/models/PropertyRepositoryPriority.h"
+#include "base_library/models/PropertyRepositoryType.h"
 
 class PropertyBase;
 
@@ -15,7 +15,7 @@ class PropertyRepository {
   /**
    * returns priority of repository
    */
-  virtual PropertyRepositoryPriority getPriority() = 0;
+  virtual PropertyRepositoryType getType() = 0;
 
   /**
    * returns if save operations are supported or not

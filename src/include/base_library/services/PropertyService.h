@@ -21,7 +21,7 @@
     propertyService->getOrCreate(properties); \
   }
 
-class PropertyService : public AbstractService<PropertyService> {
+class PropertyService {
  private:
   std::shared_ptr<PropertyRepository> propertyRepository;
   // variables
@@ -37,14 +37,12 @@ class PropertyService : public AbstractService<PropertyService> {
   static std::shared_ptr<PropertyRepository> searchRuntimeRepository(
       const std::vector<std::shared_ptr<PropertyRepository>>
           &propertyRepository);
-  bool updateRepository = false;
 
  public:
   PropertyService(const std::vector<std::shared_ptr<PropertyRepository>>
                       &propertyRepositories,
                   const std::shared_ptr<ProcessName> &processName);
 
-  void onInitialize() override;
   template <class T>
   std::shared_ptr<Property<T>> getOrCreate(const std::string &name,
                                            const std::string &instanceName,
@@ -99,6 +97,7 @@ void PropertyService::changeValueOf(
     throw PropertyNoRuntimeChangeSupported(propertyBase);
   }
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
+  std::static_pointer_cast<Property<T>>(propertyBase)->setDataStorage(DataStorage(propertyRepository->getType(), ""));
   if (propertyRepository != nullptr) {
     propertyRepository->save(propertyBase);
   }

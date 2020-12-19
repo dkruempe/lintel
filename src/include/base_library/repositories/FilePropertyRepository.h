@@ -21,7 +21,7 @@ class FilePropertyRepository : public PropertyRepository {
   /**
    * returns priority of repository
    */
-  PropertyRepositoryPriority getPriority() override;
+  PropertyRepositoryType getType() override;
 
   /**
    * returns if save operations are supported or not
