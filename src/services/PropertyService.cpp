@@ -68,9 +68,14 @@ std::shared_ptr<PropertyRepository> PropertyService::searchRuntimeRepository(
 PropertyService::PropertyService(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
-    const std::shared_ptr<ProcessName> &processName)
+    const std::shared_ptr<ProcessName> &processName,
+    const std::vector<std::shared_ptr<AbstractServiceInterface>> &abstractServices)
     : propertyRepository(searchRuntimeRepository(propertyRepositories)),
-      properties(init(propertyRepositories)) {}
+      properties(init(propertyRepositories)) {
+  std::for_each(abstractServices.begin(), abstractServices.end(), [&](const std::shared_ptr<AbstractServiceInterface> &abstractService) {
+            getOrCreate(abstractService->getProperties());
+      });
+}
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   std::transform(properties.begin(), properties.end(),

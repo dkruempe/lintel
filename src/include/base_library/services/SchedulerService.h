@@ -68,9 +68,7 @@ class SchedulerService : public AbstractService<SchedulerService> {
 
   void clear();
 
-  explicit SchedulerService(
-      const std::shared_ptr<PropertyService> &propertyService,
-      const std::shared_ptr<ProcessName> &processName);
+  explicit SchedulerService(const std::shared_ptr<ProcessName> &processName);
 
   void onInitialize() override;
 

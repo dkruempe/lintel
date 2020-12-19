@@ -77,11 +77,11 @@ void testPropertyService(std::shared_ptr<ProcessName> processName) {
       std::make_shared<FilePropertyRepository>(xmlConfigSerializationStrategy);
   std::vector<std::shared_ptr<PropertyRepository>> repositories(
       {filePropertyRepository});
+  std::vector<std::shared_ptr<AbstractServiceInterface>> abstractInterfaces = {};
   std::shared_ptr<PropertyService> propertyService =
-      std::make_shared<PropertyService>(repositories, processName);
+      std::make_shared<PropertyService>(repositories, processName, abstractInterfaces);
   PropertyExampleClass A(propertyService, "A", processName->getProcessName());
   PropertyExampleClass B(propertyService, "B", processName->getProcessName());
-  propertyService->onInitialize();
   A.printProperty();
   B.printProperty();
 }

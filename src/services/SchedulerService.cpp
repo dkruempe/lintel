@@ -1,4 +1,5 @@
 #include "base_library/services/SchedulerService.h"
+
 #include "base_library/services/LoggerService.h"
 
 void SchedulerService::clear() {
@@ -53,12 +54,9 @@ void SchedulerService::onInitialize() {
 }
 
 SchedulerService::SchedulerService(
-    const std::shared_ptr<PropertyService> &propertyService,
     const std::shared_ptr<ProcessName> &processName)
     : AbstractService<SchedulerService>(processName->getProcessName()),
-      exit(false) {
-  LOAD_PROPERTIES();
-}
+      exit(false) {}
 
 SchedulerService::~SchedulerService() {
   {

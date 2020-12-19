@@ -16,7 +16,10 @@ int main(int argc, char *argv[]) {
   Example example;
   std::cout << example << "\n";
   std::shared_ptr<NoPropertyRepository> propertyRepository = std::make_shared<NoPropertyRepository>();
-  PropertyService propertyService({propertyRepository}, std::make_shared<ProcessName>(argc, argv));
-  std::cout << propertyService << "\n";
+  std::vector<std::shared_ptr<AbstractServiceInterface>> abstractInterfaces = {};
+  PropertyService propertyService({propertyRepository}, std::make_shared<ProcessName>(argc, argv), abstractInterfaces);
+  for (auto &property : propertyService.allProperties()) {
+    std::cout << *property << "\n";
+  }
   return 0;
 }

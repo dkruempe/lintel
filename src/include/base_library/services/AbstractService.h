@@ -10,10 +10,15 @@
 #include "base_library/utils/TypeName.h"
 #include "base_library/services/LoggerService.h"
 
+class PropertyService;
+
 class AbstractServiceInterface {
  public:
   virtual void onInitialize() = 0;
   virtual void onShutdown() = 0;
+ private:
+  virtual std::vector<std::shared_ptr<PropertyBase>> getProperties() = 0;
+  friend class PropertyService;
 };
 /**
  * Every Service must be derived from this service to make sure that basic
@@ -26,6 +31,10 @@ class AbstractService : public AbstractServiceInterface {
  private:
   const std::string processName;
   const std::string instanceName;
+
+  std::vector<std::shared_ptr<PropertyBase>> getProperties() override {
+    return properties;
+  }
 
  protected:
   std::vector<std::shared_ptr<PropertyBase>> properties;

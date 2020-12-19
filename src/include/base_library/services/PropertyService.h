@@ -3,6 +3,7 @@
 
 #include <functional>
 #include <map>
+#include <ostream>
 #include <vector>
 
 #include "base_library/exceptions/PropertyNoRuntimeChangeSupported.h"
@@ -41,7 +42,8 @@ class PropertyService {
  public:
   PropertyService(const std::vector<std::shared_ptr<PropertyRepository>>
                       &propertyRepositories,
-                  const std::shared_ptr<ProcessName> &processName);
+                  const std::shared_ptr<ProcessName> &processName,
+                  const std::vector<std::shared_ptr<AbstractServiceInterface>> &abstractServices);
 
   template <class T>
   std::shared_ptr<Property<T>> getOrCreate(const std::string &name,
@@ -102,4 +104,5 @@ void PropertyService::changeValueOf(
     propertyRepository->save(propertyBase);
   }
 }
+
 #endif  // LOGGING_PROPERTYSERVICE_H
