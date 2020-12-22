@@ -25,7 +25,7 @@ endif ()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-conan_cmake_run(REQUIRES fmt/7.1.2 tinyxml2/7.1.0 magic_enum/0.7.0
+conan_cmake_run(REQUIRES fmt/7.1.2 tinyxml2/7.1.0 magic_enum/0.7.0 libpq/13.1
         OPTIONS
         ${CONAN_EXTRA_OPTIONS}
         BASIC_SETUP
@@ -51,7 +51,7 @@ target_include_directories(base_library PUBLIC
         "$<BUILD_INTERFACE:${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         "$<INSTALL_INTERFACE:${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         )
-target_link_libraries(base_library PRIVATE ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(base_library PRIVATE ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets

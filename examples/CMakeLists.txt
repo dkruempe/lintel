@@ -17,7 +17,7 @@ endif ()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-conan_cmake_run(REQUIRES fmt/7.1.2 spdlog/1.8.0 tinyxml2/7.1.0 magic_enum/0.7.0
+conan_cmake_run(REQUIRES fmt/7.1.2 spdlog/1.8.0 tinyxml2/7.1.0 magic_enum/0.7.0 libpq/13.1
         OPTIONS
         ${CONAN_EXTRA_OPTIONS}
         BASIC_SETUP
@@ -35,37 +35,37 @@ find_package(Threads REQUIRED)
 add_executable(logger_example logger_example.cpp)
 target_compile_features(logger_example PUBLIC cxx_std_17)
 target_include_directories(logger_example PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(logger_example PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(logger_example PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 
 # scheduler example
 add_executable(scheduler_example scheduler_example.cpp)
 target_compile_features(scheduler_example PUBLIC cxx_std_17)
 target_include_directories(scheduler_example PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(scheduler_example PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(scheduler_example PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 
 # file example
 add_executable(file_example file_example.cpp)
 target_compile_features(file_example PUBLIC cxx_std_17)
 target_include_directories(file_example PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(file_example PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(file_example PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 
 # class name example
 add_executable(classNameExample classNameExample.cpp)
 target_compile_features(classNameExample PUBLIC cxx_std_17)
 target_include_directories(classNameExample PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(classNameExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(classNameExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 
 # executor example
 add_executable(executor_example executor_example.cpp)
 target_compile_features(executor_example PUBLIC cxx_std_17)
 target_include_directories(executor_example PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(executor_example PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(executor_example PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 
 # configuration example
 add_executable(configuration_example configuration_example.cpp)
 target_compile_features(configuration_example PUBLIC cxx_std_17)
 target_include_directories(configuration_example PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(configuration_example PUBLIC kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(configuration_example PUBLIC kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 
 # spdlog example
 add_executable(spdlogExample spdlogExample.cpp)
@@ -77,16 +77,22 @@ target_link_libraries(spdlogExample PUBLIC CONAN_PKG::fmt CONAN_PKG::spdlog)
 add_executable(stringifyExtensionExample stringifyExtensionExample.cpp)
 target_compile_features(stringifyExtensionExample PUBLIC cxx_std_17)
 target_include_directories(stringifyExtensionExample PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(stringifyExtensionExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(stringifyExtensionExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 
 # stop watch example
 add_executable(stopWatchExample stopWatchExample.cpp)
 target_compile_features(stopWatchExample PUBLIC cxx_std_17)
 target_include_directories(stopWatchExample PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(stopWatchExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(stopWatchExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
 
 # signal example
 add_executable(signalExample signalExample.cpp)
 target_compile_features(signalExample PUBLIC cxx_std_17)
 target_include_directories(signalExample PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(signalExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 Threads::Threads)
+target_link_libraries(signalExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
+
+# database example
+add_executable(databaseExample databaseExample.cpp)
+target_compile_features(databaseExample PUBLIC cxx_std_17)
+target_include_directories(databaseExample PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
+target_link_libraries(databaseExample PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)

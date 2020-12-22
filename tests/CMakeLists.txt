@@ -18,7 +18,7 @@ endif ()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-conan_cmake_run(REQUIRES catch2/2.13.0 fmt/7.0.3 tinyxml2/7.1.0 magic_enum/0.7.0
+conan_cmake_run(REQUIRES catch2/2.13.0 fmt/7.0.3 tinyxml2/7.1.0 magic_enum/0.7.0 libpq/13.1
         OPTIONS
         ${CONAN_EXTRA_OPTIONS}
         BASIC_SETUP
@@ -30,19 +30,19 @@ conan_cmake_run(REQUIRES catch2/2.13.0 fmt/7.0.3 tinyxml2/7.1.0 magic_enum/0.7.0
 ADD_EXECUTABLE(propertyTest models/PropertyTest.cpp)
 target_compile_features(propertyTest PUBLIC cxx_std_17)
 target_include_directories(propertyTest PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(propertyTest PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
+target_link_libraries(propertyTest PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2  CONAN_PKG::libpq pthread)
 ADD_TEST(NAME BaseLibrary.PropertyTest COMMAND propertyTest)
 
 # propertyFactory Test
 ADD_EXECUTABLE(propertyFactoryTest factories/PropertyFactoryTest.cpp)
 target_compile_features(propertyFactoryTest PUBLIC cxx_std_17)
 target_include_directories(propertyFactoryTest PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
+target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq pthread)
 ADD_TEST(NAME BaseLibrary.PropertyFactoryTest COMMAND propertyFactoryTest)
 
 # property Service Test
 ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
 target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
 target_include_directories(propertyServiceTest PRIVATE ${CONAN_INCLUDE_DIRS} ${LOG4CXX_INCLUDES})
-target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 pthread)
+target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq pthread)
 ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
