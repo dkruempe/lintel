@@ -1,7 +1,7 @@
-#include <base_library/persistence/database/Connection.h>
-#include <base_library/persistence/database/Statement.h>
-#include <base_library/persistence/database/Transaction.h>
-#include <base_library/persistence/database/PreparedStatement.h>
+#include <base_library/persistence/Connection.h>
+#include <base_library/persistence/PreparedStatement.h>
+#include <base_library/persistence/Statement.h>
+#include <base_library/persistence/Transaction.h>
 
 #include <iostream>
 

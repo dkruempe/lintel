@@ -1,8 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_TRANSACTION_H
 #define CPP_BASE_LIBRARY_TRANSACTION_H
 
+#include "Connection.h"
 #include "base_library/exceptions/SQLException.h"
-#include "base_library/persistence/database/Connection.h"
 #include <string>
 
 namespace db {

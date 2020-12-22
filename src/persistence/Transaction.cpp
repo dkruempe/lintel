@@ -1,4 +1,4 @@
-#include "base_library/persistence/database/Transaction.h"
+#include "base_library/persistence/Transaction.h"
 
 namespace db {
 void Transaction::checkState(const Result &result) {

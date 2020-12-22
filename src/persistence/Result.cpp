@@ -1,4 +1,4 @@
-#include "base_library/persistence/database/Result.h"
+#include "base_library/persistence/Result.h"
 
 namespace db {
 Result::Result(PGresult *res) : res(res) {}

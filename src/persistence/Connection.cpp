@@ -1,4 +1,4 @@
-#include "base_library/persistence/database/Connection.h"
+#include "base_library/persistence/Connection.h"
 
 namespace db {
 [[nodiscard]] Result Connection::execute(const std::string &statement) const {

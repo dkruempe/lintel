@@ -1,9 +1,9 @@
 #ifndef CPP_BASE_LIBRARY_CONNECTION_H
 #define CPP_BASE_LIBRARY_CONNECTION_H
 
+#include "Parameter.h"
+#include "Result.h"
 #include "base_library/exceptions/SQLException.h"
-#include "base_library/persistence/database/Parameter.h"
-#include "base_library/persistence/database/Result.h"
 
 #include <libpq-fe.h>
 #include <string>

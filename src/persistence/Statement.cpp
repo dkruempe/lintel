@@ -1,4 +1,4 @@
-#include "base_library/persistence/database/Statement.h"
+#include "base_library/persistence/Statement.h"
 
 namespace db {
 Statement::Statement(const Connection &connection) : connection(connection) {}

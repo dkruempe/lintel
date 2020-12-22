@@ -1,5 +1,5 @@
-#include "base_library/persistence/database/PreparedStatement.h"
-#include "base_library/persistence/database/Parameter.h"
+#include "base_library/persistence/PreparedStatement.h"
+#include "base_library/persistence/Parameter.h"
 
 namespace db {
 int32_t PreparedStatement::initNParams(const std::string &tempStatement) {

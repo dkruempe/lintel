@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
 #define CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
 
-#include "base_library/persistence/database/Connection.h"
+#include "Connection.h"
 
 namespace db {
 /**

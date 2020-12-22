@@ -1,4 +1,4 @@
-#include "base_library/persistence/database/Parameter.h"
+#include "base_library/persistence/Parameter.h"
 
 #include <utility>
 
