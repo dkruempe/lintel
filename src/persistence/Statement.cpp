@@ -1,5 +1,7 @@
 #include "base_library/persistence/Statement.h"
 
+#include <algorithm>
+
 namespace db {
 Statement::Statement(const Connection &connection) : connection(connection) {}
 

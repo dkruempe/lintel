@@ -4,6 +4,7 @@
 #include <base_library/persistence/Transaction.h>
 
 #include <iostream>
+#include <chrono>
 
 void selectExample() {
   std::string connInfo = "dbname = keyValueStore";
