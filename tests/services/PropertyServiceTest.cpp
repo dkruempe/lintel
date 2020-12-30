@@ -77,10 +77,10 @@ TEST_CASE("test setValue for Property") {
   }
 }
 TEST_CASE("test create with no defined default value") {
-  std::shared_ptr<NoPropertyRepository> noPropertyRepository;
+  std::shared_ptr<NoPropertyRepository> noPropertyRepository = std::make_shared<NoPropertyRepository>();
   PropertyService propertyService({noPropertyRepository}, std::make_shared<ProcessName>("main"), {});
   createExampleProperties(propertyService);
   auto property = propertyService.getOrCreate<std::string>(
       "emptyStringProperty", "instanceName", "className", "processName", "", true, "not empty");
-  REQUIRE(property->getValue().empty());
+  REQUIRE(!property->getValue().empty());
 }
