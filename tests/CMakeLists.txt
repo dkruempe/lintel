@@ -18,7 +18,7 @@ endif ()
 
 include(${CMAKE_BINARY_DIR}/conan.cmake)
 
-conan_cmake_run(REQUIRES catch2/2.13.0 fmt/7.0.3 tinyxml2/7.1.0 magic_enum/0.7.0 libpq/13.1
+conan_cmake_run(REQUIRES catch2/2.13.0 fmt/7.1.2 tinyxml2/7.1.0 magic_enum/0.7.0 libpq/13.1
         OPTIONS
         ${CONAN_EXTRA_OPTIONS}
         BASIC_SETUP
