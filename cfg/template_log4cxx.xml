@@ -32,7 +32,6 @@
         <priority value="all"/>
         <appender-ref ref="common_file"/>
         <appender-ref ref="console"/>
-        <appender-ref ref="socket"/>
     </root>
 
 </log4j:configuration>
