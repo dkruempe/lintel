@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0025 NEW)
 project(base_library VERSION 0.0.1)
 set(CMAKE_MACOSX_RPATH OFF)
+set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
 # configuration of default path
 if (NOT DEFINED CONFIG_DIRECTORY)
@@ -16,29 +17,17 @@ configure_file(
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h.in
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h)
 
-# Download automatically, you can also just copy the conan.cmake file
-if (NOT EXISTS "${CMAKE_BINARY_DIR}/conan.cmake")
-    message(STATUS "Downloading conan.cmake from https://github.com/conan-io/cmake-conan")
-    file(DOWNLOAD "https://github.com/conan-io/cmake-conan/raw/v0.15/conan.cmake"
-            "${CMAKE_BINARY_DIR}/conan.cmake")
-endif ()
-
-include(${CMAKE_BINARY_DIR}/conan.cmake)
-
-conan_cmake_run(REQUIRES fmt/7.1.2 tinyxml2/7.1.0 magic_enum/0.7.0 libpq/13.1
-        OPTIONS
-        ${CONAN_EXTRA_OPTIONS}
-        BASIC_SETUP
-        CMAKE_TARGETS # individual targets to link to
-        BUILD
-        missing)
-
 # dependencies
 find_library(LOG4CXX NAMES log4cxx)
 find_path(LOG4CXX_INCLUDES NAMES log4cxx/log4cxx.h)
 
 find_package(Threads REQUIRED)
+find_package(fmt REQUIRED)
+find_package(tinyxml2 REQUIRED)
+find_package(PostgreSQL REQUIRED)
+find_package(magic_enum REQUIRED)
 
+# build
 FILE(GLOB_RECURSE headers include/*.h)
 FILE(GLOB_RECURSE sources *.cpp)
 
@@ -48,10 +37,10 @@ target_include_directories(base_library PUBLIC
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>"
         PRIVATE
-        "$<BUILD_INTERFACE:${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
-        "$<INSTALL_INTERFACE:${CONAN_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
+        "$<BUILD_INTERFACE:${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
+        "$<INSTALL_INTERFACE:${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         )
-target_link_libraries(base_library PRIVATE ${LOG4CXX} CONAN_PKG::fmt CONAN_PKG::tinyxml2 CONAN_PKG::libpq Threads::Threads)
+target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets

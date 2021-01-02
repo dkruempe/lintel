@@ -1,0 +1,12 @@
+[requires]
+catch2/2.13.0
+fmt/7.1.3
+spdlog/1.8.2
+tinyxml2/7.1.0
+magic_enum/0.7.2
+libpq/13.1
+
+[generators]
+cmake_find_package
+
+[options]
