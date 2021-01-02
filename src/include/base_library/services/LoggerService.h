@@ -23,21 +23,25 @@ class LoggerService {
   constexpr static std::string_view templateMarker = "template.log";
 
   // variables
-  const std::string &processName;
+  const std::string processName;
   log4cxx::LoggerPtr logger;
 
-  void configure();
+  void configure(bool consoleOnly);
 
   static LoggerService *instance;
   static std::once_flag initInstanceFlag;
 
  public:
   explicit LoggerService(const std::string &processName);
+
+  explicit LoggerService();
+
   ~LoggerService();
 
   static LoggerService &getOrCreate(const std::string &processName);
   static LoggerService &get();
   static void initSingleton(const std::string &processName);
+  static void init();
 
   template <class... Args>
   void info(const std::string &function, const std::string &file, int line,

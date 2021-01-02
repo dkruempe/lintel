@@ -15,13 +15,22 @@ std::once_flag LoggerService::initInstanceFlag;
 LoggerService::LoggerService(const std::string &processName)
     : processName(processName),
       logger(log4cxx::Logger::getLogger(processName)) {
-  configure();
+  configure(false);
+}
+
+LoggerService::LoggerService() : processName("DUMMY"), logger(log4cxx::Logger::getLogger(processName)) {
+  configure(true);
 }
 
 LoggerService::~LoggerService() = default;
 
-void LoggerService::configure() {
+void LoggerService::configure(bool consoleOnly) {
   bool createError = false;
+
+  if (consoleOnly) {
+    log4cxx::BasicConfigurator::configure();
+    return;
+  }
 
   FileService templateFile(std::string(CONFIG_DIRECTORY) + "/" +
                            std::string(templateConfig));
@@ -69,9 +78,13 @@ LoggerService &LoggerService::getOrCreate(const std::string &processName) {
 
 LoggerService &LoggerService::get() {
   if (instance == nullptr) {
-    throw LoggerServiceNotInitialized();
+    std::call_once(initInstanceFlag, &LoggerService::init);
+    LOG_FATAL("LoggerService not initialized. Please call Marco DECLARE_LOGGER");
   }
   return *instance;
+}
+void LoggerService::init() {
+  instance = new LoggerService();
 }
 void LoggerService::initSingleton(const std::string &processName) {
   instance = new LoggerService(processName);

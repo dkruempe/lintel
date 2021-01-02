@@ -10,7 +10,7 @@ void NoPropertyRepository::save(
 PropertyRepositoryType NoPropertyRepository::getType() {
   return PropertyRepositoryType::DEFAULT;
 }
-bool NoPropertyRepository::isMutable() { return false; }
+bool NoPropertyRepository::isMutable() { return true; }
 
 DataStorage NoPropertyRepository::getDataStorage() {
   return DataStorage(getType(), "");

@@ -36,7 +36,7 @@ TEST_CASE("test example service with properties") {
   std::shared_ptr<PropertyService> propertyService = std::make_shared<PropertyService>(repositories, std::make_shared<ProcessName>("testProcess"), abstractServiceInterfaces);
   PropertyExampleClass propertyExampleClass(propertyService);
   REQUIRE(propertyService->allProperties().size() == 2);
-  REQUIRE(propertyExampleClass.enable->getValue() == false);
+  REQUIRE(!propertyExampleClass.enable->getValue());
   auto propertyBase = propertyService->get(
       "enable", "testInstance", "PropertyExampleClass", "testProcess");
   std::shared_ptr<Property<bool>> property =
