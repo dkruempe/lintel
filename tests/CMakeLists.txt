@@ -19,20 +19,20 @@ find_package(magic_enum REQUIRED)
 # property Test
 ADD_EXECUTABLE(propertyTest models/PropertyTest.cpp)
 target_compile_features(propertyTest PUBLIC cxx_std_17)
-target_include_directories(propertyTest PRIVATE ${LOG4CXX_INCLUDES})
-target_link_libraries(propertyTest PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads)
+target_include_directories(propertyTest PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(propertyTest PRIVATE kruempelmann::base_library Catch2::Catch2 ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads)
 ADD_TEST(NAME BaseLibrary.PropertyTest COMMAND propertyTest)
 
 # propertyFactory Test
 ADD_EXECUTABLE(propertyFactoryTest factories/PropertyFactoryTest.cpp)
 target_compile_features(propertyFactoryTest PUBLIC cxx_std_17)
-target_include_directories(propertyFactoryTest PRIVATE ${LOG4CXX_INCLUDES})
-target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads)
+target_include_directories(propertyFactoryTest PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library Catch2::Catch2 ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads)
 ADD_TEST(NAME BaseLibrary.PropertyFactoryTest COMMAND propertyFactoryTest)
 
 # property Service Test
 ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
 target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
-target_include_directories(propertyServiceTest PRIVATE ${LOG4CXX_INCLUDES})
-target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads)
+target_include_directories(propertyServiceTest PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2 ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads)
 ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
