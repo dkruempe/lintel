@@ -1,24 +1,15 @@
 #ifndef CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
 #define CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
 
-#include "Connection.h"
+#include "base_library/persistence/Connection.h"
+#include "base_library/persistence/Result.h"
+#include "base_library/persistence/postgresql/PreparedStatement.h"
 
 namespace db {
-/**
- * format of prepared statement
- * example:
- * insert into table (..,..) values(?,?);
- *
- * => ? will be replace automatically with $1 and $2
- * => algorithm will automatically count the number of parameters
- */
 class PreparedStatement {
 private:
-  bool closed = false;
   const Connection &connection;
-  const int32_t nParams;
-  const std::string statementName;
-  const std::string statement;
+  std::unique_ptr<postgresql::PreparedStatement> preparedStatement = nullptr;
 
 public:
   static int32_t initNParams(const std::string &tempStatement);
@@ -41,4 +32,5 @@ public:
   void close();
 };
 } // namespace db
+
 #endif // CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H

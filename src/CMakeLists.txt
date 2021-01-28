@@ -26,6 +26,7 @@ find_package(fmt REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(magic_enum REQUIRED)
+find_package(SQLite3 REQUIRED)
 
 # build
 FILE(GLOB_RECURSE headers include/*.h)
@@ -40,7 +41,7 @@ target_include_directories(base_library PUBLIC
         "$<BUILD_INTERFACE:${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         "$<INSTALL_INTERFACE:${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         )
-target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads)
+target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3 Threads::Threads)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets

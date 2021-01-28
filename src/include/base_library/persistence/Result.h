@@ -1,20 +1,21 @@
 #ifndef CPP_BASE_LIBRARY_RESULT_H
 #define CPP_BASE_LIBRARY_RESULT_H
 
-#include <libpq-fe.h>
+#include "base_library/persistence/Connection.h"
+#include "base_library/persistence/postgresql/Result.h"
 #include <string>
 
 namespace db {
 class Result {
 private:
-  PGresult *res;
+  std::shared_ptr<postgresql::Result> result = nullptr;
 
 public:
-  explicit Result(PGresult *res);
+  Result() = default;
 
   ~Result();
 
-  [[nodiscard]] bool isState(ExecStatusType status) const;
+  explicit Result(std::shared_ptr<postgresql::Result> result);
 
   [[nodiscard]] std::string getValue(int row, int attribute) const;
 

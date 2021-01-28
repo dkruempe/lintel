@@ -5,6 +5,7 @@ spdlog/1.8.2
 tinyxml2/7.1.0
 magic_enum/0.7.2
 libpq/13.1
+sqlite3/3.34.0
 
 [generators]
 cmake_find_package

@@ -3,13 +3,13 @@
 #include <base_library/persistence/Statement.h>
 #include <base_library/persistence/Transaction.h>
 
-#include <iostream>
 #include <chrono>
+#include <iostream>
 
 void selectExample() {
   std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(connInfo);
+    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result =
@@ -32,9 +32,9 @@ void selectExample() {
 }
 
 void deleteExample() {
-  std::string connInfo = "dbname = keyValueStore";
+  std::string connInfo = "dbname=keyValueStore";
   try {
-    db::Connection connection(connInfo);
+    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result =
@@ -47,7 +47,7 @@ void deleteExample() {
 void insertExample() {
   std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(connInfo);
+    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
     db::Transaction transaction(connection);
     db::PreparedStatement preparedStatement(
         connection, "INSERT INTO KEY_VALUE_STORE (key, value) values (?,?)",
@@ -63,10 +63,11 @@ void insertExample() {
 void insertStatementExample() {
   std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(connInfo);
+    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
     db::Transaction transaction(connection);
     db::Statement statement(connection);
-    statement.execute("INSERT INTO KEY_VALUE_STORE (key, value) values (?,?)", {"Example", "User"});
+    statement.execute("INSERT INTO KEY_VALUE_STORE (key, value) values (?,?)",
+                      {"Example", "User"});
   } catch (db::SQLException &exception) {
     fprintf(stderr, "%s", exception.what());
   }
@@ -77,7 +78,7 @@ void insertPerformanceTest() {
   std::string connInfo = "dbname = keyValueStore";
   int32_t numOfTelegrams = 1000000;
   try {
-    db::Connection connection(connInfo);
+    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
     db::Transaction transaction(connection);
     int32_t statementBatchSize = 100;
     int32_t batchSize = 1000;
@@ -117,7 +118,7 @@ void insertPerformanceTest() {
 void transActionTest() {
   std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(connInfo);
+    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     query.execute(

@@ -1,46 +1,36 @@
 #include "base_library/persistence/Statement.h"
 
-#include <algorithm>
+#include "base_library/persistence/postgresql/Statement.h"
 
 namespace db {
-Statement::Statement(const Connection &connection) : connection(connection) {}
+Statement::Statement(const Connection &connection) : connection(connection) {
+  switch (connection.connectionType) {
+  case SQLite:
+    break;
+  case PostgreSQL:
+    statement = std::make_unique<postgresql::Statement>(*connection.conn);
+    break;
+  }
+}
 
 Result Statement::execute(const std::string &query) {
-  Result result = connection.execute(query);
-  if (!result.isState(PGRES_TUPLES_OK) && !result.isState(PGRES_COMMAND_OK)) {
-    throw SQLException("Statement failed: " + connection.getErrorMessage());
+  switch (connection.connectionType) {
+  case SQLite:
+    break;
+  case PostgreSQL:
+    return Result(statement->execute(query));
   }
-  return result;
+  return Result();
 }
+Result Statement::execute(const std::string &query,
+                          const std::vector<std::string> &params) {
+  switch (connection.connectionType) {
 
-int32_t Statement::initNParams(const std::string &tempStatement) {
-  return std::count_if(tempStatement.begin(), tempStatement.end(),
-                       [](char temp) { return temp == '?'; });
-}
-
-std::string Statement::initStatement(const std::string &tempStatement) {
-  std::string temp;
-  int32_t counter = 0;
-  for (const char &iter : tempStatement) {
-    if (iter == '?') {
-      temp += "$" + std::to_string(++counter);
-    } else {
-      temp += iter;
-    }
+  case SQLite:
+    break;
+  case PostgreSQL:
+    return Result(statement->execute(query, params));
   }
-  return temp;
-}
-
-Result Statement::execute(const std::string &query, const std::vector<std::string> &params) {
-  const std::string &statement = initStatement(query);
-  const int32_t nParams = initNParams(query);
-  if (nParams != params.size()) {
-    throw SQLException("nParams != params.size() => check statement or parameters");
-  }
-  Result result = connection.executeParameters(statement, Parameters(params));
-  if (!result.isState(PGRES_TUPLES_OK) && !result.isState(PGRES_COMMAND_OK)) {
-    throw SQLException("Statement failed: " + connection.getErrorMessage());
-  }
-  return result;
+  return Result();
 }
 } // namespace db

@@ -1,48 +1,27 @@
 #ifndef CPP_BASE_LIBRARY_CONNECTION_H
 #define CPP_BASE_LIBRARY_CONNECTION_H
+#include <memory>
 
-#include "Parameter.h"
-#include "Result.h"
-#include "base_library/exceptions/SQLException.h"
-
-#include <libpq-fe.h>
-#include <string>
-#include <vector>
+#include "base_library/persistence/postgresql/Connection.h"
 
 namespace db {
+enum ConnectionType { SQLite, PostgreSQL };
+
 class Transaction;
 class Statement;
 class PreparedStatement;
 
 class Connection {
 private:
-  PGconn *conn;
+  std::shared_ptr<postgresql::Connection> conn = nullptr;
+  ConnectionType connectionType;
   friend class Transaction;
   friend class Statement;
   friend class PreparedStatement;
-
-  [[nodiscard]] Result execute(const std::string &statement) const;
-
-  [[nodiscard]] Result executeParameters(const std::string &statement,
-                                         const Parameters &parameters) const;
-
-  [[nodiscard]] Result prepareStatement(const std::string &statementName,
-                                        const std::string &query,
-                                        int32_t nParams) const;
-
-  [[nodiscard]] Result
-  executePreparedStatement(const std::string &statementName,
-                           const std::string &query, int32_t nParams,
-                           const Parameters &parameters) const;
-
-  [[nodiscard]] std::string getErrorMessage() const;
-
 public:
-  explicit Connection(const std::string &connectionInfo);
+  explicit Connection(ConnectionType connectionType, const std::string &connectionInfo);
 
-  Connection(Connection &connection) = delete;
-
-  ~Connection();
+  explicit Connection(Connection &connection) = delete;
 };
 } // namespace db
 

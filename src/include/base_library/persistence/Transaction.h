@@ -1,20 +1,16 @@
 #ifndef CPP_BASE_LIBRARY_TRANSACTION_H
 #define CPP_BASE_LIBRARY_TRANSACTION_H
 
-#include "Connection.h"
-#include "base_library/exceptions/SQLException.h"
-#include <string>
+#include "base_library/persistence/Connection.h"
+#include "base_library/persistence/postgresql/Transaction.h"
 
 namespace db {
 class Transaction {
 private:
   const Connection &connection;
-  bool finished = false;
-
-  void checkState(const Result &result);
-
+  std::unique_ptr<postgresql::Transaction> transaction = nullptr;
 public:
-  explicit Transaction(const Connection &tempConnection);
+  explicit Transaction(const Connection &connection);
 
   Transaction(Transaction &transaction) = delete;
 
@@ -27,8 +23,6 @@ public:
   void rollback();
 
   void rollbackTo(const std::string &savepoint) const;
-
-  ~Transaction();
 };
 } // namespace db
 

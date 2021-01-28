@@ -1,23 +1,30 @@
 #include "base_library/persistence/Result.h"
 
+#include <utility>
+
 namespace db {
-Result::Result(PGresult *res) : res(res) {}
-
-Result::~Result() {
-  if (res != nullptr) {
-    PQclear(res);
+std::string Result::getValue(int row, int attribute) const {
+  if (result != nullptr) {
+    return result->getValue(row, attribute);
   }
+  return std::string();
 }
 
-[[nodiscard]] bool Result::isState(ExecStatusType status) const {
-  return PQresultStatus(res) == status;
+int Result::getNumOfAttributes() const {
+  if (result != nullptr) {
+    return result->getNumOfAttributes();
+  }
+  return 0;
 }
 
-[[nodiscard]] std::string Result::getValue(int row, int attribute) const {
-  return PQgetvalue(res, row, attribute);
+int Result::getSize() const {
+  if (result != nullptr) {
+    return result->getSize();
+  }
+  return 0;
 }
 
-[[nodiscard]] int Result::getNumOfAttributes() const { return PQnfields(res); }
-
-[[nodiscard]] int Result::getSize() const { return PQntuples(res); }
+Result::Result(std::shared_ptr<postgresql::Result> result)
+    : result(std::move(result)) {}
+Result::~Result() = default;
 } // namespace db
