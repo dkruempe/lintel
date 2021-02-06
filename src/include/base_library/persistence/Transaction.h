@@ -3,12 +3,14 @@
 
 #include "base_library/persistence/Connection.h"
 #include "base_library/persistence/postgresql/Transaction.h"
+#include "base_library/persistence/sqlite3/Transaction.h"
 
 namespace db {
 class Transaction {
 private:
   const Connection &connection;
   std::unique_ptr<postgresql::Transaction> transaction = nullptr;
+  std::unique_ptr<sqlite::Transaction> transactionSQLite = nullptr;
 public:
   explicit Transaction(const Connection &connection);
 

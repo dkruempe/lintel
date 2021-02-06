@@ -5,6 +5,7 @@ db::Connection::Connection(ConnectionType connectionType,
     : connectionType(connectionType) {
   switch (connectionType) {
   case SQLite:
+    connSQLite = std::make_shared<sqlite::Connection>(connectionInfo);
     break;
   case PostgreSQL:
     conn = std::make_shared<postgresql::Connection>(connectionInfo);

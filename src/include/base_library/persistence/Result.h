@@ -3,12 +3,14 @@
 
 #include "base_library/persistence/Connection.h"
 #include "base_library/persistence/postgresql/Result.h"
+#include "base_library/persistence/sqlite3/Result.h"
 #include <string>
 
 namespace db {
 class Result {
 private:
   std::shared_ptr<postgresql::Result> result = nullptr;
+  std::shared_ptr<sqlite::Result> resultSQLite = nullptr;
 
 public:
   Result() = default;
@@ -16,6 +18,8 @@ public:
   ~Result();
 
   explicit Result(std::shared_ptr<postgresql::Result> result);
+
+  explicit Result(std::shared_ptr<sqlite::Result> result);
 
   [[nodiscard]] std::string getValue(int row, int attribute) const;
 

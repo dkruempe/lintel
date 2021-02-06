@@ -4,12 +4,14 @@
 #include "base_library/persistence/Connection.h"
 #include "base_library/persistence/Result.h"
 #include "base_library/persistence/postgresql/PreparedStatement.h"
+#include "base_library/persistence/sqlite3/PreparedStatement.h"
 
 namespace db {
 class PreparedStatement {
 private:
   const Connection &connection;
   std::unique_ptr<postgresql::PreparedStatement> preparedStatement = nullptr;
+  std::unique_ptr<sqlite::PreparedStatement> preparedStatementSQLite = nullptr;
 
 public:
   static int32_t initNParams(const std::string &tempStatement);

@@ -1,3 +1,6 @@
+
+#include <base_library/persistence/sqlite3/Result.h>
+
 #include "base_library/persistence/postgresql/Result.h"
 
 namespace postgresql {

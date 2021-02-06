@@ -6,6 +6,7 @@ Transaction::Transaction(const Connection &connection)
     : connection(connection) {
   switch (this->connection.connectionType) {
   case SQLite:
+    transactionSQLite = std::make_unique<sqlite::Transaction>(*this->connection.connSQLite);
     break;
   case PostgreSQL:
     transaction = std::make_unique<postgresql::Transaction>(*this->connection.conn);
@@ -16,6 +17,7 @@ Transaction::Transaction(const Connection &connection)
 void Transaction::start() {
   switch (connection.connectionType) {
   case SQLite:
+    transactionSQLite->start();
     break;
   case PostgreSQL:
     transaction->start();
@@ -26,6 +28,7 @@ void Transaction::start() {
 void Transaction::commit() {
   switch (connection.connectionType) {
   case SQLite:
+    transactionSQLite->commit();
     break;
   case PostgreSQL:
     transaction->commit();
@@ -36,6 +39,7 @@ void Transaction::commit() {
 void Transaction::rollbackTo(const std::string &savepoint) const {
   switch (connection.connectionType) {
   case SQLite:
+    transactionSQLite->rollbackTo(savepoint);
     break;
   case PostgreSQL:
     transaction->rollbackTo(savepoint);
@@ -46,6 +50,7 @@ void Transaction::rollbackTo(const std::string &savepoint) const {
 void Transaction::rollback() {
   switch (connection.connectionType) {
   case SQLite:
+    transactionSQLite->rollback();
     break;
   case PostgreSQL:
     transaction->rollback();
@@ -56,6 +61,7 @@ void Transaction::rollback() {
 void Transaction::save(const std::string &savepoint) const {
   switch (connection.connectionType) {
   case SQLite:
+    transactionSQLite->save(savepoint);
     break;
   case PostgreSQL:
     transaction->save(savepoint);

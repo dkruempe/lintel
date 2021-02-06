@@ -9,6 +9,7 @@ PreparedStatement::PreparedStatement(const Connection &connection,
     : connection(connection) {
   switch (connection.connectionType) {
   case SQLite:
+    preparedStatementSQLite = std::make_unique<sqlite::PreparedStatement>(*connection.connSQLite, statement, statementName);
     break;
   case PostgreSQL:
     preparedStatement = std::make_unique<postgresql::PreparedStatement>(
@@ -20,6 +21,7 @@ PreparedStatement::PreparedStatement(const Connection &connection,
 db::Result PreparedStatement::execute(const std::vector<std::string> &params) {
   switch (connection.connectionType) {
   case SQLite:
+    preparedStatementSQLite->execute(params);
     break;
   case PostgreSQL:
     preparedStatement->execute(params);
@@ -37,6 +39,7 @@ std::string PreparedStatement::initStatement(const std::string &tempStatement) {
 void PreparedStatement::close() {
   switch (connection.connectionType) {
   case SQLite:
+    preparedStatementSQLite->close();
     break;
   case PostgreSQL:
     preparedStatement->close();

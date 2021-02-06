@@ -3,6 +3,7 @@
 #include <memory>
 
 #include "base_library/persistence/postgresql/Connection.h"
+#include "base_library/persistence/sqlite3/Connection.h"
 
 namespace db {
 enum ConnectionType { SQLite, PostgreSQL };
@@ -14,6 +15,8 @@ class PreparedStatement;
 class Connection {
 private:
   std::shared_ptr<postgresql::Connection> conn = nullptr;
+  std::shared_ptr<sqlite::Connection> connSQLite = nullptr;
+
   ConnectionType connectionType;
   friend class Transaction;
   friend class Statement;
