@@ -325,7 +325,7 @@ void testSQLite() {
 }
 
 int main(int argc, char *argv[]) {
-  // testPostgres();
+  testPostgres();
   testSQLite();
   return 0;
 }
