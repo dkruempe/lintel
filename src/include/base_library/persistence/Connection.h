@@ -11,6 +11,7 @@ enum ConnectionType { SQLite, PostgreSQL };
 class Transaction;
 class Statement;
 class PreparedStatement;
+class Notify;
 
 class Connection {
 private:
@@ -21,8 +22,11 @@ private:
   friend class Transaction;
   friend class Statement;
   friend class PreparedStatement;
+  friend class Notify;
+
 public:
-  explicit Connection(ConnectionType connectionType, const std::string &connectionInfo);
+  explicit Connection(ConnectionType connectionType,
+                      const std::string &connectionInfo);
 
   explicit Connection(Connection &connection) = delete;
 };

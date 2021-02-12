@@ -12,6 +12,7 @@ namespace sqlite {
 class Transaction;
 class Statement;
 class PreparedStatement;
+class Notify;
 
 class Connection {
 private:
@@ -19,6 +20,7 @@ private:
   friend class Transaction;
   friend class Statement;
   friend class PreparedStatement;
+  friend class Notify;
 
   std::map<std::string, sqlite3_stmt *> preparedStatements;
 

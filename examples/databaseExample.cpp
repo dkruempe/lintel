@@ -1,8 +1,8 @@
 #include <base_library/persistence/Connection.h>
+#include <base_library/persistence/Notify.h>
 #include <base_library/persistence/PreparedStatement.h>
 #include <base_library/persistence/Statement.h>
 #include <base_library/persistence/Transaction.h>
-#include <base_library/persistence/sqlite3/Connection.h>
 
 #include <chrono>
 #include <iostream>
@@ -114,10 +114,29 @@ void insertExampleSQLite() {
   }
 }
 
+void testNotify() {
+  std::string connInfo = "dbname = keyValueStore";
+  try {
+    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
+    std::function<void()> func = [&]() {
+      std::cout << "VALUE CHANGED" << std::endl;
+    };
+    db::Notify notify(connection, func, "my_channel");
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+  } catch (db::SQLException &exception) {
+    fprintf(stderr, "%s", exception.what());
+  }
+}
+
 void insertStatementExample() {
   std::string connInfo = "dbname = keyValueStore";
   try {
     db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
+    db::Connection connectionNotify(db::ConnectionType::PostgreSQL, connInfo);
+    std::function<void()> func = [&]() {
+      std::cout << "VALUE CHANGED" << std::endl;
+    };
+    db::Notify notify(connectionNotify, func, "key_value_store_channel");
     db::Transaction transaction(connection);
     db::Statement statement(connection);
     statement.execute("INSERT INTO KEY_VALUE_STORE (key, value) values (?,?)",
@@ -131,6 +150,10 @@ void insertStatementExampleSQLite() {
   std::string connInfo = "/Users/dkruempe/Documents/dev/plc/test.db";
   try {
     db::Connection connection(db::ConnectionType::SQLite, connInfo);
+    std::function<void()> func = [&]() {
+      std::cout << "NOTIFY DATA CHANGED" << std::endl;
+    };
+    db::Notify notify(connection, func, "key_value");
     db::Transaction transaction(connection);
     db::Statement statement(connection);
     statement.execute("INSERT INTO KEY_VALUE (key, value) values (?,?)",
@@ -271,8 +294,7 @@ void transActionTestSQLite() {
     transaction.commit(); // finished transaction
 
     transaction.start();
-    query.execute(
-        "INSERT INTO key_value (key, value) values('Oma', 'Opa')");
+    query.execute("INSERT INTO key_value (key, value) values('Oma', 'Opa')");
     transaction.rollback(); // finished transaction
 
     transaction.start();

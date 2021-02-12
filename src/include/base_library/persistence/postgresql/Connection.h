@@ -14,6 +14,7 @@ namespace postgresql {
 class Transaction;
 class Statement;
 class PreparedStatement;
+class Notify;
 
 class Connection {
 private:
@@ -21,6 +22,7 @@ private:
   friend class Transaction;
   friend class Statement;
   friend class PreparedStatement;
+  friend class Notify;
 
   [[nodiscard]] std::shared_ptr<Result> execute(const std::string &statement) const;
 
