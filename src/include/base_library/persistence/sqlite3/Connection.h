@@ -4,6 +4,7 @@
 #include <map>
 #include <sqlite3.h>
 #include <string>
+#include <memory>
 
 #include "base_library/persistence/Parameter.h"
 #include "base_library/persistence/sqlite3/Result.h"

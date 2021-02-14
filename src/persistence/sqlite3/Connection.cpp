@@ -2,6 +2,7 @@
 #include "base_library/exceptions/SQLException.h"
 
 #include <functional>
+#include <cstring>
 
 namespace sqlite {
 Connection::Connection(const std::string &connectionInfo) : db(nullptr) {

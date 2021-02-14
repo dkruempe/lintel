@@ -1,5 +1,6 @@
 #include "base_library/persistence/postgresql/Notify.h"
 #include <iostream>
+#include <string.h>
 
 namespace postgresql {
 Notify::Notify(Connection &connection, std::string tableName,
