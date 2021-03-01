@@ -3,21 +3,23 @@
 #include <utility>
 
 #include "base_library/config.h"
+#include "base_library/configuration/PropertyComponent.h"
+#include "base_library/configuration/PropertyEntry.h"
 
-void FilePropertyRepository::save(std::shared_ptr<PropertyBase> property) {
-  std::vector<std::shared_ptr<PropertyBase>> vector = {property};
-  save(vector);
-}
+void FilePropertyRepository::save(std::shared_ptr<PropertyBase> property) {}
 
 void FilePropertyRepository::save(
-    const std::vector<std::shared_ptr<PropertyBase>> &properties) {
-  FileService file(configurationPath);
-  std::string newContent = configSerializationStrategy->serialize(properties);
-  file.writeToFile(newContent, true);
-}
+    const std::vector<std::shared_ptr<PropertyBase>> &properties) {}
 
 std::vector<std::shared_ptr<PropertyBase>> FilePropertyRepository::awake() {
-  return configSerializationStrategy->deserialize(configurationPath);
+  auto entries = configuration->configurationOf<PropertyComponent>();
+  std::vector<std::shared_ptr<PropertyBase>> properties;
+  properties.reserve(entries.size());
+  for (auto &&entry : entries) {
+    properties.push_back(
+        std::static_pointer_cast<PropertyEntry>(entry)->getProperty());
+  }
+  return properties;
 }
 
 PropertyRepositoryType FilePropertyRepository::getType() {
@@ -25,11 +27,12 @@ PropertyRepositoryType FilePropertyRepository::getType() {
 }
 
 DataStorage FilePropertyRepository::getDataStorage() {
-  return DataStorage(getType(), configurationPath.filename());
+  // unused only needed for mutable repositories
+  return DataStorage(getType(), "");
 }
 
-bool FilePropertyRepository::isMutable() { return true; }
+bool FilePropertyRepository::isMutable() { return false; }
+
 FilePropertyRepository::FilePropertyRepository(
-    std::shared_ptr<ConfigSerializationStrategy> configSerializationStrategy)
-    : configurationPath(std::string(CONFIG_DIRECTORY) + std::filesystem::path::preferred_separator + "bootstrap.xml"),
-      configSerializationStrategy(std::move(configSerializationStrategy)) {}
+    std::shared_ptr<Configuration> configuration)
+    : configuration(std::move(configuration)) {}

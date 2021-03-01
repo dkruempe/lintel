@@ -3,26 +3,28 @@
 
 #include <ostream>
 #include <sstream>
+#include <utility>
 
 #include "base_library/models/PropertyRepositoryType.h"
 
 class DataStorage {
- private:
+private:
   PropertyRepositoryType type = PropertyRepositoryType::DEFAULT;
   std::string extraInformation;
 
- public:
-  DataStorage(const PropertyRepositoryType& type,
-              const std::string& extraInformation)
-      : type(type), extraInformation(extraInformation) {}
+public:
+  DataStorage(const PropertyRepositoryType &type, std::string extraInformation)
+      : type(type), extraInformation(std::move(extraInformation)) {}
 
   DataStorage() = default;
 
-  [[nodiscard]] const PropertyRepositoryType& getType() const { return type; }
-  [[nodiscard]] const std::string& getExtraInformation() const { return extraInformation; }
+  [[nodiscard]] const PropertyRepositoryType &getType() const { return type; }
+  [[nodiscard]] const std::string &getExtraInformation() const {
+    return extraInformation;
+  }
 
-  friend std::ostream& operator<<(std::ostream& os,
-                                  const DataStorage& storage) {
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const DataStorage &storage) {
     os << storage.type << "(" << storage.extraInformation << ")";
     return os;
   }
@@ -34,4 +36,4 @@ class DataStorage {
   }
 };
 
-#endif  // PLC_DATASTORAGE_H
+#endif // PLC_DATASTORAGE_H

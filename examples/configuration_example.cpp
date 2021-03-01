@@ -1,95 +1,106 @@
-#include <base_library/factories/PropertyFactory.h>
-#include <base_library/models/PropertyBase.h>
-#include <base_library/repositories/FilePropertyRepository.h>
-#include <base_library/services/PropertyService.h>
-#include <base_library/strategies/XMLConfigSerializationStrategy.h>
-
-#include <iostream>
-#include <memory>
+#include <ostream>
+#include <tinyxml2.h>
 #include <utility>
-#include <vector>
 
-std::vector<std::shared_ptr<PropertyBase>> createProperties() {
-  std::vector<std::shared_ptr<PropertyBase>> properties;
-  for (int k = 0; k < 2; k++) {
-    for (int j = 0; j < 5; j++) {
-      for (int i = 0; i < 5; i++) {
-        for (int l = 0; l < 5; l++) {
-          properties.emplace_back(PropertyFactory::Create(
-              "name" + std::to_string(i) + "_" + std::to_string(j) + "_" +
-                  std::to_string(k) + "_" + std::to_string(l),
-              std::to_string(k), std::to_string(j), std::to_string(i),
-              "std::string", "anna_" + std::to_string(i + j * k * (l + 1)), "",
-              true));
-        }
-      }
-    }
-  }
-  return properties;
-}
+#include "base_library/configuration/Component.h"
+#include "base_library/configuration/Configuration.h"
+#include "base_library/configuration/PropertyComponent.h"
+#include "base_library/configuration/PropertyEntry.h"
+#include "base_library/services/LoggerService.h"
+#include "base_library/utils/TypeName.h"
 
-void testSerializeDeserialize() {
-  auto properties = createProperties();
-  std::sort(properties.begin(), properties.end(),
-            [](const std::shared_ptr<PropertyBase> &rhs,
-               std::shared_ptr<PropertyBase> &lhs) { return *rhs < *lhs; });
-  std::cout << properties.size() << std::endl;
-  for (auto &property : properties) {
-    std::cout << property->getProcessName() << ": " << property->getClassName()
-              << " " << property->getInstanceName() << " "
-              << property->toString() << std::endl;
-  }
-  XMLConfigSerializationStrategy xmlConfigSerializationStrategy;
-  std::string content = xmlConfigSerializationStrategy.serialize(properties);
-  auto newProperties = xmlConfigSerializationStrategy.deserialize(content);
-  std::cout << "DESERIALIZE: size " << newProperties.size() << std::endl;
-  for (auto &property : newProperties) {
-    std::cout << property->getProcessName() << ": " << property->getClassName()
-              << " " << property->getInstanceName() << " "
-              << property->toString() << std::endl;
-  }
-}
+// Environment
+#define ENVIRONMENT_ROOT "Environment"
+#define ENVIRONMENT_NAME "name"
+#define ENVIRONMENT_VALUE "value"
 
-class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
- public:
-  explicit PropertyExampleClass(
-      const std::shared_ptr<PropertyService> &propertyService,
-      std::string instanceName, std::string processName)
-      : AbstractService(std::move(processName), std::move(instanceName)) {
-    LOAD_PROPERTIES();
-  }
+class EnvironmentConfigurationEntry : public Entry {
+private:
+  std::string name;
+  std::string value;
 
-  void printProperty() const {
-    std::cout << *extra << std::endl;
-    std::cout << *string << std::endl;
-    std::cout << *enable << std::endl;
+public:
+  EnvironmentConfigurationEntry(std::string_view configurationParserComponent,
+                                std::string name, std::string value)
+      : Entry(configurationParserComponent), name(std::move(name)),
+        value(std::move(value)) {}
+
+  [[nodiscard]] const std::string &getName() const { return name; }
+  [[nodiscard]] const std::string &getValue() const { return value; }
+
+  friend std::ostream &operator<<(std::ostream &os,
+                                  const EnvironmentConfigurationEntry &entry) {
+    os << " name: " << entry.name << " value: " << entry.value;
+    return os;
   }
-  DEFINE_PROPERTY(extra, int32_t, 4711, "", true);
-  DEFINE_PROPERTY(string, std::string, "Ich bin eine Test Property", "", true);
-  DEFINE_PROPERTY(enable, bool, false, "", true);
 };
 
-void testPropertyService(std::shared_ptr<ProcessName> processName) {
-  std::shared_ptr<XMLConfigSerializationStrategy>
-      xmlConfigSerializationStrategy =
-          std::make_shared<XMLConfigSerializationStrategy>();
-  std::shared_ptr<FilePropertyRepository> filePropertyRepository =
-      std::make_shared<FilePropertyRepository>(xmlConfigSerializationStrategy);
-  std::vector<std::shared_ptr<PropertyRepository>> repositories(
-      {filePropertyRepository});
-  std::vector<std::shared_ptr<AbstractServiceInterface>> abstractInterfaces = {};
-  std::shared_ptr<PropertyService> propertyService =
-      std::make_shared<PropertyService>(repositories, processName, abstractInterfaces);
-  PropertyExampleClass A(propertyService, "A", processName->getProcessName());
-  PropertyExampleClass B(propertyService, "B", processName->getProcessName());
-  A.printProperty();
-  B.printProperty();
-}
+class EnvironmentConfigurationParserComponent : public Component {
+public:
+  EnvironmentConfigurationParserComponent() : Component("Environments") {}
+
+  std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
+                                            const std::string &fileName,
+                                            const int32_t lineOffset) override {
+    std::vector<std::shared_ptr<Entry>> environments;
+    tinyxml2::XMLDocument document;
+    document.Parse(content.c_str());
+
+    tinyxml2::XMLElement *rootNode =
+        document.FirstChildElement(getConfigRoot().c_str());
+    if (rootNode == nullptr) {
+      return environments;
+    }
+
+    for (tinyxml2::XMLElement *environmentElement =
+             rootNode->FirstChildElement();
+         environmentElement != nullptr;
+         environmentElement = environmentElement->NextSiblingElement()) {
+      if (std::strcmp(environmentElement->Name(), ENVIRONMENT_ROOT) != 0) {
+        continue;
+      }
+      const char *name = environmentElement->Attribute(ENVIRONMENT_NAME);
+      const char *value = environmentElement->Attribute(ENVIRONMENT_VALUE);
+      if (name == nullptr) {
+        LOG_ERROR("name of environemnt is null at {}",
+                  environmentElement->GetLineNum());
+        continue;
+      }
+      if (value == nullptr) {
+        LOG_ERROR("value of environment is null at {}",
+                  environmentElement->GetLineNum());
+        continue;
+      }
+      environments.push_back(std::make_shared<EnvironmentConfigurationEntry>(
+          type_name<EnvironmentConfigurationParserComponent>(), name, value));
+    }
+    return environments;
+  }
+};
 
 int main(int argc, char *argv[]) {
-  std::shared_ptr<ProcessName> processName =
-      std::make_shared<ProcessName>(argc, argv);
-  testPropertyService(processName);
-  testSerializeDeserialize();
+  DECLARE_LOGGER(std::filesystem::path(argv[0]).filename());
+  std::shared_ptr<Component> component = std::make_shared<PropertyComponent>();
+  std::shared_ptr<EnvironmentConfigurationParserComponent> environment =
+      std::make_shared<EnvironmentConfigurationParserComponent>();
+  Configuration configurationParser({component, environment}, "bootstrap");
+  std::vector<std::shared_ptr<Entry>> properties =
+      configurationParser.configurationOf<PropertyComponent>();
+  for (auto &iter : properties) {
+    auto propertyPtr = std::static_pointer_cast<PropertyEntry>(iter);
+    std::stringstream ss;
+    ss << *propertyPtr;
+    LOG_INFO("{}", ss.str());
+  }
+  std::vector<std::shared_ptr<Entry>> environments =
+      configurationParser
+          .configurationOf<EnvironmentConfigurationParserComponent>();
+  for (auto &iter : environments) {
+    auto environemntPtr =
+        std::static_pointer_cast<EnvironmentConfigurationEntry>(iter);
+    std::stringstream ss;
+    ss << *environemntPtr;
+    LOG_INFO("{}", ss.str());
+  }
   return 0;
 }

@@ -1,11 +1,10 @@
 #ifndef LOGGING_FILEPROPERTYREPOSITORY_H
 #define LOGGING_FILEPROPERTYREPOSITORY_H
 
+#include "base_library/configuration/Configuration.h"
+#include "base_library/models/DataStorage.h"
 #include "base_library/repositories/PropertyRepository.h"
 #include "base_library/services/ExecutorService.h"
-#include "base_library/services/FileService.h"
-#include "base_library/strategies/ConfigSerializationStrategy.h"
-#include "base_library/models/DataStorage.h"
 
 /**
  * implementation of file repository for properties
@@ -15,9 +14,8 @@
  * we
  */
 class FilePropertyRepository : public PropertyRepository {
- public:
-
-  explicit FilePropertyRepository(std::shared_ptr<ConfigSerializationStrategy> configSerializationStrategy);
+public:
+  explicit FilePropertyRepository(std::shared_ptr<Configuration> configuration);
 
   /**
    * returns basic data storage information of repository
@@ -52,19 +50,16 @@ class FilePropertyRepository : public PropertyRepository {
    * save properties to repository
    * @param properties
    */
-  void save(
-      const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
+  void
+  save(const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
 
   /**
    * load all properties from repository and return result
    */
   std::vector<std::shared_ptr<PropertyBase>> awake() override;
 
- private:
-  // members of class
-  std::string content = "";
-  const std::filesystem::path configurationPath;
-  std::shared_ptr<ConfigSerializationStrategy> configSerializationStrategy;
+private:
+  std::shared_ptr<Configuration> configuration;
 };
 
-#endif  // LOGGING_FILEPROPERTYREPOSITORY_H
+#endif // LOGGING_FILEPROPERTYREPOSITORY_H
