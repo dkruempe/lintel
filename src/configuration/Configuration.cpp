@@ -3,10 +3,9 @@
 #include "base_library/services/FileService.h"
 #include "base_library/services/LoggerService.h"
 
-
+#include <algorithm>
 #include <tinyxml2.h>
 #include <utility>
-#include <algorithm>
 
 Configuration::Configuration(
     const std::vector<std::shared_ptr<Component>> &components,
@@ -19,10 +18,8 @@ Configuration::Configuration(
 }
 
 std::map<std::string, std::shared_ptr<Component>> Configuration::initialize(
-    const std::vector<std::shared_ptr<Component>>
-        &tempComponents) {
-  std::map<std::string, std::shared_ptr<Component>>
-      components;
+    const std::vector<std::shared_ptr<Component>> &tempComponents) {
+  std::map<std::string, std::shared_ptr<Component>> components;
   for (auto &component : tempComponents) {
     components.insert({component->getConfigRoot(), component});
   }
@@ -39,9 +36,15 @@ void Configuration::loadConfiguration() {
   tinyxml2::XMLDocument document;
   document.Parse(content.c_str());
 
-  for (tinyxml2::XMLElement *iter = document.FirstChildElement(); iter != nullptr;
-       iter = iter->NextSiblingElement()) {
-    std::string componentName (iter->Name());
+  tinyxml2::XMLElement *rootElement =
+      document.FirstChildElement("Configuration");
+  if (rootElement == nullptr) {
+    return;
+  }
+
+  for (tinyxml2::XMLElement *iter = rootElement->FirstChildElement();
+       iter != nullptr; iter = iter->NextSiblingElement()) {
+    std::string componentName(iter->Name());
     LOG_INFO("deserialize of {}", componentName);
     if (componentName.empty()) {
       LOG_ERROR("no component name avaialble at {}", iter->GetLineNum());
@@ -58,7 +61,8 @@ void Configuration::loadConfiguration() {
       continue;
     }
 
-    auto entries = found->second->parse(printer.CStr(), file.getName(), lineOffset);
+    auto entries =
+        found->second->parse(printer.CStr(), file.getName(), lineOffset);
     for (auto &iter : entries) {
       configurationEntries.push_back(iter);
     }

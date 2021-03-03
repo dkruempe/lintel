@@ -8,6 +8,7 @@
 PropertyComponent::Shapes PropertyComponent::shape{};
 
 PropertyComponent::PropertyComponent() : Component(shape.CONFIG_ROOT) {}
+
 std::vector<std::shared_ptr<Entry>>
 PropertyComponent::parse(const std::string &content,
                          const std::string &fileName,
