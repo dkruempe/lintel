@@ -36,13 +36,13 @@ FILE(GLOB_RECURSE sources *.cpp)
 add_library(base_library SHARED ${headers} ${sources})
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
-        "$<INSTALL_INTERFACE:include>"
+        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include;${OpenSSL_INCLUDES}>"
+        "$<INSTALL_INTERFACE:include;${OpenSSL_INCLUDES}>"
         PRIVATE
         "$<BUILD_INTERFACE:${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         "$<INSTALL_INTERFACE:${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES}>"
         )
-target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3 Threads::Threads OpenSSL::Crypto)
+target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3 Threads::Threads OpenSSL::SSL OpenSSL::Crypto)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets

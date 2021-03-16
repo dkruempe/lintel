@@ -4,10 +4,19 @@
 #include "base_library/configuration/Configuration.h"
 #include "base_library/configuration/ConnectionComponent.h"
 #include "base_library/configuration/ConnectionEntry.h"
+#include "base_library/configuration/Cryption.h"
 #include "base_library/configuration/PropertyComponent.h"
 #include "base_library/configuration/PropertyEntry.h"
 #include "base_library/services/LoggerService.h"
 #include "base_library/utils/TypeName.h"
+
+void encryptTest() {
+  Cryption cryption;
+  std::string cipherText = cryption.encryption("Dominik AAAAAAAd");
+  LOG_INFO("encryption: {}", cipherText);
+  std::string plainText = cryption.decryption(cipherText);
+  LOG_INFO("decryption: {}", plainText);
+}
 
 int main(int argc, char *argv[]) {
   DECLARE_LOGGER(std::filesystem::path(argv[0]).filename());
@@ -31,5 +40,7 @@ int main(int argc, char *argv[]) {
     ss << *environemntPtr;
     LOG_INFO("{}", ss.str());
   }
+
+  encryptTest();
   return 0;
 }
