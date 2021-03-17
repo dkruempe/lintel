@@ -1,6 +1,7 @@
 cmake-*
 build*
 .idea
+.cache
 log
 cfg
 include/config.h
