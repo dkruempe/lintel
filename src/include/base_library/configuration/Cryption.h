@@ -14,7 +14,7 @@ private:
   std::array<unsigned char, AES_BLOCK_SIZE> iv = {
       56, 57, 72, 118, 78, 79, 83, 108, 65, 122, 109, 88, 105, 98, 52, 75};
 
-  void handleErrors();
+  static void handleErrors();
 
 public:
   Cryption();

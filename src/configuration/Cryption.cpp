@@ -1,14 +1,12 @@
 #include "base_library/configuration/Cryption.h"
-#include "base_library/services/LoggerService.h"
 
 #include <algorithm>
-#include <cstdio>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
 Cryption::Cryption() { ERR_print_errors_fp(stderr); }
 
-void Cryption::handleErrors(void) {
+void Cryption::handleErrors() {
   ERR_print_errors_fp(stderr);
   abort();
 }
@@ -17,7 +15,7 @@ std::string Cryption::encryption(const std::string &plainText) {
   EVP_CIPHER_CTX *ctx;
   int len;
   int ciphertext_len;
-  int plaintext_len = plainText.length();
+  int plaintext_len = static_cast<int>(plainText.length());
   unsigned char ciphertext[plainText.length() * 2];
 
   /* Create and initialise the context */
@@ -32,7 +30,7 @@ std::string Cryption::encryption(const std::string &plainText) {
    * IV size for *most* modes is the same as the block size. For AES this
    * is 128 bits
    */
-  if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, &key[0], &iv[0])) {
+  if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &key[0], &iv[0])) {
     handleErrors();
   }
 
@@ -74,7 +72,7 @@ std::string Cryption::decryption(const std::string &cipherText) {
   int len;
   int plaintext_len;
   unsigned char ciphertext[cipherText.length()];
-  int ciphertext_len = cipherText.length();
+  int ciphertext_len = static_cast<int>(cipherText.length());
   unsigned char plaintext[cipherText.length()];
 
   std::copy(cipherText.begin(), cipherText.end(), ciphertext);
@@ -91,7 +89,7 @@ std::string Cryption::decryption(const std::string &cipherText) {
    * IV size for *most* modes is the same as the block size. For AES this
    * is 128 bits
    */
-  if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL, &key[0], &iv[0])) {
+  if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &key[0], &iv[0])) {
     handleErrors();
   }
 
