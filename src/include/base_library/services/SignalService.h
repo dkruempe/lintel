@@ -23,6 +23,8 @@ public:
     std::unique_lock<std::mutex> lock(mutex);
     condition.wait(lock);
   }
+
+  static void raiseSignal(int32_t signal) { raise(signal); }
 };
 
 #endif // CPP_BASE_LIBRARY_SIGNALSERVICE_H

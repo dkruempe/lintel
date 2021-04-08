@@ -52,10 +52,10 @@ target_include_directories(executor_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_
 target_link_libraries(executor_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads)
 
 # configuration example
-add_executable(configuration_example property_example.cpp)
-target_compile_features(configuration_example PUBLIC cxx_std_17)
-target_include_directories(configuration_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(configuration_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads)
+add_executable(property_example property_example.cpp)
+target_compile_features(property_example PUBLIC cxx_std_17)
+target_include_directories(property_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(property_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads)
 
 # spdlog example
 add_executable(spdlogExample spdlogExample.cpp)
@@ -87,7 +87,13 @@ target_include_directories(databaseExample PRIVATE ${LOG4CXX_INCLUDES} ${magic_e
 target_link_libraries(databaseExample PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads)
 
 # configuration parser example
-add_executable(configurationParserExample configuration_example.cpp)
-target_compile_features(configurationParserExample PUBLIC cxx_std_17)
-target_include_directories(configurationParserExample PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(configurationParserExample PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads)
+add_executable(configuration_example configuration_example.cpp)
+target_compile_features(configuration_example PUBLIC cxx_std_17)
+target_include_directories(configuration_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(configuration_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads)
+
+# cli application example
+add_executable(cli_example cli_example.cpp)
+target_compile_features(cli_example PUBLIC cxx_std_17)
+target_include_directories(cli_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(cli_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads)
