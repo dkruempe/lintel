@@ -2,16 +2,13 @@
 #include <base_library/services/LoggerService.h>
 #include <base_library/services/SignalService.h>
 #include <csignal>
-#include <cstdio>
 #include <fmt/color.h>
 #include <fmt/core.h>
-#include <fmt/format.h>
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <string>
 #include <thread>
-
+#include <utility>
 class CommandLineComponent {
 private:
   std::string name;
@@ -19,7 +16,7 @@ private:
 
 public:
   CommandLineComponent(std::string name, std::string alias)
-      : name(name), alias(alias) {}
+      : name(std::move(name)), alias(std::move(alias)) {}
 
   std::string getName() { return name; }
 
@@ -63,7 +60,7 @@ private:
   std::map<std::string, std::shared_ptr<CommandLineComponent>> componentMap;
   std::shared_ptr<CommandLineComponent> current = nullptr;
 
-  std::map<std::string, std::shared_ptr<CommandLineComponent>>
+  static std::map<std::string, std::shared_ptr<CommandLineComponent>>
   build(const std::vector<std::shared_ptr<CommandLineComponent>> &menuEntries) {
     std::map<std::string, std::shared_ptr<CommandLineComponent>> map;
     for (auto &menuEntry : menuEntries) {
@@ -74,8 +71,8 @@ private:
   }
 
 public:
-  AbstractCommandLineMenu(
-      std::vector<std::shared_ptr<CommandLineComponent>> components)
+  explicit AbstractCommandLineMenu(
+      std::vector<std::shared_ptr<CommandLineComponent>> &&components)
       : components(components), componentMap(build(components)) {}
 
   void onShowMenu() {
@@ -143,7 +140,7 @@ private:
       {"?", COMMAND_HELP},    {"help", COMMAND_HELP}, {"m", COMMAND_MENU},
       {"menu", COMMAND_MENU}, {"e", COMMAND_EXIT},    {"exit", COMMAND_EXIT}};
 
-  void onComponentCommand(std::string command) {
+  void onComponentCommand(const std::string &command) {
     auto found = commands.find(command);
     if (found == commands.end()) {
       menu.onCommand(command);
@@ -165,7 +162,7 @@ private:
     }
   }
 
-  void onStart() {
+  static void onStart() {
     std::string startInformation =
         "Welcome to the Command Line Interface:\n"
         "Try >help< or >?< for a list of commands\n"
@@ -246,8 +243,10 @@ private:
       if (found == commands.end()) {
         bool success = menu.onMenu(temp);
         if (!success) {
-          fmt::print(fg(fmt::color::red) | fmt::emphasis::bold,
-                     "ERROR: Invalid command '{}'! Please use the help function\n", temp);
+          fmt::print(
+              fg(fmt::color::red) | fmt::emphasis::bold,
+              "ERROR: Invalid command '{}'! Please use the help function\n",
+              temp);
         }
       }
       switch (found->second) {
@@ -266,9 +265,9 @@ private:
   }
 
 public:
-  CommandLineApplication(
-      std::vector<std::shared_ptr<CommandLineComponent>> components)
-      : menu(components), thread([&]() { start(); }) {}
+  explicit CommandLineApplication(
+      std::vector<std::shared_ptr<CommandLineComponent>> &&components)
+      : menu(std::move(components)), thread([&]() { start(); }) {}
 
   ~CommandLineApplication() {
     running.store(false);
@@ -277,7 +276,7 @@ public:
 };
 
 int main(int argc, char *argv[]) {
-  DECLARE_LOGGER(basename(argv[0]));
+  DECLARE_LOGGER(argv[0]);
   CommandLineApplication cli({std::make_shared<EnvironmentComponent>()});
   SignalService::registerHooks({SIGINT, SIGABRT, SIGTERM});
   SignalService::waitForUserInterrupt();

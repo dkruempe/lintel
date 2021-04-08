@@ -38,7 +38,7 @@ class LoggerService {
 
   ~LoggerService();
 
-  static LoggerService &getOrCreate(const std::string &processName);
+  static LoggerService &getOrCreate(const std::string &argv);
   static LoggerService &get();
   static void initSingleton(const std::string &processName);
   static void init();
@@ -91,7 +91,7 @@ class LoggerService {
         log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
   }
 };
-#define DECLARE_LOGGER(processName) LoggerService::getOrCreate(processName)
+#define DECLARE_LOGGER(argv) LoggerService::getOrCreate(argv)
 #define LOG_INFO(message, ...)                                             \
   LoggerService::get().info(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
                             ##__VA_ARGS__)

@@ -68,7 +68,8 @@ void LoggerService::configure(bool consoleOnly) {
   }
 }
 
-LoggerService &LoggerService::getOrCreate(const std::string &processName) {
+LoggerService &LoggerService::getOrCreate(const std::string &argv) {
+  std::string processName = std::filesystem::path(argv).filename();
   if (!processName.empty()) {
     std::call_once(initInstanceFlag, &LoggerService::initSingleton,
                    processName);
