@@ -11,8 +11,8 @@ ConnectionComponent::ConnectionComponent() : Component(shape.CONFIG_ROOT) {}
 
 std::vector<std::shared_ptr<Entry>>
 ConnectionComponent::parse(const std::string &content,
-                         const std::string &fileName,
-                         const int32_t lineOffset) {
+                           const std::string &fileName,
+                           const int32_t lineOffset) {
   std::vector<std::shared_ptr<Entry>> databaseEntries;
   tinyxml2::XMLDocument document;
   document.Parse(content.c_str());
@@ -34,7 +34,8 @@ ConnectionComponent::parse(const std::string &content,
         propertyElement->Attribute(shape.CONNECTION_CONNECTION.c_str());
     const char *password =
         propertyElement->Attribute(shape.CONNECTION_PASSWORD.c_str());
-    const char *type = propertyElement->Attribute(shape.CONNECTION_TYPE.c_str());
+    const char *type =
+        propertyElement->Attribute(shape.CONNECTION_TYPE.c_str());
     const char *userName =
         propertyElement->Attribute(shape.CONNECTION_USER_NAME.c_str());
 
@@ -60,7 +61,8 @@ ConnectionComponent::parse(const std::string &content,
       continue;
     }
     databaseEntries.push_back(std::make_shared<ConnectionEntry>(
-        type_name<ConnectionComponent>(), connection, userName, password, type));
+        type_name<ConnectionComponent>(), connection, userName, password,
+        type));
   }
   return databaseEntries;
 }

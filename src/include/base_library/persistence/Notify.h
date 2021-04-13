@@ -1,9 +1,9 @@
 #ifndef CPP_BASE_LIBRARY_NOTIFY_H
 #define CPP_BASE_LIBRARY_NOTIFY_H
 
+#include "base_library/persistence/Connection.h"
 #include "base_library/persistence/postgresql/Notify.h"
 #include "base_library/persistence/sqlite3/Notify.h"
-#include "base_library/persistence/Connection.h"
 #include <memory>
 
 namespace db {

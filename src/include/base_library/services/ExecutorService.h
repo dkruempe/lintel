@@ -29,13 +29,13 @@ public:
   template <class F, class... Args>
   std::future<typename std::result_of<
       typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
-  execute(F &&f, Args &&... args);
+  execute(F &&f, Args &&...args);
 };
 
 template <class F, class... Args>
 std::future<typename std::result_of<
     typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
-ExecutorService::execute(F &&f, Args &&... args) {
+ExecutorService::execute(F &&f, Args &&...args) {
   auto func = std::make_shared<
       std::packaged_task<typename std::result_of<typename std::decay<F>::type(
           typename std::decay<Args>::type...)>::type()>>(

@@ -14,33 +14,33 @@
 #include "base_library/services/AbstractService.h"
 #include "base_library/services/PropertyService.h"
 
-#define DEFINE_PROPERTY(name, type, defaultValue, description, runtime)     \
-  std::shared_ptr<Property<type>> name =                                    \
-      registerProperty<type>(std::string(#name), defaultValue, description, \
+#define DEFINE_PROPERTY(name, type, defaultValue, description, runtime)        \
+  std::shared_ptr<Property<type>> name =                                       \
+      registerProperty<type>(std::string(#name), defaultValue, description,    \
                              runtime, __FILE__, __LINE__);
-#define LOAD_PROPERTIES()                     \
-  if (propertyService != nullptr) {           \
-    propertyService->getOrCreate(properties); \
+#define LOAD_PROPERTIES()                                                      \
+  if (propertyService != nullptr) {                                            \
+    propertyService->getOrCreate(properties);                                  \
   }
 
 class PropertyService {
- private:
+private:
   std::shared_ptr<PropertyRepository> propertyRepository;
   // variables
   std::map<std::string, std::shared_ptr<PropertyBase>>
-      properties;  // identifier (name_instanceName_processName), Property
+      properties; // identifier (name_instanceName_processName), Property
   // functions
   static std::string createIdentifier(const std::string &name,
                                       const std::string &instanceName,
                                       const std::string &className,
                                       const std::string &processName);
-  static std::map<std::string, std::shared_ptr<PropertyBase>> init(
-      const std::vector<std::shared_ptr<PropertyRepository>> &repoProperties);
-  static std::shared_ptr<PropertyRepository> searchRuntimeRepository(
-      const std::vector<std::shared_ptr<PropertyRepository>>
-          &propertyRepository);
+  static std::map<std::string, std::shared_ptr<PropertyBase>>
+  init(const std::vector<std::shared_ptr<PropertyRepository>> &repoProperties);
+  static std::shared_ptr<PropertyRepository>
+  searchRuntimeRepository(const std::vector<std::shared_ptr<PropertyRepository>>
+                              &propertyRepository);
 
- public:
+public:
   PropertyService(const std::vector<std::shared_ptr<PropertyRepository>>
                       &propertyRepositories,
                   const std::shared_ptr<ProcessName> &processName,
@@ -48,15 +48,13 @@ class PropertyService {
                       &abstractServices);
 
   template <class T>
-  std::shared_ptr<Property<T>> getOrCreate(const std::string &name,
-                                           const std::string &instanceName,
-                                           const std::string &className,
-                                           const std::string &processName,
-                                           const std::string &description,
-                                           bool runtimeChange,
-                                           const T &defaultValue = T());
-  void getOrCreate(
-      const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
+  std::shared_ptr<Property<T>>
+  getOrCreate(const std::string &name, const std::string &instanceName,
+              const std::string &className, const std::string &processName,
+              const std::string &description, bool runtimeChange,
+              const T &defaultValue = T());
+  void
+  getOrCreate(const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
   std::shared_ptr<PropertyBase> &get(const std::string &name,
                                      const std::string &instanceName,
                                      const std::string &className,
@@ -108,4 +106,4 @@ void PropertyService::changeValueOf(
   }
 }
 
-#endif  // LOGGING_PROPERTYSERVICE_H
+#endif // LOGGING_PROPERTYSERVICE_H

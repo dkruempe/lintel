@@ -2,9 +2,9 @@
 #define CPP_BASE_LIBRARY_SQLITE_CONNECTION_H
 
 #include <map>
+#include <memory>
 #include <sqlite3.h>
 #include <string>
-#include <memory>
 
 #include "base_library/persistence/Parameter.h"
 #include "base_library/persistence/sqlite3/Result.h"

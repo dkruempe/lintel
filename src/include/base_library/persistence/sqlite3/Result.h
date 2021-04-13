@@ -10,7 +10,7 @@ private:
   std::vector<std::vector<std::string>> entries;
 
 public:
-  void add(const std::vector<std::string>& entry);
+  void add(const std::vector<std::string> &entry);
 
   [[nodiscard]] std::string getValue(int row, int attribute) const;
 

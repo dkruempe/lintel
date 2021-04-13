@@ -14,9 +14,9 @@ std::ostream &operator<<(std::ostream &os, const ConnectionEntry &entry) {
      << " type: " << entry.type;
   return os;
 }
-ConnectionEntry::ConnectionEntry(std::string_view component, std::string connection,
-                             std::string userName, std::string password,
-                             std::string type)
+ConnectionEntry::ConnectionEntry(std::string_view component,
+                                 std::string connection, std::string userName,
+                                 std::string password, std::string type)
     : Entry(component), connection(std::move(connection)),
       userName(std::move(userName)), password(std::move(password)),
       type(std::move(type)) {}

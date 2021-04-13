@@ -7,12 +7,13 @@
 #include "base_library/services/AbstractService.h"
 
 class InitializeService {
- private:
+private:
   std::vector<std::shared_ptr<AbstractServiceInterface>> abstractServices;
 
- public:
+public:
   explicit InitializeService(
-      const std::vector<std::shared_ptr<AbstractServiceInterface>>& abstractServices);
+      const std::vector<std::shared_ptr<AbstractServiceInterface>>
+          &abstractServices);
 };
 
-#endif  // PLC_INITIALIZESERVICE_H
+#endif // PLC_INITIALIZESERVICE_H

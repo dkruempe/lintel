@@ -18,7 +18,7 @@ public:
   std::shared_ptr<Result> execute(const std::string &query);
 
   std::shared_ptr<Result> execute(const std::string &query,
-                 const std::vector<std::string> &params);
+                                  const std::vector<std::string> &params);
 };
 } // namespace postgresql
 

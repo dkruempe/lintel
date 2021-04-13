@@ -22,6 +22,6 @@ public:
 
   [[nodiscard]] int getSize() const;
 };
-} // namespace db
+} // namespace postgresql
 
 #endif // CPP_BASE_LIBRARY_POSTGRESQL_RESULT_H

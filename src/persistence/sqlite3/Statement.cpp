@@ -7,7 +7,9 @@ std::shared_ptr<Result> Statement::execute(const std::string &query) {
   return connection.execute(query);
 }
 
-std::shared_ptr<Result> Statement::execute(const std::string &query, const std::vector<std::string> &params) {
+std::shared_ptr<Result>
+Statement::execute(const std::string &query,
+                   const std::vector<std::string> &params) {
   return connection.executeParameters(query, db::Parameters(params));
 }
-}
+} // namespace sqlite

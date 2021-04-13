@@ -18,7 +18,8 @@ LoggerService::LoggerService(const std::string &processName)
   configure(false);
 }
 
-LoggerService::LoggerService() : processName("DUMMY"), logger(log4cxx::Logger::getLogger(processName)) {
+LoggerService::LoggerService()
+    : processName("DUMMY"), logger(log4cxx::Logger::getLogger(processName)) {
   configure(true);
 }
 
@@ -80,13 +81,12 @@ LoggerService &LoggerService::getOrCreate(const std::string &argv) {
 LoggerService &LoggerService::get() {
   if (instance == nullptr) {
     std::call_once(initInstanceFlag, &LoggerService::init);
-    LOG_FATAL("LoggerService not initialized. Please call Marco DECLARE_LOGGER");
+    LOG_FATAL(
+        "LoggerService not initialized. Please call Marco DECLARE_LOGGER");
   }
   return *instance;
 }
-void LoggerService::init() {
-  instance = new LoggerService();
-}
+void LoggerService::init() { instance = new LoggerService(); }
 void LoggerService::initSingleton(const std::string &processName) {
   instance = new LoggerService(processName);
 }

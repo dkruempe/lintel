@@ -9,7 +9,8 @@ PreparedStatement::PreparedStatement(const Connection &connection,
     : connection(connection) {
   switch (connection.connectionType) {
   case SQLite:
-    preparedStatementSQLite = std::make_unique<sqlite::PreparedStatement>(*connection.connSQLite, statement, statementName);
+    preparedStatementSQLite = std::make_unique<sqlite::PreparedStatement>(
+        *connection.connSQLite, statement, statementName);
     break;
   case PostgreSQL:
     preparedStatement = std::make_unique<postgresql::PreparedStatement>(

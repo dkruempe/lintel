@@ -24,15 +24,16 @@ private:
   friend class PreparedStatement;
   friend class Notify;
 
-  [[nodiscard]] std::shared_ptr<Result> execute(const std::string &statement) const;
+  [[nodiscard]] std::shared_ptr<Result>
+  execute(const std::string &statement) const;
 
   [[nodiscard]] std::shared_ptr<Result>
   executeParameters(const std::string &statement,
                     const db::Parameters &parameters) const;
 
-  [[nodiscard]] std::shared_ptr<Result> prepareStatement(const std::string &statementName,
-                                        const std::string &query,
-                                        int32_t nParams) const;
+  [[nodiscard]] std::shared_ptr<Result>
+  prepareStatement(const std::string &statementName, const std::string &query,
+                   int32_t nParams) const;
 
   [[nodiscard]] std::shared_ptr<Result>
   executePreparedStatement(const std::string &statementName,

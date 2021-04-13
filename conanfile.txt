@@ -7,6 +7,7 @@ magic_enum/0.7.2
 libpq/13.1
 sqlite3/3.34.0
 openssl/1.1.1j
+boost/1.75.0
 
 [generators]
 cmake_find_package

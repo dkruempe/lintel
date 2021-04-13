@@ -79,9 +79,9 @@ PropertyComponent::parse(const std::string &content,
         propertyName, instanceName, className, processName, propertyType,
         propertyValue, "", false);
 
-    property->setDataStorage(
-        DataStorage(PropertyRepositoryType::FILE_REPOSITORY,
-                    fileName + ":" + std::to_string(lineNumber + lineOffset - 1)));
+    property->setDataStorage(DataStorage(
+        PropertyRepositoryType::FILE_REPOSITORY,
+        fileName + ":" + std::to_string(lineNumber + lineOffset - 1)));
 
     properties.push_back(std::make_shared<PropertyEntry>(
         type_name<PropertyComponent>(), property));

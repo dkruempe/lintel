@@ -18,7 +18,9 @@ private:
   void notify();
 
 public:
-  explicit Notify(Connection &connection, std::function<void()> functionCallBack, std::string tableName);
+  explicit Notify(Connection &connection,
+                  std::function<void()> functionCallBack,
+                  std::string tableName);
 };
 } // namespace sqlite
 

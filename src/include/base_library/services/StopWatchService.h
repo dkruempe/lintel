@@ -7,8 +7,8 @@
 class StopWatchService {
 public:
   /**
-   * @brief constructor for timer. shutdown implies the start or not start of the
-   * timer
+   * @brief constructor for timer. shutdown implies the start or not start of
+   * the timer
    *
    * @param run   variable for choose to start or not start the timer
    * @author      Example User

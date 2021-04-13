@@ -8,7 +8,7 @@
 #include "base_library/models/DataStorage.h"
 
 class PropertyBase {
- private:
+private:
   std::string name;
   std::string instanceName;
   std::string className;
@@ -18,20 +18,17 @@ class PropertyBase {
   const std::string description;
   DataStorage dataStorage;
 
- protected:
+protected:
   PropertyBase(std::string name, std::string instanceName,
                std::string className, std::string processName,
                std::string description, bool runtimeChange)
-      : name(std::move(name)),
-        instanceName(std::move(instanceName)),
-        className(std::move(className)),
-        processName(std::move(processName)),
+      : name(std::move(name)), instanceName(std::move(instanceName)),
+        className(std::move(className)), processName(std::move(processName)),
         identifier(this->name + "_" + this->instanceName + "_" +
                    this->className + "_" + this->processName),
-        runtimeChange(runtimeChange),
-        description(std::move(description)) {}
+        runtimeChange(runtimeChange), description(std::move(description)) {}
 
- public:
+public:
   PropertyBase() = delete;
   [[nodiscard]] virtual std::string toString() = 0;
   [[nodiscard]] virtual std::string getType() const = 0;
@@ -65,8 +62,7 @@ class PropertyBase {
        << ", instanceName:" << base.instanceName
        << ", runtimeChange:" << base.runtimeChange
        << ", description:" << base.description
-       << ", dataStorage:" << base.dataStorage
-       << "}";
+       << ", dataStorage:" << base.dataStorage << "}";
     return os;
   }
 
@@ -93,4 +89,4 @@ class PropertyBase {
   }
 };
 
-#endif  // LOGGING_PROPERTYBASE_H
+#endif // LOGGING_PROPERTYBASE_H

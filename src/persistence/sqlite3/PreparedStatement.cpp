@@ -10,11 +10,13 @@ PreparedStatement::PreparedStatement(Connection &connection,
   connection.prepareStatement(statementName, statement);
 }
 
-std::shared_ptr<Result> PreparedStatement::execute(const std::vector<std::string> &params) {
+std::shared_ptr<Result>
+PreparedStatement::execute(const std::vector<std::string> &params) {
   if (closed) {
-    throw db::SQLException("SQLite: prepared statement is closed => abort execute");
+    throw db::SQLException(
+        "SQLite: prepared statement is closed => abort execute");
   }
-  db::Parameters parameters (params);
+  db::Parameters parameters(params);
   return connection.executePreparedStatement(statementName, parameters);
 }
 

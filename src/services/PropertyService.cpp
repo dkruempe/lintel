@@ -4,9 +4,9 @@
 
 #include "base_library/exceptions/PropertyNotFoundException.h"
 
-std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
-    const std::vector<std::shared_ptr<PropertyRepository>>
-        &propertyRepositories) {
+std::map<std::string, std::shared_ptr<PropertyBase>>
+PropertyService::init(const std::vector<std::shared_ptr<PropertyRepository>>
+                          &propertyRepositories) {
   // sort repositories highest repository first
   std::vector<std::shared_ptr<PropertyRepository>> repositories(
       propertyRepositories);
@@ -22,8 +22,8 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
   // function to add properties to map
   std::function<void(std::vector<std::shared_ptr<PropertyBase>>)>
       addProperties =
-          [&propertiesMap](
-              const std::vector<std::shared_ptr<PropertyBase>> &repoProperties) {
+          [&propertiesMap](const std::vector<std::shared_ptr<PropertyBase>>
+                               &repoProperties) {
             for (const auto &property : repoProperties) {
               auto found = propertiesMap.find(property->getIdentifier());
               if (found != propertiesMap.end()) {
@@ -66,11 +66,14 @@ PropertyService::PropertyService(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
     const std::shared_ptr<ProcessName> &processName,
-    const std::vector<std::shared_ptr<AbstractServiceInterface>> &abstractServices)
+    const std::vector<std::shared_ptr<AbstractServiceInterface>>
+        &abstractServices)
     : propertyRepository(searchRuntimeRepository(propertyRepositories)),
       properties(init(propertyRepositories)) {
-  std::for_each(abstractServices.begin(), abstractServices.end(), [&](const std::shared_ptr<AbstractServiceInterface> &abstractService) {
-            getOrCreate(abstractService->getProperties());
+  std::for_each(
+      abstractServices.begin(), abstractServices.end(),
+      [&](const std::shared_ptr<AbstractServiceInterface> &abstractService) {
+        getOrCreate(abstractService->getProperties());
       });
 }
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
@@ -86,9 +89,10 @@ std::string PropertyService::createIdentifier(const std::string &name,
                                               const std::string &processName) {
   return name + "_" + instanceName + "_" + className + "_" + processName;
 }
-std::shared_ptr<PropertyBase> &PropertyService::get(
-    const std::string &name, const std::string &instanceName,
-    const std::string &className, const std::string &processName) {
+std::shared_ptr<PropertyBase> &
+PropertyService::get(const std::string &name, const std::string &instanceName,
+                     const std::string &className,
+                     const std::string &processName) {
   const std::string &identifier =
       createIdentifier(name, instanceName, className, processName);
   auto found = properties.find(identifier);
@@ -128,7 +132,8 @@ void PropertyService::changeStringValueOf(
   ss << *property;
   LOG_INFO("{} change to {}", ss.str(), value);
   propertyBase->setValueString(value);
-  propertyBase->setDataStorage(DataStorage(propertyRepository->getDataStorage()));
+  propertyBase->setDataStorage(
+      DataStorage(propertyRepository->getDataStorage()));
   if (propertyRepository != nullptr) {
     propertyRepository->save(propertyBase);
   }

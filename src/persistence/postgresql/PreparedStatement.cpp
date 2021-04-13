@@ -27,15 +27,16 @@ PreparedStatement::PreparedStatement(const Connection &connection,
                                      const std::string &statementName)
     : connection(connection), nParams(initNParams(statement)),
       statementName(statementName), statement(initStatement(statement)) {
-  std::shared_ptr<Result> result = connection.prepareStatement(this->statementName,
-                                                     this->statement, nParams);
+  std::shared_ptr<Result> result = connection.prepareStatement(
+      this->statementName, this->statement, nParams);
   if (!result->isState(PGRES_COMMAND_OK)) {
     throw db::SQLException("Prepare of statement '" + statementName +
-                       "' failed: " + connection.getErrorMessage());
+                           "' failed: " + connection.getErrorMessage());
   }
 }
 
-std::shared_ptr<Result> PreparedStatement::execute(const std::vector<std::string> &params) {
+std::shared_ptr<Result>
+PreparedStatement::execute(const std::vector<std::string> &params) {
   if (closed) {
     throw db::SQLException("Prepared Statement '" + statementName + "' closed");
   }
@@ -44,7 +45,7 @@ std::shared_ptr<Result> PreparedStatement::execute(const std::vector<std::string
       statementName, statement, nParams, db::Parameters(params));
   if (!result->isState(PGRES_TUPLES_OK) && !result->isState(PGRES_COMMAND_OK)) {
     throw db::SQLException("Prepared execution failed: " +
-                       connection.getErrorMessage());
+                           connection.getErrorMessage());
   }
   return result;
 }
@@ -57,8 +58,8 @@ void PreparedStatement::close() {
       connection.execute("DEALLOCATE " + statementName);
   if (!result->isState(PGRES_COMMAND_OK)) {
     throw db::SQLException("Closing of prepared statement failed: " +
-                       connection.getErrorMessage());
+                           connection.getErrorMessage());
   }
   closed = true;
 }
-} // namespace db
+} // namespace postgresql

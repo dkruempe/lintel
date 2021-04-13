@@ -10,8 +10,9 @@ private:
 
 public:
   explicit FileServiceIsNotFileException(const std::filesystem::path &path)
-      : path(path), message(fmt::format(
-                        "No Operation possible bc. {} is not a file", path.string())) {}
+      : path(path),
+        message(fmt::format("No Operation possible bc. {} is not a file",
+                            path.string())) {}
 
   [[nodiscard]] const char *what() const noexcept override {
     return message.c_str();

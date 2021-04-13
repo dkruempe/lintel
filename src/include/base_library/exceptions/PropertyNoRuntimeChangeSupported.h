@@ -8,16 +8,18 @@
 #include "base_library/models/PropertyBase.h"
 
 class PropertyNoRuntimeChangeSupported : public std::exception {
- private:
+private:
   std::shared_ptr<PropertyBase> property;
   std::string message;
 
- public:
+public:
   PropertyNoRuntimeChangeSupported() = delete;
 
-  explicit PropertyNoRuntimeChangeSupported(std::shared_ptr<PropertyBase> tempProperty)
+  explicit PropertyNoRuntimeChangeSupported(
+      std::shared_ptr<PropertyBase> tempProperty)
       : property(std::move(tempProperty)),
-        message(fmt::format("{} no runtime change allowed", property->toString())) {}
+        message(fmt::format("{} no runtime change allowed",
+                            property->toString())) {}
 
   [[nodiscard]] const char *what() const noexcept override {
     return message.c_str();

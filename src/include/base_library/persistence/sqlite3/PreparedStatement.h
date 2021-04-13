@@ -20,7 +20,6 @@ private:
   const std::string statementName;
 
 public:
-
   /**
    *
    * @param connection

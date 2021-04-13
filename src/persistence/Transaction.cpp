@@ -6,10 +6,12 @@ Transaction::Transaction(const Connection &connection)
     : connection(connection) {
   switch (this->connection.connectionType) {
   case SQLite:
-    transactionSQLite = std::make_unique<sqlite::Transaction>(*this->connection.connSQLite);
+    transactionSQLite =
+        std::make_unique<sqlite::Transaction>(*this->connection.connSQLite);
     break;
   case PostgreSQL:
-    transaction = std::make_unique<postgresql::Transaction>(*this->connection.conn);
+    transaction =
+        std::make_unique<postgresql::Transaction>(*this->connection.conn);
     break;
   }
 }

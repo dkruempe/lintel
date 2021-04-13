@@ -31,13 +31,17 @@ std::string Statement::initStatement(const std::string &tempStatement) {
   return temp;
 }
 
-std::shared_ptr<Result> Statement::execute(const std::string &query, const std::vector<std::string> &params) {
+std::shared_ptr<Result>
+Statement::execute(const std::string &query,
+                   const std::vector<std::string> &params) {
   const std::string &statement = initStatement(query);
   const int32_t nParams = initNParams(query);
   if (nParams != params.size()) {
-    throw db::SQLException("nParams != params.size() => check statement or parameters");
+    throw db::SQLException(
+        "nParams != params.size() => check statement or parameters");
   }
-  std::shared_ptr<Result> result = connection.executeParameters(statement, db::Parameters(params));
+  std::shared_ptr<Result> result =
+      connection.executeParameters(statement, db::Parameters(params));
   if (!result->isState(PGRES_TUPLES_OK) && !result->isState(PGRES_COMMAND_OK)) {
     throw db::SQLException("Statement failed: " + connection.getErrorMessage());
   }

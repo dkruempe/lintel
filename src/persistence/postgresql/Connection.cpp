@@ -1,16 +1,19 @@
 #include "base_library/persistence/postgresql/Connection.h"
 
 namespace postgresql {
-[[nodiscard]] std::shared_ptr<Result> Connection::execute(const std::string &statement) const {
+[[nodiscard]] std::shared_ptr<Result>
+Connection::execute(const std::string &statement) const {
   return std::make_shared<Result>(PQexec(conn, statement.c_str()));
 }
 
-std::shared_ptr<Result> Connection::executeParameters(const std::string &statement,
-                                     const db::Parameters &parameters) const {
+std::shared_ptr<Result>
+Connection::executeParameters(const std::string &statement,
+                              const db::Parameters &parameters) const {
   const std::vector<const char *> &params = parameters.getParameters();
   const std::vector<int32_t> &paramLengths = parameters.getParametersLengths();
-  return std::make_shared<Result>(PQexecParams(conn, statement.c_str(), params.size(), nullptr,
-                             &params[0], &paramLengths[0], nullptr, 0));
+  return std::make_shared<Result>(
+      PQexecParams(conn, statement.c_str(), params.size(), nullptr, &params[0],
+                   &paramLengths[0], nullptr, 0));
 }
 
 [[nodiscard]] std::shared_ptr<Result>
@@ -26,8 +29,9 @@ Connection::executePreparedStatement(const std::string &statementName,
                                      const db::Parameters &parameters) const {
   const std::vector<const char *> &params = parameters.getParameters();
   const std::vector<int32_t> &paramLengths = parameters.getParametersLengths();
-  return std::make_shared<Result>(PQexecPrepared(conn, statementName.c_str(), nParams, &params[0],
-                               &paramLengths[0], nullptr, 0));
+  return std::make_shared<Result>(PQexecPrepared(conn, statementName.c_str(),
+                                                 nParams, &params[0],
+                                                 &paramLengths[0], nullptr, 0));
 }
 
 [[nodiscard]] std::string Connection::getErrorMessage() const {
@@ -37,7 +41,8 @@ Connection::executePreparedStatement(const std::string &statementName,
 Connection::Connection(const std::string &connectionInfo)
     : conn(PQconnectdb(connectionInfo.c_str())) {
   if (PQstatus(conn) != CONNECTION_OK) {
-    throw db::SQLException("Connection to database failed: " + getErrorMessage());
+    throw db::SQLException("Connection to database failed: " +
+                           getErrorMessage());
   }
 }
 

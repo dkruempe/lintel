@@ -6,7 +6,8 @@ namespace db {
 Statement::Statement(const Connection &connection) : connection(connection) {
   switch (connection.connectionType) {
   case SQLite:
-    statementSQLite = std::make_unique<sqlite::Statement>(*connection.connSQLite);
+    statementSQLite =
+        std::make_unique<sqlite::Statement>(*connection.connSQLite);
     break;
   case PostgreSQL:
     statement = std::make_unique<postgresql::Statement>(*connection.conn);

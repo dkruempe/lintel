@@ -42,15 +42,17 @@ std::string XMLConfigSerializationStrategy::serialize(
   document.Print(&printer);
   return std::string(printer.CStr());
 }
-std::vector<std::shared_ptr<PropertyBase>> XMLConfigSerializationStrategy::deserialize(const std::filesystem::path &path) {
-  FileService file (path);
+std::vector<std::shared_ptr<PropertyBase>>
+XMLConfigSerializationStrategy::deserialize(const std::filesystem::path &path) {
+  FileService file(path);
   if (!file.exists()) {
     return {};
   }
   return deserialize(file.getName(), file.readFile());
 }
 std::vector<std::shared_ptr<PropertyBase>>
-XMLConfigSerializationStrategy::deserialize(const std::string &fileName, const std::string &content) {
+XMLConfigSerializationStrategy::deserialize(const std::string &fileName,
+                                            const std::string &content) {
   std::vector<std::shared_ptr<PropertyBase>> properties;
   tinyxml2::XMLDocument document;
   document.Parse(content.c_str());
@@ -82,7 +84,9 @@ XMLConfigSerializationStrategy::deserialize(const std::string &fileName, const s
     auto property = PropertyFactory::Create(
         propertyName, instanceName, className, processName, propertyType,
         propertyValue, "", false);
-    property->setDataStorage(DataStorage(PropertyRepositoryType::FILE_REPOSITORY, fileName + ":" + std::to_string(propertyElement->GetLineNum())));
+    property->setDataStorage(DataStorage(
+        PropertyRepositoryType::FILE_REPOSITORY,
+        fileName + ":" + std::to_string(propertyElement->GetLineNum())));
     properties.push_back(property);
   }
   return properties;

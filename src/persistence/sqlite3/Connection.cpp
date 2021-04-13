@@ -1,8 +1,8 @@
 #include "base_library/persistence/sqlite3/Connection.h"
 #include "base_library/exceptions/SQLException.h"
 
-#include <functional>
 #include <cstring>
+#include <functional>
 
 namespace sqlite {
 Connection::Connection(const std::string &connectionInfo) : db(nullptr) {

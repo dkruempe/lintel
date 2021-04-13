@@ -21,21 +21,18 @@
  */
 class Configuration {
 private:
-  std::map<std::string, std::shared_ptr<Component>>
-      components;
+  std::map<std::string, std::shared_ptr<Component>> components;
   std::vector<std::shared_ptr<Entry>> configurationEntries;
   std::filesystem::path configurationFile;
 
   void loadConfiguration();
 
   static std::map<std::string, std::shared_ptr<Component>>
-  initialize(const std::vector<std::shared_ptr<Component>>
-                 &tempComponents);
+  initialize(const std::vector<std::shared_ptr<Component>> &tempComponents);
 
 public:
   explicit Configuration(
-      const std::vector<std::shared_ptr<Component>>
-          &components,
+      const std::vector<std::shared_ptr<Component>> &components,
       const std::string &configurationFileName);
 
   template <typename COMPONENT>

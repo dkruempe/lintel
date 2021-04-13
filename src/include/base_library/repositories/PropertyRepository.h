@@ -4,13 +4,13 @@
 #include <memory>
 #include <vector>
 
-#include "base_library/models/PropertyRepositoryType.h"
 #include "base_library/models/DataStorage.h"
+#include "base_library/models/PropertyRepositoryType.h"
 
 class PropertyBase;
 
 class PropertyRepository {
- public:
+public:
   PropertyRepository() = default;
 
   /**
@@ -28,8 +28,8 @@ class PropertyRepository {
   /**
    * save properties to repository
    */
-  virtual void save(
-      const std::vector<std::shared_ptr<PropertyBase>> &properties) = 0;
+  virtual void
+  save(const std::vector<std::shared_ptr<PropertyBase>> &properties) = 0;
 
   /**
    * save property to repository
@@ -42,4 +42,4 @@ class PropertyRepository {
   virtual std::vector<std::shared_ptr<PropertyBase>> awake() = 0;
 };
 
-#endif  // LOGGING_PROPERTYREPOSITORY_H
+#endif // LOGGING_PROPERTYREPOSITORY_H
