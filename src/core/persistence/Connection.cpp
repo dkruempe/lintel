@@ -4,10 +4,10 @@ db::Connection::Connection(ConnectionType connectionType,
                            const std::string &connectionInfo)
     : connectionType(connectionType) {
   switch (connectionType) {
-  case SQLite:
+  case ConnectionType::SQLite:
     connSQLite = std::make_shared<sqlite::Connection>(connectionInfo);
     break;
-  case PostgreSQL:
+  case ConnectionType::PostgreSQL:
     conn = std::make_shared<postgresql::Connection>(connectionInfo);
     break;
   default:

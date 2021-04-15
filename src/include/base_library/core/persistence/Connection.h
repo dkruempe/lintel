@@ -4,9 +4,9 @@
 
 #include "base_library/core/persistence/postgresql/Connection.h"
 #include "base_library/core/persistence/sqlite3/Connection.h"
+#include "base_library/core/persistence/ConnectionType.h"
 
 namespace db {
-enum ConnectionType { SQLite, PostgreSQL };
 
 class Transaction;
 class Statement;
