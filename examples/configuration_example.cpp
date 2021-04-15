@@ -1,14 +1,14 @@
 #include <utility>
 
+#include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/TypeName.h"
 #include "base_library/features/base/configuration/Component.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
 #include "base_library/features/base/configuration/ConnectionEntry.h"
 #include "base_library/features/base/configuration/Cryption.h"
-#include "base_library/features/base/configuration/PropertyComponent.h"
-#include "base_library/features/base/configuration/PropertyEntry.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/TypeName.h"
+#include "base_library/features/property/configuration/PropertyComponent.h"
+#include "base_library/features/property/configuration/PropertyEntry.h"
 
 void encryptTest() {
   Cryption cryption;

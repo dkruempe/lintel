@@ -1,7 +1,7 @@
-#include "base_library/features/base/configuration/PropertyComponent.h"
-#include "base_library/features/base/configuration/PropertyEntry.h"
+#include "base_library/features/property/configuration/PropertyComponent.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/TypeName.h"
+#include "base_library/features/property/configuration/PropertyEntry.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
 #include "base_library/features/property/models/PropertyRepositoryType.h"
 

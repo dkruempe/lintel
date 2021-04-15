@@ -1,9 +1,9 @@
 #include <base_library/features/base/configuration/Configuration.h>
-#include <base_library/features/base/configuration/PropertyComponent.h>
+#include <base_library/features/property/configuration/PropertyComponent.h>
 #include <base_library/features/property/factories/PropertyFactory.h>
 #include <base_library/features/property/models/PropertyBase.h>
-#include <base_library/features/property/services/PropertyService.h>
 #include <base_library/features/property/repositories/FilePropertyRepository.h>
+#include <base_library/features/property/services/PropertyService.h>
 #include <base_library/features/property/strategies/XMLConfigSerializationStrategy.h>
 
 #include <iostream>

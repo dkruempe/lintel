@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_PROPERTYCOMPONENT_H
 #define CPP_BASE_LIBRARY_PROPERTYCOMPONENT_H
 
-#include "Component.h"
+#include "base_library/features/base/configuration/Component.h"
 #include <tinyxml2.h>
 
 class PropertyComponent : public Component {

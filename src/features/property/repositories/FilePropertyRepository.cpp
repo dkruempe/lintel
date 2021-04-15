@@ -2,8 +2,8 @@
 
 #include <utility>
 
-#include "base_library/features/base/configuration/PropertyComponent.h"
-#include "base_library/features/base/configuration/PropertyEntry.h"
+#include "base_library/features/property/configuration/PropertyComponent.h"
+#include "base_library/features/property/configuration/PropertyEntry.h"
 
 void FilePropertyRepository::save(std::shared_ptr<PropertyBase> property) {}
 

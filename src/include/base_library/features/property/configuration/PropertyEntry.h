@@ -4,7 +4,7 @@
 #include <memory>
 #include <ostream>
 
-#include "Entry.h"
+#include "base_library/features/base/configuration/Entry.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
 
 /**
