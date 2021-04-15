@@ -35,6 +35,9 @@ public:
       const std::vector<std::shared_ptr<Component>> &components,
       const std::string &configurationFileName);
 
+  // constructor for testing purposes
+  explicit Configuration(std::vector<std::shared_ptr<Entry>> entries);
+
   template <typename COMPONENT>
   std::vector<std::shared_ptr<Entry>> configurationOf() {
     const std::string_view nameOfComponent = type_name<COMPONENT>();

@@ -2,7 +2,6 @@
 
 #include <utility>
 
-#include "base_library/config.h"
 #include "base_library/configuration/PropertyComponent.h"
 #include "base_library/configuration/PropertyEntry.h"
 

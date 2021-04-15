@@ -68,3 +68,5 @@ void Configuration::loadConfiguration() {
     }
   }
 }
+Configuration::Configuration(std::vector<std::shared_ptr<Entry>> entries)
+    : configurationEntries(std::move(entries)) {}

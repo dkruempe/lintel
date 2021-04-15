@@ -43,7 +43,7 @@ PropertyComponent::parse(const std::string &content,
     const char *propertyValue =
         propertyElement->Attribute(shape.PROPERTY_VALUE.c_str());
 
-    int32_t lineNumber = propertyElement->GetLineNum();
+    int32_t lineNumber = propertyElement->GetLineNum() + lineOffset - 1;
 
     if (processName == nullptr) {
       LOG_ERROR("process name at line {} is null", lineNumber);
@@ -81,7 +81,7 @@ PropertyComponent::parse(const std::string &content,
 
     property->setDataStorage(DataStorage(
         PropertyRepositoryType::FILE_REPOSITORY,
-        fileName + ":" + std::to_string(lineNumber + lineOffset - 1)));
+        fileName + ":" + std::to_string(lineNumber)));
 
     properties.push_back(std::make_shared<PropertyEntry>(
         type_name<PropertyComponent>(), property));

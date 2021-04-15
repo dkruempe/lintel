@@ -98,13 +98,3 @@ add_executable(cli_example cli_example.cpp)
 target_compile_features(cli_example PUBLIC cxx_std_17)
 target_include_directories(cli_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
 target_link_libraries(cli_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads)
-
-add_executable(sharedMemoryServiceExample sharedMemoryServiceExample.cpp)
-target_compile_features(sharedMemoryServiceExample PUBLIC cxx_std_17)
-target_include_directories(sharedMemoryServiceExample PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(sharedMemoryServiceExample PRIVATE kruempelmann::base_library Threads::Threads Boost::container)
-
-add_executable(sharedMemoryObjectExample sharedMemoryObjectExample.cpp)
-target_compile_features(sharedMemoryObjectExample PUBLIC cxx_std_17)
-target_include_directories(sharedMemoryObjectExample PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(sharedMemoryObjectExample PRIVATE kruempelmann::base_library Threads::Threads Boost::container)

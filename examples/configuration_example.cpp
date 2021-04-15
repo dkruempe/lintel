@@ -12,18 +12,20 @@
 
 void encryptTest() {
   Cryption cryption;
-  std::string cipherText = cryption.encryption("Anna Krümpelmann und Example User <3");
+  std::string cipherText =
+      cryption.encryption("Anna Krümpelmann und Example User <3");
   LOG_INFO("encryption: {}", cipherText);
   std::string plainText = cryption.decryption(cipherText);
   LOG_INFO("decryption: {}", plainText);
 }
 
 int main(int argc, char *argv[]) {
-  DECLARE_LOGGER(std::filesystem::path(argv[0]).filename());
+  DECLARE_LOGGER(argv[0]);
   std::shared_ptr<Component> component = std::make_shared<PropertyComponent>();
   std::shared_ptr<ConnectionComponent> environment =
       std::make_shared<ConnectionComponent>();
-  Configuration configurationParser({component, environment}, "bootstrap");
+  Configuration configurationParser(
+      {component, environment}, "bootstrap");
   std::vector<std::shared_ptr<Entry>> properties =
       configurationParser.configurationOf<PropertyComponent>();
   for (auto &iter : properties) {
