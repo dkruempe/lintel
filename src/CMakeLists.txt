@@ -13,14 +13,23 @@ if (NOT DEFINED LOG_DIRECTORY)
     set(LOG_DIRECTORY "${PROJECT_SOURCE_DIR}/../log")
 endif ()
 
+if (NOT DEFINED BOOTSTRAP_CONFIG_NAME)
+    set(BOOTSTRAP_CONFIG_NAME "bootstrap")
+endif()
+
 configure_file(
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h.in
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h)
 
 # dependencies
+if (NOT TARGET kruempelmann::Hypodermic)
+    find_package(Hypodermic REQUIRED)
+    include_directories(${Hypodermic_INCLUDE_DIRS})
+else ()
+    include_directories(../external/Hypodermic/include)
+endif ()
 find_library(LOG4CXX NAMES log4cxx)
 find_path(LOG4CXX_INCLUDES NAMES log4cxx/log4cxx.h)
-
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(tinyxml2 REQUIRED)

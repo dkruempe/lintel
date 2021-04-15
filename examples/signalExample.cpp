@@ -1,5 +1,5 @@
+#include <base_library/core/services/SignalService.h>
 #include <iostream>
-#include <base_library/services/SignalService.h>
 
 int main(int argc, char *argv[]) {
   SignalService::registerHooks({SIGINT});

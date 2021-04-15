@@ -1,7 +1,7 @@
-#include <iostream>
+#include <base_library/core/services/StopWatchService.h>
 #include <chrono>
+#include <iostream>
 #include <thread>
-#include <base_library/services/StopWatchService.h>
 int main(int argc, char *argv[]) {
   StopWatchService stopWatch (true);
   std::this_thread::sleep_for(std::chrono::milliseconds (100));

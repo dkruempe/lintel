@@ -1,6 +1,6 @@
 #define CATCH_CONFIG_MAIN
-#include <base_library/repositories/NoPropertyRepository.h>
-#include <base_library/services/PropertyService.h>
+#include <base_library/features/property/services/PropertyService.h>
+#include <base_library/features/property/repositories/NoPropertyRepository.h>
 #include <catch2/catch.hpp>
 
 void createExampleProperties(PropertyService &propertyService) {

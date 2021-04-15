@@ -1,14 +1,14 @@
 #include <utility>
 
-#include "base_library/configuration/Component.h"
-#include "base_library/configuration/Configuration.h"
-#include "base_library/configuration/ConnectionComponent.h"
-#include "base_library/configuration/ConnectionEntry.h"
-#include "base_library/configuration/Cryption.h"
-#include "base_library/configuration/PropertyComponent.h"
-#include "base_library/configuration/PropertyEntry.h"
-#include "base_library/services/LoggerService.h"
-#include "base_library/utils/TypeName.h"
+#include "base_library/features/base/configuration/Component.h"
+#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/features/base/configuration/ConnectionComponent.h"
+#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/features/base/configuration/Cryption.h"
+#include "base_library/features/base/configuration/PropertyComponent.h"
+#include "base_library/features/base/configuration/PropertyEntry.h"
+#include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/TypeName.h"
 
 void encryptTest() {
   Cryption cryption;
@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<ConnectionComponent> environment =
       std::make_shared<ConnectionComponent>();
   Configuration configurationParser(
-      {component, environment}, "bootstrap");
+      {component, environment});
   std::vector<std::shared_ptr<Entry>> properties =
       configurationParser.configurationOf<PropertyComponent>();
   for (auto &iter : properties) {

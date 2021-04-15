@@ -1,8 +1,8 @@
-#include <base_library/persistence/Connection.h>
-#include <base_library/persistence/Notify.h>
-#include <base_library/persistence/PreparedStatement.h>
-#include <base_library/persistence/Statement.h>
-#include <base_library/persistence/Transaction.h>
+#include <base_library/core/persistence/Connection.h>
+#include <base_library/core/persistence/Notify.h>
+#include <base_library/core/persistence/PreparedStatement.h>
+#include <base_library/core/persistence/Statement.h>
+#include <base_library/core/persistence/Transaction.h>
 
 #include <chrono>
 #include <iostream>

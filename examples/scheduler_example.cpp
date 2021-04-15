@@ -1,5 +1,5 @@
-#include <base_library/services/LoggerService.h>
-#include <base_library/services/SchedulerService.h>
+#include <base_library/core/services/LoggerService.h>
+#include <base_library/features/base/services/SchedulerService.h>
 #include <libgen.h>
 
 int main(int argc, char *argv[]) {

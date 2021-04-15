@@ -1,6 +1,6 @@
-#include <base_library/repositories/NoPropertyRepository.h>
-#include <base_library/services/AbstractService.h>
-#include <base_library/services/PropertyService.h>
+#include "base_library/core/services/AbstractService.h"
+#include <base_library/features/property/services/PropertyService.h>
+#include <base_library/features/property/repositories/NoPropertyRepository.h>
 #include <iostream>
 
 class Example : public AbstractService<Example> {

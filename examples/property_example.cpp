@@ -1,10 +1,10 @@
-#include <base_library/configuration/Configuration.h>
-#include <base_library/configuration/PropertyComponent.h>
-#include <base_library/factories/PropertyFactory.h>
-#include <base_library/models/PropertyBase.h>
-#include <base_library/repositories/FilePropertyRepository.h>
-#include <base_library/services/PropertyService.h>
-#include <base_library/strategies/XMLConfigSerializationStrategy.h>
+#include <base_library/features/base/configuration/Configuration.h>
+#include <base_library/features/base/configuration/PropertyComponent.h>
+#include <base_library/features/property/factories/PropertyFactory.h>
+#include <base_library/features/property/models/PropertyBase.h>
+#include <base_library/features/property/services/PropertyService.h>
+#include <base_library/features/property/repositories/FilePropertyRepository.h>
+#include <base_library/features/property/strategies/XMLConfigSerializationStrategy.h>
 
 #include <iostream>
 #include <memory>
@@ -74,10 +74,9 @@ public:
 void testPropertyService(std::shared_ptr<ProcessName> processName) {
   std::shared_ptr<Component> propertyComponent =
       std::make_shared<PropertyComponent>();
-  std::string fileName = "bootstrap";
   std::vector<std::shared_ptr<Component>> components = {propertyComponent};
   std::shared_ptr<Configuration> configuration =
-      std::make_shared<Configuration>(components, fileName);
+      std::make_shared<Configuration>(components);
   std::shared_ptr<FilePropertyRepository> filePropertyRepository =
       std::make_shared<FilePropertyRepository>(configuration);
   std::vector<std::shared_ptr<PropertyRepository>> repositories(

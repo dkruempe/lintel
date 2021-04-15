@@ -1,5 +1,5 @@
-#include <base_library/services/StringifyService.h>
-#include <base_library/utils/TypeName.h>
+#include "base_library/core/utils/TypeName.h"
+#include <base_library/core/services/StringifyService.h>
 #include <iostream>
 
 enum class TYPES {

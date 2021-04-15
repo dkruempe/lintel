@@ -1,5 +1,5 @@
 #define CATCH_CONFIG_MAIN
-#include <base_library/services/ProcessService.h>
+#include <base_library/features/base/services/ProcessService.h>
 
 #include <catch2/catch.hpp>
 
