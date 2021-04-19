@@ -2,13 +2,11 @@
 
 #include "Hypodermic/ExceptionBase.h"
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+HYPODERMIC_DECLARE_EXCEPTION(ActivationException);
 
-    HYPODERMIC_DECLARE_EXCEPTION(ActivationException);
+}  // namespace Hypodermic
 
-} // namespace Hypodermic
-
-
-#define HYPODERMIC_THROW_ACTIVATION_EXCEPTION(message) HYPODERMIC_THROW(::Hypodermic::ActivationException, message)
+#define HYPODERMIC_THROW_ACTIVATION_EXCEPTION(message) \
+  HYPODERMIC_THROW(::Hypodermic::ActivationException, message)

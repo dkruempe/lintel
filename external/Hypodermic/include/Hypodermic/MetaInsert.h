@@ -1,13 +1,10 @@
 #pragma once
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+template <class TSequence, class TValue>
+struct MetaInsert {
+  typedef typename TSequence::template Insert<TValue>::Type Type;
+};
 
-    template <class TSequence, class TValue>
-    struct MetaInsert
-    {
-        typedef typename TSequence::template Insert< TValue >::Type Type;
-    };
-    
-} // namespace Hypodermic
+}  // namespace Hypodermic

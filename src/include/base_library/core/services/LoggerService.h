@@ -17,7 +17,7 @@
 #include <thread>
 
 class LoggerService {
-private:
+ private:
   // constexpr constants
   constexpr static std::string_view templateConfig = "template_log4cxx.xml";
   constexpr static std::string_view templateMarker = "template.log";
@@ -31,7 +31,7 @@ private:
   static LoggerService *instance;
   static std::once_flag initInstanceFlag;
 
-public:
+ public:
   explicit LoggerService(const std::string &processName);
 
   explicit LoggerService();
@@ -92,22 +92,22 @@ public:
   }
 };
 #define DECLARE_LOGGER(argv) LoggerService::getOrCreate(argv)
-#define LOG_INFO(message, ...)                                                 \
-  LoggerService::get().info(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,     \
+#define LOG_INFO(message, ...)                                             \
+  LoggerService::get().info(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
                             ##__VA_ARGS__)
-#define LOG_DEBUG(message, ...)                                                \
-  LoggerService::get().debug(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,    \
+#define LOG_DEBUG(message, ...)                                             \
+  LoggerService::get().debug(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
                              ##__VA_ARGS__)
-#define LOG_TRACE(message, ...)                                                \
-  LoggerService::get().trace(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,    \
+#define LOG_TRACE(message, ...)                                             \
+  LoggerService::get().trace(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
                              ##__VA_ARGS__)
-#define LOG_ERROR(message, ...)                                                \
-  LoggerService::get().error(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,    \
+#define LOG_ERROR(message, ...)                                             \
+  LoggerService::get().error(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
                              ##__VA_ARGS__)
-#define LOG_FATAL(message, ...)                                                \
-  LoggerService::get().fatal(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,    \
+#define LOG_FATAL(message, ...)                                             \
+  LoggerService::get().fatal(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
                              ##__VA_ARGS__)
-#define LOG_WARN(message, ...)                                                 \
-  LoggerService::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message,     \
+#define LOG_WARN(message, ...)                                             \
+  LoggerService::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
                             ##__VA_ARGS__)
-#endif // LOGGING_LOGGER_H
+#endif  // LOGGING_LOGGER_H

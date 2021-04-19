@@ -10,12 +10,12 @@
 namespace log4cxx::json {
 
 class LOG4CXX_EXPORT JsonLayout : public Layout {
-private:
+ private:
   // Print no location info by default
-  bool locationInfo; //= false
-  bool properties;   // = false
+  bool locationInfo;  //= false
+  bool properties;    // = false
 
-public:
+ public:
   DECLARE_LOG4CXX_OBJECT(JsonLayout)
   BEGIN_LOG4CXX_CAST_MAP()
   LOG4CXX_CAST_ENTRY(JsonLayout)
@@ -78,10 +78,10 @@ Returns the current value of the <b>LocationInfo</b> option.
   */
   bool ignoresThrowable() const override { return false; }
 
-}; // class XMLLayout
+};  // class XMLLayout
 LOG4CXX_PTR_DEF(JsonLayout);
-} // namespace log4cxx::json
+}  // namespace log4cxx::json
 
-#endif // CPP_BASIC_LIBRARIES_JSONLAYOUT_H
+#endif  // CPP_BASIC_LIBRARIES_JSONLAYOUT_H
 
 #pragma clang diagnostic pop

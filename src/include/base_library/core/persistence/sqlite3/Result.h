@@ -6,10 +6,10 @@
 
 namespace sqlite {
 class Result {
-private:
+ private:
   std::vector<std::vector<std::string>> entries;
 
-public:
+ public:
   void add(const std::vector<std::string> &entry);
 
   [[nodiscard]] std::string getValue(int row, int attribute) const;
@@ -18,6 +18,6 @@ public:
 
   [[nodiscard]] int getSize() const;
 };
-} // namespace sqlite
+}  // namespace sqlite
 
-#endif // CPP_BASE_LIBRAR_SQLITE_RESULT_H
+#endif  // CPP_BASE_LIBRAR_SQLITE_RESULT_H

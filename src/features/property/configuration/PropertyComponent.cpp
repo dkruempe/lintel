@@ -1,4 +1,5 @@
 #include "base_library/features/property/configuration/PropertyComponent.h"
+
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/TypeName.h"
 #include "base_library/features/property/configuration/PropertyEntry.h"
@@ -9,10 +10,9 @@ PropertyComponent::Shapes PropertyComponent::shape{};
 
 PropertyComponent::PropertyComponent() : Component(shape.CONFIG_ROOT) {}
 
-std::vector<std::shared_ptr<Entry>>
-PropertyComponent::parse(const std::string &content,
-                         const std::string &fileName,
-                         const int32_t lineOffset) {
+std::vector<std::shared_ptr<Entry>> PropertyComponent::parse(
+    const std::string &content, const std::string &fileName,
+    const int32_t lineOffset) {
   std::vector<std::shared_ptr<Entry>> properties;
   tinyxml2::XMLDocument document;
   document.Parse(content.c_str());
@@ -79,9 +79,9 @@ PropertyComponent::parse(const std::string &content,
         propertyName, instanceName, className, processName, propertyType,
         propertyValue, "", false);
 
-    property->setDataStorage(DataStorage(
-        PropertyRepositoryType::FILE_REPOSITORY,
-        fileName + ":" + std::to_string(lineNumber)));
+    property->setDataStorage(
+        DataStorage(PropertyRepositoryType::FILE_REPOSITORY,
+                    fileName + ":" + std::to_string(lineNumber)));
 
     properties.push_back(std::make_shared<PropertyEntry>(
         type_name<PropertyComponent>(), property));

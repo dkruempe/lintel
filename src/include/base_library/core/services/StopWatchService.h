@@ -5,7 +5,7 @@
 #include <ostream>
 
 class StopWatchService {
-public:
+ public:
   /**
    * @brief constructor for timer. shutdown implies the start or not start of
    * the timer
@@ -41,7 +41,7 @@ public:
   friend std::ostream &operator<<(std::ostream &os,
                                   const StopWatchService &service);
 
-private:
+ private:
   // start point of timer
   std::chrono::time_point<std::chrono::steady_clock> startTime;
   std::chrono::time_point<std::chrono::steady_clock> endTime;
@@ -49,4 +49,4 @@ private:
   bool run;
 };
 
-#endif // CPP_BASIC_LIBRARIES_STOPWATCHSERVICE_H
+#endif  // CPP_BASIC_LIBRARIES_STOPWATCHSERVICE_H

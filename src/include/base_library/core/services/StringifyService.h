@@ -3,11 +3,13 @@
 
 #include <string>
 
-template <class T> class StringifyService;
+template <class T>
+class StringifyService;
 
 #define IMPLEMENT_STRINGIFY_SERVICE_FOR(type, convertToString, convertToValue) \
-  template <> class StringifyService<type> {                                   \
-  public:                                                                      \
+  template <>                                                                  \
+  class StringifyService<type> {                                               \
+   public:                                                                     \
     static std::string serializeToString(const type &value) {                  \
       return convertToString(value);                                           \
     }                                                                          \
@@ -36,4 +38,4 @@ IMPLEMENT_STRINGIFY_SERVICE_FOR(
       return string == "true" ? true : false;
     })
 
-#endif // LOGGING_STRINGIFYSERVICE_H
+#endif  // LOGGING_STRINGIFYSERVICE_H

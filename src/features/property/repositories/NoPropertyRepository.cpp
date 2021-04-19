@@ -1,4 +1,5 @@
 #include "base_library/features/property/repositories/NoPropertyRepository.h"
+
 #include <vector>
 void NoPropertyRepository::save(std::shared_ptr<PropertyBase> property) {}
 

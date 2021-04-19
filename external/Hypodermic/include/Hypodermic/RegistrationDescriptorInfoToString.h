@@ -12,138 +12,125 @@
 #include "Hypodermic/ProvidedInstanceDependencyTag.h"
 #include "Hypodermic/TypeInfo.h"
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+namespace Details {
 
-    namespace Details
-    {
+template <class TTag>
+struct TagToString;
 
-        template <class TTag>
-        struct TagToString;
+template <class TDependency>
+struct TagToString<Tags::DependencyFactory<TDependency> > {
+  typedef TDependency Dependency;
 
-        template <class TDependency>
-        struct TagToString< Tags::DependencyFactory< TDependency > >
-        {
-            typedef TDependency Dependency;
+  static std::string toString() {
+    std::stringstream stream;
+    stream << ".WithFactoryOf< "
+           << Utils::getMetaTypeInfo<Dependency>().fullyQualifiedName() << " >";
 
-            static std::string toString()
-            {
-                std::stringstream stream;
-                stream << ".WithFactoryOf< " <<
-                    Utils::getMetaTypeInfo< Dependency >().fullyQualifiedName() << " >";
+    return stream.str();
+  }
+};
 
-                return stream.str();
-            }
-        };
+template <class TDependency, class TProvidedDependency>
+struct TagToString<
+    Tags::ProvidedInstanceDependency<TDependency, TProvidedDependency> > {
+  typedef TDependency Dependency;
+  typedef TProvidedDependency ProvidedDependency;
 
-        template <class TDependency, class TProvidedDependency>
-        struct TagToString< Tags::ProvidedInstanceDependency< TDependency, TProvidedDependency > >
-        {
-            typedef TDependency Dependency;
-            typedef TProvidedDependency ProvidedDependency;
+  static std::string toString() {
+    std::stringstream stream;
+    stream << ".WithInstanceOf< "
+           << Utils::getMetaTypeInfo<Dependency>().fullyQualifiedName() << ", "
+           << Utils::getMetaTypeInfo<ProvidedDependency>().fullyQualifiedName()
+           << " >";
 
-            static std::string toString()
-            {
-                std::stringstream stream;
-                stream << ".WithInstanceOf< " <<
-                    Utils::getMetaTypeInfo< Dependency >().fullyQualifiedName() << ", " <<
-                    Utils::getMetaTypeInfo< ProvidedDependency >().fullyQualifiedName() << " >";
+    return stream.str();
+  }
+};
 
-                return stream.str();
-            }
-        };
+template <class TDependency, class TProvidedDependency>
+struct TagToString<
+    Tags::ProvidedDependency<TDependency, TProvidedDependency> > {
+  typedef TDependency Dependency;
+  typedef TProvidedDependency ProvidedDependency;
 
-        template <class TDependency, class TProvidedDependency>
-        struct TagToString< Tags::ProvidedDependency< TDependency, TProvidedDependency > >
-        {
-            typedef TDependency Dependency;
-            typedef TProvidedDependency ProvidedDependency;
+  static std::string toString() {
+    std::stringstream stream;
+    stream << ".With< "
+           << Utils::getMetaTypeInfo<Dependency>().fullyQualifiedName() << ", "
+           << Utils::getMetaTypeInfo<ProvidedDependency>().fullyQualifiedName()
+           << " >";
 
-            static std::string toString()
-            {
-                std::stringstream stream;
-                stream << ".With< " <<
-                    Utils::getMetaTypeInfo< Dependency >().fullyQualifiedName() << ", " <<
-                    Utils::getMetaTypeInfo< ProvidedDependency >().fullyQualifiedName() << " >";
+    return stream.str();
+  }
+};
 
-                return stream.str();
-            }
-        };
+struct RegisteredBaseToString {
+  explicit RegisteredBaseToString(std::ostream& stream) : m_stream(stream) {}
 
-        struct RegisteredBaseToString
-        {
-            explicit RegisteredBaseToString(std::ostream& stream)
-                : m_stream(stream)
-            {
-            }
+  template <class TIdentity, class T>
+  void operator()(const MetaPair<TIdentity, T>&) {
+    m_stream << ".As< "
+             << Utils::getMetaTypeInfo<TIdentity>().fullyQualifiedName()
+             << " >";
+  }
 
-            template <class TIdentity, class T>
-            void operator()(const MetaPair< TIdentity, T >&)
-            {
-                m_stream << ".As< " << Utils::getMetaTypeInfo< TIdentity >().fullyQualifiedName() << " >";
-            }
+ private:
+  std::ostream& m_stream;
+};
 
-        private:
-            std::ostream& m_stream;
-        };
+struct DependencyToString {
+  explicit DependencyToString(std::ostream& stream) : m_stream(stream) {}
 
-        struct DependencyToString
-        {
-            explicit DependencyToString(std::ostream& stream)
-                : m_stream(stream)
-            {
-            }
+  template <class TKey, class TDependencyTag>
+  void operator()(const MetaPair<TKey, TDependencyTag>&) const {
+    m_stream << TagToString<TDependencyTag>::toString();
+  }
 
-            template <class TKey, class TDependencyTag>
-            void operator()(const MetaPair< TKey, TDependencyTag >&) const
-            {
-                m_stream << TagToString< TDependencyTag >::toString();
-            }
+ private:
+  std::ostream& m_stream;
+};
 
-        private:
-            std::ostream& m_stream;
-        };
+}  // namespace Details
 
-    } // namespace Details
+struct RegistrationDescriptorInfoToString {
+  template <class TDescriptorInfo>
+  static std::string toString() {
+    typedef typename TDescriptorInfo::InstanceType InstanceType;
+    typedef typename TDescriptorInfo::SelfRegistrationTag SelfRegistrationTag;
+    typedef typename TDescriptorInfo::FallbackRegistrationTag
+        FallbackRegistrationTag;
+    typedef typename TDescriptorInfo::InstanceLifetime InstanceLifetime;
+    typedef typename TDescriptorInfo::RegisteredBases RegisteredBases;
+    typedef typename TDescriptorInfo::Dependencies Dependencies;
 
+    std::stringstream stream;
 
+    stream << "RegistrationOf< "
+           << Utils::getMetaTypeInfo<InstanceType>().fullyQualifiedName()
+           << " >";
 
-    struct RegistrationDescriptorInfoToString
-    {
-        template <class TDescriptorInfo>
-        static std::string toString()
-        {
-            typedef typename TDescriptorInfo::InstanceType InstanceType;
-            typedef typename TDescriptorInfo::SelfRegistrationTag SelfRegistrationTag;
-            typedef typename TDescriptorInfo::FallbackRegistrationTag FallbackRegistrationTag;
-            typedef typename TDescriptorInfo::InstanceLifetime InstanceLifetime;
-            typedef typename TDescriptorInfo::RegisteredBases RegisteredBases;
-            typedef typename TDescriptorInfo::Dependencies Dependencies;
+    HYPODERMIC_PRAGMA_PUSH
+    HYPODERMIC_IGNORE_CONDITIONAL_EXPRESSION_IS_CONSTANT
 
-            std::stringstream stream;
+    if (std::is_same<SelfRegistrationTag, Tags::SelfRegistered>::value)
+      stream << ".AsSelf";
 
-            stream << "RegistrationOf< " << Utils::getMetaTypeInfo< InstanceType >().fullyQualifiedName() << " >";
+    if (std::is_same<InstanceLifetime, PersistentInstance>::value)
+      stream << ".SingleInstance";
 
-            HYPODERMIC_PRAGMA_PUSH
-            HYPODERMIC_IGNORE_CONDITIONAL_EXPRESSION_IS_CONSTANT
+    if (std::is_same<FallbackRegistrationTag,
+                     Tags::FallbackRegistration>::value)
+      stream << ".UseIfNone";
 
-            if (std::is_same< SelfRegistrationTag, Tags::SelfRegistered >::value)
-                stream << ".AsSelf";
+    HYPODERMIC_PRAGMA_POP
 
-            if (std::is_same< InstanceLifetime, PersistentInstance >::value)
-                stream << ".SingleInstance";
+    metaForEach<RegisteredBases>(Details::RegisteredBaseToString(stream));
+    metaForEach<Dependencies>(Details::DependencyToString(stream));
 
-            if (std::is_same< FallbackRegistrationTag, Tags::FallbackRegistration >::value)
-                stream << ".UseIfNone";
+    return stream.str();
+  }
+};
 
-            HYPODERMIC_PRAGMA_POP
-
-            metaForEach< RegisteredBases >(Details::RegisteredBaseToString(stream));
-            metaForEach< Dependencies >(Details::DependencyToString(stream));
-
-            return stream.str();
-        }
-    };
-
-} // namespace Hypodermic
+}  // namespace Hypodermic

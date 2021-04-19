@@ -7,12 +7,12 @@
 
 namespace db {
 class Transaction {
-private:
+ private:
   const Connection &connection;
   std::unique_ptr<postgresql::Transaction> transaction = nullptr;
   std::unique_ptr<sqlite::Transaction> transactionSQLite = nullptr;
 
-public:
+ public:
   explicit Transaction(const Connection &connection);
 
   Transaction(Transaction &transaction) = delete;
@@ -27,6 +27,6 @@ public:
 
   void rollbackTo(const std::string &savepoint) const;
 };
-} // namespace db
+}  // namespace db
 
-#endif // CPP_BASE_LIBRARY_TRANSACTION_H
+#endif  // CPP_BASE_LIBRARY_TRANSACTION_H

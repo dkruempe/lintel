@@ -7,10 +7,10 @@
  * DirectoryService class wraps default operations with the directory
  */
 class DirectoryService {
-private:
+ private:
   std::filesystem::path path;
 
-public:
+ public:
   /**
    * Constructor
    */
@@ -42,4 +42,4 @@ public:
   bool createDirectories();
 };
 
-#endif // LOGGING_DIRECTORY_H
+#endif  // LOGGING_DIRECTORY_H

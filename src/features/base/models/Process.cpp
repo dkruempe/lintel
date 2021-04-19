@@ -14,9 +14,13 @@ std::ostream &operator<<(std::ostream &os, const Process::ProcessInfo &info) {
 Process::Process(int startSequence, std::string name,
                  std::filesystem::path path, std::vector<std::string> args,
                  bool enabled, bool automaticRestart, int maxRestarts)
-    : enabled(enabled), automaticRestart(automaticRestart),
-      maxRestarts(maxRestarts), startSequence(startSequence),
-      name(std::move(name)), path(std::move(path)), args(std::move(args)) {}
+    : enabled(enabled),
+      automaticRestart(automaticRestart),
+      maxRestarts(maxRestarts),
+      startSequence(startSequence),
+      name(std::move(name)),
+      path(std::move(path)),
+      args(std::move(args)) {}
 
 int64_t Process::getId() const { return id; }
 

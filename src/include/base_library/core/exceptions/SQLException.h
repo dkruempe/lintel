@@ -6,10 +6,10 @@
 
 namespace db {
 class SQLException : public std::exception {
-private:
+ private:
   std::string message;
 
-public:
+ public:
   SQLException() = delete;
 
   explicit SQLException(std::string message) : message(std::move(message)) {}
@@ -18,6 +18,6 @@ public:
     return message.c_str();
   }
 };
-} // namespace db
+}  // namespace db
 
-#endif // CPP_BASE_LIBRARY_SQLEXCEPTION_H
+#endif  // CPP_BASE_LIBRARY_SQLEXCEPTION_H

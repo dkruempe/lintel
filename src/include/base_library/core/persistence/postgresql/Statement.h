@@ -5,14 +5,14 @@
 
 namespace postgresql {
 class Statement {
-private:
+ private:
   const Connection &connection;
 
   static int32_t initNParams(const std::string &tempStatement);
 
   static std::string initStatement(const std::string &tempStatement);
 
-public:
+ public:
   explicit Statement(const Connection &connection);
 
   std::shared_ptr<Result> execute(const std::string &query);
@@ -20,6 +20,6 @@ public:
   std::shared_ptr<Result> execute(const std::string &query,
                                   const std::vector<std::string> &params);
 };
-} // namespace postgresql
+}  // namespace postgresql
 
-#endif // CPP_BASE_LIBRARY_POSTGRESQL_STATEMENT_H
+#endif  // CPP_BASE_LIBRARY_POSTGRESQL_STATEMENT_H

@@ -1,8 +1,9 @@
 #include "base_library/features/base/configuration/Cryption.h"
 
-#include <algorithm>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+
+#include <algorithm>
 
 Cryption::Cryption() { ERR_print_errors_fp(stderr); }
 

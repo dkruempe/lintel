@@ -40,4 +40,4 @@ Result::Result(std::shared_ptr<sqlite::Result> result)
     : result(nullptr), resultSQLite(std::move(result)) {}
 
 Result::~Result() = default;
-} // namespace db
+}  // namespace db

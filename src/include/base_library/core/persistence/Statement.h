@@ -6,12 +6,12 @@
 #include "base_library/core/persistence/sqlite3/Statement.h"
 namespace db {
 class Statement {
-private:
+ private:
   std::unique_ptr<postgresql::Statement> statement = nullptr;
   std::unique_ptr<sqlite::Statement> statementSQLite = nullptr;
   const Connection &connection;
 
-public:
+ public:
   explicit Statement(const Connection &connection);
 
   Result execute(const std::string &query);
@@ -19,6 +19,6 @@ public:
   Result execute(const std::string &query,
                  const std::vector<std::string> &params);
 };
-} // namespace db
+}  // namespace db
 
-#endif // CPP_BASE_LIBRARY_STATEMENT_H
+#endif  // CPP_BASE_LIBRARY_STATEMENT_H

@@ -10,12 +10,12 @@ namespace db {
  * parameter of an statement or prepared statement
  */
 class Parameter {
-private:
+ private:
   std::string value;
 
   explicit Parameter(std::string value);
 
-public:
+ public:
   static Parameter with(const std::string &value);
 
   [[nodiscard]] const std::string &getValue() const;
@@ -26,12 +26,12 @@ public:
 };
 
 class Parameters {
-private:
+ private:
   std::vector<Parameter> params;
 
   static std::vector<Parameter> init(const std::vector<std::string> &params);
 
-public:
+ public:
   explicit Parameters(const std::vector<std::string> &params);
 
   explicit Parameters(std::vector<Parameter> params);
@@ -42,6 +42,6 @@ public:
 
   [[nodiscard]] std::vector<int32_t> getParametersTypes() const;
 };
-} // namespace db
+}  // namespace db
 
-#endif // CPP_BASE_LIBRARY_ENTRY_H
+#endif  // CPP_BASE_LIBRARY_ENTRY_H

@@ -13,13 +13,13 @@ namespace sqlite {
  * => algorithm will automatically count the number of parameters
  */
 class PreparedStatement {
-private:
+ private:
   bool closed = false;
   Connection &connection;
   const std::string statement;
   const std::string statementName;
 
-public:
+ public:
   /**
    *
    * @param connection
@@ -34,5 +34,5 @@ public:
 
   void close();
 };
-} // namespace sqlite
-#endif // CPP_BASE_LIBRARY_SQLITE_PREPAREDSTATEMENT_H
+}  // namespace sqlite
+#endif  // CPP_BASE_LIBRARY_SQLITE_PREPAREDSTATEMENT_H

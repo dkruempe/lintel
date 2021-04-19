@@ -1,18 +1,19 @@
 #ifndef CPP_BASE_LIBRARY_RESULT_H
 #define CPP_BASE_LIBRARY_RESULT_H
 
+#include <string>
+
 #include "Connection.h"
 #include "base_library/core/persistence/postgresql/Result.h"
 #include "base_library/core/persistence/sqlite3/Result.h"
-#include <string>
 
 namespace db {
 class Result {
-private:
+ private:
   std::shared_ptr<postgresql::Result> result = nullptr;
   std::shared_ptr<sqlite::Result> resultSQLite = nullptr;
 
-public:
+ public:
   Result() = default;
 
   ~Result();
@@ -27,6 +28,6 @@ public:
 
   [[nodiscard]] int getSize() const;
 };
-} // namespace db
+}  // namespace db
 
-#endif // CPP_BASE_LIBRARY_RESULT_H
+#endif  // CPP_BASE_LIBRARY_RESULT_H

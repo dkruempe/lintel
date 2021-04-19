@@ -1,13 +1,10 @@
 #pragma once
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+template <class TKey, class TValue>
+struct MetaPair {
+  typedef TKey Key;
+};
 
-    template <class TKey, class TValue>
-    struct MetaPair
-    {
-        typedef TKey Key;
-    };
-    
-} // namespace Hypodermic
+}  // namespace Hypodermic

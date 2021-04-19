@@ -2,20 +2,20 @@
 
 #include <type_traits>
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+namespace InstanceLifetimes {
+enum InstanceLifetime {
+  Transient,
+  Persistent,
+};
+}
 
-    namespace InstanceLifetimes
-    {
-        enum InstanceLifetime
-        {
-            Transient,
-            Persistent,
-        };
-    }
+typedef std::integral_constant<InstanceLifetimes::InstanceLifetime,
+                               InstanceLifetimes::Transient>
+    TransientInstance;
+typedef std::integral_constant<InstanceLifetimes::InstanceLifetime,
+                               InstanceLifetimes::Persistent>
+    PersistentInstance;
 
-    typedef std::integral_constant< InstanceLifetimes::InstanceLifetime, InstanceLifetimes::Transient > TransientInstance;
-    typedef std::integral_constant< InstanceLifetimes::InstanceLifetime, InstanceLifetimes::Persistent > PersistentInstance;
-
-} // namespace Hypodermic
+}  // namespace Hypodermic

@@ -24,8 +24,7 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<Component> component = std::make_shared<PropertyComponent>();
   std::shared_ptr<ConnectionComponent> environment =
       std::make_shared<ConnectionComponent>();
-  Configuration configurationParser(
-      {component, environment});
+  Configuration configurationParser({component, environment});
   std::vector<std::shared_ptr<Entry>> properties =
       configurationParser.configurationOf<PropertyComponent>();
   for (auto &iter : properties) {

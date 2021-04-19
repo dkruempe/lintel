@@ -3,22 +3,25 @@
 #ifndef LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
 #define LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
 #include <fmt/format.h>
+
 #include <string>
 
 class PropertyNotFoundException : public std::exception {
-private:
+ private:
   std::string name;
   std::string instanceName;
   std::string className;
   std::string processName;
   std::string message;
 
-public:
+ public:
   PropertyNotFoundException(const std::string &name,
                             const std::string &instanceName,
                             const std::string &className,
                             const std::string &processName)
-      : name(name), instanceName(instanceName), className(className),
+      : name(name),
+        instanceName(instanceName),
+        className(className),
         processName(processName),
         message(fmt::format("Property<> with name: {} instanceName: {} "
                             "className: {} processName: {} not found",
@@ -37,4 +40,4 @@ public:
   }
 };
 
-#endif // LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
+#endif  // LOGGING_PROPERTYNOTFOUNDEXCEPTION_H

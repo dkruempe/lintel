@@ -13,10 +13,10 @@
  * service. This has to be done manually.
  */
 class PropertyEntry : public Entry {
-private:
+ private:
   std::shared_ptr<PropertyBase> property;
 
-public:
+ public:
   PropertyEntry(std::string_view component,
                 std::shared_ptr<PropertyBase> property);
 
@@ -25,4 +25,4 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const PropertyEntry &entry);
 };
 
-#endif // CPP_BASE_LIBRARY_PROPERTYENTRY_H
+#endif  // CPP_BASE_LIBRARY_PROPERTYENTRY_H

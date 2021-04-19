@@ -1,11 +1,13 @@
 #include "base_library/features/base/configuration/Configuration.h"
+
+#include <tinyxml2.h>
+
+#include <algorithm>
+#include <utility>
+
 #include "base_library/config.h"
 #include "base_library/core/services/FileService.h"
 #include "base_library/core/services/LoggerService.h"
-
-#include <algorithm>
-#include <tinyxml2.h>
-#include <utility>
 
 Configuration::Configuration(
     const std::vector<std::shared_ptr<Component>> &components)

@@ -12,8 +12,8 @@ std::size_t Parameter::getLength() const { return value.size(); }
 int32_t Parameter::getFormatId() { return 1; }
 Parameter Parameter::with(const std::string &value) { return Parameter(value); }
 
-std::vector<Parameter>
-Parameters::init(const std::vector<std::string> &params) {
+std::vector<Parameter> Parameters::init(
+    const std::vector<std::string> &params) {
   std::vector<Parameter> temp;
   temp.reserve(params.size());
   for (auto &param : params) {
@@ -48,4 +48,4 @@ std::vector<int32_t> Parameters::getParametersTypes() const {
   }
   return temp;
 }
-} // namespace db
+}  // namespace db

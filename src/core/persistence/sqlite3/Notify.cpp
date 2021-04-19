@@ -6,7 +6,8 @@ namespace sqlite {
 Notify::Notify(Connection &connection, std::function<void()> functionCallBack,
                std::string tableName)
     : tableName(std::move(tableName)),
-      functionCallBack(std::move(functionCallBack)), connection(connection) {
+      functionCallBack(std::move(functionCallBack)),
+      connection(connection) {
   void *thisPtr = static_cast<void *>(this);
   sqlite3_update_hook(this->connection.db, callBack, thisPtr);
 }
@@ -18,4 +19,4 @@ void Notify::callBack(void *arg, int operation, const char *thread,
   auto *notify = static_cast<Notify *>(arg);
   notify->notify();
 }
-} // namespace sqlite
+}  // namespace sqlite

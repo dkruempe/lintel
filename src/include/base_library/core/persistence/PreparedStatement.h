@@ -8,12 +8,12 @@
 
 namespace db {
 class PreparedStatement {
-private:
+ private:
   const Connection &connection;
   std::unique_ptr<postgresql::PreparedStatement> preparedStatement = nullptr;
   std::unique_ptr<sqlite::PreparedStatement> preparedStatementSQLite = nullptr;
 
-public:
+ public:
   static int32_t initNParams(const std::string &tempStatement);
 
   static std::string initStatement(const std::string &tempStatement);
@@ -33,6 +33,6 @@ public:
 
   void close();
 };
-} // namespace db
+}  // namespace db
 
-#endif // CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
+#endif  // CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H

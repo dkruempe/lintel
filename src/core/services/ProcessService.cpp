@@ -7,7 +7,8 @@ ProcessService::ProcessService(std::vector<Process> processes,
                                std::chrono::seconds waitTimeForShutdown,
                                std::chrono::milliseconds monitorDuration)
     : processes(transformFunction(std::move(processes))),
-      waitTimeForShutdown(waitTimeForShutdown), monitorThread([&] { run(); }),
+      waitTimeForShutdown(waitTimeForShutdown),
+      monitorThread([&] { run(); }),
       monitorDuration(monitorDuration) {}
 ProcessService::~ProcessService() {
   exit = true;
@@ -103,8 +104,8 @@ void ProcessService::restartAll() {
     process.startChild();
   }
 }
-std::vector<Process>
-ProcessService::transformFunction(std::vector<Process> processes) {
+std::vector<Process> ProcessService::transformFunction(
+    std::vector<Process> processes) {
   std::sort(processes.begin(), processes.end(), Process::ProcessComparator());
   int64_t id = 0;
   for (auto &iter : processes) {
@@ -154,32 +155,33 @@ void ProcessService::checkExitCodeOf(Process &process) {
   int exitCode = process.getExitCode();
   const std::string &name = process.getName();
   switch (exitCode) {
-  case EXIT_SUCCESS:
-    // all went fine
-    break;
-  case SIGQUIT:
-    fprintf(stderr, "%s: ERROR quit\n", name.c_str());
-    break;
-  case SIGILL:
-    fprintf(stderr, "%s: ERROR illegal instruction (not reset when caught)\n",
-            name.c_str());
-    break;
-  case SIGABRT:
-    fprintf(stderr, "%s: ERROR abort()\n", name.c_str());
-    break;
-  case SIGFPE:
-    fprintf(stderr, "%s: ERROR floating point exception\n", name.c_str());
-    break;
-  case SIGSEGV:
-    fprintf(stderr, "%s: ERROR segmentation violation\n", name.c_str());
-    break;
-  case SIGTERM:
-    fprintf(stderr, "%s ERROR software termination signal from kill\n",
-            name.c_str());
-    break;
-  default:
-    fprintf(stderr, "%s shutdown with exit code %d\n", name.c_str(), exitCode);
-    break;
+    case EXIT_SUCCESS:
+      // all went fine
+      break;
+    case SIGQUIT:
+      fprintf(stderr, "%s: ERROR quit\n", name.c_str());
+      break;
+    case SIGILL:
+      fprintf(stderr, "%s: ERROR illegal instruction (not reset when caught)\n",
+              name.c_str());
+      break;
+    case SIGABRT:
+      fprintf(stderr, "%s: ERROR abort()\n", name.c_str());
+      break;
+    case SIGFPE:
+      fprintf(stderr, "%s: ERROR floating point exception\n", name.c_str());
+      break;
+    case SIGSEGV:
+      fprintf(stderr, "%s: ERROR segmentation violation\n", name.c_str());
+      break;
+    case SIGTERM:
+      fprintf(stderr, "%s ERROR software termination signal from kill\n",
+              name.c_str());
+      break;
+    default:
+      fprintf(stderr, "%s shutdown with exit code %d\n", name.c_str(),
+              exitCode);
+      break;
   }
 }
 Process::ProcessInfo ProcessService::ofCurrentProcess(int argc, char *argv[]) {

@@ -1,24 +1,21 @@
-#include "base_library/core/utils/TypeName.h"
 #include <base_library/core/services/StringifyService.h>
+
 #include <iostream>
 
-enum class TYPES {
-  UNDEFINED = -1,
-  CLIENT = 0,
-  SERVER = 1,
-  STANDALONE = 2
-};
+#include "base_library/core/utils/TypeName.h"
+
+enum class TYPES { UNDEFINED = -1, CLIENT = 0, SERVER = 1, STANDALONE = 2 };
 
 std::string convertToString(TYPES e) {
-  switch(e) {
-  case TYPES::CLIENT:
-    return "TYPES::CLIENT";
-  case TYPES::SERVER:
-    return "TYPES::SERVER";
-  case TYPES::STANDALONE:
-    return "TYPES::STANDALONE";
-  default:
-    return "TYPES::UNDEFINED";
+  switch (e) {
+    case TYPES::CLIENT:
+      return "TYPES::CLIENT";
+    case TYPES::SERVER:
+      return "TYPES::SERVER";
+    case TYPES::STANDALONE:
+      return "TYPES::STANDALONE";
+    default:
+      return "TYPES::UNDEFINED";
   }
   return "TYPES::UNDEFINED";
 }

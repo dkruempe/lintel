@@ -1,15 +1,16 @@
 #include <base_library/core/services/LoggerService.h>
+#include <libgen.h>
+
 #include <chrono>
 #include <csignal>
-#include <libgen.h>
 #include <thread>
 #include <utility>
 
 class ExampleClass {
-private:
+ private:
   std::string information;
 
-public:
+ public:
   [[maybe_unused]] explicit ExampleClass(std::string information)
       : information(std::move(information)) {}
 
@@ -26,12 +27,12 @@ volatile bool running = true;
 
 void receiveSignal(int signal) {
   switch (signal) {
-  case SIGINT:
-  case SIGHUP:
-    running = false;
-    break;
-  default:
-    break;
+    case SIGINT:
+    case SIGHUP:
+      running = false;
+      break;
+    default:
+      break;
   }
 }
 

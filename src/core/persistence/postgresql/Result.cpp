@@ -1,7 +1,7 @@
 
-#include <base_library/core/persistence/sqlite3/Result.h>
-
 #include "base_library/core/persistence/postgresql/Result.h"
+
+#include <base_library/core/persistence/sqlite3/Result.h>
 
 namespace postgresql {
 Result::Result(PGresult *res) : res(res) {}
@@ -24,4 +24,4 @@ Result::~Result() {
 [[nodiscard]] int Result::getNumOfAttributes() const { return PQnfields(res); }
 
 [[nodiscard]] int Result::getSize() const { return PQntuples(res); }
-} // namespace postgresql
+}  // namespace postgresql

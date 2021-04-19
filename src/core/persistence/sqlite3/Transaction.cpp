@@ -46,4 +46,4 @@ void Transaction::save(const std::string &savepoint) const {
 void Transaction::rollbackTo(const std::string &savepoint) const {
   auto result = connection.execute("ROLLBACK TO " + savepoint);
 }
-} // namespace sqlite
+}  // namespace sqlite

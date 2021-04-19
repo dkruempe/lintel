@@ -1,33 +1,31 @@
 #pragma once
 
+#include <boost/signals2.hpp>
 #include <functional>
 #include <memory>
 
-#include <boost/signals2.hpp>
+namespace Hypodermic {
 
+class IRegistrationDescriptor;
+class IRegistrationRegistry;
 
-namespace Hypodermic
-{
+struct TypeInfo;
 
-    class IRegistrationDescriptor;
-    class IRegistrationRegistry;
+class IRegistrationDescriptor {
+ public:
+  typedef boost::signals2::signal<void(
+      const std::shared_ptr<IRegistrationDescriptor>&)>
+      Updated;
 
-    struct TypeInfo;
+ public:
+  virtual ~IRegistrationDescriptor() = default;
 
+  virtual Updated& registrationDescriptorUpdated() const = 0;
 
-    class IRegistrationDescriptor
-    {
-    public:
-        typedef boost::signals2::signal< void(const std::shared_ptr< IRegistrationDescriptor >&) > Updated;
+  virtual std::function<void(IRegistrationRegistry&)> getDescriptionFactory()
+      const = 0;
 
-    public:
-        virtual ~IRegistrationDescriptor() = default;
+  virtual const TypeInfo& instanceType() const = 0;
+};
 
-        virtual Updated& registrationDescriptorUpdated() const = 0;
-
-        virtual std::function< void(IRegistrationRegistry&) > getDescriptionFactory() const = 0;
-
-        virtual const TypeInfo& instanceType() const = 0;
-    };
-
-} // namespace Hypodermic
+}  // namespace Hypodermic

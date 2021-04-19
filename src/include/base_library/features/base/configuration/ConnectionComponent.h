@@ -4,17 +4,20 @@
 #include "Component.h"
 
 class ConnectionComponent : public Component {
-private:
+ private:
   static struct Shapes {
     const std::string CONFIG_ROOT = "Connections";
     const std::string DATABASE_ROOT = "Connection";
+    const std::string CONNECTION_NAME = "name";
     const std::string CONNECTION_TYPE = "type";
     const std::string CONNECTION_USER_NAME = "user_name";
     const std::string CONNECTION_PASSWORD = "password";
     const std::string CONNECTION_CONNECTION = "connection";
+    const std::string CONNECTION_DATBASE_NAME = "database_name";
+    const std::string CONNECTION_PORT = "port";
   } shape;
 
-public:
+ public:
   ConnectionComponent();
 
   std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
@@ -22,4 +25,4 @@ public:
                                             int32_t lineOffset) override;
 };
 
-#endif // CPP_BASE_LIBRARY_CONNECTIONCOMPONENT_H
+#endif  // CPP_BASE_LIBRARY_CONNECTIONCOMPONENT_H

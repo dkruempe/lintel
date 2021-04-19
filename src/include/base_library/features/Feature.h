@@ -1,16 +1,17 @@
 #ifndef CPP_BASE_LIBRARY_FEATURE_H
 #define CPP_BASE_LIBRARY_FEATURE_H
 
+#include <string>
+
 #include "../../../../external/Hypodermic/include/Hypodermic/Container.h"
 #include "../../../../external/Hypodermic/include/Hypodermic/ContainerBuilder.h"
 #include "base_library/core/utils/TypeName.h"
-#include <string>
 
 class Feature {
-protected:
+ protected:
   std::string_view name;
 
-public:
+ public:
   explicit Feature(std::string_view name) : name(name) {}
 
   ~Feature() = default;
@@ -22,4 +23,4 @@ public:
   std::string_view getName() { return name; }
 };
 
-#endif // CPP_BASE_LIBRARY_FEATURE_H
+#endif  // CPP_BASE_LIBRARY_FEATURE_H

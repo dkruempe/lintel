@@ -31,9 +31,8 @@ std::string Statement::initStatement(const std::string &tempStatement) {
   return temp;
 }
 
-std::shared_ptr<Result>
-Statement::execute(const std::string &query,
-                   const std::vector<std::string> &params) {
+std::shared_ptr<Result> Statement::execute(
+    const std::string &query, const std::vector<std::string> &params) {
   const std::string &statement = initStatement(query);
   const int32_t nParams = initNParams(query);
   if (nParams != params.size()) {
@@ -47,4 +46,4 @@ Statement::execute(const std::string &query,
   }
   return result;
 }
-} // namespace postgresql
+}  // namespace postgresql

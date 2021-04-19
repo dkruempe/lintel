@@ -24,8 +24,8 @@ std::shared_ptr<PropertyBase> PropertyFactory::Create(
   return nullptr;
 }
 
-std::map<std::string, PropertyFactory::TCreateMethod> &
-PropertyFactory::GetMap() {
+std::map<std::string, PropertyFactory::TCreateMethod>
+    &PropertyFactory::GetMap() {
   static std::map<std::string, TCreateMethod> s_methods;
   return s_methods;
 }

@@ -1,17 +1,19 @@
 #pragma once
-#include <exception>
-#include <filesystem>
 #include <fmt/format.h>
 
+#include <exception>
+#include <filesystem>
+
 class FileServiceFileExists : public std::exception {
-private:
+ private:
   const std::filesystem::path path;
   const std::string message;
 
-public:
+ public:
   explicit FileServiceFileExists(const std::filesystem::path &path)
-      : path(path), message(fmt::format("No Operation possible bc. {} exists",
-                                        path.string())) {}
+      : path(path),
+        message(fmt::format("No Operation possible bc. {} exists",
+                            path.string())) {}
 
   [[nodiscard]] const char *what() const noexcept override {
     return message.c_str();

@@ -2,14 +2,15 @@
 #define CPP_BASE_LIBRARY_POSTGRESQL_RESULT_H
 
 #include <libpq-fe.h>
+
 #include <string>
 
 namespace postgresql {
 class Result {
-private:
+ private:
   PGresult *res;
 
-public:
+ public:
   explicit Result(PGresult *res);
 
   ~Result();
@@ -22,6 +23,6 @@ public:
 
   [[nodiscard]] int getSize() const;
 };
-} // namespace postgresql
+}  // namespace postgresql
 
-#endif // CPP_BASE_LIBRARY_POSTGRESQL_RESULT_H
+#endif  // CPP_BASE_LIBRARY_POSTGRESQL_RESULT_H

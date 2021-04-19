@@ -13,20 +13,20 @@
  * class for wrapping general operations with a normal file
  */
 class FileService {
-private:
+ private:
   std::filesystem::path path;
 
-public:
+ public:
   /**
    * class for stream operations with file
    * -> reading line by line a file
    */
   class Stream {
-  private:
-    std::ifstream file;     // stream for operations
-    bool endOfFile = false; // marks if end of file is reached
+   private:
+    std::ifstream file;      // stream for operations
+    bool endOfFile = false;  // marks if end of file is reached
 
-  public:
+   public:
     /**
      * constructor
      * @param path of file
@@ -113,4 +113,4 @@ public:
     return os;
   }
 };
-#endif // LOGGING_FILE_H
+#endif  // LOGGING_FILE_H

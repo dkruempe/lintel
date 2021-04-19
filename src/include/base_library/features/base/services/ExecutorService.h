@@ -8,7 +8,7 @@
 #include <thread>
 
 class ExecutorService {
-private:
+ private:
   volatile bool exit = false;
   std::mutex mutex;
   std::condition_variable conditionVariable;
@@ -18,7 +18,7 @@ private:
 
   void run();
 
-public:
+ public:
   ExecutorService() : runnable([&]() { run(); }) {}
 
   ~ExecutorService() {
@@ -49,4 +49,4 @@ ExecutorService::execute(F &&f, Args &&...args) {
   return future;
 }
 
-#endif // LOGGING_EXECUTORSERVICE_H
+#endif  // LOGGING_EXECUTORSERVICE_H

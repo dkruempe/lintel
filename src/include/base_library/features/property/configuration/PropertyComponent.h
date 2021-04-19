@@ -1,11 +1,12 @@
 #ifndef CPP_BASE_LIBRARY_PROPERTYCOMPONENT_H
 #define CPP_BASE_LIBRARY_PROPERTYCOMPONENT_H
 
-#include "base_library/features/base/configuration/Component.h"
 #include <tinyxml2.h>
 
+#include "base_library/features/base/configuration/Component.h"
+
 class PropertyComponent : public Component {
-private:
+ private:
   static struct Shapes {
     const std::string CONFIG_ROOT = "Properties";
     const std::string ELEMENT_NAME = "name";
@@ -17,7 +18,7 @@ private:
     const std::string PROPERTY_VALUE = "value";
   } shape;
 
-public:
+ public:
   PropertyComponent();
 
   std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
@@ -25,4 +26,4 @@ public:
                                             const int32_t lineOffset) override;
 };
 
-#endif // CPP_BASE_LIBRARY_PROPERTYCOMPONENT_H
+#endif  // CPP_BASE_LIBRARY_PROPERTYCOMPONENT_H

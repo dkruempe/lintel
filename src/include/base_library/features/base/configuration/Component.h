@@ -8,17 +8,17 @@
 #include "Entry.h"
 
 class Component {
-private:
+ private:
   std::string configRoot;
 
-public:
+ public:
   explicit Component(std::string configRoot);
 
   [[nodiscard]] const std::string &getConfigRoot() const;
 
-  virtual std::vector<std::shared_ptr<Entry>>
-  parse(const std::string &content, const std::string &fileName,
-        const int32_t lineOffset) = 0;
+  virtual std::vector<std::shared_ptr<Entry>> parse(
+      const std::string &content, const std::string &fileName,
+      const int32_t lineOffset) = 0;
 };
 
-#endif // CPP_BASE_LIBRARY_COMPONENT_H
+#endif  // CPP_BASE_LIBRARY_COMPONENT_H

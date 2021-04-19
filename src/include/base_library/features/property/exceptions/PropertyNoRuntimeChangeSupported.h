@@ -8,11 +8,11 @@
 #include "base_library/features/property/models/PropertyBase.h"
 
 class PropertyNoRuntimeChangeSupported : public std::exception {
-private:
+ private:
   std::shared_ptr<PropertyBase> property;
   std::string message;
 
-public:
+ public:
   PropertyNoRuntimeChangeSupported() = delete;
 
   explicit PropertyNoRuntimeChangeSupported(

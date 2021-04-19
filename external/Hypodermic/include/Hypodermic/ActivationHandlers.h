@@ -4,10 +4,8 @@
 
 #include "Hypodermic/ActivationHandler.h"
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+typedef std::vector<ActivationHandler> ActivationHandlers;
 
-    typedef std::vector< ActivationHandler > ActivationHandlers;
-
-} // namespace Hypodermic
+}  // namespace Hypodermic

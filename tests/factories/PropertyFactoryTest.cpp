@@ -1,6 +1,7 @@
 #define CATCH_CONFIG_MAIN
 #include <base_library/features/property/factories/PropertyFactory.h>
 #include <base_library/features/property/models/Property.h>
+
 #include <catch2/catch.hpp>
 
 TEST_CASE("basic propertyFactoryTest") {
@@ -31,9 +32,9 @@ TEST_CASE("basic propertyFactoryTest") {
   REQUIRE(int8Property->getProcessName() == "testProcess");
   REQUIRE(int8Property->getName() == "int8Property");
 
-  auto createStringProperty =
-      PropertyFactory::Create("stringProperty", "testInstance", "testClass",
-                              "testProcess", "std::string", "Hallo Welt!", "", true);
+  auto createStringProperty = PropertyFactory::Create(
+      "stringProperty", "testInstance", "testClass", "testProcess",
+      "std::string", "Hallo Welt!", "", true);
   std::shared_ptr<Property<std::string>> stringProperty =
       std::static_pointer_cast<Property<std::string>>(createStringProperty);
   REQUIRE(stringProperty->getValue() == "Hallo Welt!");

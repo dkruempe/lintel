@@ -13,11 +13,11 @@
 class PropertyService;
 
 class AbstractServiceInterface {
-public:
+ public:
   virtual void onInitialize() = 0;
   virtual void onShutdown() = 0;
 
-private:
+ private:
   virtual std::vector<std::shared_ptr<PropertyBase>> getProperties() = 0;
   friend class PropertyService;
 };
@@ -27,8 +27,9 @@ private:
  *
  * These information are for example needed for initializing the Properties
  */
-template <class T> class AbstractService : public AbstractServiceInterface {
-private:
+template <class T>
+class AbstractService : public AbstractServiceInterface {
+ private:
   const std::string processName;
   const std::string instanceName;
 
@@ -36,28 +37,27 @@ private:
     return properties;
   }
 
-protected:
+ protected:
   std::vector<std::shared_ptr<PropertyBase>> properties;
 
   template <class type>
-  std::shared_ptr<Property<type>>
-  registerProperty(std::string name, type defaultValue, std::string description,
-                   bool runtime, const std::string &fileName,
-                   int32_t position) {
+  std::shared_ptr<Property<type>> registerProperty(
+      std::string name, type defaultValue, std::string description,
+      bool runtime, const std::string &fileName, int32_t position) {
     LOG_INFO("Property<{}> {} = {}", type_name<type>(), name, defaultValue);
     std::shared_ptr<Property<type>> property = std::make_shared<Property<type>>(
         name, getInstanceName(), std::string(getClassName()), getProcessName(),
         defaultValue, description, runtime);
     const std::filesystem::path &path(fileName);
 
-    property->setDataStorage(DataStorage(PropertyRepositoryType::DEFAULT,
-                                         path.filename().generic_string() +
-                                             ":" + std::to_string(position)));
+    property->setDataStorage(DataStorage(
+        PropertyRepositoryType::DEFAULT,
+        path.filename().generic_string() + ":" + std::to_string(position)));
     properties.push_back(property);
     return property;
   }
 
-public:
+ public:
   AbstractService() = delete;
   AbstractService(std::string processName, std::string instanceName)
       : processName(std::move(processName)),
@@ -85,4 +85,4 @@ public:
   }
 };
 
-#endif // LOGGING_ABSTRACTSERVICE_H
+#endif  // LOGGING_ABSTRACTSERVICE_H

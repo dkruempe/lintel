@@ -1,10 +1,10 @@
 #ifndef LOGGING_FILEPROPERTYREPOSITORY_H
 #define LOGGING_FILEPROPERTYREPOSITORY_H
 
-#include "base_library/features/property/repositories/PropertyRepository.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/property/models/DataStorage.h"
+#include "base_library/features/property/repositories/PropertyRepository.h"
 
 /**
  * implementation of file repository for properties
@@ -14,7 +14,7 @@
  * we
  */
 class FilePropertyRepository : public PropertyRepository {
-public:
+ public:
   explicit FilePropertyRepository(std::shared_ptr<Configuration> configuration);
 
   /**
@@ -50,16 +50,16 @@ public:
    * save properties to repository
    * @param properties
    */
-  void
-  save(const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
+  void save(
+      const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
 
   /**
    * load all properties from repository and return result
    */
   std::vector<std::shared_ptr<PropertyBase>> awake() override;
 
-private:
+ private:
   std::shared_ptr<Configuration> configuration;
 };
 
-#endif // LOGGING_FILEPROPERTYREPOSITORY_H
+#endif  // LOGGING_FILEPROPERTYREPOSITORY_H

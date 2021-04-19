@@ -4,10 +4,10 @@
 #include <filesystem>
 
 class ProcessName {
-private:
+ private:
   std::filesystem::path path;
 
-public:
+ public:
   ProcessName(int argc, char *argv[]) { path = argv[0]; }
 
   ProcessName(std::string processName) : path(processName){};
@@ -15,4 +15,4 @@ public:
   std::string getProcessName() const { return path.filename().string(); }
 };
 
-#endif // CPP_BASE_LIBRARY_PROCESSNAME_H
+#endif  // CPP_BASE_LIBRARY_PROCESSNAME_H

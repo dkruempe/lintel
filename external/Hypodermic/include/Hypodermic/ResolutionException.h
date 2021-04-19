@@ -2,13 +2,11 @@
 
 #include "Hypodermic/ExceptionBase.h"
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+HYPODERMIC_DECLARE_EXCEPTION(ResolutionException);
 
-    HYPODERMIC_DECLARE_EXCEPTION(ResolutionException);
+}  // namespace Hypodermic
 
-} // namespace Hypodermic
-
-
-#define HYPODERMIC_THROW_RESOLUTION_EXCEPTION(message) HYPODERMIC_THROW(::Hypodermic::ResolutionException, message)
+#define HYPODERMIC_THROW_RESOLUTION_EXCEPTION(message) \
+  HYPODERMIC_THROW(::Hypodermic::ResolutionException, message)

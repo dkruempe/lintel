@@ -1,14 +1,14 @@
-#ifndef CPP_BASE_LIBRARY_ENTRY_H
-#define CPP_BASE_LIBRARY_ENTRY_H
+#ifndef CPP_BASE_LIBRARY_CONFIG_ENTRY_H
+#define CPP_BASE_LIBRARY_CONFIG_ENTRY_H
 
 #include <ostream>
 #include <string>
 
 class Entry {
-private:
+ private:
   const std::string_view component;
 
-public:
+ public:
   explicit Entry(std::string_view component);
 
   std::string_view getConfigurationParserComponent();
@@ -16,4 +16,4 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const Entry &entry);
 };
 
-#endif // CPP_BASE_LIBRARY_ENTRY_H
+#endif  // CPP_BASE_LIBRARY_CONFIG_ENTRY_H

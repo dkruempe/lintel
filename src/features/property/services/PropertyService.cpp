@@ -1,10 +1,12 @@
 #include "base_library/features/property/services/PropertyService.h"
-#include "base_library/features/property/exceptions/PropertyNotFoundException.h"
+
 #include <algorithm>
 
-std::map<std::string, std::shared_ptr<PropertyBase>>
-PropertyService::init(const std::vector<std::shared_ptr<PropertyRepository>>
-                          &propertyRepositories) {
+#include "base_library/features/property/exceptions/PropertyNotFoundException.h"
+
+std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
+    const std::vector<std::shared_ptr<PropertyRepository>>
+        &propertyRepositories) {
   // sort repositories highest repository first
   std::vector<std::shared_ptr<PropertyRepository>> repositories(
       propertyRepositories);
@@ -63,7 +65,6 @@ std::shared_ptr<PropertyRepository> PropertyService::searchRuntimeRepository(
 PropertyService::PropertyService(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
-    const std::shared_ptr<ProcessName> &processName,
     const std::vector<std::shared_ptr<AbstractServiceInterface>>
         &abstractServices)
     : propertyRepository(searchRuntimeRepository(propertyRepositories)),
@@ -87,10 +88,9 @@ std::string PropertyService::createIdentifier(const std::string &name,
                                               const std::string &processName) {
   return name + "_" + instanceName + "_" + className + "_" + processName;
 }
-std::shared_ptr<PropertyBase> &
-PropertyService::get(const std::string &name, const std::string &instanceName,
-                     const std::string &className,
-                     const std::string &processName) {
+std::shared_ptr<PropertyBase> &PropertyService::get(
+    const std::string &name, const std::string &instanceName,
+    const std::string &className, const std::string &processName) {
   const std::string &identifier =
       createIdentifier(name, instanceName, className, processName);
   auto found = properties.find(identifier);

@@ -1,20 +1,21 @@
-#include <atomic>
 #include <base_library/core/services/LoggerService.h>
 #include <base_library/core/services/SignalService.h>
-#include <csignal>
 #include <fmt/color.h>
 #include <fmt/core.h>
+
+#include <atomic>
+#include <csignal>
 #include <functional>
 #include <iostream>
 #include <memory>
 #include <thread>
 #include <utility>
 class CommandLineComponent {
-private:
+ private:
   std::string name;
   std::string alias;
 
-public:
+ public:
   CommandLineComponent(std::string name, std::string alias)
       : name(std::move(name)), alias(std::move(alias)) {}
 
@@ -34,10 +35,10 @@ public:
 };
 
 class EnvironmentComponent : public CommandLineComponent {
-private:
+ private:
   std::string name;
 
-public:
+ public:
   EnvironmentComponent() : CommandLineComponent("Environment", "env") {}
 
   void onCommand(const std::string &input) override {
@@ -55,13 +56,13 @@ public:
 };
 
 class AbstractCommandLineMenu {
-private:
+ private:
   std::vector<std::shared_ptr<CommandLineComponent>> components;
   std::map<std::string, std::shared_ptr<CommandLineComponent>> componentMap;
   std::shared_ptr<CommandLineComponent> current = nullptr;
 
-  static std::map<std::string, std::shared_ptr<CommandLineComponent>>
-  build(const std::vector<std::shared_ptr<CommandLineComponent>> &menuEntries) {
+  static std::map<std::string, std::shared_ptr<CommandLineComponent>> build(
+      const std::vector<std::shared_ptr<CommandLineComponent>> &menuEntries) {
     std::map<std::string, std::shared_ptr<CommandLineComponent>> map;
     for (auto &menuEntry : menuEntries) {
       map.insert({menuEntry->getName(), menuEntry});
@@ -70,7 +71,7 @@ private:
     return map;
   }
 
-public:
+ public:
   explicit AbstractCommandLineMenu(
       std::vector<std::shared_ptr<CommandLineComponent>> &&components)
       : components(components), componentMap(build(components)) {}
@@ -80,9 +81,9 @@ public:
       current->onShowMenu();
       return;
     }
-    fmt::print(fg(fmt::color::green) | fmt::emphasis::bold |
-                   fmt::emphasis::underline,
-               "Menu Overview\n");
+    fmt::print(
+        fg(fmt::color::green) | fmt::emphasis::bold | fmt::emphasis::underline,
+        "Menu Overview\n");
     int index = 0;
     for (auto &component : components) {
       fmt::print(fg(fmt::color::green) | fmt::emphasis::bold, "{}) {} [{}]\n",
@@ -129,7 +130,7 @@ public:
 };
 
 class CommandLineApplication {
-private:
+ private:
   AbstractCommandLineMenu menu;
   std::thread thread;
   std::atomic<bool> running = true;
@@ -147,18 +148,18 @@ private:
       return;
     }
     switch (found->second) {
-    case COMMAND_HELP:
-      menu.onHelp();
-      break;
-    case COMMAND_MENU:
-      menu.onShowMenu();
-      break;
-    case COMMAND_EXIT:
-      menu.onExit();
-      break;
-    default:
-      menu.onCommand(command);
-      break;
+      case COMMAND_HELP:
+        menu.onHelp();
+        break;
+      case COMMAND_MENU:
+        menu.onShowMenu();
+        break;
+      case COMMAND_EXIT:
+        menu.onExit();
+        break;
+      default:
+        menu.onCommand(command);
+        break;
     }
   }
 
@@ -197,27 +198,27 @@ private:
           fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, "]\n");
         };
 
-    fmt::print(fg(fmt::color::green) | fmt::emphasis::bold |
-                   fmt::emphasis::underline,
-               "Help Overview\n");
+    fmt::print(
+        fg(fmt::color::green) | fmt::emphasis::bold | fmt::emphasis::underline,
+        "Help Overview\n");
     for (auto &[command, aliases] : map) {
       switch (command) {
-      case COMMAND_MENU:
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
-                   "COMMAND_MENU: Shows available Menu entries");
-        print(aliases);
-        break;
-      case COMMAND_EXIT:
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
-                   "COMMAND_EXIT: Exits current Menu or total CLI itself");
-        print(aliases);
-        break;
-      case COMMAND_HELP:
-        fmt::print(
-            fg(fmt::color::green) | fmt::emphasis::bold,
-            "COMMAND_HELP: Shows all available commands in current menu");
-        print(aliases);
-        break;
+        case COMMAND_MENU:
+          fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
+                     "COMMAND_MENU: Shows available Menu entries");
+          print(aliases);
+          break;
+        case COMMAND_EXIT:
+          fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
+                     "COMMAND_EXIT: Exits current Menu or total CLI itself");
+          print(aliases);
+          break;
+        case COMMAND_HELP:
+          fmt::print(
+              fg(fmt::color::green) | fmt::emphasis::bold,
+              "COMMAND_HELP: Shows all available commands in current menu");
+          print(aliases);
+          break;
       }
     }
   }
@@ -250,21 +251,21 @@ private:
         }
       }
       switch (found->second) {
-      case COMMAND_EXIT:
-        SignalService::raiseSignal(SIGINT);
-        running.store(false);
-        break;
-      case COMMAND_HELP:
-        onHelp();
-        break;
-      case COMMAND_MENU:
-        menu.onShowMenu();
-        break;
+        case COMMAND_EXIT:
+          SignalService::raiseSignal(SIGINT);
+          running.store(false);
+          break;
+        case COMMAND_HELP:
+          onHelp();
+          break;
+        case COMMAND_MENU:
+          menu.onShowMenu();
+          break;
       }
     }
   }
 
-public:
+ public:
   explicit CommandLineApplication(
       std::vector<std::shared_ptr<CommandLineComponent>> &&components)
       : menu(std::move(components)), thread([&]() { start(); }) {}

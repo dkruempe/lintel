@@ -6,7 +6,7 @@
 #include <string>
 
 class PropertyRepositoryType {
-public:
+ public:
   // value is defining priority of property repository type
   enum Value { DEFAULT = -1, FILE_REPOSITORY = 0 };
 
@@ -29,15 +29,15 @@ public:
     return std::string(magic_enum::enum_name<>(value));
   }
 
-  friend std::ostream &
-  operator<<(std::ostream &os,
-             const PropertyRepositoryType &propertyRepositoryPriority) {
+  friend std::ostream &operator<<(
+      std::ostream &os,
+      const PropertyRepositoryType &propertyRepositoryPriority) {
     os << magic_enum::enum_name<>(propertyRepositoryPriority.value);
     return os;
   }
 
-private:
+ private:
   Value value;
 };
 
-#endif // PLC_PROPERTYREPOSITORYTYPE_H
+#endif  // PLC_PROPERTYREPOSITORYTYPE_H

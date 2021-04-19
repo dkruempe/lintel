@@ -1,12 +1,13 @@
 #ifndef CPP_BASE_LIBRARY_CRYPTION_H
 #define CPP_BASE_LIBRARY_CRYPTION_H
 
-#include <array>
 #include <openssl/aes.h>
+
+#include <array>
 #include <string>
 
 class Cryption {
-private:
+ private:
   std::array<unsigned char, 32> key = {117, 56,  56,  84,  104, 053, 111, 067,
                                        077, 050, 050, 49,  101, 119, 103, 118,
                                        102, 83,  072, 121, 122, 69,  104, 103,
@@ -16,7 +17,7 @@ private:
 
   static void handleErrors();
 
-public:
+ public:
   Cryption();
 
   std::string encryption(const std::string &plainText);
@@ -24,4 +25,4 @@ public:
   std::string decryption(const std::string &cipherText);
 };
 
-#endif // CPP_BASE_LIBRARY_CRYPTION_H
+#endif  // CPP_BASE_LIBRARY_CRYPTION_H

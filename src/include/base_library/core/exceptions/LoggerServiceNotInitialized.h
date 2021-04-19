@@ -3,10 +3,10 @@
 #include <filesystem>
 
 class LoggerServiceNotInitialized : public std::exception {
-private:
+ private:
   const std::string message;
 
-public:
+ public:
   explicit LoggerServiceNotInitialized()
       : message(
             "LoggerService not initialized. Please call Marco DECLARE_LOGGER") {

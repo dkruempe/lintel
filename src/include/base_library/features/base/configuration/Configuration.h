@@ -1,14 +1,14 @@
 #ifndef CPP_BASE_LIBRARY_CONFIGURATION_H
 #define CPP_BASE_LIBRARY_CONFIGURATION_H
 
-#include "Component.h"
-#include "Entry.h"
-#include "base_library/core/utils/TypeName.h"
-
 #include <filesystem>
 #include <map>
 #include <memory>
 #include <vector>
+
+#include "Component.h"
+#include "Entry.h"
+#include "base_library/core/utils/TypeName.h"
 
 /**
  * General Configuration Parser
@@ -20,17 +20,17 @@
  * - get easy the configuration of the give components.
  */
 class Configuration {
-private:
+ private:
   std::map<std::string, std::shared_ptr<Component>> components;
   std::vector<std::shared_ptr<Entry>> configurationEntries;
   std::filesystem::path configurationFile;
 
   void loadConfiguration();
 
-  static std::map<std::string, std::shared_ptr<Component>>
-  initialize(const std::vector<std::shared_ptr<Component>> &tempComponents);
+  static std::map<std::string, std::shared_ptr<Component>> initialize(
+      const std::vector<std::shared_ptr<Component>> &tempComponents);
 
-public:
+ public:
   explicit Configuration(
       const std::vector<std::shared_ptr<Component>> &components);
 
@@ -50,4 +50,4 @@ public:
   }
 };
 
-#endif // CPP_BASE_LIBRARY_CONFIGURATION_H
+#endif  // CPP_BASE_LIBRARY_CONFIGURATION_H

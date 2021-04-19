@@ -6,7 +6,7 @@
 #include "PropertyRepository.h"
 
 class NoPropertyRepository : public PropertyRepository {
-public:
+ public:
   NoPropertyRepository() : PropertyRepository() {}
 
   PropertyRepositoryType getType() override;
@@ -20,8 +20,8 @@ public:
    */
   void save(std::shared_ptr<PropertyBase> property) override;
 
-  void
-  save(const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
+  void save(
+      const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
 
   /**
    * load all properties from repository and return result
@@ -29,4 +29,4 @@ public:
   std::vector<std::shared_ptr<PropertyBase>> awake() override;
 };
 
-#endif // LOGGING_NOPROPERTYREPOSITORY_H
+#endif  // LOGGING_NOPROPERTYREPOSITORY_H

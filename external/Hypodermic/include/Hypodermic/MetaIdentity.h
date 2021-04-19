@@ -1,13 +1,10 @@
 #pragma once
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+template <class T>
+struct MetaIdentity {
+  typedef T Type;
+};
 
-    template <class T>
-    struct MetaIdentity
-    {
-        typedef T Type;
-    };
-    
-} // namespace Hypodermic
+}  // namespace Hypodermic

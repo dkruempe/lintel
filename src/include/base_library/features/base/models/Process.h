@@ -5,13 +5,13 @@
 #include <optional>
 #include <string>
 class Process {
-private:
-  static constexpr int INFINITE_RESTARTS = -1; // infinite restarts;
+ private:
+  static constexpr int INFINITE_RESTARTS = -1;  // infinite restarts;
   int64_t id = -1;
   bool enabled;
   bool automaticRestart;
   int restarts = 0;
-  int maxRestarts; // -1 infinite
+  int maxRestarts;  // -1 infinite
   int startSequence;
   std::string name;
   std::filesystem::path path;
@@ -19,7 +19,7 @@ private:
   std::shared_ptr<boost::process::child> child = nullptr;
   int exitCode = -1;
 
-public:
+ public:
   // Comprators
   struct ProcessComparator {
     bool operator()(const Process &left, const Process &right) const;
@@ -57,4 +57,4 @@ public:
   [[nodiscard]] int getExitCode() const;
   void setExitCode(int exitCode);
 };
-#endif // CPP_SYSTEM_LIBRARY_PROCESS_H
+#endif  // CPP_SYSTEM_LIBRARY_PROCESS_H

@@ -53,7 +53,7 @@ void testSerializeDeserialize() {
 }
 
 class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
-public:
+ public:
   explicit PropertyExampleClass(
       const std::shared_ptr<PropertyService> &propertyService,
       std::string instanceName, std::string processName)

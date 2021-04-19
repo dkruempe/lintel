@@ -1,19 +1,20 @@
 #ifndef CPP_BASE_LIBRARY_POSTGRESQL_TRANSACTION_H
 #define CPP_BASE_LIBRARY_POSTGRESQL_TRANSACTION_H
 
+#include <string>
+
 #include "Connection.h"
 #include "base_library/core/exceptions/SQLException.h"
-#include <string>
 
 namespace postgresql {
 class Transaction {
-private:
+ private:
   const Connection &connection;
   bool finished = false;
 
   void checkState(const std::shared_ptr<Result> &result);
 
-public:
+ public:
   explicit Transaction(const Connection &tempConnection);
 
   Transaction(Transaction &transaction) = delete;
@@ -30,6 +31,6 @@ public:
 
   ~Transaction();
 };
-} // namespace postgresql
+}  // namespace postgresql
 
-#endif // CPP_BASE_LIBRARY_POSTGRESQL_TRANSACTION_H
+#endif  // CPP_BASE_LIBRARY_POSTGRESQL_TRANSACTION_H

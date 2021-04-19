@@ -2,13 +2,11 @@
 
 #include "Hypodermic/ExceptionBase.h"
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+HYPODERMIC_DECLARE_EXCEPTION(CircularDependencyException);
 
-    HYPODERMIC_DECLARE_EXCEPTION(CircularDependencyException);
+}  // namespace Hypodermic
 
-} // namespace Hypodermic
-
-
-#define HYPODERMIC_THROW_CIRCULAR_DEPENDENCY_EXCEPTION(message) HYPODERMIC_THROW(::Hypodermic::CircularDependencyException, message)
+#define HYPODERMIC_THROW_CIRCULAR_DEPENDENCY_EXCEPTION(message) \
+  HYPODERMIC_THROW(::Hypodermic::CircularDependencyException, message)

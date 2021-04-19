@@ -8,11 +8,11 @@
 #include "PropertyRepositoryType.h"
 
 class DataStorage {
-private:
+ private:
   PropertyRepositoryType type = PropertyRepositoryType::DEFAULT;
   std::string extraInformation;
 
-public:
+ public:
   DataStorage(const PropertyRepositoryType &type, std::string extraInformation)
       : type(type), extraInformation(std::move(extraInformation)) {}
 
@@ -36,4 +36,4 @@ public:
   }
 };
 
-#endif // PLC_DATASTORAGE_H
+#endif  // PLC_DATASTORAGE_H

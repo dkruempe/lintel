@@ -1,14 +1,15 @@
 #pragma once
-#include <exception>
-#include <filesystem>
 #include <fmt/format.h>
 
+#include <exception>
+#include <filesystem>
+
 class FileServiceIsNotFileException : public std::exception {
-private:
+ private:
   const std::filesystem::path path;
   const std::string message;
 
-public:
+ public:
   explicit FileServiceIsNotFileException(const std::filesystem::path &path)
       : path(path),
         message(fmt::format("No Operation possible bc. {} is not a file",

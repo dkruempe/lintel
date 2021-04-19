@@ -1,10 +1,11 @@
 #ifndef CPP_BASE_LIBRARY_CONNECTION_H
 #define CPP_BASE_LIBRARY_CONNECTION_H
+
 #include <memory>
 
 #include "base_library/core/persistence/postgresql/Connection.h"
 #include "base_library/core/persistence/sqlite3/Connection.h"
-#include "base_library/core/persistence/ConnectionType.h"
+#include "base_library/features/base/configuration/ConnectionEntry.h"
 
 namespace db {
 
@@ -14,7 +15,7 @@ class PreparedStatement;
 class Notify;
 
 class Connection {
-private:
+ private:
   std::shared_ptr<postgresql::Connection> conn = nullptr;
   std::shared_ptr<sqlite::Connection> connSQLite = nullptr;
 
@@ -24,12 +25,14 @@ private:
   friend class PreparedStatement;
   friend class Notify;
 
-public:
+ public:
   explicit Connection(ConnectionType connectionType,
                       const std::string &connectionInfo);
 
+  explicit Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry);
+
   explicit Connection(Connection &connection) = delete;
 };
-} // namespace db
+}  // namespace db
 
-#endif // CPP_BASE_LIBRARY_CONNECTION_H
+#endif  // CPP_BASE_LIBRARY_CONNECTION_H

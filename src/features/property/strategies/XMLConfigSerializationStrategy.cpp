@@ -1,10 +1,10 @@
 #include "base_library/features/property/strategies/XMLConfigSerializationStrategy.h"
-#include "base_library/core/services/FileService.h"
 
 #include <tinyxml2.h>
 
 #include <vector>
 
+#include "base_library/core/services/FileService.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
 
 #define CONFIG_ROOT "Properties"

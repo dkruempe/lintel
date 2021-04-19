@@ -13,14 +13,14 @@ namespace postgresql {
  * => algorithm will automatically count the number of parameters
  */
 class PreparedStatement {
-private:
+ private:
   bool closed = false;
   const Connection &connection;
   const int32_t nParams;
   const std::string statementName;
   const std::string statement;
 
-public:
+ public:
   static int32_t initNParams(const std::string &tempStatement);
 
   static std::string initStatement(const std::string &tempStatement);
@@ -39,5 +39,5 @@ public:
 
   void close();
 };
-} // namespace postgresql
-#endif // CPP_BASE_LIBRARY_POSTGRESQL_PREPAREDSTATEMENT_H
+}  // namespace postgresql
+#endif  // CPP_BASE_LIBRARY_POSTGRESQL_PREPAREDSTATEMENT_H

@@ -1,7 +1,8 @@
 #include "base_library/features/property/PropertyFeature.h"
+
+#include "base_library/features/property/configuration/PropertyComponent.h"
 #include "base_library/features/property/repositories/FilePropertyRepository.h"
 #include "base_library/features/property/strategies/XMLConfigSerializationStrategy.h"
-#include "base_library/features/property/configuration/PropertyComponent.h"
 
 PropertyFeature::PropertyFeature() : Feature(type_name<PropertyFeature>()) {}
 void PropertyFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {

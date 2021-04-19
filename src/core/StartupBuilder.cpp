@@ -1,10 +1,12 @@
 #include "base_library/core/StartupBuilder.h"
+
+#include <algorithm>
+#include <csignal>
+
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/InitializeService.h"
-#include <algorithm>
-#include <csignal>
 
 StartupBuilder *StartupBuilder::startupBuilder = nullptr;
 
@@ -56,14 +58,14 @@ StartupBuilder &StartupBuilder::start() {
 
 void StartupBuilder::receiveSignal(int signal) {
   switch (signal) {
-  case SIGINT:
-  case SIGCHLD:
-  case SIGTERM:
-    startupBuilder->onShutdown();
-    break;
-  default:
-    LOG_ERROR("{} undefined signal", signal);
-    break;
+    case SIGINT:
+    case SIGCHLD:
+    case SIGTERM:
+      startupBuilder->onShutdown();
+      break;
+    default:
+      LOG_ERROR("{} undefined signal", signal);
+      break;
   }
 }
 

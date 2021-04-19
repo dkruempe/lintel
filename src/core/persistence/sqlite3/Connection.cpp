@@ -1,12 +1,21 @@
 #include "base_library/core/persistence/sqlite3/Connection.h"
-#include "base_library/core/exceptions/SQLException.h"
 
 #include <cstring>
 #include <functional>
 
+#include "base_library/core/exceptions/SQLException.h"
+#include "base_library/features/base/configuration/ConnectionEntry.h"
+
 namespace sqlite {
 Connection::Connection(const std::string &connectionInfo) : db(nullptr) {
   int rc = sqlite3_open(connectionInfo.c_str(), &db);
+  if (rc != SQLITE_OK) {
+    throw db::SQLException("Can't open database: " + getErrorMessage());
+  }
+}
+Connection::Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry)
+    : db(nullptr) {
+  int rc = sqlite3_open(connectionEntry->getConnection().c_str(), &db);
   if (rc != SQLITE_OK) {
     throw db::SQLException("Can't open database: " + getErrorMessage());
   }
@@ -25,9 +34,8 @@ Connection::~Connection() {
   }
 }
 
-std::shared_ptr<Result>
-Connection::prepareStatement(const std::string &queryName,
-                             const std::string &query) {
+std::shared_ptr<Result> Connection::prepareStatement(
+    const std::string &queryName, const std::string &query) {
   auto found = preparedStatements.find(queryName);
   if (found != preparedStatements.end()) {
     throw db::SQLException("SQLite sqlite3_stmt is initialized => abort");
@@ -55,9 +63,8 @@ void Connection::finalizePreparedStatement(const std::string &queryName) {
   sqlite3_finalize(found->second);
   preparedStatements.erase(found);
 }
-std::shared_ptr<Result>
-Connection::executePreparedStatement(const std::string &queryName,
-                                     const db::Parameters &parameters) {
+std::shared_ptr<Result> Connection::executePreparedStatement(
+    const std::string &queryName, const db::Parameters &parameters) {
   auto found = preparedStatements.find(queryName);
   if (found == preparedStatements.end()) {
     throw db::SQLException("SQLite not prepared statement available");
@@ -96,9 +103,8 @@ Connection::executePreparedStatement(const std::string &queryName,
   return result;
 }
 
-std::shared_ptr<Result>
-Connection::executeParameters(const std::string &statement,
-                              const db::Parameters &parameters) {
+std::shared_ptr<Result> Connection::executeParameters(
+    const std::string &statement, const db::Parameters &parameters) {
   std::shared_ptr<Result> result = std::make_shared<Result>();
   sqlite3_stmt *stmt;
   const int rc = sqlite3_prepare_v2(db, statement.c_str(),
@@ -140,8 +146,8 @@ Connection::executeParameters(const std::string &statement,
   return result;
 }
 
-std::shared_ptr<Result>
-Connection::execute(const std::string &statement) const {
+std::shared_ptr<Result> Connection::execute(
+    const std::string &statement) const {
   char *errorMessage;
   std::shared_ptr<Result> result = std::make_shared<Result>();
   std::function<void(int argc, char **argv, char **column)> func =
@@ -172,4 +178,4 @@ int Connection::callBack(void *funcPtr, int argc, char **argv, char **column) {
   func->operator()(argc, argv, column);
   return 0;
 }
-} // namespace sqlite
+}  // namespace sqlite

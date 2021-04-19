@@ -15,7 +15,7 @@ endif ()
 
 if (NOT DEFINED BOOTSTRAP_CONFIG_NAME)
     set(BOOTSTRAP_CONFIG_NAME "bootstrap")
-endif()
+endif ()
 
 configure_file(
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h.in

@@ -69,7 +69,6 @@ void JsonLayout::format(LogString &output, const spi::LoggingEventPtr &event,
     LoggingEvent::KeySet keySet(event->getMDCKeySet());
 
     if (!(keySet.empty() && propertySet.empty())) {
-
       for (const LogString &key : keySet) {
         LogString value;
         if (event->getMDC(key, value)) {

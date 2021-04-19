@@ -1,17 +1,18 @@
 #ifndef CPP_BASE_LIBRARY_POSTGRESQL_NOTIFY_H
 #define CPP_BASE_LIBRARY_POSTGRESQL_NOTIFY_H
 
-#include "Connection.h"
+#include <sys/select.h>
 
 #include <atomic>
 #include <functional>
 #include <string>
-#include <sys/select.h>
 #include <thread>
+
+#include "Connection.h"
 
 namespace postgresql {
 class Notify {
-private:
+ private:
   const int32_t timeoutSeconds = 1;
   std::atomic<bool> shutdown = false;
   Connection &connection;
@@ -26,12 +27,12 @@ private:
   void run();
   void listen();
 
-public:
+ public:
   explicit Notify(Connection &connection, std::string tableName,
                   std::function<void()> &callBack);
 
   ~Notify();
 };
-} // namespace postgresql
+}  // namespace postgresql
 
-#endif // CPP_BASE_LIBRARY_POSTGRESQL_NOTIFY_H
+#endif  // CPP_BASE_LIBRARY_POSTGRESQL_NOTIFY_H

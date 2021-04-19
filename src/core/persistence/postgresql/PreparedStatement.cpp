@@ -1,7 +1,8 @@
 #include "base_library/core/persistence/postgresql/PreparedStatement.h"
-#include "base_library/core/persistence/Parameter.h"
 
 #include <algorithm>
+
+#include "base_library/core/persistence/Parameter.h"
 
 namespace postgresql {
 int32_t PreparedStatement::initNParams(const std::string &tempStatement) {
@@ -25,8 +26,10 @@ std::string PreparedStatement::initStatement(const std::string &tempStatement) {
 PreparedStatement::PreparedStatement(const Connection &connection,
                                      const std::string &statement,
                                      const std::string &statementName)
-    : connection(connection), nParams(initNParams(statement)),
-      statementName(statementName), statement(initStatement(statement)) {
+    : connection(connection),
+      nParams(initNParams(statement)),
+      statementName(statementName),
+      statement(initStatement(statement)) {
   std::shared_ptr<Result> result = connection.prepareStatement(
       this->statementName, this->statement, nParams);
   if (!result->isState(PGRES_COMMAND_OK)) {
@@ -35,8 +38,8 @@ PreparedStatement::PreparedStatement(const Connection &connection,
   }
 }
 
-std::shared_ptr<Result>
-PreparedStatement::execute(const std::vector<std::string> &params) {
+std::shared_ptr<Result> PreparedStatement::execute(
+    const std::vector<std::string> &params) {
   if (closed) {
     throw db::SQLException("Prepared Statement '" + statementName + "' closed");
   }
@@ -62,4 +65,4 @@ void PreparedStatement::close() {
   }
   closed = true;
 }
-} // namespace postgresql
+}  // namespace postgresql

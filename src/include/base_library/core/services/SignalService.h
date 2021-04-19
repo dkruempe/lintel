@@ -10,7 +10,7 @@ static std::condition_variable condition;
 static std::mutex mutex;
 
 class SignalService {
-public:
+ public:
   static void registerHooks(const std::vector<int32_t> &signals) {
     for (const auto &sig : signals) {
       signal(sig, handleSignal);
@@ -27,4 +27,4 @@ public:
   static void raiseSignal(int32_t signal) { raise(signal); }
 };
 
-#endif // CPP_BASE_LIBRARY_SIGNALSERVICE_H
+#endif  // CPP_BASE_LIBRARY_SIGNALSERVICE_H

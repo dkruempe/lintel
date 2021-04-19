@@ -1,18 +1,15 @@
 #pragma once
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+namespace Tags {
 
-    namespace Tags
-    {
-        
-        struct SelfRegistered {};
-        struct NotSelfRegistered {};
+struct SelfRegistered {};
+struct NotSelfRegistered {};
 
-        struct FallbackRegistration {};
-        struct DefaultRegistration {};
+struct FallbackRegistration {};
+struct DefaultRegistration {};
 
-    }
+}  // namespace Tags
 
-} // namespace Hypodermic
+}  // namespace Hypodermic

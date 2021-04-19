@@ -3,12 +3,11 @@
 #include <functional>
 #include <memory>
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+class ComponentContext;
 
-    class ComponentContext;
+typedef std::function<std::shared_ptr<void>(ComponentContext&)>
+    DependencyFactory;
 
-    typedef std::function< std::shared_ptr< void >(ComponentContext&) > DependencyFactory;
-
-} // namespace Hypodermic
+}  // namespace Hypodermic

@@ -1,12 +1,16 @@
 #include "base_library/core/persistence/postgresql/Notify.h"
-#include <iostream>
+
 #include <string.h>
+
+#include <iostream>
 
 namespace postgresql {
 Notify::Notify(Connection &connection, std::string tableName,
                std::function<void()> &callBack)
-    : connection(connection), thread([&]() { run(); }),
-      tableName(std::move(tableName)), callBack(callBack) {}
+    : connection(connection),
+      thread([&]() { run(); }),
+      tableName(std::move(tableName)),
+      callBack(callBack) {}
 
 void Notify::listen() {
   if (shutdown) {
@@ -28,27 +32,27 @@ void Notify::listen() {
   FD_SET(sock, &input_mask);
   const int rc = select(sock + 1, &input_mask, nullptr, nullptr, &timeout);
   switch (rc) {
-    // error happen
-  case -1:
-    throw db::SQLException("LISTEN select() failed: " +
-                           std::string(strerror(errno)));
-    break;
-  case 0:
-    // timeout
-    break;
-  default:
-    PQconsumeInput(connection.conn);
-    PGnotify *notify = nullptr;
-    do {
-      notify = PQnotifies(connection.conn);
-      // clean received messages
-      if (notify != nullptr) {
-        PQfreemem(notify);
-      }
-    } while (notify != nullptr);
-    callBack();
-    // worked
-    break;
+      // error happen
+    case -1:
+      throw db::SQLException("LISTEN select() failed: " +
+                             std::string(strerror(errno)));
+      break;
+    case 0:
+      // timeout
+      break;
+    default:
+      PQconsumeInput(connection.conn);
+      PGnotify *notify = nullptr;
+      do {
+        notify = PQnotifies(connection.conn);
+        // clean received messages
+        if (notify != nullptr) {
+          PQfreemem(notify);
+        }
+      } while (notify != nullptr);
+      callBack();
+      // worked
+      break;
   }
 }
 void Notify::run() {
@@ -61,4 +65,4 @@ Notify::~Notify() {
   shutdown.store(true);
   thread.join();
 }
-} // namespace postgresql
+}  // namespace postgresql

@@ -1,6 +1,6 @@
 #include "base_library/features/property/models/Property.h"
 
-#define REGISTER_PROPERTY(type)                                                \
+#define REGISTER_PROPERTY(type) \
   bool Property<type>::registered = Property<type>::Registration();
 
 REGISTER_PROPERTY(int8_t)

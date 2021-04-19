@@ -1,17 +1,12 @@
 #pragma once
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+namespace Tags {
 
-    namespace Tags
-    {
+template <class TDependency>
+struct DependencyFactory {};
 
-        template <class TDependency>
-        struct DependencyFactory
-        {
-        };
+}  // namespace Tags
 
-    }
-
-} // namespace Hypodermic
+}  // namespace Hypodermic

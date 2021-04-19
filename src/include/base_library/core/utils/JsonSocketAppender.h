@@ -11,7 +11,7 @@
 namespace log4cxx::net {
 
 class LOG4CXX_EXPORT JsonSocketAppender : public SocketAppenderSkeleton {
-public:
+ public:
   /**
   The default port number of remote logging server (4560).
   */
@@ -46,7 +46,7 @@ public:
   */
   JsonSocketAppender(const LogString &host, int port);
 
-protected:
+ protected:
   void setSocket(log4cxx::helpers::SocketPtr &socket,
                  log4cxx::helpers::Pool &p) override;
 
@@ -59,15 +59,15 @@ protected:
   void append(const spi::LoggingEventPtr &event,
               log4cxx::helpers::Pool &pool) override;
 
-private:
+ private:
   log4cxx::helpers::WriterPtr writer;
   //  prevent copy and assignment statements
   JsonSocketAppender(const JsonSocketAppender &);
   JsonSocketAppender &operator=(const JsonSocketAppender &);
-}; // class XMLSocketAppender
+};  // class XMLSocketAppender
 
 LOG4CXX_PTR_DEF(JsonSocketAppender);
 
-} // namespace log4cxx::net
+}  // namespace log4cxx::net
 
-#endif // CPP_BASIC_LIBRARIES_JSONSOCKETAPPENDER_H
+#endif  // CPP_BASIC_LIBRARIES_JSONSOCKETAPPENDER_H

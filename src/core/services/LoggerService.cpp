@@ -1,13 +1,16 @@
 #include "base_library/core/services/LoggerService.h"
+
+#include <fmt/format.h>
+#include <log4cxx/basicconfigurator.h>
+#include <log4cxx/xml/domconfigurator.h>
+
+#include <algorithm>
+#include <iostream>
+
 #include "base_library/config.h"
 #include "base_library/core/exceptions/LoggerServiceNotInitialized.h"
 #include "base_library/core/services/DirectoryService.h"
 #include "base_library/core/services/FileService.h"
-#include <algorithm>
-#include <fmt/format.h>
-#include <iostream>
-#include <log4cxx/basicconfigurator.h>
-#include <log4cxx/xml/domconfigurator.h>
 // initialization of static variables
 LoggerService *LoggerService::instance = nullptr;
 std::once_flag LoggerService::initInstanceFlag;

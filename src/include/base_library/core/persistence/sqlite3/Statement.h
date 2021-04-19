@@ -5,10 +5,10 @@
 
 namespace sqlite {
 class Statement {
-private:
+ private:
   Connection &connection;
 
-public:
+ public:
   explicit Statement(Connection &connection);
 
   std::shared_ptr<Result> execute(const std::string &query);
@@ -16,6 +16,6 @@ public:
   std::shared_ptr<Result> execute(const std::string &query,
                                   const std::vector<std::string> &params);
 };
-} // namespace sqlite
+}  // namespace sqlite
 
-#endif // CPP_BASE_LIBRARY_SQLITE_STATEMENT_H
+#endif  // CPP_BASE_LIBRARY_SQLITE_STATEMENT_H

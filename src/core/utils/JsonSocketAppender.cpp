@@ -1,4 +1,5 @@
 #include "base_library/core/utils/JsonSocketAppender.h"
+
 #include <log4cxx/helpers/charsetencoder.h>
 #include <log4cxx/helpers/loglog.h>
 #include <log4cxx/helpers/optionconverter.h>

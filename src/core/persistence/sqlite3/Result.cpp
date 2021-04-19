@@ -19,4 +19,4 @@ int Result::getNumOfAttributes() const {
 }
 
 int Result::getSize() const { return entries.size(); }
-} // namespace sqlite
+}  // namespace sqlite

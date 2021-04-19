@@ -7,10 +7,17 @@
 #include <chrono>
 #include <iostream>
 
+std::shared_ptr<ConnectionEntry> connPostgres =
+    std::make_shared<ConnectionEntry>("", "", "", "",
+                                      db::ConnectionType::PostgreSQL,
+                                      "postgresql", -1, "keyValueStore");
+std::shared_ptr<ConnectionEntry> connSqlite = std::make_shared<ConnectionEntry>(
+    "", "/Users/dkruempe/Documents/dev/plc/test.db", "", "",
+    db::ConnectionType::SQLite, "sqlite", -1, "");
+
 void selectExample() {
-  std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
+    db::Connection connection(connPostgres);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result =
@@ -33,9 +40,8 @@ void selectExample() {
 }
 
 void selectExampleSQLite() {
-  std::string connInfo = "/Users/dkruempe/Documents/dev/plc/test.db";
   try {
-    db::Connection connection(db::ConnectionType::SQLite, connInfo);
+    db::Connection connection(connSqlite);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result = query.execute("select key, value from key_value");
@@ -57,9 +63,8 @@ void selectExampleSQLite() {
 }
 
 void deleteExample() {
-  std::string connInfo = "dbname=keyValueStore";
   try {
-    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
+    db::Connection connection(connPostgres);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result =
@@ -70,9 +75,8 @@ void deleteExample() {
 }
 
 void deleteExampleSQLite() {
-  std::string connInfo = "/Users/dkruempe/Documents/dev/plc/test.db";
   try {
-    db::Connection connection(db::ConnectionType::SQLite, connInfo);
+    db::Connection connection(connSqlite);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result =
@@ -83,9 +87,8 @@ void deleteExampleSQLite() {
 }
 
 void insertExample() {
-  std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
+    db::Connection connection(connPostgres);
     db::Transaction transaction(connection);
     db::PreparedStatement preparedStatement(
         connection, "INSERT INTO KEY_VALUE_STORE (key, value) values (?,?)",
@@ -99,9 +102,8 @@ void insertExample() {
 }
 
 void insertExampleSQLite() {
-  std::string connInfo = "/Users/dkruempe/Documents/dev/plc/test.db";
   try {
-    db::Connection connection(db::ConnectionType::SQLite, connInfo);
+    db::Connection connection(connSqlite);
     db::Transaction transaction(connection);
     db::PreparedStatement preparedStatement(
         connection, "INSERT INTO KEY_VALUE (key, value) values (?,?)",
@@ -115,9 +117,8 @@ void insertExampleSQLite() {
 }
 
 void testNotify() {
-  std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
+    db::Connection connection(connPostgres);
     std::function<void()> func = [&]() {
       std::cout << "VALUE CHANGED" << std::endl;
     };
@@ -129,10 +130,9 @@ void testNotify() {
 }
 
 void insertStatementExample() {
-  std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
-    db::Connection connectionNotify(db::ConnectionType::PostgreSQL, connInfo);
+    db::Connection connection(connPostgres);
+    db::Connection connectionNotify(connPostgres);
     std::function<void()> func = [&]() {
       std::cout << "VALUE CHANGED" << std::endl;
     };
@@ -147,9 +147,8 @@ void insertStatementExample() {
 }
 
 void insertStatementExampleSQLite() {
-  std::string connInfo = "/Users/dkruempe/Documents/dev/plc/test.db";
   try {
-    db::Connection connection(db::ConnectionType::SQLite, connInfo);
+    db::Connection connection(connSqlite);
     std::function<void()> func = [&]() {
       std::cout << "NOTIFY DATA CHANGED" << std::endl;
     };
@@ -165,10 +164,9 @@ void insertStatementExampleSQLite() {
 
 void insertPerformanceTest() {
   auto start = std::chrono::steady_clock::now();
-  std::string connInfo = "dbname = keyValueStore";
   int32_t numOfTelegrams = 1000000;
   try {
-    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
+    db::Connection connection(connPostgres);
     db::Transaction transaction(connection);
     int32_t statementBatchSize = 100;
     int32_t batchSize = 1000;
@@ -207,10 +205,9 @@ void insertPerformanceTest() {
 
 void insertPerformanceTestSQLite() {
   auto start = std::chrono::steady_clock::now();
-  std::string connInfo = "/Users/dkruempe/Documents/dev/plc/test.db";
   int32_t numOfTelegrams = 1000000;
   try {
-    db::Connection connection(db::ConnectionType::SQLite, connInfo);
+    db::Connection connection(connSqlite);
     db::Transaction transaction(connection);
     int32_t statementBatchSize = 100;
     int32_t batchSize = 1000;
@@ -248,21 +245,21 @@ void insertPerformanceTestSQLite() {
 }
 
 void transActionTest() {
-  std::string connInfo = "dbname = keyValueStore";
   try {
-    db::Connection connection(db::ConnectionType::PostgreSQL, connInfo);
+    db::Connection connection(connPostgres);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     query.execute(
         "INSERT INTO key_value_store (key, value) values('Anna', 'Dominik')");
-    transaction.commit(); // finished transaction
+    transaction.commit();  // finished transaction
     transaction.start();
     query.execute(
         "INSERT INTO key_value_store (key, value) values('Oma', 'Opa')");
-    transaction.rollback(); // finished transaction
+    transaction.rollback();  // finished transaction
     transaction.start();
-    query.execute("INSERT INTO key_value_store (key,value) values('Katharina', "
-                  "'Pierre')");
+    query.execute(
+        "INSERT INTO key_value_store (key,value) values('Katharina', "
+        "'Pierre')");
     transaction.save("save");
     query.execute(
         "INSERT INTO key_value_store (key,value) values('Jeniffer', 'Daniel')");
@@ -284,22 +281,22 @@ void transActionTest() {
 }
 
 void transActionTestSQLite() {
-  std::string connInfo = "/Users/dkruempe/Documents/dev/plc/test.db";
   try {
-    db::Connection connection(db::ConnectionType::SQLite, connInfo);
+    db::Connection connection(connSqlite);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     query.execute(
         "INSERT INTO key_value (key, value) values('Anna', 'Dominik')");
-    transaction.commit(); // finished transaction
+    transaction.commit();  // finished transaction
 
     transaction.start();
     query.execute("INSERT INTO key_value (key, value) values('Oma', 'Opa')");
-    transaction.rollback(); // finished transaction
+    transaction.rollback();  // finished transaction
 
     transaction.start();
-    query.execute("INSERT INTO key_value (key,value) values('Katharina', "
-                  "'Pierre')");
+    query.execute(
+        "INSERT INTO key_value (key,value) values('Katharina', "
+        "'Pierre')");
     transaction.save("save");
     query.execute(
         "INSERT INTO key_value (key,value) values('Jeniffer', 'Daniel')");

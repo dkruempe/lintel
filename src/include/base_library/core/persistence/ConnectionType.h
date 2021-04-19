@@ -7,7 +7,7 @@
 
 namespace db {
 class ConnectionType {
-public:
+ public:
   // value is defining priority of property repository type
   enum Value { UNDEFINED = -1, SQLite = 0, PostgreSQL };
 
@@ -36,9 +36,9 @@ public:
     return os;
   }
 
-private:
+ private:
   Value value;
 };
-} // namespace db
+}  // namespace db
 
-#endif // CPP_BASE_LIBRARY_CONNECTIONTYPE_H
+#endif  // CPP_BASE_LIBRARY_CONNECTIONTYPE_H

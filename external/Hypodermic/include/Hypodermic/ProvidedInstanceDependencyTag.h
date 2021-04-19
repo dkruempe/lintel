@@ -1,17 +1,12 @@
 #pragma once
 
+namespace Hypodermic {
 
-namespace Hypodermic
-{
+namespace Tags {
 
-    namespace Tags
-    {
+template <class TDependency, class TProvidedDependency>
+struct ProvidedInstanceDependency {};
 
-        template <class TDependency, class TProvidedDependency>
-        struct ProvidedInstanceDependency
-        {
-        };
+}  // namespace Tags
 
-    }
-
-} // namespace Hypodermic
+}  // namespace Hypodermic

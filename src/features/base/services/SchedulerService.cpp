@@ -1,4 +1,5 @@
 #include "base_library/features/base/services/SchedulerService.h"
+
 #include "base_library/core/services/LoggerService.h"
 
 void SchedulerService::clear() {

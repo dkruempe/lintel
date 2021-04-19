@@ -14,7 +14,7 @@
 #include "base_library/features/base/models/Process.h"
 
 class ProcessService {
-private:
+ private:
   volatile bool exit = false;
   std::vector<Process> processes;
   std::chrono::seconds waitTimeForShutdown;
@@ -25,7 +25,7 @@ private:
   void run();
   static void checkExitCodeOf(Process &process);
 
-public:
+ public:
   /**
    * constructor
    * @param processes
@@ -103,4 +103,4 @@ public:
   void detachOf(int64_t id);
 };
 
-#endif // CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H
+#endif  // CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H

@@ -1,17 +1,18 @@
 #ifndef CPP_BASE_LIBRARY_SQLITE_TRANSACTION_H
 #define CPP_BASE_LIBRARY_SQLITE_TRANSACTION_H
 
+#include <string>
+
 #include "Connection.h"
 #include "base_library/core/exceptions/SQLException.h"
-#include <string>
 
 namespace sqlite {
 class Transaction {
-private:
+ private:
   const Connection &connection;
   bool finished = false;
 
-public:
+ public:
   explicit Transaction(const Connection &tempConnection);
 
   Transaction(Transaction &transaction) = delete;
@@ -29,6 +30,6 @@ public:
   ~Transaction();
   void isFinished() const;
 };
-} // namespace sqlite
+}  // namespace sqlite
 
-#endif // CPP_BASE_LIBRARY_SQLITE_TRANSACTION_H
+#endif  // CPP_BASE_LIBRARY_SQLITE_TRANSACTION_H

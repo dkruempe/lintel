@@ -13,11 +13,13 @@
 
 class PropertyService;
 
-template <class T> class Property;
+template <class T>
+class Property;
 
 #define IMPLEMENT_PROPERTY(type, convertToString, convertToValue)              \
-  template <> class Property<type> : public PropertyBase {                     \
-  private:                                                                     \
+  template <>                                                                  \
+  class Property<type> : public PropertyBase {                                 \
+   private:                                                                    \
     type value;                                                                \
     std::shared_mutex mutex;                                                   \
     static bool Registration() {                                               \
@@ -45,7 +47,7 @@ template <class T> class Property;
       this->value = convertToValue(value);                                     \
     }                                                                          \
                                                                                \
-  public:                                                                      \
+   public:                                                                     \
     Property(const std::string &name, const std::string &instanceName,         \
              const std::string &className, const std::string &processName,     \
              type value, const std::string &description, bool runtimeChange)   \
