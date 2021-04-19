@@ -21,9 +21,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<NoPropertyRepository>();
   std::vector<std::shared_ptr<AbstractServiceInterface>> abstractInterfaces =
       {};
-  PropertyService propertyService({propertyRepository},
-                                  std::make_shared<ProcessName>(argc, argv),
-                                  abstractInterfaces);
+  PropertyService propertyService({propertyRepository}, abstractInterfaces);
   for (auto &property : propertyService.allProperties()) {
     std::cout << *property << "\n";
   }
