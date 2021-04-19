@@ -14,6 +14,9 @@
  * we
  */
 class FilePropertyRepository : public PropertyRepository {
+ private:
+  std::vector<std::shared_ptr<PropertyBase>> properties;
+
  public:
   explicit FilePropertyRepository(std::shared_ptr<Configuration> configuration);
 
