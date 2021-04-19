@@ -28,7 +28,7 @@ bool FilePropertyRepository::isMutable() { return false; }
 FilePropertyRepository::FilePropertyRepository(
     std::shared_ptr<Configuration> configuration)
     : configuration(std::move(configuration)) {
-  auto entries = configuration->configurationOf<PropertyComponent>();
+  auto entries = this->configuration->configurationOf<PropertyComponent>();
   properties.reserve(entries.size());
   for (auto &&entry : entries) {
     properties.push_back(

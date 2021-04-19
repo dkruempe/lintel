@@ -8,7 +8,7 @@
 class PropertyRepositoryType {
  public:
   // value is defining priority of property repository type
-  enum Value { DEFAULT = -1, FILE_REPOSITORY = 0 };
+  enum Value { DEFAULT = -1, FILE_REPOSITORY = 0, DATABASE_REPOSITORY };
 
   PropertyRepositoryType() = default;
 
