@@ -1,5 +1,6 @@
 #include <base_library/core/services/LoggerService.h>
 #include <base_library/core/services/SignalService.h>
+#include <base_library/features/base/configuration/Cryption.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
 
@@ -7,6 +8,7 @@
 #include <csignal>
 #include <functional>
 #include <iostream>
+#include <magic_enum.hpp>
 #include <memory>
 #include <thread>
 #include <utility>
@@ -34,23 +36,61 @@ class CommandLineComponent {
   virtual bool onExit() = 0;
 };
 
-class EnvironmentComponent : public CommandLineComponent {
+class ConfigurationComponent : public CommandLineComponent {
  private:
+  enum STATE { ENCRYPT, DECRYPT, SHOW, UNDEFINED };
+  STATE currentState = UNDEFINED;
+  Cryption cryption;
   std::string name;
 
  public:
-  EnvironmentComponent() : CommandLineComponent("Environment", "env") {}
+  ConfigurationComponent() : CommandLineComponent("Configuration", "conf") {}
 
   void onCommand(const std::string &input) override {
-    fmt::print(fg(fmt::color::crimson) | fmt::emphasis::bold, "Hello, {}!\n",
-               "world");
+    switch (currentState) {
+      case ENCRYPT:
+        fmt::print("{}\n", cryption.encryption(input));
+        currentState = UNDEFINED;
+        return;
+      case DECRYPT:
+        fmt::print("{}\n", cryption.decryption(input));
+        currentState = UNDEFINED;
+        return;
+      default:
+        break;
+    }
+    STATE state = magic_enum::enum_cast<STATE>(input).value_or(UNDEFINED);
+    switch (state) {
+      case ENCRYPT:
+        fmt::print("Encryption of: \n");
+        currentState = ENCRYPT;
+        break;
+      case DECRYPT:
+        fmt::print("Decryption of: \n");
+        currentState = DECRYPT;
+        break;
+      case SHOW:
+        currentState = UNDEFINED;
+        break;
+      case UNDEFINED:
+        fmt::print("Wrong command \n");
+        currentState = UNDEFINED;
+        break;
+    }
   }
 
-  void onShowMenu() override {}
+  void onShowMenu() override {
+    fmt::print("No submenu available!");
+  }
 
   bool onMenu(const std::string &component) override { return true; }
 
-  void onHelp() override {}
+  void onHelp() override {
+    auto values = magic_enum::enum_names<STATE>();
+    for (auto &value : values) {
+      fmt::print("{}\n", value);
+    }
+  }
 
   bool onExit() override { return true; }
 };
@@ -278,7 +318,7 @@ class CommandLineApplication {
 
 int main(int argc, char *argv[]) {
   DECLARE_LOGGER(argv[0]);
-  CommandLineApplication cli({std::make_shared<EnvironmentComponent>()});
+  CommandLineApplication cli({std::make_shared<ConfigurationComponent>()});
   SignalService::registerHooks({SIGINT, SIGABRT, SIGTERM});
   SignalService::waitForUserInterrupt();
   return 0;

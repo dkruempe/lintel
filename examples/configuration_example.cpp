@@ -13,7 +13,7 @@
 void encryptTest() {
   Cryption cryption;
   std::string cipherText =
-      cryption.encryption("Anna Krümpelmann und Example User <3");
+      cryption.encryption("Example User and Example User <3");
   LOG_INFO("encryption: {}", cipherText);
   std::string plainText = cryption.decryption(cipherText);
   LOG_INFO("decryption: {}", plainText);

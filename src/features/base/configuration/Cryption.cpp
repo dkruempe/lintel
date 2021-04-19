@@ -5,6 +5,8 @@
 
 #include <algorithm>
 
+#include "base_library/core/utils/StringUtils.h"
+
 Cryption::Cryption() { ERR_print_errors_fp(stderr); }
 
 void Cryption::handleErrors() {
@@ -57,12 +59,9 @@ std::string Cryption::encryption(const std::string &plainText) {
   /* Clean up */
   EVP_CIPHER_CTX_free(ctx);
 
-  printf("Ciphertext is:\n");
-  BIO_dump_fp(stdout, (const char *)ciphertext, ciphertext_len);
-
   std::string result;
   for (int i = 0; i < ciphertext_len; i++) {
-    result += static_cast<char>(ciphertext[i]);
+    result += std::to_string(ciphertext[i]) += " ";
   }
   return result;
 }
@@ -72,11 +71,15 @@ std::string Cryption::decryption(const std::string &cipherText) {
 
   int len;
   int plaintext_len;
-  unsigned char ciphertext[cipherText.length()];
-  int ciphertext_len = static_cast<int>(cipherText.length());
-  unsigned char plaintext[cipherText.length()];
+  std::vector<std::string> tokens = StringUtils::split(cipherText, ' ');
+  unsigned char ciphertext[tokens.size()];
+  int ciphertext_len = static_cast<int>(tokens.size());
+  unsigned char plaintext[tokens.size()];
 
-  std::copy(cipherText.begin(), cipherText.end(), ciphertext);
+  int i = 0;
+  for (auto &token : tokens) {
+    ciphertext[i++] = std::stoul(token);
+  }
 
   /* Create and initialise the context */
   if (!(ctx = EVP_CIPHER_CTX_new())) {
