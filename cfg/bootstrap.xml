@@ -1,9 +1,14 @@
 <Configuration>
     <Connections>
         <Connection name="DEFAULT" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite"/>
-        <Connection name="KPI" user_name="dkruempe" password="${ADMIN_PASSWORD}" database_name="keyValueStore" type="PostgreSQL"/>
+        <Connection name="KPI" user_name="dkruempe" password="${ADMIN_PASSWORD}" database_name="keyValueStore"
+                    type="PostgreSQL"/>
         <Connection name="KPI" database_name="keyValueStore" type="PostgreSQL"/>
     </Connections>
+    <Websockets>
+        <Websocket name="DEFAULT" type="Server" address="0.0.0.0" port="4711"/>
+        <Websocket name="CLI" type="Client" address="localhost" port="4711"/>
+    </Websockets>
     <Properties>
         <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService"
                   instance="__DEFAULT"/>

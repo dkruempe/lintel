@@ -9,6 +9,8 @@
 #include "base_library/features/base/configuration/Cryption.h"
 #include "base_library/features/property/configuration/PropertyComponent.h"
 #include "base_library/features/property/configuration/PropertyEntry.h"
+#include "base_library/features/websocket/WebsocketComponent.h"
+#include "base_library/features/websocket/WebsocketEntry.h"
 
 void encryptTest() {
   Cryption cryption;
@@ -24,7 +26,8 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<Component> component = std::make_shared<PropertyComponent>();
   std::shared_ptr<ConnectionComponent> environment =
       std::make_shared<ConnectionComponent>();
-  Configuration configurationParser({component, environment});
+  std::shared_ptr<Component> websocket = std::make_shared<WebsocketComponent>();
+  Configuration configurationParser({component, environment, websocket});
   std::vector<std::shared_ptr<Entry>> properties =
       configurationParser.configurationOf<PropertyComponent>();
   for (auto &iter : properties) {
@@ -39,6 +42,15 @@ int main(int argc, char *argv[]) {
     auto environemntPtr = std::static_pointer_cast<ConnectionEntry>(iter);
     std::stringstream ss;
     ss << *environemntPtr;
+    LOG_INFO("{}", ss.str());
+  }
+
+  std::vector<std::shared_ptr<Entry>> websockets =
+      configurationParser.configurationOf<WebsocketComponent>();
+  for (auto &iter : websockets) {
+    auto websocketPtr = std::static_pointer_cast<WebsocketEntry>(iter);
+    std::stringstream ss;
+    ss << *websocketPtr;
     LOG_INFO("{}", ss.str());
   }
 
