@@ -46,12 +46,10 @@ FILE(GLOB_RECURSE sources *.cpp)
 
 add_library(base_library SHARED ${headers} ${sources})
 target_compile_features(base_library PUBLIC cxx_std_17)
-target_include_directories(base_library PUBLIC
-        "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include;${OpenSSL_INCLUDES}>"
-        "$<INSTALL_INTERFACE:include;${OpenSSL_INCLUDES}>"
-        PRIVATE
-        "$<BUILD_INTERFACE:${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES};${Boost_INCLUDE_DIRS}>"
-        "$<INSTALL_INTERFACE:${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES};${Boost_INCLUDE_DIRS}>"
+target_include_directories(base_library
+        SYSTEM PUBLIC
+        "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES};${Boost_INCLUDE_DIRS};${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES};${Boost_INCLUDE_DIRS};include>"
         )
 target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3 Threads::Threads OpenSSL::SSL OpenSSL::Crypto RapidJSON::RapidJSON)
 add_library(kruempelmann::base_library ALIAS base_library)
