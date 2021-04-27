@@ -1,9 +1,16 @@
 #ifndef CPP_BASE_LIBRARY_WEBSOCKETFEATURE_H
 #define CPP_BASE_LIBRARY_WEBSOCKETFEATURE_H
 
+#include <memory>
+
 #include "base_library/features/Feature.h"
 
+class Server;
+
 class WebsocketFeature : public Feature {
+ private:
+  std::shared_ptr<Server> server;
+
  public:
   WebsocketFeature();
 

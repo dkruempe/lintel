@@ -8,6 +8,7 @@ libpq/13.1
 sqlite3/3.34.0
 openssl/1.1.1j
 boost/1.75.0
+rapidjson/cci.20200410
 
 [generators]
 cmake_find_package

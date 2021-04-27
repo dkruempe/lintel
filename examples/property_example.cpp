@@ -71,7 +71,7 @@ class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
   DEFINE_PROPERTY(enable, bool, false, "", true);
 };
 
-void testPropertyService(std::shared_ptr<ProcessName> processName) {
+void testPropertyService(const std::shared_ptr<ProcessName>& processName) {
   std::shared_ptr<Component> propertyComponent =
       std::make_shared<PropertyComponent>();
   std::vector<std::shared_ptr<Component>> components = {propertyComponent};
@@ -84,7 +84,7 @@ void testPropertyService(std::shared_ptr<ProcessName> processName) {
   std::vector<std::shared_ptr<AbstractServiceInterface>> abstractInterfaces =
       {};
   std::shared_ptr<PropertyService> propertyService =
-      std::make_shared<PropertyService>(repositories, processName,
+      std::make_shared<PropertyService>(repositories,
                                         abstractInterfaces);
   PropertyExampleClass A(propertyService, "A", processName->getProcessName());
   PropertyExampleClass B(propertyService, "B", processName->getProcessName());
