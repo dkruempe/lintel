@@ -13,7 +13,8 @@ class DatabasePropertyRepository : public PropertyRepository {
   std::shared_ptr<ConnectionEntry> connectionEntry;
 
  public:
-  explicit DatabasePropertyRepository(std::shared_ptr<ConnectionConfigurations> connectionConfigurations);
+  explicit DatabasePropertyRepository(
+      std::shared_ptr<ConnectionConfigurations> connectionConfigurations);
 
   PropertyRepositoryType getType() override;
 

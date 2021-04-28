@@ -34,5 +34,6 @@ std::chrono::nanoseconds StopWatchService::elapsed() const {
       std::chrono::steady_clock::now() - startTime);
 }
 std::ostream &operator<<(std::ostream &os, const StopWatchService &service) {
-  return os << static_cast<double>(service.elapsed().count()) / 1000000.0 << " ms";
+  return os << static_cast<double>(service.elapsed().count()) / 1000000.0
+            << " ms";
 }

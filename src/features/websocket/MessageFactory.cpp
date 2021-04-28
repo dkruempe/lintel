@@ -49,7 +49,7 @@ std::vector<std::shared_ptr<Message>> MessageFactory::generate(
     if (foundId != iter->MemberEnd() && foundMethod != iter->MemberEnd()) {
       std::string params;
       if (foundParameter != iter->MemberEnd()) {
-        //params = foundParameter->value
+        // params = foundParameter->value
       }
       auto request =
           std::make_shared<Request>(jsonrpc, foundMethod->value.GetString(),

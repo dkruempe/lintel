@@ -5,11 +5,7 @@
 
 class WebsocketComponent : public Component {
  private:
-  enum TYPE {
-    Server,
-    Client,
-    UNDEFINED
-  };
+  enum TYPE { Server, Client, UNDEFINED };
   static struct Shapes {
     const std::string CONFIG_ROOT = "Websockets";
     const std::string WEBSOCKET_ROOT = "Websocket";

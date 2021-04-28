@@ -1,8 +1,9 @@
+#include <algorithm>
+#include <map>
+
 #include "base_library/core/exceptions/SQLException.h"
 #include "base_library/core/persistence/ConnectionConfigurations.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
-#include <algorithm>
-#include <map>
 
 ConnectionConfigurations::ConnectionConfigurations(
     const std::shared_ptr<Configuration> &configuration)
@@ -23,8 +24,8 @@ ConnectionConfigurations::build(std::vector<std::shared_ptr<Entry>> entries) {
       });
   return connections;
 }
-std::shared_ptr<ConnectionEntry>
-ConnectionConfigurations::of(const std::string &connectionName) {
+std::shared_ptr<ConnectionEntry> ConnectionConfigurations::of(
+    const std::string &connectionName) {
   try {
     return connections.at(connectionName);
   } catch (std::out_of_range &e) {

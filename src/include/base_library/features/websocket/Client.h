@@ -1,8 +1,6 @@
 #ifndef CPP_BASE_LIBRARY_CLIENT_H
 #define CPP_BASE_LIBRARY_CLIENT_H
 
-class Client {
-
-};
+class Client {};
 
 #endif  // CPP_BASE_LIBRARY_CLIENT_H

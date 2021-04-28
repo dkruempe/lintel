@@ -8,7 +8,8 @@ std::string Result::getValue(int row, int attribute) const {
   if (entries.empty()) {
     return "";
   }
-  return entries[static_cast<std::size_t>(row)][static_cast<std::size_t>(attribute)];
+  return entries[static_cast<std::size_t>(row)]
+                [static_cast<std::size_t>(attribute)];
 }
 
 int Result::getNumOfAttributes() const {

@@ -41,8 +41,10 @@ std::string Cryption::encryption(const std::string &plainText) {
    * Provide the message to be encrypted, and obtain the encrypted output.
    * EVP_EncryptUpdate can be called multiple times if necessary
    */
-  if (!EVP_EncryptUpdate(ctx, &ciphertext[0], &len,
-                        reinterpret_cast<const unsigned char*>(plainText.c_str()), plaintext_len)) {
+  if (!EVP_EncryptUpdate(
+          ctx, &ciphertext[0], &len,
+          reinterpret_cast<const unsigned char *>(plainText.c_str()),
+          plaintext_len)) {
     handleErrors();
   }
   ciphertext_len = len;
@@ -72,7 +74,7 @@ std::string Cryption::decryption(const std::string &cipherText) {
   int len;
   int plaintext_len;
   std::vector<std::string> tokens = StringUtils::split(cipherText, ' ');
-  std::vector<unsigned char> ciphertext (tokens.size());
+  std::vector<unsigned char> ciphertext(tokens.size());
   int ciphertext_len = static_cast<int>(tokens.size());
   std::vector<unsigned char> plaintext(tokens.size());
 
@@ -101,7 +103,8 @@ std::string Cryption::decryption(const std::string &cipherText) {
    * Provide the message to be decrypted, and obtain the plaintext output.
    * EVP_DecryptUpdate can be called multiple times if necessary.
    */
-  if (!EVP_DecryptUpdate(ctx, &plaintext[0], &len, &ciphertext[0], ciphertext_len)) {
+  if (!EVP_DecryptUpdate(ctx, &plaintext[0], &len, &ciphertext[0],
+                         ciphertext_len)) {
     handleErrors();
   }
   plaintext_len = len;

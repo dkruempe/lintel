@@ -53,8 +53,8 @@ class FilePropertyRepository : public PropertyRepository {
    * save saveProperties to repository
    * @param saveProperties
    */
-  void save(
-      const std::vector<std::shared_ptr<PropertyBase>> &saveProperties) override;
+  void save(const std::vector<std::shared_ptr<PropertyBase>> &saveProperties)
+      override;
 
   /**
    * load all properties from repository and return result

@@ -42,8 +42,8 @@ std::shared_ptr<Result> Connection::prepareStatement(
   }
 
   sqlite3_stmt *stmt;
-  const int rc = sqlite3_prepare_v2(db, query.c_str(), static_cast<int>(query.size() + 1),
-                                    &stmt, nullptr);
+  const int rc = sqlite3_prepare_v2(
+      db, query.c_str(), static_cast<int>(query.size() + 1), &stmt, nullptr);
 
   if (rc != SQLITE_OK) {
     throw db::SQLException("SQLite prepare exception: " + getErrorMessage());
@@ -108,7 +108,8 @@ std::shared_ptr<Result> Connection::executeParameters(
   std::shared_ptr<Result> result = std::make_shared<Result>();
   sqlite3_stmt *stmt;
   const int rc = sqlite3_prepare_v2(db, statement.c_str(),
-                                    static_cast<int>(statement.size() + 1), &stmt, nullptr);
+                                    static_cast<int>(statement.size() + 1),
+                                    &stmt, nullptr);
   if (rc != SQLITE_OK) {
     throw db::SQLException("SQLite prepare exception: " + getErrorMessage());
   }
