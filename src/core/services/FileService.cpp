@@ -79,6 +79,6 @@ void FileService::createFile(std::size_t sizeOfFile) {
   fbuf.open(path, std::ios_base::in | std::ios_base::out |
                       std::ios_base::trunc | std::ios_base::binary);
   // Set the size
-  fbuf.pubseekoff(sizeOfFile - 1, std::ios_base::beg);
+  fbuf.pubseekoff(static_cast<long long>(sizeOfFile - 1), std::ios_base::beg);
   fbuf.sputc(0);
 }

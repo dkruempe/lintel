@@ -19,7 +19,7 @@ std::string Cryption::encryption(const std::string &plainText) {
   int len;
   int ciphertext_len;
   int plaintext_len = static_cast<int>(plainText.length());
-  unsigned char ciphertext[plainText.length() * 2];
+  std::vector<unsigned char> ciphertext(plainText.length() * 2);
 
   /* Create and initialise the context */
   if (!(ctx = EVP_CIPHER_CTX_new())) {
@@ -41,8 +41,8 @@ std::string Cryption::encryption(const std::string &plainText) {
    * Provide the message to be encrypted, and obtain the encrypted output.
    * EVP_EncryptUpdate can be called multiple times if necessary
    */
-  if (!EVP_EncryptUpdate(ctx, ciphertext, &len,
-                         (unsigned char *)(plainText.c_str()), plaintext_len)) {
+  if (!EVP_EncryptUpdate(ctx, &ciphertext[0], &len,
+                        reinterpret_cast<const unsigned char*>(plainText.c_str()), plaintext_len)) {
     handleErrors();
   }
   ciphertext_len = len;
@@ -51,7 +51,7 @@ std::string Cryption::encryption(const std::string &plainText) {
    * Finalise the encryption. Further ciphertext bytes may be written at
    * this stage.
    */
-  if (!EVP_EncryptFinal_ex(ctx, ciphertext + len, &len)) {
+  if (!EVP_EncryptFinal_ex(ctx, &ciphertext[0] + len, &len)) {
     handleErrors();
   }
   ciphertext_len += len;
@@ -60,7 +60,7 @@ std::string Cryption::encryption(const std::string &plainText) {
   EVP_CIPHER_CTX_free(ctx);
 
   std::string result;
-  for (int i = 0; i < ciphertext_len; i++) {
+  for (std::size_t i = 0; i < static_cast<std::size_t>(ciphertext_len); i++) {
     result += std::to_string(ciphertext[i]) += " ";
   }
   return result;
@@ -72,13 +72,13 @@ std::string Cryption::decryption(const std::string &cipherText) {
   int len;
   int plaintext_len;
   std::vector<std::string> tokens = StringUtils::split(cipherText, ' ');
-  unsigned char ciphertext[tokens.size()];
+  std::vector<unsigned char> ciphertext (tokens.size());
   int ciphertext_len = static_cast<int>(tokens.size());
-  unsigned char plaintext[tokens.size()];
+  std::vector<unsigned char> plaintext(tokens.size());
 
-  int i = 0;
+  std::size_t i = 0;
   for (auto &token : tokens) {
-    ciphertext[i++] = std::stoul(token);
+    ciphertext[i++] = static_cast<unsigned char>(std::stoul(token));
   }
 
   /* Create and initialise the context */
@@ -101,7 +101,7 @@ std::string Cryption::decryption(const std::string &cipherText) {
    * Provide the message to be decrypted, and obtain the plaintext output.
    * EVP_DecryptUpdate can be called multiple times if necessary.
    */
-  if (!EVP_DecryptUpdate(ctx, plaintext, &len, ciphertext, ciphertext_len)) {
+  if (!EVP_DecryptUpdate(ctx, &plaintext[0], &len, &ciphertext[0], ciphertext_len)) {
     handleErrors();
   }
   plaintext_len = len;
@@ -110,7 +110,7 @@ std::string Cryption::decryption(const std::string &cipherText) {
    * Finalise the decryption. Further plaintext bytes may be written at
    * this stage.
    */
-  if (!EVP_DecryptFinal_ex(ctx, plaintext + len, &len)) {
+  if (!EVP_DecryptFinal_ex(ctx, &plaintext[0] + len, &len)) {
     handleErrors();
   }
   plaintext_len += len;
@@ -118,6 +118,6 @@ std::string Cryption::decryption(const std::string &cipherText) {
   /* Clean up */
   EVP_CIPHER_CTX_free(ctx);
 
-  plaintext[plaintext_len] = 0;
-  return reinterpret_cast<char *>(plaintext);
+  plaintext[static_cast<std::size_t>(plaintext_len)] = 0;
+  return reinterpret_cast<const char *>(&plaintext[0]);
 }

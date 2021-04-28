@@ -41,7 +41,8 @@ void DatabasePropertyRepository::save(
   }
 }
 void DatabasePropertyRepository::save(std::shared_ptr<PropertyBase> property) {
-  save({property});
+  std::vector<std::shared_ptr<PropertyBase>> temp = {property};
+  save(temp);
 }
 std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake() {
   std::vector<std::shared_ptr<PropertyBase>> properties;

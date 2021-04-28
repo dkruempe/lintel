@@ -51,7 +51,7 @@ class ProcessService {
    * indirectly
    * @param nameOfProcess
    */
-  void startOf(int64_t id);
+  void startOf(std::size_t id);
   /**
    * This method will start all processes which are enabled and not
    * automatically enable a process. For enable and start a process the method
@@ -62,18 +62,18 @@ class ProcessService {
    * enables a process. So, that this process is allowed to start
    * @param nameOfProcess
    */
-  void enableOf(int64_t id);
+  void enableOf(std::size_t id);
   /**
    * checks if the process is running
    * @param nameOfProcess
    * @return true if the process is running
    */
-  bool isRunning(int64_t id);
+  bool isRunning(std::size_t id);
   /**
    * aborts the running process via kill -9
    * @param nameOfProcess
    */
-  void terminateOf(int64_t id);
+  void terminateOf(std::size_t id);
   /**
    * abort all running processes via kill -9
    */
@@ -82,7 +82,7 @@ class ProcessService {
    * regular stop of process
    * @param nameOfProcess
    */
-  void stopOf(int64_t id);
+  void stopOf(std::size_t id);
   /**
    * regular stop of all processes
    */
@@ -91,7 +91,7 @@ class ProcessService {
    * regular restart of a process
    * @param nameOfProcess
    */
-  void restartOf(int64_t id);
+  void restartOf(std::size_t id);
   /**
    * regular restart of all processes
    */
@@ -100,7 +100,7 @@ class ProcessService {
    * detach a process from the master
    * @param nameOfProcess
    */
-  void detachOf(int64_t id);
+  void detachOf(std::size_t id);
 };
 
 #endif  // CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H

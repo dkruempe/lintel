@@ -8,15 +8,15 @@ std::string Result::getValue(int row, int attribute) const {
   if (entries.empty()) {
     return "";
   }
-  return entries[row][attribute];
+  return entries[static_cast<std::size_t>(row)][static_cast<std::size_t>(attribute)];
 }
 
 int Result::getNumOfAttributes() const {
   if (entries.empty()) {
     return 0;
   }
-  return entries[0].size();
+  return static_cast<int>(entries[0].size());
 }
 
-int Result::getSize() const { return entries.size(); }
+int Result::getSize() const { return static_cast<int>(entries.size()); }
 }  // namespace sqlite

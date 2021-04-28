@@ -64,8 +64,8 @@ void Configuration::loadConfiguration() {
 
     auto entries =
         found->second->parse(printer.CStr(), file.getName(), lineOffset);
-    for (auto &iter : entries) {
-      configurationEntries.push_back(iter);
+    for (auto &entry : entries) {
+      configurationEntries.push_back(entry);
     }
   }
 }

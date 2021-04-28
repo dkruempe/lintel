@@ -15,7 +15,7 @@ ProcessService::~ProcessService() {
   monitorThread.join();
   monitor();
 }
-void ProcessService::startOf(int64_t id) {
+void ProcessService::startOf(std::size_t id) {
   Process &process = processes[id];
   if (!process.isEnabled()) {
     return;
@@ -49,14 +49,14 @@ void ProcessService::startAll() {
     process.startChild();
   }
 }
-bool ProcessService::isRunning(int64_t id) {
+bool ProcessService::isRunning(std::size_t id) {
   Process &process = processes[id];
   if (process.getChild() == nullptr) {
     return false;
   }
   return process.getChild()->running();
 }
-void ProcessService::terminateOf(int64_t id) {
+void ProcessService::terminateOf(std::size_t id) {
   Process &process = processes[id];
   if (process.getChild() == nullptr) {
     return;
@@ -71,7 +71,7 @@ void ProcessService::terminateAll() {
     process.getChild()->terminate();
   }
 }
-void ProcessService::stopOf(int64_t id) {
+void ProcessService::stopOf(std::size_t id) {
   Process &process = processes[id];
   if (process.getChild() == nullptr || !process.getChild()->running()) {
     return;
@@ -89,7 +89,7 @@ void ProcessService::stopAll() {
     process.getChild()->wait_for(waitTimeForShutdown);
   }
 }
-void ProcessService::restartOf(int64_t id) {
+void ProcessService::restartOf(std::size_t id) {
   Process &process = processes[id];
   if (process.getChild() != nullptr && process.getChild()->running()) {
     process.getChild()->wait_for(waitTimeForShutdown);
@@ -114,11 +114,11 @@ std::vector<Process> ProcessService::transformFunction(
   }
   return processes;
 }
-void ProcessService::detachOf(int64_t id) {
+void ProcessService::detachOf(std::size_t id) {
   Process &process = processes[id];
   process.getChild()->detach();
 }
-void ProcessService::enableOf(int64_t id) {
+void ProcessService::enableOf(std::size_t id) {
   Process &process = processes[id];
   if (process.isEnabled()) {
     return;

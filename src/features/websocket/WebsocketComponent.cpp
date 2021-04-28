@@ -32,7 +32,7 @@ std::vector<std::shared_ptr<Entry>> WebsocketComponent::parse(
     const char* name = element->Attribute(shape.NAME.c_str());
 
     int32_t lineNumber = element->GetLineNum() + lineOffset - 1;
-    uint16_t port = std::stoul(portTemp);
+    uint16_t port = static_cast<uint16_t>(std::stoul(portTemp));
     TYPE type = magic_enum::enum_cast<TYPE>(typeName).value_or(UNDEFINED);
     if (type == UNDEFINED) {
       LOG_ERROR("type {} not available at {}", typeName, lineNumber);

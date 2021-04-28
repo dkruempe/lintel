@@ -42,7 +42,7 @@ std::shared_ptr<Result> Connection::prepareStatement(
   }
 
   sqlite3_stmt *stmt;
-  const int rc = sqlite3_prepare_v2(db, query.c_str(), (int)query.size() + 1,
+  const int rc = sqlite3_prepare_v2(db, query.c_str(), static_cast<int>(query.size() + 1),
                                     &stmt, nullptr);
 
   if (rc != SQLITE_OK) {
@@ -108,7 +108,7 @@ std::shared_ptr<Result> Connection::executeParameters(
   std::shared_ptr<Result> result = std::make_shared<Result>();
   sqlite3_stmt *stmt;
   const int rc = sqlite3_prepare_v2(db, statement.c_str(),
-                                    (int)statement.size() + 1, &stmt, nullptr);
+                                    static_cast<int>(statement.size() + 1), &stmt, nullptr);
   if (rc != SQLITE_OK) {
     throw db::SQLException("SQLite prepare exception: " + getErrorMessage());
   }
@@ -133,9 +133,9 @@ std::shared_ptr<Result> Connection::executeParameters(
     const unsigned char *text;
     const int count = sqlite3_column_count(stmt);
     std::vector<std::string> entry;
-    for (int i = 0; i < count; i++) {
-      bytes = sqlite3_column_bytes(stmt, i);
-      text = sqlite3_column_text(stmt, i);
+    for (int j = 0; j < count; j++) {
+      bytes = sqlite3_column_bytes(stmt, j);
+      text = sqlite3_column_text(stmt, j);
       std::basic_string<unsigned char> temp = text;
       entry.emplace_back(temp.begin(), temp.end());
     }
@@ -153,7 +153,7 @@ std::shared_ptr<Result> Connection::execute(
   std::function<void(int argc, char **argv, char **column)> func =
       [&](int argc, char **argv, char **column) {
         std::vector<std::string> entry;
-        entry.reserve(argc);
+        entry.reserve(static_cast<std::size_t>(argc));
         for (int i = 0; i < argc; i++) {
           entry.emplace_back(argv[i]);
         }

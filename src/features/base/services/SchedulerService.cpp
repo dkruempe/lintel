@@ -47,7 +47,7 @@ void SchedulerService::run() {
 
 void SchedulerService::onInitialize() {
   LOG_INFO("start Scheduler with {} threads", numberOfThreads->getValue());
-  threads.reserve(numberOfThreads->getValue());
+  threads.reserve(static_cast<std::size_t>(numberOfThreads->getValue()));
   for (int i = 0; i < numberOfThreads->getValue(); i++) {
     threads.emplace_back([&] { run(); });
   }

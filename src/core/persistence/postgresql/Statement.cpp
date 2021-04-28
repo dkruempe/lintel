@@ -14,8 +14,9 @@ std::shared_ptr<Result> Statement::execute(const std::string &query) {
 }
 
 int32_t Statement::initNParams(const std::string &tempStatement) {
-  return std::count_if(tempStatement.begin(), tempStatement.end(),
-                       [](char temp) { return temp == '?'; });
+  return static_cast<int32_t>(
+      std::count_if(tempStatement.begin(), tempStatement.end(),
+                    [](char temp) { return temp == '?'; }));
 }
 
 std::string Statement::initStatement(const std::string &tempStatement) {
@@ -35,7 +36,7 @@ std::shared_ptr<Result> Statement::execute(
     const std::string &query, const std::vector<std::string> &params) {
   const std::string &statement = initStatement(query);
   const int32_t nParams = initNParams(query);
-  if (nParams != params.size()) {
+  if (static_cast<std::size_t>(nParams) != params.size()) {
     throw db::SQLException(
         "nParams != params.size() => check statement or parameters");
   }

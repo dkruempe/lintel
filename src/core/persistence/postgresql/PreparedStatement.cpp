@@ -6,8 +6,8 @@
 
 namespace postgresql {
 int32_t PreparedStatement::initNParams(const std::string &tempStatement) {
-  return std::count_if(tempStatement.begin(), tempStatement.end(),
-                       [](char temp) { return temp == '?'; });
+  return static_cast<int32_t>(std::count_if(tempStatement.begin(), tempStatement.end(),
+                       [](char temp) { return temp == '?'; }));
 }
 
 std::string PreparedStatement::initStatement(const std::string &tempStatement) {

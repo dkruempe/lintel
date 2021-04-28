@@ -11,7 +11,7 @@ std::shared_ptr<Result> Connection::executeParameters(
   const std::vector<const char *> &params = parameters.getParameters();
   const std::vector<int32_t> &paramLengths = parameters.getParametersLengths();
   return std::make_shared<Result>(
-      PQexecParams(conn, statement.c_str(), params.size(), nullptr, &params[0],
+      PQexecParams(conn, statement.c_str(), static_cast<int>(params.size()), nullptr, &params[0],
                    &paramLengths[0], nullptr, 0));
 }
 

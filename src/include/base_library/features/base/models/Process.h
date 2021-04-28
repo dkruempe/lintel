@@ -41,12 +41,12 @@ class Process {
           bool automaticRestart = false, int maxRestarts = INFINITE_RESTARTS);
 
   [[nodiscard]] int64_t getId() const;
-  void setId(int64_t id);
+  void setId(int64_t newId);
   [[nodiscard]] bool isEnabled() const;
   void setEnable(bool enable);
   [[nodiscard]] bool isAutomaticRestart() const;
   [[nodiscard]] int getRestarts() const;
-  void setRestarts(int restarts);
+  void setRestarts(int newRestarts);
   [[nodiscard]] int getMaxRestarts() const;
   [[nodiscard]] int getStartSequence() const;
   [[nodiscard]] const std::string &getName() const;
@@ -55,6 +55,6 @@ class Process {
   [[nodiscard]] const std::shared_ptr<boost::process::child> &getChild() const;
   void startChild();
   [[nodiscard]] int getExitCode() const;
-  void setExitCode(int exitCode);
+  void setExitCode(int newExitCode);
 };
 #endif  // CPP_SYSTEM_LIBRARY_PROCESS_H

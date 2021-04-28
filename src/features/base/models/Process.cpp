@@ -24,7 +24,7 @@ Process::Process(int startSequence, std::string name,
 
 int64_t Process::getId() const { return id; }
 
-void Process::setId(int64_t id) { Process::id = id; }
+void Process::setId(int64_t newId) { Process::id = newId; }
 
 bool Process::isEnabled() const { return enabled; }
 
@@ -34,7 +34,7 @@ bool Process::isAutomaticRestart() const { return automaticRestart; }
 
 int Process::getRestarts() const { return restarts; }
 
-void Process::setRestarts(int restarts) { Process::restarts = restarts; }
+void Process::setRestarts(int newRestarts) { Process::restarts = newRestarts; }
 
 int Process::getMaxRestarts() const { return maxRestarts; }
 
@@ -52,7 +52,7 @@ const std::shared_ptr<boost::process::child> &Process::getChild() const {
 
 int Process::getExitCode() const { return exitCode; }
 
-void Process::setExitCode(int exitCode) { Process::exitCode = exitCode; }
+void Process::setExitCode(int newExitCode) { Process::exitCode = newExitCode; }
 void Process::startChild() {
   exitCode = -1;
   std::filesystem::path newPath(

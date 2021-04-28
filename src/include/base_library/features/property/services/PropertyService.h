@@ -17,7 +17,7 @@
 #define DEFINE_PROPERTY(name, type, defaultValue, description, runtime)     \
   std::shared_ptr<Property<type>> name =                                    \
       registerProperty<type>(std::string(#name), defaultValue, description, \
-                             runtime, __FILE__, __LINE__);
+                             runtime, __FILE__, __LINE__)
 #define LOAD_PROPERTIES()                     \
   if (propertyService != nullptr) {           \
     propertyService->getOrCreate(properties); \

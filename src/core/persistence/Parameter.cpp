@@ -37,7 +37,7 @@ std::vector<const char *> Parameters::getParameters() const {
 std::vector<int32_t> Parameters::getParametersLengths() const {
   std::vector<int32_t> temp;
   for (auto &iter : params) {
-    temp.push_back(iter.getLength());
+    temp.push_back(static_cast<int32_t>(iter.getLength()));
   }
   return temp;
 }

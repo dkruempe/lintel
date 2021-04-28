@@ -7,10 +7,10 @@ std::string Request::serialize() { return std::string(); }
 Request::Request(std::string jsonRPC, std::string method, std::string params,
                  std::string id)
     : Message(),
-      jsonRPC(std::move(jsonRPC)),
-      method(std::move(method)),
+      id(std::move(id)),
       params(std::move(params)),
-      id(std::move(id)) {}
+      method(std::move(method)),
+      jsonRPC(std::move(jsonRPC)) {}
 const std::string& Request::getId() const { return id; }
 const std::string& Request::getMethod() const { return method; }
 const std::string& Request::getJsonRpc() const { return jsonRPC; }

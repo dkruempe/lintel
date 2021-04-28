@@ -55,7 +55,7 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
         static_cast<const uint8_t *>(readBuffer.cdata().data());
     std::vector<uint8_t> binaryBuffer;
     binaryBuffer.reserve(readBuffer.size());
-    for (int i = 0; i < readBuffer.size(); i++) {
+    for (std::size_t i = 0; i < readBuffer.size(); i++) {
       binaryBuffer.push_back(temp[i]);
     }
     auto packet = std::make_shared<Packet>(binaryBuffer);

@@ -8,7 +8,7 @@
 void FilePropertyRepository::save(std::shared_ptr<PropertyBase> property) {}
 
 void FilePropertyRepository::save(
-    const std::vector<std::shared_ptr<PropertyBase>> &properties) {}
+    const std::vector<std::shared_ptr<PropertyBase>> &saveProperties) {}
 
 std::vector<std::shared_ptr<PropertyBase>> FilePropertyRepository::awake() {
   return properties;
