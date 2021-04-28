@@ -11,7 +11,7 @@ namespace db {
  */
 class Parameter {
  private:
-  std::string value;
+  std::string m_value;
 
   explicit Parameter(std::string value);
 
@@ -27,7 +27,7 @@ class Parameter {
 
 class Parameters {
  private:
-  std::vector<Parameter> params;
+  std::vector<Parameter> m_params;
 
   static std::vector<Parameter> init(const std::vector<std::string> &params);
 
