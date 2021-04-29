@@ -86,12 +86,10 @@ std::shared_ptr<Result> Connection::executePreparedStatement(
     if (step != SQLITE_ROW) {
       continue;
     }
-    int bytes;
     const unsigned char *text;
     const int count = sqlite3_column_count(found->second);
     std::vector<std::string> entry;
     for (int i = 0; i < count; i++) {
-      bytes = sqlite3_column_bytes(found->second, i);
       text = sqlite3_column_text(found->second, i);
       std::basic_string<unsigned char> temp = text;
       entry.emplace_back(temp.begin(), temp.end());
@@ -130,12 +128,10 @@ std::shared_ptr<Result> Connection::executeParameters(
     if (step != SQLITE_ROW) {
       continue;
     }
-    int bytes;
     const unsigned char *text;
     const int count = sqlite3_column_count(stmt);
     std::vector<std::string> entry;
     for (int j = 0; j < count; j++) {
-      bytes = sqlite3_column_bytes(stmt, j);
       text = sqlite3_column_text(stmt, j);
       std::basic_string<unsigned char> temp = text;
       entry.emplace_back(temp.begin(), temp.end());

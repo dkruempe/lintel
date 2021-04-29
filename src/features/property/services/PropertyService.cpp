@@ -130,8 +130,7 @@ void PropertyService::changeStringValueOf(
   ss << *property;
   LOG_INFO("{} change to {}", ss.str(), value);
   propertyBase->setValueString(value);
-  propertyBase->setDataStorage(
-      DataStorage(m_propertyRepository->getDataStorage()));
+  propertyBase->setDataStorage(m_propertyRepository->getDataStorage());
   if (m_propertyRepository != nullptr) {
     m_propertyRepository->save(propertyBase);
   }
