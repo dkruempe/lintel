@@ -21,9 +21,9 @@
  */
 class Configuration {
  private:
-  std::map<std::string, std::shared_ptr<Component>> components;
-  std::vector<std::shared_ptr<Entry>> configurationEntries;
-  std::filesystem::path configurationFile;
+  std::map<std::string, std::shared_ptr<Component>> m_components;
+  std::vector<std::shared_ptr<Entry>> m_configurationEntries;
+  std::filesystem::path m_configurationFile;
 
   void loadConfiguration();
 
@@ -41,7 +41,7 @@ class Configuration {
   std::vector<std::shared_ptr<Entry>> configurationOf() {
     const std::string_view nameOfComponent = type_name<COMPONENT>();
     std::vector<std::shared_ptr<Entry>> tempEntries;
-    for (auto &entry : configurationEntries) {
+    for (auto &entry : m_configurationEntries) {
       if (entry->getConfigurationParserComponent() == nameOfComponent) {
         tempEntries.push_back(entry);
       }

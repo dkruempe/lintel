@@ -8,9 +8,9 @@
 namespace db {
 class Transaction {
  private:
-  const Connection &connection;
-  std::unique_ptr<postgresql::Transaction> transaction = nullptr;
-  std::unique_ptr<sqlite::Transaction> transactionSQLite = nullptr;
+  const Connection &m_connection;
+  std::unique_ptr<postgresql::Transaction> m_transaction = nullptr;
+  std::unique_ptr<sqlite::Transaction> m_transactionSQLite = nullptr;
 
  public:
   explicit Transaction(const Connection &connection);

@@ -12,6 +12,8 @@
  */
 class ConfigSerializationStrategy {
  public:
+  ConfigSerializationStrategy() = default;
+  virtual ~ConfigSerializationStrategy() = default;
   /**
    * serialize Properties to string
    * @param properties

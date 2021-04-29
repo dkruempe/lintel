@@ -8,7 +8,7 @@
 
 class InitializeService {
  private:
-  std::vector<std::shared_ptr<AbstractServiceInterface>> abstractServices;
+  std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
 
  public:
   explicit InitializeService(

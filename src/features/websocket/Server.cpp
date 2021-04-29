@@ -8,10 +8,10 @@
 
 Server::Server(const std::shared_ptr<Configuration>& configuration,
                std::vector<std::shared_ptr<Controller>> controllers)
-    : controllers(std::move(controllers)),
-      context(1),
-      acceptor(this->context, buildEndpoint(configuration)),
-      thread([&]() { run(); }) {}
+    : m_controllers(std::move(controllers)),
+      m_context(1),
+      m_acceptor(m_context, buildEndpoint(configuration)),
+      m_thread([&]() { run(); }) {}
 
 boost::asio::ip::tcp::endpoint Server::buildEndpoint(
     const std::shared_ptr<Configuration>& configuration) {
@@ -35,11 +35,11 @@ boost::asio::ip::tcp::endpoint Server::buildEndpoint(
 }
 void Server::run() {
   doAccept();
-  context.run();
+  m_context.run();
 }
-void Server::onClose(const std::string& id) { sessions.erase(id); }
+void Server::onClose(const std::string& id) { m_sessions.erase(id); }
 void Server::doAccept() {
-  acceptor.async_accept(
+  m_acceptor.async_accept(
       boost::beast::bind_front_handler(&Server::onAccept, this));
 }
 void Server::onAccept(boost::beast::error_code errorCode,
@@ -54,12 +54,12 @@ void Server::onAccept(boost::beast::error_code errorCode,
   };
 
   auto session =
-      std::make_shared<Session>(std::move(socket), temp, controllers);
+      std::make_shared<Session>(std::move(socket), temp, m_controllers);
   session->run();
-  sessions.insert({session->getId(), std::move(session)});
+  m_sessions.insert({session->getId(), std::move(session)});
   doAccept();
 }
 Server::~Server() {
-  context.stop();
-  thread.join();
+  m_context.stop();
+  m_thread.join();
 }

@@ -9,8 +9,8 @@
 namespace postgresql {
 class Transaction {
  private:
-  const Connection &connection;
-  bool finished = false;
+  const Connection &m_connection;
+  bool m_finished = false;
 
   void checkState(const std::shared_ptr<Result> &result);
 

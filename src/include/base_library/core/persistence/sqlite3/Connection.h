@@ -19,13 +19,13 @@ class Notify;
 
 class Connection {
  private:
-  sqlite3 *db;
+  sqlite3 *m_db;
   friend class Transaction;
   friend class Statement;
   friend class PreparedStatement;
   friend class Notify;
 
-  std::map<std::string, sqlite3_stmt *> preparedStatements;
+  std::map<std::string, sqlite3_stmt *> m_preparedStatements;
 
  private:
   [[nodiscard]] std::shared_ptr<Result> execute(

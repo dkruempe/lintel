@@ -13,12 +13,12 @@ class ConnectionType {
 
   ConnectionType() = default;
 
-  constexpr ConnectionType(Value value) : value(value) {}
+  constexpr ConnectionType(Value value) : m_value(value) {}
 
   constexpr explicit ConnectionType(std::string_view enumName)
-      : value(magic_enum::enum_cast<Value>(enumName).value_or(UNDEFINED)) {}
+      : m_value(magic_enum::enum_cast<Value>(enumName).value_or(UNDEFINED)) {}
 
-  operator Value() const { return value; }
+  operator Value() const { return m_value; }
   explicit operator bool() = delete;
 
   static std::set<Value> values() {
@@ -27,17 +27,17 @@ class ConnectionType {
   }
 
   std::string toString() const {
-    return std::string(magic_enum::enum_name<>(value));
+    return std::string(magic_enum::enum_name<>(m_value));
   }
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const ConnectionType &connectionType) {
-    os << magic_enum::enum_name<>(connectionType.value);
+    os << magic_enum::enum_name<>(connectionType.m_value);
     return os;
   }
 
  private:
-  Value value;
+  Value m_value;
 };
 }  // namespace db
 

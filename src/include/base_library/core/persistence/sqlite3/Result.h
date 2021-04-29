@@ -7,7 +7,7 @@
 namespace sqlite {
 class Result {
  private:
-  std::vector<std::vector<std::string>> entries;
+  std::vector<std::vector<std::string>> m_entries;
 
  public:
   void add(const std::vector<std::string> &entry);

@@ -9,7 +9,7 @@ class Server;
 
 class WebsocketFeature : public Feature {
  private:
-  std::shared_ptr<Server> server;
+  std::shared_ptr<Server> m_server;
 
  public:
   WebsocketFeature();

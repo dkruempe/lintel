@@ -7,24 +7,24 @@
 Session::Session(boost::asio::ip::tcp::socket &&socket,
                  std::function<void(const std::string &)> onClose,
                  std::vector<std::shared_ptr<Controller>> controllers)
-    : id(boost::uuids::to_string(boost::uuids::random_generator()())),
-      websocket(std::move(socket)),
-      onClose(std::move(onClose)),
-      controllers(std::move(controllers)) {
-  websocket.set_option(boost::beast::websocket::stream_base::timeout::suggested(
+    : m_id(boost::uuids::to_string(boost::uuids::random_generator()())),
+      m_websocket(std::move(socket)),
+      m_onClose(std::move(onClose)),
+      m_controllers(std::move(controllers)) {
+  m_websocket.set_option(boost::beast::websocket::stream_base::timeout::suggested(
       boost::beast::role_type::server));
-  websocket.set_option(boost::beast::websocket::stream_base::decorator(
+  m_websocket.set_option(boost::beast::websocket::stream_base::decorator(
       [](boost::beast::websocket::response_type &res) {
         res.set(boost::beast::http::field::server,
                 std::string(BOOST_BEAST_VERSION_STRING) + "ws-simple-server");
       }));
 }
 void Session::run() {
-  websocket.async_accept(
+  m_websocket.async_accept(
       boost::beast::bind_front_handler(&Session::onAccept, shared_from_this()));
 }
 void Session::doRead() {
-  websocket.async_read(readBuffer, boost::beast::bind_front_handler(
+  m_websocket.async_read(m_readBuffer, boost::beast::bind_front_handler(
                                        &Session::onRead, shared_from_this()));
 }
 void Session::onAccept(boost::beast::error_code errorCode) {
@@ -44,24 +44,24 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
     close();
     return;
   }
-  if (websocket.got_text()) {
-    auto data = static_cast<const char *>(readBuffer.cdata().data());
+  if (m_websocket.got_text()) {
+    auto data = static_cast<const char *>(m_readBuffer.cdata().data());
     std::string textBuffer;
-    textBuffer.assign(data, data + readBuffer.size());
+    textBuffer.assign(data, data + m_readBuffer.size());
     auto packet = std::make_shared<Packet>(textBuffer);
     onReceive(packet);
-  } else if (websocket.got_binary()) {
+  } else if (m_websocket.got_binary()) {
     const uint8_t *temp =
-        static_cast<const uint8_t *>(readBuffer.cdata().data());
+        static_cast<const uint8_t *>(m_readBuffer.cdata().data());
     std::vector<uint8_t> binaryBuffer;
-    binaryBuffer.reserve(readBuffer.size());
-    for (std::size_t i = 0; i < readBuffer.size(); i++) {
+    binaryBuffer.reserve(m_readBuffer.size());
+    for (std::size_t i = 0; i < m_readBuffer.size(); i++) {
       binaryBuffer.push_back(temp[i]);
     }
     auto packet = std::make_shared<Packet>(binaryBuffer);
     onReceive(packet);
   }
-  readBuffer.clear();
+  m_readBuffer.clear();
   doRead();
 }
 void Session::onReceive(const std::shared_ptr<Packet> &packet) {
@@ -103,43 +103,43 @@ void Session::onWrite(boost::beast::error_code errorCode, std::size_t length) {
     fail(errorCode, "write");
     return;
   }
-  writeQueue.pop_front();
-  if (writeQueue.empty()) {
+  m_writeQueue.pop_front();
+  if (m_writeQueue.empty()) {
     return;
   }
   doWrite();
 }
 void Session::doWrite() {
-  if (writeQueue.empty()) {
+  if (m_writeQueue.empty()) {
     return;
   }
-  auto &packet = writeQueue.front();
-  websocket.text(packet->isText());
+  auto &packet = m_writeQueue.front();
+  m_websocket.text(packet->isText());
   auto handler =
       boost::beast::bind_front_handler(&Session::onWrite, shared_from_this());
   if (packet->isText()) {
-    websocket.async_write(boost::asio::buffer(packet->getTextBuffer()),
+    m_websocket.async_write(boost::asio::buffer(packet->getTextBuffer()),
                           std::move(handler));
   } else {
-    websocket.async_write(boost::asio::buffer(packet->getBinaryBuffer()),
+    m_websocket.async_write(boost::asio::buffer(packet->getBinaryBuffer()),
                           std::move(handler));
   }
 }
 void Session::fail(boost::beast::error_code errorCode,
                    const std::string &message) const {
-  LOG_ERROR("Session {}-{}: {} {}", id, message, errorCode.message(),
+  LOG_ERROR("Session {}-{}: {} {}", m_id, message, errorCode.message(),
             errorCode.value());
 }
 
-void Session::close() { onClose(id); }
+void Session::close() { m_onClose(m_id); }
 void Session::send(const std::shared_ptr<Packet> &packet) {
-  writeQueue.emplace_back(packet);
-  if (writeQueue.size() > 1) {
+  m_writeQueue.emplace_back(packet);
+  if (m_writeQueue.size() > 1) {
     return;
   }
   doWrite();
 }
-const std::string &Session::getId() { return id; }
+const std::string &Session::getId() { return m_id; }
 void Session::send(std::unique_ptr<Notification> &&notification) {
   std::shared_ptr<Packet> packet =
       std::make_shared<Packet>(notification->serialize());

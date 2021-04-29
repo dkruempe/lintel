@@ -60,7 +60,7 @@ class LOG4CXX_EXPORT JsonSocketAppender : public SocketAppenderSkeleton {
               log4cxx::helpers::Pool &pool) override;
 
  private:
-  log4cxx::helpers::WriterPtr writer;
+  log4cxx::helpers::WriterPtr m_writer;
   //  prevent copy and assignment statements
   JsonSocketAppender(const JsonSocketAppender &);
   JsonSocketAppender &operator=(const JsonSocketAppender &);

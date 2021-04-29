@@ -28,5 +28,5 @@ void PropertyFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
 
 void PropertyFeature::initialize(
     std::shared_ptr<Hypodermic::Container> container) {
-  propertyService = container->resolve<PropertyService>();
+  m_propertyService = container->resolve<PropertyService>();
 }

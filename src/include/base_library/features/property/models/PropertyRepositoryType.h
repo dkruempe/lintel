@@ -12,12 +12,12 @@ class PropertyRepositoryType {
 
   PropertyRepositoryType() = default;
 
-  constexpr PropertyRepositoryType(Value value) : value(value) {}
+  constexpr PropertyRepositoryType(Value value) : m_value(value) {}
 
   constexpr explicit PropertyRepositoryType(std::string_view enumName)
-      : value(magic_enum::enum_cast<Value>(enumName).value_or(DEFAULT)) {}
+      : m_value(magic_enum::enum_cast<Value>(enumName).value_or(DEFAULT)) {}
 
-  operator Value() const { return value; }
+  operator Value() const { return m_value; }
   explicit operator bool() = delete;
 
   static std::set<Value> values() {
@@ -26,18 +26,18 @@ class PropertyRepositoryType {
   }
 
   std::string toString() const {
-    return std::string(magic_enum::enum_name<>(value));
+    return std::string(magic_enum::enum_name<>(m_value));
   }
 
   friend std::ostream &operator<<(
       std::ostream &os,
       const PropertyRepositoryType &propertyRepositoryPriority) {
-    os << magic_enum::enum_name<>(propertyRepositoryPriority.value);
+    os << magic_enum::enum_name<>(propertyRepositoryPriority.m_value);
     return os;
   }
 
  private:
-  Value value;
+  Value m_value;
 };
 
 #endif  // PLC_PROPERTYREPOSITORYTYPE_H

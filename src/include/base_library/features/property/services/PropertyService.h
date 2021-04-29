@@ -20,15 +20,15 @@
                              runtime, __FILE__, __LINE__)
 #define LOAD_PROPERTIES()                     \
   if (propertyService != nullptr) {           \
-    propertyService->getOrCreate(properties); \
+    propertyService->getOrCreate(m_properties); \
   }
 
 class PropertyService {
  private:
-  std::shared_ptr<PropertyRepository> propertyRepository;
+  std::shared_ptr<PropertyRepository> m_propertyRepository;
   // variables
   std::map<std::string, std::shared_ptr<PropertyBase>>
-      properties;  // identifier (name_instanceName_processName), Property
+      m_properties;  // identifier (name_instanceName_processName), Property
   // functions
   static std::string createIdentifier(const std::string &name,
                                       const std::string &instanceName,
@@ -83,9 +83,9 @@ std::shared_ptr<Property<T>> PropertyService::getOrCreate(
     auto property = std::make_shared<Property<T>>(name, instanceName, className,
                                                   processName, defaultValue,
                                                   description, runtimeChange);
-    properties.insert({property->getIdentifier(), property});
-    if (propertyRepository != nullptr) {
-      propertyRepository->save(property);
+    m_properties.insert({property->getIdentifier(), property});
+    if (m_propertyRepository != nullptr) {
+      m_propertyRepository->save(property);
     }
     return property;
   }
@@ -100,10 +100,10 @@ void PropertyService::changeValueOf(
     throw PropertyNoRuntimeChangeSupported(propertyBase);
   }
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
-  std::static_pointer_cast<Property<T>>(propertyBase)
-      ->setDataStorage(propertyRepository->getDataStorage());
-  if (propertyRepository != nullptr) {
-    propertyRepository->save(propertyBase);
+  if (m_propertyRepository != nullptr) {
+    std::static_pointer_cast<Property<T>>(propertyBase)
+        ->setDataStorage(m_propertyRepository->getDataStorage());
+    m_propertyRepository->save(propertyBase);
   }
 }
 

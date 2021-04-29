@@ -6,7 +6,7 @@
 namespace postgresql {
 class Statement {
  private:
-  const Connection &connection;
+  const Connection &m_connection;
 
   static int32_t initNParams(const std::string &tempStatement);
 

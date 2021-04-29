@@ -33,7 +33,7 @@ std::string Cryption::encryption(const std::string &plainText) {
    * IV size for *most* modes is the same as the block size. For AES this
    * is 128 bits
    */
-  if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &key[0], &iv[0])) {
+  if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &m_key[0], &m_iv[0])) {
     handleErrors();
   }
 
@@ -95,7 +95,7 @@ std::string Cryption::decryption(const std::string &cipherText) {
    * IV size for *most* modes is the same as the block size. For AES this
    * is 128 bits
    */
-  if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &key[0], &iv[0])) {
+  if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &m_key[0], &m_iv[0])) {
     handleErrors();
   }
 

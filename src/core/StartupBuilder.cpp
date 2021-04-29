@@ -8,13 +8,13 @@
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/InitializeService.h"
 
-StartupBuilder *StartupBuilder::startupBuilder = nullptr;
+StartupBuilder *StartupBuilder::m_startupBuilder = nullptr;
 
 StartupBuilder::StartupBuilder(Process::ProcessInfo &&processInfo,
                                ProcessName &&name)
-    : processInfo(
+    : m_processInfo(
           std::make_shared<Process::ProcessInfo>(std::move(processInfo))),
-      name(std::make_shared<ProcessName>(std::move(name))) {
+      m_name(std::make_shared<ProcessName>(std::move(name))) {
   signal(SIGINT, StartupBuilder::receiveSignal);
   signal(SIGCHLD, StartupBuilder::receiveSignal);
   signal(SIGTERM, StartupBuilder::receiveSignal);
@@ -24,35 +24,35 @@ StartupBuilder &StartupBuilder::with(int argc, char *argv[]) {
   Process::ProcessInfo info = ProcessService::ofCurrentProcess(argc, argv);
   ProcessName name(argc, argv);
   DECLARE_LOGGER(info.name);
-  startupBuilder = new StartupBuilder(std::move(info), std::move(name));
-  return *startupBuilder;
+  m_startupBuilder = new StartupBuilder(std::move(info), std::move(name));
+  return *m_startupBuilder;
 }
 
 void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
-  features.erase(std::remove_if(features.begin(), features.end(),
-                                [&nameOfFeature](auto &&feature) -> bool {
-                                  return feature->getName() == nameOfFeature;
-                                }),
-                 features.end());
+  m_features.erase(std::remove_if(m_features.begin(), m_features.end(),
+                                  [&nameOfFeature](auto &&feature) -> bool {
+                                    return feature->getName() == nameOfFeature;
+                                  }),
+                   m_features.end());
 }
 
 StartupBuilder &StartupBuilder::start() {
   Hypodermic::ContainerBuilder builder;
-  for (auto &&feature : features) {
+  for (auto &&feature : m_features) {
     feature->registerTypes(builder);
   }
-  builder.registerInstance(processInfo);
-  builder.registerInstance(name);
-  container = builder.build();
-  for (auto &&feature : features) {
-    feature->initialize(container);
+  builder.registerInstance(m_processInfo);
+  builder.registerInstance(m_name);
+  m_container = builder.build();
+  for (auto &&feature : m_features) {
+    feature->initialize(m_container);
   }
   std::shared_ptr<InitializeService> initializeService =
-      container->resolve<InitializeService>();
-  LOG_INFO("{} finished initialization", processInfo->name);
+      m_container->resolve<InitializeService>();
+  LOG_INFO("{} finished initialization", m_processInfo->name);
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
-  conditionVariable.wait(lock);
+  m_conditionVariable.wait(lock);
   return *this;
 }
 
@@ -61,7 +61,7 @@ void StartupBuilder::receiveSignal(int signal) {
     case SIGINT:
     case SIGCHLD:
     case SIGTERM:
-      startupBuilder->onShutdown();
+      m_startupBuilder->onShutdown();
       break;
     default:
       LOG_ERROR("{} undefined signal", signal);
@@ -70,11 +70,11 @@ void StartupBuilder::receiveSignal(int signal) {
 }
 
 void StartupBuilder::onShutdown() {
-  LOG_INFO("{} shutdown", processInfo->name);
+  LOG_INFO("{} shutdown", m_processInfo->name);
 
-  conditionVariable.notify_all();
+  m_conditionVariable.notify_all();
   // trigger shutdown
-  for (auto &&abstractService : abstractServices) {
+  for (auto &&abstractService : m_abstractServices) {
     abstractService->onShutdown();
   }
 }

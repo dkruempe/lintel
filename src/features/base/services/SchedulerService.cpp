@@ -3,42 +3,42 @@
 #include "base_library/core/services/LoggerService.h"
 
 void SchedulerService::clear() {
-  std::lock_guard<std::mutex> lock(mutex);
-  tasks.clear();
+  std::lock_guard<std::mutex> lock(m_mutex);
+  m_tasks.clear();
 }
 
 void SchedulerService::run() {
-  while (!exit || !tasks.empty()) {
-    auto time = tasks.empty() ? std::chrono::steady_clock::now() +
+  while (!m_exit || !m_tasks.empty()) {
+    auto time = m_tasks.empty() ? std::chrono::steady_clock::now() +
                                     std::chrono::seconds(60)
-                              : tasks.front().time;
+                              : m_tasks.front().time;
     std::function<void()> funcTask;
     {
-      std::unique_lock<std::mutex> lock(mutex);
+      std::unique_lock<std::mutex> lock(m_mutex);
 
-      conditionVariable.wait_until(lock, time, [&] {
-        return exit || (!tasks.empty() && tasks.front().time != time);
+      m_conditionVariable.wait_until(lock, time, [&] {
+        return m_exit || (!m_tasks.empty() && m_tasks.front().time != time);
       });
-      if (exit && tasks.empty()) {
+      if (m_exit && m_tasks.empty()) {
         return;
       }
 
-      if (tasks.empty()) {
+      if (m_tasks.empty()) {
         continue;
       }
 
-      if ((std::chrono::steady_clock::now() - tasks.front().time).count() < 0) {
+      if ((std::chrono::steady_clock::now() - m_tasks.front().time).count() < 0) {
         continue;
       }
 
-      std::pop_heap(tasks.begin(), tasks.end(), TaskComperator());
-      Task task = std::move(tasks.back());
-      tasks.pop_back();
+      std::pop_heap(m_tasks.begin(), m_tasks.end(), TaskComperator());
+      Task task = std::move(m_tasks.back());
+      m_tasks.pop_back();
       funcTask = task.func;
-      if (task.period.count() != 0 && !exit) {
+      if (task.period.count() != 0 && !m_exit) {
         task.time += task.period;
-        tasks.push_back(task);
-        std::push_heap(tasks.begin(), tasks.end(), TaskComperator());
+        m_tasks.push_back(task);
+        std::push_heap(m_tasks.begin(), m_tasks.end(), TaskComperator());
       }
     }
     funcTask();
@@ -47,24 +47,24 @@ void SchedulerService::run() {
 
 void SchedulerService::onInitialize() {
   LOG_INFO("start Scheduler with {} threads", numberOfThreads->getValue());
-  threads.reserve(static_cast<std::size_t>(numberOfThreads->getValue()));
+  m_threads.reserve(static_cast<std::size_t>(numberOfThreads->getValue()));
   for (int i = 0; i < numberOfThreads->getValue(); i++) {
-    threads.emplace_back([&] { run(); });
+    m_threads.emplace_back([&] { run(); });
   }
 }
 
 SchedulerService::SchedulerService(
     const std::shared_ptr<ProcessName> &processName)
     : AbstractService<SchedulerService>(processName->getProcessName()),
-      exit(false) {}
+      m_exit(false) {}
 
 SchedulerService::~SchedulerService() {
   {
-    std::unique_lock<std::mutex> lock(mutex);
-    exit = true;
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_exit = true;
   }
 
-  conditionVariable.notify_all();
-  std::for_each(threads.begin(), threads.end(),
+  m_conditionVariable.notify_all();
+  std::for_each(m_threads.begin(), m_threads.end(),
                 [&](std::thread &thread) { thread.join(); });
 }

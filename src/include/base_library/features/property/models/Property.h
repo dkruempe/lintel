@@ -20,8 +20,8 @@ class Property;
   template <>                                                                  \
   class Property<type> : public PropertyBase {                                 \
    private:                                                                    \
-    type value;                                                                \
-    std::shared_mutex mutex;                                                   \
+    type m_value;                                                              \
+    std::shared_mutex m_mutex;                                                 \
     static bool Registration() {                                               \
       PropertyFactory::TCreateMethod func =                                    \
           [&](const std::string &name, const std::string &instanceName,        \
@@ -38,13 +38,13 @@ class Property;
     static bool registered;                                                    \
                                                                                \
     void setValue(const type &value) {                                         \
-      std::unique_lock<std::shared_mutex> lock(mutex);                         \
-      this->value = value;                                                     \
+      std::unique_lock<std::shared_mutex> lock(m_mutex);                       \
+      m_value = value;                                                         \
     }                                                                          \
                                                                                \
     void setValueString(const std::string &value) override {                   \
-      std::unique_lock<std::shared_mutex> lock(mutex);                         \
-      this->value = convertToValue(value);                                     \
+      std::unique_lock<std::shared_mutex> lock(m_mutex);                       \
+      m_value = convertToValue(value);                                         \
     }                                                                          \
                                                                                \
    public:                                                                     \
@@ -53,15 +53,15 @@ class Property;
              type value, const std::string &description, bool runtimeChange)   \
         : PropertyBase(name, instanceName, className, processName,             \
                        description, runtimeChange),                            \
-          value(std::move(value)) {}                                           \
+          m_value(std::move(value)) {}                                           \
     [[nodiscard]] std::string getType() const override { return #type; }       \
     type getValue() {                                                          \
-      std::shared_lock<std::shared_mutex> lock(mutex);                         \
-      return value;                                                            \
+      std::shared_lock<std::shared_mutex> lock(m_mutex);                       \
+      return m_value;                                                            \
     }                                                                          \
     std::string toString() override {                                          \
-      std::shared_lock<std::shared_mutex> lock(mutex);                         \
-      return convertToString(value);                                           \
+      std::shared_lock<std::shared_mutex> lock(m_mutex);                       \
+      return convertToString(m_value);                                           \
     }                                                                          \
     friend class PropertyService;                                              \
   };

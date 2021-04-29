@@ -8,7 +8,7 @@
 namespace postgresql {
 class Result {
  private:
-  PGresult *res;
+  PGresult *m_res;
 
  public:
   explicit Result(PGresult *res);

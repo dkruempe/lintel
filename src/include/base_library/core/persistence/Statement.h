@@ -7,9 +7,9 @@
 namespace db {
 class Statement {
  private:
-  std::unique_ptr<postgresql::Statement> statement = nullptr;
-  std::unique_ptr<sqlite::Statement> statementSQLite = nullptr;
-  const Connection &connection;
+  std::unique_ptr<postgresql::Statement> m_statement = nullptr;
+  std::unique_ptr<sqlite::Statement> m_statementSQLite = nullptr;
+  const Connection &m_connection;
 
  public:
   explicit Statement(const Connection &connection);

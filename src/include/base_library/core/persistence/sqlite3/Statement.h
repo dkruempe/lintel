@@ -6,7 +6,7 @@
 namespace sqlite {
 class Statement {
  private:
-  Connection &connection;
+  Connection &m_connection;
 
  public:
   explicit Statement(Connection &connection);

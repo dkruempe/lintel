@@ -12,8 +12,8 @@
 DatabasePropertyRepository::DatabasePropertyRepository(
     std::shared_ptr<ConnectionConfigurations> connectionConfigurations)
     : PropertyRepository(),
-      connectionConfigurations(std::move(connectionConfigurations)),
-      connectionEntry(this->connectionConfigurations->of("DEFAULT")) {}
+      m_connectionConfigurations(std::move(connectionConfigurations)),
+      m_connectionEntry(m_connectionConfigurations->of("DEFAULT")) {}
 PropertyRepositoryType DatabasePropertyRepository::getType() {
   return PropertyRepositoryType::DATABASE_REPOSITORY;
 }
@@ -24,7 +24,7 @@ bool DatabasePropertyRepository::isMutable() { return true; }
 void DatabasePropertyRepository::save(
     const std::vector<std::shared_ptr<PropertyBase>>& properties) {
   try {
-    db::Connection connection(connectionEntry);
+    db::Connection connection(m_connectionEntry);
     db::Transaction transaction(connection);
     db::PreparedStatement preparedStatement(
         connection,
@@ -47,7 +47,7 @@ void DatabasePropertyRepository::save(std::shared_ptr<PropertyBase> property) {
 std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake() {
   std::vector<std::shared_ptr<PropertyBase>> properties;
   try {
-    db::Connection connection(connectionEntry);
+    db::Connection connection(m_connectionEntry);
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result = query.execute(

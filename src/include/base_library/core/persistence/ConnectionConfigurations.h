@@ -9,7 +9,7 @@
 
 class ConnectionConfigurations {
  private:
-  std::map<std::string, std::shared_ptr<ConnectionEntry>> connections;
+  std::map<std::string, std::shared_ptr<ConnectionEntry>> m_connections;
 
   static std::map<std::string, std::shared_ptr<ConnectionEntry>> build(
       std::vector<std::shared_ptr<Entry>> entries);

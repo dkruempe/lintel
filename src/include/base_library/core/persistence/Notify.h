@@ -10,9 +10,9 @@
 namespace db {
 class Notify {
  private:
-  Connection &connection;
-  std::unique_ptr<sqlite::Notify> notifySqlite = nullptr;
-  std::unique_ptr<postgresql::Notify> notifyPostgresql = nullptr;
+  Connection &m_connection;
+  std::unique_ptr<sqlite::Notify> m_notifySqlite = nullptr;
+  std::unique_ptr<postgresql::Notify> m_notifyPostgresql = nullptr;
 
  public:
   explicit Notify(Connection &connection,

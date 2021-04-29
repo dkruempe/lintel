@@ -15,11 +15,11 @@
 
 class ProcessService {
  private:
-  volatile bool exit = false;
-  std::vector<Process> processes;
-  std::chrono::seconds waitTimeForShutdown;
-  std::thread monitorThread;
-  std::chrono::milliseconds monitorDuration;
+  volatile bool m_exit = false;
+  std::vector<Process> m_processes;
+  std::chrono::seconds m_waitTimeForShutdown;
+  std::thread m_monitorThread;
+  std::chrono::milliseconds m_monitorDuration;
   static std::vector<Process> transformFunction(std::vector<Process> processes);
   void monitor();
   void run();

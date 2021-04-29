@@ -7,7 +7,7 @@ class Notification : public Message {
  public:
   std::string serialize() override;
   Notification() : Message() {}
-  ~Notification() = default;
+  ~Notification() override = default;
 };
 
 #endif  // CPP_BASE_LIBRARY_NOTIFICATION_H

@@ -14,7 +14,7 @@
  */
 class PropertyEntry : public Entry {
  private:
-  std::shared_ptr<PropertyBase> property;
+  std::shared_ptr<PropertyBase> m_property;
 
  public:
   PropertyEntry(std::string_view component,

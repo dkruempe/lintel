@@ -13,5 +13,5 @@ void WebsocketFeature::registerTypes(Hypodermic::ContainerBuilder& builder) {
 }
 void WebsocketFeature::initialize(
     std::shared_ptr<Hypodermic::Container> container) {
-  server = container->resolve<Server>();
+  m_server = container->resolve<Server>();
 }

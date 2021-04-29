@@ -13,7 +13,7 @@ using namespace log4cxx::json;
 
 IMPLEMENT_LOG4CXX_OBJECT(JsonLayout)
 
-JsonLayout::JsonLayout() : locationInfo(false), properties(false) {}
+JsonLayout::JsonLayout() : m_locationInfo(false), m_properties(false) {}
 
 void JsonLayout::setOption(const LogString &option, const LogString &value) {
   if (StringHelper::equalsIgnoreCase(option, LOG4CXX_STR("LOCATIONINFO"),
@@ -51,7 +51,7 @@ void JsonLayout::format(LogString &output, const spi::LoggingEventPtr &event,
     output.append(LOG4CXX_STR("\""));
   }
 
-  if (locationInfo) {
+  if (m_locationInfo) {
     const LocationInfo &locInfo = event->getLocationInformation();
     output.append(LOG4CXX_STR(", \"class\":\""));
     output.append(LOG4CXX_STR(locInfo.getClassName()));
@@ -64,7 +64,7 @@ void JsonLayout::format(LogString &output, const spi::LoggingEventPtr &event,
     output.append("\"");
   }
 
-  if (properties) {
+  if (m_properties) {
     LoggingEvent::KeySet propertySet(event->getPropertyKeySet());
     LoggingEvent::KeySet keySet(event->getMDCKeySet());
 

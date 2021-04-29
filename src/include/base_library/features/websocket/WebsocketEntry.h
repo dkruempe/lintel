@@ -7,10 +7,10 @@
 
 class WebsocketEntry : public Entry {
  private:
-  std::string address;
-  uint16_t port;
-  bool isServer;
-  std::string name;
+  std::string m_address;
+  uint16_t m_port;
+  bool m_isServer;
+  std::string m_name;
 
  public:
   WebsocketEntry(std::string_view component, std::string address, uint16_t port,

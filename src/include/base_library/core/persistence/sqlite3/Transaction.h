@@ -9,8 +9,8 @@
 namespace sqlite {
 class Transaction {
  private:
-  const Connection &connection;
-  bool finished = false;
+  const Connection &m_connection;
+  bool m_finished = false;
 
  public:
   explicit Transaction(const Connection &tempConnection);

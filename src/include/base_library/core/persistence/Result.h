@@ -10,8 +10,8 @@
 namespace db {
 class Result {
  private:
-  std::shared_ptr<postgresql::Result> result = nullptr;
-  std::shared_ptr<sqlite::Result> resultSQLite = nullptr;
+  std::shared_ptr<postgresql::Result> m_result = nullptr;
+  std::shared_ptr<sqlite::Result> m_resultSQLite = nullptr;
 
  public:
   Result() = default;

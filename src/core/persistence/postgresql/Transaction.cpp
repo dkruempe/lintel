@@ -4,65 +4,65 @@ namespace postgresql {
 void Transaction::checkState(const std::shared_ptr<Result> &result) {
   if (!result->isState(PGRES_COMMAND_OK)) {
     throw db::SQLException("Connection to database failed: " +
-                           connection.getErrorMessage());
+                               m_connection.getErrorMessage());
   }
 }
 
 Transaction::Transaction(const Connection &tempConnection)
-    : connection(tempConnection) {
-  std::shared_ptr<Result> result = connection.execute("BEGIN");
+    : m_connection(tempConnection) {
+  std::shared_ptr<Result> result = m_connection.execute("BEGIN");
   checkState(result);
 }
 
 void Transaction::start() {
-  if (!finished) {
+  if (!m_finished) {
     return;
   }
   // start transaction again
-  std::shared_ptr<Result> result = connection.execute("BEGIN");
+  std::shared_ptr<Result> result = m_connection.execute("BEGIN");
   checkState(result);
-  finished = false;
+  m_finished = false;
 }
 
 void Transaction::commit() {
-  if (finished) {
+  if (m_finished) {
     throw db::SQLException("Transaction is finished and not available anymore");
   }
-  std::shared_ptr<Result> result = connection.execute("COMMIT");
+  std::shared_ptr<Result> result = m_connection.execute("COMMIT");
   checkState(result);
-  finished = true;
+  m_finished = true;
 }
 
 void Transaction::save(const std::string &savepoint) const {
-  if (finished) {
+  if (m_finished) {
     throw db::SQLException("Transaction is finished and not available anymore");
   }
-  std::shared_ptr<Result> result = connection.execute(
+  std::shared_ptr<Result> result = m_connection.execute(
       "SAVEPOINT " + savepoint);  // saves current state of transaction
 }
 
 void Transaction::rollback() {
-  if (finished) {
+  if (m_finished) {
     throw db::SQLException("Transaction is finished and not available anymore");
   }
-  std::shared_ptr<Result> result = connection.execute("ROLLBACK");
+  std::shared_ptr<Result> result = m_connection.execute("ROLLBACK");
   checkState(result);
-  finished = true;
+  m_finished = true;
 }
 
 void Transaction::rollbackTo(const std::string &savepoint) const {
-  if (finished) {
+  if (m_finished) {
     throw db::SQLException("Transaction is finished and not available anymore");
   }
   std::shared_ptr<Result> result =
-      connection.execute("ROLLBACK TO " + savepoint);
+      m_connection.execute("ROLLBACK TO " + savepoint);
 }
 
 Transaction::~Transaction() {
-  if (finished) {
+  if (m_finished) {
     return;
   }
-  std::shared_ptr<Result> result = connection.execute("END");
+  std::shared_ptr<Result> result = m_connection.execute("END");
   checkState(result);
 }
 }  // namespace postgresql

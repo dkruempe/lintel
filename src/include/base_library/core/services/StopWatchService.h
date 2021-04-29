@@ -43,10 +43,10 @@ class StopWatchService {
 
  private:
   // start point of timer
-  std::chrono::time_point<std::chrono::steady_clock> startTime;
-  std::chrono::time_point<std::chrono::steady_clock> endTime;
-  bool stopVar = false;
-  bool run;
+  std::chrono::time_point<std::chrono::steady_clock> m_startTime;
+  std::chrono::time_point<std::chrono::steady_clock> m_endTime;
+  bool m_stopVar = false;
+  bool m_run;
 };
 
 #endif  // CPP_BASIC_LIBRARIES_STOPWATCHSERVICE_H

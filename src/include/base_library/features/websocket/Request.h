@@ -8,10 +8,10 @@
 
 class Request : public Message {
  private:
-  std::string id;
-  std::string params;
-  std::string method;
-  std::string jsonRPC;
+  std::string m_id;
+  std::string m_params;
+  std::string m_method;
+  std::string m_jsonRPC;
 
  public:
   std::string serialize() override;

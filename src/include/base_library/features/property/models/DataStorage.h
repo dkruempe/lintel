@@ -9,23 +9,23 @@
 
 class DataStorage {
  private:
-  PropertyRepositoryType type = PropertyRepositoryType::DEFAULT;
-  std::string extraInformation;
+  PropertyRepositoryType m_type = PropertyRepositoryType::DEFAULT;
+  std::string m_extraInformation;
 
  public:
   DataStorage(const PropertyRepositoryType &type, std::string extraInformation)
-      : type(type), extraInformation(std::move(extraInformation)) {}
+      : m_type(type), m_extraInformation(std::move(extraInformation)) {}
 
   DataStorage() = default;
 
-  [[nodiscard]] const PropertyRepositoryType &getType() const { return type; }
+  [[nodiscard]] const PropertyRepositoryType &getType() const { return m_type; }
   [[nodiscard]] const std::string &getExtraInformation() const {
-    return extraInformation;
+    return m_extraInformation;
   }
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const DataStorage &storage) {
-    os << storage.type << "(" << storage.extraInformation << ")";
+    os << storage.m_type << "(" << storage.m_extraInformation << ")";
     return os;
   }
 

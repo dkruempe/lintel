@@ -6,7 +6,7 @@
 
 class Entry {
  private:
-  const std::string_view component;
+  const std::string_view m_component;
 
  public:
   explicit Entry(std::string_view component);

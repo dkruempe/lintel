@@ -8,13 +8,13 @@
 
 class ConnectionEntry : public Entry {
  private:
-  const std::string connection;
-  const std::string userName;
-  const std::string password;
-  db::ConnectionType type;
-  const std::string name;
-  const int32_t port;
-  const std::string databaseName;
+  const std::string m_connection;
+  const std::string m_userName;
+  const std::string m_password;
+  db::ConnectionType m_type;
+  const std::string m_name;
+  const int32_t m_port;
+  const std::string m_databaseName;
 
  public:
   ConnectionEntry(std::string_view component, std::string connection,

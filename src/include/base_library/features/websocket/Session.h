@@ -19,12 +19,12 @@
 class Controller;
 class Session : public std::enable_shared_from_this<Session> {
  private:
-  const std::string id;
-  boost::beast::websocket::stream<boost::asio::ip::tcp::socket> websocket;
-  boost::beast::flat_buffer readBuffer;
-  std::deque<std::shared_ptr<Packet>> writeQueue;
-  std::function<void(const std::string &)> onClose;
-  std::vector<std::shared_ptr<Controller>> controllers;
+  const std::string m_id;
+  boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_websocket;
+  boost::beast::flat_buffer m_readBuffer;
+  std::deque<std::shared_ptr<Packet>> m_writeQueue;
+  std::function<void(const std::string &)> m_onClose;
+  std::vector<std::shared_ptr<Controller>> m_controllers;
 
   void doRead();
 

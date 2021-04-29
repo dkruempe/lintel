@@ -3,9 +3,9 @@
 InitializeService::InitializeService(
     const std::vector<std::shared_ptr<AbstractServiceInterface>>
         &abstractServices)
-    : abstractServices(abstractServices) {
+    : m_abstractServices(abstractServices) {
   for (const std::shared_ptr<AbstractServiceInterface> &abstractService :
-       abstractServices) {
+      m_abstractServices) {
     abstractService->onInitialize();
   }
 }

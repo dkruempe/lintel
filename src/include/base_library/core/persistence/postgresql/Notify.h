@@ -13,16 +13,14 @@
 namespace postgresql {
 class Notify {
  private:
-  const int32_t timeoutSeconds = 1;
-  std::atomic<bool> shutdown = false;
-  Connection &connection;
-  std::thread thread;
+  const int32_t m_timeoutSeconds = 1;
+  std::atomic<bool> m_shutdown = false;
+  Connection &m_connection;
+  std::thread m_thread;
 
-  std::string tableName;
-  std::function<void()> callBack;
-  struct timeval timeout {
-    .tv_sec = timeoutSeconds, .tv_usec = 0
-  };
+  std::string m_tableName;
+  std::function<void()> m_callBack;
+  struct timeval m_timeout {m_timeoutSeconds, 0};
 
   void run();
   void listen();

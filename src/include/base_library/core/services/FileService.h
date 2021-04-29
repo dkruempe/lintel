@@ -14,7 +14,7 @@
  */
 class FileService {
  private:
-  std::filesystem::path path;
+  std::filesystem::path m_path;
 
  public:
   /**
@@ -23,8 +23,8 @@ class FileService {
    */
   class Stream {
    private:
-    std::ifstream file;      // stream for operations
-    bool endOfFile = false;  // marks if end of file is reached
+    std::ifstream m_file;      // stream for operations
+    bool m_endOfFile = false;  // marks if end of file is reached
 
    public:
     /**
@@ -109,7 +109,7 @@ class FileService {
    * to string method
    */
   friend std::ostream &operator<<(std::ostream &os, const FileService &file) {
-    os << "path: " << file.path;
+    os << "path: " << file.m_path;
     return os;
   }
 };

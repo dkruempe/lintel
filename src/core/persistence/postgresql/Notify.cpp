@@ -7,22 +7,22 @@
 namespace postgresql {
 Notify::Notify(Connection &connection, std::string tableName,
                std::function<void()> &callBack)
-    : connection(connection),
-      thread([&]() { run(); }),
-      tableName(std::move(tableName)),
-      callBack(callBack) {}
+    : m_connection(connection),
+      m_thread([&]() { run(); }),
+      m_tableName(std::move(tableName)),
+      m_callBack(callBack) {}
 
 void Notify::listen() {
-  if (shutdown) {
+  if (m_shutdown) {
     return;
   }
 
-  auto result = connection.execute("LISTEN " + tableName);
+  auto result = m_connection.execute("LISTEN " + m_tableName);
   if (!result->isState(ExecStatusType::PGRES_COMMAND_OK)) {
     throw db::SQLException("LISTEN command failed: " +
-                           connection.getErrorMessage());
+                               m_connection.getErrorMessage());
   }
-  int sock = PQsocket(connection.conn);
+  int sock = PQsocket(m_connection.m_conn);
 
   if (sock < 0) {
     throw db::SQLException("LISTEN sock connection failed");
@@ -30,7 +30,7 @@ void Notify::listen() {
   fd_set input_mask;
   FD_ZERO(&input_mask);
   FD_SET(sock, &input_mask);
-  const int rc = select(sock + 1, &input_mask, nullptr, nullptr, &timeout);
+  const int rc = select(sock + 1, &input_mask, nullptr, nullptr, &m_timeout);
   switch (rc) {
       // error happen
     case -1:
@@ -41,28 +41,28 @@ void Notify::listen() {
       // timeout
       break;
     default:
-      PQconsumeInput(connection.conn);
+      PQconsumeInput(m_connection.m_conn);
       PGnotify *notify = nullptr;
       do {
-        notify = PQnotifies(connection.conn);
+        notify = PQnotifies(m_connection.m_conn);
         // clean received messages
         if (notify != nullptr) {
           PQfreemem(notify);
         }
       } while (notify != nullptr);
-      callBack();
+      m_callBack();
       // worked
       break;
   }
 }
 void Notify::run() {
-  while (!shutdown) {
+  while (!m_shutdown) {
     listen();
   }
 }
 
 Notify::~Notify() {
-  shutdown.store(true);
-  thread.join();
+  m_shutdown.store(true);
+  m_thread.join();
 }
 }  // namespace postgresql

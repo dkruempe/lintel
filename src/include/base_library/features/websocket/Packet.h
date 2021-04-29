@@ -6,9 +6,9 @@
 
 class Packet {
  private:
-  std::string textBuffer;
-  std::vector<uint8_t> binaryBuffer;
-  bool text = false;
+  std::string m_textBuffer;
+  std::vector<uint8_t> m_binaryBuffer;
+  bool m_text = false;
 
  public:
   explicit Packet(std::string textBuffer);

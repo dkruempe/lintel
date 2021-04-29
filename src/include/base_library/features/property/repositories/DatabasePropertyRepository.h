@@ -9,8 +9,8 @@
 
 class DatabasePropertyRepository : public PropertyRepository {
  private:
-  std::shared_ptr<ConnectionConfigurations> connectionConfigurations;
-  std::shared_ptr<ConnectionEntry> connectionEntry;
+  std::shared_ptr<ConnectionConfigurations> m_connectionConfigurations;
+  std::shared_ptr<ConnectionEntry> m_connectionEntry;
 
  public:
   explicit DatabasePropertyRepository(

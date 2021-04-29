@@ -3,14 +3,14 @@
 #include "base_library/core/persistence/postgresql/Statement.h"
 
 namespace db {
-Statement::Statement(const Connection &connection) : connection(connection) {
-  switch (connection.connectionType) {
+Statement::Statement(const Connection &connection) : m_connection(connection) {
+  switch (connection.m_connectionType) {
     case ConnectionType::SQLite:
-      statementSQLite =
-          std::make_unique<sqlite::Statement>(*connection.connSQLite);
+      m_statementSQLite =
+          std::make_unique<sqlite::Statement>(*connection.m_connSQLite);
       break;
     case ConnectionType::PostgreSQL:
-      statement = std::make_unique<postgresql::Statement>(*connection.conn);
+      m_statement = std::make_unique<postgresql::Statement>(*connection.m_conn);
       break;
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
@@ -18,12 +18,12 @@ Statement::Statement(const Connection &connection) : connection(connection) {
 }
 
 Result Statement::execute(const std::string &query) {
-  switch (connection.connectionType) {
+  switch (m_connection.m_connectionType) {
     case ConnectionType::SQLite:
-      return Result(statementSQLite->execute(query));
+      return Result(m_statementSQLite->execute(query));
       break;
     case ConnectionType::PostgreSQL:
-      return Result(statement->execute(query));
+      return Result(m_statement->execute(query));
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
   }
@@ -31,12 +31,12 @@ Result Statement::execute(const std::string &query) {
 }
 Result Statement::execute(const std::string &query,
                           const std::vector<std::string> &params) {
-  switch (connection.connectionType) {
+  switch (m_connection.m_connectionType) {
     case ConnectionType::SQLite:
-      return Result(statementSQLite->execute(query, params));
+      return Result(m_statementSQLite->execute(query, params));
       break;
     case ConnectionType::PostgreSQL:
-      return Result(statement->execute(query, params));
+      return Result(m_statement->execute(query, params));
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
   }

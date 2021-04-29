@@ -7,28 +7,28 @@
 #include "base_library/features/base/configuration/ConnectionEntry.h"
 
 namespace sqlite {
-Connection::Connection(const std::string &connectionInfo) : db(nullptr) {
-  int rc = sqlite3_open(connectionInfo.c_str(), &db);
+Connection::Connection(const std::string &connectionInfo) : m_db(nullptr) {
+  int rc = sqlite3_open(connectionInfo.c_str(), &m_db);
   if (rc != SQLITE_OK) {
     throw db::SQLException("Can't open database: " + getErrorMessage());
   }
 }
 Connection::Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry)
-    : db(nullptr) {
-  int rc = sqlite3_open(connectionEntry->getConnection().c_str(), &db);
+    : m_db(nullptr) {
+  int rc = sqlite3_open(connectionEntry->getConnection().c_str(), &m_db);
   if (rc != SQLITE_OK) {
     throw db::SQLException("Can't open database: " + getErrorMessage());
   }
 }
-std::string Connection::getErrorMessage() const { return sqlite3_errmsg(db); }
+std::string Connection::getErrorMessage() const { return sqlite3_errmsg(m_db); }
 Connection::~Connection() {
-  if (db != nullptr) {
-    sqlite3_close(db);
-    db = nullptr;
+  if (m_db != nullptr) {
+    sqlite3_close(m_db);
+    m_db = nullptr;
   }
 
-  if (!preparedStatements.empty()) {
-    for (auto &[queryName, stmt] : preparedStatements) {
+  if (!m_preparedStatements.empty()) {
+    for (auto &[queryName, stmt] : m_preparedStatements) {
       sqlite3_finalize(stmt);
     }
   }
@@ -36,37 +36,37 @@ Connection::~Connection() {
 
 std::shared_ptr<Result> Connection::prepareStatement(
     const std::string &queryName, const std::string &query) {
-  auto found = preparedStatements.find(queryName);
-  if (found != preparedStatements.end()) {
+  auto found = m_preparedStatements.find(queryName);
+  if (found != m_preparedStatements.end()) {
     throw db::SQLException("SQLite sqlite3_stmt is initialized => abort");
   }
 
   sqlite3_stmt *stmt;
   const int rc = sqlite3_prepare_v2(
-      db, query.c_str(), static_cast<int>(query.size() + 1), &stmt, nullptr);
+      m_db, query.c_str(), static_cast<int>(query.size() + 1), &stmt, nullptr);
 
   if (rc != SQLITE_OK) {
     throw db::SQLException("SQLite prepare exception: " + getErrorMessage());
   }
 
-  preparedStatements.insert({queryName, stmt});
+  m_preparedStatements.insert({queryName, stmt});
 
   return std::make_shared<Result>();
 }
 void Connection::finalizePreparedStatement(const std::string &queryName) {
-  auto found = preparedStatements.find(queryName);
-  if (found == preparedStatements.end()) {
+  auto found = m_preparedStatements.find(queryName);
+  if (found == m_preparedStatements.end()) {
     // no need to finalize
     return;
   }
 
   sqlite3_finalize(found->second);
-  preparedStatements.erase(found);
+  m_preparedStatements.erase(found);
 }
 std::shared_ptr<Result> Connection::executePreparedStatement(
     const std::string &queryName, const db::Parameters &parameters) {
-  auto found = preparedStatements.find(queryName);
-  if (found == preparedStatements.end()) {
+  auto found = m_preparedStatements.find(queryName);
+  if (found == m_preparedStatements.end()) {
     throw db::SQLException("SQLite not prepared statement available");
   }
 
@@ -107,7 +107,7 @@ std::shared_ptr<Result> Connection::executeParameters(
     const std::string &statement, const db::Parameters &parameters) {
   std::shared_ptr<Result> result = std::make_shared<Result>();
   sqlite3_stmt *stmt;
-  const int rc = sqlite3_prepare_v2(db, statement.c_str(),
+  const int rc = sqlite3_prepare_v2(m_db, statement.c_str(),
                                     static_cast<int>(statement.size() + 1),
                                     &stmt, nullptr);
   if (rc != SQLITE_OK) {
@@ -162,7 +162,7 @@ std::shared_ptr<Result> Connection::execute(
       };
   void *funcPtr = static_cast<void *>(&func);
   const int rc =
-      sqlite3_exec(db, statement.c_str(), callBack, funcPtr, &errorMessage);
+      sqlite3_exec(m_db, statement.c_str(), callBack, funcPtr, &errorMessage);
 
   if (rc != SQLITE_OK) {
     std::string errMsg = (errorMessage);

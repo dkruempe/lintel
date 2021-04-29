@@ -6,17 +6,17 @@
 ProcessService::ProcessService(std::vector<Process> processes,
                                std::chrono::seconds waitTimeForShutdown,
                                std::chrono::milliseconds monitorDuration)
-    : processes(transformFunction(std::move(processes))),
-      waitTimeForShutdown(waitTimeForShutdown),
-      monitorThread([&] { run(); }),
-      monitorDuration(monitorDuration) {}
+    : m_processes(transformFunction(std::move(processes))),
+      m_waitTimeForShutdown(waitTimeForShutdown),
+      m_monitorThread([&] { run(); }),
+      m_monitorDuration(monitorDuration) {}
 ProcessService::~ProcessService() {
-  exit = true;
-  monitorThread.join();
+  m_exit = true;
+  m_monitorThread.join();
   monitor();
 }
 void ProcessService::startOf(std::size_t id) {
-  Process &process = processes[id];
+  Process &process = m_processes[id];
   if (!process.isEnabled()) {
     return;
   }
@@ -25,7 +25,7 @@ void ProcessService::startOf(std::size_t id) {
 std::vector<Process::ProcessInfo> ProcessService::allProcesses() {
   std::vector<Process::ProcessInfo> tmp;
   std::transform(
-      processes.begin(), processes.end(), std::back_inserter(tmp),
+      m_processes.begin(), m_processes.end(), std::back_inserter(tmp),
       [](const Process &process) -> Process::ProcessInfo {
         return Process::ProcessInfo{
             process.getId(),
@@ -52,7 +52,7 @@ std::vector<Process::ProcessInfo> ProcessService::allProcesses() {
   return tmp;
 }
 void ProcessService::startAll() {
-  for (auto &process : processes) {
+  for (auto &process : m_processes) {
     if (process.getChild() != nullptr || !process.isEnabled()) {
       // process started ignore
       continue;
@@ -61,21 +61,21 @@ void ProcessService::startAll() {
   }
 }
 bool ProcessService::isRunning(std::size_t id) {
-  Process &process = processes[id];
+  Process &process = m_processes[id];
   if (process.getChild() == nullptr) {
     return false;
   }
   return process.getChild()->running();
 }
 void ProcessService::terminateOf(std::size_t id) {
-  Process &process = processes[id];
+  Process &process = m_processes[id];
   if (process.getChild() == nullptr) {
     return;
   }
   process.getChild()->terminate();
 }
 void ProcessService::terminateAll() {
-  for (auto &process : processes) {
+  for (auto &process : m_processes) {
     if (process.getChild() == nullptr) {
       continue;
     }
@@ -83,34 +83,34 @@ void ProcessService::terminateAll() {
   }
 }
 void ProcessService::stopOf(std::size_t id) {
-  Process &process = processes[id];
+  Process &process = m_processes[id];
   if (process.getChild() == nullptr || !process.getChild()->running()) {
     return;
   }
-  process.getChild()->wait_for(waitTimeForShutdown);
+  process.getChild()->wait_for(m_waitTimeForShutdown);
 }
 void ProcessService::stopAll() {
-  for (auto &process : processes) {
+  for (auto &process : m_processes) {
     if (process.getChild() == nullptr) {
       continue;
     }
     if (!process.getChild()->running()) {
       continue;
     }
-    process.getChild()->wait_for(waitTimeForShutdown);
+    process.getChild()->wait_for(m_waitTimeForShutdown);
   }
 }
 void ProcessService::restartOf(std::size_t id) {
-  Process &process = processes[id];
+  Process &process = m_processes[id];
   if (process.getChild() != nullptr && process.getChild()->running()) {
-    process.getChild()->wait_for(waitTimeForShutdown);
+    process.getChild()->wait_for(m_waitTimeForShutdown);
   }
   process.startChild();
 }
 void ProcessService::restartAll() {
-  for (auto &process : processes) {
+  for (auto &process : m_processes) {
     if (process.getChild() != nullptr && process.getChild()->running()) {
-      process.getChild()->wait_for(waitTimeForShutdown);
+      process.getChild()->wait_for(m_waitTimeForShutdown);
     }
     process.startChild();
   }
@@ -126,11 +126,11 @@ std::vector<Process> ProcessService::transformFunction(
   return processes;
 }
 void ProcessService::detachOf(std::size_t id) {
-  Process &process = processes[id];
+  Process &process = m_processes[id];
   process.getChild()->detach();
 }
 void ProcessService::enableOf(std::size_t id) {
-  Process &process = processes[id];
+  Process &process = m_processes[id];
   if (process.isEnabled()) {
     return;
   }
@@ -139,13 +139,13 @@ void ProcessService::enableOf(std::size_t id) {
 
 void ProcessService::run() {
   do {
-    std::this_thread::sleep_for(monitorDuration);
+    std::this_thread::sleep_for(m_monitorDuration);
     monitor();
-  } while (!exit);
+  } while (!m_exit);
 }
 
 void ProcessService::monitor() {
-  for (auto &process : processes) {
+  for (auto &process : m_processes) {
     // check if process unexpected stopped
     if (process.getChild() != nullptr && !process.getChild()->running() &&
         process.isEnabled() && process.getExitCode() == -1) {

@@ -19,17 +19,17 @@
 class LoggerService {
  private:
   // constexpr constants
-  constexpr static std::string_view templateConfig = "template_log4cxx.xml";
-  constexpr static std::string_view templateMarker = "template.log";
+  constexpr static std::string_view m_templateConfig = "template_log4cxx.xml";
+  constexpr static std::string_view m_templateMarker = "template.log";
 
   // variables
-  const std::string processName;
-  log4cxx::LoggerPtr logger;
+  const std::string m_processName;
+  log4cxx::LoggerPtr m_logger;
 
   void configure(bool consoleOnly);
 
-  static LoggerService *instance;
-  static std::once_flag initInstanceFlag;
+  static LoggerService *m_instance;
+  static std::once_flag m_initInstanceFlag;
 
  public:
   explicit LoggerService(const std::string &processName);
@@ -46,7 +46,7 @@ class LoggerService {
   template <class... Args>
   void info(const std::string &function, const std::string &file, int line,
             const std::string &message, Args... args) {
-    logger->info(
+    m_logger->info(
         fmt::format(message, args...),
         log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
   }
@@ -54,7 +54,7 @@ class LoggerService {
   template <class... Args>
   void debug(const std::string &function, const std::string &file, int line,
              const std::string &message, Args... args) {
-    logger->debug(
+    m_logger->debug(
         fmt::format(message, args...),
         log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
   }
@@ -62,7 +62,7 @@ class LoggerService {
   template <class... Args>
   void trace(const std::string &function, const std::string &file, int line,
              const std::string &message, Args... args) {
-    logger->trace(
+    m_logger->trace(
         fmt::format(message, args...),
         log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
   }
@@ -70,7 +70,7 @@ class LoggerService {
   template <class... Args>
   void error(const std::string &function, const std::string &file, int line,
              const std::string &message, Args... args) {
-    logger->error(
+    m_logger->error(
         fmt::format(message, args...),
         log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
   }
@@ -78,7 +78,7 @@ class LoggerService {
   template <class... Args>
   void fatal(const std::string &function, const std::string &file, int line,
              const std::string &message, Args... args) {
-    logger->fatal(
+    m_logger->fatal(
         fmt::format(message, args...),
         log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
   }
@@ -86,7 +86,7 @@ class LoggerService {
   template <class... Args>
   void warn(const std::string &function, const std::string &file, int line,
             const std::string &message, Args... args) {
-    logger->warn(
+    m_logger->warn(
         fmt::format(message, args...),
         log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
   }

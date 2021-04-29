@@ -8,35 +8,35 @@
 
 class PropertyNotFoundException : public std::exception {
  private:
-  std::string name;
-  std::string instanceName;
-  std::string className;
-  std::string processName;
-  std::string message;
+  std::string m_name;
+  std::string m_instanceName;
+  std::string m_className;
+  std::string m_processName;
+  std::string m_message;
 
  public:
   PropertyNotFoundException(const std::string &name,
                             const std::string &instanceName,
                             const std::string &className,
                             const std::string &processName)
-      : name(name),
-        instanceName(instanceName),
-        className(className),
-        processName(processName),
-        message(fmt::format("Property<> with name: {} instanceName: {} "
+      : m_name(name),
+        m_instanceName(instanceName),
+        m_className(className),
+        m_processName(processName),
+        m_message(fmt::format("Property<> with name: {} instanceName: {} "
                             "className: {} processName: {} not found",
                             name, instanceName, className, processName)) {}
 
   [[nodiscard]] const char *what() const noexcept override {
-    return message.c_str();
+    return m_message.c_str();
   }
-  [[nodiscard]] const std::string &getName() const { return name; }
+  [[nodiscard]] const std::string &getName() const { return m_name; }
   [[nodiscard]] const std::string &getInstanceName() const {
-    return instanceName;
+    return m_instanceName;
   }
-  [[nodiscard]] const std::string &getClassName() const { return className; }
+  [[nodiscard]] const std::string &getClassName() const { return m_className; }
   [[nodiscard]] const std::string &getProcessName() const {
-    return processName;
+    return m_processName;
   }
 };
 

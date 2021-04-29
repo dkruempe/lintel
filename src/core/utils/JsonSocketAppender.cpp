@@ -57,14 +57,14 @@ void JsonSocketAppender::setSocket(log4cxx::helpers::SocketPtr &socket,
   OutputStreamPtr os(new SocketOutputStream(socket));
   CharsetEncoderPtr charset(CharsetEncoder::getUTF8Encoder());
   synchronized sync(mutex);
-  writer = new OutputStreamWriter(os, charset);
+  m_writer = new OutputStreamWriter(os, charset);
 }
 
 void JsonSocketAppender::cleanUp(Pool &p) {
-  if (writer != 0) {
+  if (m_writer != 0) {
     try {
-      writer->close(p);
-      writer = 0;
+      m_writer->close(p);
+      m_writer = 0;
     } catch (std::exception &) {
     }
   }
@@ -72,15 +72,15 @@ void JsonSocketAppender::cleanUp(Pool &p) {
 
 void JsonSocketAppender::append(const spi::LoggingEventPtr &event,
                                 log4cxx::helpers::Pool &p) {
-  if (writer != 0) {
+  if (m_writer != 0) {
     LogString output;
     layout->format(output, event, p);
 
     try {
-      writer->write(output, p);
-      writer->flush(p);
+      m_writer->write(output, p);
+      m_writer->flush(p);
     } catch (std::exception &e) {
-      writer = 0;
+      m_writer = 0;
       LogLog::warn(LOG4CXX_STR("Detected problem with connection: "), e);
 
       if (getReconnectionDelay() > 0) {

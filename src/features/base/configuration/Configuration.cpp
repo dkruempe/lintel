@@ -11,8 +11,8 @@
 
 Configuration::Configuration(
     const std::vector<std::shared_ptr<Component>> &components)
-    : components(initialize(components)),
-      configurationFile(std::string(CONFIG_DIRECTORY) +
+    : m_components(initialize(components)),
+      m_configurationFile(std::string(CONFIG_DIRECTORY) +
                         std::filesystem::path::preferred_separator +
                         std::string(BOOTSTRAP_CONFIG_NAME) + ".xml") {
   loadConfiguration();
@@ -28,7 +28,7 @@ std::map<std::string, std::shared_ptr<Component>> Configuration::initialize(
 }
 
 void Configuration::loadConfiguration() {
-  FileService file(configurationFile);
+  FileService file(m_configurationFile);
   if (!file.exists()) {
     return;
   }
@@ -56,8 +56,8 @@ void Configuration::loadConfiguration() {
     tinyxml2::XMLPrinter printer;
     iter->Accept(&printer);
 
-    auto found = components.find(componentName);
-    if (found == components.end()) {
+    auto found = m_components.find(componentName);
+    if (found == m_components.end()) {
       LOG_ERROR("no component defined for {}", componentName);
       continue;
     }
@@ -65,10 +65,10 @@ void Configuration::loadConfiguration() {
     auto entries =
         found->second->parse(printer.CStr(), file.getName(), lineOffset);
     for (auto &entry : entries) {
-      configurationEntries.push_back(entry);
+      m_configurationEntries.push_back(entry);
     }
   }
 }
 void Configuration::setEntries(std::vector<std::shared_ptr<Entry>> entries) {
-  this->configurationEntries = std::move(entries);
+  m_configurationEntries = std::move(entries);
 }

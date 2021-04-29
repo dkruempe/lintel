@@ -20,7 +20,7 @@ class Notify;
 
 class Connection {
  private:
-  PGconn *conn;
+  PGconn *m_conn;
   friend class Transaction;
   friend class Statement;
   friend class PreparedStatement;

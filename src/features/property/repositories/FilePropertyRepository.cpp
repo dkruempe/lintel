@@ -11,7 +11,7 @@ void FilePropertyRepository::save(
     const std::vector<std::shared_ptr<PropertyBase>> &saveProperties) {}
 
 std::vector<std::shared_ptr<PropertyBase>> FilePropertyRepository::awake() {
-  return properties;
+  return m_properties;
 }
 
 PropertyRepositoryType FilePropertyRepository::getType() {
@@ -27,11 +27,11 @@ bool FilePropertyRepository::isMutable() { return false; }
 
 FilePropertyRepository::FilePropertyRepository(
     std::shared_ptr<Configuration> configuration)
-    : configuration(std::move(configuration)) {
-  auto entries = this->configuration->configurationOf<PropertyComponent>();
-  properties.reserve(entries.size());
+    : m_configuration(std::move(configuration)) {
+  auto entries = m_configuration->configurationOf<PropertyComponent>();
+  m_properties.reserve(entries.size());
   for (auto &&entry : entries) {
-    properties.push_back(
+    m_properties.push_back(
         std::static_pointer_cast<PropertyEntry>(entry)->getProperty());
   }
 }

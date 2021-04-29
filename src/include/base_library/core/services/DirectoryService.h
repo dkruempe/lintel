@@ -8,7 +8,7 @@
  */
 class DirectoryService {
  private:
-  std::filesystem::path path;
+  std::filesystem::path m_path;
 
  public:
   /**

@@ -3,7 +3,7 @@
 namespace postgresql {
 [[nodiscard]] std::shared_ptr<Result> Connection::execute(
     const std::string &statement) const {
-  return std::make_shared<Result>(PQexec(conn, statement.c_str()));
+  return std::make_shared<Result>(PQexec(m_conn, statement.c_str()));
 }
 
 std::shared_ptr<Result> Connection::executeParameters(
@@ -11,7 +11,7 @@ std::shared_ptr<Result> Connection::executeParameters(
   const std::vector<const char *> &params = parameters.getParameters();
   const std::vector<int32_t> &paramLengths = parameters.getParametersLengths();
   return std::make_shared<Result>(
-      PQexecParams(conn, statement.c_str(), static_cast<int>(params.size()),
+      PQexecParams(m_conn, statement.c_str(), static_cast<int>(params.size()),
                    nullptr, &params[0], &paramLengths[0], nullptr, 0));
 }
 
@@ -19,7 +19,7 @@ std::shared_ptr<Result> Connection::executeParameters(
     const std::string &statementName, const std::string &query,
     int32_t nParams) const {
   return std::make_shared<Result>(
-      PQprepare(conn, statementName.c_str(), query.c_str(), nParams, nullptr));
+      PQprepare(m_conn, statementName.c_str(), query.c_str(), nParams, nullptr));
 }
 
 [[nodiscard]] std::shared_ptr<Result> Connection::executePreparedStatement(
@@ -27,25 +27,25 @@ std::shared_ptr<Result> Connection::executeParameters(
     const db::Parameters &parameters) const {
   const std::vector<const char *> &params = parameters.getParameters();
   const std::vector<int32_t> &paramLengths = parameters.getParametersLengths();
-  return std::make_shared<Result>(PQexecPrepared(conn, statementName.c_str(),
+  return std::make_shared<Result>(PQexecPrepared(m_conn, statementName.c_str(),
                                                  nParams, &params[0],
                                                  &paramLengths[0], nullptr, 0));
 }
 
 [[nodiscard]] std::string Connection::getErrorMessage() const {
-  return PQerrorMessage(conn);
+  return PQerrorMessage(m_conn);
 }
 
 Connection::Connection(const std::string &connectionInfo)
-    : conn(PQconnectdb(connectionInfo.c_str())) {
-  if (PQstatus(conn) != CONNECTION_OK) {
+    : m_conn(PQconnectdb(connectionInfo.c_str())) {
+  if (PQstatus(m_conn) != CONNECTION_OK) {
     throw db::SQLException("Connection to database failed: " +
                            getErrorMessage());
   }
 }
 
 Connection::Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry)
-    : conn(nullptr) {
+    : m_conn(nullptr) {
   std::string connInfo;
   if (!connectionEntry->getUserName().empty()) {
     connInfo += "user=";
@@ -71,17 +71,17 @@ Connection::Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry)
     connInfo += "port=";
     connInfo += std::to_string(connectionEntry->getPort());
   }
-  conn = PQconnectdb(connInfo.c_str());
-  if (PQstatus(conn) != CONNECTION_OK) {
+  m_conn = PQconnectdb(connInfo.c_str());
+  if (PQstatus(m_conn) != CONNECTION_OK) {
     throw db::SQLException("Connection to database failed: " +
                            getErrorMessage());
   }
 }
 
 Connection::~Connection() {
-  if (conn != nullptr) {
-    PQfinish(conn);
-    conn = nullptr;
+  if (m_conn != nullptr) {
+    PQfinish(m_conn);
+    m_conn = nullptr;
   }
 }
 }  // namespace postgresql

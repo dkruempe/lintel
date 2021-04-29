@@ -7,7 +7,7 @@
 
 ConnectionConfigurations::ConnectionConfigurations(
     const std::shared_ptr<Configuration> &configuration)
-    : connections(
+    : m_connections(
           build(configuration->configurationOf<ConnectionComponent>())) {}
 
 std::map<std::string, std::shared_ptr<ConnectionEntry>>
@@ -27,7 +27,7 @@ ConnectionConfigurations::build(std::vector<std::shared_ptr<Entry>> entries) {
 std::shared_ptr<ConnectionEntry> ConnectionConfigurations::of(
     const std::string &connectionName) {
   try {
-    return connections.at(connectionName);
+    return m_connections.at(connectionName);
   } catch (std::out_of_range &e) {
     throw db::SQLException("Connection with " + connectionName + " not found");
   }

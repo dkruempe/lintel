@@ -9,9 +9,9 @@
 namespace sqlite {
 class Notify {
  private:
-  std::string tableName;
-  std::function<void()> functionCallBack;
-  Connection &connection;
+  std::string m_tableName;
+  std::function<void()> m_functionCallBack;
+  Connection &m_connection;
 
   static void callBack(void *arg, int operation, const char *thread,
                        const char *tableName, sqlite3_int64 changes);

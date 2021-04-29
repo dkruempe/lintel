@@ -6,7 +6,7 @@
 
 class PropertyFeature : public Feature {
  private:
-  std::shared_ptr<PropertyService> propertyService;
+  std::shared_ptr<PropertyService> m_propertyService;
 
  public:
   PropertyFeature();

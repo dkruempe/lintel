@@ -9,21 +9,21 @@
 
 class ExecutorService {
  private:
-  volatile bool exit = false;
-  std::mutex mutex;
-  std::condition_variable conditionVariable;
-  std::thread runnable;
+  volatile bool m_exit = false;
+  std::mutex m_mutex;
+  std::condition_variable m_conditionVariable;
+  std::thread m_runnable;
   typedef std::function<void()> TASK;
-  std::queue<TASK> tasks;
+  std::queue<TASK> m_tasks;
 
   void run();
 
  public:
-  ExecutorService() : runnable([&]() { run(); }) {}
+  ExecutorService() : m_runnable([&]() { run(); }) {}
 
   ~ExecutorService() {
-    exit = true;
-    runnable.join();
+    m_exit = true;
+    m_runnable.join();
   }
 
   template <class F, class... Args>
@@ -42,10 +42,10 @@ ExecutorService::execute(F &&f, Args &&...args) {
       std::bind(std::forward<F>(f), std::forward<Args>(args)...));
   auto future = func->get_future();
   {
-    std::unique_lock<std::mutex> lock(mutex);
-    tasks.push([=, func = std::move(func)]() { (*func)(); });
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_tasks.push([=, func = std::move(func)]() { (*func)(); });
   }
-  conditionVariable.notify_one();
+  m_conditionVariable.notify_one();
   return future;
 }
 

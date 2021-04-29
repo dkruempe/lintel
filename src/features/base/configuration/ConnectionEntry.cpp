@@ -1,19 +1,19 @@
 #include "base_library/features/base/configuration/ConnectionEntry.h"
 
 #include <utility>
-const std::string &ConnectionEntry::getConnection() const { return connection; }
+const std::string &ConnectionEntry::getConnection() const { return m_connection; }
 
-const std::string &ConnectionEntry::getUserName() const { return userName; }
+const std::string &ConnectionEntry::getUserName() const { return m_userName; }
 
-const std::string &ConnectionEntry::getPassword() const { return password; }
+const std::string &ConnectionEntry::getPassword() const { return m_password; }
 
-const std::string &ConnectionEntry::getName() const { return name; }
+const std::string &ConnectionEntry::getName() const { return m_name; }
 
 std::ostream &operator<<(std::ostream &os, const ConnectionEntry &entry) {
-  os << static_cast<const Entry &>(entry) << " connection: " << entry.connection
-     << " userName: " << entry.userName << " password: " << entry.password
-     << " type: " << entry.type << " name: " << entry.name
-     << " databaseName: " << entry.databaseName << " port: " << entry.port;
+  os << static_cast<const Entry &>(entry) << " connection: " << entry.m_connection
+     << " userName: " << entry.m_userName << " password: " << entry.m_password
+     << " type: " << entry.m_type << " name: " << entry.m_name
+     << " databaseName: " << entry.m_databaseName << " port: " << entry.m_port;
   return os;
 }
 ConnectionEntry::ConnectionEntry(std::string_view component,
@@ -22,16 +22,16 @@ ConnectionEntry::ConnectionEntry(std::string_view component,
                                  std::string name, int32_t port,
                                  std::string databaseName)
     : Entry(component),
-      connection(std::move(connection)),
-      userName(std::move(userName)),
-      password(std::move(password)),
-      type(type),
-      name(std::move(name)),
-      port(port),
-      databaseName(std::move(databaseName)) {}
+      m_connection(std::move(connection)),
+      m_userName(std::move(userName)),
+      m_password(std::move(password)),
+      m_type(type),
+      m_name(std::move(name)),
+      m_port(port),
+      m_databaseName(std::move(databaseName)) {}
 
-const db::ConnectionType &ConnectionEntry::getType() const { return type; }
-int32_t ConnectionEntry::getPort() const { return port; }
+const db::ConnectionType &ConnectionEntry::getType() const { return m_type; }
+int32_t ConnectionEntry::getPort() const { return m_port; }
 const std::string &ConnectionEntry::getDatabaseName() const {
-  return databaseName;
+  return m_databaseName;
 }

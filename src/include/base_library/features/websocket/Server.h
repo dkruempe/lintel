@@ -12,11 +12,11 @@
 
 class Server {
  private:
-  std::vector<std::shared_ptr<Controller>> controllers;
-  boost::asio::io_context context;
-  boost::asio::ip::tcp::acceptor acceptor;
-  std::thread thread;
-  std::map<std::string, std::shared_ptr<Session>> sessions;
+  std::vector<std::shared_ptr<Controller>> m_controllers;
+  boost::asio::io_context m_context;
+  boost::asio::ip::tcp::acceptor m_acceptor;
+  std::thread m_thread;
+  std::map<std::string, std::shared_ptr<Session>> m_sessions;
 
   void run();
 

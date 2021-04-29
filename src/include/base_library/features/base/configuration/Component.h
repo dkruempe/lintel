@@ -9,10 +9,12 @@
 
 class Component {
  private:
-  std::string configRoot;
+  std::string m_configRoot;
 
  public:
   explicit Component(std::string configRoot);
+
+  virtual ~Component() = default;
 
   [[nodiscard]] const std::string &getConfigRoot() const;
 

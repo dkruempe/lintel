@@ -13,6 +13,8 @@ class PropertyRepository {
  public:
   PropertyRepository() = default;
 
+  virtual ~PropertyRepository() = default;
+
   /**
    * returns priority of repository
    */

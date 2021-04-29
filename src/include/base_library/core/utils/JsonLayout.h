@@ -12,8 +12,8 @@ namespace log4cxx::json {
 class LOG4CXX_EXPORT JsonLayout : public Layout {
  private:
   // Print no location info by default
-  bool locationInfo;  //= false
-  bool properties;    // = false
+  bool m_locationInfo;  //= false
+  bool m_properties;    // = false
 
  public:
   DECLARE_LOG4CXX_OBJECT(JsonLayout)
@@ -35,27 +35,27 @@ class LOG4CXX_EXPORT JsonLayout : public Layout {
   <b>LocationInfo</b> option of that appender as well.
   */
   inline void setLocationInfo(bool locationInfo1) {
-    this->locationInfo = locationInfo1;
+    this->m_locationInfo = locationInfo1;
   }
 
   /**
 Returns the current value of the <b>LocationInfo</b> option.
 */
-  inline bool getLocationInfo() const { return locationInfo; }
+  inline bool getLocationInfo() const { return m_locationInfo; }
 
   /**
    * Sets whether MDC key-value pairs should be output, default false.
    * @param flag new value.
    *
    */
-  inline void setProperties(bool flag) { properties = flag; }
+  inline void setProperties(bool flag) { m_properties = flag; }
 
   /**
    * Gets whether MDC key-value pairs should be output.
    * @return true if MDC key-value pairs are output.
    *
    */
-  inline bool getProperties() const { return properties; }
+  inline bool getProperties() const { return m_properties; }
 
   /** No options to activate. */
   void activateOptions(log4cxx::helpers::Pool & /* p */) override {}

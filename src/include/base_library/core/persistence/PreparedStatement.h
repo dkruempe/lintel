@@ -9,9 +9,9 @@
 namespace db {
 class PreparedStatement {
  private:
-  const Connection &connection;
-  std::unique_ptr<postgresql::PreparedStatement> preparedStatement = nullptr;
-  std::unique_ptr<sqlite::PreparedStatement> preparedStatementSQLite = nullptr;
+  const Connection &m_connection;
+  std::unique_ptr<postgresql::PreparedStatement> m_preparedStatement = nullptr;
+  std::unique_ptr<sqlite::PreparedStatement> m_preparedStatementSQLite = nullptr;
 
  public:
   static int32_t initNParams(const std::string &tempStatement);

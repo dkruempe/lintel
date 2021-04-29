@@ -6,8 +6,8 @@
 #include <mutex>
 #include <vector>
 
-static std::condition_variable condition;
-static std::mutex mutex;
+static std::condition_variable m_condition;
+static std::mutex m_mutex;
 
 class SignalService {
  public:
@@ -17,11 +17,11 @@ class SignalService {
     }
   }
 
-  static void handleSignal(int signal) { condition.notify_all(); }
+  static void handleSignal(int signal) { m_condition.notify_all(); }
 
   static void waitForUserInterrupt() {
-    std::unique_lock<std::mutex> lock(mutex);
-    condition.wait(lock);
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_condition.wait(lock);
   }
 
   static void raiseSignal(int32_t signal) { raise(signal); }

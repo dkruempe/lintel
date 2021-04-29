@@ -5,14 +5,14 @@
 namespace sqlite {
 Notify::Notify(Connection &connection, std::function<void()> functionCallBack,
                std::string tableName)
-    : tableName(std::move(tableName)),
-      functionCallBack(std::move(functionCallBack)),
-      connection(connection) {
+    : m_tableName(std::move(tableName)),
+      m_functionCallBack(std::move(functionCallBack)),
+      m_connection(connection) {
   void *thisPtr = static_cast<void *>(this);
-  sqlite3_update_hook(this->connection.db, callBack, thisPtr);
+  sqlite3_update_hook(m_connection.m_db, callBack, thisPtr);
 }
 
-void Notify::notify() { functionCallBack(); }
+void Notify::notify() { m_functionCallBack(); }
 
 void Notify::callBack(void *arg, int operation, const char *thread,
                       const char *tableName, sqlite3_int64 changes) {

@@ -7,7 +7,7 @@ class Response : public Message {
  public:
   std::string serialize() override;
   Response() : Message() {}
-  ~Response() = default;
+  ~Response() override = default;
 };
 
 #endif  // CPP_BASE_LIBRARY_RESPONSE_H

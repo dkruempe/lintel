@@ -3,5 +3,5 @@
 #include <utility>
 
 Component::Component(std::string configRoot)
-    : configRoot(std::move(configRoot)) {}
-const std::string &Component::getConfigRoot() const { return configRoot; }
+    : m_configRoot(std::move(configRoot)) {}
+const std::string &Component::getConfigRoot() const { return m_configRoot; }

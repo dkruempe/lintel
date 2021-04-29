@@ -15,7 +15,7 @@
  */
 class FilePropertyRepository : public PropertyRepository {
  private:
-  std::vector<std::shared_ptr<PropertyBase>> properties;
+  std::vector<std::shared_ptr<PropertyBase>> m_properties;
 
  public:
   explicit FilePropertyRepository(std::shared_ptr<Configuration> configuration);
@@ -62,7 +62,7 @@ class FilePropertyRepository : public PropertyRepository {
   std::vector<std::shared_ptr<PropertyBase>> awake() override;
 
  private:
-  std::shared_ptr<Configuration> configuration;
+  std::shared_ptr<Configuration> m_configuration;
 };
 
 #endif  // LOGGING_FILEPROPERTYREPOSITORY_H

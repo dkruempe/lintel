@@ -9,10 +9,10 @@
 
 class Feature {
  protected:
-  std::string_view name;
+  std::string_view m_name;
 
  public:
-  explicit Feature(std::string_view name) : name(name) {}
+  explicit Feature(std::string_view name) : m_name(name) {}
 
   ~Feature() = default;
 
@@ -20,7 +20,7 @@ class Feature {
 
   virtual void initialize(std::shared_ptr<Hypodermic::Container> container) = 0;
 
-  std::string_view getName() { return name; }
+  std::string_view getName() { return m_name; }
 };
 
 #endif  // CPP_BASE_LIBRARY_FEATURE_H

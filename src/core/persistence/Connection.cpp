@@ -2,13 +2,13 @@
 
 db::Connection::Connection(ConnectionType connectionType,
                            const std::string &connectionInfo)
-    : connectionType(connectionType) {
+    : m_connectionType(connectionType) {
   switch (connectionType) {
     case ConnectionType::SQLite:
-      connSQLite = std::make_shared<sqlite::Connection>(connectionInfo);
+      m_connSQLite = std::make_shared<sqlite::Connection>(connectionInfo);
       break;
     case ConnectionType::PostgreSQL:
-      conn = std::make_shared<postgresql::Connection>(connectionInfo);
+      m_conn = std::make_shared<postgresql::Connection>(connectionInfo);
       break;
     default:
       break;
@@ -17,13 +17,13 @@ db::Connection::Connection(ConnectionType connectionType,
 
 db::Connection::Connection(
     const std::shared_ptr<ConnectionEntry> &connectionEntry)
-    : connectionType(connectionEntry->getType()) {
-  switch (connectionType) {
+    : m_connectionType(connectionEntry->getType()) {
+  switch (m_connectionType) {
     case ConnectionType::SQLite:
-      connSQLite = std::make_shared<sqlite::Connection>(connectionEntry);
+      m_connSQLite = std::make_shared<sqlite::Connection>(connectionEntry);
       break;
     case ConnectionType::PostgreSQL:
-      conn = std::make_shared<postgresql::Connection>(connectionEntry);
+      m_conn = std::make_shared<postgresql::Connection>(connectionEntry);
       break;
     default:
       break;

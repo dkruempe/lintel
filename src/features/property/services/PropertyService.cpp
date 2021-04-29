@@ -67,8 +67,8 @@ PropertyService::PropertyService(
         &propertyRepositories,
     const std::vector<std::shared_ptr<AbstractServiceInterface>>
         &abstractServices)
-    : propertyRepository(searchRuntimeRepository(propertyRepositories)),
-      properties(init(propertyRepositories)) {
+    : m_propertyRepository(searchRuntimeRepository(propertyRepositories)),
+      m_properties(init(propertyRepositories)) {
   std::for_each(
       abstractServices.begin(), abstractServices.end(),
       [&](const std::shared_ptr<AbstractServiceInterface> &abstractService) {
@@ -77,7 +77,7 @@ PropertyService::PropertyService(
 }
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-  std::transform(properties.begin(), properties.end(),
+  std::transform(m_properties.begin(), m_properties.end(),
                  std::back_inserter(propertiesVector),
                  [](const auto &iter) { return iter.second; });
   return propertiesVector;
@@ -93,8 +93,8 @@ std::shared_ptr<PropertyBase> &PropertyService::get(
     const std::string &className, const std::string &processName) {
   const std::string &identifier =
       createIdentifier(name, instanceName, className, processName);
-  auto found = properties.find(identifier);
-  if (found == properties.end()) {
+  auto found = m_properties.find(identifier);
+  if (found == m_properties.end()) {
     throw PropertyNotFoundException(name, instanceName, className, processName);
   }
   return found->second;
@@ -110,7 +110,7 @@ void PropertyService::getOrCreate(
       property->setDataStorage(newProperty->getDataStorage());
       newProperty = property;
     } catch (PropertyNotFoundException &exception) {
-      properties.insert({property->getIdentifier(), property});
+      m_properties.insert({property->getIdentifier(), property});
     }
   }
 }
@@ -131,8 +131,8 @@ void PropertyService::changeStringValueOf(
   LOG_INFO("{} change to {}", ss.str(), value);
   propertyBase->setValueString(value);
   propertyBase->setDataStorage(
-      DataStorage(propertyRepository->getDataStorage()));
-  if (propertyRepository != nullptr) {
-    propertyRepository->save(propertyBase);
+      DataStorage(m_propertyRepository->getDataStorage()));
+  if (m_propertyRepository != nullptr) {
+    m_propertyRepository->save(propertyBase);
   }
 }

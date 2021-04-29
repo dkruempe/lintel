@@ -16,10 +16,10 @@ class Notify;
 
 class Connection {
  private:
-  std::shared_ptr<postgresql::Connection> conn = nullptr;
-  std::shared_ptr<sqlite::Connection> connSQLite = nullptr;
+  std::shared_ptr<postgresql::Connection> m_conn = nullptr;
+  std::shared_ptr<sqlite::Connection> m_connSQLite = nullptr;
 
-  ConnectionType connectionType;
+  ConnectionType m_connectionType;
   friend class Transaction;
   friend class Statement;
   friend class PreparedStatement;

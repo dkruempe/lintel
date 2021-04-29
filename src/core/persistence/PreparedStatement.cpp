@@ -7,15 +7,15 @@ namespace db {
 PreparedStatement::PreparedStatement(const Connection &connection,
                                      const std::string &statement,
                                      const std::string &statementName)
-    : connection(connection) {
-  switch (connection.connectionType) {
+    : m_connection(connection) {
+  switch (connection.m_connectionType) {
     case ConnectionType::SQLite:
-      preparedStatementSQLite = std::make_unique<sqlite::PreparedStatement>(
-          *connection.connSQLite, statement, statementName);
+      m_preparedStatementSQLite = std::make_unique<sqlite::PreparedStatement>(
+          *connection.m_connSQLite, statement, statementName);
       break;
     case ConnectionType::PostgreSQL:
-      preparedStatement = std::make_unique<postgresql::PreparedStatement>(
-          *connection.conn, statement, statementName);
+      m_preparedStatement = std::make_unique<postgresql::PreparedStatement>(
+          *connection.m_conn, statement, statementName);
       break;
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
@@ -23,12 +23,12 @@ PreparedStatement::PreparedStatement(const Connection &connection,
 }
 
 db::Result PreparedStatement::execute(const std::vector<std::string> &params) {
-  switch (connection.connectionType) {
+  switch (m_connection.m_connectionType) {
     case ConnectionType::SQLite:
-      preparedStatementSQLite->execute(params);
+      m_preparedStatementSQLite->execute(params);
       break;
     case ConnectionType::PostgreSQL:
-      preparedStatement->execute(params);
+      m_preparedStatement->execute(params);
       break;
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
@@ -44,12 +44,12 @@ std::string PreparedStatement::initStatement(const std::string &tempStatement) {
 }
 
 void PreparedStatement::close() {
-  switch (connection.connectionType) {
+  switch (m_connection.m_connectionType) {
     case ConnectionType::SQLite:
-      preparedStatementSQLite->close();
+      m_preparedStatementSQLite->close();
       break;
     case ConnectionType::PostgreSQL:
-      preparedStatement->close();
+      m_preparedStatement->close();
       break;
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");

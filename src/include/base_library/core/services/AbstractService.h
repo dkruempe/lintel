@@ -30,15 +30,15 @@ class AbstractServiceInterface {
 template <class T>
 class AbstractService : public AbstractServiceInterface {
  private:
-  const std::string processName;
-  const std::string instanceName;
+  const std::string m_processName;
+  const std::string m_instanceName;
 
   std::vector<std::shared_ptr<PropertyBase>> getProperties() override {
-    return properties;
+    return m_properties;
   }
 
  protected:
-  std::vector<std::shared_ptr<PropertyBase>> properties;
+  std::vector<std::shared_ptr<PropertyBase>> m_properties;
 
   template <class type>
   std::shared_ptr<Property<type>> registerProperty(
@@ -53,33 +53,33 @@ class AbstractService : public AbstractServiceInterface {
     property->setDataStorage(DataStorage(
         PropertyRepositoryType::DEFAULT,
         path.filename().generic_string() + ":" + std::to_string(position)));
-    properties.push_back(property);
+    m_properties.push_back(property);
     return property;
   }
 
  public:
   AbstractService() = delete;
   AbstractService(std::string processName, std::string instanceName)
-      : processName(std::move(processName)),
-        instanceName(std::move(instanceName)) {}
+      : m_processName(std::move(processName)),
+        m_instanceName(std::move(instanceName)) {}
 
   explicit AbstractService(std::string processName)
-      : processName(std::move(processName)), instanceName("__DEFAULT") {}
+      : m_processName(std::move(processName)), m_instanceName("__DEFAULT") {}
   void onInitialize() override {}
   void onShutdown() override {}
   [[nodiscard]] const std::string &getProcessName() const {
-    return processName;
+    return m_processName;
   }
   [[nodiscard]] const std::string &getInstanceName() const {
-    return instanceName;
+    return m_instanceName;
   }
   [[nodiscard]] constexpr std::string_view getClassName() const {
     return type_name<T>();
   }
   friend std::ostream &operator<<(std::ostream &os,
                                   const AbstractService &service) {
-    os << "processName: " << service.processName
-       << " instanceName: " << service.instanceName
+    os << "processName: " << service.m_processName
+       << " instanceName: " << service.m_instanceName
        << " className: " << service.getClassName();
     return os;
   }

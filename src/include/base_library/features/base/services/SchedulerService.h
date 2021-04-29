@@ -33,11 +33,11 @@ class SchedulerService : public AbstractService<SchedulerService> {
     }
   };
 
-  std::vector<Task> tasks;
-  std::mutex mutex;
-  std::condition_variable conditionVariable;
-  volatile bool exit;
-  std::vector<std::thread> threads;
+  std::vector<Task> m_tasks;
+  std::mutex m_mutex;
+  std::condition_variable m_conditionVariable;
+  volatile bool m_exit;
+  std::vector<std::thread> m_threads;
 
   void run();
 
@@ -98,13 +98,13 @@ void SchedulerService::schedule_at_fixed_rate(
     const std::chrono::steady_clock::duration &d,
     const std::chrono::steady_clock::duration &period, F &&f, Args &&...args) {
   {
-    std::unique_lock<std::mutex> lock(mutex);
-    tasks.emplace_back(Task(
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_tasks.emplace_back(Task(
         std::chrono::steady_clock::now() + d,
         std::bind(std::forward<F>(f), std::forward<Args>(args)...), period));
-    std::push_heap(tasks.begin(), tasks.end(), TaskComperator());
+    std::push_heap(m_tasks.begin(), m_tasks.end(), TaskComperator());
   }
-  conditionVariable.notify_one();
+  m_conditionVariable.notify_one();
 }
 
 template <class F, class... Args>
@@ -118,12 +118,13 @@ SchedulerService::schedule_at(const std::chrono::steady_clock::time_point &t,
       std::bind(std::forward<F>(f), std::forward<Args>(args)...));
   auto future = function->get_future();
   {
-    std::unique_lock<std::mutex> lock(mutex);
-    tasks.emplace_back(Task(t, [=, func = std::move(function)] { (*func)(); }));
-    std::push_heap(tasks.begin(), tasks.end(), TaskComperator());
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_tasks.emplace_back(
+        Task(t, [=, func = std::move(function)] { (*func)(); }));
+    std::push_heap(m_tasks.begin(), m_tasks.end(), TaskComperator());
   }
 
-  conditionVariable.notify_one();
+  m_conditionVariable.notify_one();
   return future;
 }
 

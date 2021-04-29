@@ -14,11 +14,11 @@ namespace postgresql {
  */
 class PreparedStatement {
  private:
-  bool closed = false;
-  const Connection &connection;
-  const int32_t nParams;
-  const std::string statementName;
-  const std::string statement;
+  bool m_closed = false;
+  const Connection &m_connection;
+  const int32_t m_nParams;
+  const std::string m_statementName;
+  const std::string m_statement;
 
  public:
   static int32_t initNParams(const std::string &tempStatement);

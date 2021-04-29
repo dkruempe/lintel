@@ -4,15 +4,15 @@
 
 class LoggerServiceNotInitialized : public std::exception {
  private:
-  const std::string message;
+  const std::string m_message;
 
  public:
   explicit LoggerServiceNotInitialized()
-      : message(
+      : m_message(
             "LoggerService not initialized. Please call Marco DECLARE_LOGGER") {
   }
 
   [[nodiscard]] const char *what() const noexcept override {
-    return message.c_str();
+    return m_message.c_str();
   }
 };

@@ -9,22 +9,22 @@
 
 class PropertyNoRuntimeChangeSupported : public std::exception {
  private:
-  std::shared_ptr<PropertyBase> property;
-  std::string message;
+  std::shared_ptr<PropertyBase> m_property;
+  std::string m_message;
 
  public:
   PropertyNoRuntimeChangeSupported() = delete;
 
   explicit PropertyNoRuntimeChangeSupported(
       std::shared_ptr<PropertyBase> tempProperty)
-      : property(std::move(tempProperty)),
-        message(fmt::format("{} no runtime change allowed",
-                            property->toString())) {}
+      : m_property(std::move(tempProperty)),
+        m_message(fmt::format("{} no runtime change allowed",
+                              m_property->toString())) {}
 
   [[nodiscard]] const char *what() const noexcept override {
-    return message.c_str();
+    return m_message.c_str();
   }
   [[nodiscard]] const std::shared_ptr<PropertyBase> &getProperty() {
-    return property;
+    return m_property;
   }
 };

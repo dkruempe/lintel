@@ -11,13 +11,13 @@
 
 class StartupBuilder {
  private:
-  std::vector<std::shared_ptr<Feature>> features;
-  std::shared_ptr<Hypodermic::Container> container = nullptr;
-  std::shared_ptr<Process::ProcessInfo> processInfo;
-  std::shared_ptr<ProcessName> name;
-  std::vector<std::shared_ptr<AbstractServiceInterface>> abstractServices;
-  static StartupBuilder *startupBuilder;
-  std::condition_variable conditionVariable;
+  std::vector<std::shared_ptr<Feature>> m_features;
+  std::shared_ptr<Hypodermic::Container> m_container = nullptr;
+  std::shared_ptr<Process::ProcessInfo> m_processInfo;
+  std::shared_ptr<ProcessName> m_name;
+  std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
+  static StartupBuilder *m_startupBuilder;
+  std::condition_variable m_conditionVariable;
 
   explicit StartupBuilder(Process::ProcessInfo &&processInfo,
                           ProcessName &&processName);
@@ -29,7 +29,7 @@ class StartupBuilder {
 
   template <typename FEATURE>
   StartupBuilder &addFeature() {
-    features.push_back(std::make_shared<FEATURE>());
+    m_features.push_back(std::make_shared<FEATURE>());
     return *this;
   }
 

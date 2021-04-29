@@ -9,63 +9,63 @@
 
 class PropertyBase {
  private:
-  std::string name;
-  std::string instanceName;
-  std::string className;
-  std::string processName;
-  std::string identifier;
-  const bool runtimeChange;
-  const std::string description;
-  DataStorage dataStorage;
+  std::string m_name;
+  std::string m_instanceName;
+  std::string m_className;
+  std::string m_processName;
+  std::string m_identifier;
+  const bool m_runtimeChange;
+  const std::string m_description;
+  DataStorage m_dataStorage;
 
  protected:
   PropertyBase(std::string name, std::string instanceName,
                std::string className, std::string processName,
                std::string description, bool runtimeChange)
-      : name(std::move(name)),
-        instanceName(std::move(instanceName)),
-        className(std::move(className)),
-        processName(std::move(processName)),
-        identifier(this->name + "_" + this->instanceName + "_" +
-                   this->className + "_" + this->processName),
-        runtimeChange(runtimeChange),
-        description(std::move(description)) {}
+      : m_name(std::move(name)),
+        m_instanceName(std::move(instanceName)),
+        m_className(std::move(className)),
+        m_processName(std::move(processName)),
+        m_identifier(m_name + "_" + m_instanceName + "_" +
+                         m_className + "_" + m_processName),
+        m_runtimeChange(runtimeChange),
+        m_description(std::move(description)) {}
 
  public:
   PropertyBase() = delete;
   [[nodiscard]] virtual std::string toString() = 0;
   [[nodiscard]] virtual std::string getType() const = 0;
-  [[nodiscard]] const std::string &getName() const { return name; }
+  [[nodiscard]] const std::string &getName() const { return m_name; }
   [[nodiscard]] const std::string &getInstanceName() const {
-    return instanceName;
+    return m_instanceName;
   }
   [[nodiscard]] const DataStorage &getDataStorage() const {
-    return dataStorage;
+    return m_dataStorage;
   }
   void setDataStorage(const DataStorage &newDataStorage) {
-    PropertyBase::dataStorage = newDataStorage;
+    PropertyBase::m_dataStorage = newDataStorage;
   }
-  [[nodiscard]] const std::string &getClassName() const { return className; }
+  [[nodiscard]] const std::string &getClassName() const { return m_className; }
   [[nodiscard]] const std::string &getProcessName() const {
-    return processName;
+    return m_processName;
   }
-  [[nodiscard]] bool isRuntimeChange() const { return runtimeChange; }
+  [[nodiscard]] bool isRuntimeChange() const { return m_runtimeChange; }
   [[nodiscard]] const std::string &getDescription() const {
-    return description;
+    return m_description;
   }
-  [[nodiscard]] const std::string &getIdentifier() const { return identifier; }
+  [[nodiscard]] const std::string &getIdentifier() const { return m_identifier; }
 
   virtual void setValueString(const std::string &value) = 0;
 
   friend std::ostream &operator<<(std::ostream &os, PropertyBase &base) {
     os << "Property{"
-       << "name:" << base.name << ", value:" << base.toString()
-       << ", processName:" << base.processName
-       << ", className:" << base.className
-       << ", instanceName:" << base.instanceName
-       << ", runtimeChange:" << base.runtimeChange
-       << ", description:" << base.description
-       << ", dataStorage:" << base.dataStorage << "}";
+       << "name:" << base.m_name << ", value:" << base.toString()
+       << ", processName:" << base.m_processName
+       << ", className:" << base.m_className
+       << ", instanceName:" << base.m_instanceName
+       << ", runtimeChange:" << base.m_runtimeChange
+       << ", description:" << base.m_description
+       << ", dataStorage:" << base.m_dataStorage << "}";
     return os;
   }
 

@@ -14,10 +14,10 @@ namespace sqlite {
  */
 class PreparedStatement {
  private:
-  bool closed = false;
-  Connection &connection;
-  const std::string statement;
-  const std::string statementName;
+  bool m_closed = false;
+  Connection &m_connection;
+  const std::string m_statement;
+  const std::string m_statementName;
 
  public:
   /**

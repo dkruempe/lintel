@@ -7,17 +7,17 @@
 class Process {
  private:
   static constexpr int INFINITE_RESTARTS = -1;  // infinite restarts;
-  int64_t id = -1;
-  bool enabled;
-  bool automaticRestart;
-  int restarts = 0;
-  int maxRestarts;  // -1 infinite
-  int startSequence;
-  std::string name;
-  std::filesystem::path path;
-  std::vector<std::string> args;
-  std::shared_ptr<boost::process::child> child = nullptr;
-  int exitCode = -1;
+  int64_t m_id = -1;
+  bool m_enabled;
+  bool m_automaticRestart;
+  int m_restarts = 0;
+  int m_maxRestarts;  // -1 infinite
+  int m_startSequence;
+  std::string m_name;
+  std::filesystem::path m_path;
+  std::vector<std::string> m_args;
+  std::shared_ptr<boost::process::child> m_child = nullptr;
+  int m_exitCode = -1;
 
  public:
   // Comprators
