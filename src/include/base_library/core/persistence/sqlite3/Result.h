@@ -20,4 +20,4 @@ class Result {
 };
 }  // namespace sqlite
 
-#endif  // CPP_BASE_LIBRAR_SQLITE_RESULT_H
+#endif  // CPP_BASE_LIBRARY_SQLITE_RESULT_H
