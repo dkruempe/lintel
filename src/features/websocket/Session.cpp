@@ -1,6 +1,7 @@
 #include "base_library/features/websocket/Session.h"
 
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/UUID.h"
 #include "base_library/features/websocket/Controller.h"
 #include "base_library/features/websocket/messages/ErrorMessage.h"
 #include "base_library/features/websocket/messages/MessageFactory.h"
@@ -8,7 +9,7 @@
 Session::Session(boost::asio::ip::tcp::socket &&socket,
                  std::function<void(const std::string &)> onClose,
                  std::vector<std::shared_ptr<Controller>> controllers)
-    : m_id(boost::uuids::to_string(boost::uuids::random_generator()())),
+    : m_id(UUID::generate()),
       m_websocket(std::move(socket)),
       m_onClose(std::move(onClose)),
       m_controllers(std::move(controllers)) {

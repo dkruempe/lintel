@@ -2,8 +2,6 @@
 #define CPP_BASE_LIBRARY_SESSION_H
 
 #include <boost/beast.hpp>
-#include <boost/uuid/random_generator.hpp>
-#include <boost/uuid/uuid_io.hpp>
 #include <deque>
 #include <functional>
 #include <map>
