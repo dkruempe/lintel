@@ -3,8 +3,8 @@
 #include <sstream>
 
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/features/websocket/WebsocketComponent.h"
-#include "base_library/features/websocket/WebsocketEntry.h"
+#include "base_library/features/websocket/configuration/WebsocketComponent.h"
+#include "base_library/features/websocket/configuration/WebsocketEntry.h"
 
 Server::Server(const std::shared_ptr<Configuration>& configuration,
                std::vector<std::shared_ptr<Controller>> controllers)

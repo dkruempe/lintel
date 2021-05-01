@@ -2,7 +2,8 @@
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/websocket/Controller.h"
-#include "base_library/features/websocket/MessageFactory.h"
+#include "base_library/features/websocket/messages/ErrorMessage.h"
+#include "base_library/features/websocket/messages/MessageFactory.h"
 
 Session::Session(boost::asio::ip::tcp::socket &&socket,
                  std::function<void(const std::string &)> onClose,
@@ -11,8 +12,9 @@ Session::Session(boost::asio::ip::tcp::socket &&socket,
       m_websocket(std::move(socket)),
       m_onClose(std::move(onClose)),
       m_controllers(std::move(controllers)) {
-  m_websocket.set_option(boost::beast::websocket::stream_base::timeout::suggested(
-      boost::beast::role_type::server));
+  m_websocket.set_option(
+      boost::beast::websocket::stream_base::timeout::suggested(
+          boost::beast::role_type::server));
   m_websocket.set_option(boost::beast::websocket::stream_base::decorator(
       [](boost::beast::websocket::response_type &res) {
         res.set(boost::beast::http::field::server,
@@ -24,8 +26,9 @@ void Session::run() {
       boost::beast::bind_front_handler(&Session::onAccept, shared_from_this()));
 }
 void Session::doRead() {
-  m_websocket.async_read(m_readBuffer, boost::beast::bind_front_handler(
-                                       &Session::onRead, shared_from_this()));
+  m_websocket.async_read(
+      m_readBuffer,
+      boost::beast::bind_front_handler(&Session::onRead, shared_from_this()));
 }
 void Session::onAccept(boost::beast::error_code errorCode) {
   if (errorCode) {
@@ -67,13 +70,16 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
 void Session::onReceive(const std::shared_ptr<Packet> &packet) {
   if (packet->isText()) {
     try {
-      std::vector<std::shared_ptr<Message>> messages =
+      MessageContainer container =
           MessageFactory::generate(packet->getTextBuffer());
-      LOG_INFO("created messages {}", messages.size());
-      for (const auto &item : messages) {
-        std::stringstream ss;
-        ss << *item;
-        LOG_INFO("received message {}", ss.str());
+      LOG_INFO("created messages {}", container.getMessages().size());
+      for (const auto &item : container.getMessages()) {
+        LOG_INFO("received message {}", item->serialize());
+      }
+      for (const auto &item : container.getErrors()) {
+        std::shared_ptr<Response> temp =
+            std::static_pointer_cast<Response>(item);
+        send(temp);
       }
       /*const std::vector<Request> &requests =
           Request::fromJson(packet->textBuffer);
@@ -87,6 +93,9 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
       }*/
       // send();
     } catch (std::exception &e) {
+      std::shared_ptr<Response> response = std::make_shared<ErrorMessage>(
+          ErrorCode::PARSE_ERROR, "parse error", "");
+      send(response);
       LOG_ERROR("{} {}", e.what(), packet->getTextBuffer());
     }
   } else {
@@ -119,10 +128,10 @@ void Session::doWrite() {
       boost::beast::bind_front_handler(&Session::onWrite, shared_from_this());
   if (packet->isText()) {
     m_websocket.async_write(boost::asio::buffer(packet->getTextBuffer()),
-                          std::move(handler));
+                            std::move(handler));
   } else {
     m_websocket.async_write(boost::asio::buffer(packet->getBinaryBuffer()),
-                          std::move(handler));
+                            std::move(handler));
   }
 }
 void Session::fail(boost::beast::error_code errorCode,
@@ -140,17 +149,17 @@ void Session::send(const std::shared_ptr<Packet> &packet) {
   doWrite();
 }
 const std::string &Session::getId() { return m_id; }
-void Session::send(std::unique_ptr<Notification> &&notification) {
+void Session::send(const std::shared_ptr<Notification> &notification) {
   std::shared_ptr<Packet> packet =
       std::make_shared<Packet>(notification->serialize());
   send(packet);
 }
-void Session::send(std::unique_ptr<Request> &&request) {
+void Session::send(const std::shared_ptr<Request> &request) {
   std::shared_ptr<Packet> packet =
       std::make_shared<Packet>(request->serialize());
   send(packet);
 }
-void Session::send(std::unique_ptr<Response> &&response) {
+void Session::send(const std::shared_ptr<Response> &response) {
   std::shared_ptr<Packet> packet =
       std::make_shared<Packet>(response->serialize());
   send(packet);

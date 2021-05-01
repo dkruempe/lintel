@@ -1,4 +1,4 @@
-#include "base_library/features/websocket/WebsocketEntry.h"
+#include "base_library/features/websocket/configuration/WebsocketEntry.h"
 
 #include <utility>
 const std::string& WebsocketEntry::getAddress() const { return m_address; }

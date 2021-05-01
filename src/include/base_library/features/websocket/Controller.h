@@ -3,10 +3,10 @@
 
 #include <memory>
 
-#include "base_library/features/websocket/Notification.h"
-#include "base_library/features/websocket/Request.h"
-#include "base_library/features/websocket/Response.h"
 #include "base_library/features/websocket/Session.h"
+#include "base_library/features/websocket/messages/Notification.h"
+#include "base_library/features/websocket/messages/Request.h"
+#include "base_library/features/websocket/messages/Response.h"
 
 class Controller {
  public:

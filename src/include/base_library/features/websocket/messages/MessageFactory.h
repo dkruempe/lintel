@@ -4,11 +4,12 @@
 #include <memory>
 #include <vector>
 
-#include "base_library/features/websocket/Message.h"
+#include "Message.h"
+#include "base_library/features/websocket/models/MessageContainer.h"
 
 class MessageFactory {
  public:
-  static std::vector<std::shared_ptr<Message>> generate(
+  static MessageContainer generate(
       const std::string& message);
 };
 

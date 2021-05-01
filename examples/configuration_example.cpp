@@ -9,8 +9,8 @@
 #include "base_library/features/base/configuration/Cryption.h"
 #include "base_library/features/property/configuration/PropertyComponent.h"
 #include "base_library/features/property/configuration/PropertyEntry.h"
-#include "base_library/features/websocket/WebsocketComponent.h"
-#include "base_library/features/websocket/WebsocketEntry.h"
+#include "base_library/features/websocket/configuration/WebsocketComponent.h"
+#include "base_library/features/websocket/configuration/WebsocketEntry.h"
 
 void encryptTest() {
   Cryption cryption;

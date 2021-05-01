@@ -1,4 +1,4 @@
-#include "base_library/features/websocket/WebsocketComponent.h"
+#include "base_library/features/websocket/configuration/WebsocketComponent.h"
 
 #include <tinyxml2.h>
 
@@ -6,7 +6,7 @@
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/TypeName.h"
-#include "base_library/features/websocket/WebsocketEntry.h"
+#include "base_library/features/websocket/configuration/WebsocketEntry.h"
 WebsocketComponent::Shapes WebsocketComponent::shape{};
 WebsocketComponent::WebsocketComponent() : Component(shape.CONFIG_ROOT) {}
 std::vector<std::shared_ptr<Entry>> WebsocketComponent::parse(

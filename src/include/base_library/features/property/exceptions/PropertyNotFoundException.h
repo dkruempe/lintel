@@ -1,9 +1,8 @@
-#include <exception>
-
-#ifndef LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
+<#ifndef LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
 #define LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
 #include <fmt/format.h>
 
+#include <exception>
 #include <string>
 
 class PropertyNotFoundException : public std::exception {
@@ -24,8 +23,8 @@ class PropertyNotFoundException : public std::exception {
         m_className(className),
         m_processName(processName),
         m_message(fmt::format("Property<> with name: {} instanceName: {} "
-                            "className: {} processName: {} not found",
-                            name, instanceName, className, processName)) {}
+                              "className: {} processName: {} not found",
+                              name, instanceName, className, processName)) {}
 
   [[nodiscard]] const char *what() const noexcept override {
     return m_message.c_str();

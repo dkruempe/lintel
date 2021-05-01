@@ -11,10 +11,10 @@
 #include <mutex>
 #include <thread>
 
-#include "base_library/features/websocket/Notification.h"
-#include "base_library/features/websocket/Packet.h"
-#include "base_library/features/websocket/Request.h"
-#include "base_library/features/websocket/Response.h"
+#include "base_library/features/websocket/messages/Notification.h"
+#include "base_library/features/websocket/messages/Request.h"
+#include "base_library/features/websocket/messages/Response.h"
+#include "base_library/features/websocket/models/Packet.h"
 
 class Controller;
 class Session : public std::enable_shared_from_this<Session> {
@@ -46,9 +46,9 @@ class Session : public std::enable_shared_from_this<Session> {
   void close();
 
  public:
-  void send(std::unique_ptr<Notification> &&notification);
-  void send(std::unique_ptr<Request> &&request);
-  void send(std::unique_ptr<Response> &&response);
+  void send(const std::shared_ptr<Notification> &notification);
+  void send(const std::shared_ptr<Request> &request);
+  void send(const std::shared_ptr<Response> &response);
 
   explicit Session(boost::asio::ip::tcp::socket &&socket,
                    std::function<void(const std::string &)> onClose,

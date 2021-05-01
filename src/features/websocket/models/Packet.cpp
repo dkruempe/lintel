@@ -1,4 +1,4 @@
-#include "base_library/features/websocket/Packet.h"
+#include "base_library/features/websocket/models/Packet.h"
 Packet::Packet(std::string textBuffer)
     : m_textBuffer(std::move(textBuffer)), m_text(true) {}
 Packet::Packet(std::vector<uint8_t> binaryBuffer)
