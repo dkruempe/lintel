@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include "Message.h"
+#include "base_library/features/websocket/messages/Message.h"
 
 class Request : public Message {
  private:
