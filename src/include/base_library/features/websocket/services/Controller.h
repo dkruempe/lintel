@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include "base_library/features/websocket/Session.h"
+#include "Session.h"
 #include "base_library/features/websocket/messages/Notification.h"
 #include "base_library/features/websocket/messages/Request.h"
 #include "base_library/features/websocket/messages/Response.h"

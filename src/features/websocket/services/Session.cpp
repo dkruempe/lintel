@@ -1,10 +1,9 @@
-#include "base_library/features/websocket/Session.h"
+#include "base_library/features/websocket/services/Session.h"
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/UUID.h"
-#include "base_library/features/websocket/Controller.h"
 #include "base_library/features/websocket/messages/ErrorMessage.h"
-#include "base_library/features/websocket/messages/MessageFactory.h"
+#include "base_library/features/websocket/services/Controller.h"
 
 Session::Session(boost::asio::ip::tcp::socket &&socket,
                  std::function<void(const std::string &)> onClose,
@@ -12,7 +11,9 @@ Session::Session(boost::asio::ip::tcp::socket &&socket,
     : m_id(UUID::generate()),
       m_websocket(std::move(socket)),
       m_onClose(std::move(onClose)),
-      m_controllers(std::move(controllers)) {
+      m_controllers(std::move(controllers)),
+      messageFactory(),
+      processingRequests() {
   m_websocket.set_option(
       boost::beast::websocket::stream_base::timeout::suggested(
           boost::beast::role_type::server));
@@ -72,7 +73,7 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
   if (packet->isText()) {
     try {
       MessageContainer container =
-          MessageFactory::generate(packet->getTextBuffer());
+          messageFactory.generate(packet->getTextBuffer(), processingRequests);
       LOG_INFO("created messages {}", container.getMessages().size());
       for (const auto &item : container.getMessages()) {
         LOG_INFO("received message {}", item->serialize());

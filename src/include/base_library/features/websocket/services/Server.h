@@ -6,9 +6,9 @@
 #include <memory>
 #include <thread>
 
+#include "Controller.h"
+#include "Session.h"
 #include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/websocket/Controller.h"
-#include "base_library/features/websocket/Session.h"
 
 class Server {
  private:

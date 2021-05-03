@@ -9,10 +9,12 @@
 #include <mutex>
 #include <thread>
 
+#include "base_library/features/websocket/messages/MessageFactory.h"
 #include "base_library/features/websocket/messages/Notification.h"
 #include "base_library/features/websocket/messages/Request.h"
 #include "base_library/features/websocket/messages/Response.h"
 #include "base_library/features/websocket/models/Packet.h"
+#include "base_library/features/websocket/models/ProcessingRequests.h"
 
 class Controller;
 class Session : public std::enable_shared_from_this<Session> {
@@ -23,6 +25,8 @@ class Session : public std::enable_shared_from_this<Session> {
   std::deque<std::shared_ptr<Packet>> m_writeQueue;
   std::function<void(const std::string &)> m_onClose;
   std::vector<std::shared_ptr<Controller>> m_controllers;
+  MessageFactory messageFactory;
+  ProcessingRequests processingRequests;
 
   void doRead();
 
