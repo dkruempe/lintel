@@ -5,6 +5,7 @@
 #include <deque>
 #include <functional>
 #include <map>
+#include <string>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -24,7 +25,7 @@ class Session : public std::enable_shared_from_this<Session> {
   boost::beast::flat_buffer m_readBuffer;
   std::deque<std::shared_ptr<Packet>> m_writeQueue;
   std::function<void(const std::string &)> m_onClose;
-  std::vector<std::shared_ptr<Controller>> m_controllers;
+  std::map<std::string, std::shared_ptr<Controller>> m_controllers;
   MessageFactory messageFactory;
   ProcessingRequests processingRequests;
 
@@ -54,7 +55,7 @@ class Session : public std::enable_shared_from_this<Session> {
 
   explicit Session(boost::asio::ip::tcp::socket &&socket,
                    std::function<void(const std::string &)> onClose,
-                   std::vector<std::shared_ptr<Controller>> controllers);
+                   std::map<std::string, std::shared_ptr<Controller>> controllers);
 
   ~Session() = default;
 

@@ -10,9 +10,8 @@
 #define RESULT_NAME "result"
 #define ID_NAME "id"
 
-Response::Response(std::string jsonRPC, std::string result, std::string error, std::string id)
+Response::Response(std::string result, std::string error, std::string id)
     : Message(Message::RESPONSE),
-      m_jsonRPC(std::move(jsonRPC)),
       result(std::move(result)),
       error(std::move(error)),
       id(std::move(id)) {}
@@ -82,7 +81,7 @@ std::vector<Response> Response::fromJson(const std::string &serialized) {
     } else if (found != iter->MemberEnd() && isErrorSet) {
       throw std::invalid_argument("jsonrpc wrong format only error or result");
     }
-    return Response(found->value.GetString(), resultTemp, errorTemp, idTemp);
+    return Response(resultTemp, errorTemp, idTemp);
   };
   std::vector<Response> responses;
   rapidjson::Document document;
@@ -101,3 +100,6 @@ std::vector<Response> Response::fromJson(const std::string &serialized) {
   return responses;
 }
 std::string Response::serialize() { return toJson(); }
+void Response::serialize(rapidjson::Writer<rapidjson::StringBuffer> &writer) {
+  toJson(*this, writer);
+}

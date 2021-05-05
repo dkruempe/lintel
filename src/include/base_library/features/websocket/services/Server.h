@@ -17,6 +17,7 @@ class Server {
   boost::asio::ip::tcp::acceptor m_acceptor;
   std::thread m_thread;
   std::map<std::string, std::shared_ptr<Session>> m_sessions;
+  std::map<std::string, std::shared_ptr<Controller>> m_methodControllerMap;
 
   void run();
 
@@ -34,6 +35,8 @@ class Server {
   ~Server();
   static boost::asio::ip::tcp::endpoint buildEndpoint(
       const std::shared_ptr<Configuration>& sharedPtr);
+  static std::map<std::string, std::shared_ptr<Controller>> build(
+      const std::vector<std::shared_ptr<Controller>> &controllers);
 };
 
 #endif  // CPP_BASE_LIBRARY_SERVER_H

@@ -11,7 +11,8 @@
 #define ID_NAME "id"
 
 bool Request::operator==(const Request &rhs) const {
-  return m_method == rhs.m_method && m_params == rhs.m_params && m_id == rhs.m_id;
+  return m_method == rhs.m_method && m_params == rhs.m_params &&
+         m_id == rhs.m_id;
 }
 
 bool Request::operator!=(const Request &rhs) const { return !(rhs == *this); }
@@ -24,9 +25,8 @@ const std::string &Request::getParams() const { return m_params; }
 
 std::string Request::getJsonRpc() { return JSON_RPC_VALUE; }
 
-Request::Request(std::string jsonRPC, std::string method, std::string params, std::string id)
+Request::Request(std::string method, std::string params, std::string id)
     : Message(Message::REQUEST),
-      m_jsonRPC(std::move(jsonRPC)),
       m_method(std::move(method)),
       m_params(std::move(params)),
       m_id(std::move(id)) {}
@@ -87,7 +87,7 @@ std::vector<Request> Request::fromJson(const std::string &serialized) {
     if (found != iter->MemberEnd()) {
       paramsTemp = found->value.GetString();
     }
-    return Request(JSON_RPC_NAME, methodTemp, paramsTemp, idTemp);
+    return Request(methodTemp, paramsTemp, idTemp);
   };
   // parse json array or normal json object
   std::vector<Request> requests;
@@ -106,6 +106,7 @@ std::vector<Request> Request::fromJson(const std::string &serialized) {
   }
   return requests;
 }
-std::string Request::serialize() {
-  return toJson();
+std::string Request::serialize() { return toJson(); }
+void Request::serialize(rapidjson::Writer<rapidjson::StringBuffer> &writer) {
+  return toJson(*this, writer);
 }

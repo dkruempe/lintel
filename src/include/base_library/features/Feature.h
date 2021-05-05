@@ -14,7 +14,7 @@ class Feature {
  public:
   explicit Feature(std::string_view name) : m_name(name) {}
 
-  ~Feature() = default;
+  virtual ~Feature() = default;
 
   virtual void registerTypes(Hypodermic::ContainerBuilder &builder) = 0;
 

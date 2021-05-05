@@ -1,6 +1,9 @@
 #ifndef CPP_BASE_LIBRARY_MESSAGE_H
 #define CPP_BASE_LIBRARY_MESSAGE_H
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <ostream>
 #include <string>
 
@@ -8,6 +11,9 @@ class Message {
  public:
   enum TYPE { REQUEST, RESPONSE, NOTIFICATION };
   virtual std::string serialize() = 0;
+
+  virtual void serialize(
+      rapidjson::Writer<rapidjson::StringBuffer> &writer) = 0;
 
   explicit Message(TYPE type) : m_type(type) {}
 

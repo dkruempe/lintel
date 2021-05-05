@@ -10,7 +10,6 @@
 
 class Request : public Message {
  private:
-  const std::string m_jsonRPC;
   const std::string m_method;
   const std::string m_params;
   const std::string m_id;
@@ -24,12 +23,13 @@ class Request : public Message {
   std::string toJson();
   static std::string toJson(std::vector<Request> &requests);
   static std::vector<Request> fromJson(const std::string &serialized);
-  Request(std::string jsonRPC, std::string method, std::string params, std::string id);
+  Request(std::string method, std::string params, std::string id);
   [[nodiscard]] const std::string &getMethod() const;
   [[nodiscard]] const std::string &getParams() const;
   [[nodiscard]] const std::string &getId() const;
   [[nodiscard]] static std::string getJsonRpc();
   std::string serialize() override;
+  void serialize(rapidjson::Writer<rapidjson::StringBuffer> &writer) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_REQUEST_H

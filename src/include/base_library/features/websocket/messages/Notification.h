@@ -10,7 +10,6 @@
 
 class Notification : public Message {
  private:
-  const std::string m_jsonRPC;
   const std::string m_method;
   const std::string m_params;
 
@@ -23,11 +22,12 @@ class Notification : public Message {
   std::string toJson();
   static std::string toJson(std::vector<Notification> &requests);
   static std::vector<Notification> fromJson(const std::string &serialized);
-  Notification(std::string jsonRPC, std::string method, std::string params);
+  Notification(std::string method, std::string params);
   [[nodiscard]] const std::string &getMethod() const;
   [[nodiscard]] const std::string &getParams() const;
   [[nodiscard]] static std::string getJsonRpc();
   std::string serialize() override;
+  void serialize(rapidjson::Writer<rapidjson::StringBuffer> &writer) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_NOTIFICATION_H

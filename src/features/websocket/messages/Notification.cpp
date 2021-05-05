@@ -23,10 +23,8 @@ const std::string &Notification::getParams() const { return m_params; }
 
 std::string Notification::getJsonRpc() { return JSON_RPC_VALUE; }
 
-Notification::Notification(std::string jsonRPC, std::string method,
-                           std::string params)
+Notification::Notification(std::string method, std::string params)
     : Message(Message::NOTIFICATION),
-      m_jsonRPC(std::move(jsonRPC)),
       m_method(std::move(method)),
       m_params(std::move(params)) {}
 
@@ -80,7 +78,7 @@ std::vector<Notification> Notification::fromJson(
     if (found != iter->MemberEnd()) {
       paramsTemp = found->value.GetString();
     }
-    return Notification(JSON_RPC_NAME, methodTemp, paramsTemp);
+    return Notification(methodTemp, paramsTemp);
   };
   // parse json array or normal json object
   std::vector<Notification> requests;
@@ -100,3 +98,7 @@ std::vector<Notification> Notification::fromJson(
   return requests;
 }
 std::string Notification::serialize() { return toJson(); }
+void Notification::serialize(
+    rapidjson::Writer<rapidjson::StringBuffer> &writer) {
+  toJson(*this, writer);
+}

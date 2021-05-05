@@ -11,7 +11,8 @@ Server::Server(const std::shared_ptr<Configuration>& configuration,
     : m_controllers(std::move(controllers)),
       m_context(1),
       m_acceptor(m_context, buildEndpoint(configuration)),
-      m_thread([&]() { run(); }) {}
+      m_thread([&]() { run(); }),
+      m_methodControllerMap(build(m_controllers)){}
 
 boost::asio::ip::tcp::endpoint Server::buildEndpoint(
     const std::shared_ptr<Configuration>& configuration) {
@@ -54,7 +55,7 @@ void Server::onAccept(boost::beast::error_code errorCode,
   };
 
   auto session =
-      std::make_shared<Session>(std::move(socket), temp, m_controllers);
+      std::make_shared<Session>(std::move(socket), temp, m_methodControllerMap);
   session->run();
   m_sessions.insert({session->getId(), std::move(session)});
   doAccept();
@@ -62,4 +63,14 @@ void Server::onAccept(boost::beast::error_code errorCode,
 Server::~Server() {
   m_context.stop();
   m_thread.join();
+}
+std::map<std::string, std::shared_ptr<Controller>> Server::build(
+    const std::vector<std::shared_ptr<Controller>> &controllers) {
+  std::map<std::string, std::shared_ptr<Controller>> map;
+  for (auto& controller : controllers) {
+    for (const auto& method : controller->getMethods()) {
+      map.insert({method, controller});
+    }
+  }
+  return map;
 }

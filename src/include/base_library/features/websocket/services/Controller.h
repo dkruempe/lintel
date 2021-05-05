@@ -2,20 +2,23 @@
 #define CPP_BASE_LIBRARY_CONTROLLER_H
 
 #include <memory>
+#include <string>
+#include <vector>
 
-#include "Session.h"
 #include "base_library/features/websocket/messages/Notification.h"
 #include "base_library/features/websocket/messages/Request.h"
 #include "base_library/features/websocket/messages/Response.h"
 
 class Controller {
  public:
-  virtual void onReceive(Session &session,
-                         const std::shared_ptr<Request> &request) = 0;
-  virtual void onReceive(Session &session,
-                         const std::shared_ptr<Response> &response) = 0;
-  virtual void onReceive(Session &session,
-                         const std::shared_ptr<Notification> &notification) = 0;
+  virtual std::shared_ptr<Response> onReceive(
+      const std::shared_ptr<Request> &request) = 0;
+
+  virtual void onReceive(const std::shared_ptr<Notification> &notification) = 0;
+
+  virtual std::vector<std::string> getMethods() = 0;
+
+  virtual ~Controller() = default;
 };
 
 #endif  // CPP_BASE_LIBRARY_CONTROLLER_H

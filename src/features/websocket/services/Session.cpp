@@ -7,7 +7,7 @@
 
 Session::Session(boost::asio::ip::tcp::socket &&socket,
                  std::function<void(const std::string &)> onClose,
-                 std::vector<std::shared_ptr<Controller>> controllers)
+                 std::map<std::string, std::shared_ptr<Controller>> controllers)
     : m_id(UUID::generate()),
       m_websocket(std::move(socket)),
       m_onClose(std::move(onClose)),
@@ -77,6 +77,43 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
       LOG_INFO("created messages {}", container.getMessages().size());
       for (const auto &item : container.getMessages()) {
         LOG_INFO("received message {}", item->serialize());
+        switch (item->getType()) {
+          case Message::NOTIFICATION: {
+            std::shared_ptr<Notification> notification =
+                std::static_pointer_cast<Notification>(item);
+            try {
+              m_controllers.at(notification->getMethod())
+                  ->onReceive(notification);
+            } catch (std::out_of_range &e) {
+              LOG_ERROR("method {} not found", notification->getMethod());
+              send(std::make_shared<ErrorMessage>(ErrorCode::METHOD_NOT_FOUND,
+                                                  "method not found", ""));
+            }
+            break;
+          }
+          case Message::REQUEST: {
+            std::shared_ptr<Request> request =
+                std::static_pointer_cast<Request>(item);
+            try {
+              std::shared_ptr<Response> response =
+                  m_controllers.at(request->getMethod())->onReceive(request);
+              if (response == nullptr) {
+                LOG_ERROR("response is nullpointer ERROR");
+              } else {
+                send(response);
+              }
+            } catch (std::out_of_range &e) {
+              LOG_ERROR("method {} not found", request->getMethod());
+              send(std::make_shared<ErrorMessage>(ErrorCode::METHOD_NOT_FOUND,
+                                                  "method not found",
+                                                  request->getId()));
+            }
+            break;
+          }
+          case Message::RESPONSE: {
+            break;
+          }
+        }
       }
       for (const auto &item : container.getErrors()) {
         std::shared_ptr<Response> temp =

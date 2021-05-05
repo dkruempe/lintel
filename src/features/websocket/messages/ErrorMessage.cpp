@@ -6,7 +6,7 @@
 #define ERROR_MESSAGE "message"
 ErrorMessage::ErrorMessage(ErrorCode errorCode, const std::string &message,
                            std::string id)
-    : Response("2.0", "", buildJson(errorCode, message), std::move(id)) {}
+    : Response("", buildJson(errorCode, message), std::move(id)) {}
 std::string ErrorMessage::buildJson(ErrorCode code,
                                     const std::string &message) {
   rapidjson::StringBuffer buffer;
