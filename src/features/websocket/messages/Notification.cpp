@@ -60,45 +60,29 @@ void Notification::toJson(Notification &request,
   writer.EndObject();
 }
 
-std::vector<Notification> Notification::fromJson(
-    const std::string &serialized) {
-  // generic lambda function for reducing duplicate code
-  auto func = [](auto &iter) -> Notification {
-    std::string methodTemp;
-    std::string paramsTemp;
-    auto found = iter->FindMember(JSON_RPC_NAME);
-    if (found == iter->MemberEnd()) {
-      throw std::runtime_error("incorrect message format");
-    }
-    found = iter->FindMember(METHOD_NAME);
-    if (found != iter->MemberEnd()) {
-      methodTemp = found->value.GetString();
-    }
-    found = iter->FindMember(PARAMS_NAME);
-    if (found != iter->MemberEnd()) {
-      paramsTemp = found->value.GetString();
-    }
-    return Notification(methodTemp, paramsTemp);
-  };
-  // parse json array or normal json object
-  std::vector<Notification> requests;
-  rapidjson::Document document;
-  if (document.Parse<0>(serialized.c_str()).HasParseError()) {
-    throw std::invalid_argument("json parse error");
+std::shared_ptr<Notification> Notification::fromJson(jsonType iter) {
+  std::string methodTemp;
+  std::string paramsTemp;
+  auto found = iter->FindMember(JSON_RPC_NAME);
+  if (found == iter->MemberEnd()) {
+    throw std::runtime_error("incorrect message format");
   }
-  if (document.IsArray()) {
-    auto array = document.GetArray();
-    for (auto iter = array.begin(); iter < array.end(); iter++) {
-      requests.push_back(func(iter));
-    }
-  } else {
-    const rapidjson::Document *temp = &document;
-    requests.push_back(func(temp));
+  found = iter->FindMember(METHOD_NAME);
+  if (found != iter->MemberEnd()) {
+    methodTemp = found->value.GetString();
   }
-  return requests;
+  found = iter->FindMember(PARAMS_NAME);
+  if (found != iter->MemberEnd()) {
+    paramsTemp = found->value.GetString();
+  }
+  return std::make_shared<Notification>(methodTemp, paramsTemp);
 }
 std::string Notification::serialize() { return toJson(); }
 void Notification::serialize(
     rapidjson::Writer<rapidjson::StringBuffer> &writer) {
   toJson(*this, writer);
+}
+Message::create_t Notification::createFunctionOf() {
+  return
+      [&](jsonType json) -> std::shared_ptr<Message> { return fromJson(json); };
 }

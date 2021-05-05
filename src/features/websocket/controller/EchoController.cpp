@@ -20,3 +20,17 @@ void EchoController::onReceive(
 std::vector<std::string> EchoController::getMethods() {
   return {"EchoRequest"};
 }
+std::map<std::string, Message::create_t> EchoController::getRequests() {
+  Message::create_t func =
+      [&](Message::jsonType iter) -> std::shared_ptr<Message> {
+    return Request::fromJson(iter);
+  };
+  return {{std::string(EchoRequest::methodName), func}};
+}
+std::map<std::string, Message::create_t> EchoController::getResponses() {
+  Message::create_t func =
+      [&](Message::jsonType iter) -> std::shared_ptr<Message> {
+    return Response::fromJson(iter);
+  };
+  return {{std::string(EchoRequest::methodName), func}};
+}

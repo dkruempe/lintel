@@ -56,50 +56,37 @@ std::string Response::toJson(const std::vector<Response> &responses) {
   writer.EndArray();
   return stringBuffer.GetString();
 }
-std::vector<Response> Response::fromJson(const std::string &serialized) {
-  auto func = [](auto &iter) -> Response {
-    std::string idTemp;
-    std::string errorTemp;
-    std::string resultTemp;
-    auto found = iter->FindMember(JSON_RPC_NAME);
-    if (found == iter->MemberEnd()) {
-      throw std::runtime_error("incorrect message format");
-    }
-    found = iter->FindMember(ID_NAME);
-    if (found != iter->MemberEnd()) {
-      idTemp = found->value.GetString();
-    }
-    bool isErrorSet = false;
-    found = iter->FindMember(ERROR_NAME);
-    if (found != iter->MemberEnd()) {
-      errorTemp = found->value.GetString();
-      isErrorSet = true;
-    }
-    found = iter->FindMember(RESULT_NAME);
-    if (found != iter->MemberEnd() && !isErrorSet) {
-      resultTemp = found->value.GetString();
-    } else if (found != iter->MemberEnd() && isErrorSet) {
-      throw std::invalid_argument("jsonrpc wrong format only error or result");
-    }
-    return Response(resultTemp, errorTemp, idTemp);
-  };
-  std::vector<Response> responses;
-  rapidjson::Document document;
-  if (document.Parse<0>(serialized.c_str()).HasParseError()) {
-    throw std::invalid_argument("json parse error");
-  }
-  if (document.IsArray()) {
-    auto array = document.GetArray();
-    for (auto iter = array.begin(); iter < array.end(); iter++) {
-      responses.push_back(func(iter));
-    }
-  } else {
-    const rapidjson::Document *temp = &document;
-    responses.push_back(func(temp));
-  }
-  return responses;
-}
 std::string Response::serialize() { return toJson(); }
 void Response::serialize(rapidjson::Writer<rapidjson::StringBuffer> &writer) {
   toJson(*this, writer);
+}
+std::shared_ptr<Response> Response::fromJson(jsonType iter) {
+  std::string idTemp;
+  std::string errorTemp;
+  std::string resultTemp;
+  auto found = iter->FindMember(JSON_RPC_NAME);
+  if (found == iter->MemberEnd()) {
+    return nullptr;
+  }
+  found = iter->FindMember(ID_NAME);
+  if (found != iter->MemberEnd()) {
+    idTemp = found->value.GetString();
+  }
+  bool isErrorSet = false;
+  found = iter->FindMember(ERROR_NAME);
+  if (found != iter->MemberEnd()) {
+    errorTemp = found->value.GetString();
+    isErrorSet = true;
+  }
+  found = iter->FindMember(RESULT_NAME);
+  if (found != iter->MemberEnd() && !isErrorSet) {
+    resultTemp = found->value.GetString();
+  } else if (found != iter->MemberEnd() && isErrorSet) {
+    return nullptr;
+  }
+  return std::make_shared<Response>(resultTemp, errorTemp, idTemp);
+}
+Message::create_t Response::createFunctionOf() {
+  return
+      [&](jsonType json) -> std::shared_ptr<Message> { return fromJson(json); };
 }

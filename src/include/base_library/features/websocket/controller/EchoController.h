@@ -11,6 +11,10 @@ class EchoController : public Controller {
   void onReceive(const std::shared_ptr<Notification> &notification) override;
 
   std::vector<std::string> getMethods() override;
+
+  std::map<std::string, Message::create_t> getRequests() override;
+
+  std::map<std::string, Message::create_t> getResponses() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_ECHOCONTROLLER_H

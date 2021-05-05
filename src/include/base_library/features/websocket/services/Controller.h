@@ -1,6 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_CONTROLLER_H
 #define CPP_BASE_LIBRARY_CONTROLLER_H
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -17,6 +18,10 @@ class Controller {
   virtual void onReceive(const std::shared_ptr<Notification> &notification) = 0;
 
   virtual std::vector<std::string> getMethods() = 0;
+
+  virtual std::map<std::string, Message::create_t> getRequests() = 0;
+
+  virtual std::map<std::string, Message::create_t> getResponses() = 0;
 
   virtual ~Controller() = default;
 };

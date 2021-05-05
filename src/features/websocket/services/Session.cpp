@@ -22,6 +22,14 @@ Session::Session(boost::asio::ip::tcp::socket &&socket,
         res.set(boost::beast::http::field::server,
                 std::string(BOOST_BEAST_VERSION_STRING) + "ws-simple-server");
       }));
+  for (const auto &[name, controller] : m_controllers) {
+    for (const auto &[methodName, func] : controller->getRequests()) {
+      messageFactory.registerRequest(methodName, func);
+    }
+    for (const auto &[methodName, func] : controller->getResponses()) {
+      messageFactory.registerResponse(methodName, func);
+    }
+  }
 }
 void Session::run() {
   m_websocket.async_accept(

@@ -64,49 +64,33 @@ void Request::toJson(Request &request,
   writer.String(request.m_id.c_str());
   writer.EndObject();
 }
-
-std::vector<Request> Request::fromJson(const std::string &serialized) {
-  // generic lambda function for reducing duplicate code
-  auto func = [](auto &iter) -> Request {
-    std::string idTemp;
-    std::string methodTemp;
-    std::string paramsTemp;
-    auto found = iter->FindMember(JSON_RPC_NAME);
-    if (found == iter->MemberEnd()) {
-      throw std::runtime_error("incorrect message format");
-    }
-    found = iter->FindMember(ID_NAME);
-    if (found != iter->MemberEnd()) {
-      idTemp = found->value.GetString();
-    }
-    found = iter->FindMember(METHOD_NAME);
-    if (found != iter->MemberEnd()) {
-      methodTemp = found->value.GetString();
-    }
-    found = iter->FindMember(PARAMS_NAME);
-    if (found != iter->MemberEnd()) {
-      paramsTemp = found->value.GetString();
-    }
-    return Request(methodTemp, paramsTemp, idTemp);
-  };
-  // parse json array or normal json object
-  std::vector<Request> requests;
-  rapidjson::Document document;
-  if (document.Parse<0>(serialized.c_str()).HasParseError()) {
-    throw std::invalid_argument("json parse error");
+std::shared_ptr<Request> Request::fromJson(Message::jsonType iter) {
+  std::string idTemp;
+  std::string methodTemp;
+  std::string paramsTemp;
+  auto found = iter->FindMember(JSON_RPC_NAME);
+  if (found == iter->MemberEnd()) {
+    return nullptr;
   }
-  if (document.IsArray()) {
-    auto array = document.GetArray();
-    for (auto iter = array.begin(); iter < array.end(); iter++) {
-      requests.push_back(func(iter));
-    }
-  } else {
-    const rapidjson::Document *temp = &document;
-    requests.push_back(func(temp));
+  found = iter->FindMember(ID_NAME);
+  if (found != iter->MemberEnd()) {
+    idTemp = found->value.GetString();
   }
-  return requests;
+  found = iter->FindMember(METHOD_NAME);
+  if (found != iter->MemberEnd()) {
+    methodTemp = found->value.GetString();
+  }
+  found = iter->FindMember(PARAMS_NAME);
+  if (found != iter->MemberEnd()) {
+    paramsTemp = found->value.GetString();
+  }
+  return std::make_shared<Request>(methodTemp, paramsTemp, idTemp);
 }
 std::string Request::serialize() { return toJson(); }
 void Request::serialize(rapidjson::Writer<rapidjson::StringBuffer> &writer) {
   return toJson(*this, writer);
+}
+Message::create_t Request::createFunctionOf() {
+  return
+      [&](jsonType json) -> std::shared_ptr<Message> { return fromJson(json); };
 }

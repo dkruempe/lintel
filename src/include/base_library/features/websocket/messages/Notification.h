@@ -21,13 +21,14 @@ class Notification : public Message {
   bool operator!=(const Notification &rhs) const;
   std::string toJson();
   static std::string toJson(std::vector<Notification> &requests);
-  static std::vector<Notification> fromJson(const std::string &serialized);
+  static std::shared_ptr<Notification> fromJson(jsonType iter);
   Notification(std::string method, std::string params);
   [[nodiscard]] const std::string &getMethod() const;
   [[nodiscard]] const std::string &getParams() const;
   [[nodiscard]] static std::string getJsonRpc();
   std::string serialize() override;
   void serialize(rapidjson::Writer<rapidjson::StringBuffer> &writer) override;
+  create_t createFunctionOf() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_NOTIFICATION_H

@@ -4,4 +4,4 @@
 #include "base_library/core/utils/UUID.h"
 
 EchoRequest::EchoRequest()
-    : Request(std::string(type_name<EchoRequest>()), "", UUID::generate()) {}
+    : Request(std::string(methodName), "", UUID::generate()) {}

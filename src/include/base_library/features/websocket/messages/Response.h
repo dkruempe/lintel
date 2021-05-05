@@ -22,7 +22,7 @@ class Response : public Message {
   bool operator!=(const Response &rhs) const;
   [[nodiscard]] std::string toJson() const;
   static std::string toJson(const std::vector<Response> &responses);
-  static std::vector<Response> fromJson(const std::string &serialized);
+  static std::shared_ptr<Response> fromJson(jsonType iter);
   Response(std::string result, std::string error, std::string id);
   [[nodiscard]] const std::string &getResult() const;
   [[nodiscard]] const std::string &getError() const;
@@ -30,6 +30,7 @@ class Response : public Message {
   [[nodiscard]] static std::string getJsonRpc();
   std::string serialize() override;
   void serialize(rapidjson::Writer<rapidjson::StringBuffer> &writer) override;
+  create_t createFunctionOf() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_RESPONSE_H

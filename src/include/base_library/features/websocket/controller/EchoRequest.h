@@ -5,6 +5,7 @@
 
 class EchoRequest : public Request {
  public:
+  static constexpr std::string_view methodName = "EchoRequest";
   EchoRequest();
 };
 
