@@ -43,6 +43,7 @@ MessageContainer MessageFactory::generate(
     } else if (hasId != iter->MemberEnd() && !hasId->value.IsString()) {
       container.addError(
           createErrorMessage(ErrorCode::PARSE_ERROR, "id is not a string"));
+      LOG_ERROR("id is not string for parsed message");
       return;
     }
     // check if jsonrpc is correct
@@ -55,9 +56,10 @@ MessageContainer MessageFactory::generate(
     std::string method;
     if (hasMethod != iter->MemberEnd() && hasMethod->value.IsString()) {
       method = hasMethod->value.GetString();
-    } else {
+    } else if (hasMethod != iter->MemberEnd()) {
       container.addError(
           createErrorMessage(ErrorCode::PARSE_ERROR, "method is not string"));
+      LOG_ERROR("method available but not a string");
       return;
     }
     // check if request has correct structure
@@ -65,12 +67,14 @@ MessageContainer MessageFactory::generate(
         (hasResult != iter->MemberEnd() || hasError != iter->MemberEnd())) {
       container.addError(createErrorMessage(ErrorCode::PARSE_ERROR,
                                             "has method and result or error"));
+      LOG_ERROR("has method but also result or error");
       return;
     }
     if ((hasResult != iter->MemberEnd() || hasError != iter->MemberEnd()) &&
         hasParams != iter->MemberEnd()) {
       container.addError(createErrorMessage(ErrorCode::PARSE_ERROR,
                                             "is response but has also params"));
+      LOG_ERROR("has result or error but also params");
       return;
     }
     // check if request has not to much or to less members
@@ -78,6 +82,7 @@ MessageContainer MessageFactory::generate(
         (iter->MemberCount() > 4 || iter->MemberCount() < 2)) {
       container.addError(createErrorMessage(
           ErrorCode::PARSE_ERROR, "requests has to much or to less members"));
+      LOG_ERROR("request has more or less members than defined");
       return;
     }
     // check if response has not to much or to less members
@@ -85,6 +90,7 @@ MessageContainer MessageFactory::generate(
         iter->MemberCount() != 3) {
       container.addError(createErrorMessage(
           ErrorCode::PARSE_ERROR, "response has to less or to much members"));
+      LOG_ERROR("response has more or less members than defined");
       return;
     }
     if (!method.empty()) {
@@ -103,7 +109,7 @@ MessageContainer MessageFactory::generate(
         } else {
           container.addError(createErrorMessage(
               ErrorCode::METHOD_NOT_FOUND,
-              "no processing response with the mentioned id"));
+              "no processing response with the mentioned id", id));
           LOG_ERROR("no processing response with the mentioned id >{}<", id);
         }
       } catch (std::out_of_range& e) {
