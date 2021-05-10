@@ -6,9 +6,9 @@
 #include <memory>
 #include <thread>
 
-#include "Controller.h"
-#include "Session.h"
 #include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/features/websocket/services/Controller.h"
+#include "base_library/features/websocket/services/Session.h"
 
 class Server {
  private:
@@ -36,7 +36,7 @@ class Server {
   static boost::asio::ip::tcp::endpoint buildEndpoint(
       const std::shared_ptr<Configuration>& sharedPtr);
   static std::map<std::string, std::shared_ptr<Controller>> build(
-      const std::vector<std::shared_ptr<Controller>> &controllers);
+      const std::vector<std::shared_ptr<Controller>>& controllers);
 };
 
 #endif  // CPP_BASE_LIBRARY_SERVER_H

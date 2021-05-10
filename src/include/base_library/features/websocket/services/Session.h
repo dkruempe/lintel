@@ -4,10 +4,11 @@
 #include <boost/beast.hpp>
 #include <deque>
 #include <functional>
+#include <future>
 #include <map>
-#include <string>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
 
 #include "base_library/features/websocket/messages/MessageFactory.h"
@@ -26,6 +27,8 @@ class Session : public std::enable_shared_from_this<Session> {
   std::deque<std::shared_ptr<Packet>> m_writeQueue;
   std::function<void(const std::string &)> m_onClose;
   std::map<std::string, std::shared_ptr<Controller>> m_controllers;
+  std::map<std::string, std::promise<std::shared_ptr<Response>>>
+      m_pendingRequests;
   MessageFactory messageFactory;
   ProcessingRequests processingRequests;
 
@@ -50,12 +53,14 @@ class Session : public std::enable_shared_from_this<Session> {
 
  public:
   void send(const std::shared_ptr<Notification> &notification);
-  void send(const std::shared_ptr<Request> &request);
+  std::future<std::shared_ptr<Response>> send(
+      const std::shared_ptr<Request> &request);
   void send(const std::shared_ptr<Response> &response);
 
-  explicit Session(boost::asio::ip::tcp::socket &&socket,
-                   std::function<void(const std::string &)> onClose,
-                   std::map<std::string, std::shared_ptr<Controller>> controllers);
+  explicit Session(
+      boost::asio::ip::tcp::socket &&socket,
+      std::function<void(const std::string &)> onClose,
+      std::map<std::string, std::shared_ptr<Controller>> controllers);
 
   ~Session() = default;
 

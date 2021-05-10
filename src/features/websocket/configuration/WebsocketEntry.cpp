@@ -17,5 +17,5 @@ std::ostream& operator<<(std::ostream& os, const WebsocketEntry& entry) {
      << " name: " << entry.m_name;
   return os;
 }
-bool WebsocketEntry::isServer1() const { return m_isServer; }
+bool WebsocketEntry::isServer() const { return m_isServer; }
 const std::string& WebsocketEntry::getName() const { return m_name; }

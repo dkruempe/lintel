@@ -18,7 +18,7 @@ class WebsocketEntry : public Entry {
 
   [[nodiscard]] const std::string& getAddress() const;
   [[nodiscard]] uint16_t getPort() const;
-  [[nodiscard]] bool isServer1() const;
+  [[nodiscard]] bool isServer() const;
   [[nodiscard]] const std::string& getName() const;
 
   friend std::ostream& operator<<(std::ostream& os,

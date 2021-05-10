@@ -119,6 +119,18 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
             break;
           }
           case Message::RESPONSE: {
+            std::shared_ptr<Response> response =
+                std::static_pointer_cast<Response>(item);
+            try {
+              m_pendingRequests.at(response->getId()).set_value(response);
+            } catch (std::out_of_range &e) {
+              LOG_ERROR("id not found {} in pending requests",
+                        response->getId());
+              send(std::make_shared<ErrorMessage>(
+                  ErrorCode::METHOD_NOT_FOUND,
+                  "no matching waiting response for request found",
+                  response->getId()));
+            }
             break;
           }
         }
@@ -128,17 +140,6 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
             std::static_pointer_cast<Response>(item);
         send(temp);
       }
-      /*const std::vector<Request> &requests =
-          Request::fromJson(packet->textBuffer);
-      std::vector<Response> responses;
-      for (const auto &request : requests) {
-        auto found = controllers.find(request.getMethod());
-        if (found == controllers.end()) {
-          continue;
-        }
-        responses.push_back(found->second->onRequest(request));
-      }*/
-      // send();
     } catch (std::exception &e) {
       std::shared_ptr<Response> response = std::make_shared<ErrorMessage>(
           ErrorCode::PARSE_ERROR, "parse error", "");
@@ -201,10 +202,18 @@ void Session::send(const std::shared_ptr<Notification> &notification) {
       std::make_shared<Packet>(notification->serialize());
   send(packet);
 }
-void Session::send(const std::shared_ptr<Request> &request) {
+std::future<std::shared_ptr<Response>> Session::send(
+    const std::shared_ptr<Request> &request) {
+  std::promise<std::shared_ptr<Response>> promise;
   std::shared_ptr<Packet> packet =
       std::make_shared<Packet>(request->serialize());
   send(packet);
+  std::string id = request->getId();
+  std::pair<std::string, std::promise<std::shared_ptr<Response>>> pair{
+      std::move(id), std::move(promise)};
+  m_pendingRequests.insert(std::move(pair));
+  processingRequests.waitingFor(request->getMethod(), request->getId());
+  return m_pendingRequests.at(request->getId()).get_future();
 }
 void Session::send(const std::shared_ptr<Response> &response) {
   std::shared_ptr<Packet> packet =
