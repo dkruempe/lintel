@@ -11,6 +11,7 @@
 #include <string>
 #include <thread>
 
+#include "base_library/features/websocket/configuration/WebsocketEntry.h"
 #include "base_library/features/websocket/messages/MessageFactory.h"
 #include "base_library/features/websocket/messages/Notification.h"
 #include "base_library/features/websocket/messages/Request.h"
@@ -22,7 +23,8 @@ class Controller;
 class Session : public std::enable_shared_from_this<Session> {
  private:
   const std::string m_id;
-  boost::beast::websocket::stream<boost::asio::ip::tcp::socket> m_websocket;
+  const std::shared_ptr<WebsocketEntry> m_websocketEntry = nullptr;
+  boost::beast::websocket::stream<boost::beast::tcp_stream> m_websocket;
   boost::beast::flat_buffer m_readBuffer;
   std::deque<std::shared_ptr<Packet>> m_writeQueue;
   std::function<void(const std::string &)> m_onClose;
@@ -31,6 +33,7 @@ class Session : public std::enable_shared_from_this<Session> {
       m_pendingRequests;
   MessageFactory messageFactory;
   ProcessingRequests processingRequests;
+  std::unique_ptr<boost::asio::ip::tcp::resolver> m_resolver = nullptr;
 
   void doRead();
 
@@ -46,6 +49,11 @@ class Session : public std::enable_shared_from_this<Session> {
 
   void onWrite(boost::beast::error_code errorCode, std::size_t length);
 
+  void onHandshake(boost::beast::error_code ec);
+
+  void onResolve(boost::beast::error_code ec,
+                 boost::asio::ip::tcp::resolver::results_type results);
+
   void fail(boost::beast::error_code errorCode,
             const std::string &message) const;
 
@@ -57,15 +65,23 @@ class Session : public std::enable_shared_from_this<Session> {
       const std::shared_ptr<Request> &request);
   void send(const std::shared_ptr<Response> &response);
 
-  explicit Session(
-      boost::asio::ip::tcp::socket &&socket,
-      std::function<void(const std::string &)> onClose,
-      std::map<std::string, std::shared_ptr<Controller>> controllers);
+  Session(boost::asio::ip::tcp::socket &&socket,
+          std::function<void(const std::string &)> onClose,
+          std::map<std::string, std::shared_ptr<Controller>> controllers);
+
+  Session(boost::asio::io_context &context,
+          std::function<void(const std::string &)> onClose,
+          std::map<std::string, std::shared_ptr<Controller>> controllers,
+          std::shared_ptr<WebsocketEntry> connectionEntry);
 
   ~Session() = default;
 
   [[nodiscard]] const std::string &getId();
 
   void run();
+
+  void onConnect(
+      boost::beast::error_code ec,
+      boost::asio::ip::tcp::resolver::results_type::endpoint_type ep);
 };
 #endif  // CPP_BASE_LIBRARY_SESSION_H

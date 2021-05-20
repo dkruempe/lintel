@@ -1,10 +1,20 @@
 #include "base_library/features/websocket/services/Session.h"
 
+#include <boost/asio/strand.hpp>
+#include <boost/beast/core.hpp>
+#include <boost/beast/websocket.hpp>
+
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/UUID.h"
 #include "base_library/features/websocket/messages/ErrorMessage.h"
 #include "base_library/features/websocket/services/Controller.h"
 
+/**
+ * constructor for server session
+ * @param socket
+ * @param onClose
+ * @param controllers
+ */
 Session::Session(boost::asio::ip::tcp::socket &&socket,
                  std::function<void(const std::string &)> onClose,
                  std::map<std::string, std::shared_ptr<Controller>> controllers)
@@ -31,6 +41,55 @@ Session::Session(boost::asio::ip::tcp::socket &&socket,
     }
   }
 }
+
+/**
+ * constructor for client session
+ * @param context
+ * @param onClose
+ * @param controllers
+ * @param websocketEntry
+ */
+Session::Session(boost::asio::io_context &context,
+                 std::function<void(const std::string &)> onClose,
+                 std::map<std::string, std::shared_ptr<Controller>> controllers,
+                 std::shared_ptr<WebsocketEntry> websocketEntry)
+    : m_id(UUID::generate()),
+      m_websocketEntry(std::move(websocketEntry)),
+      m_websocket(boost::asio::make_strand(context)),
+      m_onClose(std::move(onClose)),
+      m_controllers(std::move(controllers)),
+      messageFactory(),
+      processingRequests(),
+      m_resolver(std::make_unique<boost::asio::ip::tcp::resolver>(
+          boost::asio::make_strand(context))) {
+  for (const auto &[name, controller] : m_controllers) {
+    for (const auto &[methodName, func] : controller->getRequests()) {
+      messageFactory.registerRequest(methodName, func);
+    }
+    for (const auto &[methodName, func] : controller->getResponses()) {
+      messageFactory.registerResponse(methodName, func);
+    }
+  }
+  // Look up the domain name
+  m_resolver->async_resolve(std::string(websocketEntry->getAddress()).c_str(),
+                            std::to_string(websocketEntry->getPort()).c_str(),
+                            boost::beast::bind_front_handler(
+                                &Session::onResolve, shared_from_this()));
+}
+void Session::onResolve(boost::beast::error_code ec,
+                        boost::asio::ip::tcp::resolver::results_type results) {
+  if (ec) {
+    return fail(ec, "resolve");
+  }
+
+  // Set the timeout for the operation
+  boost::beast::get_lowest_layer(m_websocket)
+      .expires_after(std::chrono::seconds(30));
+  // Make the connection on the IP address we get from a lookup
+  boost::beast::get_lowest_layer(m_websocket)
+      .async_connect(results, boost::beast::bind_front_handler(&Session::onConnect,
+                                                        shared_from_this()));
+}
 void Session::run() {
   m_websocket.async_accept(
       boost::beast::bind_front_handler(&Session::onAccept, shared_from_this()));
@@ -46,6 +105,50 @@ void Session::onAccept(boost::beast::error_code errorCode) {
     return;
   }
   doRead();
+}
+void Session::onHandshake(boost::beast::error_code ec) {
+  if (ec) {
+    fail(ec, "handshake");
+    return;
+  }
+  // read messages
+  doRead();
+}
+void Session::onConnect(
+    boost::beast::error_code ec,
+    boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) {
+  if (ec) {
+    fail(ec, "connect");
+    return;
+  }
+
+  // Turn off the timeout on the tcp_stream, because
+  // the websocket stream has its own timeout system.
+  boost::beast::get_lowest_layer(m_websocket).expires_never();
+
+  // Set suggested timeout settings for the websocket
+  m_websocket.set_option(
+      boost::beast::websocket::stream_base::timeout::suggested(
+          boost::beast::role_type::client));
+
+  // Set a decorator to change the User-Agent of the handshake
+  m_websocket.set_option(boost::beast::websocket::stream_base::decorator(
+      [](boost::beast::websocket::request_type &req) {
+        req.set(boost::beast::http::field::user_agent,
+                std::string(BOOST_BEAST_VERSION_STRING) +
+                    " websocket-client-async");
+      }));
+
+  // Update the host_ string. This will provide the value of the
+  // Host HTTP header during the WebSocket handshake.
+  // See https://tools.ietf.org/html/rfc7230#section-5.4
+  std::string host =
+      m_websocketEntry->getAddress() + ":" + std::to_string(ep.port());
+
+  // Perform the websocket handshake
+  m_websocket.async_handshake(host, "/",
+                              boost::beast::bind_front_handler(
+                                  &Session::onHandshake, shared_from_this()));
 }
 void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   if (errorCode == boost::beast::websocket::error::closed) {

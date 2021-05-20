@@ -5,14 +5,14 @@
 #include <log4cxx/helpers/optionconverter.h>
 #include <log4cxx/helpers/outputstreamwriter.h>
 #include <log4cxx/helpers/socketoutputstream.h>
-#include <log4cxx/helpers/synchronized.h>
 #include <log4cxx/helpers/transcoder.h>
-#include <log4cxx/xml/xmllayout.h>
+
+#include "base_library/core/utils/JsonLayout.h"
 
 using namespace log4cxx;
 using namespace log4cxx::helpers;
 using namespace log4cxx::net;
-using namespace log4cxx::xml;
+using namespace log4cxx::json;
 
 IMPLEMENT_LOG4CXX_OBJECT(JsonSocketAppender)
 
@@ -26,20 +26,20 @@ const int JsonSocketAppender::MAX_EVENT_LEN = 1024;
 
 JsonSocketAppender::JsonSocketAppender()
     : SocketAppenderSkeleton(DEFAULT_PORT, DEFAULT_RECONNECTION_DELAY) {
-  layout = new XMLLayout();
+  layout = std::make_shared<JsonLayout>();
 }
 
 JsonSocketAppender::JsonSocketAppender(const InetAddressPtr &address1,
                                        int port1)
     : SocketAppenderSkeleton(address1, port1, DEFAULT_RECONNECTION_DELAY) {
-  layout = new XMLLayout();
+  layout = std::make_shared<JsonLayout>();
   Pool p;
   activateOptions(p);
 }
 
 JsonSocketAppender::JsonSocketAppender(const LogString &host, int port1)
     : SocketAppenderSkeleton(host, port1, DEFAULT_RECONNECTION_DELAY) {
-  layout = new XMLLayout();
+  layout = std::make_shared<JsonLayout>();
   Pool p;
   activateOptions(p);
 }
@@ -56,8 +56,8 @@ void JsonSocketAppender::setSocket(log4cxx::helpers::SocketPtr &socket,
                                    Pool &p) {
   OutputStreamPtr os(new SocketOutputStream(socket));
   CharsetEncoderPtr charset(CharsetEncoder::getUTF8Encoder());
-  synchronized sync(mutex);
-  m_writer = new OutputStreamWriter(os, charset);
+  std::lock_guard lock(mutex);
+  m_writer = std::make_shared<OutputStreamWriter>(os, charset);
 }
 
 void JsonSocketAppender::cleanUp(Pool &p) {

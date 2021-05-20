@@ -5,7 +5,10 @@ Client::Client(const std::shared_ptr<Configuration>& configuration,
                std::vector<std::shared_ptr<Controller>> controllers)
     : m_controllers(std::move(controllers)),
       m_methodControllerMap(build(m_controllers)),
-      m_resolver(boost::asio::make_strand(m_context)),
+      config(std::static_pointer_cast<WebsocketEntry>(
+          configuration->configurationOf<WebsocketEntry>()[0])),
+      m_session(
+          m_context, [](const std::string&) {}, m_methodControllerMap, config),
       m_thread([&]() { run(); }) {}
 
 std::map<std::string, std::shared_ptr<Controller>> Client::build(
