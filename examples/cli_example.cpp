@@ -1,6 +1,9 @@
 #include <base_library/core/services/LoggerService.h>
 #include <base_library/core/services/SignalService.h>
+#include <base_library/features/base/configuration/Configuration.h>
 #include <base_library/features/base/configuration/Cryption.h>
+#include <base_library/features/websocket/configuration/WebsocketComponent.h>
+#include <base_library/features/websocket/services/Client.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
 
@@ -79,9 +82,7 @@ class ConfigurationComponent : public CommandLineComponent {
     }
   }
 
-  void onShowMenu() override {
-    fmt::print("No submenu available!");
-  }
+  void onShowMenu() override { fmt::print("No submenu available!"); }
 
   bool onMenu(const std::string &component) override { return true; }
 
@@ -318,6 +319,19 @@ class CommandLineApplication {
 
 int main(int argc, char *argv[]) {
   DECLARE_LOGGER(argv[0]);
+  std::shared_ptr<Component> websocketComponent =
+      std::make_shared<WebsocketComponent>();
+  std::vector<std::shared_ptr<Component>> components{websocketComponent};
+  /* Get Websocket Configuration for Client */
+  std::shared_ptr<Configuration> configuration =
+      std::make_shared<Configuration>(components);
+  // TODO replace hack with feature implementation of cli and provider for
+  // getting correct Websocket Configuration
+  std::shared_ptr<WebsocketEntry> websocketEntry =
+      std::static_pointer_cast<WebsocketEntry>(
+          configuration->configurationOf<WebsocketComponent>().at(1));
+  Client client(websocketEntry, {});
+  std::cout << websocketEntry->getName() << std::endl;
   CommandLineApplication cli({std::make_shared<ConfigurationComponent>()});
   SignalService::registerHooks({SIGINT, SIGABRT, SIGTERM});
   SignalService::waitForUserInterrupt();

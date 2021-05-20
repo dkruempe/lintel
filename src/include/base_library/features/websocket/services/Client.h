@@ -18,7 +18,7 @@ class Client {
   std::map<std::string, std::shared_ptr<Controller>> m_methodControllerMap;
   boost::asio::io_context m_context;
   std::shared_ptr<WebsocketEntry> config;
-  Session m_session;
+  std::shared_ptr<Session> m_session;
   std::thread m_thread;
 
   static std::map<std::string, std::shared_ptr<Controller>> build(
@@ -27,7 +27,7 @@ class Client {
   void run();
 
  public:
-  Client(const std::shared_ptr<Configuration>& configuration,
+  Client(std::shared_ptr<WebsocketEntry> websocketEntry,
          std::vector<std::shared_ptr<Controller>> controllers);
   ~Client();
 };

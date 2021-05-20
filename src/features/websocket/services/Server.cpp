@@ -18,6 +18,12 @@ boost::asio::ip::tcp::endpoint Server::buildEndpoint(
     const std::shared_ptr<Configuration>& configuration) {
   std::vector<std::shared_ptr<Entry>> entries =
       configuration->configurationOf<WebsocketComponent>();
+  /*
+   * TODO replace with same logic as in Client
+   * Server class is expecting WebsocketEntry configuration. These configuration
+   * will later be provided by manually implemented Provider, who will know which
+   * configuration is for which situation. This cannot be handled automatically!
+   */
   auto found =
       std::find_if(entries.begin(), entries.end(),
                    [](const std::shared_ptr<Entry>& entry) -> bool {

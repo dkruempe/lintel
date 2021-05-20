@@ -1,15 +1,15 @@
 #include "base_library/features/websocket/services/Client.h"
 
-#include <boost/asio/strand.hpp>
-Client::Client(const std::shared_ptr<Configuration>& configuration,
+Client::Client(std::shared_ptr<WebsocketEntry> websocketEntry,
                std::vector<std::shared_ptr<Controller>> controllers)
     : m_controllers(std::move(controllers)),
       m_methodControllerMap(build(m_controllers)),
-      config(std::static_pointer_cast<WebsocketEntry>(
-          configuration->configurationOf<WebsocketEntry>()[0])),
-      m_session(
-          m_context, [](const std::string&) {}, m_methodControllerMap, config),
-      m_thread([&]() { run(); }) {}
+      config(std::move(websocketEntry)),
+      m_session(std::make_shared<Session>(
+          m_context, [](const std::string&) {}, m_methodControllerMap, config)),
+      m_thread([&]() { run(); }) {
+  m_session->run();
+}
 
 std::map<std::string, std::shared_ptr<Controller>> Client::build(
     const std::vector<std::shared_ptr<Controller>>& controllers) {

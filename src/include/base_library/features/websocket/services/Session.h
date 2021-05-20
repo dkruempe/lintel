@@ -23,7 +23,7 @@ class Controller;
 class Session : public std::enable_shared_from_this<Session> {
  private:
   const std::string m_id;
-  const std::shared_ptr<WebsocketEntry> m_websocketEntry = nullptr;
+  std::shared_ptr<WebsocketEntry> m_websocketEntry = nullptr;
   boost::beast::websocket::stream<boost::beast::tcp_stream> m_websocket;
   boost::beast::flat_buffer m_readBuffer;
   std::deque<std::shared_ptr<Packet>> m_writeQueue;
@@ -34,6 +34,8 @@ class Session : public std::enable_shared_from_this<Session> {
   MessageFactory messageFactory;
   ProcessingRequests processingRequests;
   std::unique_ptr<boost::asio::ip::tcp::resolver> m_resolver = nullptr;
+  std::string m_host;
+  std::string m_port;
 
   void doRead();
 

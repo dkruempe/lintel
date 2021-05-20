@@ -61,7 +61,9 @@ Session::Session(boost::asio::io_context &context,
       messageFactory(),
       processingRequests(),
       m_resolver(std::make_unique<boost::asio::ip::tcp::resolver>(
-          boost::asio::make_strand(context))) {
+          boost::asio::make_strand(context))),
+      m_host(m_websocketEntry->getAddress()),
+      m_port(std::to_string(m_websocketEntry->getPort())) {
   for (const auto &[name, controller] : m_controllers) {
     for (const auto &[methodName, func] : controller->getRequests()) {
       messageFactory.registerRequest(methodName, func);
@@ -70,11 +72,6 @@ Session::Session(boost::asio::io_context &context,
       messageFactory.registerResponse(methodName, func);
     }
   }
-  // Look up the domain name
-  m_resolver->async_resolve(std::string(websocketEntry->getAddress()).c_str(),
-                            std::to_string(websocketEntry->getPort()).c_str(),
-                            boost::beast::bind_front_handler(
-                                &Session::onResolve, shared_from_this()));
 }
 void Session::onResolve(boost::beast::error_code ec,
                         boost::asio::ip::tcp::resolver::results_type results) {
@@ -87,12 +84,19 @@ void Session::onResolve(boost::beast::error_code ec,
       .expires_after(std::chrono::seconds(30));
   // Make the connection on the IP address we get from a lookup
   boost::beast::get_lowest_layer(m_websocket)
-      .async_connect(results, boost::beast::bind_front_handler(&Session::onConnect,
-                                                        shared_from_this()));
+      .async_connect(results, boost::beast::bind_front_handler(
+                                  &Session::onConnect, shared_from_this()));
 }
 void Session::run() {
-  m_websocket.async_accept(
-      boost::beast::bind_front_handler(&Session::onAccept, shared_from_this()));
+  if (m_websocketEntry == nullptr) {
+    m_websocket.async_accept(boost::beast::bind_front_handler(
+        &Session::onAccept, shared_from_this()));
+  } else {
+    // Look up the domain name
+    m_resolver->async_resolve(m_host.c_str(), m_port.c_str(),
+                              boost::beast::bind_front_handler(
+                                  &Session::onResolve, shared_from_this()));
+  }
 }
 void Session::doRead() {
   m_websocket.async_read(
