@@ -108,6 +108,7 @@ void Session::onAccept(boost::beast::error_code errorCode) {
     fail(errorCode, "accept");
     return;
   }
+  m_isConnect = true;
   doRead();
 }
 void Session::onHandshake(boost::beast::error_code ec) {
@@ -143,6 +144,8 @@ void Session::onConnect(
                     " websocket-client-async");
       }));
 
+  LOG_INFO("connected to server");
+
   // Update the host_ string. This will provide the value of the
   // Host HTTP header during the WebSocket handshake.
   // See https://tools.ietf.org/html/rfc7230#section-5.4
@@ -153,6 +156,7 @@ void Session::onConnect(
   m_websocket.async_handshake(host, "/",
                               boost::beast::bind_front_handler(
                                   &Session::onHandshake, shared_from_this()));
+  m_isConnect = true;
 }
 void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   if (errorCode == boost::beast::websocket::error::closed) {
@@ -230,6 +234,7 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
                 std::static_pointer_cast<Response>(item);
             try {
               m_pendingRequests.at(response->getId()).set_value(response);
+              m_pendingRequests.erase(response->getId());
             } catch (std::out_of_range &e) {
               LOG_ERROR("id not found {} in pending requests",
                         response->getId());
@@ -295,7 +300,10 @@ void Session::fail(boost::beast::error_code errorCode,
             errorCode.value());
 }
 
-void Session::close() { m_onClose(m_id); }
+void Session::close() {
+  m_isConnect = false;
+  m_onClose(m_id);
+}
 void Session::send(const std::shared_ptr<Packet> &packet) {
   m_writeQueue.emplace_back(packet);
   if (m_writeQueue.size() > 1) {
@@ -327,3 +335,4 @@ void Session::send(const std::shared_ptr<Response> &response) {
       std::make_shared<Packet>(response->serialize());
   send(packet);
 }
+bool Session::isConnected() { return m_isConnect; }

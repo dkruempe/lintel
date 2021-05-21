@@ -36,6 +36,7 @@ class Session : public std::enable_shared_from_this<Session> {
   std::unique_ptr<boost::asio::ip::tcp::resolver> m_resolver = nullptr;
   std::string m_host;
   std::string m_port;
+  std::atomic<bool> m_isConnect = false;
 
   void doRead();
 
@@ -85,5 +86,7 @@ class Session : public std::enable_shared_from_this<Session> {
   void onConnect(
       boost::beast::error_code ec,
       boost::asio::ip::tcp::resolver::results_type::endpoint_type ep);
+
+  bool isConnected();
 };
 #endif  // CPP_BASE_LIBRARY_SESSION_H

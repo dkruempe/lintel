@@ -7,8 +7,16 @@ Client::Client(std::shared_ptr<WebsocketEntry> websocketEntry,
       config(std::move(websocketEntry)),
       m_session(std::make_shared<Session>(
           m_context, [](const std::string&) {}, m_methodControllerMap, config)),
-      m_thread([&]() { run(); }) {
-  m_session->run();
+      m_thread([&]() { run(); }) {}
+void Client::send(const std::shared_ptr<Notification>& notification) {
+  m_session->send(notification);
+}
+std::future<std::shared_ptr<Response>> Client::send(
+    const std::shared_ptr<Request>& request) {
+  return m_session->send(request);
+}
+void Client::send(const std::shared_ptr<Response>& response) {
+  m_session->send(response);
 }
 
 std::map<std::string, std::shared_ptr<Controller>> Client::build(
@@ -21,7 +29,10 @@ std::map<std::string, std::shared_ptr<Controller>> Client::build(
   }
   return map;
 }
-void Client::run() { m_context.run(); }
+void Client::run() {
+  m_session->run();
+  m_context.run();
+}
 Client::~Client() {
   m_context.stop();
   m_thread.join();

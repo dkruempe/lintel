@@ -3,6 +3,9 @@
 #include <base_library/features/base/configuration/Configuration.h>
 #include <base_library/features/base/configuration/Cryption.h>
 #include <base_library/features/websocket/configuration/WebsocketComponent.h>
+#include <base_library/features/websocket/controller/EchoController.h>
+#include <base_library/features/websocket/controller/EchoRequest.h>
+#include <base_library/features/websocket/controller/EchoResponse.h>
 #include <base_library/features/websocket/services/Client.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
@@ -330,7 +333,15 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<WebsocketEntry> websocketEntry =
       std::static_pointer_cast<WebsocketEntry>(
           configuration->configurationOf<WebsocketComponent>().at(1));
-  Client client(websocketEntry, {});
+  std::shared_ptr<EchoController> echoController =
+      std::make_shared<EchoController>();
+  Client client(websocketEntry, {echoController});
+  std::shared_ptr<EchoRequest> request = std::make_shared<EchoRequest>();
+  std::this_thread::sleep_for(std::chrono::seconds(10));
+  for (int i = 0; i < 10; i++) {
+    std::future<std::shared_ptr<Response>> response = client.send(request);
+    response.wait();
+  }
   std::cout << websocketEntry->getName() << std::endl;
   CommandLineApplication cli({std::make_shared<ConfigurationComponent>()});
   SignalService::registerHooks({SIGINT, SIGABRT, SIGTERM});

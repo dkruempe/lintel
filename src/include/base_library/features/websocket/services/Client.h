@@ -30,6 +30,10 @@ class Client {
   Client(std::shared_ptr<WebsocketEntry> websocketEntry,
          std::vector<std::shared_ptr<Controller>> controllers);
   ~Client();
+  void send(const std::shared_ptr<Notification> &notification);
+  std::future<std::shared_ptr<Response>> send(
+      const std::shared_ptr<Request> &request);
+  void send(const std::shared_ptr<Response> &response);
 };
 
 #endif  // CPP_BASE_LIBRARY_CLIENT_H
