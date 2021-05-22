@@ -123,6 +123,9 @@ void Session::onConnect(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) {
   if (ec) {
+    // TODO implement bretter solution for wait condition ?
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    run();
     fail(ec, "connect");
     return;
   }

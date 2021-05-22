@@ -22,7 +22,7 @@ class Client {
   std::thread m_thread;
 
   static std::map<std::string, std::shared_ptr<Controller>> build(
-      const std::vector<std::shared_ptr<Controller>>& controllers);
+      const std::vector<std::shared_ptr<Controller>> &controllers);
 
   void run();
 
@@ -34,6 +34,7 @@ class Client {
   std::future<std::shared_ptr<Response>> send(
       const std::shared_ptr<Request> &request);
   void send(const std::shared_ptr<Response> &response);
+  bool isConnected();
 };
 
 #endif  // CPP_BASE_LIBRARY_CLIENT_H

@@ -37,3 +37,4 @@ Client::~Client() {
   m_context.stop();
   m_thread.join();
 }
+bool Client::isConnected() { return m_session->isConnected(); }
