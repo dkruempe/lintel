@@ -123,9 +123,11 @@ void Session::onConnect(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) {
   if (ec) {
-    // TODO implement bretter solution for wait condition ?
-    std::this_thread::sleep_for(std::chrono::seconds(10));
-    run();
+    if (m_websocketEntry != nullptr) {
+      std::unique_lock<std::mutex> lock(m_reconnectMutex);
+      m_reconnectCondition.wait_for(lock, m_reconnectInterval);
+      run();
+    }
     fail(ec, "connect");
     return;
   }
@@ -163,12 +165,24 @@ void Session::onConnect(
 }
 void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   if (errorCode == boost::beast::websocket::error::closed) {
-    close();
+    if (m_websocketEntry != nullptr) {
+      std::unique_lock<std::mutex> lock(m_reconnectMutex);
+      m_reconnectCondition.wait_for(lock, m_reconnectInterval);
+      run();
+    } else {
+      close();
+    }
     return;
   }
   if (errorCode) {
     fail(errorCode, "read");
-    close();
+    if (m_websocketEntry != nullptr) {
+      std::unique_lock<std::mutex> lock(m_reconnectMutex);
+      m_reconnectCondition.wait_for(lock, m_reconnectInterval);
+      run();
+    } else {
+      close();
+    }
     return;
   }
   if (m_websocket.got_text()) {

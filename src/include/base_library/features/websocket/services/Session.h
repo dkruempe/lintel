@@ -37,6 +37,9 @@ class Session : public std::enable_shared_from_this<Session> {
   std::string m_host;
   std::string m_port;
   std::atomic<bool> m_isConnect = false;
+  std::mutex m_reconnectMutex;
+  std::condition_variable m_reconnectCondition;
+  std::chrono::seconds m_reconnectInterval = std::chrono::seconds(30);
 
   void doRead();
 

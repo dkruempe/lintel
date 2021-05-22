@@ -337,7 +337,7 @@ int main(int argc, char *argv[]) {
       std::make_shared<EchoController>();
   Client client(websocketEntry, {echoController});
   std::shared_ptr<EchoRequest> request = std::make_shared<EchoRequest>();
-  // remove workaround with future ?!
+  // TODO remove workaround with future ?!
   while (!client.isConnected()) {
     std::this_thread::sleep_for(std::chrono::seconds(2));
   }
