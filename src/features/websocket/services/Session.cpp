@@ -78,6 +78,7 @@ Session::Session(boost::asio::io_context &context,
 Session::~Session() {
   m_exit = true;
   m_writeCondition.notify_all();
+  m_reconnectCondition.notify_all();
   m_writeThread.join();
 }
 void Session::runWrite() {
@@ -151,7 +152,12 @@ void Session::onConnect(
   if (ec) {
     if (m_websocketEntry != nullptr) {
       std::unique_lock<std::mutex> lock(m_reconnectMutex);
-      m_reconnectCondition.wait_for(lock, m_reconnectInterval);
+      m_reconnectCondition.wait_for(lock, m_reconnectInterval,
+                                    [&]() -> bool { return m_exit; });
+      // abort in case of shutdown
+      if (m_exit) {
+        return;
+      }
       run();
     }
     fail(ec, "connect");
