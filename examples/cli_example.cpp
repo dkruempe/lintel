@@ -293,6 +293,7 @@ class CommandLineApplication {
               "ERROR: Invalid command '{}'! Please use the help function\n",
               temp);
         }
+        continue;
       }
       switch (found->second) {
         case COMMAND_EXIT:
@@ -336,16 +337,15 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<EchoController> echoController =
       std::make_shared<EchoController>();
   Client client(websocketEntry, {echoController});
-  std::shared_ptr<EchoRequest> request = std::make_shared<EchoRequest>();
   // TODO remove workaround with future ?!
   while (!client.isConnected()) {
     std::this_thread::sleep_for(std::chrono::seconds(2));
   }
   for (int i = 0; i < 10; i++) {
+    std::shared_ptr<EchoRequest> request = std::make_shared<EchoRequest>();
     std::future<std::shared_ptr<Response>> response = client.send(request);
     response.wait();
   }
-  std::cout << websocketEntry->getName() << std::endl;
   CommandLineApplication cli({std::make_shared<ConfigurationComponent>()});
   SignalService::registerHooks({SIGINT, SIGABRT, SIGTERM});
   SignalService::waitForUserInterrupt();

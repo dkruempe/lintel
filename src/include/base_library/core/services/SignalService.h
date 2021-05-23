@@ -17,7 +17,9 @@ class SignalService {
     }
   }
 
-  static void handleSignal(int signal) { m_condition.notify_all(); }
+  static void handleSignal(int signal) {
+    m_condition.notify_all();
+  }
 
   static void waitForUserInterrupt() {
     std::unique_lock<std::mutex> lock(m_mutex);

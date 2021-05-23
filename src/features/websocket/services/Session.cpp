@@ -23,7 +23,8 @@ Session::Session(boost::asio::ip::tcp::socket &&socket,
       m_onClose(std::move(onClose)),
       m_controllers(std::move(controllers)),
       messageFactory(),
-      processingRequests() {
+      processingRequests(),
+      m_writeThread([&]() { runWrite(); }) {
   m_websocket.set_option(
       boost::beast::websocket::stream_base::timeout::suggested(
           boost::beast::role_type::server));
@@ -63,7 +64,8 @@ Session::Session(boost::asio::io_context &context,
       m_resolver(std::make_unique<boost::asio::ip::tcp::resolver>(
           boost::asio::make_strand(context))),
       m_host(m_websocketEntry->getAddress()),
-      m_port(std::to_string(m_websocketEntry->getPort())) {
+      m_port(std::to_string(m_websocketEntry->getPort())),
+      m_writeThread([&]() { runWrite(); }) {
   for (const auto &[name, controller] : m_controllers) {
     for (const auto &[methodName, func] : controller->getRequests()) {
       messageFactory.registerRequest(methodName, func);
@@ -71,6 +73,30 @@ Session::Session(boost::asio::io_context &context,
     for (const auto &[methodName, func] : controller->getResponses()) {
       messageFactory.registerResponse(methodName, func);
     }
+  }
+}
+Session::~Session() {
+  m_exit = true;
+  m_writeCondition.notify_all();
+  m_writeThread.join();
+}
+void Session::runWrite() {
+  while (!m_exit) {
+    std::unique_lock lock(m_writeMutex);
+    auto time = std::chrono::steady_clock::now() + m_writeInterval;
+    m_writeCondition.wait_until(lock, time, [&] {
+      return m_exit || (!m_writeQueue.empty() && m_websocket.is_open());
+    });
+    if (m_exit && m_writeQueue.empty()) {
+      return;
+    }
+    if (m_writeQueue.empty()) {
+      continue;
+    }
+    if (!m_websocket.is_open()) {
+      continue;
+    }
+    onWrite();
   }
 }
 void Session::onResolve(boost::beast::error_code ec,
@@ -284,18 +310,7 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
     LOG_INFO("Received: {}", temp);
   }
 }
-void Session::onWrite(boost::beast::error_code errorCode, std::size_t length) {
-  if (errorCode) {
-    fail(errorCode, "write");
-    return;
-  }
-  m_writeQueue.pop_front();
-  if (m_writeQueue.empty()) {
-    return;
-  }
-  doWrite();
-}
-void Session::doWrite() {
+void Session::onWrite() {
   if (m_writeQueue.empty()) {
     return;
   }
@@ -304,12 +319,11 @@ void Session::doWrite() {
   auto handler =
       boost::beast::bind_front_handler(&Session::onWrite, shared_from_this());
   if (packet->isText()) {
-    m_websocket.async_write(boost::asio::buffer(packet->getTextBuffer()),
-                            std::move(handler));
+    m_websocket.write(boost::asio::buffer(packet->getTextBuffer()));
   } else {
-    m_websocket.async_write(boost::asio::buffer(packet->getBinaryBuffer()),
-                            std::move(handler));
+    m_websocket.write(boost::asio::buffer(packet->getBinaryBuffer()));
   }
+  m_writeQueue.pop_front();
 }
 void Session::fail(boost::beast::error_code errorCode,
                    const std::string &message) const {
@@ -322,11 +336,16 @@ void Session::close() {
   m_onClose(m_id);
 }
 void Session::send(const std::shared_ptr<Packet> &packet) {
+  if (m_writeQueue.size() >= m_bufferLimit) {
+    LOG_ERROR("{} exceeds buffer limit {}",
+              packet->isText() ? packet->getTextBuffer() : "", m_bufferLimit);
+    return;
+  }
   m_writeQueue.emplace_back(packet);
   if (m_writeQueue.size() > 1) {
     return;
   }
-  doWrite();
+  m_writeCondition.notify_one();
 }
 const std::string &Session::getId() { return m_id; }
 void Session::send(const std::shared_ptr<Notification> &notification) {

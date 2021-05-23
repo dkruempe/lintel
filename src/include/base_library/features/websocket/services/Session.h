@@ -11,6 +11,7 @@
 #include <string>
 #include <thread>
 
+#include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/websocket/configuration/WebsocketEntry.h"
 #include "base_library/features/websocket/messages/MessageFactory.h"
 #include "base_library/features/websocket/messages/Notification.h"
@@ -40,10 +41,16 @@ class Session : public std::enable_shared_from_this<Session> {
   std::mutex m_reconnectMutex;
   std::condition_variable m_reconnectCondition;
   std::chrono::seconds m_reconnectInterval = std::chrono::seconds(30);
+  const std::size_t m_bufferLimit = 1000;
+  std::atomic<bool> m_exit = false;
+  std::thread m_writeThread;
+  std::mutex m_writeMutex;
+  std::condition_variable m_writeCondition;
+  std::chrono::seconds m_writeInterval = std::chrono::seconds(5);
 
   void doRead();
 
-  void doWrite();
+  void onWrite();
 
   void onAccept(boost::beast::error_code errorCode);
 
@@ -52,8 +59,6 @@ class Session : public std::enable_shared_from_this<Session> {
   void onReceive(const std::shared_ptr<Packet> &packet);
 
   void send(const std::shared_ptr<Packet> &packet);
-
-  void onWrite(boost::beast::error_code errorCode, std::size_t length);
 
   void onHandshake(boost::beast::error_code ec);
 
@@ -64,6 +69,8 @@ class Session : public std::enable_shared_from_this<Session> {
             const std::string &message) const;
 
   void close();
+
+  void runWrite();
 
  public:
   void send(const std::shared_ptr<Notification> &notification);
@@ -80,7 +87,7 @@ class Session : public std::enable_shared_from_this<Session> {
           std::map<std::string, std::shared_ptr<Controller>> controllers,
           std::shared_ptr<WebsocketEntry> connectionEntry);
 
-  ~Session() = default;
+  ~Session();
 
   [[nodiscard]] const std::string &getId();
 
