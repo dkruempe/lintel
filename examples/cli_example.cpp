@@ -337,10 +337,9 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<EchoController> echoController =
       std::make_shared<EchoController>();
   Client client(websocketEntry, {echoController});
-  for (int i = 0; i < 10; i++) {
+  for (int i = 0; i < 220; i++) {
     std::shared_ptr<EchoRequest> request = std::make_shared<EchoRequest>();
     std::future<std::shared_ptr<Response>> response = client.send(request);
-    response.wait();
   }
   CommandLineApplication cli({std::make_shared<ConfigurationComponent>()});
   SignalService::registerHooks({SIGINT, SIGABRT, SIGTERM});

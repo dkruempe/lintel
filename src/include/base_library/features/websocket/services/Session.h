@@ -11,7 +11,6 @@
 #include <string>
 #include <thread>
 
-#include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/websocket/configuration/WebsocketEntry.h"
 #include "base_library/features/websocket/messages/MessageFactory.h"
 #include "base_library/features/websocket/messages/Notification.h"
@@ -27,7 +26,7 @@ class Session : public std::enable_shared_from_this<Session> {
   std::shared_ptr<WebsocketEntry> m_websocketEntry = nullptr;
   boost::beast::websocket::stream<boost::beast::tcp_stream> m_websocket;
   boost::beast::flat_buffer m_readBuffer;
-  std::deque<std::shared_ptr<Packet>> m_writeQueue;
+  std::deque<std::shared_ptr<Message>> m_writeQueue;
   std::function<void(const std::string &)> m_onClose;
   std::map<std::string, std::shared_ptr<Controller>> m_controllers;
   std::map<std::string, std::promise<std::shared_ptr<Response>>>
@@ -40,12 +39,15 @@ class Session : public std::enable_shared_from_this<Session> {
   std::atomic<bool> m_isConnect = false;
   std::mutex m_reconnectMutex;
   std::condition_variable m_reconnectCondition;
-  std::chrono::seconds m_reconnectInterval = std::chrono::seconds(30);
-  const std::size_t m_bufferLimit = 1000;
   std::atomic<bool> m_exit = false;
   std::thread m_writeThread;
   std::mutex m_writeMutex;
   std::condition_variable m_writeCondition;
+
+  // constants
+  const std::size_t m_bufferLimit = 1000;
+  const std::size_t m_batchSize = 100;
+  std::chrono::seconds m_reconnectInterval = std::chrono::seconds(30);
   std::chrono::seconds m_writeInterval = std::chrono::seconds(5);
 
   void doRead();
@@ -57,8 +59,6 @@ class Session : public std::enable_shared_from_this<Session> {
   void onRead(boost::beast::error_code errorCode, size_t length);
 
   void onReceive(const std::shared_ptr<Packet> &packet);
-
-  void send(const std::shared_ptr<Packet> &packet);
 
   void onHandshake(boost::beast::error_code ec);
 
@@ -77,6 +77,8 @@ class Session : public std::enable_shared_from_this<Session> {
   std::future<std::shared_ptr<Response>> send(
       const std::shared_ptr<Request> &request);
   void send(const std::shared_ptr<Response> &response);
+  std::vector<std::future<std::shared_ptr<Response>>> send(
+      const std::vector<std::shared_ptr<Message>> &messages);
 
   Session(boost::asio::ip::tcp::socket &&socket,
           std::function<void(const std::string &)> onClose,

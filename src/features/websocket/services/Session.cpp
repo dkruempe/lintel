@@ -1,5 +1,8 @@
 #include "base_library/features/websocket/services/Session.h"
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <boost/asio/strand.hpp>
 #include <boost/beast/core.hpp>
 #include <boost/beast/websocket.hpp>
@@ -199,7 +202,8 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   if (errorCode == boost::beast::websocket::error::closed) {
     if (m_websocketEntry != nullptr) {
       std::unique_lock<std::mutex> lock(m_reconnectMutex);
-      m_reconnectCondition.wait_for(lock, m_reconnectInterval);
+      m_reconnectCondition.wait_for(lock, m_reconnectInterval,
+                                    [&]() -> bool { return m_exit; });
       run();
     } else {
       close();
@@ -210,7 +214,8 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
     fail(errorCode, "read");
     if (m_websocketEntry != nullptr) {
       std::unique_lock<std::mutex> lock(m_reconnectMutex);
-      m_reconnectCondition.wait_for(lock, m_reconnectInterval);
+      m_reconnectCondition.wait_for(lock, m_reconnectInterval,
+                                    [&]() -> bool { return m_exit; });
       run();
     } else {
       close();
@@ -320,16 +325,22 @@ void Session::onWrite() {
   if (m_writeQueue.empty()) {
     return;
   }
-  auto &packet = m_writeQueue.front();
-  m_websocket.text(packet->isText());
+  rapidjson::StringBuffer stringBuffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
+  std::size_t i;
+  writer.StartArray();
+  for (i = 0; i < m_batchSize && !m_writeQueue.empty(); i++) {
+    auto &message = m_writeQueue.front();
+    message->serialize(writer);
+    m_writeQueue.pop_front();
+  }
+  writer.EndArray();
+  m_websocket.text(true);
   auto handler =
       boost::beast::bind_front_handler(&Session::onWrite, shared_from_this());
-  if (packet->isText()) {
-    m_websocket.write(boost::asio::buffer(packet->getTextBuffer()));
-  } else {
-    m_websocket.write(boost::asio::buffer(packet->getBinaryBuffer()));
-  }
-  m_writeQueue.pop_front();
+  std::string serialized = stringBuffer.GetString();
+  m_websocket.write(boost::asio::buffer(serialized));
+  LOG_INFO("send batch of {} messages", i);
 }
 void Session::fail(boost::beast::error_code errorCode,
                    const std::string &message) const {
@@ -341,40 +352,52 @@ void Session::close() {
   m_isConnect = false;
   m_onClose(m_id);
 }
-void Session::send(const std::shared_ptr<Packet> &packet) {
-  if (m_writeQueue.size() >= m_bufferLimit) {
-    LOG_ERROR("{} exceeds buffer limit {}",
-              packet->isText() ? packet->getTextBuffer() : "", m_bufferLimit);
-    return;
-  }
-  m_writeQueue.emplace_back(packet);
-  if (m_writeQueue.size() > 1) {
-    return;
-  }
-  m_writeCondition.notify_one();
-}
 const std::string &Session::getId() { return m_id; }
 void Session::send(const std::shared_ptr<Notification> &notification) {
-  std::shared_ptr<Packet> packet =
-      std::make_shared<Packet>(notification->serialize());
-  send(packet);
+  std::vector<std::shared_ptr<Message>> messages{notification};
+  send(messages);
 }
 std::future<std::shared_ptr<Response>> Session::send(
     const std::shared_ptr<Request> &request) {
-  std::promise<std::shared_ptr<Response>> promise;
-  std::shared_ptr<Packet> packet =
-      std::make_shared<Packet>(request->serialize());
-  send(packet);
-  std::string id = request->getId();
-  std::pair<std::string, std::promise<std::shared_ptr<Response>>> pair{
-      std::move(id), std::move(promise)};
-  m_pendingRequests.insert(std::move(pair));
-  processingRequests.waitingFor(request->getMethod(), request->getId());
-  return m_pendingRequests.at(request->getId()).get_future();
+  std::vector<std::shared_ptr<Message>> messages{request};
+  return std::move(send(messages)[0]);
 }
 void Session::send(const std::shared_ptr<Response> &response) {
-  std::shared_ptr<Packet> packet =
-      std::make_shared<Packet>(response->serialize());
-  send(packet);
+  std::vector<std::shared_ptr<Message>> messages{response};
+  send(messages);
 }
 bool Session::isConnected() { return m_isConnect; }
+
+std::vector<std::future<std::shared_ptr<Response>>> Session::send(
+    const std::vector<std::shared_ptr<Message>> &messages) {
+  std::vector<std::future<std::shared_ptr<Response>>> responses;
+  for (const auto &message : messages) {
+    switch (message->getType()) {
+      case Message::REQUEST: {
+        std::shared_ptr<Request> request =
+            std::static_pointer_cast<Request>(message);
+        std::promise<std::shared_ptr<Response>> promise;
+        std::string id = request->getId();
+        std::pair<std::string, std::promise<std::shared_ptr<Response>>> pair{
+            std::move(id), std::move(promise)};
+        m_pendingRequests.insert(std::move(pair));
+        processingRequests.waitingFor(request->getMethod(), request->getId());
+        responses.push_back(
+            m_pendingRequests.at(request->getId()).get_future());
+      }
+      case Message::RESPONSE:
+      case Message::NOTIFICATION: {
+        if (m_writeQueue.size() >= m_bufferLimit) {
+          LOG_ERROR("{} exceeds buffer limit {}", message->serialize());
+          continue;
+        }
+        m_writeQueue.push_back(message);
+        break;
+      }
+    }
+  }
+  if (!m_writeQueue.empty()) {
+    m_writeCondition.notify_one();
+  }
+  return responses;
+}
