@@ -79,10 +79,15 @@ Session::Session(boost::asio::io_context &context,
   }
 }
 Session::~Session() {
-  m_exit = true;
+  LOG_TRACE("delete Session");
+  m_exit.store(true);
+  LOG_TRACE("set m_exit to true");
   m_writeCondition.notify_all();
+  LOG_TRACE("informs write condition");
   m_reconnectCondition.notify_all();
+  LOG_TRACE("informs all conditions reconnect and write");
   m_writeThread.join();
+  LOG_TRACE("finished delete of Session");
 }
 void Session::runWrite() {
   while (!m_exit) {
@@ -91,6 +96,9 @@ void Session::runWrite() {
     m_writeCondition.wait_until(lock, time, [&] {
       return m_exit || (!m_writeQueue.empty() && m_websocket.is_open());
     });
+    if (m_exit && !m_websocket.is_open()) {
+      return;
+    }
     if (m_exit && m_writeQueue.empty()) {
       return;
     }
@@ -204,6 +212,9 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
       std::unique_lock<std::mutex> lock(m_reconnectMutex);
       m_reconnectCondition.wait_for(lock, m_reconnectInterval,
                                     [&]() -> bool { return m_exit; });
+      if (m_exit) {
+        return;
+      }
       run();
     } else {
       close();
@@ -216,6 +227,9 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
       std::unique_lock<std::mutex> lock(m_reconnectMutex);
       m_reconnectCondition.wait_for(lock, m_reconnectInterval,
                                     [&]() -> bool { return m_exit; });
+      if (m_exit) {
+        return;
+      }
       run();
     } else {
       close();

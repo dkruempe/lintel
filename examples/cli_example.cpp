@@ -317,7 +317,9 @@ class CommandLineApplication {
 
   ~CommandLineApplication() {
     running.store(false);
+    LOG_TRACE("finish command line application");
     thread.join();
+    LOG_TRACE("stopped thread");
   }
 };
 

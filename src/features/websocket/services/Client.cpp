@@ -1,4 +1,5 @@
 #include "base_library/features/websocket/services/Client.h"
+#include "base_library/core/services/LoggerService.h"
 
 Client::Client(std::shared_ptr<WebsocketEntry> websocketEntry,
                std::vector<std::shared_ptr<Controller>> controllers)
@@ -34,7 +35,10 @@ void Client::run() {
   m_context.run();
 }
 Client::~Client() {
+  LOG_TRACE("delete client");
+  m_session = nullptr;
   m_context.stop();
   m_thread.join();
+  LOG_TRACE("finished delete client");
 }
 bool Client::isConnected() { return m_session->isConnected(); }
