@@ -79,12 +79,12 @@ Session::Session(boost::asio::io_context &context,
   }
 }
 Session::~Session() {
-  LOG_TRACE("delete Session");
-  m_exit.store(true);
-  LOG_TRACE("set m_exit to true");
-  m_writeCondition.notify_all();
-  LOG_TRACE("informs write condition");
-  m_reconnectCondition.notify_all();
+  if (!isClient()) {
+    LOG_TRACE("delete Session");
+    m_exit.store(true);
+    LOG_TRACE("set m_exit to true");
+    m_writeCondition.notify_all();
+  }
   m_websocket.next_layer().cancel();
   LOG_TRACE("informs all conditions reconnect and write");
   m_writeThread.join();
@@ -164,21 +164,7 @@ void Session::onConnect(
     boost::beast::error_code ec,
     boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) {
   if (ec) {
-    if (m_websocketEntry != nullptr) {
-      if (m_exit) {
-        return;
-      }
-      {
-        std::unique_lock<std::mutex> lock(m_reconnectMutex);
-        m_reconnectCondition.wait_for(lock, m_reconnectInterval,
-                                      [&]() -> bool { return m_exit; });
-      }
-      // abort in case of shutdown
-      if (m_exit) {
-        return;
-      }
-      run();
-    }
+    doReconnect();
     fail(ec, "connect");
     return;
   }
@@ -216,42 +202,12 @@ void Session::onConnect(
 }
 void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   if (errorCode == boost::beast::websocket::error::closed) {
-    if (m_websocketEntry != nullptr) {
-      if (m_exit) {
-        return;
-      }
-      {
-        std::unique_lock<std::mutex> lock(m_reconnectMutex);
-        m_reconnectCondition.wait_for(lock, m_reconnectInterval,
-                                      [&]() -> bool { return m_exit; });
-      }
-      if (m_exit) {
-        return;
-      }
-      run();
-    } else {
-      close();
-    }
+    doReconnect();
     return;
   }
   if (errorCode) {
     fail(errorCode, "read");
-    if (m_websocketEntry != nullptr) {
-      if (m_exit) {
-        return;
-      }
-      {
-        std::unique_lock<std::mutex> lock(m_reconnectMutex);
-        m_reconnectCondition.wait_for(lock, m_reconnectInterval,
-                                      [&]() -> bool { return m_exit; });
-      }
-      if (m_exit) {
-        return;
-      }
-      run();
-    } else {
-      close();
-    }
+    doReconnect();
     return;
   }
   if (m_websocket.got_text()) {
@@ -273,6 +229,38 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   }
   m_readBuffer.clear();
   doRead();
+}
+bool Session::isClient() {
+  return m_websocketEntry != nullptr;
+}
+void Session::doReconnect() {
+  if (!isClient()) {
+    // no reconnect in case of server
+    close();
+    return;
+  }
+
+  // shutdown triggered ? => abort reconnect
+  if (m_exit) {
+    LOG_INFO("abort reconnect");
+    return;
+  }
+
+  {
+    std::unique_lock<std::mutex> lock(m_reconnectMutex);
+    m_reconnectCondition.wait_for(lock, m_reconnectInterval,
+                                  [&]() -> bool { return m_exit; });
+  }
+  LOG_TRACE("awake from reconnect");
+
+  // shutdwon triggered ? => abort
+  if (m_exit) {
+    LOG_INFO("abort reconnect");
+    return;
+  }
+
+  LOG_TRACE("trigger reconnect");
+  run();
 }
 void Session::onReceive(const std::shared_ptr<Packet> &packet) {
   if (packet->isText()) {
@@ -383,6 +371,7 @@ void Session::fail(boost::beast::error_code errorCode,
 void Session::close() {
   m_isConnect = false;
   m_onClose(m_id);
+  LOG_INFO("closed session {}", m_id);
 }
 const std::string &Session::getId() { return m_id; }
 void Session::send(const std::shared_ptr<Notification> &notification) {
@@ -435,4 +424,10 @@ std::vector<std::future<std::shared_ptr<Response>>> Session::send(
     m_writeCondition.notify_one();
   }
   return responses;
+}
+
+void Session::onShutdown() {
+  m_exit.store(true);
+  m_writeCondition.notify_all();
+  m_reconnectCondition.notify_all();
 }

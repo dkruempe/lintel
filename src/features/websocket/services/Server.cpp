@@ -12,7 +12,7 @@ Server::Server(const std::shared_ptr<Configuration>& configuration,
       m_context(1),
       m_acceptor(m_context, buildEndpoint(configuration)),
       m_thread([&]() { run(); }),
-      m_methodControllerMap(build(m_controllers)){}
+      m_methodControllerMap(build(m_controllers)) {}
 
 boost::asio::ip::tcp::endpoint Server::buildEndpoint(
     const std::shared_ptr<Configuration>& configuration) {
@@ -21,8 +21,9 @@ boost::asio::ip::tcp::endpoint Server::buildEndpoint(
   /*
    * TODO replace with same logic as in Client
    * Server class is expecting WebsocketEntry configuration. These configuration
-   * will later be provided by manually implemented Provider, who will know which
-   * configuration is for which situation. This cannot be handled automatically!
+   * will later be provided by manually implemented Provider, who will know
+   * which configuration is for which situation. This cannot be handled
+   * automatically!
    */
   auto found =
       std::find_if(entries.begin(), entries.end(),
@@ -44,7 +45,16 @@ void Server::run() {
   doAccept();
   m_context.run();
 }
-void Server::onClose(const std::string& id) { m_sessions.erase(id); }
+void Server::onClose(const std::string& id) {
+  try {
+    auto& sessionPtr = m_sessions.at(id);
+    sessionPtr.reset();
+    sessionPtr = nullptr;
+    m_sessions.erase(id);
+  } catch (std::out_of_range& e) {
+    LOG_ERROR("cannot remove session with {}", id);
+  }
+}
 void Server::doAccept() {
   m_acceptor.async_accept(
       boost::beast::bind_front_handler(&Server::onAccept, this));
@@ -71,7 +81,7 @@ Server::~Server() {
   m_thread.join();
 }
 std::map<std::string, std::shared_ptr<Controller>> Server::build(
-    const std::vector<std::shared_ptr<Controller>> &controllers) {
+    const std::vector<std::shared_ptr<Controller>>& controllers) {
   std::map<std::string, std::shared_ptr<Controller>> map;
   for (auto& controller : controllers) {
     for (const auto& method : controller->getMethods()) {

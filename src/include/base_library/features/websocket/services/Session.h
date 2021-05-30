@@ -72,6 +72,10 @@ class Session : public std::enable_shared_from_this<Session> {
 
   void runWrite();
 
+  void doReconnect();
+
+  bool isClient();
+
  public:
   void send(const std::shared_ptr<Notification> &notification);
   std::future<std::shared_ptr<Response>> send(
@@ -100,5 +104,8 @@ class Session : public std::enable_shared_from_this<Session> {
       boost::asio::ip::tcp::resolver::results_type::endpoint_type ep);
 
   bool isConnected();
+
+  void onShutdown();
+
 };
 #endif  // CPP_BASE_LIBRARY_SESSION_H

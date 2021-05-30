@@ -36,6 +36,7 @@ void Client::run() {
   m_context.run();
 }
 Client::~Client() {
+  m_session->onShutdown();
   LOG_TRACE("delete client");
   m_context.stop();
   LOG_TRACE("set session to nullptr");
