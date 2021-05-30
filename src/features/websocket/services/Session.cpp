@@ -85,17 +85,20 @@ Session::~Session() {
   m_writeCondition.notify_all();
   LOG_TRACE("informs write condition");
   m_reconnectCondition.notify_all();
+  m_websocket.next_layer().cancel();
   LOG_TRACE("informs all conditions reconnect and write");
   m_writeThread.join();
   LOG_TRACE("finished delete of Session");
 }
 void Session::runWrite() {
   while (!m_exit) {
-    std::unique_lock lock(m_writeMutex);
-    auto time = std::chrono::steady_clock::now() + m_writeInterval;
-    m_writeCondition.wait_until(lock, time, [&] {
-      return m_exit || (!m_writeQueue.empty() && m_websocket.is_open());
-    });
+    {
+      std::unique_lock lock(m_writeMutex);
+      auto time = std::chrono::steady_clock::now() + m_writeInterval;
+      m_writeCondition.wait_until(lock, time, [&] {
+        return m_exit || (!m_writeQueue.empty() && m_websocket.is_open());
+      });
+    }
     if (m_exit && !m_websocket.is_open()) {
       return;
     }
@@ -162,9 +165,14 @@ void Session::onConnect(
     boost::asio::ip::tcp::resolver::results_type::endpoint_type ep) {
   if (ec) {
     if (m_websocketEntry != nullptr) {
-      std::unique_lock<std::mutex> lock(m_reconnectMutex);
-      m_reconnectCondition.wait_for(lock, m_reconnectInterval,
-                                    [&]() -> bool { return m_exit; });
+      if (m_exit) {
+        return;
+      }
+      {
+        std::unique_lock<std::mutex> lock(m_reconnectMutex);
+        m_reconnectCondition.wait_for(lock, m_reconnectInterval,
+                                      [&]() -> bool { return m_exit; });
+      }
       // abort in case of shutdown
       if (m_exit) {
         return;
@@ -209,9 +217,14 @@ void Session::onConnect(
 void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   if (errorCode == boost::beast::websocket::error::closed) {
     if (m_websocketEntry != nullptr) {
-      std::unique_lock<std::mutex> lock(m_reconnectMutex);
-      m_reconnectCondition.wait_for(lock, m_reconnectInterval,
-                                    [&]() -> bool { return m_exit; });
+      if (m_exit) {
+        return;
+      }
+      {
+        std::unique_lock<std::mutex> lock(m_reconnectMutex);
+        m_reconnectCondition.wait_for(lock, m_reconnectInterval,
+                                      [&]() -> bool { return m_exit; });
+      }
       if (m_exit) {
         return;
       }
@@ -224,9 +237,14 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   if (errorCode) {
     fail(errorCode, "read");
     if (m_websocketEntry != nullptr) {
-      std::unique_lock<std::mutex> lock(m_reconnectMutex);
-      m_reconnectCondition.wait_for(lock, m_reconnectInterval,
-                                    [&]() -> bool { return m_exit; });
+      if (m_exit) {
+        return;
+      }
+      {
+        std::unique_lock<std::mutex> lock(m_reconnectMutex);
+        m_reconnectCondition.wait_for(lock, m_reconnectInterval,
+                                      [&]() -> bool { return m_exit; });
+      }
       if (m_exit) {
         return;
       }
@@ -405,7 +423,10 @@ std::vector<std::future<std::shared_ptr<Response>>> Session::send(
           LOG_ERROR("{} exceeds buffer limit {}", message->serialize());
           continue;
         }
-        m_writeQueue.push_back(message);
+        {
+          std::lock_guard<std::mutex> locker(m_writeMutex);
+          m_writeQueue.push_back(message);
+        }
         break;
       }
     }

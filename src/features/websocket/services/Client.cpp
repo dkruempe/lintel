@@ -1,4 +1,5 @@
 #include "base_library/features/websocket/services/Client.h"
+
 #include "base_library/core/services/LoggerService.h"
 
 Client::Client(std::shared_ptr<WebsocketEntry> websocketEntry,
@@ -36,8 +37,8 @@ void Client::run() {
 }
 Client::~Client() {
   LOG_TRACE("delete client");
-  m_session = nullptr;
   m_context.stop();
+  LOG_TRACE("set session to nullptr");
   m_thread.join();
   LOG_TRACE("finished delete client");
 }
