@@ -22,24 +22,34 @@
 class Controller;
 class Session : public std::enable_shared_from_this<Session> {
  private:
+  // I base variables
   const std::string m_id;
   std::shared_ptr<WebsocketEntry> m_websocketEntry = nullptr;
-  boost::beast::websocket::stream<boost::beast::tcp_stream> m_websocket;
-  boost::beast::flat_buffer m_readBuffer;
-  std::deque<std::shared_ptr<Message>> m_writeQueue;
-  std::function<void(const std::string &)> m_onClose;
-  std::map<std::string, std::shared_ptr<Controller>> m_controllers;
-  std::map<std::string, std::promise<std::shared_ptr<Response>>>
-      m_pendingRequests;
-  MessageFactory messageFactory;
-  ProcessingRequests processingRequests;
-  std::unique_ptr<boost::asio::ip::tcp::resolver> m_resolver = nullptr;
   std::string m_host;
   std::string m_port;
+
+  // II Websocket Variables
+  std::unique_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>>
+      m_websocket;
+  boost::beast::flat_buffer m_readBuffer;
+  std::unique_ptr<boost::asio::ip::tcp::resolver> m_resolver = nullptr;
+
+  // III others
+  std::function<void(const std::string &)> m_onClose;
+  std::map<std::string, std::promise<std::shared_ptr<Response>>>
+      m_pendingRequests;
+  std::deque<std::shared_ptr<Message>> m_writeQueue;
   std::atomic<bool> m_isConnect = false;
+  std::atomic<bool> m_exit = false;
+
+  // IV Services Controller/MessageFactory/Processing
+  std::map<std::string, std::shared_ptr<Controller>> m_controllers;
+  MessageFactory messageFactory;
+  ProcessingRequests processingRequests;
+
+  // V Write/Reconnect Thread Variables
   std::mutex m_reconnectMutex;
   std::condition_variable m_reconnectCondition;
-  std::atomic<bool> m_exit = false;
   std::thread m_writeThread;
   std::mutex m_writeMutex;
   std::condition_variable m_writeCondition;
@@ -106,6 +116,5 @@ class Session : public std::enable_shared_from_this<Session> {
   bool isConnected();
 
   void onShutdown();
-
 };
 #endif  // CPP_BASE_LIBRARY_SESSION_H

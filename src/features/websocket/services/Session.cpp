@@ -22,16 +22,18 @@ Session::Session(boost::asio::ip::tcp::socket &&socket,
                  std::function<void(const std::string &)> onClose,
                  std::map<std::string, std::shared_ptr<Controller>> controllers)
     : m_id(UUID::generate()),
-      m_websocket(std::move(socket)),
+      m_websocket(std::make_unique<
+                  boost::beast::websocket::stream<boost::beast::tcp_stream>>(
+          std::move(socket))),
       m_onClose(std::move(onClose)),
       m_controllers(std::move(controllers)),
       messageFactory(),
       processingRequests(),
       m_writeThread([&]() { runWrite(); }) {
-  m_websocket.set_option(
+  m_websocket->set_option(
       boost::beast::websocket::stream_base::timeout::suggested(
           boost::beast::role_type::server));
-  m_websocket.set_option(boost::beast::websocket::stream_base::decorator(
+  m_websocket->set_option(boost::beast::websocket::stream_base::decorator(
       [](boost::beast::websocket::response_type &res) {
         res.set(boost::beast::http::field::server,
                 std::string(BOOST_BEAST_VERSION_STRING) + "ws-simple-server");
@@ -59,15 +61,15 @@ Session::Session(boost::asio::io_context &context,
                  std::shared_ptr<WebsocketEntry> websocketEntry)
     : m_id(UUID::generate()),
       m_websocketEntry(std::move(websocketEntry)),
-      m_websocket(boost::asio::make_strand(context)),
+      m_host(m_websocketEntry->getAddress()),
+      m_port(std::to_string(m_websocketEntry->getPort())),
+      m_websocket(std::make_unique<boost::beast::websocket::stream<boost::beast::tcp_stream>>(boost::asio::make_strand(context))),
+      m_resolver(std::make_unique<boost::asio::ip::tcp::resolver>(
+          boost::asio::make_strand(context))),
       m_onClose(std::move(onClose)),
       m_controllers(std::move(controllers)),
       messageFactory(),
       processingRequests(),
-      m_resolver(std::make_unique<boost::asio::ip::tcp::resolver>(
-          boost::asio::make_strand(context))),
-      m_host(m_websocketEntry->getAddress()),
-      m_port(std::to_string(m_websocketEntry->getPort())),
       m_writeThread([&]() { runWrite(); }) {
   for (const auto &[name, controller] : m_controllers) {
     for (const auto &[methodName, func] : controller->getRequests()) {
@@ -85,7 +87,7 @@ Session::~Session() {
     LOG_TRACE("set m_exit to true");
     m_writeCondition.notify_all();
   }
-  m_websocket.next_layer().cancel();
+  m_websocket->next_layer().cancel();
   LOG_TRACE("informs all conditions reconnect and write");
   m_writeThread.join();
   LOG_TRACE("finished delete of Session");
@@ -96,10 +98,10 @@ void Session::runWrite() {
       std::unique_lock lock(m_writeMutex);
       auto time = std::chrono::steady_clock::now() + m_writeInterval;
       m_writeCondition.wait_until(lock, time, [&] {
-        return m_exit || (!m_writeQueue.empty() && m_websocket.is_open());
+        return m_exit || (!m_writeQueue.empty() && m_websocket->is_open());
       });
     }
-    if (m_exit && !m_websocket.is_open()) {
+    if (m_exit && !m_websocket->is_open()) {
       return;
     }
     if (m_exit && m_writeQueue.empty()) {
@@ -108,7 +110,7 @@ void Session::runWrite() {
     if (m_writeQueue.empty()) {
       continue;
     }
-    if (!m_websocket.is_open()) {
+    if (!m_websocket->is_open()) {
       continue;
     }
     onWrite();
@@ -121,16 +123,16 @@ void Session::onResolve(boost::beast::error_code ec,
   }
 
   // Set the timeout for the operation
-  boost::beast::get_lowest_layer(m_websocket)
+  boost::beast::get_lowest_layer(*m_websocket)
       .expires_after(std::chrono::seconds(30));
   // Make the connection on the IP address we get from a lookup
-  boost::beast::get_lowest_layer(m_websocket)
+  boost::beast::get_lowest_layer(*m_websocket)
       .async_connect(results, boost::beast::bind_front_handler(
                                   &Session::onConnect, shared_from_this()));
 }
 void Session::run() {
   if (m_websocketEntry == nullptr) {
-    m_websocket.async_accept(boost::beast::bind_front_handler(
+    m_websocket->async_accept(boost::beast::bind_front_handler(
         &Session::onAccept, shared_from_this()));
   } else {
     // Look up the domain name
@@ -140,7 +142,7 @@ void Session::run() {
   }
 }
 void Session::doRead() {
-  m_websocket.async_read(
+  m_websocket->async_read(
       m_readBuffer,
       boost::beast::bind_front_handler(&Session::onRead, shared_from_this()));
 }
@@ -171,15 +173,15 @@ void Session::onConnect(
 
   // Turn off the timeout on the tcp_stream, because
   // the websocket stream has its own timeout system.
-  boost::beast::get_lowest_layer(m_websocket).expires_never();
+  boost::beast::get_lowest_layer(*m_websocket).expires_never();
 
   // Set suggested timeout settings for the websocket
-  m_websocket.set_option(
+  m_websocket->set_option(
       boost::beast::websocket::stream_base::timeout::suggested(
           boost::beast::role_type::client));
 
   // Set a decorator to change the User-Agent of the handshake
-  m_websocket.set_option(boost::beast::websocket::stream_base::decorator(
+  m_websocket->set_option(boost::beast::websocket::stream_base::decorator(
       [](boost::beast::websocket::request_type &req) {
         req.set(boost::beast::http::field::user_agent,
                 std::string(BOOST_BEAST_VERSION_STRING) +
@@ -195,7 +197,7 @@ void Session::onConnect(
       m_websocketEntry->getAddress() + ":" + std::to_string(ep.port());
 
   // Perform the websocket handshake
-  m_websocket.async_handshake(host, "/",
+  m_websocket->async_handshake(host, "/",
                               boost::beast::bind_front_handler(
                                   &Session::onHandshake, shared_from_this()));
   m_isConnect = true;
@@ -210,13 +212,13 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
     doReconnect();
     return;
   }
-  if (m_websocket.got_text()) {
+  if (m_websocket->got_text()) {
     auto data = static_cast<const char *>(m_readBuffer.cdata().data());
     std::string textBuffer;
     textBuffer.assign(data, data + m_readBuffer.size());
     auto packet = std::make_shared<Packet>(textBuffer);
     onReceive(packet);
-  } else if (m_websocket.got_binary()) {
+  } else if (m_websocket->got_binary()) {
     const uint8_t *temp =
         static_cast<const uint8_t *>(m_readBuffer.cdata().data());
     std::vector<uint8_t> binaryBuffer;
@@ -230,9 +232,7 @@ void Session::onRead(boost::beast::error_code errorCode, size_t length) {
   m_readBuffer.clear();
   doRead();
 }
-bool Session::isClient() {
-  return m_websocketEntry != nullptr;
-}
+bool Session::isClient() { return m_websocketEntry != nullptr; }
 void Session::doReconnect() {
   if (!isClient()) {
     // no reconnect in case of server
@@ -355,11 +355,11 @@ void Session::onWrite() {
     m_writeQueue.pop_front();
   }
   writer.EndArray();
-  m_websocket.text(true);
+  m_websocket->text(true);
   auto handler =
       boost::beast::bind_front_handler(&Session::onWrite, shared_from_this());
   std::string serialized = stringBuffer.GetString();
-  m_websocket.write(boost::asio::buffer(serialized));
+  m_websocket->write(boost::asio::buffer(serialized));
   LOG_INFO("send batch of {} messages", i);
 }
 void Session::fail(boost::beast::error_code errorCode,
