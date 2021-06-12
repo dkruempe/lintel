@@ -2,6 +2,8 @@
 #define CPP_BASE_LIBRARY_SESSION_H
 
 #include <boost/beast.hpp>
+#include <boost/beast/ssl.hpp>
+#include <boost/beast/websocket/ssl.hpp>
 #include <deque>
 #include <functional>
 #include <future>
@@ -31,6 +33,9 @@ class Session : public std::enable_shared_from_this<Session> {
   // II Websocket Variables
   std::unique_ptr<boost::beast::websocket::stream<boost::beast::tcp_stream>>
       m_websocket;
+  std::unique_ptr<boost::beast::websocket::stream<
+      boost::beast::ssl_stream<boost::beast::tcp_stream>>>
+      m_sslWebsocket;
   boost::beast::flat_buffer m_readBuffer;
   std::unique_ptr<boost::asio::ip::tcp::resolver> m_resolver = nullptr;
 
@@ -94,10 +99,25 @@ class Session : public std::enable_shared_from_this<Session> {
   std::vector<std::future<std::shared_ptr<Response>>> send(
       const std::vector<std::shared_ptr<Message>> &messages);
 
+  // SSL Server constructor
+  Session(boost::asio::ip::tcp::socket &&socket,
+          boost::asio::ssl::context &sslContext,
+          std::function<void(const std::string &)> onClose,
+          std::map<std::string, std::shared_ptr<Controller>> controllers);
+
+  // Plain Server constructor
   Session(boost::asio::ip::tcp::socket &&socket,
           std::function<void(const std::string &)> onClose,
           std::map<std::string, std::shared_ptr<Controller>> controllers);
 
+  // SSL Client constructor
+  Session(boost::asio::io_context &context,
+          boost::asio::ssl::context &sslContext,
+          std::function<void(const std::string &)> onClose,
+          std::map<std::string, std::shared_ptr<Controller>> controllers,
+          std::shared_ptr<WebsocketEntry> connectionEntry);
+
+  // Plain Client constructor
   Session(boost::asio::io_context &context,
           std::function<void(const std::string &)> onClose,
           std::map<std::string, std::shared_ptr<Controller>> controllers,
