@@ -9,11 +9,18 @@
 
 class CryptionComamndLineComponent : public CommandLineComponent {
  private:
-  enum COMMAND { COMMAND_ENCRYPT, COMMAND_DECRYPT, COMMAND_UNDEFINED };
-  std::map<std::string_view, COMMAND> m_commands = {{"encrypt", COMMAND_ENCRYPT},
-                                                    {"enc", COMMAND_ENCRYPT},
-                                                    {"decrypt", COMMAND_DECRYPT},
-                                                    {"dec", COMMAND_DECRYPT}};
+  enum COMMAND {
+    COMMAND_ENCRYPT,
+    COMMAND_DECRYPT,
+    COMMAND_UNDEFINED,
+    COMMAND_MESSAGE
+  };
+  std::map<std::string_view, COMMAND> m_commands = {
+      {"encrypt", COMMAND_ENCRYPT},
+      {"enc", COMMAND_ENCRYPT},
+      {"decrypt", COMMAND_DECRYPT},
+      {"dec", COMMAND_DECRYPT},
+      {"msg", COMMAND_MESSAGE}};
   static constexpr std::string_view m_name = "Cryption";
   static constexpr std::string_view m_alias = "Crypt";
   COMMAND m_currentCommand = COMMAND_UNDEFINED;

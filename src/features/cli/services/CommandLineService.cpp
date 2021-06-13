@@ -6,10 +6,23 @@
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
+#include "base_library/features/websocket/configuration/WebsocketComponent.h"
+#include "base_library/features/websocket/services/Client.h"
 
 CommandLineService::CommandLineService(
-    const std::vector<std::shared_ptr<CommandLineComponent>> &components)
-    : m_menu(components), m_thread([&]() { run(); }) {}
+    const std::vector<std::shared_ptr<CommandLineComponent>> &components,
+    const std::shared_ptr<Configuration> &configuration,
+    const std::vector<std::shared_ptr<Controller>> &controllers)
+    : m_menu(components),
+      m_thread([&]() { run(); }),
+      m_client(std::make_shared<Client>(
+          std::static_pointer_cast<WebsocketEntry>(
+              configuration->configurationOf<WebsocketComponent>().at(1)),
+          controllers)) {
+  for (const auto &component : components) {
+    component->setClient(m_client);
+  }
+}
 
 CommandLineService::~CommandLineService() {
   m_running.store(false);

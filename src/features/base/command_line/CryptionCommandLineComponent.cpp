@@ -3,7 +3,11 @@
 #include <fmt/color.h>
 #include <fmt/core.h>
 
+#include <future>
+
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/features/websocket/controller/EchoRequest.h"
+#include "base_library/features/websocket/controller/EchoResponse.h"
 
 CryptionComamndLineComponent::CryptionComamndLineComponent()
     : CommandLineComponent(m_name, m_alias) {}
@@ -32,6 +36,15 @@ void CryptionComamndLineComponent::onCommand(const std::string &input) {
     case COMMAND_DECRYPT:
       fmt::print("Decryption of: \n");
       m_currentCommand = COMMAND_DECRYPT;
+      break;
+    case COMMAND_MESSAGE:
+      for (int i = 0; i < 220; i++) {
+        std::shared_ptr<EchoRequest> request = std::make_shared<EchoRequest>();
+        std::future<std::shared_ptr<Response>> response =
+            getClient()->send(request);
+      }
+      fmt::print("Send messages to websocket Service \n");
+      m_currentCommand = COMMAND_UNDEFINED;
       break;
     case COMMAND_UNDEFINED:
       fmt::print("Wrong command \n");
@@ -87,6 +100,12 @@ void CryptionComamndLineComponent::onHelp() {
         fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
                    "COMMAND_DECRYPT: decrypt given strings");
         print(aliases);
+        break;
+      case COMMAND_MESSAGE:
+        fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
+                   "COMMAND_MESSAGE: send test messages to websocket");
+        print(aliases);
+        break;
         break;
       default:
         LOG_ERROR("undefined state");

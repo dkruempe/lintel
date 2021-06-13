@@ -1,12 +1,16 @@
 #ifndef CPP_BASE_LIBRARY_COMMANDLINECOMPONENT_H
 #define CPP_BASE_LIBRARY_COMMANDLINECOMPONENT_H
 
+#include <memory>
 #include <string>
+
+#include "base_library/features/websocket/services/Client.h"
 
 class CommandLineComponent {
  private:
   std::string_view m_name;
   std::string_view m_alias;
+  std::shared_ptr<Client> m_client;
 
  public:
   CommandLineComponent(std::string_view name, std::string_view alias);
@@ -16,6 +20,10 @@ class CommandLineComponent {
   std::string_view getName();
 
   std::string_view getAlias();
+
+  const std::shared_ptr<Client> &getClient();
+
+  void setClient(const std::shared_ptr<Client> &client);
 
   virtual void onCommand(const std::string &input) = 0;
 
