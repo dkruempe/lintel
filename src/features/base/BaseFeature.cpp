@@ -1,6 +1,7 @@
 #include "base_library/features/base/BaseFeature.h"
 
 #include "base_library/core/persistence/ConnectionConfigurations.h"
+#include "base_library/features/base/command_line/CryptionCommandLineComponent.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
 #include "base_library/features/base/services/ExecutorService.h"
@@ -25,4 +26,8 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .singleInstance();
   builder.registerType<Configuration>().singleInstance();
   builder.registerType<ConnectionConfigurations>().singleInstance();
+  builder.registerType<CryptionComamndLineComponent>()
+      .as<CommandLineComponent>()
+      .asSelf()
+      .singleInstance();
 }
