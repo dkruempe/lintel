@@ -97,7 +97,7 @@ void CommandLineService::onPrompt() {
   // timestamp MENU %
   std::string_view currentMenu =
       m_menu.currentOf() == nullptr ? "MAIN" : m_menu.currentOf()->getName();
-  fmt::print("{} %", currentMenu);
+  fmt::print("{} % ", currentMenu);
 }
 void CommandLineService::run() {
   onStart();
