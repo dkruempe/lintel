@@ -4,9 +4,11 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <mutex>
 
 class ProcessingRequests {
  private:
+  std::mutex m_processingRequestsMutex;
   std::map<std::string, std::string> m_processingRequests;  // id, method
 
  public:

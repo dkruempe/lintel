@@ -106,7 +106,6 @@ void CryptionCliComponent::onHelp() {
                    "COMMAND_MESSAGE: send test messages to websocket");
         print(aliases);
         break;
-        break;
       default:
         LOG_ERROR("undefined state");
         break;

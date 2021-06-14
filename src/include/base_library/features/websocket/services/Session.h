@@ -41,6 +41,7 @@ class Session : public std::enable_shared_from_this<Session> {
 
   // III others
   std::function<void(const std::string &)> m_onClose;
+  std::mutex m_pendingRequestsMutex;
   std::map<std::string, std::promise<std::shared_ptr<Response>>>
       m_pendingRequests;
   std::deque<std::shared_ptr<Message>> m_writeQueue;

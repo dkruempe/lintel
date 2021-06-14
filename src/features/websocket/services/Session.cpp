@@ -61,7 +61,7 @@ Session::Session(boost::asio::ip::tcp::socket &&socket,
     : m_id(UUID::generate()),
       m_websocket(nullptr),
       m_sslWebsocket(std::make_unique<boost::beast::websocket::stream<
-          boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
+                         boost::beast::ssl_stream<boost::beast::tcp_stream>>>(
           std::move(socket), sslContext)),
       m_onClose(std::move(onClose)),
       m_controllers(std::move(controllers)),
@@ -170,18 +170,18 @@ void Session::runWrite() {
       m_writeCondition.wait_until(lock, time, [&] {
         return m_exit || (!m_writeQueue.empty() && m_websocket->is_open());
       });
-    }
-    if (m_exit && !m_websocket->is_open()) {
-      return;
-    }
-    if (m_exit && m_writeQueue.empty()) {
-      return;
-    }
-    if (m_writeQueue.empty()) {
-      continue;
-    }
-    if (!m_websocket->is_open()) {
-      continue;
+      if (m_exit && !m_websocket->is_open()) {
+        return;
+      }
+      if (m_exit && m_writeQueue.empty()) {
+        return;
+      }
+      if (m_writeQueue.empty()) {
+        continue;
+      }
+      if (!m_websocket->is_open()) {
+        continue;
+      }
     }
     onWrite();
   }
@@ -407,16 +407,19 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
           case Message::RESPONSE: {
             std::shared_ptr<Response> response =
                 std::static_pointer_cast<Response>(item);
-            try {
-              m_pendingRequests.at(response->getId()).set_value(response);
-              m_pendingRequests.erase(response->getId());
-            } catch (std::out_of_range &e) {
+            const std::string id = response->getId();
+            std::lock_guard<std::mutex> locker(m_pendingRequestsMutex);
+            auto found = m_pendingRequests.find(id);
+            if (found == m_pendingRequests.end()) {
               LOG_ERROR("id not found {} in pending requests",
                         response->getId());
               send(std::make_shared<ErrorMessage>(
                   ErrorCode::METHOD_NOT_FOUND,
                   "no matching waiting response for request found",
                   response->getId()));
+            } else {
+              found->second.set_value(response);
+              m_pendingRequests.erase(found->first);
             }
             break;
           }
@@ -443,22 +446,27 @@ void Session::onReceive(const std::shared_ptr<Packet> &packet) {
   }
 }
 void Session::onWrite() {
+  std::lock_guard<std::mutex> locker(m_writeMutex);
   if (m_writeQueue.empty()) {
     return;
   }
   rapidjson::StringBuffer stringBuffer;
   rapidjson::Writer<rapidjson::StringBuffer> writer(stringBuffer);
-  std::size_t i;
+  std::size_t i = 0;
   writer.StartArray();
-  for (i = 0; i < m_batchSize && !m_writeQueue.empty(); i++) {
+  while (!m_writeQueue.empty()) {
+    if (i >= m_batchSize) {
+      break;
+    }
     auto &message = m_writeQueue.front();
     message->serialize(writer);
     m_writeQueue.pop_front();
+    i++;
   }
   writer.EndArray();
   m_websocket->text(true);
-  auto handler =
-      boost::beast::bind_front_handler(&Session::onWrite, shared_from_this());
+  /*auto handler =
+      boost::beast::bind_front_handler(&Session::onWrite, shared_from_this());*/
   std::string serialized = stringBuffer.GetString();
   m_websocket->write(boost::asio::buffer(serialized));
   LOG_INFO("send batch of {} messages", i);
@@ -482,7 +490,8 @@ void Session::send(const std::shared_ptr<Notification> &notification) {
 std::future<std::shared_ptr<Response>> Session::send(
     const std::shared_ptr<Request> &request) {
   std::vector<std::shared_ptr<Message>> messages{request};
-  return std::move(send(messages)[0]);
+  auto responses = send(messages);
+  return std::move(responses[0]);
 }
 void Session::send(const std::shared_ptr<Response> &response) {
   std::vector<std::shared_ptr<Message>> messages{response};
@@ -502,27 +511,31 @@ std::vector<std::future<std::shared_ptr<Response>>> Session::send(
         std::string id = request->getId();
         std::pair<std::string, std::promise<std::shared_ptr<Response>>> pair{
             std::move(id), std::move(promise)};
+        std::lock_guard<std::mutex> locker(m_pendingRequestsMutex);
         m_pendingRequests.insert(std::move(pair));
         processingRequests.waitingFor(request->getMethod(), request->getId());
-        responses.push_back(
-            m_pendingRequests.at(request->getId()).get_future());
+        auto found = m_pendingRequests.find(request->getId());
+        if (found != m_pendingRequests.end()) {
+          responses.push_back(found->second.get_future());
+        }
       }
       case Message::RESPONSE:
       case Message::NOTIFICATION: {
+        std::lock_guard<std::mutex> locker(m_writeMutex);
         if (m_writeQueue.size() >= m_bufferLimit) {
           LOG_ERROR("{} exceeds buffer limit {}", message->serialize());
           continue;
         }
-        {
-          std::lock_guard<std::mutex> locker(m_writeMutex);
-          m_writeQueue.push_back(message);
-        }
+        m_writeQueue.push_back(message);
         break;
       }
     }
   }
-  if (!m_writeQueue.empty()) {
-    m_writeCondition.notify_one();
+  {
+    std::lock_guard<std::mutex> locker(m_writeMutex);
+    if (!m_writeQueue.empty()) {
+      m_writeCondition.notify_one();
+    }
   }
   return responses;
 }
