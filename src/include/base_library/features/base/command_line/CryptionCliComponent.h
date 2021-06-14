@@ -1,5 +1,5 @@
-#ifndef CPP_BASE_LIBRARY_CRYPTIONCOMMANDLINECOMPONENT_H
-#define CPP_BASE_LIBRARY_CRYPTIONCOMMANDLINECOMPONENT_H
+#ifndef CPP_BASE_LIBRARY_CRYPTIONCLICOMPONENT_H
+#define CPP_BASE_LIBRARY_CRYPTIONCLICOMPONENT_H
 
 #include <map>
 #include <string>
@@ -7,7 +7,7 @@
 #include "base_library/features/base/configuration/Cryption.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 
-class CryptionComamndLineComponent : public CommandLineComponent {
+class CryptionCliComponent : public CommandLineComponent {
  private:
   enum COMMAND {
     COMMAND_ENCRYPT,
@@ -27,7 +27,7 @@ class CryptionComamndLineComponent : public CommandLineComponent {
   Cryption m_cryption;
 
  public:
-  CryptionComamndLineComponent();
+  CryptionCliComponent();
 
   void onCommand(const std::string &input) override;
 
@@ -40,4 +40,4 @@ class CryptionComamndLineComponent : public CommandLineComponent {
   bool onExit() override;
 };
 
-#endif  // CPP_BASE_LIBRARY_CRYPTIONCOMMANDLINECOMPONENT_H
+#endif  // CPP_BASE_LIBRARY_CRYPTIONCLICOMPONENT_H

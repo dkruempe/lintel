@@ -1,4 +1,4 @@
-#include "base_library/features/base/command_line/CryptionCommandLineComponent.h"
+#include "base_library/features/base/command_line/CryptionCliComponent.h"
 
 #include <fmt/color.h>
 #include <fmt/core.h>
@@ -9,10 +9,10 @@
 #include "base_library/features/websocket/controller/EchoRequest.h"
 #include "base_library/features/websocket/controller/EchoResponse.h"
 
-CryptionComamndLineComponent::CryptionComamndLineComponent()
+CryptionCliComponent::CryptionCliComponent()
     : CommandLineComponent(m_name, m_alias) {}
 
-void CryptionComamndLineComponent::onCommand(const std::string &input) {
+void CryptionCliComponent::onCommand(const std::string &input) {
   switch (m_currentCommand) {
     case COMMAND_ENCRYPT:
       fmt::print("{}\n", m_cryption.encryption(input));
@@ -52,15 +52,15 @@ void CryptionComamndLineComponent::onCommand(const std::string &input) {
       break;
   }
 }
-void CryptionComamndLineComponent::onShowMenu() {
+void CryptionCliComponent::onShowMenu() {
   fmt::print("No submenu available!");
 }
 
-bool CryptionComamndLineComponent::onMenu(const std::string &component) {
+bool CryptionCliComponent::onMenu(const std::string &component) {
   return true;
 }
 
-void CryptionComamndLineComponent::onHelp() {
+void CryptionCliComponent::onHelp() {
   // group commands map by command enum
   std::map<COMMAND, std::vector<std::string_view>> map;
   for (auto &iter : m_commands) {
@@ -114,4 +114,4 @@ void CryptionComamndLineComponent::onHelp() {
   }
 }
 
-bool CryptionComamndLineComponent::onExit() { return true; }
+bool CryptionCliComponent::onExit() { return true; }
