@@ -7,6 +7,8 @@
 
 #include <ostream>
 #include <string>
+#include <functional>
+#include <memory>
 
 class Message {
  public:
