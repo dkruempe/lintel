@@ -1,12 +1,6 @@
 #include <base_library/core/services/LoggerService.h>
 #include <base_library/core/services/SignalService.h>
-#include <base_library/features/base/configuration/Configuration.h>
 #include <base_library/features/base/configuration/Cryption.h>
-#include <base_library/features/websocket/configuration/WebsocketComponent.h>
-#include <base_library/features/websocket/controller/EchoController.h>
-#include <base_library/features/websocket/controller/EchoRequest.h>
-#include <base_library/features/websocket/controller/EchoResponse.h>
-#include <base_library/features/websocket/services/Client.h>
 #include <fmt/color.h>
 #include <fmt/core.h>
 
@@ -325,24 +319,6 @@ class CommandLineApplication {
 
 int main(int argc, char *argv[]) {
   DECLARE_LOGGER(argv[0]);
-  std::shared_ptr<Component> websocketComponent =
-      std::make_shared<WebsocketComponent>();
-  std::vector<std::shared_ptr<Component>> components{websocketComponent};
-  /* Get Websocket Configuration for Client */
-  std::shared_ptr<Configuration> configuration =
-      std::make_shared<Configuration>(components);
-  // TODO replace hack with feature implementation of cli and provider for
-  // getting correct Websocket Configuration
-  std::shared_ptr<WebsocketEntry> websocketEntry =
-      std::static_pointer_cast<WebsocketEntry>(
-          configuration->configurationOf<WebsocketComponent>().at(1));
-  std::shared_ptr<EchoController> echoController =
-      std::make_shared<EchoController>();
-  Client client(websocketEntry, {echoController});
-  for (int i = 0; i < 220; i++) {
-    std::shared_ptr<EchoRequest> request = std::make_shared<EchoRequest>();
-    std::future<std::shared_ptr<Response>> response = client.send(request);
-  }
   CommandLineApplication cli({std::make_shared<ConfigurationComponent>()});
   SignalService::registerHooks({SIGINT, SIGABRT, SIGTERM});
   SignalService::waitForUserInterrupt();

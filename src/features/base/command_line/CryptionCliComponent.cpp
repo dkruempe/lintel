@@ -3,11 +3,7 @@
 #include <fmt/color.h>
 #include <fmt/core.h>
 
-#include <future>
-
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/features/websocket/controller/EchoRequest.h"
-#include "base_library/features/websocket/controller/EchoResponse.h"
 
 CryptionCliComponent::CryptionCliComponent()
     : CommandLineComponent(m_name, m_alias) {}
@@ -38,13 +34,6 @@ void CryptionCliComponent::onCommand(const std::string &input) {
       m_currentCommand = COMMAND_DECRYPT;
       break;
     case COMMAND_MESSAGE:
-      for (int i = 0; i < 220; i++) {
-        std::shared_ptr<EchoRequest> request = std::make_shared<EchoRequest>();
-        std::future<std::shared_ptr<Response>> response =
-            getClient()->send(request);
-      }
-      fmt::print("Send messages to websocket Service \n");
-      m_currentCommand = COMMAND_UNDEFINED;
       break;
     case COMMAND_UNDEFINED:
       fmt::print("Wrong command \n");
@@ -52,13 +41,9 @@ void CryptionCliComponent::onCommand(const std::string &input) {
       break;
   }
 }
-void CryptionCliComponent::onShowMenu() {
-  fmt::print("No submenu available!");
-}
+void CryptionCliComponent::onShowMenu() { fmt::print("No submenu available!"); }
 
-bool CryptionCliComponent::onMenu(const std::string &component) {
-  return true;
-}
+bool CryptionCliComponent::onMenu(const std::string &component) { return true; }
 
 void CryptionCliComponent::onHelp() {
   // group commands map by command enum

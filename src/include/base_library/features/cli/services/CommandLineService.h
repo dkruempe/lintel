@@ -9,7 +9,6 @@
 
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
-#include "base_library/features/websocket/services/Controller.h"
 
 class CommandLineComponent;
 class Client;
@@ -19,8 +18,6 @@ class CommandLineService {
   AbstractCommandLineMenu m_menu;
   std::thread m_thread;
   std::atomic<bool> m_running = true;
-  std::shared_ptr<Configuration> m_configuration;
-  std::shared_ptr<Client> m_client;
 
   enum COMMAND { COMMAND_HELP, COMMAND_MENU, COMMAND_EXIT };
 
@@ -41,8 +38,7 @@ class CommandLineService {
  public:
   explicit CommandLineService(
       const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-      const std::shared_ptr<Configuration> &configuration,
-      const std::vector<std::shared_ptr<Controller>> &controllers);
+      const std::shared_ptr<Configuration> &configuration);
   ~CommandLineService();
 };
 
