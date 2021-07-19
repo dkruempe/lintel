@@ -6,7 +6,6 @@
 
 class ServerProvider {
  private:
-  static constexpr std::string_view m_serverConfigurationName = "MAIN";
   std::shared_ptr<Server> m_server;
 
   static std::shared_ptr<Server> build(
