@@ -9,8 +9,15 @@
 
 CommandLineService::CommandLineService(
     const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-    const std::shared_ptr<Configuration> &configuration)
-    : m_menu(components), m_thread([&]() { run(); }) {}
+    const std::shared_ptr<Configuration> &configuration,
+    const std::shared_ptr<ClientProvider> &clientProvider)
+    : m_menu(components),
+      m_thread([&]() { run(); }),
+      m_client(clientProvider->provide()) {
+  for (auto &component : components) {
+    component->setClient(m_client);
+  }
+}
 
 CommandLineService::~CommandLineService() {
   m_running.store(false);

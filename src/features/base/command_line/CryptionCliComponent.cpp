@@ -34,6 +34,8 @@ void CryptionCliComponent::onCommand(const std::string &input) {
       m_currentCommand = COMMAND_DECRYPT;
       break;
     case COMMAND_MESSAGE:
+      fmt::print("message -> {}\n", m_client->get("/hello").value().body);
+      m_currentCommand = COMMAND_UNDEFINED;
       break;
     case COMMAND_UNDEFINED:
       fmt::print("Wrong command \n");
