@@ -5,10 +5,9 @@
                     type="PostgreSQL"/>
         <Connection name="KPI" database_name="keyValueStore" type="PostgreSQL"/>
     </Connections>
-    <Websockets>
-        <Websocket name="DEFAULT" type="Server" address="0.0.0.0" port="4711"/>
-        <Websocket name="CLI" type="Client" address="localhost" port="4711"/>
-    </Websockets>
+    <HttpHost>
+        <Server host="0.0.0.0" port="8080"/>
+    </HttpHost>
     <Properties>
         <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService"
                   instance="__DEFAULT"/>
