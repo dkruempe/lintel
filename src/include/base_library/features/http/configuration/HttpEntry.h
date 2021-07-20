@@ -4,9 +4,9 @@
 #include <memory>
 #include <ostream>
 
+#include "ClientConfiguration.h"
+#include "ServerConfiguration.h"
 #include "base_library/features/base/configuration/Entry.h"
-#include "base_library/features/http/ClientConfiguration.h"
-#include "base_library/features/http/ServerConfiguration.h"
 
 class HttpEntry : public Entry {
  private:

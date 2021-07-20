@@ -1,4 +1,4 @@
-#include "base_library/features/http/Client.h"
+#include "base_library/features/http/service/Client.h"
 
 std::shared_ptr<httplib::SSLClient>
 Client::buildSslClient(const ClientConfiguration &clientConfiguration) {

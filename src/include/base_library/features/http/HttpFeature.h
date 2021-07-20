@@ -2,7 +2,7 @@
 #define CPP_BASE_LIBRARY_HTTP_FEATURE_H
 
 #include "base_library/features/Feature.h"
-#include "base_library/features/http/ServerProvider.h"
+#include "base_library/features/http/provider/ServerProvider.h"
 
 class HttpFeature : public Feature {
  private:

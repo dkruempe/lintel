@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "base_library/features/http/Client.h"
+#include "base_library/features/http/service/Client.h"
 
 class CommandLineComponent {
  private:

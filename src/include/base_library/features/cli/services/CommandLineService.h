@@ -9,7 +9,7 @@
 
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
-#include "base_library/features/http/ClientProvider.h"
+#include "base_library/features/http/provider/ClientProvider.h"
 
 class CommandLineComponent;
 

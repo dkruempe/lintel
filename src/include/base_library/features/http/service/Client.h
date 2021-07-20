@@ -1,10 +1,12 @@
 #ifndef HTTP_LIBRARY_CLIENT_H
 #define HTTP_LIBRARY_CLIENT_H
 
-#include "base_library/features/http/ClientConfiguration.h"
-#include <filesystem>
 #include <httplib.h>
+
+#include <filesystem>
 #include <string>
+
+#include "base_library/features/http/configuration/ClientConfiguration.h"
 
 class Client {
 private:

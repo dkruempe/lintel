@@ -1,13 +1,14 @@
 #ifndef HTTP_LIBRARY_SERVER_H
 #define HTTP_LIBRARY_SERVER_H
 
-#include <filesystem>
 #include <httplib.h>
+
+#include <filesystem>
 #include <memory>
 #include <thread>
 
-#include "base_library/features/http/Controller.h"
-#include "base_library/features/http/ServerConfiguration.h"
+#include "Controller.h"
+#include "base_library/features/http/configuration/ServerConfiguration.h"
 
 class Server {
 private:

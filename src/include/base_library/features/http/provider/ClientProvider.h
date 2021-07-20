@@ -2,7 +2,7 @@
 #define CPP_BASE_LIBRARY_CLIENTPROVIDER_H
 
 #include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/http/Client.h"
+#include "base_library/features/http/service/Client.h"
 
 class ClientProvider {
  private:

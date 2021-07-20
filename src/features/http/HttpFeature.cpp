@@ -1,9 +1,9 @@
 #include "base_library/features/http/HttpFeature.h"
 
-#include "base_library/features/http/ClientProvider.h"
-#include "base_library/features/http/Controller.h"
 #include "base_library/features/http/ExampleController.h"
 #include "base_library/features/http/configuration/HttpComponent.h"
+#include "base_library/features/http/provider/ClientProvider.h"
+#include "base_library/features/http/service/Controller.h"
 
 HttpFeature::HttpFeature() : Feature(type_name<HttpFeature>()) {}
 

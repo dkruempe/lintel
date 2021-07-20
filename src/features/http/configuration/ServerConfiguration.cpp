@@ -1,4 +1,4 @@
-#include "base_library/features/http/ServerConfiguration.h"
+#include "base_library/features/http/configuration/ServerConfiguration.h"
 ServerConfiguration::ServerConfiguration(
         std::string host, const int32_t port,
         const std::chrono::milliseconds &readTimeOut,

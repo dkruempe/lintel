@@ -2,7 +2,7 @@
 #define CPP_BASE_LIBRARY_SERVERPROVIDER_H
 
 #include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/http/Server.h"
+#include "base_library/features/http/service/Server.h"
 
 class ServerProvider {
  private:

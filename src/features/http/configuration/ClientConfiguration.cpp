@@ -1,4 +1,4 @@
-#include "base_library/features/http/ClientConfiguration.h"
+#include "base_library/features/http/configuration/ClientConfiguration.h"
 
 #include <utility>
 

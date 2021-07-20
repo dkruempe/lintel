@@ -1,4 +1,4 @@
-#include "base_library/features/http/ClientProvider.h"
+#include "base_library/features/http/provider/ClientProvider.h"
 
 #include "base_library/features/http/configuration/HttpComponent.h"
 #include "base_library/features/http/configuration/HttpEntry.h"
