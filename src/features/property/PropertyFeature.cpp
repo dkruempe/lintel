@@ -1,6 +1,7 @@
 #include "base_library/features/property/PropertyFeature.h"
 
 #include "base_library/features/property/configuration/PropertyComponent.h"
+#include "base_library/features/property/controller/PropertyController.h"
 #include "base_library/features/property/repositories/DatabasePropertyRepository.h"
 #include "base_library/features/property/repositories/FilePropertyRepository.h"
 #include "base_library/features/property/strategies/XMLConfigSerializationStrategy.h"
@@ -22,6 +23,10 @@ void PropertyFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .singleInstance();
   builder.registerType<PropertyComponent>()
       .as<Component>()
+      .asSelf()
+      .singleInstance();
+  builder.registerType<PropertyController>()
+      .as<Controller>()
       .asSelf()
       .singleInstance();
 }
