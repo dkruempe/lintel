@@ -8,14 +8,19 @@
 class PropertyRepositoryType {
  public:
   // value is defining priority of property repository type
-  enum Value { DEFAULT = -1, FILE_REPOSITORY = 0, DATABASE_REPOSITORY };
+  enum Value {
+    UNDEFINED = -1,
+    DEFAULT = 0,
+    FILE_REPOSITORY = 1,
+    DATABASE_REPOSITORY
+  };
 
   PropertyRepositoryType() = default;
 
   constexpr PropertyRepositoryType(Value value) : m_value(value) {}
 
   constexpr explicit PropertyRepositoryType(std::string_view enumName)
-      : m_value(magic_enum::enum_cast<Value>(enumName).value_or(DEFAULT)) {}
+      : m_value(magic_enum::enum_cast<Value>(enumName).value_or(UNDEFINED)) {}
 
   operator Value() const { return m_value; }
   explicit operator bool() = delete;

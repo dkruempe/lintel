@@ -1,11 +1,14 @@
 #include "base_library/features/property/controller/PropertyController.h"
+
+#include "base_library/features/property/controller/PropertiesDto.h"
+
 PropertyController::PropertyController(
     std::shared_ptr<PropertyService> propertyService)
     : Controller(), m_propertyService(std::move(propertyService)) {}
 void PropertyController::allPropertiesOfGet(const httplib::Request& request,
                                             httplib::Response& response) {
-  // m_propertyService->allProperties()
-  response.set_content("received request\n", "text/plain");
+  PropertiesDto propertiesDto(m_propertyService->allProperties());
+  response.set_content( propertiesDto.JsonSerializable::serialize() + "\n", "text/plain");
 }
 void PropertyController::allPropertiesOfProcessGet(
     const httplib::Request& request, httplib::Response& response) {

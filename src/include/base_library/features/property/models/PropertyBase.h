@@ -26,13 +26,14 @@ class PropertyBase {
         m_instanceName(std::move(instanceName)),
         m_className(std::move(className)),
         m_processName(std::move(processName)),
-        m_identifier(m_name + "_" + m_instanceName + "_" +
-                         m_className + "_" + m_processName),
+        m_identifier(m_name + "_" + m_instanceName + "_" + m_className + "_" +
+                     m_processName),
         m_runtimeChange(runtimeChange),
         m_description(std::move(description)) {}
 
  public:
   PropertyBase() = delete;
+  virtual ~PropertyBase() = default;
   [[nodiscard]] virtual std::string toString() = 0;
   [[nodiscard]] virtual std::string getType() const = 0;
   [[nodiscard]] const std::string &getName() const { return m_name; }
@@ -53,7 +54,9 @@ class PropertyBase {
   [[nodiscard]] const std::string &getDescription() const {
     return m_description;
   }
-  [[nodiscard]] const std::string &getIdentifier() const { return m_identifier; }
+  [[nodiscard]] const std::string &getIdentifier() const {
+    return m_identifier;
+  }
 
   virtual void setValueString(const std::string &value) = 0;
 
