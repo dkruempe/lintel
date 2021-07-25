@@ -75,11 +75,50 @@ PropertyService::PropertyService(
         getOrCreate(abstractService->getProperties());
       });
 }
-std::vector<std::shared_ptr<PropertyBase>> PropertyService::allProperties() {
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf() {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   std::transform(m_properties.begin(), m_properties.end(),
                  std::back_inserter(propertiesVector),
                  [](const auto &iter) { return iter.second; });
+  return propertiesVector;
+}
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::string &processName) {
+  std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+  for (const auto &property : m_properties) {
+    if (property.second->getProcessName() != processName) {
+      continue;
+    }
+    propertiesVector.push_back(property.second);
+  }
+  return propertiesVector;
+}
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::string &processName, const std::string &className) {
+  std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+  for (const auto &property : m_properties) {
+    if (property.second->getProcessName() != processName) {
+      continue;
+    }
+    if (property.second->getClassName() != className) {
+      continue;
+    }
+    propertiesVector.push_back(property.second);
+  }
+  return propertiesVector;
+}
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::string &processName, const std::string &className, const std::string &instanceName) {
+  std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+  for (const auto &property : m_properties) {
+    if (property.second->getProcessName() != processName) {
+      continue;
+    }
+    if (property.second->getClassName() != className) {
+      continue;
+    }
+    if (property.second->getInstanceName() != instanceName) {
+      continue;
+    }
+    propertiesVector.push_back(property.second);
+  }
   return propertiesVector;
 }
 std::string PropertyService::createIdentifier(const std::string &name,

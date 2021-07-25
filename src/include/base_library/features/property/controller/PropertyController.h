@@ -8,15 +8,13 @@ class PropertyController : public Controller {
  private:
   std::shared_ptr<PropertyService> m_propertyService;
   ADD_HANDLER_METHOD("/properties", Get, allPropertiesOf);
-  ADD_HANDLER_METHOD(R"(/properties/(.*))", Get, allPropertiesOfProcess);
-    ADD_HANDLER_METHOD(R"(/properties/(.*)/(.*))", Get,
-                       allPropertiesOfProcessAndClass);
-    ADD_HANDLER_METHOD(R"(/properties/(.*)/(.*)/(.*))",
-    Get,
-                       allPropertiesOfProcessClassAndInstance);
-    ADD_HANDLER_METHOD(
-        R"(/properties/(.*)/(.*)/(.*)/(.*))",
-        Get, allPropertiesOfProcessClassInstanceAndName);
+  ADD_HANDLER_METHOD(R"(/properties/(\w+))", Get, allPropertiesOfProcess);
+  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+))", Get,
+                     allPropertiesOfProcessAndClass);
+  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+))", Get,
+                     allPropertiesOfProcessClassAndInstance);
+  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+)/(\w+))", Get,
+                     allPropertiesOfProcessClassInstanceAndName);
 
  public:
   explicit PropertyController(std::shared_ptr<PropertyService> propertyService);

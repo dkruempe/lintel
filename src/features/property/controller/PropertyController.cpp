@@ -7,30 +7,33 @@ PropertyController::PropertyController(
     : Controller(), m_propertyService(std::move(propertyService)) {}
 void PropertyController::allPropertiesOfGet(const httplib::Request& request,
                                             httplib::Response& response) {
-  PropertiesDto propertiesDto(m_propertyService->allProperties());
-  response.set_content( propertiesDto.JsonSerializable::serialize() + "\n", "text/plain");
+  PropertiesDto propertiesDto(m_propertyService->allOf());
+  response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
+                       "text/plain");
 }
 void PropertyController::allPropertiesOfProcessGet(
     const httplib::Request& request, httplib::Response& response) {
   const std::string processName = request.matches[1];
-  response.set_content("received request with param: " + processName + "\n",
+  PropertiesDto propertiesDto(m_propertyService->allOf(processName));
+  response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
                        "text/plain");
 }
 void PropertyController::allPropertiesOfProcessAndClassGet(
     const httplib::Request& request, httplib::Response& response) {
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
-  response.set_content(
-      "received request with param: " + processName + ", " + className + "\n",
-      "text/plain");
+  PropertiesDto propertiesDto(m_propertyService->allOf(processName, className));
+  response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
+                       "text/plain");
 }
 void PropertyController::allPropertiesOfProcessClassAndInstanceGet(
     const httplib::Request& request, httplib::Response& response) {
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
-  response.set_content("received request with param: " + processName + ", " +
-                           className + ", " + instanceName + "\n",
+  PropertiesDto propertiesDto(
+      m_propertyService->allOf(processName, className, instanceName));
+  response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
                        "text/plain");
 }
 void PropertyController::allPropertiesOfProcessClassInstanceAndNameGet(
@@ -39,8 +42,13 @@ void PropertyController::allPropertiesOfProcessClassInstanceAndNameGet(
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
   const std::string propertyName = request.matches[4];
-  response.set_content("received request with param: " + processName + ", " +
-                           className + ", " + instanceName + ", " +
-                           propertyName + "\n",
-                       "text/plain");
+  auto property = m_propertyService->get(propertyName, instanceName, className,
+                                         processName);
+  if (property != nullptr) {
+    PropertyDto propertyDto(property);
+    response.set_content(propertyDto.JsonSerializable::serialize() + "\n",
+                         "text/plain");
+  } else {
+    response.set_content("no property found \n", "text/plain");
+  }
 }

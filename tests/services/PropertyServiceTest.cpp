@@ -45,7 +45,7 @@ TEST_CASE("test example service with properties") {
       std::make_shared<PropertyService>(repositories,
                                         abstractServiceInterfaces);
   PropertyExampleClass propertyExampleClass(propertyService);
-  REQUIRE(propertyService->allProperties().size() == 2);
+  REQUIRE(propertyService->allOf().size() == 2);
   REQUIRE(!propertyExampleClass.enable->getValue());
   auto propertyBase = propertyService->get(
       "enable", "testInstance", "PropertyExampleClass", "testProcess");
@@ -69,7 +69,7 @@ TEST_CASE("test create/get of PropertyService") {
       std::make_shared<NoPropertyRepository>();
   PropertyService propertyService({noPropertyRepository}, {});
   createExampleProperties(propertyService);
-  REQUIRE(propertyService.allProperties().size() == 4);
+  REQUIRE(propertyService.allOf().size() == 4);
 }
 TEST_CASE("test setValue for Property") {
   std::shared_ptr<NoPropertyRepository> noPropertyRepository =
@@ -80,7 +80,7 @@ TEST_CASE("test setValue for Property") {
       "intProperty", "instanceName", "class", "processName", "", true, 4713);
   propertyService.changeValueOf<int32_t>(intProperty, 4711);
   REQUIRE(intProperty->getValue() == 4711);
-  auto properties = propertyService.allProperties();
+  auto properties = propertyService.allOf();
   for (const auto &property : properties) {
     if (property->getName() == "intProperty" &&
         property->getClassName() == "class") {

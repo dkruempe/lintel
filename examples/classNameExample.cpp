@@ -22,7 +22,7 @@ int main(int argc, char *argv[]) {
   std::vector<std::shared_ptr<AbstractServiceInterface>> abstractInterfaces =
       {};
   PropertyService propertyService({propertyRepository}, abstractInterfaces);
-  for (auto &property : propertyService.allProperties()) {
+  for (auto &property : propertyService.allOf()) {
     std::cout << *property << "\n";
   }
   return 0;

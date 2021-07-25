@@ -60,7 +60,10 @@ class PropertyService {
                                      const std::string &instanceName,
                                      const std::string &className,
                                      const std::string &processName);
-  std::vector<std::shared_ptr<PropertyBase>> allProperties();
+  std::vector<std::shared_ptr<PropertyBase>> allOf();
+  std::vector<std::shared_ptr<PropertyBase>> allOf(const std::string &processName);
+  std::vector<std::shared_ptr<PropertyBase>> allOf(const std::string &processName, const std::string &className);
+  std::vector<std::shared_ptr<PropertyBase>> allOf(const std::string &processName, const std::string &className, const std::string &instanceName);
   template <class T>
   void changeValueOf(const std::shared_ptr<PropertyBase> &property,
                      const T &value);
