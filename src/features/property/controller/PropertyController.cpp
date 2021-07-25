@@ -6,20 +6,33 @@ PropertyController::PropertyController(
     std::shared_ptr<PropertyService> propertyService)
     : Controller(), m_propertyService(std::move(propertyService)) {}
 void PropertyController::allPropertiesOfGet(const httplib::Request& request,
-                                            httplib::Response& response) {
-  PropertiesDto propertiesDto(m_propertyService->allOf());
-  response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
-                       "text/plain");
+                                            httplib::Response& response,
+                                            const ContentType& contentType) {
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      PropertiesDto propertiesDto(m_propertyService->allOf());
+      response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = 500;
+      response.set_content("", "text/plain");
+      break;
+    }
+  }
 }
 void PropertyController::allPropertiesOfProcessGet(
-    const httplib::Request& request, httplib::Response& response) {
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType) {
   const std::string processName = request.matches[1];
   PropertiesDto propertiesDto(m_propertyService->allOf(processName));
   response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
                        "text/plain");
 }
 void PropertyController::allPropertiesOfProcessAndClassGet(
-    const httplib::Request& request, httplib::Response& response) {
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType) {
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   PropertiesDto propertiesDto(m_propertyService->allOf(processName, className));
@@ -27,7 +40,8 @@ void PropertyController::allPropertiesOfProcessAndClassGet(
                        "text/plain");
 }
 void PropertyController::allPropertiesOfProcessClassAndInstanceGet(
-    const httplib::Request& request, httplib::Response& response) {
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType) {
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
@@ -37,7 +51,8 @@ void PropertyController::allPropertiesOfProcessClassAndInstanceGet(
                        "text/plain");
 }
 void PropertyController::allPropertiesOfProcessClassInstanceAndNameGet(
-    const httplib::Request& request, httplib::Response& response) {
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType) {
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
