@@ -58,7 +58,7 @@ class ContentType {
 
   Value getValue() { return m_value; }
 
-  const std::string &getName() const;
+  [[nodiscard]] const std::string &getName() const;
 
  private:
   Value build(const std::string &contentType);
@@ -81,7 +81,7 @@ class ContentType {
       {"image/jpeg", ImageJpeg},
       {"video/mp4", VideoMp4},
       {"video/mpeg", VideoMpeg},
-      {"video/webm", AudioWebm},
+      {"video/webm", VideoWebm},
       {"audio/mp3", AudioMp3},
       {"audio/mpeg", AudioMpeg},
       {"audio/webm", AudioWebm},
@@ -104,6 +104,8 @@ class ContentType {
       {"application/zip", ApplicationZip},
       {"application/wasm", ApplicationWasm}};
   std::map<Value, std::string> m_valueToName = {
+      {UNDEFINED,
+       "text/plain"},  // in case of error send message back as text/plain
       {TextCss, "text/css"},
       {TextCsv, "text/csv"},
       {TextPlain, "text/plain"},
@@ -121,7 +123,7 @@ class ContentType {
       {ImageJpeg, "image/jpeg"},
       {VideoMp4, "video/mp4"},
       {VideoMpeg, "video/mpeg"},
-      {AudioWebm, "video/webm"},
+      {VideoWebm, "video/webm"},
       {AudioMp3, "audio/mp3"},
       {AudioMpeg, "audio/mpeg"},
       {AudioWebm, "audio/webm"},

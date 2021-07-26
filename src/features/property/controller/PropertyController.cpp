@@ -1,5 +1,6 @@
 #include "base_library/features/property/controller/PropertyController.h"
 
+#include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/property/controller/PropertiesDto.h"
 
 PropertyController::PropertyController(
@@ -16,8 +17,8 @@ void PropertyController::allPropertiesOfGet(const httplib::Request& request,
       break;
     }
     default: {
-      response.status = 500;
-      response.set_content("", "text/plain");
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
       break;
     }
   }
@@ -26,18 +27,39 @@ void PropertyController::allPropertiesOfProcessGet(
     const httplib::Request& request, httplib::Response& response,
     const ContentType& contentType) {
   const std::string processName = request.matches[1];
-  PropertiesDto propertiesDto(m_propertyService->allOf(processName));
-  response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
-                       "text/plain");
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      PropertiesDto propertiesDto(m_propertyService->allOf(processName));
+      response.set_content(propertiesDto.JsonSerializable::serialize(),
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
 }
 void PropertyController::allPropertiesOfProcessAndClassGet(
     const httplib::Request& request, httplib::Response& response,
     const ContentType& contentType) {
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
-  PropertiesDto propertiesDto(m_propertyService->allOf(processName, className));
-  response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
-                       "text/plain");
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      PropertiesDto propertiesDto(
+          m_propertyService->allOf(processName, className));
+      response.set_content(propertiesDto.JsonSerializable::serialize(),
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
 }
 void PropertyController::allPropertiesOfProcessClassAndInstanceGet(
     const httplib::Request& request, httplib::Response& response,
@@ -45,10 +67,20 @@ void PropertyController::allPropertiesOfProcessClassAndInstanceGet(
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
-  PropertiesDto propertiesDto(
-      m_propertyService->allOf(processName, className, instanceName));
-  response.set_content(propertiesDto.JsonSerializable::serialize() + "\n",
-                       "text/plain");
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      PropertiesDto propertiesDto(
+          m_propertyService->allOf(processName, className, instanceName));
+      response.set_content(propertiesDto.JsonSerializable::serialize(),
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
 }
 void PropertyController::allPropertiesOfProcessClassInstanceAndNameGet(
     const httplib::Request& request, httplib::Response& response,
@@ -57,13 +89,24 @@ void PropertyController::allPropertiesOfProcessClassInstanceAndNameGet(
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
   const std::string propertyName = request.matches[4];
-  auto property = m_propertyService->get(propertyName, instanceName, className,
-                                         processName);
-  if (property != nullptr) {
-    PropertyDto propertyDto(property);
-    response.set_content(propertyDto.JsonSerializable::serialize() + "\n",
-                         "text/plain");
-  } else {
-    response.set_content("no property found \n", "text/plain");
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      try {
+        auto property = m_propertyService->get(propertyName, instanceName,
+                                               className, processName);
+        PropertyDto propertyDto(property);
+        response.set_content(propertyDto.JsonSerializable::serialize(),
+                             contentType.getName().c_str());
+      } catch (const PropertyNotFoundException& exception) {
+        response.status = HttpStatusCodes::MethodNotAllowed;
+        response.set_content("", contentType.getName().c_str());
+      }
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
   }
 }
