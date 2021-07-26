@@ -2,8 +2,8 @@
 #define CPP_BASE_LIBRARY_JSONSERIALIZABLE_H
 
 #include <rapidjson/document.h>
-#include <rapidjson/writer.h>
 #include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 #include <string>
 
@@ -39,6 +39,12 @@ class JsonSerializable {
     rapidjson::Writer writer(stringBuffer);
     serialize(&writer);
     return std::string(stringBuffer.GetString());
+  }
+
+  void deserialize(const std::string& json) {
+    rapidjson::Document document;
+    document.Parse(json.c_str());
+    deserialize(document);
   }
 };
 

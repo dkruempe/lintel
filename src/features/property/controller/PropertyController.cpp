@@ -2,6 +2,7 @@
 
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/property/controller/PropertiesDto.h"
+#include "base_library/features/property/controller/PropertyValueDto.h"
 
 PropertyController::PropertyController(
     std::shared_ptr<PropertyService> propertyService)
@@ -82,9 +83,9 @@ void PropertyController::allPropertiesOfProcessClassAndInstanceGet(
     }
   }
 }
-void PropertyController::allPropertiesOfProcessClassInstanceAndNameGet(
-    const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType) {
+void PropertyController::propertyOfGet(const httplib::Request& request,
+                                       httplib::Response& response,
+                                       const ContentType& contentType) {
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
@@ -100,6 +101,39 @@ void PropertyController::allPropertiesOfProcessClassInstanceAndNameGet(
       } catch (const PropertyNotFoundException& exception) {
         response.status = HttpStatusCodes::MethodNotAllowed;
         response.set_content("", contentType.getName().c_str());
+      }
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
+void PropertyController::updatePropertyPut(const httplib::Request& request,
+                                           httplib::Response& response,
+                                           const ContentType& contentType) {
+  const std::string processName = request.matches[1];
+  const std::string className = request.matches[2];
+  const std::string instanceName = request.matches[3];
+  const std::string propertyName = request.matches[4];
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      try {
+        PropertyValueDto propertyValueDto;
+        propertyValueDto.JsonSerializable::deserialize(request.body);
+        auto property = m_propertyService->get(propertyName, instanceName,
+                                               className, processName);
+        m_propertyService->changeStringValueOf(property, propertyValueDto.getValue());
+      } catch (const PropertyNotFoundException& exception) {
+        response.status = HttpStatusCodes::MethodNotAllowed;
+        response.set_content("property not found",
+                             contentType.getName().c_str());
+      } catch (const std::exception& e) {
+        response.status = HttpStatusCodes::MethodNotAllowed;
+        response.set_content("value parameter not found",
+                             contentType.getName().c_str());
       }
       break;
     }

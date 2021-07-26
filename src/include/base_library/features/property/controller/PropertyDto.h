@@ -11,7 +11,7 @@ class PropertyDto : public JsonSerializable {
   std::string m_instanceName;
   std::string m_className;
   std::string m_processName;
-  bool m_runtimeChange;
+  bool m_runtimeChange = false;
   std::string m_description;
   PropertyRepositoryType m_repositoryType = PropertyRepositoryType::UNDEFINED;
   std::string m_extraInformation;
@@ -46,7 +46,7 @@ class PropertyDto : public JsonSerializable {
   [[nodiscard]] const std::string &getType() const;
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
-  bool deserialize(const rapidjson::Value& obj) override;
+  bool deserialize(const rapidjson::Value &obj) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYDTO_H

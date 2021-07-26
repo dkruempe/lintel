@@ -14,7 +14,9 @@ class PropertyController : public Controller {
   ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+))", Get,
                      allPropertiesOfProcessClassAndInstance);
   ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+)/(\w+))", Get,
-                     allPropertiesOfProcessClassInstanceAndName);
+                     propertyOf);
+  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+)/(\w+))", Put,
+                     updateProperty);
 
  public:
   explicit PropertyController(std::shared_ptr<PropertyService> propertyService);
