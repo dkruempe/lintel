@@ -1,7 +1,8 @@
 #include "base_library/features/cli/services/CommandLineService.h"
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
 
-#include <fmt/color.h>
-#include <fmt/core.h>
+#include <chrono>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
@@ -42,7 +43,7 @@ void CommandLineService::onStart() {
       "Try >help< or >?< for a list of commands\n"
       "Try >menue< or >m< to work with the menue system\n"
       "Try >exit< or >e< to go back or exit the Command Line Interface\n";
-  fmt::print(fg(fmt::color::green) | fmt::emphasis::bold, startInformation);
+  fmt::print(startInformation);
 }
 void CommandLineService::onHelp() {
   // group commands map by command enum
@@ -58,36 +59,29 @@ void CommandLineService::onHelp() {
 
   std::function<void(std::vector<std::string_view> &)> print =
       [&](std::vector<std::string_view> &aliases) {
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, "[");
+        fmt::print("[");
         for (std::size_t i = 0; i < aliases.size(); i++) {
-          fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, "{}",
-                     aliases[i]);
+          fmt::print("{}", aliases[i]);
           if (i < aliases.size() - 1) {
-            fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, ", ",
-                       aliases[i]);
+            fmt::print(", ", aliases[i]);
           }
         }
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, "]\n");
+        fmt::print("]\n");
       };
 
-  fmt::print(
-      fg(fmt::color::green) | fmt::emphasis::bold | fmt::emphasis::underline,
-      "Help Overview\n");
+  fmt::print("Help Overview\n");
   for (auto &[command, aliases] : map) {
     switch (command) {
       case CommandMenu:
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
-                   "COMMAND_MENU: Shows available Menu entries");
+        fmt::print("COMMAND_MENU: Shows available Menu entries");
         print(aliases);
         break;
       case CommandExit:
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
-                   "COMMAND_EXIT: Exits current Menu or total CLI itself");
+        fmt::print("COMMAND_EXIT: Exits current Menu or total CLI itself");
         print(aliases);
         break;
       case CommandHelp:
         fmt::print(
-            fg(fmt::color::green) | fmt::emphasis::bold,
             "COMMAND_HELP: Shows all available commands in current menu");
         print(aliases);
         break;
@@ -115,7 +109,6 @@ void CommandLineService::run() {
       bool success = m_menu.onMenu(temp);
       if (!success) {
         fmt::print(
-            fg(fmt::color::red) | fmt::emphasis::bold,
             "ERROR: Invalid command '{}'! Please use the help function\n",
             temp);
       }

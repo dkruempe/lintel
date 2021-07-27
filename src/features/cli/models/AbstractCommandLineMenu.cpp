@@ -1,7 +1,6 @@
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
-
-#include <fmt/color.h>
-#include <fmt/core.h>
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
 
 #include "base_library/features/cli/models/CommandLineComponent.h"
 
@@ -26,12 +25,10 @@ void AbstractCommandLineMenu::onShowMenu() {
     return;
   }
 
-  fmt::print(
-      fg(fmt::color::green) | fmt::emphasis::bold | fmt::emphasis::underline,
-      "Menu Overview\n");
+  fmt::print("Menu Overview\n");
   int index = 0;
   for (auto &component : m_components) {
-    fmt::print(fg(fmt::color::green) | fmt::emphasis::bold, "{}) {} [{}]\n",
+    fmt::print("{}) {} [{}]\n",
                ++index, component->getName(), component->getAlias());
   }
 }

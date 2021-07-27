@@ -1,5 +1,6 @@
 #include "base_library/features/property/PropertyFeature.h"
 
+#include "base_library/features/property/command_line/PropertyCliComponent.h"
 #include "base_library/features/property/configuration/PropertyComponent.h"
 #include "base_library/features/property/controller/PropertyApi.h"
 #include "base_library/features/property/controller/PropertyController.h"
@@ -31,6 +32,10 @@ void PropertyFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .asSelf()
       .singleInstance();
   builder.registerType<PropertyApi>().singleInstance();
+  builder.registerType<PropertyCliComponent>()
+      .as<CommandLineComponent>()
+      .asSelf()
+      .singleInstance();
 }
 
 void PropertyFeature::initialize(

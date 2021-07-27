@@ -1,16 +1,13 @@
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
-
-#include <fmt/color.h>
-#include <fmt/core.h>
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
 
 #include <utility>
 
 #include "base_library/core/services/LoggerService.h"
 
-CryptionCliComponent::CryptionCliComponent(
-    std::shared_ptr<PropertyApi> propertyApi)
-    : CommandLineComponent(m_name, m_alias),
-      m_propertyApi(std::move(propertyApi)) {}
+CryptionCliComponent::CryptionCliComponent()
+    : CommandLineComponent(m_name, m_alias) {}
 
 void CryptionCliComponent::onCommand(const std::string &input) {
   switch (m_currentCommand) {
@@ -61,31 +58,27 @@ void CryptionCliComponent::onHelp() {
 
   std::function<void(std::vector<std::string_view> &)> print =
       [&](std::vector<std::string_view> &aliases) {
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, "[");
+        fmt::print("[");
         for (std::size_t i = 0; i < aliases.size(); i++) {
-          fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, "{}",
+          fmt::print("{}",
                      aliases[i]);
           if (i < aliases.size() - 1) {
-            fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, ", ",
+            fmt::print(", ",
                        aliases[i]);
           }
         }
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::italic, "]\n");
+        fmt::print("]\n");
       };
 
-  fmt::print(
-      fg(fmt::color::green) | fmt::emphasis::bold | fmt::emphasis::underline,
-      "Help Overview\n");
+  fmt::print("Help Overview\n");
   for (auto &[command, aliases] : map) {
     switch (command) {
       case CommandEncrypt:
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
-                   "COMMAND_ENCRYPT: encrypts given string");
+        fmt::print("COMMAND_ENCRYPT: encrypts given string");
         print(aliases);
         break;
       case CommandDecrypt:
-        fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
-                   "COMMAND_DECRYPT: decrypt given strings");
+        fmt::print("COMMAND_DECRYPT: decrypt given strings");
         print(aliases);
         break;
       default:
