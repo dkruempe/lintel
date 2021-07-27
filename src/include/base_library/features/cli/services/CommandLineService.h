@@ -18,13 +18,12 @@ class CommandLineService {
   AbstractCommandLineMenu m_menu;
   std::thread m_thread;
   std::atomic<bool> m_running = true;
-  std::shared_ptr<Client> m_client;
 
-  enum COMMAND { COMMAND_HELP, COMMAND_MENU, COMMAND_EXIT };
+  enum Command { CommandHelp, CommandMenu, CommandExit };
 
-  std::map<std::string_view, COMMAND> m_commands = {
-      {"?", COMMAND_HELP},    {"help", COMMAND_HELP}, {"m", COMMAND_MENU},
-      {"menu", COMMAND_MENU}, {"e", COMMAND_EXIT},    {"exit", COMMAND_EXIT}};
+  std::map<std::string_view, Command> m_commands = {
+      {"?", CommandHelp},    {"help", CommandHelp}, {"m", CommandMenu},
+      {"menu", CommandMenu}, {"e", CommandExit},    {"exit", CommandExit}};
 
   void onComponentCommand(const std::string &command);
 
@@ -39,8 +38,7 @@ class CommandLineService {
  public:
   explicit CommandLineService(
       const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-      const std::shared_ptr<Configuration> &configuration,
-      const std::shared_ptr<ClientProvider> &clientProvider);
+      const std::shared_ptr<Configuration> &configuration);
   ~CommandLineService();
 };
 

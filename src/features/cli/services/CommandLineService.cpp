@@ -9,15 +9,8 @@
 
 CommandLineService::CommandLineService(
     const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-    const std::shared_ptr<Configuration> &configuration,
-    const std::shared_ptr<ClientProvider> &clientProvider)
-    : m_menu(components),
-      m_thread([&]() { run(); }),
-      m_client(clientProvider->provide()) {
-  for (auto &component : components) {
-    component->setClient(m_client);
-  }
-}
+    const std::shared_ptr<Configuration> &configuration)
+    : m_menu(components), m_thread([&]() { run(); }) {}
 
 CommandLineService::~CommandLineService() {
   m_running.store(false);
@@ -32,13 +25,13 @@ void CommandLineService::onComponentCommand(const std::string &command) {
     return;
   }
   switch (found->second) {
-    case COMMAND_HELP:
+    case CommandHelp:
       m_menu.onHelp();
       break;
-    case COMMAND_MENU:
+    case CommandMenu:
       m_menu.onShowMenu();
       break;
-    case COMMAND_EXIT:
+    case CommandExit:
       m_menu.onExit();
       break;
   }
@@ -53,7 +46,7 @@ void CommandLineService::onStart() {
 }
 void CommandLineService::onHelp() {
   // group commands map by command enum
-  std::map<COMMAND, std::vector<std::string_view>> map;
+  std::map<Command, std::vector<std::string_view>> map;
   for (auto &iter : m_commands) {
     auto found = map.find(iter.second);
     if (found == map.end()) {
@@ -82,17 +75,17 @@ void CommandLineService::onHelp() {
       "Help Overview\n");
   for (auto &[command, aliases] : map) {
     switch (command) {
-      case COMMAND_MENU:
+      case CommandMenu:
         fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
                    "COMMAND_MENU: Shows available Menu entries");
         print(aliases);
         break;
-      case COMMAND_EXIT:
+      case CommandExit:
         fmt::print(fg(fmt::color::green) | fmt::emphasis::bold,
                    "COMMAND_EXIT: Exits current Menu or total CLI itself");
         print(aliases);
         break;
-      case COMMAND_HELP:
+      case CommandHelp:
         fmt::print(
             fg(fmt::color::green) | fmt::emphasis::bold,
             "COMMAND_HELP: Shows all available commands in current menu");
@@ -129,14 +122,14 @@ void CommandLineService::run() {
       continue;
     }
     switch (found->second) {
-      case COMMAND_EXIT:
+      case CommandExit:
         SignalService::raiseSignal(SIGINT);
         m_running.store(false);
         break;
-      case COMMAND_HELP:
+      case CommandHelp:
         onHelp();
         break;
-      case COMMAND_MENU:
+      case CommandMenu:
         m_menu.onShowMenu();
         break;
     }
