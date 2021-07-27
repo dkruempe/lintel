@@ -125,10 +125,15 @@ void PropertyController::updatePropertyPut(const httplib::Request& request,
         propertyValueDto.JsonSerializable::deserialize(request.body);
         auto property = m_propertyService->get(propertyName, instanceName,
                                                className, processName);
-        m_propertyService->changeStringValueOf(property, propertyValueDto.getValue());
+        m_propertyService->changeStringValueOf(property,
+                                               propertyValueDto.getValue());
       } catch (const PropertyNotFoundException& exception) {
         response.status = HttpStatusCodes::MethodNotAllowed;
         response.set_content("property not found",
+                             contentType.getName().c_str());
+      } catch (const PropertyNoRuntimeChangeSupported& exception) {
+        response.status = HttpStatusCodes::MethodNotAllowed;
+        response.set_content("no property runtime change supported",
                              contentType.getName().c_str());
       } catch (const std::exception& e) {
         response.status = HttpStatusCodes::MethodNotAllowed;

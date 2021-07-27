@@ -97,11 +97,15 @@ bool PropertyApi::updateOf(const PropertyDto& propertyDto,
                            const std::string& value) {
   try {
     PropertyValueDto propertyValueDto(value);
-    m_client->put(
+    const httplib::Result& result = m_client->put(
         "/properties/" + propertyDto.getProcessName() + "/" +
             propertyDto.getClassName() + "/" + propertyDto.getInstanceName() +
             "/" + propertyDto.getName(),
         propertyValueDto.JsonSerializable::serialize(), "application/json");
+    if (result->status != HttpStatusCodes::OK) {
+      LOG_ERROR("property {} update value no success {}:{}",
+                propertyDto.getName(), result->status, result->body);
+    }
   } catch (std::exception& e) {
     LOG_ERROR("exception during update of property {} with {}: {}",
               propertyDto.getName(), value, e.what());

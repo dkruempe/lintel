@@ -68,8 +68,7 @@ bool PropertyDto::deserialize(const rapidjson::Value& obj) {
   // VALUE
   if (obj.HasMember(shape.VALUE.c_str())) {
     m_value = obj[shape.VALUE.c_str()].GetString();
-  }
-  {
+  } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", shape.VALUE.c_str());
   }
