@@ -22,19 +22,16 @@ void PropertiesDto::serialize(
   }
   writer->EndArray();
 }
-bool PropertiesDto::deserialize(const rapidjson::Value& obj) {
-  if (obj.IsArray()) {
-    return false;
-  }
 
-  bool success = true;
-  for (const auto& property : obj.GetArray()) {
+void PropertiesDto::deserialize(const std::string& json) {
+  rapidjson::Document document;
+  document.Parse(json.c_str());
+  if (!document.IsArray()) {
+    return;
+  }
+  for (const auto& property : document.GetArray()) {
     PropertyDto propertyDto;
-    success = propertyDto.deserialize(property);
-    if (!success) {
-      break;
-    }
+    propertyDto.deserialize(property);
     m_properties.push_back(propertyDto);
   }
-  return success;
 }

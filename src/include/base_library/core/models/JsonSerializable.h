@@ -16,11 +16,10 @@ class JsonSerializable {
   virtual ~JsonSerializable() = default;
   /**
    * deserialization of given value in json
-   * TODO implement exceptions for better UI handling afterwards ?
    * @param obj json value
    * @return success or not ?
    */
-  virtual bool deserialize(const rapidjson::Value& obj) = 0;
+  virtual bool deserialize(const rapidjson::Value& obj) { return false; }
 
   /**
    * serialization of object to json itself
@@ -41,7 +40,7 @@ class JsonSerializable {
     return std::string(stringBuffer.GetString());
   }
 
-  void deserialize(const std::string& json) {
+  virtual void deserialize(const std::string& json) {
     rapidjson::Document document;
     document.Parse(json.c_str());
     deserialize(document);

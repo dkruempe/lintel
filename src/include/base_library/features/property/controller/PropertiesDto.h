@@ -24,7 +24,7 @@ class PropertiesDto : public JsonSerializable {
 
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
-  bool deserialize(const rapidjson::Value &obj) override;
+  void deserialize(const std::string &json) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTIESDTO_H

@@ -6,6 +6,7 @@
 
 #include "base_library/features/base/configuration/Cryption.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
+#include "base_library/features/property/controller/PropertyApi.h"
 
 class CryptionCliComponent : public CommandLineComponent {
  private:
@@ -25,9 +26,10 @@ class CryptionCliComponent : public CommandLineComponent {
   static constexpr std::string_view m_alias = "Crypt";
   COMMAND m_currentCommand = COMMAND_UNDEFINED;
   Cryption m_cryption;
+  std::shared_ptr<PropertyApi> m_propertyApi;
 
  public:
-  CryptionCliComponent();
+  CryptionCliComponent(std::shared_ptr<PropertyApi> propertyApi);
 
   void onCommand(const std::string &input) override;
 

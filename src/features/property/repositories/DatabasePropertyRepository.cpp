@@ -63,6 +63,8 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake() {
       std::string type = result.getValue(i, 5);
       std::shared_ptr<PropertyBase> property = PropertyFactory::Create(
           name, instanceName, className, processName, type, value, "", false);
+      property->setDataStorage(
+          DataStorage(PropertyRepositoryType::DATABASE_REPOSITORY, ""));
       properties.push_back(property);
     }
   } catch (db::SQLException& exception) {

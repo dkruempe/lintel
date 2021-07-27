@@ -5,8 +5,9 @@
 
 #include "base_library/core/services/LoggerService.h"
 
-CryptionCliComponent::CryptionCliComponent()
-    : CommandLineComponent(m_name, m_alias) {}
+CryptionCliComponent::CryptionCliComponent(
+    std::shared_ptr<PropertyApi> propertyApi)
+    : CommandLineComponent(m_name, m_alias), m_propertyApi(propertyApi) {}
 
 void CryptionCliComponent::onCommand(const std::string &input) {
   switch (m_currentCommand) {
@@ -33,10 +34,37 @@ void CryptionCliComponent::onCommand(const std::string &input) {
       fmt::print("Decryption of: \n");
       m_currentCommand = COMMAND_DECRYPT;
       break;
-    case COMMAND_MESSAGE:
-      fmt::print("message -> {}\n", m_client->get("/hello").value().body);
+    case COMMAND_MESSAGE: {
+      std::optional<PropertyDto> propertyDto = m_propertyApi->of("main", "SchedulerService", "__DEFAULT", "numberOfThreads");
+      if (propertyDto.has_value()) {
+        PropertyDto iter = propertyDto.value();
+        m_propertyApi->updateOf(iter, "80");
+        fmt::print(
+            "Property (name={}, type={}, value={}, process={}, class={}, "
+            "instance={}, runtimeChange={}, description={}, "
+            "repositoryType={})\n",
+            iter.getName(), iter.getType(), iter.getValue(),
+            iter.getProcessName(), iter.getClassName(), iter.getInstanceName(),
+            iter.isRuntimeChange() ? "true" : "false", iter.getDescription(),
+            PropertyRepositoryType(iter.getRepositoryType()).toString());
+        propertyDto = m_propertyApi->of("main", "SchedulerService", "__DEFAULT", "numberOfThreads");
+        if (propertyDto.has_value()) {
+          iter = propertyDto.value();
+          fmt::print(
+              "Property (name={}, type={}, value={}, process={}, class={}, "
+              "instance={}, runtimeChange={}, description={}, "
+              "repositoryType={})\n",
+              iter.getName(), iter.getType(), iter.getValue(),
+              iter.getProcessName(), iter.getClassName(), iter.getInstanceName(),
+              iter.isRuntimeChange() ? "true" : "false", iter.getDescription(),
+              PropertyRepositoryType(iter.getRepositoryType()).toString());
+        }
+      } else {
+        fmt::print("ERROR: property not available");
+      }
       m_currentCommand = COMMAND_UNDEFINED;
       break;
+    }
     case COMMAND_UNDEFINED:
       fmt::print("Wrong command \n");
       m_currentCommand = COMMAND_UNDEFINED;
