@@ -1,5 +1,6 @@
 #include "base_library/features/cli/services/CommandLineService.h"
 #define FMT_HEADER_ONLY
+<#include <fmt/chrono.h>
 #include <fmt/format.h>
 
 #include <chrono>
@@ -92,7 +93,9 @@ void CommandLineService::onPrompt() {
   // timestamp MENU %
   std::string_view currentMenu =
       m_menu.currentOf() == nullptr ? "MAIN" : m_menu.currentOf()->getName();
-  fmt::print("{} % ", currentMenu);
+  std::chrono::system_clock::time_point point =
+      std::chrono::system_clock::now();
+  fmt::print("{:%Y-%m-%d %H:%M:%S} {} % ", point, currentMenu);
 }
 void CommandLineService::run() {
   onStart();
