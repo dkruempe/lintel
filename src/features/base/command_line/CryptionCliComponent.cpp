@@ -9,7 +9,8 @@
 CryptionCliComponent::CryptionCliComponent()
     : CommandLineComponent(m_name, m_alias) {}
 
-void CryptionCliComponent::onCommand(const std::string &input) {
+void CryptionCliComponent::onCommand(
+    const std::string &input, const std::vector<std::string> &parameters) {
   switch (m_currentCommand) {
     case CommandEncrypt:
       fmt::print("{}\n", m_cryption.encryption(input));
@@ -60,11 +61,9 @@ void CryptionCliComponent::onHelp() {
       [&](std::vector<std::string_view> &aliases) {
         fmt::print("[");
         for (std::size_t i = 0; i < aliases.size(); i++) {
-          fmt::print("{}",
-                     aliases[i]);
+          fmt::print("{}", aliases[i]);
           if (i < aliases.size() - 1) {
-            fmt::print(", ",
-                       aliases[i]);
+            fmt::print(", ", aliases[i]);
           }
         }
         fmt::print("]\n");

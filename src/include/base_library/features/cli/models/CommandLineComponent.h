@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "base_library/features/http/service/Client.h"
 
@@ -20,7 +21,8 @@ class CommandLineComponent {
 
   std::string_view getAlias();
 
-  virtual void onCommand(const std::string &input) = 0;
+  virtual void onCommand(const std::string &command,
+                         const std::vector<std::string> &parameters) = 0;
 
   virtual void onHelp() = 0;
 

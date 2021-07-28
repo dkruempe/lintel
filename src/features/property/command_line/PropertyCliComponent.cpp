@@ -11,7 +11,8 @@ PropertyCliComponent::PropertyCliComponent(
     : CommandLineComponent(m_name, m_alias),
       m_propertyApi(std::move(propertyApi)) {}
 
-void PropertyCliComponent::onCommand(const std::string &input) {
+void PropertyCliComponent::onCommand(
+    const std::string &input, const std::vector<std::string> &parameters) {
   switch (m_currentCommand) {
     case CommandAllPropertiesOfProcess: {
       m_process = input;

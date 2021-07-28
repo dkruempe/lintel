@@ -52,11 +52,11 @@ bool AbstractCommandLineMenu::onExit() {
   }
   return success;
 }
-void AbstractCommandLineMenu::onCommand(const std::string &command) {
+void AbstractCommandLineMenu::onCommand(const std::string &command, const std::vector<std::string> &parameters) {
   if (m_current == nullptr) {
     return;
   }
-  m_current->onCommand(command);
+  m_current->onCommand(command, parameters);
 }
 void AbstractCommandLineMenu::onHelp() {
   if (m_current == nullptr) {

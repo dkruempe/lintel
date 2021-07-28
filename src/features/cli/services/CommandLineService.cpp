@@ -1,12 +1,13 @@
 #include "base_library/features/cli/services/CommandLineService.h"
 #define FMT_HEADER_ONLY
-<#include <fmt/chrono.h>
+#include <fmt/chrono.h>
 #include <fmt/format.h>
 
 #include <chrono>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
+#include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 
 CommandLineService::CommandLineService(
@@ -20,10 +21,10 @@ CommandLineService::~CommandLineService() {
   m_thread.join();
   LOG_INFO("stopped command line service");
 }
-void CommandLineService::onComponentCommand(const std::string &command) {
+void CommandLineService::onComponentCommand(const std::string &command, const std::vector<std::string> &parameters) {
   auto found = m_commands.find(command);
   if (found == m_commands.end()) {
-    m_menu.onCommand(command);
+    m_menu.onCommand(command, parameters);
     return;
   }
   switch (found->second) {
@@ -103,17 +104,23 @@ void CommandLineService::run() {
     onPrompt();
     std::string temp;
     std::getline(std::cin, temp);
-    auto found = m_commands.find(temp);
+    std::vector<std::string> tokens = StringUtils::split(temp, ' ');
+    std::string command;
+    if (!tokens.empty()) {
+      command = tokens[0];
+      tokens.erase(tokens.begin());
+    }
+    auto found = m_commands.find(command);
     if (m_menu.currentOf() != nullptr) {
-      onComponentCommand(temp);
+      onComponentCommand(command, tokens);
       continue;
     }
     if (found == m_commands.end()) {
-      bool success = m_menu.onMenu(temp);
-      if (!success) {
+      bool success = m_menu.onMenu(command);
+      if (!success && !command.empty()) {
         fmt::print(
             "ERROR: Invalid command '{}'! Please use the help function\n",
-            temp);
+            command);
       }
       continue;
     }

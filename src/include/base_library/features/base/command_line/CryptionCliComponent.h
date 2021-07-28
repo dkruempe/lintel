@@ -27,7 +27,7 @@ class CryptionCliComponent : public CommandLineComponent {
  public:
   CryptionCliComponent();
 
-  void onCommand(const std::string &input) override;
+  void onCommand(const std::string &input, const std::vector<std::string> &parameters) override;
 
   void onHelp() override;
 

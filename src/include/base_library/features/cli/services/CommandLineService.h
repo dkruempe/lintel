@@ -25,7 +25,7 @@ class CommandLineService {
       {"?", CommandHelp},    {"help", CommandHelp}, {"m", CommandMenu},
       {"menu", CommandMenu}, {"e", CommandExit},    {"exit", CommandExit}};
 
-  void onComponentCommand(const std::string &command);
+  void onComponentCommand(const std::string &command, const std::vector<std::string> &parameters);
 
   static void onStart();
 

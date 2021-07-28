@@ -3,8 +3,8 @@
 
 #include <map>
 #include <memory>
-#include <vector>
 #include <string>
+#include <vector>
 
 #include "base_library/features/cli/models/CommandLineComponent.h"
 
@@ -24,11 +24,12 @@ class AbstractCommandLineMenu {
 
   void onShowMenu();
 
-  bool onMenu(const std::string& command);
+  bool onMenu(const std::string &command);
 
   bool onExit();
 
-  void onCommand(const std::string& command);
+  void onCommand(const std::string &command,
+                 const std::vector<std::string> &parameters);
 
   void onHelp();
 
