@@ -50,24 +50,71 @@ PropertyCliComponent::PropertyCliComponent(
       "Instance Name where property is defined!");
   m_commandParser.addCommand(commandShowAllPropertiesProcessClassInstance,
                              ProcessClassInstanceProperties);
+  // Command: update property
+  Command commandUpdateProperty("up", "Update given property");
+  commandUpdateProperty.addArgument({"--process_name", "-p"}, &m_processName,
+                                    "Process Name of property!");
+  commandUpdateProperty.addArgument({"--class_name", "-c"}, &m_className,
+                                    "Class Name of property!");
+  commandUpdateProperty.addArgument({"--instance-name", "-i"}, &m_instanceName,
+                                    "Instance Name of property");
+  commandUpdateProperty.addArgument({"--value", "-v"}, &m_value,
+                                    "Value of property!");
+  commandUpdateProperty.addArgument({"--name", "-n"}, &m_propertyName,
+                                    "Name of property!");
+  // Command: show property
+  Command commandShowProperty("sp", "Show given property");
+  commandShowProperty.addArgument({"--process_name", "-p"}, &m_processName,
+                                  "Process Name of property!");
+  commandShowProperty.addArgument({"--class_name", "-c"}, &m_className,
+                                  "Class Name of property!");
+  commandShowProperty.addArgument({"--instance-name", "-i"}, &m_instanceName,
+                                  "Instance Name of property");
+  commandShowProperty.addArgument({"--name", "-n"}, &m_propertyName,
+                                  "Name of property!");
+  m_commandParser.addCommand(commandUpdateProperty, UpdateProperty);
 }
 void PropertyCliComponent::onCommand(
     const std::string &input, const std::vector<std::string> &parameters) {
   try {
     Commands command = m_commandParser.parse(input, parameters);
     switch (command) {
-      case AllProperties:
+      case AllProperties: {
         printProperties(m_propertyApi->allOf());
         break;
-      case ProcessProperties:
+      }
+      case ProcessProperties: {
         printProperties(m_propertyApi->allOf(m_processName));
         break;
-      case ProcessClassProperties:
+      }
+      case ProcessClassProperties: {
         printProperties(m_propertyApi->allOf(m_processName, m_className));
         break;
-      case ProcessClassInstanceProperties:
+      }
+      case ProcessClassInstanceProperties: {
         printProperties(
             m_propertyApi->allOf(m_processName, m_className, m_instanceName));
+      }
+      case ShowProperty: {
+        auto optProperty = m_propertyApi->of(m_processName, m_className,
+                                             m_instanceName, m_propertyName);
+      }
+      case UpdateProperty: {
+        auto optProperty = m_propertyApi->of(m_processName, m_className,
+                                             m_instanceName, m_propertyName);
+        if (!optProperty.has_value()) {
+          std::cerr << "Property with given values is not preset => No Update "
+                       "possible \n";
+          return;
+        }
+        std::cout << "Before Update: \n";
+        printProperty(optProperty);
+        m_propertyApi->updateOf(optProperty.value(), m_value);
+        optProperty = m_propertyApi->of(m_processName, m_className,
+                                        m_instanceName, m_propertyName);
+        std::cout << "After Update: \n";
+        printProperty(optProperty);
+      }
       default:
         break;
     }
@@ -97,3 +144,21 @@ bool PropertyCliComponent::onMenu(const std::string &component) { return true; }
 void PropertyCliComponent::onShowMenu() { fmt::print("No submenu available!"); }
 
 bool PropertyCliComponent::onExit() { return true; }
+void PropertyCliComponent::printProperty(
+    const optional<PropertyDto> &optionalProperty) {
+  if (!optionalProperty.has_value()) {
+    std::cerr << "Property with given values is not preset => No Update "
+                 "possible \n";
+    return;
+  }
+  const PropertyDto &propertyDto = optionalProperty.value();
+  tabulate::Table table;
+  table.add_row({"Process:", propertyDto.getProcessName()});
+  table.add_row({"Class:", propertyDto.getClassName()});
+  table.add_row({"Instance:", propertyDto.getInstanceName()});
+  table.add_row({"Name:", propertyDto.getName()});
+  table.add_row({"Type:", propertyDto.getType()});
+  table.add_row({"Value:", propertyDto.getValue()});
+  table.add_row({"Data Storage:", propertyDto.getRepositoryType().toString()});
+  std::cout << table.str() << "\n";
+}

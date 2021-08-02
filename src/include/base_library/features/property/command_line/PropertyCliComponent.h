@@ -21,7 +21,9 @@ class PropertyCliComponent : public CommandLineComponent {
     AllProperties,
     ProcessProperties,
     ProcessClassProperties,
-    ProcessClassInstanceProperties
+    ProcessClassInstanceProperties,
+    ShowProperty,
+    UpdateProperty
   };
 
   // Flags
@@ -29,12 +31,13 @@ class PropertyCliComponent : public CommandLineComponent {
   std::string m_className;
   std::string m_instanceName;
   std::string m_propertyName;
-  std::string m_type;
   std::string m_value;
 
   CommandParser<Commands, Undefined> m_commandParser;
 
   static void printProperties(const std::vector<PropertyDto> &properties);
+
+  static void printProperty(const std::optional<PropertyDto> &optionalProperty);
 
  public:
   explicit PropertyCliComponent(std::shared_ptr<PropertyApi> propertyApi);
