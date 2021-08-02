@@ -13,6 +13,9 @@ class PropertyCliComponent : public CommandLineComponent {
  private:
   static constexpr std::string_view m_name = "Property";
   static constexpr std::string_view m_alias = "Prop";
+  static constexpr std::string_view m_description =
+      "The component can be used to show and manipulate all kind of available "
+      "properties.";
   std::shared_ptr<PropertyApi> m_propertyApi;
 
   // Commands

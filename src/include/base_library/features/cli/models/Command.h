@@ -54,6 +54,7 @@ class Command {
   std::string m_description;
   std::map<std::string, Argument> m_argumentsMap;
   std::vector<Argument> m_arguments;
+  static constexpr const char *m_tab = "\t";
 };
 
 #endif  // CPP_BASE_LIBRARY_COMMAND_H

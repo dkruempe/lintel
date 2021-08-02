@@ -14,14 +14,19 @@ void Command::addArgument(const std::vector<std::string>& flags,
 }
 void Command::printHelp(std::ostream& os) const {
   // Print the general description.
-  os << m_command << ": " << m_description << std::endl;
+  os << m_command << ":\n";
+  os << m_tab << m_description << "\n";
+  if (!m_arguments.empty()) {
+    os << m_tab << "\n";
+    os << m_tab << "Arguments: \n";
+  }
 
   // Find the argument with the longest combined flag length (in order
   // to align the help messages).
 
   uint32_t maxFlagLength = 0;
 
-  for (auto const &argument : m_arguments) {
+  for (auto const& argument : m_arguments) {
     uint32_t flagLength = 0;
     for (auto const& flag : argument.m_flags) {
       // Plus comma and space.
@@ -55,7 +60,7 @@ void Command::printHelp(std::ostream& os) const {
       spacePos = nextspacePos;
 
       if (lineWidth > 60) {
-        os << sstr.str() << std::endl;
+        os << m_tab << sstr.str() << std::endl;
         sstr = std::stringstream();
         sstr << std::left << std::setw(static_cast<int>(maxFlagLength - 1))
              << " ";

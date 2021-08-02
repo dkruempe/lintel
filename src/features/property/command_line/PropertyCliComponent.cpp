@@ -137,7 +137,9 @@ void PropertyCliComponent::printProperties(
   fmt::print("{}\n", table.str());
 }
 
-void PropertyCliComponent::onHelp() { m_commandParser.printHelp(); }
+void PropertyCliComponent::onHelp() {
+  m_commandParser.printHelp(getName(), getAlias(), m_description);
+}
 
 bool PropertyCliComponent::onMenu(const std::string &component) { return true; }
 

@@ -37,9 +37,14 @@ class CommandParser {
     return foundEnum->second;
   }
 
-  void printHelp(std::ostream &os = std::cout) {
+  void printHelp(std::string_view componentName, const std::string_view alias,
+                 std::string_view description, std::ostream &os = std::cout) {
+    os << "Help Menu of " << componentName << " [" << alias << "]:\n\n";
+    os << description << "\n\n";
     for (const auto &item : m_commands) {
       item.second.printHelp(os);
+      // make break between all kind of commands for an easier separation
+      std::cout << "\n";
     }
   }
 };

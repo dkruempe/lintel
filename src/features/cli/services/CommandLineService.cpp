@@ -93,7 +93,7 @@ void CommandLineService::onHelp() {
         print(aliases);
         break;
       case CommandClear:
-        fmt::print("COMMAND_CLEAR: Clears screen for about 100 lines");
+        fmt::print("COMMAND_CLEAR: Clears screen for about 100 lines\n");
         break;
     }
   }
