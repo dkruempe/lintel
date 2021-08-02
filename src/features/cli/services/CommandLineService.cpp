@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 
 #include <chrono>
+#include <string>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
@@ -21,7 +22,8 @@ CommandLineService::~CommandLineService() {
   m_thread.join();
   LOG_INFO("stopped command line service");
 }
-void CommandLineService::onComponentCommand(const std::string &command, const std::vector<std::string> &parameters) {
+void CommandLineService::onComponentCommand(
+    const std::string &command, const std::vector<std::string> &parameters) {
   auto found = m_commands.find(command);
   if (found == m_commands.end()) {
     m_menu.onCommand(command, parameters);
@@ -36,6 +38,9 @@ void CommandLineService::onComponentCommand(const std::string &command, const st
       break;
     case CommandExit:
       m_menu.onExit();
+      break;
+    case CommandClear:
+      std::cout << m_clear;
       break;
   }
 }
@@ -87,6 +92,9 @@ void CommandLineService::onHelp() {
             "COMMAND_HELP: Shows all available commands in current menu");
         print(aliases);
         break;
+      case CommandClear:
+        fmt::print("COMMAND_CLEAR: Clears screen for about 100 lines");
+        break;
     }
   }
 }
@@ -131,6 +139,9 @@ void CommandLineService::run() {
         break;
       case CommandHelp:
         onHelp();
+        break;
+      case CommandClear:
+        std::cout << m_clear;
         break;
       case CommandMenu:
         m_menu.onShowMenu();

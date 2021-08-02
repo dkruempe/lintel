@@ -18,12 +18,14 @@ class CommandLineService {
   AbstractCommandLineMenu m_menu;
   std::thread m_thread;
   std::atomic<bool> m_running = true;
+  std::string m_clear = std::string(100, '\n');
 
-  enum Command { CommandHelp, CommandMenu, CommandExit };
+  enum Command { CommandHelp, CommandClear, CommandMenu, CommandExit };
 
   std::map<std::string_view, Command> m_commands = {
       {"?", CommandHelp},    {"help", CommandHelp}, {"m", CommandMenu},
-      {"menu", CommandMenu}, {"e", CommandExit},    {"exit", CommandExit}};
+      {"menu", CommandMenu}, {"e", CommandExit},    {"exit", CommandExit},
+      {"clear", CommandClear}};
 
   void onComponentCommand(const std::string &command, const std::vector<std::string> &parameters);
 

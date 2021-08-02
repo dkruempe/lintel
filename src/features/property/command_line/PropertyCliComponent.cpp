@@ -9,36 +9,50 @@
 PropertyCliComponent::PropertyCliComponent(
     std::shared_ptr<PropertyApi> propertyApi)
     : CommandLineComponent(m_name, m_alias),
-      m_propertyApi(std::move(propertyApi)) {}
-
+      m_propertyApi(std::move(propertyApi)) {
+  Command commandShowAllProperties(showAllProperties,
+                                   "Shows all available valid properties!");
+  m_commandParser.addCommand(commandShowAllProperties, AllProperties);
+  Command commandShowAllPropertiesProcess(
+      showAllPropertiesProcess,
+      "Shows all available valid properties for given process!");
+  commandShowAllPropertiesProcess.addArgument(
+      {std::string(m_processName), std::string(m_processNameShort)},
+      &m_processNameValue, "Process Name where property is defined!");
+  m_commandParser.addCommand(commandShowAllPropertiesProcess,
+                             ProcessProperties);
+  Command commandShowAllPropertiesProcessClass(
+      showAllPropertiesProcessClass,
+      "Shows all available valid properties for given process and class!");
+  commandShowAllPropertiesProcessClass.addArgument(
+      {std::string(m_processName), std::string(m_processNameShort)},
+      &m_processNameValue, "Process Name where property is defined!");
+  commandShowAllPropertiesProcessClass.addArgument(
+      {std::string(m_className), std::string(m_classNameShort)},
+      &m_classNameValue, "Class name where property is defined!");
+  m_commandParser.addCommand(commandShowAllPropertiesProcessClass,
+                             ProcessClassProperties);
+}
 void PropertyCliComponent::onCommand(
     const std::string &input, const std::vector<std::string> &parameters) {
-  switch (m_currentCommand) {
-    case CommandAllPropertiesOfProcess: {
-      m_process = input;
-      std::vector<PropertyDto> properties = m_propertyApi->allOf(m_process);
-      printProperties(properties);
-      m_process = "";
-      m_currentCommand = CommandUndefined;
-      return;
+  try {
+    Commands command = m_commandParser.parse(input, parameters);
+    switch (command) {
+      case AllProperties:
+        printProperties(m_propertyApi->allOf());
+        break;
+      case ProcessProperties:
+        printProperties(m_propertyApi->allOf(m_processNameValue));
+        break;
+      case ProcessClassProperties:
+        printProperties(
+            m_propertyApi->allOf(m_processNameValue, m_classNameValue));
+        break;
+      default:
+        break;
     }
-    default:
-      break;
-  }
-  auto found = m_commands.find(input);
-  Command command =
-      found == m_commands.end() ? CommandUndefined : found->second;
-  switch (command) {
-    case CommandAllProperties: {
-      allOf();
-    } break;
-    case CommandAllPropertiesOfProcess: {
-      fmt::print("Please enter the process name:\n");
-      m_currentCommand = CommandAllPropertiesOfProcess;
-      break;
-    }
-    default:
-      break;
+  } catch (const std::exception &exception) {
+    std::cerr << exception.what() << "\n";
   }
 }
 void PropertyCliComponent::printProperties(
@@ -55,55 +69,8 @@ void PropertyCliComponent::printProperties(
   }
   fmt::print("{}\n", table.str());
 }
-void PropertyCliComponent::allOf() {
-  const std::vector<PropertyDto> &properties = m_propertyApi->allOf();
-  printProperties(properties);
-}
 
-void PropertyCliComponent::onHelp() {
-  // group commands map by command enum
-  std::map<Command, std::vector<std::string_view>> map;
-  for (auto &iter : m_commands) {
-    auto found = map.find(iter.second);
-    if (found == map.end()) {
-      map.insert({iter.second, {iter.first}});
-    } else {
-      found->second.push_back(iter.first);
-    }
-  }
-
-  std::function<void(std::vector<std::string_view> &)> print =
-      [&](std::vector<std::string_view> &aliases) {
-        fmt::print("[");
-        for (std::size_t i = 0; i < aliases.size(); i++) {
-          fmt::print("{}", aliases[i]);
-          if (i < aliases.size() - 1) {
-            fmt::print(", ", aliases[i]);
-          }
-        }
-        fmt::print("]\n");
-      };
-
-  fmt::print("Help Overview\n");
-  for (auto &[command, aliases] : map) {
-    switch (command) {
-      case CommandAllProperties:
-        fmt::print("CommandAllProperties: shows all properties");
-        print(aliases);
-        break;
-      case CommandAllPropertiesOfProcess:
-        fmt::print(
-            "CommandAllPropertiesOfProcess: shows all properties with "
-            "given process");
-        print(aliases);
-        break;
-      default:
-        fmt::print("Undefined: command not available \n");
-        LOG_ERROR("undefined state");
-        break;
-    }
-  }
-}
+void PropertyCliComponent::onHelp() { m_commandParser.printHelp(); }
 
 bool PropertyCliComponent::onMenu(const std::string &component) { return true; }
 
