@@ -10,28 +10,46 @@ PropertyCliComponent::PropertyCliComponent(
     std::shared_ptr<PropertyApi> propertyApi)
     : CommandLineComponent(m_name, m_alias),
       m_propertyApi(std::move(propertyApi)) {
-  Command commandShowAllProperties(showAllProperties,
+  // Command: show all properties
+  Command commandShowAllProperties("sap",
                                    "Shows all available valid properties!");
   m_commandParser.addCommand(commandShowAllProperties, AllProperties);
+  // Command: show all properties of process
   Command commandShowAllPropertiesProcess(
-      showAllPropertiesProcess,
-      "Shows all available valid properties for given process!");
+      "sapp", "Shows all available valid properties for given process!");
   commandShowAllPropertiesProcess.addArgument(
-      {std::string(m_processName), std::string(m_processNameShort)},
-      &m_processNameValue, "Process Name where property is defined!");
+      {"--process_name", "-p"}, &m_processName,
+      "Process Name where property is defined!");
   m_commandParser.addCommand(commandShowAllPropertiesProcess,
                              ProcessProperties);
+  // Command: show all properties of process and class
   Command commandShowAllPropertiesProcessClass(
-      showAllPropertiesProcessClass,
+      "sappc",
       "Shows all available valid properties for given process and class!");
   commandShowAllPropertiesProcessClass.addArgument(
-      {std::string(m_processName), std::string(m_processNameShort)},
-      &m_processNameValue, "Process Name where property is defined!");
+      {"--process_name", "-p"}, &m_processName,
+      "Process Name where property is defined!");
   commandShowAllPropertiesProcessClass.addArgument(
-      {std::string(m_className), std::string(m_classNameShort)},
-      &m_classNameValue, "Class name where property is defined!");
+      {"--class_name", "-c"}, &m_className,
+      "Class name where property is defined!");
   m_commandParser.addCommand(commandShowAllPropertiesProcessClass,
                              ProcessClassProperties);
+  // Command: show all properties of process, class and instance
+  Command commandShowAllPropertiesProcessClassInstance(
+      "sappci",
+      "Shows all available valid properties for given process, class and "
+      "instance!");
+  commandShowAllPropertiesProcessClassInstance.addArgument(
+      {"--process_name", "-p"}, &m_processName,
+      "Process Name where property is defined!");
+  commandShowAllPropertiesProcessClassInstance.addArgument(
+      {"--class_name", "-c"}, &m_className,
+      "Class Name where property is defined!");
+  commandShowAllPropertiesProcessClassInstance.addArgument(
+      {"--instance_name", "-i"}, &m_instanceName,
+      "Instance Name where property is defined!");
+  m_commandParser.addCommand(commandShowAllPropertiesProcessClassInstance,
+                             ProcessClassInstanceProperties);
 }
 void PropertyCliComponent::onCommand(
     const std::string &input, const std::vector<std::string> &parameters) {
@@ -42,12 +60,14 @@ void PropertyCliComponent::onCommand(
         printProperties(m_propertyApi->allOf());
         break;
       case ProcessProperties:
-        printProperties(m_propertyApi->allOf(m_processNameValue));
+        printProperties(m_propertyApi->allOf(m_processName));
         break;
       case ProcessClassProperties:
-        printProperties(
-            m_propertyApi->allOf(m_processNameValue, m_classNameValue));
+        printProperties(m_propertyApi->allOf(m_processName, m_className));
         break;
+      case ProcessClassInstanceProperties:
+        printProperties(
+            m_propertyApi->allOf(m_processName, m_className, m_instanceName));
       default:
         break;
     }

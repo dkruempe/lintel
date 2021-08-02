@@ -4,8 +4,6 @@
 #include <sstream>
 Command::Command(std::string command, std::string description)
     : m_command(std::move(command)), m_description(std::move(description)) {}
-Command::Command(std::string_view command, std::string description)
-    : m_command(command), m_description(std::move(description)) {}
 void Command::addArgument(const std::vector<std::string>& flags,
                           Command::Value value, const std::string& help) {
   Argument argument{flags, value, help};

@@ -21,8 +21,6 @@ class Command {
   // The description is printed as part of the help message.
   Command(std::string command, std::string description);
 
-  Command(std::string_view command, std::string description);
-
   // Adds a possible option. A typical call would be like this:
   // bool printHelp = false;
   // cmd.addArgument({"--help", "-h"}, &printHelp, "Print this help message");

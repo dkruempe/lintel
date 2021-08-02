@@ -20,40 +20,17 @@ class PropertyCliComponent : public CommandLineComponent {
     Undefined,
     AllProperties,
     ProcessProperties,
-    ProcessClassProperties
+    ProcessClassProperties,
+    ProcessClassInstanceProperties
   };
-  static constexpr std::string_view showAllProperties = "sap";
-  static constexpr std::string_view showAllPropertiesProcess = "sapp";
-  static constexpr std::string_view showAllPropertiesProcessClass = "sappc";
-  static constexpr std::string_view showAllPropertiesProcessClassInstance =
-      "sappci";
-  static constexpr std::string_view showProperty = "sp";
-  static constexpr std::string_view updateProperty = "up";
 
   // Flags
-  std::string m_processNameValue;
-  static constexpr std::string_view m_processName = "--process_name";
-  static constexpr std::string_view m_processNameShort = "-p";
-
-  std::string m_classNameValue;
-  static constexpr std::string_view m_className = "--class_name";
-  static constexpr std::string_view m_classNameShort = "-c";
-
-  std::string m_instanceNameValue;
-  static constexpr std::string_view m_instanceName = "--instance_name";
-  static constexpr std::string_view m_instanceNameShort = "-i";
-
-  std::string m_propertyNameValue;
-  static constexpr std::string_view m_propertyName = "--property_name";
-  static constexpr std::string_view m_propertyNameShort = "-p";
-
-  std::string m_typeValue;
-  static constexpr std::string_view m_type = "--type";
-  static constexpr std::string_view m_typeShort = "-t";
-
-  std::string m_valueValue;
-  static constexpr std::string_view m_value = "--value";
-  static constexpr std::string_view m_valueShort = "-v";
+  std::string m_processName;
+  std::string m_className;
+  std::string m_instanceName;
+  std::string m_propertyName;
+  std::string m_type;
+  std::string m_value;
 
   CommandParser<Commands, Undefined> m_commandParser;
 
