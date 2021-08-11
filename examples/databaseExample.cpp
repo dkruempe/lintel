@@ -22,8 +22,8 @@ void selectExample() {
     db::Statement query(connection);
     db::Result result =
         query.execute("select key, value from key_value_store limit 100");
-    for (auto &arguments : result) {
-      for (auto &argument : arguments) {
+    for (const auto &arguments : result) {
+      for (const auto &argument : arguments) {
         std::cout << argument << std::endl;
       }
     }
@@ -38,8 +38,8 @@ void selectExampleSQLite() {
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result = query.execute("select key, value from key_value");
-    for (auto &arguments : result) {
-      for (auto &argument : arguments) {
+    for (const auto &arguments : result) {
+      for (const auto &argument : arguments) {
         std::cout << argument << std::endl;
       }
     }

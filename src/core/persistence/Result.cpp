@@ -44,6 +44,12 @@ Arguments& Result::of(std::size_t pos) {
   }
   return m_resultSQLite->of(pos);
 }
+const Arguments& Result::of(std::size_t pos) const {
+  if (m_result != nullptr) {
+    return m_result->of(pos);
+  }
+  return m_resultSQLite->of(pos);
+}
 
 Result::~Result() = default;
 }  // namespace db

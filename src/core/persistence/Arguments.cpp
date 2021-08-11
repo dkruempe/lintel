@@ -8,6 +8,9 @@ std::size_t Arguments::getSize() const { return m_arguments.size(); }
 Argument& Arguments::getArgument(std::size_t iterator) {
   return m_arguments.at(iterator);
 }
+const Argument& Arguments::getArgument(std::size_t iterator) const {
+  return m_arguments.at(iterator);
+}
 Argument::Argument(const std::string& value, const std::string& name)
     : m_value(value), m_name(name) {}
 const std::string& Argument::getValue() const { return m_value; }
