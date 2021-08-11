@@ -1,23 +1,27 @@
 #include "base_library/core/persistence/sqlite3/Result.h"
 
 namespace sqlite {
-void Result::add(const std::vector<std::string> &entry) {
-  m_entries.push_back(entry);
-}
-std::string Result::getValue(int row, int attribute) const {
-  if (m_entries.empty()) {
+std::string Result::getValue(int row, int attribute) {
+  if (m_arguments.empty()) {
     return "";
   }
-  return m_entries[static_cast<std::size_t>(row)]
-                [static_cast<std::size_t>(attribute)];
+  return m_arguments.at(static_cast<std::size_t>(row))
+      .getArgument(static_cast<std::size_t>(attribute))
+      .getValue();
 }
 
 int Result::getNumOfAttributes() const {
-  if (m_entries.empty()) {
+  if (m_arguments.empty()) {
     return 0;
   }
-  return static_cast<int>(m_entries[0].size());
+  return static_cast<int>(m_arguments[0].getSize());
 }
 
-int Result::getSize() const { return static_cast<int>(m_entries.size()); }
+int Result::getSize() const { return static_cast<int>(m_arguments.size()); }
+db::Arguments& Result::of(std::size_t pos) {
+  return m_arguments.at(pos);
+}
+void Result::add(const db::Arguments& arguments) {
+  m_arguments.push_back(arguments);
+}
 }  // namespace sqlite

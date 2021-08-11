@@ -1,9 +1,11 @@
 #ifndef CPP_BASE_LIBRARY_RESULT_H
 #define CPP_BASE_LIBRARY_RESULT_H
 
+#include <iterator>
 #include <string>
 
-#include "Connection.h"
+#include "base_library/core/persistence/Arguments.h"
+#include "base_library/core/persistence/Connection.h"
 #include "base_library/core/persistence/postgresql/Result.h"
 #include "base_library/core/persistence/sqlite3/Result.h"
 
@@ -14,6 +16,35 @@ class Result {
   std::shared_ptr<sqlite::Result> m_resultSQLite = nullptr;
 
  public:
+  class Iterator
+      : public std::iterator<std::random_access_iterator_tag, Arguments,
+                             std::ptrdiff_t, Arguments *, Arguments &> {
+   private:
+    Result &m_result;
+    std::size_t m_pos;
+
+   public:
+    explicit Iterator(Result &result, bool end = false)
+        : m_result(result),
+          m_pos(end ? static_cast<std::size_t>(m_result.getSize()) : 0) {}
+
+    Iterator &operator++() {
+      ++m_pos;
+      return *this;
+    }
+    Iterator operator++(int) {
+      ++m_pos;
+      return *this;
+    }
+    bool operator==(Iterator other) const { return m_pos == other.m_pos; }
+    bool operator!=(Iterator other) const { return !(*this == other); }
+    reference operator*() { return m_result.of(m_pos); }
+  };
+
+  Iterator begin() { return Iterator(*this); }
+
+  Iterator end() { return Iterator(*this, true); }
+
   Result() = default;
 
   ~Result();
@@ -23,6 +54,8 @@ class Result {
   explicit Result(std::shared_ptr<sqlite::Result> result);
 
   [[nodiscard]] std::string getValue(int row, int attribute) const;
+
+  [[nodiscard]] Arguments &of(std::size_t pos);
 
   [[nodiscard]] int getNumOfAttributes() const;
 

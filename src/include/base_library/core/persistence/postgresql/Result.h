@@ -5,10 +5,13 @@
 
 #include <string>
 
+#include "base_library/core/persistence/Arguments.h"
+
 namespace postgresql {
 class Result {
  private:
   PGresult *m_res;
+  std::vector<db::Arguments> m_arguments;
 
  public:
   explicit Result(PGresult *res);
@@ -22,6 +25,8 @@ class Result {
   [[nodiscard]] int getNumOfAttributes() const;
 
   [[nodiscard]] int getSize() const;
+
+  [[nodiscard]] db::Arguments &of(std::size_t pos);
 };
 }  // namespace postgresql
 

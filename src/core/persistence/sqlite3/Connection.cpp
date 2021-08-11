@@ -87,14 +87,18 @@ std::shared_ptr<Result> Connection::executePreparedStatement(
       continue;
     }
     const unsigned char *text;
+    const char *name;
     const int count = sqlite3_column_count(found->second);
-    std::vector<std::string> entry;
+    db::Arguments arguments;
     for (int i = 0; i < count; i++) {
       text = sqlite3_column_text(found->second, i);
+      name = sqlite3_column_name(found->second, i);
       std::basic_string<unsigned char> temp = text;
-      entry.emplace_back(temp.begin(), temp.end());
+      std::string value(temp.begin(), temp.end());
+      db::Argument argument(value, name);
+      arguments.add(argument);
     }
-    result->add(entry);
+    result->add(arguments);
     row++;
   } while (step == SQLITE_ROW);
   sqlite3_reset(found->second);
@@ -129,14 +133,18 @@ std::shared_ptr<Result> Connection::executeParameters(
       continue;
     }
     const unsigned char *text;
+    const char *name;
     const int count = sqlite3_column_count(stmt);
-    std::vector<std::string> entry;
+    db::Arguments arguments;
     for (int j = 0; j < count; j++) {
       text = sqlite3_column_text(stmt, j);
+      name = sqlite3_column_name(stmt, j);
       std::basic_string<unsigned char> temp = text;
-      entry.emplace_back(temp.begin(), temp.end());
+      std::string value(temp.begin(), temp.end());
+      db::Argument argument(value, name);
+      arguments.add(argument);
     }
-    result->add(entry);
+    result->add(arguments);
     row++;
   } while (step == SQLITE_ROW);
   sqlite3_finalize(stmt);
@@ -149,12 +157,12 @@ std::shared_ptr<Result> Connection::execute(
   std::shared_ptr<Result> result = std::make_shared<Result>();
   std::function<void(int argc, char **argv, char **column)> func =
       [&](int argc, char **argv, char **column) {
-        std::vector<std::string> entry;
-        entry.reserve(static_cast<std::size_t>(argc));
+        db::Arguments arguments;
         for (int i = 0; i < argc; i++) {
-          entry.emplace_back(argv[i]);
+          db::Argument argument(argv[i], column[i]);
+          arguments.add(argument);
         }
-        result->add(entry);
+        result->add(arguments);
       };
   void *funcPtr = static_cast<void *>(&func);
   const int rc =

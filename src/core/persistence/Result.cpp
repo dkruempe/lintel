@@ -10,7 +10,7 @@ std::string Result::getValue(int row, int attribute) const {
   if (m_resultSQLite != nullptr) {
     return m_resultSQLite->getValue(row, attribute);
   }
-  return std::string();
+  return {};
 }
 
 int Result::getNumOfAttributes() const {
@@ -38,6 +38,12 @@ Result::Result(std::shared_ptr<postgresql::Result> result)
 
 Result::Result(std::shared_ptr<sqlite::Result> result)
     : m_result(nullptr), m_resultSQLite(std::move(result)) {}
+Arguments& Result::of(std::size_t pos) {
+  if (m_result != nullptr) {
+    return m_result->of(pos);
+  }
+  return m_resultSQLite->of(pos);
+}
 
 Result::~Result() = default;
 }  // namespace db

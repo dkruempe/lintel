@@ -22,17 +22,10 @@ void selectExample() {
     db::Statement query(connection);
     db::Result result =
         query.execute("select key, value from key_value_store limit 100");
-    for (int i = 0; i < result.getSize(); i++) {
-      std::cout << "(";
-      for (int j = 0; j < result.getNumOfAttributes(); j++) {
-        std::cout << result.getValue(i, j);
-        if (j != result.getNumOfAttributes() - 1) {
-          std::cout << ", ";
-        } else {
-          std::cout << ")";
-        }
+    for (auto &arguments : result) {
+      for (auto &argument : arguments) {
+        std::cout << argument << std::endl;
       }
-      std::cout << "\n";
     }
   } catch (db::SQLException &exception) {
     fprintf(stderr, "%s", exception.what());
@@ -45,17 +38,10 @@ void selectExampleSQLite() {
     db::Transaction transaction(connection);
     db::Statement query(connection);
     db::Result result = query.execute("select key, value from key_value");
-    for (int i = 0; i < result.getSize(); i++) {
-      std::cout << "(";
-      for (int j = 0; j < result.getNumOfAttributes(); j++) {
-        std::cout << result.getValue(i, j);
-        if (j != result.getNumOfAttributes() - 1) {
-          std::cout << ", ";
-        } else {
-          std::cout << ")";
-        }
+    for (auto &arguments : result) {
+      for (auto &argument : arguments) {
+        std::cout << argument << std::endl;
       }
-      std::cout << "\n";
     }
   } catch (db::SQLException &exception) {
     fprintf(stderr, "%s", exception.what());
