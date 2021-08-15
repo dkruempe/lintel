@@ -32,83 +32,12 @@ find_package(httplib REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Boost 1.75.0 REQUIRED COMPONENTS container) # interprocess process asio are header only libraries
 
-# logger example
-add_executable(logger_example logger_example.cpp)
-target_compile_features(logger_example PUBLIC cxx_std_17)
-target_include_directories(logger_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(logger_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# scheduler example
-add_executable(scheduler_example scheduler_example.cpp)
-target_compile_features(scheduler_example PUBLIC cxx_std_17)
-target_include_directories(scheduler_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(scheduler_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# file example
-add_executable(file_example file_example.cpp)
-target_compile_features(file_example PUBLIC cxx_std_17)
-target_include_directories(file_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(file_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# class name example
-add_executable(classNameExample classNameExample.cpp)
-target_compile_features(classNameExample PUBLIC cxx_std_17)
-target_include_directories(classNameExample PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(classNameExample PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# executor example
-add_executable(executor_example executor_example.cpp)
-target_compile_features(executor_example PUBLIC cxx_std_17)
-target_include_directories(executor_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(executor_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# configuration example
-add_executable(property_example property_example.cpp)
-target_compile_features(property_example PUBLIC cxx_std_17)
-target_include_directories(property_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(property_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
 # spdlog example
 add_executable(spdlogExample spdlogExample.cpp)
 target_compile_features(spdlogExample PUBLIC cxx_std_17)
 target_link_libraries(spdlogExample PUBLIC fmt::fmt spdlog::spdlog)
 
-# stringify extension example
-add_executable(stringifyExtensionExample stringifyExtensionExample.cpp)
-target_compile_features(stringifyExtensionExample PUBLIC cxx_std_17)
-target_include_directories(stringifyExtensionExample PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(stringifyExtensionExample PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# stop watch example
-add_executable(stopWatchExample stopWatchExample.cpp)
-target_compile_features(stopWatchExample PUBLIC cxx_std_17)
-target_include_directories(stopWatchExample PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(stopWatchExample PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# signal example
-add_executable(signalExample signalExample.cpp)
-target_compile_features(signalExample PUBLIC cxx_std_17)
-target_include_directories(signalExample PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(signalExample PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# database example
-add_executable(databaseExample databaseExample.cpp)
-target_compile_features(databaseExample PUBLIC cxx_std_17)
-target_include_directories(databaseExample PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(databaseExample PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# configuration parser example
-add_executable(configuration_example configuration_example.cpp)
-target_compile_features(configuration_example PUBLIC cxx_std_17)
-target_include_directories(configuration_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(configuration_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
-# cli application example
-add_executable(cli_example cli_example.cpp)
-target_compile_features(cli_example PUBLIC cxx_std_17)
-target_include_directories(cli_example PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(cli_example PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib)
-
+# main example
 add_executable(main main.cpp)
 target_compile_features(main PUBLIC cxx_std_17)
 target_include_directories(main PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
