@@ -32,3 +32,11 @@ std::shared_ptr<ConnectionEntry> ConnectionConfigurations::of(
     throw db::SQLException("Connection with " + connectionName + " not found");
   }
 }
+std::vector<std::shared_ptr<ConnectionEntry>>
+ConnectionConfigurations::allof() {
+  std::vector<std::shared_ptr<ConnectionEntry>> connections;
+  for (auto &[name, connection] : m_connections) {
+    connections.push_back(connection);
+  }
+  return connections;
+}

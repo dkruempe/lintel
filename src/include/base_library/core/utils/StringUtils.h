@@ -10,8 +10,8 @@
 class StringUtils {
  public:
   StringUtils() = delete;
-  StringUtils(StringUtils&) = delete;
-  StringUtils(StringUtils&&) = delete;
+  StringUtils(StringUtils &) = delete;
+  StringUtils(StringUtils &&) = delete;
 
   /**
    * function splits string with defined delimter into tokens
@@ -19,7 +19,10 @@ class StringUtils {
    * @param delimiter for differentiate between tokens
    * @return tokens in vector
    */
-  static std::vector<std::string> split(const std::string& s, char delimiter);
+  static std::vector<std::string> split(const std::string &s, char delimiter);
+
+  static bool startsWith(const std::string &s, const std::string &start);
+
 };
 
 #endif  // CPP_BASE_LIBRARY_STRINGUTILS_H

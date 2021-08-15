@@ -20,6 +20,8 @@ class ConnectionConfigurations {
 
   [[nodiscard]] std::shared_ptr<ConnectionEntry> of(
       const std::string &connectionName);
+
+  [[nodiscard]] std::vector<std::shared_ptr<ConnectionEntry>> allof();
 };
 
 #endif  // CPP_BASE_LIBRARY_CONNECTIONCONFIGURATIONS_H

@@ -1,6 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_ARGUMENTS_H
 #define CPP_BASE_LIBRARY_ARGUMENTS_H
 
+#include <map>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -14,7 +15,7 @@ class Argument {
   std::string m_name;
 
  public:
-  Argument(const std::string &value, const std::string &name);
+  Argument(std::string value, std::string name);
   [[nodiscard]] const std::string &getValue() const;
   [[nodiscard]] const std::string &getName() const;
 
@@ -28,6 +29,11 @@ class Argument {
 };
 class Arguments {
  private:
+  // members
+  std::vector<Argument> m_arguments;
+  std::map<std::string, Argument> m_argumentsMap;
+
+  // iterator classes
   class Iterator
       : public std::iterator<std::random_access_iterator_tag, Argument,
                              std::ptrdiff_t, Argument *, Argument &> {
@@ -38,7 +44,7 @@ class Arguments {
    public:
     explicit Iterator(Arguments &arguments, bool end = false)
         : m_arguments(arguments),
-          m_pos(end ? static_cast<std::size_t>(m_arguments.getSize()) : 0) {}
+          m_pos(end ? static_cast<std::size_t>(m_arguments.size()) : 0) {}
 
     Iterator &operator++() {
       ++m_pos;
@@ -50,7 +56,7 @@ class Arguments {
     }
     bool operator==(Iterator other) const { return m_pos == other.m_pos; }
     bool operator!=(Iterator other) const { return !(*this == other); }
-    reference operator*() { return m_arguments.getArgument(m_pos); }
+    reference operator*() { return m_arguments.of(m_pos); }
   };
 
   class ConstIterator
@@ -64,7 +70,7 @@ class Arguments {
    public:
     explicit ConstIterator(const Arguments &arguments, bool end = false)
         : m_arguments(arguments),
-          m_pos(end ? static_cast<std::size_t>(m_arguments.getSize()) : 0) {}
+          m_pos(end ? static_cast<std::size_t>(m_arguments.size()) : 0) {}
 
     ConstIterator &operator++() {
       ++m_pos;
@@ -76,23 +82,25 @@ class Arguments {
     }
     bool operator==(ConstIterator other) const { return m_pos == other.m_pos; }
     bool operator!=(ConstIterator other) const { return !(*this == other); }
-    reference operator*() const { return m_arguments.getArgument(m_pos); }
+    reference operator*() const { return m_arguments.of(m_pos); }
   };
 
  public:
+  // constructor
   Arguments() = default;
-
+  // helper methods
   void add(const Argument &argument);
-  std::size_t getSize() const;
-  Argument &getArgument(std::size_t iterator);
-  const Argument &getArgument(std::size_t iterator) const;
-  std::vector<Argument> m_arguments;
+  [[nodiscard]] std::size_t size() const;
+  [[nodiscard]] bool empty() const;
+  Argument &of(std::size_t iterator);
+  [[nodiscard]] const Argument &of(std::size_t iterator) const;
+  [[nodiscard]] const Argument &of(const std::string &name) const;
+
+  // iterators
   Iterator begin() { return Iterator(*this); }
-
   Iterator end() { return Iterator(*this, true); }
-  ConstIterator begin() const { return ConstIterator(*this); }
-
-  ConstIterator end() const { return ConstIterator(*this, true); }
+  [[nodiscard]] ConstIterator begin() const { return ConstIterator(*this); }
+  [[nodiscard]] ConstIterator end() const { return ConstIterator(*this, true); }
 };
 };  // namespace db
 

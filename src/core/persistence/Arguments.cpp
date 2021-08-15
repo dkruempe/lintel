@@ -3,16 +3,21 @@
 namespace db {
 void Arguments::add(const Argument& argument) {
   m_arguments.push_back(argument);
+  m_argumentsMap.insert({argument.getName(), argument});
 }
-std::size_t Arguments::getSize() const { return m_arguments.size(); }
-Argument& Arguments::getArgument(std::size_t iterator) {
+std::size_t Arguments::size() const { return m_arguments.size(); }
+Argument& Arguments::of(std::size_t iterator) {
   return m_arguments.at(iterator);
 }
-const Argument& Arguments::getArgument(std::size_t iterator) const {
+const Argument& Arguments::of(std::size_t iterator) const {
   return m_arguments.at(iterator);
 }
-Argument::Argument(const std::string& value, const std::string& name)
-    : m_value(value), m_name(name) {}
+const Argument& Arguments::of(const std::string& name) const {
+  return m_argumentsMap.at(name);
+}
+bool Arguments::empty() const { return size() == 0; }
+Argument::Argument(std::string value, std::string name)
+    : m_value(std::move(value)), m_name(std::move(name)) {}
 const std::string& Argument::getValue() const { return m_value; }
 const std::string& Argument::getName() const { return m_name; }
 std::ostream& operator<<(std::ostream& os, const db::Argument& argument) {

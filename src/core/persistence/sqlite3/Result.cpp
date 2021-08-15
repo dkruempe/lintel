@@ -6,7 +6,7 @@ std::string Result::getValue(int row, int attribute) {
     return "";
   }
   return m_arguments.at(static_cast<std::size_t>(row))
-      .getArgument(static_cast<std::size_t>(attribute))
+      .of(static_cast<std::size_t>(attribute))
       .getValue();
 }
 
@@ -14,7 +14,7 @@ int Result::getNumOfAttributes() const {
   if (m_arguments.empty()) {
     return 0;
   }
-  return static_cast<int>(m_arguments[0].getSize());
+  return static_cast<int>(m_arguments[0].size());
 }
 
 int Result::getSize() const { return static_cast<int>(m_arguments.size()); }

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <csignal>
 
+#include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/features/base/models/ProcessName.h"
@@ -47,6 +48,9 @@ StartupBuilder &StartupBuilder::start() {
   for (auto &&feature : m_features) {
     feature->initialize(m_container);
   }
+  std::shared_ptr<BootstrapService> bootstrapService =
+      m_container->resolve<BootstrapService>();
+  bootstrapService->onStart();
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
   LOG_INFO("{} finished initialization", m_processInfo->name);
