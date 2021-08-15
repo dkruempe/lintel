@@ -67,10 +67,14 @@ PropertyService::PropertyService(
         &propertyRepositories,
     const std::vector<std::shared_ptr<AbstractServiceInterface>>
         &abstractServices)
-    : m_propertyRepository(searchRuntimeRepository(propertyRepositories)),
-      m_properties(init(propertyRepositories)) {
+    : m_propertyRepositories(propertyRepositories),
+      m_propertyRepository(searchRuntimeRepository(propertyRepositories)),
+      m_abstractServices(abstractServices),
+      m_properties() {}
+void PropertyService::onAwake() {
+  m_properties = init(m_propertyRepositories);
   std::for_each(
-      abstractServices.begin(), abstractServices.end(),
+      m_abstractServices.begin(), m_abstractServices.end(),
       [&](const std::shared_ptr<AbstractServiceInterface> &abstractService) {
         getOrCreate(abstractService->getProperties());
       });
@@ -82,7 +86,8 @@ std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf() {
                  [](const auto &iter) { return iter.second; });
   return propertiesVector;
 }
-std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::string &processName) {
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
+    const std::string &processName) {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   for (const auto &property : m_properties) {
     if (property.second->getProcessName() != processName) {
@@ -92,7 +97,8 @@ std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::str
   }
   return propertiesVector;
 }
-std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::string &processName, const std::string &className) {
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
+    const std::string &processName, const std::string &className) {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   for (const auto &property : m_properties) {
     if (property.second->getProcessName() != processName) {
@@ -105,7 +111,9 @@ std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::str
   }
   return propertiesVector;
 }
-std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::string &processName, const std::string &className, const std::string &instanceName) {
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
+    const std::string &processName, const std::string &className,
+    const std::string &instanceName) {
   std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
   for (const auto &property : m_properties) {
     if (property.second->getProcessName() != processName) {

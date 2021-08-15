@@ -3,6 +3,7 @@
 #include "base_library/core/persistence/ConnectionConfigurations.h"
 #include "base_library/core/plugins/DatabaseBootstrapPlugin.h"
 #include "base_library/core/services/BootstrapService.h"
+#include "base_library/core/services/PersistableService.h"
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
@@ -37,4 +38,5 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .as<BootstrapPlugin>()
       .asSelf()
       .singleInstance();
+  builder.registerType<PersistableService>().singleInstance();
 }

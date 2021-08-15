@@ -5,6 +5,7 @@
 
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/services/PersistableService.h"
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/InitializeService.h"
@@ -51,6 +52,9 @@ StartupBuilder &StartupBuilder::start() {
   std::shared_ptr<BootstrapService> bootstrapService =
       m_container->resolve<BootstrapService>();
   bootstrapService->onStart();
+  std::shared_ptr<PersistableService> persistableService =
+      m_container->resolve<PersistableService>();
+  persistableService->awake();
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
   LOG_INFO("{} finished initialization", m_processInfo->name);

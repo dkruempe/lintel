@@ -6,8 +6,8 @@
 #include <ostream>
 #include <vector>
 
-#include "PropertyService.h"
 #include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/PersistableBean.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/property/exceptions/PropertyNoRuntimeChangeSupported.h"
 #include "base_library/features/property/exceptions/PropertyNotFoundException.h"
@@ -18,14 +18,16 @@
   std::shared_ptr<Property<type>> name =                                    \
       registerProperty<type>(std::string(#name), defaultValue, description, \
                              runtime, __FILE__, __LINE__)
-#define LOAD_PROPERTIES()                     \
-  if (propertyService != nullptr) {           \
+#define LOAD_PROPERTIES()                       \
+  if (propertyService != nullptr) {             \
     propertyService->getOrCreate(m_properties); \
   }
 
-class PropertyService {
+class PropertyService : public PersistableBean {
  private:
+  std::vector<std::shared_ptr<PropertyRepository>> m_propertyRepositories;
   std::shared_ptr<PropertyRepository> m_propertyRepository;
+  std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
   // variables
   std::map<std::string, std::shared_ptr<PropertyBase>>
       m_properties;  // identifier (name_instanceName_processName), Property
@@ -46,6 +48,8 @@ class PropertyService {
                   const std::vector<std::shared_ptr<AbstractServiceInterface>>
                       &abstractServices);
 
+  void onAwake() override;
+
   template <class T>
   std::shared_ptr<Property<T>> getOrCreate(const std::string &name,
                                            const std::string &instanceName,
@@ -61,9 +65,13 @@ class PropertyService {
                                      const std::string &className,
                                      const std::string &processName);
   std::vector<std::shared_ptr<PropertyBase>> allOf();
-  std::vector<std::shared_ptr<PropertyBase>> allOf(const std::string &processName);
-  std::vector<std::shared_ptr<PropertyBase>> allOf(const std::string &processName, const std::string &className);
-  std::vector<std::shared_ptr<PropertyBase>> allOf(const std::string &processName, const std::string &className, const std::string &instanceName);
+  std::vector<std::shared_ptr<PropertyBase>> allOf(
+      const std::string &processName);
+  std::vector<std::shared_ptr<PropertyBase>> allOf(
+      const std::string &processName, const std::string &className);
+  std::vector<std::shared_ptr<PropertyBase>> allOf(
+      const std::string &processName, const std::string &className,
+      const std::string &instanceName);
   template <class T>
   void changeValueOf(const std::shared_ptr<PropertyBase> &property,
                      const T &value);
