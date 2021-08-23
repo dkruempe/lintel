@@ -41,6 +41,7 @@ find_package(OpenSSL REQUIRED)
 find_package(Boost 1.75.0 REQUIRED)
 find_package(RapidJSON REQUIRED)
 find_package(tabulate REQUIRED)
+find_package(date REQUIRED)
 
 # build
 FILE(GLOB_RECURSE headers include/*.h)
@@ -53,7 +54,7 @@ target_include_directories(base_library
         "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES};${Boost_INCLUDE_DIRS};${tabulate_INCLUDES};${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES};${Boost_INCLUDE_DIRS};${tabulate_INCLUDES};include>"
         )
-target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3 Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib RapidJSON::RapidJSON project_warnings)
+target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3 Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib RapidJSON::RapidJSON date::date project_warnings)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets
