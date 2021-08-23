@@ -29,9 +29,9 @@ class Serialization {
       const std::shared_ptr<ConnectionEntry> &connectionEntry) {
     switch (connectionEntry->getType()) {
       case ConnectionType::SQLite:
-        return sqlite::Serialization<T>::deserialize(type);
+        return sqlite::Serialization<T>::deserialize(value);
       case ConnectionType::PostgreSQL:
-        return postgresql::Serialization<T>::deserialize(type);
+        return postgresql::Serialization<T>::deserialize(value);
       default:
         throw std::runtime_error("not supported connection type");
     }

@@ -89,7 +89,7 @@ std::shared_ptr<Result> Connection::executePreparedStatement(
     const unsigned char *text;
     const char *name;
     const int count = sqlite3_column_count(found->second);
-    db::Arguments arguments;
+    db::Arguments arguments(db::ConnectionType::SQLite);
     for (int i = 0; i < count; i++) {
       text = sqlite3_column_text(found->second, i);
       name = sqlite3_column_name(found->second, i);
@@ -135,7 +135,7 @@ std::shared_ptr<Result> Connection::executeParameters(
     const unsigned char *text;
     const char *name;
     const int count = sqlite3_column_count(stmt);
-    db::Arguments arguments;
+    db::Arguments arguments(db::ConnectionType::SQLite);
     for (int j = 0; j < count; j++) {
       text = sqlite3_column_text(stmt, j);
       name = sqlite3_column_name(stmt, j);
@@ -157,7 +157,7 @@ std::shared_ptr<Result> Connection::execute(
   std::shared_ptr<Result> result = std::make_shared<Result>();
   std::function<void(int argc, char **argv, char **column)> func =
       [&](int argc, char **argv, char **column) {
-        db::Arguments arguments;
+        db::Arguments arguments(db::ConnectionType::SQLite);
         for (int i = 0; i < argc; i++) {
           db::Argument argument(argv[i], column[i]);
           arguments.add(argument);

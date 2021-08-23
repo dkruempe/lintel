@@ -8,7 +8,7 @@ Result::Result(PGresult* res) : m_res(res) {
   int cols = PQntuples(m_res);
   int row = PQnfields(m_res);
   for (int i = 0; i < cols; i++) {
-    db::Arguments arguments;
+    db::Arguments arguments(db::ConnectionType::PostgreSQL);
     for (int j = 0; j < row; j++) {
       std::string value = PQgetvalue(m_res, static_cast<int>(i), j);
       std::string name = PQfname(m_res, j);

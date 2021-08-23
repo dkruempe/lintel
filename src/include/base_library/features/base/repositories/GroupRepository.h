@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_GROUPREPOSITORY_H
 
 #include <memory>
+#include <optional>
 
 #include "base_library/core/persistence/ConnectionConfigurations.h"
 #include "base_library/features/base/models/Group.h"
@@ -14,11 +15,21 @@ class GroupRepository {
   std::shared_ptr<ConnectionEntry> m_connectionEntry;
   // cache of groups
   std::vector<Group> m_groups;
+  std::map<std::string, Group> m_groupMap;
 
   void initGroups();
+
  public:
   explicit GroupRepository(
       std::shared_ptr<ConnectionConfigurations> connectionConfigurations);
+
+  std::optional<Group> of(const std::string &groupName);
+
+  std::vector<Group> allOf();
+
+  void createOf(const Group &group);
+
+  void deleteOf(const Group &group);
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUPREPOSITORY_H

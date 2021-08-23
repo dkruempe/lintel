@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "base_library/core/persistence/ConnectionConfigurations.h"
-#include "base_library/core/persistence/postgresql/Serialization.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
@@ -21,8 +20,15 @@ int main(int argc, char *argv[]) {
   UserRepository userRepository(connectionConfigurations);
   GroupRepository groupRepository(connectionConfigurations);
   std::optional<User> anna = userRepository.of("anna");
-  std::cout << anna.value() << std::endl;
-  std::cout << postgresql::Serialization<int32_t>::serialize(4711) << std::endl;
-  std::cout << postgresql::Serialization<bool>::serialize(true) << std::endl;
+  std::vector<Group> groups = groupRepository.allOf();
+  for (const auto &group : groups) {
+    std::cout << group << std::endl;
+  }
+  std::optional<Group> propertyAdmin = groupRepository.of("Property-Admin");
+  Group newGroup("test", {propertyAdmin.value()}, false);
+  groupRepository.createOf(newGroup);
+  std::cout << groupRepository.of("test").value() << std::endl;
+  groupRepository.deleteOf(newGroup);
+  auto testGroup = groupRepository.of("test");
   return 0;
 }

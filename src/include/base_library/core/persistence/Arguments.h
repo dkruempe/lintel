@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "base_library/core/persistence/ConnectionType.h"
+#include "base_library/core/persistence/Serialization.h"
 #include "base_library/core/services/StringifyService.h"
 
 namespace db {
@@ -13,15 +15,22 @@ class Argument {
  private:
   std::string m_value;
   std::string m_name;
+  db::ConnectionType m_connectionType;
 
  public:
   Argument(std::string value, std::string name);
   [[nodiscard]] const std::string &getValue() const;
   [[nodiscard]] const std::string &getName() const;
+  void setConnectionType(ConnectionType connectionType);
 
   template <typename TYPE>
   TYPE getValue() const {
-    return StringifyService<TYPE>::deserializeFromString(m_value);
+    switch (m_connectionType) {
+      case ConnectionType::PostgreSQL:
+        return postgresql::Serialization<TYPE>::deserialize(m_value);
+      case ConnectionType::UNDEFINED:
+        return StringifyService<TYPE>::deserializeFromString(m_value);
+    }
   }
 
   friend std::ostream &operator<<(std::ostream &os,
@@ -32,6 +41,7 @@ class Arguments {
   // members
   std::vector<Argument> m_arguments;
   std::map<std::string, Argument> m_argumentsMap;
+  ConnectionType m_connectionType;
 
   // iterator classes
   class Iterator
@@ -87,9 +97,9 @@ class Arguments {
 
  public:
   // constructor
-  Arguments() = default;
+  explicit Arguments(ConnectionType connectionType);
   // helper methods
-  void add(const Argument &argument);
+  void add(Argument &argument);
   [[nodiscard]] std::size_t size() const;
   [[nodiscard]] bool empty() const;
   Argument &of(std::size_t iterator);
