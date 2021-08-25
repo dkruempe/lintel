@@ -1,6 +1,8 @@
 #ifndef LOGGING_STRINGIFYSERVICE_H
 #define LOGGING_STRINGIFYSERVICE_H
 
+#include <date/tz.h>
+
 #include <string>
 
 template <class T>
@@ -36,6 +38,18 @@ IMPLEMENT_STRINGIFY_SERVICE_FOR(
     bool, [](bool value) -> std::string { return value ? "true" : "false"; },
     [](const std::string &string) -> bool {
       return string == "true" ? true : false;
+    })
+IMPLEMENT_STRINGIFY_SERVICE_FOR(
+    date::sys_time<std::chrono::microseconds>,
+    [](const date::sys_time<std::chrono::microseconds> &time) -> std::string {
+      return date::format("%Y-%m-%d %H:%M:%S%Ez", time);
+    },
+    [](const std::string &timeString)
+        -> date::sys_time<std::chrono::microseconds> {
+      std::stringstream ss(timeString);
+      date::sys_time<std::chrono::microseconds> lt;
+      ss >> date::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
+      return lt;
     })
 
 #endif  // LOGGING_STRINGIFYSERVICE_H

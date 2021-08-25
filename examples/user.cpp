@@ -42,5 +42,14 @@ int main(int argc, char *argv[]) {
   }
   groupRepository->deleteOf(newGroup);
   auto testGroup = groupRepository->of("test");
+  User user("Josef", "Hermes", User::Sex::Male, "josef.hermes@aol.com", "jopp",
+            "jopp", {});
+  userRepository.createOf(user);
+  for (const auto &user : userRepository.allOf()) {
+    std::stringstream ss;
+    ss << user;
+    LOG_INFO("{}", ss.str());
+  }
+  userRepository.deleteOf(user);
   return 0;
 }

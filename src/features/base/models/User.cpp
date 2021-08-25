@@ -13,10 +13,10 @@ const date::sys_time<std::chrono::microseconds>& User::getCreatedTimestamp()
     const {
   return m_createdTimestamp;
 }
-User::User(std::string firstName, std::string lastName, User::Sex sex,
+User::User(std::string firstName, std::string lastName, Sex sex,
            std::string email, std::string userName, std::string password,
-           date::sys_time<std::chrono::microseconds> createdTimestamp,
-           std::vector<Group> groups)
+           std::vector<Group> groups,
+           date::sys_time<std::chrono::microseconds> createdTimestamp)
     : m_firstName(std::move(firstName)),
       m_lastName(std::move(lastName)),
       m_sex(sex),

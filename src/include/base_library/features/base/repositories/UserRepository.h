@@ -21,11 +21,15 @@ class UserRepository {
 
   std::optional<User> of(const std::string &userName);
 
+  std::vector<User> allOf();
+
   void createOf(const User &user);
 
   void deleteOf(const User &user);
 
-  void updateOf(const User &user);
+  void changeUserOf(const User &user, const User &changeUser);
+
+  void addGroupOf(const User &user, const Group &group);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERREPOSITORY_H

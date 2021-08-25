@@ -35,9 +35,9 @@ class User {
 
  public:
   User(std::string firstName, std::string lastName, Sex sex, std::string email,
-       std::string userName, std::string password,
-       date::sys_time<std::chrono::microseconds> createdTimestamp,
-       std::vector<Group> groups);
+       std::string userName, std::string password, std::vector<Group> groups,
+       date::sys_time<std::chrono::microseconds> createdTimestamp =
+           std::chrono::system_clock::now());
   [[nodiscard]] const std::string& getFirstName() const;
   [[nodiscard]] const std::string& getLastName() const;
   [[nodiscard]] Sex getSex() const;
