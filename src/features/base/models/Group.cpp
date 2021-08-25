@@ -11,7 +11,18 @@ bool Group::isVirtual() const { return m_isVirtual; }
 std::ostream& operator<<(std::ostream& os, const Group& group) {
   os << "Group{"
      << "group_name: " << group.m_groupName
-     << ", isVirtual:" << group.m_isVirtual
-     << ", m_groups:" << group.m_groups.size() << "}";
+     << ", isVirtual:" << group.m_isVirtual;
+  if (!group.m_groups.empty()) {
+    os << ", m_groups: {";
+    for (std::size_t i = 0; i < group.m_groups.size(); i++) {
+      Group memberGroup = group.m_groups[i];
+      os << memberGroup;
+      if (i != memberGroup.m_groups.size() - 1) {
+        os << ", ";
+      }
+    }
+    os << "}";
+  }
+  os << "}";
   return os;
 }

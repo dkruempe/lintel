@@ -17,15 +17,66 @@ GroupRepository::GroupRepository(
 void GroupRepository::initGroups() {
   db::Connection connection(m_connectionEntry);
   db::Statement statement(connection);
-  db::Result result =
-      statement.execute("select name, virtual from public.group");
-  for (const auto& iter : result) {
-    std::string groupName = iter.of("name").getValue();
-    bool isVirtual = iter.of("virtual").getValue<bool>();
+  // initialize virtual groups
+  db::Result result = statement.execute(R"(
+  select name,
+         virtual
+  from public.group
+  where virtual = true
+  )");
+  for (auto& iter : result) {
+    std::string groupName = iter.of(0).getValue();
+    bool isVirtual = iter.of(1).getValue<bool>();
     Group group(groupName, {}, isVirtual);
-    m_groups.push_back(group);
     m_groupMap.insert({group.getGroupName(), group});
+    m_groups.push_back(group);
   }
+  // initialize non virtual groups
+  result = statement.execute(R"(
+  select g.name,
+         g.virtual,
+         gr.base_group_name
+  from public.group g
+  left join group_groups_relation gr
+    on gr.group_name = g.name
+  where g.virtual = false;
+  )");
+  std::string lastGroupName;
+  bool lastIsVirtual;
+  std::vector<std::string> groupNames;
+  for (const auto& iter : result) {
+    std::string groupName = iter.of(0).getValue();
+    bool isVirtual = iter.of(1).getValue<bool>();
+    std::string groupMember = iter.of(2).getValue();
+    if (lastGroupName != groupName && !lastGroupName.empty()) {
+      std::vector<Group> groups;
+      std::transform(groupNames.begin(), groupNames.end(),
+                     std::back_inserter(groups),
+                     [&](const std::string& groupName) -> Group {
+                       return m_groupMap.at(groupName);
+                     });
+      Group group(lastGroupName, groups, lastIsVirtual);
+      m_groupMap.insert({group.getGroupName(), group});
+      m_groups.push_back(group);
+    }
+    if (lastGroupName != groupName) {
+      lastGroupName = groupName;
+      lastIsVirtual = isVirtual;
+      groupNames.clear();
+    }
+    if (!groupMember.empty()) {
+      groupNames.push_back(groupMember);
+    }
+  }
+  std::vector<Group> groups;
+  std::transform(groupNames.begin(), groupNames.end(),
+                 std::back_inserter(groups),
+                 [&](const std::string& groupName) -> Group {
+                   return m_groupMap.at(groupName);
+                 });
+  Group group(lastGroupName, groups, lastIsVirtual);
+  m_groupMap.insert({group.getGroupName(), group});
+  m_groups.push_back(group);
 }
 std::optional<Group> GroupRepository::of(const std::string& groupName) {
   auto found = m_groupMap.find(groupName);

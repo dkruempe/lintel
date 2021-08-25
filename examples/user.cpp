@@ -1,4 +1,4 @@
-#include <iostream>
+#include <sstream>
 
 #include "base_library/core/persistence/ConnectionConfigurations.h"
 #include "base_library/core/services/LoggerService.h"
@@ -17,18 +17,30 @@ int main(int argc, char *argv[]) {
       std::make_shared<Configuration>(vec);
   std::shared_ptr<ConnectionConfigurations> connectionConfigurations =
       std::make_shared<ConnectionConfigurations>(configuration);
-  UserRepository userRepository(connectionConfigurations);
-  GroupRepository groupRepository(connectionConfigurations);
-  std::optional<User> anna = userRepository.of("anna");
-  std::vector<Group> groups = groupRepository.allOf();
-  for (const auto &group : groups) {
-    std::cout << group << std::endl;
+  std::shared_ptr<GroupRepository> groupRepository =
+      std::make_shared<GroupRepository>(connectionConfigurations);
+  UserRepository userRepository(connectionConfigurations, groupRepository);
+  std::optional<User> dkruempe = userRepository.of("dkruempe");
+  {
+    std::stringstream ss;
+    ss << dkruempe.value();
+    LOG_INFO("{}", ss.str());
   }
-  std::optional<Group> propertyAdmin = groupRepository.of("Property-Admin");
+  std::vector<Group> groups = groupRepository->allOf();
+  for (const auto &group : groups) {
+    std::stringstream ss;
+    ss << group;
+    LOG_INFO("{}", ss.str());
+  }
+  std::optional<Group> propertyAdmin = groupRepository->of("Property-Admin");
   Group newGroup("test", {propertyAdmin.value()}, false);
-  groupRepository.createOf(newGroup);
-  std::cout << groupRepository.of("test").value() << std::endl;
-  groupRepository.deleteOf(newGroup);
-  auto testGroup = groupRepository.of("test");
+  groupRepository->createOf(newGroup);
+  {
+    std::stringstream ss;
+    ss << groupRepository->of("test").value();
+    LOG_INFO("{}", ss.str());
+  }
+  groupRepository->deleteOf(newGroup);
+  auto testGroup = groupRepository->of("test");
   return 0;
 }

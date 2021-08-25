@@ -31,6 +31,15 @@ std::ostream& operator<<(std::ostream& os, const User& user) {
      << ", last_name: " << user.m_lastName << ", e_mail: " << user.m_email
      << ", password: " << user.m_password << ", sex: " << user.m_sex
      << ", created_timestamp: "
-     << date::format("%Y.%m.%d %T%Ez", user.m_createdTimestamp) << "}";
+     << date::format("%Y.%m.%d %T%Ez", user.m_createdTimestamp)
+     << ", groups = {";
+  for (std::size_t i = 0; i < user.m_groups.size(); i++) {
+    const Group& group = user.m_groups[i];
+    os << group;
+    if (i != user.m_groups.size() - 1) {
+      os << ", ";
+    }
+  }
+  os << "}";
   return os;
 }
