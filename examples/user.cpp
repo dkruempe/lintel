@@ -26,6 +26,8 @@ int main(int argc, char *argv[]) {
     ss << dkruempe.value();
     LOG_INFO("{}", ss.str());
   }
+  auto userAdminGroup = groupRepository->of("User-Admin");
+  userRepository.addGroupOf(dkruempe.value(), userAdminGroup.value());
   std::vector<Group> groups = groupRepository->allOf();
   for (const auto &group : groups) {
     std::stringstream ss;
@@ -51,5 +53,6 @@ int main(int argc, char *argv[]) {
     LOG_INFO("{}", ss.str());
   }
   userRepository.deleteOf(user);
+  userRepository.removeGroupOf(dkruempe.value(), userAdminGroup.value());
   return 0;
 }

@@ -100,8 +100,38 @@ void UserRepository::createOf(const User &user) {
   }
 }
 
-void UserRepository::changeUserOf(const User &user, const User &changeUser) {}
-void UserRepository::addGroupOf(const User &user, const Group &group) {}
+void UserRepository::addGroupOf(const User &user, const Group &group) {
+  auto found = std::find_if(user.getGroups().begin(), user.getGroups().end(),
+                            [&](const Group &b) -> bool {
+                              return group.getGroupName() == b.getGroupName();
+                            });
+  if (found != user.getGroups().end()) {
+    return;
+  }
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::Statement statement(connection);
+  statement.execute(R"(
+    insert into user_groups_relation(user_name, group_name) values(?, ?)
+  )",
+                    {user.getUserName(), group.getGroupName()});
+}
+void UserRepository::removeGroupOf(const User &user, const Group &group) {
+  auto found = std::find_if(user.getGroups().begin(), user.getGroups().end(),
+                            [&](const Group &b) -> bool {
+                              return group.getGroupName() == b.getGroupName();
+                            });
+  if (found == user.getGroups().end()) {
+    return;
+  }
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::Statement statement(connection);
+  statement.execute(R"(
+    delete from user_groups_relation where user_name = ? and group_name = ?
+  )",
+                    {user.getUserName(), group.getGroupName()});
+}
 std::vector<User> UserRepository::allOf() {
   std::vector<User> users;
   try {
@@ -118,7 +148,8 @@ std::vector<User> UserRepository::allOf() {
            u.user_name
     from public.user u
     left join public.user_groups_relation ru
-      on u.user_name = ru.user_name)");
+      on u.user_name = ru.user_name
+    order by u.user_name asc)");
     std::string lastUserName;
     std::string lastFirstName;
     std::string lastLastName;
@@ -151,22 +182,80 @@ std::vector<User> UserRepository::allOf() {
       std::string userName = iter.of(6).getValue();
       if (lastUserName != userName && !lastUserName.empty()) {
         func();
+        lastGroupNames.clear();
       }
-      if (lastUserName != userName) {
-        lastUserName = userName;
-        if (!groupName.empty()) {
-          lastGroupNames.push_back(groupName);
-        }
-        lastFirstName = firstName;
-        lastLastName = lastName;
-        lastEMail = eMail;
-        lastPassword = password;
-        lastCreatedTimestamp = createdTimestamp;
+      lastUserName = userName;
+      if (!groupName.empty()) {
+        lastGroupNames.push_back(groupName);
       }
+      lastFirstName = firstName;
+      lastLastName = lastName;
+      lastEMail = eMail;
+      lastPassword = password;
+      lastCreatedTimestamp = createdTimestamp;
     }
     func();
   } catch (const db::SQLException &exception) {
     LOG_ERROR("{}", exception.what());
   }
   return users;
+}
+void UserRepository::changeFirstNameOf(const User &user,
+                                       const std::string &firstName) {
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::Statement statement(connection);
+  statement.execute(R"(
+    update public.user
+    set first_name = ?
+    where user_name = ?
+  )",
+                    {firstName, user.getUserName()});
+}
+void UserRepository::changeLastNameOf(const User &user,
+                                      const std::string &lastName) {
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::Statement statement(connection);
+  statement.execute(R"(
+    update public.user
+    set last_name = ?
+    where user_name = ?
+  )",
+                    {lastName, user.getUserName()});
+}
+void UserRepository::changeUserNameOf(const User &user,
+                                      const std::string &userName) {
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::Statement statement(connection);
+  statement.execute(R"(
+    update public.user
+    set user_name = ?
+    where user_name = ?
+  )",
+                    {userName, user.getUserName()});
+}
+void UserRepository::changePasswordOf(const User &user,
+                                      const std::string &password) {
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::Statement statement(connection);
+  statement.execute(R"(
+    update public.user
+    set password = ?
+    where user_name = ?
+  )",
+                    {password, user.getUserName()});
+}
+void UserRepository::changeEMailOf(const User &user, const std::string &eMail) {
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::Statement statement(connection);
+  statement.execute(R"(
+    update public.user
+    set e_mail = ?
+    where user_name = ?
+  )",
+                    {eMail, user.getUserName()});
 }

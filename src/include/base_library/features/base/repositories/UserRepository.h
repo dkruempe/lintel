@@ -27,9 +27,19 @@ class UserRepository {
 
   void deleteOf(const User &user);
 
-  void changeUserOf(const User &user, const User &changeUser);
-
   void addGroupOf(const User &user, const Group &group);
+
+  void removeGroupOf(const User &user, const Group &group);
+
+  void changeFirstNameOf(const User &user, const std::string &firstName);
+
+  void changeLastNameOf(const User &user, const std::string &lastName);
+
+  void changeUserNameOf(const User &user, const std::string &userName);
+
+  void changePasswordOf(const User &user, const std::string &password);
+
+  void changeEMailOf(const User &user, const std::string &eMail);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERREPOSITORY_H
