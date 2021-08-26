@@ -30,6 +30,10 @@ class GroupRepository {
   void createOf(const Group &group);
 
   void deleteOf(const Group &group);
+
+  void addGroupOf(const Group &group, const Group &add);
+
+  void removeGroupOf(const Group &group, const Group &remove);
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUPREPOSITORY_H

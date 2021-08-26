@@ -120,3 +120,43 @@ void GroupRepository::deleteOf(const Group& group) {
   statement.execute("delete from public.group where name = ?",
                     {group.getGroupName()});
 }
+void GroupRepository::addGroupOf(const Group& group, const Group& add) {
+  auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(),
+                            [&](const Group& b) -> bool {
+                              return b.getGroupName() == add.getGroupName();
+                            });
+  if (found != group.getGroups().end()) {
+    return;
+  }
+  if (group.isVirtual()) {
+    LOG_ERROR("{} is a virtual group", group.getGroupName());
+    return;
+  }
+  if (!add.isVirtual()) {
+    LOG_ERROR("{} is not a virtual group", add.getGroupName());
+    return;
+  }
+  db::Connection connection(m_connectionEntry);
+  db::Statement statement(connection);
+  db::Result result =
+      statement.execute(R"(
+    insert into group_groups_relation(group_name, base_group_name) values(?,?)
+  )",
+                        {group.getGroupName(), add.getGroupName()});
+}
+void GroupRepository::removeGroupOf(const Group& group, const Group& remove) {
+  auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(),
+                            [&](const Group& b) -> bool {
+                              return b.getGroupName() == remove.getGroupName();
+                            });
+  if (found == group.getGroups().end()) {
+    return;
+  }
+  db::Connection connection(m_connectionEntry);
+  db::Statement statement(connection);
+  db::Result result = statement.execute(
+      R"(
+    delete from group_groups_relation(group_name, base_group_name) where group_name = ? and base_group_name = ?
+      )",
+      {group.getGroupName(), remove.getGroupName()});
+}
