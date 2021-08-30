@@ -2,8 +2,11 @@
 
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/sha.h>
 
 #include <algorithm>
+#include <iomanip>
+#include <sstream>
 
 #include "base_library/core/utils/StringUtils.h"
 
@@ -33,7 +36,8 @@ std::string Cryption::encryption(const std::string &plainText) {
    * IV size for *most* modes is the same as the block size. For AES this
    * is 128 bits
    */
-  if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &m_key[0], &m_iv[0])) {
+  if (!EVP_EncryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &m_key[0],
+                          &m_iv[0])) {
     handleErrors();
   }
 
@@ -95,7 +99,8 @@ std::string Cryption::decryption(const std::string &cipherText) {
    * IV size for *most* modes is the same as the block size. For AES this
    * is 128 bits
    */
-  if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &m_key[0], &m_iv[0])) {
+  if (!EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), nullptr, &m_key[0],
+                          &m_iv[0])) {
     handleErrors();
   }
 
@@ -123,4 +128,25 @@ std::string Cryption::decryption(const std::string &cipherText) {
 
   plaintext[static_cast<std::size_t>(plaintext_len)] = 0;
   return reinterpret_cast<const char *>(&plaintext[0]);
+}
+std::string Cryption::hashOf(const std::string &text) {
+  SHA512_CTX ctx;
+  std::vector<unsigned char> buffer(SHA512_DIGEST_LENGTH);
+
+  std::size_t i = 0;
+  for (auto &token : text) {
+    buffer[i++] = static_cast<unsigned char>(token);
+  }
+
+  SHA512_Init(&ctx);
+  SHA512_Update(&ctx, &buffer[0], text.length());
+  SHA512_Final(&buffer[0], &ctx);
+  buffer[buffer.size()] = 0;
+
+  std::stringstream ss;
+  ss << std::hex << std::setfill('0');
+  for (auto &token : buffer) {
+    ss << static_cast<int>(token);
+  }
+  return ss.str();
 }

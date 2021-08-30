@@ -7,6 +7,7 @@
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
+#include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/InitializeService.h"
 #include "base_library/features/base/services/SchedulerService.h"
@@ -17,6 +18,10 @@ void BaseFeature::initialize(std::shared_ptr<Hypodermic::Container> container) {
 }
 
 void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
+  builder.registerType<AuthService>()
+      .as<AbstractServiceInterface>()
+      .asSelf()
+      .singleInstance();
   builder.registerType<SchedulerService>()
       .as<AbstractServiceInterface>()
       .asSelf()

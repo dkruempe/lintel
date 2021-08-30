@@ -10,9 +10,9 @@ class ProcessName {
  public:
   ProcessName(int argc, char *argv[]) { m_path = argv[0]; }
 
-  ProcessName(std::string processName) : m_path(processName){};
+  explicit ProcessName(std::string processName) : m_path(processName){};
 
-  std::string getProcessName() const { return m_path.filename().string(); }
+  [[nodiscard]] std::string getProcessName() const { return m_path.filename().string(); }
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSNAME_H

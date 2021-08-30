@@ -4,6 +4,7 @@
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
+#include "base_library/features/base/configuration/Cryption.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
 #include "base_library/features/base/repositories/UserRepository.h"
 
@@ -54,5 +55,7 @@ int main(int argc, char *argv[]) {
   }
   userRepository.deleteOf(user);
   userRepository.removeGroupOf(dkruempe.value(), userAdminGroup.value());
+  std::string passwordHash = Cryption::hashOf("${ADMIN_PASSWORD}");
+  LOG_INFO("password hash: {}", passwordHash);
   return 0;
 }

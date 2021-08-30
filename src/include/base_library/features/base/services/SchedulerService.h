@@ -73,7 +73,7 @@ class SchedulerService : public AbstractService<SchedulerService> {
 
   void onInitialize() override;
 
-  ~SchedulerService();
+  virtual ~SchedulerService();
 };
 
 template <class F, class... Args>
