@@ -51,5 +51,21 @@ IMPLEMENT_STRINGIFY_SERVICE_FOR(
       ss >> date::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
       return lt;
     })
+IMPLEMENT_STRINGIFY_SERVICE_FOR(
+    std::chrono::seconds,
+    [](const std::chrono::seconds &duration) -> std::string {
+      return std::to_string(duration.count());
+    },
+    [](const std::string &duration) -> std::chrono::seconds {
+      return std::chrono::seconds(std::stoull(duration));
+    })
+IMPLEMENT_STRINGIFY_SERVICE_FOR(
+    std::chrono::minutes,
+    [](const std::chrono::minutes &duration) -> std::string {
+      return std::to_string(duration.count());
+    },
+    [](const std::string &duration) -> std::chrono::minutes {
+      return std::chrono::minutes(std::stoull(duration));
+    })
 
 #endif  // LOGGING_STRINGIFYSERVICE_H

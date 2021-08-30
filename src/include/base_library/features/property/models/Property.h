@@ -6,10 +6,10 @@
 #include <shared_mutex>
 #include <string>
 
-#include "PropertyBase.h"
 #include "base_library/core/services/StringifyService.h"
 #include "base_library/core/utils/TypeName.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
+#include "base_library/features/property/models/PropertyBase.h"
 
 class PropertyService;
 
@@ -53,15 +53,15 @@ class Property;
              type value, const std::string &description, bool runtimeChange)   \
         : PropertyBase(name, instanceName, className, processName,             \
                        description, runtimeChange),                            \
-          m_value(std::move(value)) {}                                           \
+          m_value(std::move(value)) {}                                         \
     [[nodiscard]] std::string getType() const override { return #type; }       \
     type getValue() {                                                          \
       std::shared_lock<std::shared_mutex> lock(m_mutex);                       \
-      return m_value;                                                            \
+      return m_value;                                                          \
     }                                                                          \
     std::string toString() override {                                          \
       std::shared_lock<std::shared_mutex> lock(m_mutex);                       \
-      return convertToString(m_value);                                           \
+      return convertToString(m_value);                                         \
     }                                                                          \
     friend class PropertyService;                                              \
   };
@@ -90,5 +90,13 @@ IMPLEMENT_PROPERTY(std::string,
                    StringifyService<std::string>::deserializeFromString)
 IMPLEMENT_PROPERTY(bool, StringifyService<bool>::serializeToString,
                    StringifyService<bool>::deserializeFromString)
+IMPLEMENT_PROPERTY(
+    std::chrono::seconds,
+    StringifyService<std::chrono::seconds>::serializeToString,
+    StringifyService<std::chrono::seconds>::deserializeFromString)
+IMPLEMENT_PROPERTY(
+    std::chrono::minutes,
+    StringifyService<std::chrono::minutes>::serializeToString,
+    StringifyService<std::chrono::minutes>::deserializeFromString)
 
 #endif /* PROPERTY_H */

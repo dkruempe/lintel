@@ -44,10 +44,11 @@ class AbstractService : public AbstractServiceInterface {
   std::shared_ptr<Property<type>> registerProperty(
       std::string name, type defaultValue, std::string description,
       bool runtime, const std::string &fileName, int32_t position) {
-    LOG_INFO("Property<{}> {} = {}", type_name<type>(), name, defaultValue);
     std::shared_ptr<Property<type>> property = std::make_shared<Property<type>>(
         name, getInstanceName(), std::string(getClassName()), getProcessName(),
         defaultValue, description, runtime);
+    LOG_INFO("Property<{}> {} = {}", type_name<type>(), name,
+             property->toString());
     const std::filesystem::path &path(fileName);
 
     property->setDataStorage(DataStorage(

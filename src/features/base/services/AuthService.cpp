@@ -86,14 +86,13 @@ void AuthService::onCheck() {
       std::chrono::system_clock::now();
   for (auto& iter : m_userTokens) {
     if ((now - iter.second.m_lastAccessTimestamps) <
-        std::chrono::minutes(m_timeoutLogin->getValue())) {
+        m_timeoutLogin->getValue()) {
       continue;
     }
     m_userTokens.erase(iter.first);
   }
+  m_scheduler->schedule_after(m_scheduleRate->getValue(), [&]() { onCheck(); });
 }
 void AuthService::onInitialize() {
-  m_scheduler->schedule_at_fixed_rate(
-      std::chrono::seconds(m_scheduleRate->getValue()), std::chrono::seconds(0),
-      [&]() { onCheck(); });
+  m_scheduler->schedule_after(m_scheduleRate->getValue(), [&]() { onCheck(); });
 }

@@ -31,9 +31,9 @@ struct UserToken {
 class AuthService : public AbstractService<AuthService> {
  private:
   // properties
-  DEFINE_PROPERTY(m_scheduleRate, int32_t, 2,
-                  "schedule rate of user tokens checks in seconds", false);
-  DEFINE_PROPERTY(m_timeoutLogin, int32_t, 5,
+  DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),
+                  "schedule rate of user tokens checks in seconds", true);
+  DEFINE_PROPERTY(m_timeoutLogin, std::chrono::minutes, std::chrono::minutes(5),
                   "timeout of user login in minutes", true);
   // variables
   std::map<std::string, UserToken> m_userTokens;

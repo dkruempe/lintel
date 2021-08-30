@@ -46,12 +46,12 @@ StartupBuilder &StartupBuilder::start() {
   builder.registerInstance(m_processInfo);
   builder.registerInstance(m_name);
   m_container = builder.build();
-  for (auto &&feature : m_features) {
-    feature->initialize(m_container);
-  }
   std::shared_ptr<BootstrapService> bootstrapService =
       m_container->resolve<BootstrapService>();
   bootstrapService->onStart();
+  for (auto &&feature : m_features) {
+    feature->initialize(m_container);
+  }
   std::shared_ptr<PersistableService> persistableService =
       m_container->resolve<PersistableService>();
   persistableService->awake();
