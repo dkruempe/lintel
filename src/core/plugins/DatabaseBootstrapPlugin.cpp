@@ -190,6 +190,10 @@ int32_t DatabaseBootstrapPlugin::versionOf(const std::string &fileName) {
 void DatabaseBootstrapPlugin::updateSchemaVersion(
     const db::Connection &connection, const std::string &schemaName,
     int32_t schemaVersion, bool insert) {
+  if (schemaVersion <= 0) {
+    // no persistence
+    return;
+  }
   if (insert) {
     db::Statement statement(connection);
     statement.execute("insert into schema_version(name, version) values(?, ?)",

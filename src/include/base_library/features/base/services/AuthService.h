@@ -25,7 +25,7 @@ struct UserToken {
   std::string m_ipAddress;
   std::string m_id;
   date::sys_time<std::chrono::microseconds> m_lastAccessTimestamps;
-  User user;
+  User m_user;
 };
 
 class AuthService : public AbstractService<AuthService> {
