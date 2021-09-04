@@ -10,13 +10,13 @@ std::vector<PropertyDto> PropertyApi::allOf() {
   headers.insert({"Content-Type", "application/json"});
   const httplib::Result& result = m_client->get("/properties", headers);
   if (result->status != HttpStatusCodes::OK) {
-    return std::vector<PropertyDto>();
+    return {};
   }
   PropertiesDto propertiesDto;
   try {
     propertiesDto.deserialize(result->body);
   } catch (std::exception& exception) {
-    return std::vector<PropertyDto>();
+    return {};
   }
   return propertiesDto.getProperties();
 }
@@ -26,13 +26,13 @@ std::vector<PropertyDto> PropertyApi::allOf(const std::string& processName) {
   const httplib::Result& result =
       m_client->get("/properties/" + processName, headers);
   if (result->status != HttpStatusCodes::OK) {
-    return std::vector<PropertyDto>();
+    return {};
   }
   PropertiesDto propertiesDto;
   try {
     propertiesDto.deserialize(result->body);
   } catch (std::exception& exception) {
-    return std::vector<PropertyDto>();
+    return {};
   }
   return propertiesDto.getProperties();
 }
@@ -43,13 +43,13 @@ std::vector<PropertyDto> PropertyApi::allOf(const std::string& processName,
   const httplib::Result& result =
       m_client->get("/properties/" + processName + "/" + className, headers);
   if (result->status != HttpStatusCodes::OK) {
-    return std::vector<PropertyDto>();
+    return {};
   }
   PropertiesDto propertiesDto;
   try {
     propertiesDto.deserialize(result->body);
   } catch (std::exception& exception) {
-    return std::vector<PropertyDto>();
+    return {};
   }
   return propertiesDto.getProperties();
 }
@@ -62,13 +62,13 @@ std::vector<PropertyDto> PropertyApi::allOf(const std::string& processName,
       "/properties/" + processName + "/" + className + "/" + instanceName,
       headers);
   if (result->status != HttpStatusCodes::OK) {
-    return std::vector<PropertyDto>();
+    return {};
   }
   PropertiesDto propertiesDto;
   try {
     propertiesDto.deserialize(result->body);
   } catch (std::exception& exception) {
-    return std::vector<PropertyDto>();
+    return {};
   }
   return propertiesDto.getProperties();
 }

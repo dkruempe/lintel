@@ -5,9 +5,10 @@
 #include <utility>
 
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/features/base/controller/UserDto.h"
 
-CryptionCliComponent::CryptionCliComponent()
-    : CommandLineComponent(m_name, m_alias) {}
+CryptionCliComponent::CryptionCliComponent(std::shared_ptr<UserApi> userApi)
+    : CommandLineComponent(m_name, m_alias), m_userApi(std::move(userApi)) {}
 
 void CryptionCliComponent::onCommand(
     const std::string &input, const std::vector<std::string> &parameters) {
@@ -35,6 +36,13 @@ void CryptionCliComponent::onCommand(
       fmt::print("Decryption of: \n");
       m_currentCommand = CommandDecrypt;
       break;
+    case CommandUserLogin: {
+      UserDto userDto =
+          m_userApi->loginOf(UserLoginDto("dkruempe", "${ADMIN_PASSWORD}"));
+      fmt::print("{}\n", userDto.JsonSerializable::serialize());
+      m_currentCommand = CommandUndefined;
+      break;
+    }
     case CommandUndefined:
       fmt::print("Wrong command \n");
       m_currentCommand = CommandUndefined;

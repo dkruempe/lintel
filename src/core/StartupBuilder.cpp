@@ -39,6 +39,7 @@ void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
 }
 
 StartupBuilder &StartupBuilder::start() {
+  // injection
   Hypodermic::ContainerBuilder builder;
   for (auto &&feature : m_features) {
     feature->registerTypes(builder);
@@ -46,18 +47,24 @@ StartupBuilder &StartupBuilder::start() {
   builder.registerInstance(m_processInfo);
   builder.registerInstance(m_name);
   m_container = builder.build();
+  // boostrap plugins trigger initialization
   std::shared_ptr<BootstrapService> bootstrapService =
       m_container->resolve<BootstrapService>();
   bootstrapService->onStart();
+  // start services
   for (auto &&feature : m_features) {
     feature->initialize(m_container);
   }
+  // awake all from persistence
   std::shared_ptr<PersistableService> persistableService =
       m_container->resolve<PersistableService>();
   persistableService->awake();
+  // initialize services
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
   LOG_INFO("{} finished initialization", m_processInfo->name);
+  // wait for signal to shutdown
+
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   m_conditionVariable.wait(lock);

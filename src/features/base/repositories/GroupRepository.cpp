@@ -27,6 +27,9 @@ void GroupRepository::initGroups() {
   for (auto& iter : result) {
     std::string groupName = iter.of(0).getValue();
     bool isVirtual = iter.of(1).getValue<bool>();
+    if (groupName.empty()) {
+      continue;
+    }
     Group group(groupName, {}, isVirtual);
     m_groupMap.insert({group.getGroupName(), group});
     m_groups.push_back(group);
@@ -48,6 +51,9 @@ void GroupRepository::initGroups() {
     std::string groupName = iter.of(0).getValue();
     bool isVirtual = iter.of(1).getValue<bool>();
     std::string groupMember = iter.of(2).getValue();
+    if (groupName.empty()) {
+      continue;
+    }
     if (lastGroupName != groupName && !lastGroupName.empty()) {
       std::vector<Group> groups;
       std::transform(groupNames.begin(), groupNames.end(),
@@ -69,6 +75,9 @@ void GroupRepository::initGroups() {
     }
   }
   std::vector<Group> groups;
+  if (lastGroupName.empty()) {
+    return;
+  }
   std::transform(groupNames.begin(), groupNames.end(),
                  std::back_inserter(groups),
                  [&](const std::string& groupName) -> Group {

@@ -46,11 +46,14 @@ std::optional<User> UserRepository::of(const std::string &userName) {
       userArg.of(5).getValue<date::sys_time<std::chrono::microseconds>>();
 
   std::vector<Group> groups;
-  for (auto &groupName : result) {
-    std::optional<Group> groupOpt =
-        m_groupRepository->of(groupName.of(0).getValue());
+  for (auto &iter : result) {
+    std::string groupName = iter.of(0).getValue();
+    if (groupName.empty()) {
+      continue;
+    }
+    std::optional<Group> groupOpt = m_groupRepository->of(groupName);
     if (!groupOpt.has_value()) {
-      LOG_ERROR("{} not available", groupName.of(0).getValue());
+      LOG_ERROR("{} not available", iter.of(0).getValue());
       continue;
     }
     groups.push_back(groupOpt.value());

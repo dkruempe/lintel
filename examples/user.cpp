@@ -8,8 +8,7 @@
 #include "base_library/features/base/repositories/GroupRepository.h"
 #include "base_library/features/base/repositories/UserRepository.h"
 
-int main(int argc, char *argv[]) {
-  DECLARE_LOGGER(argv[0]);
+void testUser() {
   // base initialization stuff
   std::shared_ptr<Component> connectionComponent =
       std::make_shared<ConnectionComponent>();
@@ -21,41 +20,13 @@ int main(int argc, char *argv[]) {
   std::shared_ptr<GroupRepository> groupRepository =
       std::make_shared<GroupRepository>(connectionConfigurations);
   UserRepository userRepository(connectionConfigurations, groupRepository);
-  std::optional<User> dkruempe = userRepository.of("dkruempe");
-  {
-    std::stringstream ss;
-    ss << dkruempe.value();
-    LOG_INFO("{}", ss.str());
-  }
-  auto userAdminGroup = groupRepository->of("User-Admin");
-  userRepository.addGroupOf(dkruempe.value(), userAdminGroup.value());
-  std::vector<Group> groups = groupRepository->allOf();
-  for (const auto &group : groups) {
-    std::stringstream ss;
-    ss << group;
-    LOG_INFO("{}", ss.str());
-  }
-  std::optional<Group> propertyAdmin = groupRepository->of("Property-Admin");
-  Group newGroup("test", {propertyAdmin.value()}, false);
-  groupRepository->createOf(newGroup);
-  {
-    std::stringstream ss;
-    ss << groupRepository->of("test").value();
-    LOG_INFO("{}", ss.str());
-  }
-  groupRepository->deleteOf(newGroup);
-  auto testGroup = groupRepository->of("test");
-  User user("Josef", "Hermes", User::Sex::Male, "josef.hermes@aol.com", "jopp",
-            "jopp", {});
+  User user("Dominik", "Krümpelmann", User::Sex::Male, "example@example.com",
+            "dkruempe", Cryption::hashOf("${ADMIN_PASSWORD}"), {});
   userRepository.createOf(user);
-  for (const auto &user : userRepository.allOf()) {
-    std::stringstream ss;
-    ss << user;
-    LOG_INFO("{}", ss.str());
-  }
-  userRepository.deleteOf(user);
-  userRepository.removeGroupOf(dkruempe.value(), userAdminGroup.value());
-  std::string passwordHash = Cryption::hashOf("${ADMIN_PASSWORD}");
-  LOG_INFO("password hash: {}", passwordHash);
+}
+
+int main(int argc, char *argv[]) {
+  DECLARE_LOGGER(argv[0]);
+  testUser();
   return 0;
 }
