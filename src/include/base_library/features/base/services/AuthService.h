@@ -53,7 +53,7 @@ class AuthService : public AbstractService<AuthService> {
 
   std::optional<UserToken> onAccessOf(const UserTokenLogin &userTokenLogin);
 
-  void onLogoutOf(const UserToken &userToken);
+  void onLogoutOf(const UserTokenLogin &userToken);
 
   void onInitialize() override;
 };

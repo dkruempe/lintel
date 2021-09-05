@@ -40,7 +40,21 @@ void CryptionCliComponent::onCommand(
       UserDto userDto =
           m_userApi->loginOf(UserLoginDto("dkruempe", "${ADMIN_PASSWORD}"));
       fmt::print("{}\n", userDto.JsonSerializable::serialize());
+      m_loginId = userDto.getId();
       m_currentCommand = CommandUndefined;
+      break;
+    }
+    case CommandUserLogout: {
+      if (m_loginId.empty()) {
+        break;
+      }
+      UserTokenDto userTokenDto(m_loginId);
+      bool success = m_userApi->logoutOf(userTokenDto);
+      if (success) {
+        fmt::print("logout successfully\n");
+      } else {
+        fmt::print("logout failed\n");
+      }
       break;
     }
     case CommandUndefined:
@@ -88,6 +102,12 @@ void CryptionCliComponent::onHelp() {
         fmt::print("COMMAND_DECRYPT: decrypt given strings");
         print(aliases);
         break;
+      case CommandUserLogin:
+        fmt::print("COMMAND_USER_LOGIN: login");
+        print(aliases);
+      case CommandUserLogout:
+        fmt::print("COMMAND_USER_LOGOUT: logout");
+        print(aliases);
       default:
         LOG_ERROR("undefined state");
         break;

@@ -12,12 +12,13 @@ const date::sys_time<std::chrono::microseconds>& UserDto::getCreatedTimestamp()
     const {
   return m_createdTimestamp;
 }
-UserDto::UserDto(const User& user, const std::string& id)
+UserDto::UserDto(const User& user, std::string id)
     : JsonSerializable(),
       m_firstName(user.getFirstName()),
       m_lastName(user.getLastName()),
       m_eMail(user.getEmail()),
       m_userName(user.getUserName()),
+      m_id(std::move(id)),
       m_createdTimestamp(user.getCreatedTimestamp()),
       m_groups(user.getGroups().empty()
                    ? nullptr
@@ -37,6 +38,11 @@ void UserDto::serialize(
   // USER_NAME
   writer->String(shape.USER_NAME.c_str());
   writer->String(m_userName.c_str());
+  // ID
+  if (!m_id.empty()) {
+    writer->String(shape.ID.c_str());
+    writer->String(m_id.c_str());
+  }
   // CREATED_TIMESTAMP
   writer->String(shape.CREATED_TIMESTAMP.c_str());
   writer->String(StringifyService<date::sys_time<std::chrono::microseconds>>::
@@ -96,5 +102,12 @@ bool UserDto::deserialize(const rapidjson::Value& obj) {
   } else {
     m_groups = nullptr;
   }
+  // ID
+  if (obj.HasMember(shape.ID.c_str())) {
+    m_id = obj[shape.ID.c_str()].GetString();
+  } else {
+    m_id = "";
+  }
   return success;
 }
+const std::string& UserDto::getId() const { return m_id; }

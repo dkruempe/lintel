@@ -72,11 +72,16 @@ std::optional<UserToken> AuthService::onAccessOf(
   found->second.m_lastAccessTimestamps = std::chrono::system_clock::now();
   return std::make_optional(found->second);
 }
-void AuthService::onLogoutOf(const UserToken& userToken) {
+void AuthService::onLogoutOf(const UserTokenLogin& userToken) {
   auto found = m_userTokens.find(userToken.m_ipAddress);
   if (found == m_userTokens.end()) {
     LOG_ERROR("{}: {} user not logged in", userToken.m_ipAddress,
               userToken.m_id);
+    return;
+  }
+  if (found->second.m_id != userToken.m_id) {
+    LOG_ERROR("{}: {} user logged in but with different id {}",
+              userToken.m_ipAddress, userToken.m_id, found->second.m_id);
     return;
   }
   m_userTokens.erase(userToken.m_ipAddress);

@@ -9,6 +9,7 @@
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/http/provider/ClientProvider.h"
 #include "base_library/features/base/controller/UserDto.h"
+#include "base_library/features/base/controller/UserTokenDto.h"
 
 class UserApi {
  private:
@@ -18,6 +19,8 @@ class UserApi {
   explicit UserApi(const std::shared_ptr<ClientProvider> &clientProvider);
 
   UserDto loginOf(const UserLoginDto &userLoginDto);
+
+  bool logoutOf(const UserTokenDto &userLoginTokenDto);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERAPI_H

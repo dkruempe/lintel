@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "base_library/features/base/controller/UserDto.h"
+#include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 void UserController::loginOfPost(const httplib::Request& request,
@@ -28,7 +29,23 @@ void UserController::loginOfPost(const httplib::Request& request,
     response.set_content(responseBody, "application/json");
   } catch (const std::exception& exception) {
     LOG_ERROR("login failed {} for {}", exception.what(), request.body);
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName().c_str());
   }
 }
 UserController::UserController(std::shared_ptr<AuthService> authService)
     : Controller(), m_authService(std::move(authService)) {}
+void UserController::logoutOfDelete(const httplib::Request& request,
+                                    httplib::Response& response,
+                                    const ContentType& contentType) {
+  try {
+    UserTokenDto userTokenDto;
+    userTokenDto.JsonSerializable::deserialize(request.body);
+    UserTokenLogin userTokenLogin{request.remote_addr, userTokenDto.getId()};
+    m_authService->onLogoutOf(userTokenLogin);
+  } catch (const std::exception& exception) {
+    LOG_ERROR("login failed {} for {}", exception.what(), request.body);
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName().c_str());
+  }
+}

@@ -8,7 +8,7 @@ class UserController : public Controller {
  private:
   std::shared_ptr<AuthService> m_authService;
   ADD_HANDLER_METHOD("/user/login", Post, loginOf);
-
+  ADD_HANDLER_METHOD("/user/logout", Delete, logoutOf);
  public:
   explicit UserController(std::shared_ptr<AuthService> authService);
 };

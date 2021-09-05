@@ -2,8 +2,8 @@
 #define CPP_BASE_LIBRARY_USERDTO_H
 
 #include "base_library/core/models/JsonSerializable.h"
-#include "base_library/features/base/models/User.h"
 #include "base_library/features/base/controller/GroupDto.h"
+#include "base_library/features/base/models/User.h"
 
 class UserDto : public JsonSerializable {
  private:
@@ -11,6 +11,7 @@ class UserDto : public JsonSerializable {
   std::string m_lastName;
   std::string m_eMail;
   std::string m_userName;
+  std::string m_id;
   date::sys_time<std::chrono::microseconds> m_createdTimestamp;
   std::unique_ptr<GroupsDto> m_groups;
 
@@ -21,6 +22,7 @@ class UserDto : public JsonSerializable {
     const std::string USER_NAME = "user_name";
     const std::string CREATED_TIMESTAMP = "created_timestamp";
     const std::string GROUPS = "groups";
+    const std::string ID = "id";
   } shape;
 
  public:
@@ -28,8 +30,10 @@ class UserDto : public JsonSerializable {
   [[nodiscard]] const std::string &getLastName() const;
   [[nodiscard]] const std::string &getEMail() const;
   [[nodiscard]] const std::string &getUserName() const;
-  [[nodiscard]] const date::sys_time<std::chrono::microseconds> &getCreatedTimestamp() const;
-  UserDto(const User &user, const std::string &id);
+  const std::string &getId() const;
+  [[nodiscard]] const date::sys_time<std::chrono::microseconds>
+      &getCreatedTimestamp() const;
+  explicit UserDto(const User &user, std::string id = "");
   UserDto() = default;
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
