@@ -28,12 +28,6 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin& userLogin) {
     return std::nullopt;
   }
   // III check if user is logged in
-  auto found = m_userTokens.find(userLogin.m_ipAddress);
-  if (found != m_userTokens.end()) {
-    LOG_INFO("{}: {} {} already logged in", userLogin.m_ipAddress,
-             userLogin.m_userName, found->second.m_id);
-    return std::make_optional(found->second);
-  }
   auto userOpt = m_userRepository->of(userLogin.m_userName);
   if (!userOpt.has_value()) {
     LOG_INFO("{}: {} does not exists", userLogin.m_ipAddress,
@@ -49,40 +43,32 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin& userLogin) {
   std::string id = UUID::generate();
   UserToken userToken{userLogin.m_ipAddress, id,
                       std::chrono::system_clock::now(), user};
-  m_userTokens.insert({userToken.m_ipAddress, userToken});
+  m_userTokens.insert({userToken.m_id, userToken});
   LOG_INFO("{}: {} {} success full login", userLogin.m_ipAddress,
            userLogin.m_userName, id);
   return userToken;
 }
 std::optional<UserToken> AuthService::onAccessOf(
     const UserTokenLogin& userTokenLogin) {
-  auto found = m_userTokens.find(userTokenLogin.m_ipAddress);
+  auto found = m_userTokens.find(userTokenLogin.m_id);
   if (found == m_userTokens.end()) {
     LOG_ERROR("{}: {} user not logged in", userTokenLogin.m_ipAddress,
               userTokenLogin.m_id);
-    return std::nullopt;
-  }
-  if (userTokenLogin.m_id != found->second.m_id) {
-    m_userTokens.erase(found->first);
-    LOG_ERROR("{}: {} user logged in but with different token != {}",
-              userTokenLogin.m_ipAddress, userTokenLogin.m_id,
-              found->second.m_id);
     return std::nullopt;
   }
   found->second.m_lastAccessTimestamps = std::chrono::system_clock::now();
   return std::make_optional(found->second);
 }
 void AuthService::onLogoutOf(const UserTokenLogin& userToken) {
-  auto found = m_userTokens.find(userToken.m_ipAddress);
+  auto found = m_userTokens.find(userToken.m_id);
   if (found == m_userTokens.end()) {
     LOG_ERROR("{}: {} user not logged in", userToken.m_ipAddress,
               userToken.m_id);
-    return;
+    throw std::runtime_error("user not logged in");
   }
-  if (found->second.m_id != userToken.m_id) {
-    LOG_ERROR("{}: {} user logged in but with different id {}",
+  if (found->second.m_ipAddress != userToken.m_ipAddress) {
+    LOG_WARN("{}: {} user logged in but with different id {}",
               userToken.m_ipAddress, userToken.m_id, found->second.m_id);
-    return;
   }
   m_userTokens.erase(userToken.m_ipAddress);
 }
