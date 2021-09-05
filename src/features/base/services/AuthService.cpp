@@ -89,12 +89,17 @@ void AuthService::onLogoutOf(const UserTokenLogin& userToken) {
 void AuthService::onCheck() {
   date::sys_time<std::chrono::microseconds> now =
       std::chrono::system_clock::now();
+  std::vector<std::string> toBeRemoved;
   for (auto& iter : m_userTokens) {
     if ((now - iter.second.m_lastAccessTimestamps) <
         m_timeoutLogin->getValue()) {
       continue;
     }
-    m_userTokens.erase(iter.first);
+    LOG_INFO("{}:{} timeout login", iter.second.m_ipAddress, iter.second.m_id);
+    toBeRemoved.push_back(iter.first);
+  }
+  for (const auto& iter : toBeRemoved) {
+    m_userTokens.erase(iter);
   }
   m_scheduler->schedule_after(m_scheduleRate->getValue(), [&]() { onCheck(); });
 }
