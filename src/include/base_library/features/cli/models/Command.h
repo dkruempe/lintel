@@ -26,8 +26,11 @@ class Command {
   // cmd.addArgument({"--help", "-h"}, &printHelp, "Print this help message");
   // Then, after parse() has been called, printHelp will be true if the user
   // provided the flag.
-  void addArgument(const std::vector<std::string>& flags, Value defaultValue,
-                   const std::string& help);
+  Command& addArgument(const std::vector<std::string>& flags,
+                       Value defaultValue, const std::string& help);
+
+  Command& addArgument(const std::vector<std::string>&& flags,
+                       Value defaultValue, std::string help);
 
   // Prints the description given to the constructor and the help
   // for each option.
@@ -54,7 +57,7 @@ class Command {
   std::string m_description;
   std::map<std::string, Argument> m_argumentsMap;
   std::vector<Argument> m_arguments;
-  static constexpr const char *m_tab = "\t";
+  static constexpr const char* m_tab = "\t";
 };
 
 #endif  // CPP_BASE_LIBRARY_COMMAND_H

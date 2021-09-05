@@ -4,13 +4,23 @@
 #include <sstream>
 Command::Command(std::string command, std::string description)
     : m_command(std::move(command)), m_description(std::move(description)) {}
-void Command::addArgument(const std::vector<std::string>& flags,
-                          Command::Value value, const std::string& help) {
+Command& Command::addArgument(const std::vector<std::string>& flags,
+                              Command::Value value, const std::string& help) {
   Argument argument{flags, value, help};
   for (const auto& flag : flags) {
     m_argumentsMap.insert({flag, argument});
   }
   m_arguments.push_back(argument);
+  return *this;
+}
+Command& Command::addArgument(const std::vector<std::string>&& flags,
+                              Value defaultValue, std::string help) {
+  Argument argument{flags, defaultValue, std::move(help)};
+  for (const auto& flag : flags) {
+    m_argumentsMap.insert({flag, argument});
+  }
+  m_arguments.push_back(argument);
+  return *this;
 }
 void Command::printHelp(std::ostream& os) const {
   // Print the general description.

@@ -26,6 +26,11 @@ class CommandParser {
     m_enumCommand.insert({command.getCommand(), value});
   }
 
+  void addCommand(Command &&command, ENUM value) {
+    m_commands.insert({command.getCommand(), command});
+    m_enumCommand.insert({command.getCommand(), value});
+  }
+
   ENUM parse(const std::string &command,
              const std::vector<std::string> &flags) {
     auto foundEnum = m_enumCommand.find(command);

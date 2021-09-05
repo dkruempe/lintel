@@ -11,68 +11,60 @@ PropertyCliComponent::PropertyCliComponent(
     : CommandLineComponent(m_name, m_alias),
       m_propertyApi(std::move(propertyApi)) {
   // Command: show all properties
-  Command commandShowAllProperties("sap",
-                                   "Shows all available valid properties!");
-  m_commandParser.addCommand(commandShowAllProperties, AllProperties);
+  m_commandParser.addCommand(
+      Command("sap", "Shows all available valid properties!"), AllProperties);
   // Command: show all properties of process
-  Command commandShowAllPropertiesProcess(
-      "sapp", "Shows all available valid properties for given process!");
-  commandShowAllPropertiesProcess.addArgument(
-      {"--process_name", "-p"}, &m_processName,
-      "Process Name where property is defined!");
-  m_commandParser.addCommand(commandShowAllPropertiesProcess,
-                             ProcessProperties);
+  m_commandParser.addCommand(
+      Command("sapp", "Shows all available valid properties for given process!")
+          .addArgument({"--process_name", "-p"}, &m_processName,
+                       "Process Name where property is defined!"),
+      ProcessProperties);
   // Command: show all properties of process and class
-  Command commandShowAllPropertiesProcessClass(
-      "sappc",
-      "Shows all available valid properties for given process and class!");
-  commandShowAllPropertiesProcessClass.addArgument(
-      {"--process_name", "-p"}, &m_processName,
-      "Process Name where property is defined!");
-  commandShowAllPropertiesProcessClass.addArgument(
-      {"--class_name", "-c"}, &m_className,
-      "Class name where property is defined!");
-  m_commandParser.addCommand(commandShowAllPropertiesProcessClass,
-                             ProcessClassProperties);
+  m_commandParser.addCommand(
+      Command(
+          "sappc",
+          "Shows all available valid properties for given process and class!")
+          .addArgument({"--process_name", "-p"}, &m_processName,
+                       "Process Name where property is defined!")
+          .addArgument({"--class_name", "-c"}, &m_className,
+                       "Class name where property is defined!"),
+      ProcessClassProperties);
   // Command: show all properties of process, class and instance
-  Command commandShowAllPropertiesProcessClassInstance(
-      "sappci",
-      "Shows all available valid properties for given process, class and "
-      "instance!");
-  commandShowAllPropertiesProcessClassInstance.addArgument(
-      {"--process_name", "-p"}, &m_processName,
-      "Process Name where property is defined!");
-  commandShowAllPropertiesProcessClassInstance.addArgument(
-      {"--class_name", "-c"}, &m_className,
-      "Class Name where property is defined!");
-  commandShowAllPropertiesProcessClassInstance.addArgument(
-      {"--instance_name", "-i"}, &m_instanceName,
-      "Instance Name where property is defined!");
-  m_commandParser.addCommand(commandShowAllPropertiesProcessClassInstance,
-                             ProcessClassInstanceProperties);
-  // Command: update property
-  Command commandUpdateProperty("up", "Update given property");
-  commandUpdateProperty.addArgument({"--process_name", "-p"}, &m_processName,
-                                    "Process Name of property!");
-  commandUpdateProperty.addArgument({"--class_name", "-c"}, &m_className,
-                                    "Class Name of property!");
-  commandUpdateProperty.addArgument({"--instance-name", "-i"}, &m_instanceName,
-                                    "Instance Name of property");
-  commandUpdateProperty.addArgument({"--value", "-v"}, &m_value,
-                                    "Value of property!");
-  commandUpdateProperty.addArgument({"--name", "-n"}, &m_propertyName,
-                                    "Name of property!");
+  m_commandParser.addCommand(
+      Command(
+          "sappci",
+          "Shows all available valid properties for given process, class and "
+          "instance!")
+          .addArgument({"--process_name", "-p"}, &m_processName,
+                       "Process Name where property is defined!")
+          .addArgument({"--class_name", "-c"}, &m_className,
+                       "Class Name where property is defined!")
+          .addArgument({"--instance_name", "-i"}, &m_instanceName,
+                       "Instance Name where property is defined!"),
+      ProcessClassInstanceProperties);
   // Command: show property
-  Command commandShowProperty("sp", "Show given property");
-  commandShowProperty.addArgument({"--process_name", "-p"}, &m_processName,
-                                  "Process Name of property!");
-  commandShowProperty.addArgument({"--class_name", "-c"}, &m_className,
-                                  "Class Name of property!");
-  commandShowProperty.addArgument({"--instance-name", "-i"}, &m_instanceName,
-                                  "Instance Name of property");
-  commandShowProperty.addArgument({"--name", "-n"}, &m_propertyName,
-                                  "Name of property!");
-  m_commandParser.addCommand(commandUpdateProperty, UpdateProperty);
+  m_commandParser.addCommand(
+      Command("sp", "Show given property")
+          .addArgument({"--process_name", "-p"}, &m_processName,
+                       "Process Name of property!")
+          .addArgument({"--class_name", "-c"}, &m_className,
+                       "Class Name of property!")
+          .addArgument({"--instance-name", "-i"}, &m_instanceName,
+                       "Instance Name of property")
+          .addArgument({"--name", "-n"}, &m_propertyName, "Name of property!"),
+      ShowProperty);
+  // Command: update property
+  m_commandParser.addCommand(
+      Command("up", "Update given property")
+          .addArgument({"--process_name", "-p"}, &m_processName,
+                       "Process Name of property!")
+          .addArgument({"--class_name", "-c"}, &m_className,
+                       "Class Name of property!")
+          .addArgument({"--instance-name", "-i"}, &m_instanceName,
+                       "Instance Name of property")
+          .addArgument({"--value", "-v"}, &m_value, "Value of property!")
+          .addArgument({"--name", "-n"}, &m_propertyName, "Name of property!"),
+      UpdateProperty);
 }
 void PropertyCliComponent::onCommand(
     const std::string &input, const std::vector<std::string> &parameters) {
@@ -94,10 +86,13 @@ void PropertyCliComponent::onCommand(
       case ProcessClassInstanceProperties: {
         printProperties(
             m_propertyApi->allOf(m_processName, m_className, m_instanceName));
+        break;
       }
       case ShowProperty: {
         auto optProperty = m_propertyApi->of(m_processName, m_className,
                                              m_instanceName, m_propertyName);
+        printProperty(optProperty);
+        break;
       }
       case UpdateProperty: {
         auto optProperty = m_propertyApi->of(m_processName, m_className,
@@ -114,6 +109,7 @@ void PropertyCliComponent::onCommand(
                                         m_instanceName, m_propertyName);
         std::cout << "After Update: \n";
         printProperty(optProperty);
+        break;
       }
       default:
         break;
