@@ -14,7 +14,17 @@
 CommandLineService::CommandLineService(
     const std::vector<std::shared_ptr<CommandLineComponent>> &components,
     const std::shared_ptr<Configuration> &configuration)
-    : m_menu(components), m_thread([&]() { run(); }) {}
+    : m_menu(components), m_thread([&]() { run(); }) {
+  m_commandParser.addCommand(
+      Command("help",
+              "Show all available commands in the current selected menu."),
+      CommandHelp);
+  m_commandParser.addCommand(Command("menu", "Show all available menus"),
+                             CommandMenu);
+  m_commandParser.addCommand(
+      Command("exit", "Exit of current menu or whole cli"), CommandExit);
+  m_commandParser.addCommand(Command("clear", "Clear cli"), CommandClear);
+}
 
 CommandLineService::~CommandLineService() {
   m_running.store(false);
@@ -23,13 +33,13 @@ CommandLineService::~CommandLineService() {
   LOG_INFO("stopped command line service");
 }
 void CommandLineService::onComponentCommand(
-    const std::string &command, const std::vector<std::string> &parameters) {
-  auto found = m_commands.find(command);
-  if (found == m_commands.end()) {
-    m_menu.onCommand(command, parameters);
+    const std::string &input, const std::vector<std::string> &flags) {
+  Commands command = m_commandParser.parse(input, flags);
+  if (command == CommandUndefined) {
+    m_menu.onCommand(input, flags);
     return;
   }
-  switch (found->second) {
+  switch (command) {
     case CommandHelp:
       m_menu.onHelp();
       break;
@@ -42,61 +52,22 @@ void CommandLineService::onComponentCommand(
     case CommandClear:
       std::cout << m_clear;
       break;
+    default:
+      break;
   }
 }
 void CommandLineService::onStart() {
   std::string startInformation =
       "Welcome to the Command Line Interface:\n"
-      "Try >help< or >?< for a list of commands\n"
-      "Try >menue< or >m< to work with the menue system\n"
-      "Try >exit< or >e< to go back or exit the Command Line Interface\n";
+      "Try >help< for a list of commands\n"
+      "Try >exit< to go back or exit the Command Line Interface\n";
   fmt::print(startInformation);
 }
 void CommandLineService::onHelp() {
-  // group commands map by command enum
-  std::map<Command, std::vector<std::string_view>> map;
-  for (auto &iter : m_commands) {
-    auto found = map.find(iter.second);
-    if (found == map.end()) {
-      map.insert({iter.second, {iter.first}});
-    } else {
-      found->second.push_back(iter.first);
-    }
-  }
-
-  std::function<void(std::vector<std::string_view> &)> print =
-      [&](std::vector<std::string_view> &aliases) {
-        fmt::print("[");
-        for (std::size_t i = 0; i < aliases.size(); i++) {
-          fmt::print("{}", aliases[i]);
-          if (i < aliases.size() - 1) {
-            fmt::print(", ", aliases[i]);
-          }
-        }
-        fmt::print("]\n");
-      };
-
-  fmt::print("Help Overview\n");
-  for (auto &[command, aliases] : map) {
-    switch (command) {
-      case CommandMenu:
-        fmt::print("COMMAND_MENU: Shows available Menu entries");
-        print(aliases);
-        break;
-      case CommandExit:
-        fmt::print("COMMAND_EXIT: Exits current Menu or total CLI itself");
-        print(aliases);
-        break;
-      case CommandHelp:
-        fmt::print(
-            "COMMAND_HELP: Shows all available commands in current menu");
-        print(aliases);
-        break;
-      case CommandClear:
-        fmt::print("COMMAND_CLEAR: Clears screen for about 100 lines\n");
-        break;
-    }
-  }
+  m_commandParser.printHelp(
+      "MAIN", "",
+      "This is the base entering point for the whole cli service. Here you can "
+      "list all available menus and select your prefered one!");
 }
 void CommandLineService::onPrompt() {
   // timestamp MENU %
@@ -112,27 +83,29 @@ void CommandLineService::run() {
     onPrompt();
     std::string temp;
     std::getline(std::cin, temp);
-    std::vector<std::string> tokens = StringUtils::split(temp, ' ');
-    std::string command;
-    if (!tokens.empty()) {
-      command = tokens[0];
-      tokens.erase(tokens.begin());
+    std::vector<std::string> flags = StringUtils::split(temp, ' ');
+    std::string input;
+    if (!flags.empty()) {
+      input = flags[0];
+      flags.erase(flags.begin());
     }
-    auto found = m_commands.find(command);
     if (m_menu.currentOf() != nullptr) {
-      onComponentCommand(command, tokens);
+      onComponentCommand(input, flags);
       continue;
     }
-    if (found == m_commands.end()) {
-      bool success = m_menu.onMenu(command);
-      if (!success && !command.empty()) {
+    Commands command = m_commandParser.parse(input, flags);
+    if (command == CommandUndefined) {
+      if (input.empty()) {
+        continue;
+      }
+      if (!m_menu.onMenu(input)) {
         fmt::print(
             "ERROR: Invalid command '{}'! Please use the help function\n",
-            command);
+            input);
+        continue;
       }
-      continue;
     }
-    switch (found->second) {
+    switch (command) {
       case CommandExit:
         SignalService::raiseSignal(SIGINT);
         m_running.store(false);
@@ -145,6 +118,8 @@ void CommandLineService::run() {
         break;
       case CommandMenu:
         m_menu.onShowMenu();
+        break;
+      default:
         break;
     }
   }
