@@ -11,6 +11,7 @@
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
 #include "base_library/features/http/provider/ClientProvider.h"
 #include "base_library/features/cli/models/CommandParser.h"
+#include "base_library/features/cli/services/AuthCliService.h"
 
 class CommandLineComponent;
 
@@ -23,10 +24,12 @@ class CommandLineService {
   std::atomic<bool> m_running = true;
   std::string m_clear = std::string(100, '\n');
   CommandParser<Commands, CommandUndefined> m_commandParser;
+  std::shared_ptr<AuthCliService> m_authCliService;
+  UserDto m_userDto;
 
   void onComponentCommand(const std::string &input, const std::vector<std::string> &flags);
 
-  static void onStart();
+  void onStart();
 
   void onHelp();
 
@@ -37,7 +40,8 @@ class CommandLineService {
  public:
   explicit CommandLineService(
       const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-      const std::shared_ptr<Configuration> &configuration);
+      const std::shared_ptr<Configuration> &configuration,
+      std::shared_ptr<AuthCliService> authCliService);
   ~CommandLineService();
 };
 

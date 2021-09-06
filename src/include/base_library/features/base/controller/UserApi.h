@@ -18,7 +18,7 @@ class UserApi {
  public:
   explicit UserApi(const std::shared_ptr<ClientProvider> &clientProvider);
 
-  UserDto loginOf(const UserLoginDto &userLoginDto);
+  std::optional<UserDto> loginOf(const UserLoginDto &userLoginDto);
 
   bool logoutOf(const UserTokenDto &userLoginTokenDto);
 };

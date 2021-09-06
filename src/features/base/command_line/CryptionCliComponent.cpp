@@ -37,10 +37,10 @@ void CryptionCliComponent::onCommand(
       m_currentCommand = CommandDecrypt;
       break;
     case CommandUserLogin: {
-      UserDto userDto =
+      std::optional<UserDto> userDto =
           m_userApi->loginOf(UserLoginDto("dkruempe", "${ADMIN_PASSWORD}"));
-      fmt::print("{}\n", userDto.JsonSerializable::serialize());
-      m_loginId = userDto.getId();
+      fmt::print("{}\n", userDto.value().JsonSerializable::serialize());
+      m_loginId = userDto.value().getId();
       m_currentCommand = CommandUndefined;
       break;
     }

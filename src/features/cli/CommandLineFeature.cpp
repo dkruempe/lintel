@@ -1,10 +1,12 @@
 #include "base_library/features/cli/CommandLineFeature.h"
+
+#include "base_library/features/cli/services/AuthCliService.h"
 CommandLineFeature::CommandLineFeature()
     : Feature(type_name<CommandLineFeature>()) {}
 
-void CommandLineFeature::registerTypes(
-    Hypodermic::ContainerBuilder& builder) {
+void CommandLineFeature::registerTypes(Hypodermic::ContainerBuilder& builder) {
   builder.registerType<CommandLineService>().singleInstance();
+  builder.registerType<AuthCliService>().singleInstance();
 }
 
 void CommandLineFeature::initialize(

@@ -13,8 +13,11 @@
 
 CommandLineService::CommandLineService(
     const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-    const std::shared_ptr<Configuration> &configuration)
-    : m_menu(components), m_thread([&]() { run(); }) {
+    const std::shared_ptr<Configuration> &configuration,
+    std::shared_ptr<AuthCliService> authCliService)
+    : m_menu(components),
+      m_thread([&]() { run(); }),
+      m_authCliService(std::move(authCliService)) {
   m_commandParser.addCommand(
       Command("help",
               "Show all available commands in the current selected menu."),
@@ -57,6 +60,7 @@ void CommandLineService::onComponentCommand(
   }
 }
 void CommandLineService::onStart() {
+  m_userDto = m_authCliService->onLogin();
   std::string startInformation =
       "Welcome to the Command Line Interface:\n"
       "Try >help< for a list of commands\n"
@@ -101,12 +105,13 @@ void CommandLineService::run() {
       if (!m_menu.onMenu(input)) {
         fmt::print(
             "ERROR: Invalid command '{}'! Please use the help function\n",
-            input);
+            input);@k
         continue;
       }
     }
     switch (command) {
       case CommandExit:
+        m_authCliService->onLogout(std::move(m_userDto));
         SignalService::raiseSignal(SIGINT);
         m_running.store(false);
         break;

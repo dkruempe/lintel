@@ -22,7 +22,7 @@ UserDto::UserDto(const User& user, std::string id)
       m_createdTimestamp(user.getCreatedTimestamp()),
       m_groups(user.getGroups().empty()
                    ? nullptr
-                   : std::make_unique<GroupsDto>(user.getGroups())) {}
+                   : std::make_shared<GroupsDto>(user.getGroups())) {}
 void UserDto::serialize(
     rapidjson::Writer<rapidjson::StringBuffer>* writer) const {
   writer->StartObject();
