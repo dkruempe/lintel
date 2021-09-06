@@ -32,6 +32,20 @@ void AuthCliService::onLogout(UserDto &&userDto) {
   }
   std::cout << "INFO: succesfull logout of >" << userDto.getUserName() << "<\n";
 }
+void AuthCliService::hideStdinKeystrokes() {
+  termios tty{};
+  tcgetattr(STDIN_FILENO, &tty);
+  /* we want to disable echo */
+  tty.c_lflag &= static_cast<unsigned long>(~ECHO);
+  tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+void AuthCliService::showStdinKeystrokes() {
+  termios tty{};
+  tcgetattr(STDIN_FILENO, &tty);
+  /* we want to reenable echo */
+  tty.c_lflag |= ECHO;
+  tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
 std::string AuthCliService::readPassword() {
   std::cout << "Please enter the password: ";
   std::string password;

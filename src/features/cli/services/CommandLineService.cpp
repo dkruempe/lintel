@@ -105,7 +105,7 @@ void CommandLineService::run() {
       if (!m_menu.onMenu(input)) {
         fmt::print(
             "ERROR: Invalid command '{}'! Please use the help function\n",
-            input);@k
+            input);
         continue;
       }
     }
