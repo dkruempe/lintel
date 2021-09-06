@@ -67,7 +67,8 @@ PropertyCliComponent::PropertyCliComponent(
       UpdateProperty);
 }
 void PropertyCliComponent::onCommand(
-    const std::string &input, const std::vector<std::string> &parameters) {
+    const UserDto &userDto, const std::string &input,
+    const std::vector<std::string> &parameters) {
   try {
     Commands command = m_commandParser.parse(input, parameters);
     switch (command) {

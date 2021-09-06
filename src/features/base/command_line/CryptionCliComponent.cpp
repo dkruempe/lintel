@@ -11,7 +11,8 @@ CryptionCliComponent::CryptionCliComponent(std::shared_ptr<UserApi> userApi)
     : CommandLineComponent(m_name, m_alias), m_userApi(std::move(userApi)) {}
 
 void CryptionCliComponent::onCommand(
-    const std::string &input, const std::vector<std::string> &parameters) {
+    const UserDto &userDto, const std::string &input,
+    const std::vector<std::string> &parameters) {
   switch (m_currentCommand) {
     case CommandEncrypt:
       fmt::print("{}\n", m_cryption.encryption(input));
@@ -36,27 +37,6 @@ void CryptionCliComponent::onCommand(
       fmt::print("Decryption of: \n");
       m_currentCommand = CommandDecrypt;
       break;
-    case CommandUserLogin: {
-      std::optional<UserDto> userDto =
-          m_userApi->loginOf(UserLoginDto("dkruempe", "${ADMIN_PASSWORD}"));
-      fmt::print("{}\n", userDto.value().JsonSerializable::serialize());
-      m_loginId = userDto.value().getId();
-      m_currentCommand = CommandUndefined;
-      break;
-    }
-    case CommandUserLogout: {
-      if (m_loginId.empty()) {
-        break;
-      }
-      UserTokenDto userTokenDto(m_loginId);
-      bool success = m_userApi->logoutOf(userTokenDto);
-      if (success) {
-        fmt::print("logout successfully\n");
-      } else {
-        fmt::print("logout failed\n");
-      }
-      break;
-    }
     case CommandUndefined:
       fmt::print("Wrong command \n");
       m_currentCommand = CommandUndefined;
@@ -102,12 +82,6 @@ void CryptionCliComponent::onHelp() {
         fmt::print("COMMAND_DECRYPT: decrypt given strings");
         print(aliases);
         break;
-      case CommandUserLogin:
-        fmt::print("COMMAND_USER_LOGIN: login");
-        print(aliases);
-      case CommandUserLogout:
-        fmt::print("COMMAND_USER_LOGOUT: logout");
-        print(aliases);
       default:
         LOG_ERROR("undefined state");
         break;

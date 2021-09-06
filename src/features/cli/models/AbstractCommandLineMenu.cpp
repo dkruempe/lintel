@@ -28,8 +28,8 @@ void AbstractCommandLineMenu::onShowMenu() {
   fmt::print("Menu Overview\n");
   int index = 0;
   for (auto &component : m_components) {
-    fmt::print("{}) {} [{}]\n",
-               ++index, component->getName(), component->getAlias());
+    fmt::print("{}) {} [{}]\n", ++index, component->getName(),
+               component->getAlias());
   }
 }
 
@@ -52,11 +52,13 @@ bool AbstractCommandLineMenu::onExit() {
   }
   return success;
 }
-void AbstractCommandLineMenu::onCommand(const std::string &command, const std::vector<std::string> &parameters) {
+void AbstractCommandLineMenu::onCommand(
+    const UserDto &userDto, const std::string &command,
+    const std::vector<std::string> &parameters) {
   if (m_current == nullptr) {
     return;
   }
-  m_current->onCommand(command, parameters);
+  m_current->onCommand(userDto, command, parameters);
 }
 void AbstractCommandLineMenu::onHelp() {
   if (m_current == nullptr) {

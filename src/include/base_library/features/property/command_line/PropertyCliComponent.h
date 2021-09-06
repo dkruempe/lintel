@@ -45,7 +45,7 @@ class PropertyCliComponent : public CommandLineComponent {
  public:
   explicit PropertyCliComponent(std::shared_ptr<PropertyApi> propertyApi);
 
-  void onCommand(const std::string &input,
+  void onCommand(const UserDto &userDto, const std::string &input,
                  const std::vector<std::string> &parameters) override;
 
   void onHelp() override;

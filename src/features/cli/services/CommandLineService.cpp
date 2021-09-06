@@ -39,7 +39,7 @@ void CommandLineService::onComponentCommand(
     const std::string &input, const std::vector<std::string> &flags) {
   Commands command = m_commandParser.parse(input, flags);
   if (command == CommandUndefined) {
-    m_menu.onCommand(input, flags);
+    m_menu.onCommand(m_userDto, input, flags);
     return;
   }
   switch (command) {

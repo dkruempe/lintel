@@ -5,6 +5,7 @@
 #include <string>
 #include <vector>
 
+#include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/http/service/Client.h"
 
 class CommandLineComponent {
@@ -21,7 +22,7 @@ class CommandLineComponent {
 
   std::string_view getAlias();
 
-  virtual void onCommand(const std::string &command,
+  virtual void onCommand(const UserDto &userDto, const std::string &command,
                          const std::vector<std::string> &parameters) = 0;
 
   virtual void onHelp() = 0;

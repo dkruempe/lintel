@@ -13,15 +13,11 @@ class CryptionCliComponent : public CommandLineComponent {
   enum Command {
     CommandEncrypt,
     CommandDecrypt,
-    CommandUserLogin,
-    CommandUserLogout,
     CommandUndefined,
   };
   std::map<std::string_view, Command> m_commands = {
       {"encrypt", CommandEncrypt},  {"enc", CommandEncrypt},
-      {"decrypt", CommandDecrypt},  {"dec", CommandDecrypt},
-      {"login", CommandUserLogin},  {"log", CommandUserLogin},
-      {"logout", CommandUserLogout}};
+      {"decrypt", CommandDecrypt},  {"dec", CommandDecrypt}};
   static constexpr std::string_view m_name = "Cryption";
   static constexpr std::string_view m_alias = "Crypt";
   Command m_currentCommand = CommandUndefined;
@@ -32,7 +28,7 @@ class CryptionCliComponent : public CommandLineComponent {
  public:
   explicit CryptionCliComponent(std::shared_ptr<UserApi> m_userApi);
 
-  void onCommand(const std::string &input,
+  void onCommand(const UserDto &userDto, const std::string &input,
                  const std::vector<std::string> &parameters) override;
 
   void onHelp() override;
