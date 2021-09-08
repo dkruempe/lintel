@@ -25,6 +25,8 @@ class Cryption {
   std::string decryption(const std::string &cipherText);
 
   static std::string hashOf(const std::string &text);
+
+  static std::string decodeBase64(const std::string &in);
 };
 
 #endif  // CPP_BASE_LIBRARY_CRYPTION_H

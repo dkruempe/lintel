@@ -5,19 +5,21 @@
 UserApi::UserApi(const std::shared_ptr<ClientProvider>& clientProvider)
     : m_client(clientProvider->provide()) {}
 std::optional<UserDto> UserApi::loginOf(const UserLoginDto& userLoginDto) {
-  const std::string body = userLoginDto.JsonSerializable::serialize();
+  m_client->setBasicAuth(userLoginDto.getUserName(),
+                         userLoginDto.getPassword());
   const httplib::Result& result =
-      m_client->post("/user/login", body, "application/json");
+      m_client->post("/user/login", "", "application/json");
   if (result->status != HttpStatusCodes::OK) {
     return std::nullopt;
   }
   UserDto userDto;
   userDto.JsonSerializable::deserialize(result.value().body);
+  m_client->setBasicAuth("", "");
+  m_client->setBearerTokenAuth(userDto.getId());
   return std::make_optional<UserDto>(std::move(userDto));
 }
 bool UserApi::logoutOf(const UserTokenDto& userTokenDto) {
-  const std::string body = userTokenDto.JsonSerializable::serialize();
   httplib::Result result =
-      m_client->deletes("/user/logout", body, "application/json");
+      m_client->deletes("/user/logout", "", "application/json");
   return result->status == HttpStatusCodes::OK;
 }

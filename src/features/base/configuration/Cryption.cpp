@@ -150,3 +150,24 @@ std::string Cryption::hashOf(const std::string &text) {
   }
   return ss.str();
 }
+std::string Cryption::decodeBase64(const std::string &in) {
+  std::string out;
+  static const std::string lookup =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+  std::vector<int> T(in.size());
+  for (std::size_t i = 0; i < 64; i++)
+    T[static_cast<std::size_t>(lookup[i])] = static_cast<int>(i);
+
+  int val = 0, valb = -8;
+  for (auto c : in) {
+    if (T[static_cast<std::size_t>(c)] == -1) break;
+    val = (val << 6) + T[static_cast<std::size_t>(c)];
+    valb += 6;
+    if (valb >= 0) {
+      out.push_back(char((val >> valb) & 0xFF));
+      valb -= 8;
+    }
+  }
+  return out;
+}

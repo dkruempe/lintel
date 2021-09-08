@@ -2,20 +2,30 @@
 
 #include <utility>
 
+#include "base_library/core/utils/StringUtils.h"
+#include "base_library/features/base/configuration/Cryption.h"
 #include "base_library/features/base/controller/UserDto.h"
-#include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"
+#include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 void UserController::loginOfPost(const httplib::Request& request,
                                  httplib::Response& response,
                                  const ContentType& contentType) {
   try {
-    UserLoginDto userLoginDto;
-    userLoginDto.JsonSerializable::deserialize(request.body);
-    UserLogin userLogin{request.remote_addr, userLoginDto.getUserName(),
-                        userLoginDto.getPassword()};
-    LOG_INFO("login {} {} {}", userLoginDto.getUserName(),
-             userLoginDto.getPassword(), request.remote_addr);
+    std::string auth = request.get_header_value("Authorization");
+    // remove 'Basic ' prefix => start pos 6
+    auth = auth.substr(6);
+    std::string result = Cryption::decodeBase64(auth);
+    auto found = result.find(':', 0);
+    if (found == std::string::npos) {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      return;
+    }
+    std::string userName = result.substr(0, found);
+    std::string password = result.substr(found + 1);
+    UserLogin userLogin{request.remote_addr, userName, password};
+    LOG_INFO("login {} {} {}", userName, password, request.remote_addr);
     std::optional<UserToken> userToken = m_authService->onLoginOf(userLogin);
     if (!userToken.has_value()) {
       response.status = HttpStatusCodes::Forbidden;
@@ -39,9 +49,10 @@ void UserController::logoutOfDelete(const httplib::Request& request,
                                     httplib::Response& response,
                                     const ContentType& contentType) {
   try {
-    UserTokenDto userTokenDto;
-    userTokenDto.JsonSerializable::deserialize(request.body);
-    UserTokenLogin userTokenLogin{request.remote_addr, userTokenDto.getId()};
+    std::string auth = request.get_header_value("Authorization");
+    // remove 'Bearer ' => start pos 7
+    std::string id = auth.substr(7);
+    UserTokenLogin userTokenLogin{request.remote_addr, id};
     m_authService->onLogoutOf(userTokenLogin);
   } catch (const std::exception& exception) {
     LOG_ERROR("login failed {} for {}", exception.what(), request.body);
