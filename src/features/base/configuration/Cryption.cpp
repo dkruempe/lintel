@@ -1,12 +1,11 @@
 #include "base_library/features/base/configuration/Cryption.h"
 
+#include <fmt/format.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
 #include <algorithm>
-#include <iomanip>
-#include <sstream>
 
 #include "base_library/core/utils/StringUtils.h"
 
@@ -143,12 +142,11 @@ std::string Cryption::hashOf(const std::string &text) {
   SHA512_Final(&buffer[0], &ctx);
   buffer[buffer.size()] = 0;
 
-  std::stringstream ss;
-  ss << std::hex << std::setfill('0');
+  std::string tokens;
   for (auto &token : buffer) {
-    ss << static_cast<int>(token);
+    tokens += fmt::format("{:02x}", static_cast<int>(token));
   }
-  return ss.str();
+  return tokens;
 }
 std::string Cryption::decodeBase64(const std::string &in) {
   std::string out;

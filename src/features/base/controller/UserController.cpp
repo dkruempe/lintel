@@ -16,6 +16,7 @@ void UserController::loginOfPost(const httplib::Request& request,
     // remove 'Basic ' prefix => start pos 6
     auth = auth.substr(6);
     std::string result = Cryption::decodeBase64(auth);
+    result = result.substr(0, result.size() - 1);
     auto found = result.find(':', 0);
     if (found == std::string::npos) {
       response.status = HttpStatusCodes::Forbidden;

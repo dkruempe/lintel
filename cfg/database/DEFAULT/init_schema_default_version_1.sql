@@ -1,4 +1,4 @@
-CREATE TABLE public."property"
+CREATE TABLE public.property
 (
     name          TEXT NOT NULL,
     instance_name TEXT NOT NULL,
@@ -8,7 +8,7 @@ CREATE TABLE public."property"
     value         TEXT NOT NULL,
     CONSTRAINT property_PK PRIMARY KEY (name, instance_name, class_name, process_name)
 );
-CREATE TABLE public."user"
+CREATE TABLE public.user
 (
     first_name        TEXT                     NOT NULL,
     last_name         TEXT                     NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE public."user"
     created_timestamp timestamp with time zone NOT NULL,
     CONSTRAINT user_pk PRIMARY KEY (user_name)
 );
-CREATE TABLE public."group"
+CREATE TABLE public.group
 (
     "name"  text NOT NULL,
     virtual bool NOT NULL,
@@ -40,4 +40,3 @@ CREATE TABLE public.group_groups_relation
     CONSTRAINT group_groups_relation_fk FOREIGN KEY (group_name) REFERENCES public."group" ("name"),
     CONSTRAINT group_groups_relation_fk_1 FOREIGN KEY (base_group_name) REFERENCES public."group" ("name")
 );
-

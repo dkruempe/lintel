@@ -11,6 +11,9 @@ void DatabaseBootstrapPlugin::onStart() {
   for (const auto &connectionEntry : m_connectionConfigurations->allof()) {
     try {
       handle(connectionEntry);
+    } catch (const db::SQLException &exception) {
+      LOG_ERROR("{} - failed to ahndle database bootstrap plugin - {}", connectionEntry->getName(), exception.what());
+      throw exception;
     } catch (std::exception &exception) {
       LOG_ERROR("{} - failed to handle database bootstrap plugin - {}",
                 connectionEntry->getName(), exception.what());
@@ -132,7 +135,6 @@ void DatabaseBootstrapPlugin::initDatabase(
                 return a.m_isInitFile && !b.m_isInitFile;
               });
     db::Connection connection(connectionEntry);
-    db::Transaction transaction(connection);
     int32_t currentSchemaVersion = 0;
     for (const auto &item : fileInformations) {
       if (item.m_isInitFile && currentSchemaVersion + 1 != item.m_version) {
@@ -151,6 +153,7 @@ void DatabaseBootstrapPlugin::initDatabase(
       if (item.m_isInitFile) {
         currentSchemaVersion = item.m_version;
       }
+      db::Transaction transaction(connection);
       FileService fileService(item.m_filePath);
       std::string content = fileService.readFile();
       content.erase(std::remove_if(content.begin(), content.end(),
