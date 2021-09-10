@@ -116,7 +116,7 @@ void PropertyCliComponent::onCommand(
         break;
     }
   } catch (const std::exception &exception) {
-    std::cerr << exception.what() << "\n";
+    std::cerr << "ERROR: " << exception.what() << "\n";
   }
 }
 void PropertyCliComponent::printProperties(
