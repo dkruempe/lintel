@@ -24,7 +24,12 @@ User::User(std::string firstName, std::string lastName, Sex sex,
       m_userName(std::move(userName)),
       m_password(std::move(password)),
       m_createdTimestamp(createdTimestamp),
-      m_groups(std::move(groups)) {}
+      m_groups(std::move(groups)) {
+  for (const auto& item : m_groups) {
+    m_allGroups.insert(item);
+    m_allGroups.insert(item.getGroups().begin(), item.getGroups().end());
+  }
+}
 std::ostream& operator<<(std::ostream& os, const User& user) {
   os << "User{"
      << "username: " << user.m_userName << ", first_name: " << user.m_firstName
@@ -42,4 +47,8 @@ std::ostream& operator<<(std::ostream& os, const User& user) {
   }
   os << "}";
   return os;
+}
+bool User::has(const Group& group) const {
+  auto found = m_allGroups.find(group);
+  return found != m_allGroups.end();
 }

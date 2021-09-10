@@ -6,6 +6,7 @@
 #include <chrono>
 #include <ostream>
 #include <string>
+#include <set>
 
 #include "base_library/features/base/models/Group.h"
 
@@ -32,6 +33,7 @@ class User {
 
   date::sys_time<std::chrono::microseconds> m_createdTimestamp;
   std::vector<Group> m_groups;
+  std::set<Group> m_allGroups{}; // including subgroups
 
  public:
   User(std::string firstName, std::string lastName, Sex sex, std::string email,
@@ -44,6 +46,7 @@ class User {
   [[nodiscard]] const std::string& getEmail() const;
   [[nodiscard]] const std::string& getUserName() const;
   [[nodiscard]] const std::string& getPassword() const;
+  bool has(const Group &group) const;
   [[nodiscard]] const date::sys_time<std::chrono::microseconds>&
   getCreatedTimestamp() const;
   [[nodiscard]] const std::vector<Group>& getGroups() const;

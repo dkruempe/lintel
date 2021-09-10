@@ -7,19 +7,21 @@
 class PropertyController : public Controller {
  private:
   std::shared_ptr<PropertyService> m_propertyService;
+  Group m_adminGroup;
+  Group m_userGroup;
   ADD_HANDLER_METHOD("/properties", Get, allPropertiesOf);
   ADD_HANDLER_METHOD(R"(/properties/(\w+))", Get, allPropertiesOfProcess);
   ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+))", Get,
                      allPropertiesOfProcessAndClass);
   ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+))", Get,
                      allPropertiesOfProcessClassAndInstance);
-  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+)/(\w+))", Get,
-                     propertyOf);
+  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+)/(\w+))", Get, propertyOf);
   ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+)/(\w+))", Put,
                      updateProperty);
 
  public:
-  explicit PropertyController(std::shared_ptr<PropertyService> propertyService);
+  explicit PropertyController(std::shared_ptr<PropertyService> propertyService,
+                              const std::shared_ptr<AuthService> &authService);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYCONTROLLER_H

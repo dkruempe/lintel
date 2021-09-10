@@ -8,7 +8,7 @@ void BootstrapService::onStart() {
   std::sort(m_bootstrapPlugins.begin(), m_bootstrapPlugins.end(),
             [](const std::shared_ptr<BootstrapPlugin> &a,
                const std::shared_ptr<BootstrapPlugin> &b) -> bool {
-              return a->getPriority() > b->getPriority();
+              return a->getPriority() < b->getPriority();
             });
   std::for_each(m_bootstrapPlugins.begin(), m_bootstrapPlugins.end(),
                 [](const std::shared_ptr<BootstrapPlugin> &plugin) {

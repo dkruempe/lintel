@@ -1,10 +1,9 @@
-#include <sstream>
-
 #include "base_library/core/persistence/ConnectionConfigurations.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
 #include "base_library/features/base/configuration/Cryption.h"
+#include "base_library/features/base/provider/GroupProvider.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
 #include "base_library/features/base/repositories/UserRepository.h"
 
@@ -25,8 +24,15 @@ void testUser() {
   userRepository.createOf(user);
 }
 
+void testGroupProvider() {
+  Group propertyAdmin("Property-Admin", {}, true);
+  std::vector<Group> groups{propertyAdmin};
+  GroupProvider groupProvider(groups);
+}
+
 int main(int argc, char *argv[]) {
   DECLARE_LOGGER(argv[0]);
   testUser();
+  testGroupProvider();
   return 0;
 }

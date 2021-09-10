@@ -26,3 +26,18 @@ std::ostream& operator<<(std::ostream& os, const Group& group) {
   os << "}";
   return os;
 }
+bool Group::operator==(const Group& rhs) const {
+  return m_groupName == rhs.m_groupName && m_groups == rhs.m_groups &&
+         m_isVirtual == rhs.m_isVirtual;
+}
+bool Group::operator!=(const Group& rhs) const { return !(rhs == *this); }
+bool Group::operator<(const Group& rhs) const {
+  if (m_groupName < rhs.m_groupName) return true;
+  if (rhs.m_groupName < m_groupName) return false;
+  if (m_groups < rhs.m_groups) return true;
+  if (rhs.m_groups < m_groups) return false;
+  return m_isVirtual < rhs.m_isVirtual;
+}
+bool Group::operator>(const Group& rhs) const { return rhs < *this; }
+bool Group::operator<=(const Group& rhs) const { return !(rhs < *this); }
+bool Group::operator>=(const Group& rhs) const { return !(*this < rhs); }

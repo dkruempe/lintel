@@ -8,16 +8,14 @@
 class BootstrapSequence {
  public:
   // value is defining priority of property repository type
-  enum Value {
-    Undefined = 0,
-    Database = 9 };
+  enum Value { Undefined = 0, Database = 1, VirtualGroups = 2 };
 
   BootstrapSequence() = default;
 
   constexpr BootstrapSequence(Value value) : m_value(value) {}
 
   constexpr explicit BootstrapSequence(std::string_view enumName)
-  : m_value(magic_enum::enum_cast<Value>(enumName).value_or(Undefined)) {}
+      : m_value(magic_enum::enum_cast<Value>(enumName).value_or(Undefined)) {}
 
   operator Value() const { return m_value; }
   explicit operator bool() = delete;

@@ -8,21 +8,34 @@
 #include <memory>
 #include <type_traits>
 
+#include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/StringUtils.h"
+#include "base_library/features/base/provider/GroupProvider.h"
+#include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/http/service/ContentType.h"
+#include "base_library/features/http/service/HttpStatusCodes.h"
 
-#define ADD_HANDLER_METHOD(pattern, httpType, name)                           \
-  Handler name##httpType##Function =                                          \
-      addMethod<std::function<HandlerArgs>, httpType>(                        \
-          pattern,                                                            \
-          [&](const httplib::Request &request, httplib::Response &response) { \
-            const std::string contentTypeString =                             \
-                request.get_header_value("Content-Type");                     \
-            ContentType contentType(contentTypeString);                       \
-            name##httpType(request, response, contentType);                   \
-          });                                                                 \
-  void name##httpType(const httplib::Request &request,                        \
-                      httplib::Response &response,                            \
-                      const ContentType &contentType)
+#define ADD_HANDLER_METHOD(pattern, httpType, name)                       \
+  Handler name##httpType##Function =                                      \
+      addMethod<std::function<HandlerArgs>, httpType>(                    \
+          pattern, [&](const httplib::Request &request,       \
+                                   httplib::Response &response) {         \
+            std::string auth = request.get_header_value("Authorization"); \
+            const std::string contentTypeString =                         \
+                request.get_header_value("Content-Type");                 \
+            ContentType contentType(contentTypeString);                   \
+            bool isBearerToken = StringUtils::startsWith(auth, "Bearer"); \
+            std::optional<UserToken> user = std::nullopt;                 \
+            if (isBearerToken) {                                          \
+              std::string id = auth.substr(7);                            \
+              UserTokenLogin userTokenLogin{request.remote_addr, id};     \
+              user = m_authService->onAccessOf(userTokenLogin);           \
+            }                                                             \
+            name##httpType(request, response, contentType, user);         \
+          });                                                             \
+  void name##httpType(                                                    \
+      const httplib::Request &request, httplib::Response &response,       \
+      const ContentType &contentType, const std::optional<UserToken> &user)
 #define ADD_HANDLER_CONTENT_READER_METHOD(pattern, httpType, name)          \
   HandlerWithContentReader name##httpType##Function =                       \
       addMethod<std::function<HandlerWithContentReaderArgs>, httpType>(     \
@@ -39,8 +52,9 @@
                       const httplib::ContentReader &contentReader,          \
                       const ContentType &contentType)
 
-class Controller {
+class Controller : public GroupProvider {
  protected:
+  std::shared_ptr<AuthService> m_authService;
   using HandlerArgs = void(const httplib::Request &, httplib::Response &);
   using HandlerWithContentReaderArgs = void(const httplib::Request &,
                                             httplib::Response &,
@@ -59,7 +73,8 @@ class Controller {
   Type addMethod(const std::string &pattern, Type handler) {
     auto found = m_methods.find(httpType);
     // I check if all limitations of library are checked
-    // a) Get / HandlerWithContentReader not supported => abort compilation
+    // a) Get / HandlerWithContentReader not supported => abort
+    // compilation
     static_assert(
         httpType != Get || !std::is_same<Type, HandlerWithContentReader>::value,
         "Get and HandlerWithContentReader is not supported");
@@ -89,8 +104,9 @@ class Controller {
 
  public:
   // default constructor / destructor
-  Controller() = default;
-  virtual ~Controller() = default;
+  explicit Controller(std::shared_ptr<AuthService> authService)
+      : GroupProvider(), m_authService(std::move(authService)) {}
+  ~Controller() override = default;
 
   // register methods for http functions
   void registerMethods(std::shared_ptr<httplib::Server> &server);

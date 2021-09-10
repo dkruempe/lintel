@@ -1,15 +1,37 @@
 #include "base_library/features/property/controller/PropertyController.h"
 
+#include <utility>
+
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/property/controller/PropertiesDto.h"
 #include "base_library/features/property/controller/PropertyValueDto.h"
 
 PropertyController::PropertyController(
-    std::shared_ptr<PropertyService> propertyService)
-    : Controller(), m_propertyService(std::move(propertyService)) {}
-void PropertyController::allPropertiesOfGet(const httplib::Request& request,
-                                            httplib::Response& response,
-                                            const ContentType& contentType) {
+    std::shared_ptr<PropertyService> propertyService,
+    const std::shared_ptr<AuthService>& authService)
+    : Controller(authService),
+      m_propertyService(std::move(propertyService)),
+      m_adminGroup("Admin-Property", {}, true),
+      m_userGroup("User-Property", {}, true) {
+  add(m_adminGroup);
+  add(m_userGroup);
+}
+
+void PropertyController::allPropertiesOfGet(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& userToken) {
+  // no user logged in => Unauthorized
+  if (!userToken.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!userToken->m_user.has(m_userGroup) &&
+      !userToken->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
   switch (contentType) {
     case ContentType::ApplicationJson: {
       PropertiesDto propertiesDto(m_propertyService->allOf());
@@ -26,7 +48,19 @@ void PropertyController::allPropertiesOfGet(const httplib::Request& request,
 }
 void PropertyController::allPropertiesOfProcessGet(
     const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType) {
+    const ContentType& contentType, const std::optional<UserToken>& userToken) {
+  // no user logged in => Unauthorized
+  if (!userToken.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!userToken->m_user.has(m_userGroup) &&
+      !userToken->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
   const std::string processName = request.matches[1];
   switch (contentType) {
     case ContentType::ApplicationJson: {
@@ -44,7 +78,19 @@ void PropertyController::allPropertiesOfProcessGet(
 }
 void PropertyController::allPropertiesOfProcessAndClassGet(
     const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType) {
+    const ContentType& contentType, const std::optional<UserToken>& userToken) {
+  // no user logged in => Unauthorized
+  if (!userToken.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!userToken->m_user.has(m_userGroup) &&
+      !userToken->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   switch (contentType) {
@@ -64,7 +110,19 @@ void PropertyController::allPropertiesOfProcessAndClassGet(
 }
 void PropertyController::allPropertiesOfProcessClassAndInstanceGet(
     const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType) {
+    const ContentType& contentType, const std::optional<UserToken>& userToken) {
+  // no user logged in => Unauthorized
+  if (!userToken.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!userToken->m_user.has(m_userGroup) &&
+      !userToken->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
@@ -83,9 +141,21 @@ void PropertyController::allPropertiesOfProcessClassAndInstanceGet(
     }
   }
 }
-void PropertyController::propertyOfGet(const httplib::Request& request,
-                                       httplib::Response& response,
-                                       const ContentType& contentType) {
+void PropertyController::propertyOfGet(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& userToken) {
+  // no user logged in => Unauthorized
+  if (!userToken.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!userToken->m_user.has(m_userGroup) &&
+      !userToken->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];
@@ -111,9 +181,20 @@ void PropertyController::propertyOfGet(const httplib::Request& request,
     }
   }
 }
-void PropertyController::updatePropertyPut(const httplib::Request& request,
-                                           httplib::Response& response,
-                                           const ContentType& contentType) {
+void PropertyController::updatePropertyPut(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& userToken) {
+  // no user logged in => Unauthorized
+  if (!userToken.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!userToken->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
   const std::string processName = request.matches[1];
   const std::string className = request.matches[2];
   const std::string instanceName = request.matches[3];

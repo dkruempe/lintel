@@ -12,6 +12,7 @@ void HttpFeature::registerTypes(Hypodermic::ContainerBuilder& builder) {
   builder.registerType<ClientProvider>().singleInstance();
   builder.registerType<ExampleController>()
       .as<Controller>()
+      .as<GroupProvider>()
       .asSelf()
       .singleInstance();
   builder.registerType<HttpComponent>()

@@ -43,6 +43,12 @@ class Group {
   [[nodiscard]] const std::vector<Group>& getGroups() const;
   [[nodiscard]] bool isVirtual() const;
   friend std::ostream& operator<<(std::ostream& os, const Group& group);
+  bool operator==(const Group& rhs) const;
+  bool operator!=(const Group& rhs) const;
+  bool operator<(const Group& rhs) const;
+  bool operator>(const Group& rhs) const;
+  bool operator<=(const Group& rhs) const;
+  bool operator>=(const Group& rhs) const;
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUP_H

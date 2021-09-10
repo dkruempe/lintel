@@ -10,7 +10,7 @@ class UserController : public Controller {
   ADD_HANDLER_METHOD("/user/login", Post, loginOf);
   ADD_HANDLER_METHOD("/user/logout", Delete, logoutOf);
  public:
-  explicit UserController(std::shared_ptr<AuthService> authService);
+  explicit UserController(const std::shared_ptr<AuthService> &authService);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERCONTROLLER_H

@@ -10,7 +10,15 @@
 #include "base_library/features/http/service/HttpStatusCodes.h"
 void UserController::loginOfPost(const httplib::Request& request,
                                  httplib::Response& response,
-                                 const ContentType& contentType) {
+                                 const ContentType& contentType,
+                                 const std::optional<UserToken>& user) {
+  if (user.has_value()) {
+    LOG_ERROR("{}-{}: login with logged in user", request.remote_addr,
+              user->m_id);
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
   try {
     std::string auth = request.get_header_value("Authorization");
     // remove 'Basic ' prefix => start pos 6
@@ -44,20 +52,17 @@ void UserController::loginOfPost(const httplib::Request& request,
     response.set_content("", contentType.getName().c_str());
   }
 }
-UserController::UserController(std::shared_ptr<AuthService> authService)
-    : Controller(), m_authService(std::move(authService)) {}
+UserController::UserController(const std::shared_ptr<AuthService>& authService)
+    : Controller(authService), m_authService(authService) {
+  Group adminUser("Admin-User", {}, true);
+  Group userUser("User-User", {}, true);
+  add(adminUser);
+  add(userUser);
+}
 void UserController::logoutOfDelete(const httplib::Request& request,
                                     httplib::Response& response,
-                                    const ContentType& contentType) {
-  try {
-    std::string auth = request.get_header_value("Authorization");
-    // remove 'Bearer ' => start pos 7
-    std::string id = auth.substr(7);
-    UserTokenLogin userTokenLogin{request.remote_addr, id};
-    m_authService->onLogoutOf(userTokenLogin);
-  } catch (const std::exception& exception) {
-    LOG_ERROR("login failed {} for {}", exception.what(), request.body);
-    response.status = HttpStatusCodes::Forbidden;
-    response.set_content("", contentType.getName().c_str());
-  }
+                                    const ContentType& contentType,
+                                    const std::optional<UserToken>& user) {
+  UserTokenLogin userTokenLogin{request.remote_addr, user->m_id};
+  m_authService->onLogoutOf(userTokenLogin);
 }

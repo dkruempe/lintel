@@ -2,6 +2,7 @@
 
 #include "base_library/core/persistence/ConnectionConfigurations.h"
 #include "base_library/core/plugins/DatabaseBootstrapPlugin.h"
+#include "base_library/core/plugins/VirtualGroupBootstrapPlugin.h"
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/PersistableService.h"
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
@@ -9,6 +10,7 @@
 #include "base_library/features/base/configuration/ConnectionComponent.h"
 #include "base_library/features/base/controller/UserApi.h"
 #include "base_library/features/base/controller/UserController.h"
+#include "base_library/features/base/provider/GroupProvider.h"
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/InitializeService.h"
@@ -45,10 +47,15 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .as<BootstrapPlugin>()
       .asSelf()
       .singleInstance();
+  builder.registerType<VirtualGroupBootstrapPlugin>()
+      .as<BootstrapPlugin>()
+      .asSelf()
+      .singleInstance();
   builder.registerType<PersistableService>().singleInstance();
   builder.registerType<UserApi>().singleInstance();
   builder.registerType<UserController>()
       .as<Controller>()
+      .as<GroupProvider>()
       .asSelf()
       .singleInstance();
 }

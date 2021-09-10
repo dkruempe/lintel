@@ -6,8 +6,9 @@
 class ExampleController : public Controller {
  private:
   ADD_HANDLER_METHOD("/hello", Get, hello);
+
  public:
-  ExampleController();
+  explicit ExampleController(std::shared_ptr<AuthService> authService);
 };
 
 #endif  // CPP_BASE_LIBRARY_EXAMPLECONTROLLER_H

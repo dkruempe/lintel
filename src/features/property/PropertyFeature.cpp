@@ -33,6 +33,7 @@ void PropertyFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .singleInstance();
   builder.registerType<PropertyController>()
       .as<Controller>()
+      .as<GroupProvider>()
       .asSelf()
       .singleInstance();
   builder.registerType<PropertyApi>().singleInstance();
