@@ -127,7 +127,7 @@ std::vector<Group> GroupRepository::allOf(const std::string& groupName,
   temp.erase(std::remove_if(
       temp.begin(), temp.end(), [&match](const Group& group) -> bool {
         return !std::regex_match(group.getGroupName(), match);
-      }));
+      }), temp.end());
   return temp;
 }
 void GroupRepository::createOf(const Group& group) {
