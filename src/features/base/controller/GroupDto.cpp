@@ -4,7 +4,7 @@
 GroupDto::Shapes GroupDto::shape{};
 GroupDto::GroupDto(const Group& group)
     : m_groupName(group.getGroupName()),
-      m_groups(std::make_unique<GroupsDto>(group.getGroups())),
+      m_groups(std::make_shared<GroupsDto>(group.getGroups())),
       m_isVirtual(group.isVirtual()) {}
 void GroupDto::serialize(
     rapidjson::Writer<rapidjson::StringBuffer>* writer) const {
@@ -37,11 +37,19 @@ bool GroupDto::deserialize(const rapidjson::Value& obj) {
     LOG_ERROR("deserialization of {} failed", shape.VIRTUAL);
   }
   if (obj.HasMember(shape.GROUPS.c_str())) {
-    std::unique_ptr<GroupsDto> groupsDto = std::make_unique<GroupsDto>();
+    std::shared_ptr<GroupsDto> groupsDto = std::make_shared<GroupsDto>();
     groupsDto->deserialize(obj[shape.GROUPS.c_str()]);
     m_groups = std::move(groupsDto);
   }
   return success;
+}
+const std::string& GroupDto::getGroupName() const { return m_groupName; }
+bool GroupDto::isVirtual() const { return m_isVirtual; }
+std::vector<GroupDto> GroupDto::getSubGroups() const {
+  if (m_groups == nullptr) {
+    return {};
+  }
+  return m_groups->getGroups();
 }
 GroupsDto::GroupsDto(const std::vector<Group>& groups)
     : m_groups(init(groups)) {}
@@ -72,3 +80,4 @@ bool GroupsDto::deserialize(const rapidjson::Value& obj) {
   }
   return true;
 }
+const std::vector<GroupDto>& GroupsDto::getGroups() const { return m_groups; }

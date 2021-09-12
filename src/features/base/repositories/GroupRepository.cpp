@@ -42,7 +42,8 @@ void GroupRepository::initGroups() {
   from public.group g
   left join group_groups_relation gr
     on gr.group_name = g.name
-  where g.virtual = false;
+  where g.virtual = false
+  order by g.name;
   )");
   std::string lastGroupName;
   bool lastIsVirtual;

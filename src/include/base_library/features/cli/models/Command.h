@@ -14,8 +14,10 @@ class Command {
   // with a std::stringstream. This std::variant can be easily extended if
   // the stream operator>> is overloaded. If not, you have to add a special
   // case to the parse() method.
-  typedef std::variant<int32_t*, uint32_t*, double*, float*, bool*,
-                       std::string*>
+  typedef std::variant<
+      int32_t*, uint32_t*, double*, float*, bool*, std::string*,
+      std::optional<int32_t>*, std::optional<uint32_t>*, std::optional<double>*,
+      std::optional<float>*, std::optional<bool>*, std::optional<std::string>*>
       Value;
 
   // The description is printed as part of the help message.
@@ -27,10 +29,12 @@ class Command {
   // Then, after parse() has been called, printHelp will be true if the user
   // provided the flag.
   Command& addArgument(const std::vector<std::string>& flags,
-                       Value defaultValue, const std::string& help);
+                       Value defaultValue, const std::string& help,
+                       bool optional = false);
 
   Command& addArgument(const std::vector<std::string>&& flags,
-                       Value defaultValue, std::string help);
+                       Value defaultValue, std::string help,
+                       bool optional = false);
 
   // Prints the description given to the constructor and the help
   // for each option.
@@ -51,6 +55,7 @@ class Command {
     std::vector<std::string> m_flags;
     Value m_value;
     std::string m_help;
+    bool m_optional;
   };
 
   std::string m_command;

@@ -52,8 +52,11 @@ void UserController::loginOfPost(const httplib::Request& request,
     response.set_content("", contentType.getName().c_str());
   }
 }
-UserController::UserController(const std::shared_ptr<AuthService>& authService)
-    : Controller(authService), m_authService(authService) {
+UserController::UserController(const std::shared_ptr<AuthService>& authService,
+                               std::shared_ptr<GroupRepository> groupRepository)
+    : Controller(authService),
+      m_authService(authService),
+      m_groupRepository(std::move(groupRepository)) {
   Group adminUser("Admin-User", {}, true);
   Group userUser("User-User", {}, true);
   add(adminUser);
@@ -66,3 +69,32 @@ void UserController::logoutOfDelete(const httplib::Request& request,
   UserTokenLogin userTokenLogin{request.remote_addr, user->m_id};
   m_authService->onLogoutOf(userTokenLogin);
 }
+void UserController::allGroupsOfGet(const httplib::Request& request,
+                                    httplib::Response& response,
+                                    const ContentType& contentType,
+                                    const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      GroupsDto groupsDto(m_groupRepository->allOf());
+      response.set_content(groupsDto.JsonSerializable::serialize(),
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
+void UserController::allGroupsOfGroupNameOrIsVirtualGroupGet(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& user) {}
+void UserController::allGroupsOfGroupNameAndIsVirtualGroupGet(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& user) {}

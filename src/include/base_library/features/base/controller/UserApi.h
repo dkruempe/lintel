@@ -18,9 +18,15 @@ class UserApi {
  public:
   explicit UserApi(const std::shared_ptr<ClientProvider> &clientProvider);
 
+  // basic user functions for login / logout
   std::optional<UserDto> loginOf(const UserLoginDto &userLoginDto);
-
   bool logoutOf(const UserTokenDto &userLoginTokenDto);
+
+  // user management functions
+  std::vector<GroupDto> allOf();
+  std::vector<GroupDto> allOf(const std::string &groupName);
+  std::vector<GroupDto> allOf(const std::string &groupName, bool isVirtualGroup);
+  std::vector<GroupDto> allOf(bool isVirtualGroup);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERAPI_H

@@ -23,3 +23,24 @@ bool UserApi::logoutOf(const UserTokenDto& userTokenDto) {
       m_client->deletes("/user/logout", "", "application/json");
   return result->status == HttpStatusCodes::OK;
 }
+std::vector<GroupDto> UserApi::allOf() {
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  httplib::Result result =
+      m_client->get("/user/groups", headers);
+  GroupsDto groupsDto;
+  try {
+    groupsDto.JsonSerializable::deserialize(result->body);
+  } catch (std::exception &exception) {
+    return {};
+  }
+  return groupsDto.getGroups();
+}
+std::vector<GroupDto> UserApi::allOf(const std::string& groupName) {
+  return {};
+}
+std::vector<GroupDto> UserApi::allOf(const std::string& groupName,
+                                     bool isVirtualGroup) {
+  return {};
+}
+std::vector<GroupDto> UserApi::allOf(bool isVirtualGroup) { return {}; }

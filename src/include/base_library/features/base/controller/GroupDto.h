@@ -3,13 +3,14 @@
 
 #include "base_library/core/models/JsonSerializable.h"
 #include "base_library/features/base/models/Group.h"
+#include <memory>
 
 class GroupsDto;
 
 class GroupDto : public JsonSerializable {
  private:
   std::string m_groupName;
-  std::unique_ptr<GroupsDto> m_groups;
+  std::shared_ptr<GroupsDto> m_groups;
   bool m_isVirtual;
 
   static struct Shapes {
@@ -24,6 +25,9 @@ class GroupDto : public JsonSerializable {
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
   bool deserialize(const rapidjson::Value &obj) override;
+  [[nodiscard]] const std::string &getGroupName() const;
+  [[nodiscard]] bool isVirtual() const;
+  std::vector<GroupDto> getSubGroups() const;
 };
 
 class GroupsDto : public JsonSerializable {
@@ -38,6 +42,7 @@ class GroupsDto : public JsonSerializable {
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
   bool deserialize(const rapidjson::Value &obj) override;
+  [[nodiscard]] const std::vector<GroupDto> &getGroups() const;
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUPDTO_H
