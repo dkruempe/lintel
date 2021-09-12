@@ -56,11 +56,11 @@ UserController::UserController(const std::shared_ptr<AuthService>& authService,
                                std::shared_ptr<GroupRepository> groupRepository)
     : Controller(authService),
       m_authService(authService),
-      m_groupRepository(std::move(groupRepository)) {
-  Group adminUser("Admin-User", {}, true);
-  Group userUser("User-User", {}, true);
-  add(adminUser);
-  add(userUser);
+      m_groupRepository(std::move(groupRepository)),
+      m_adminUser("Admin-User", {}, true),
+      m_userUser("User-User", {}, true) {
+  add(m_adminUser);
+  add(m_userUser);
 }
 void UserController::logoutOfDelete(const httplib::Request& request,
                                     httplib::Response& response,
@@ -74,6 +74,11 @@ void UserController::allGroupsOfGet(const httplib::Request& request,
                                     const ContentType& contentType,
                                     const std::optional<UserToken>& user) {
   if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
     response.status = HttpStatusCodes::Unauthorized;
     response.set_content("", contentType.getName().c_str());
     return;
@@ -94,7 +99,63 @@ void UserController::allGroupsOfGet(const httplib::Request& request,
 }
 void UserController::allGroupsOfGroupNameOrIsVirtualGroupGet(
     const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType, const std::optional<UserToken>& user) {}
+    const ContentType& contentType, const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      std::string temp = request.matches[1];
+      GroupsDto groupsDto;
+      if (temp == "true" || temp == "false") {
+        groupsDto = GroupsDto(m_groupRepository->allOf(temp == "true"));
+      } else {
+        groupsDto = GroupsDto(m_groupRepository->allOf(temp));
+      }
+      response.set_content(groupsDto.JsonSerializable::serialize(),
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
 void UserController::allGroupsOfGroupNameAndIsVirtualGroupGet(
     const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType, const std::optional<UserToken>& user) {}
+    const ContentType& contentType, const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      std::string groupName = request.matches[1];
+      bool isVirtual = request.matches[2] == "true";
+      GroupsDto groupsDto(m_groupRepository->allOf(groupName, isVirtual));
+      response.set_content(groupsDto.JsonSerializable::serialize(),
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}

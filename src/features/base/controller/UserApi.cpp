@@ -26,21 +26,52 @@ bool UserApi::logoutOf(const UserTokenDto& userTokenDto) {
 std::vector<GroupDto> UserApi::allOf() {
   httplib::Headers headers{};
   headers.insert({"Content-Type", "application/json"});
-  httplib::Result result =
-      m_client->get("/user/groups", headers);
+  httplib::Result result = m_client->get("/user/groups", headers);
   GroupsDto groupsDto;
   try {
     groupsDto.JsonSerializable::deserialize(result->body);
-  } catch (std::exception &exception) {
+  } catch (std::exception& exception) {
     return {};
   }
   return groupsDto.getGroups();
 }
 std::vector<GroupDto> UserApi::allOf(const std::string& groupName) {
-  return {};
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  httplib::Result result = m_client->get("/user/groups/" + groupName, headers);
+  GroupsDto groupsDto;
+  try {
+    groupsDto.JsonSerializable::deserialize(result->body);
+  } catch (std::exception& exception) {
+    return {};
+  }
+  return groupsDto.getGroups();
 }
 std::vector<GroupDto> UserApi::allOf(const std::string& groupName,
                                      bool isVirtualGroup) {
-  return {};
+  std::string boolStr = isVirtualGroup ? "true" : "false";
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  httplib::Result result =
+      m_client->get("/user/groups/" + groupName + "/" + boolStr, headers);
+  GroupsDto groupsDto;
+  try {
+    groupsDto.JsonSerializable::deserialize(result->body);
+  } catch (std::exception& exception) {
+    return {};
+  }
+  return groupsDto.getGroups();
 }
-std::vector<GroupDto> UserApi::allOf(bool isVirtualGroup) { return {}; }
+std::vector<GroupDto> UserApi::allOf(bool isVirtualGroup) {
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  std::string boolStr = isVirtualGroup ? "true" : "false";
+  httplib::Result result = m_client->get("/user/groups/" + boolStr, headers);
+  GroupsDto groupsDto;
+  try {
+    groupsDto.JsonSerializable::deserialize(result->body);
+  } catch (std::exception& exception) {
+    return {};
+  }
+  return groupsDto.getGroups();
+}

@@ -10,13 +10,13 @@ class PropertyController : public Controller {
   Group m_adminGroup;
   Group m_userGroup;
   ADD_HANDLER_METHOD("/properties", Get, allPropertiesOf);
-  ADD_HANDLER_METHOD(R"(/properties/(\w+))", Get, allPropertiesOfProcess);
-  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+))", Get,
+  ADD_HANDLER_METHOD(R"(/properties/([^\/]+))", Get, allPropertiesOfProcess);
+  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+))", Get,
                      allPropertiesOfProcessAndClass);
-  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+))", Get,
+  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+))", Get,
                      allPropertiesOfProcessClassAndInstance);
-  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+)/(\w+))", Get, propertyOf);
-  ADD_HANDLER_METHOD(R"(/properties/(\w+)/(\w+)/(\w+)/(\w+))", Put,
+  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Get, propertyOf);
+  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Put,
                      updateProperty);
 
  public:

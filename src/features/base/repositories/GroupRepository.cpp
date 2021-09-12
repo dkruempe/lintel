@@ -1,5 +1,6 @@
 #include "base_library/features/base/repositories/GroupRepository.h"
 
+#include <regex>
 #include <utility>
 
 #include "base_library/core/persistence/Connection.h"
@@ -96,6 +97,39 @@ std::optional<Group> GroupRepository::of(const std::string& groupName) {
   return std::make_optional(found->second);
 }
 std::vector<Group> GroupRepository::allOf() { return m_groups; }
+std::vector<Group> GroupRepository::allOf(bool isVirtualGroup) {
+  std::vector<Group> temp(m_groups);
+  temp.erase(std::remove_if(temp.begin(), temp.end(),
+                            [&isVirtualGroup](const Group& group) -> bool {
+                              return group.isVirtual() != isVirtualGroup;
+                            }),
+             temp.end());
+  return temp;
+}
+std::vector<Group> GroupRepository::allOf(const std::string& groupName) {
+  std::regex match(groupName);
+  std::vector<Group> temp(m_groups);
+  temp.erase(std::remove_if(temp.begin(), temp.end(),
+                            [&match](const Group& group) -> bool {
+                              return !std::regex_match(group.getGroupName(),
+                                                       match);
+                            }),
+             temp.end());
+  return temp;
+}
+std::vector<Group> GroupRepository::allOf(const std::string& groupName,
+                                          bool isVirtualGroup) {
+  std::vector<Group> temp = allOf(isVirtualGroup);
+  if (temp.empty()) {
+    return temp;
+  }
+  std::regex match(groupName);
+  temp.erase(std::remove_if(
+      temp.begin(), temp.end(), [&match](const Group& group) -> bool {
+        return !std::regex_match(group.getGroupName(), match);
+      }));
+  return temp;
+}
 void GroupRepository::createOf(const Group& group) {
   if (group.isVirtual()) {
     throw std::runtime_error(

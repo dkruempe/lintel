@@ -27,6 +27,12 @@ class GroupRepository {
 
   std::vector<Group> allOf();
 
+  std::vector<Group> allOf(const std::string &groupName);
+
+  std::vector<Group> allOf(bool isVirtualGroup);
+
+  std::vector<Group> allOf(const std::string &groupName, bool isVirtualGroup);
+
   void createOf(const Group &group);
 
   void deleteOf(const Group &group);

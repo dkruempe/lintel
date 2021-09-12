@@ -8,13 +8,15 @@ class UserController : public Controller {
  private:
   std::shared_ptr<AuthService> m_authService;
   std::shared_ptr<GroupRepository> m_groupRepository;
+  Group m_adminUser;
+  Group m_userUser;
 
   ADD_HANDLER_METHOD("/user/login", Post, loginOf);
   ADD_HANDLER_METHOD("/user/logout", Delete, logoutOf);
   ADD_HANDLER_METHOD(R"(/user/groups)", Get, allGroupsOf);
-  ADD_HANDLER_METHOD(R"(/user/groups/(\w+))", Get,
+  ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+))", Get,
                      allGroupsOfGroupNameOrIsVirtualGroup);
-  ADD_HANDLER_METHOD(R"(/user/groups/(\w+)/(\w+))", Get,
+  ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+)/([^\/]+))", Get,
                      allGroupsOfGroupNameAndIsVirtualGroup);
 
  public:

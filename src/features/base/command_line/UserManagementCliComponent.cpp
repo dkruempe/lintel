@@ -23,6 +23,13 @@ void UserManagementCliComponent::onCommand(
       case AllGroups:
         if (!m_groupName.has_value() && !m_isVirtualGroup.has_value()) {
           printGroups(m_userApi->allOf());
+        } else if (!m_groupName.has_value() && m_isVirtualGroup.has_value()) {
+          printGroups(m_userApi->allOf(m_isVirtualGroup.value()));
+        } else if (m_groupName.has_value() && !m_isVirtualGroup.has_value()) {
+          printGroups(m_userApi->allOf(m_groupName.value()));
+        } else {
+          printGroups(
+              m_userApi->allOf(m_groupName.value(), m_isVirtualGroup.value()));
         }
         break;
       default:
