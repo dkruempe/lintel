@@ -32,7 +32,8 @@ class UserDto : public JsonSerializable {
   [[nodiscard]] const std::string &getLastName() const;
   [[nodiscard]] const std::string &getEMail() const;
   [[nodiscard]] const std::string &getUserName() const;
-  const std::string &getId() const;
+  [[nodiscard]] const std::string &getId() const;
+  const std::vector<GroupDto> &getGroups() const;
   [[nodiscard]] const date::sys_time<std::chrono::microseconds>
       &getCreatedTimestamp() const;
   explicit UserDto(const User &user, std::string id = "");
@@ -40,6 +41,21 @@ class UserDto : public JsonSerializable {
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
   bool deserialize(const rapidjson::Value &obj) override;
+};
+
+class UsersDto : public JsonSerializable {
+ private:
+  std::vector<UserDto> m_users;
+
+  static std::vector<UserDto> init(const std::vector<User> &users);
+
+ public:
+  explicit UsersDto(const std::vector<User> &users);
+  UsersDto() = default;
+  void serialize(
+      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+  bool deserialize(const rapidjson::Value &obj) override;
+  [[nodiscard]] const std::vector<UserDto> &getUsers() const;
 };
 
 #endif  // CPP_BASE_LIBRARY_USERDTO_H

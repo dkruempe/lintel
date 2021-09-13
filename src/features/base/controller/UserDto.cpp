@@ -111,3 +111,35 @@ bool UserDto::deserialize(const rapidjson::Value& obj) {
   return success;
 }
 const std::string& UserDto::getId() const { return m_id; }
+const std::vector<GroupDto>& UserDto::getGroups() const {
+  return m_groups->getGroups();
+}
+std::vector<UserDto> UsersDto::init(const std::vector<User>& users) {
+  std::vector<UserDto> userDtos;
+  userDtos.reserve(users.size());
+  for (auto& user : users) {
+    userDtos.emplace_back(user);
+  }
+  return userDtos;
+}
+UsersDto::UsersDto(const std::vector<User>& users) : m_users(init(users)) {}
+const std::vector<UserDto>& UsersDto::getUsers() const { return m_users; }
+void UsersDto::serialize(
+    rapidjson::Writer<rapidjson::StringBuffer>* writer) const {
+  writer->StartArray();
+  for (const auto& item : m_users) {
+    item.serialize(writer);
+  }
+  writer->EndArray();
+}
+bool UsersDto::deserialize(const rapidjson::Value& obj) {
+  if (!obj.IsArray()) {
+    return false;
+  }
+  for (auto iter = obj.Begin(); iter != obj.End(); iter++) {
+    UserDto userDto;
+    userDto.deserialize(*iter);
+    m_users.push_back(std::move(userDto));
+  }
+  return true;
+}

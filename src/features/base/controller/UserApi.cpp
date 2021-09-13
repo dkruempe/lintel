@@ -35,6 +35,18 @@ std::vector<GroupDto> UserApi::allOf() {
   }
   return groupsDto.getGroups();
 }
+std::vector<UserDto> UserApi::allUsersOf() {
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  httplib::Result result = m_client->get("/user/users", headers);
+  UsersDto usersDto;
+  try {
+    usersDto.JsonSerializable::deserialize(result->body);
+  } catch (std::exception& exception) {
+    return {};
+  }
+  return usersDto.getUsers();
+}
 std::vector<GroupDto> UserApi::allOf(const std::string& groupName) {
   httplib::Headers headers{};
   headers.insert({"Content-Type", "application/json"});

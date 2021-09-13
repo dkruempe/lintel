@@ -53,10 +53,12 @@ void UserController::loginOfPost(const httplib::Request& request,
   }
 }
 UserController::UserController(const std::shared_ptr<AuthService>& authService,
-                               std::shared_ptr<GroupRepository> groupRepository)
+                               std::shared_ptr<GroupRepository> groupRepository,
+                               std::shared_ptr<UserRepository> userRepository)
     : Controller(authService),
       m_authService(authService),
       m_groupRepository(std::move(groupRepository)),
+      m_userRepository(std::move(userRepository)),
       m_adminUser("Admin-User", {}, true),
       m_userUser("User-User", {}, true) {
   add(m_adminUser);
@@ -149,6 +151,34 @@ void UserController::allGroupsOfGroupNameAndIsVirtualGroupGet(
       bool isVirtual = request.matches[2] == "true";
       GroupsDto groupsDto(m_groupRepository->allOf(groupName, isVirtual));
       response.set_content(groupsDto.JsonSerializable::serialize(),
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
+void UserController::allUsersOfGet(const httplib::Request& request,
+                                   httplib::Response& response,
+                                   const ContentType& contentType,
+                                   const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      UsersDto usersDto(m_userRepository->allOf());
+      response.set_content(usersDto.JsonSerializable::serialize(),
                            contentType.getName().c_str());
       break;
     }

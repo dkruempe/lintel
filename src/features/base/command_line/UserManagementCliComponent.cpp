@@ -13,6 +13,13 @@ UserManagementCliComponent::UserManagementCliComponent(
           .addArgument({"--is-virtual", "-v"}, &m_isVirtualGroup,
                        "Limits search result to virtual or non virtual groups"),
       AllGroups);
+  m_commandParser.addCommand(
+      Command("sau", "Show all available users!")
+          .addArgument(
+              {"--user-name", "-u"}, &m_userName,
+              "Limits search result to given user name or pattern matching",
+              true),
+      AllUsers);
 }
 void UserManagementCliComponent::onCommand(
     const UserDto& userDto, const std::string& input,
@@ -32,6 +39,10 @@ void UserManagementCliComponent::onCommand(
               m_userApi->allOf(m_groupName.value(), m_isVirtualGroup.value()));
         }
         break;
+      case AllUsers: {
+        printUsers(m_userApi->allUsersOf());
+        break;
+      }
       default:
         break;
     }
@@ -66,6 +77,29 @@ std::string UserManagementCliComponent::printSubGroups(const GroupDto& group) {
     GroupDto subGroup = subGroups[i];
     printString += subGroup.getGroupName();
     if (i < subGroups.size() - 1) {
+      printString += ";";
+    }
+  }
+  return printString;
+}
+void UserManagementCliComponent::printUsers(const std::vector<UserDto>& users) {
+  tabulate::Table table;
+  table.add_row(
+      {"No.", "firstname", "lastname", "e-mail", "username", "groups"});
+  std::size_t iter = 0;
+  for (const auto& user : users) {
+    table.add_row({std::to_string(++iter), user.getFirstName(),
+                   user.getLastName(), user.getEMail(), user.getUserName(),
+                   printUserGroups(user.getGroups())});
+  }
+  std::cout << table.str() << "\n";
+}
+std::string UserManagementCliComponent::printUserGroups(const std::vector<GroupDto>& groups) {
+  std::string printString;
+  for (std::size_t i = 0; i < groups.size(); i++) {
+    GroupDto group = groups[i];
+    printString += group.getGroupName();
+    if (i < groups.size() - 1) {
       printString += ";";
     }
   }

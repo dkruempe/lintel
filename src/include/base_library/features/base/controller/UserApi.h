@@ -5,11 +5,11 @@
 #include <optional>
 #include <vector>
 
+#include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"
+#include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/http/provider/ClientProvider.h"
-#include "base_library/features/base/controller/UserDto.h"
-#include "base_library/features/base/controller/UserTokenDto.h"
 
 class UserApi {
  private:
@@ -25,8 +25,10 @@ class UserApi {
   // user management functions
   std::vector<GroupDto> allOf();
   std::vector<GroupDto> allOf(const std::string &groupName);
-  std::vector<GroupDto> allOf(const std::string &groupName, bool isVirtualGroup);
+  std::vector<GroupDto> allOf(const std::string &groupName,
+                              bool isVirtualGroup);
   std::vector<GroupDto> allOf(bool isVirtualGroup);
+  std::vector<UserDto> allUsersOf();
 };
 
 #endif  // CPP_BASE_LIBRARY_USERAPI_H
