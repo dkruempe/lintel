@@ -3,7 +3,6 @@
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConnectionComponent.h"
 #include "base_library/features/base/configuration/Cryption.h"
-#include "base_library/features/base/provider/GroupProvider.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
 #include "base_library/features/base/repositories/UserRepository.h"
 
@@ -24,15 +23,16 @@ void testUser() {
   userRepository.createOf(user);
 }
 
-void testGroupProvider() {
-  Group propertyAdmin("Property-Admin", {}, true);
-  std::vector<Group> groups{propertyAdmin};
-  GroupProvider groupProvider(groups);
+void testCryption() {
+  std::string password = "anna";
+  std::string encoded = Cryption::encodeBase64(password);
+  std::string decoded = Cryption::decodeBase64(encoded);
+  std::cout << password << " vs. " << decoded << "\n";
 }
 
 int main(int argc, char *argv[]) {
   DECLARE_LOGGER(argv[0]);
-  testUser();
-  testGroupProvider();
+  //testUser();
+  testCryption();
   return 0;
 }

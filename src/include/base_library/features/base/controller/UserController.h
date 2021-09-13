@@ -21,6 +21,7 @@ class UserController : public Controller {
   ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+)/([^\/]+))", Get,
                      allGroupsOfGroupNameAndIsVirtualGroup);
   ADD_HANDLER_METHOD(R"(/user/users)", Get, allUsersOf);
+  ADD_HANDLER_METHOD("/user/add", Post, addUser);
 
  public:
   explicit UserController(const std::shared_ptr<AuthService> &authService,

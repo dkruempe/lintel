@@ -44,8 +44,13 @@ class UserManagementCliComponent : public CommandLineComponent {
   std::optional<bool> m_isVirtualGroup;
   /*
    * Command: AllUsers
+   * Command: AddUser
    */
   std::optional<std::string> m_userName;
+  std::optional<std::string> m_firstName;
+  std::optional<std::string> m_lastName;
+  std::optional<std::string> m_eMail;
+  std::optional<std::string> m_password;
 
   CommandParser<Commands, Undefined> m_commandParser;
   static void printUsers(const std::vector<UserDto> &users);

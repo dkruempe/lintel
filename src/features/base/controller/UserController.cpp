@@ -24,7 +24,6 @@ void UserController::loginOfPost(const httplib::Request& request,
     // remove 'Basic ' prefix => start pos 6
     auth = auth.substr(6);
     std::string result = Cryption::decodeBase64(auth);
-    result = result.substr(0, result.size() - 1);
     auto found = result.find(':', 0);
     if (found == std::string::npos) {
       response.status = HttpStatusCodes::Forbidden;
@@ -180,6 +179,45 @@ void UserController::allUsersOfGet(const httplib::Request& request,
       UsersDto usersDto(m_userRepository->allOf());
       response.set_content(usersDto.JsonSerializable::serialize(),
                            contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
+void UserController::addUserPost(const httplib::Request& request,
+                                 httplib::Response& response,
+                                 const ContentType& contentType,
+                                 const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      UserDto userDto;
+      userDto.JsonSerializable::deserialize(request.body);
+      // check if password is set
+      if (!userDto.getPassword().has_value()) {
+        response.status = HttpStatusCodes::NotAcceptable;
+        response.set_content("", contentType.getName().c_str());
+        return;
+      }
+      std::string password =
+          Cryption::hashOf(Cryption::decodeBase64(userDto.getPassword().value()));
+      User userNew(userDto.getFirstName(), userDto.getLastName(),
+                   User::Sex::Male, userDto.getEMail(), userDto.getUserName(),
+                   password, {});
+      m_userRepository->createOf(userNew);
       break;
     }
     default: {

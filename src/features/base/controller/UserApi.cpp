@@ -87,3 +87,16 @@ std::vector<GroupDto> UserApi::allOf(bool isVirtualGroup) {
   }
   return groupsDto.getGroups();
 }
+void UserApi::createOf(const UserDto& userDto) {
+  try {
+    std::string body = userDto.JsonSerializable::serialize();
+    httplib::Result result =
+        m_client->post("/user/add", body, "application/json");
+    if (result->status != HttpStatusCodes::OK) {
+      LOG_ERROR("failed to create user {}", userDto.getUserName());
+    }
+  } catch (std::exception& exception) {
+    LOG_ERROR("failed to create user {}", userDto.getUserName());
+    return;
+  }
+}

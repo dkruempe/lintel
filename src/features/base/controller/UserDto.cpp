@@ -43,6 +43,11 @@ void UserDto::serialize(
     writer->String(shape.ID.c_str());
     writer->String(m_id.c_str());
   }
+  // PASSWORD
+  if (m_password.has_value()) {
+    writer->String(shape.PASSWORD.c_str());
+    writer->String(m_password.value().c_str());
+  }
   // CREATED_TIMESTAMP
   writer->String(shape.CREATED_TIMESTAMP.c_str());
   writer->String(StringifyService<date::sys_time<std::chrono::microseconds>>::
@@ -63,6 +68,11 @@ bool UserDto::deserialize(const rapidjson::Value& obj) {
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serializatioon", shape.FIRST_NAME);
+  }
+  if (obj.HasMember(shape.PASSWORD.c_str())) {
+    m_password = std::make_optional(obj[shape.PASSWORD.c_str()].GetString());
+  } else {
+    m_password = std::nullopt;
   }
   // LAST_NAME
   if (obj.HasMember(shape.LAST_NAME.c_str())) {
@@ -111,8 +121,17 @@ bool UserDto::deserialize(const rapidjson::Value& obj) {
   return success;
 }
 const std::string& UserDto::getId() const { return m_id; }
-const std::vector<GroupDto>& UserDto::getGroups() const {
+const std::vector<GroupDto> UserDto::getGroups() const {
+  if (m_groups == nullptr) {
+    return {};
+  }
   return m_groups->getGroups();
+}
+const std::optional<std::string>& UserDto::getPassword() const {
+  return m_password;
+}
+void UserDto::setPassword(const std::string& password) {
+  m_password = std::make_optional(password);
 }
 std::vector<UserDto> UsersDto::init(const std::vector<User>& users) {
   std::vector<UserDto> userDtos;

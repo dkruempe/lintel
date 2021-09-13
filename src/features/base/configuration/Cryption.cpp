@@ -153,9 +153,11 @@ std::string Cryption::decodeBase64(const std::string &in) {
   static const std::string lookup =
       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-  std::vector<int> T(in.size());
-  for (std::size_t i = 0; i < 64; i++)
-    T[static_cast<std::size_t>(lookup[i])] = static_cast<int>(i);
+  std::vector<int> T(256, -1);
+  for (std::size_t i = 0; i < 64; i++) {
+    auto iter = static_cast<std::size_t>(static_cast<unsigned char>(lookup[i]));
+    T[iter] = static_cast<int>(i);
+  }
 
   int val = 0, valb = -8;
   for (auto c : in) {
@@ -167,5 +169,34 @@ std::string Cryption::decodeBase64(const std::string &in) {
       valb -= 8;
     }
   }
+  return out;
+}
+std::string Cryption::encodeBase64(const std::string &in) {
+  static const auto lookup =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+  std::string out;
+  out.reserve(in.size());
+
+  int val = 0;
+  int valb = -6;
+
+  for (auto c : in) {
+    val = (val << 8) + static_cast<uint8_t>(c);
+    valb += 8;
+    while (valb >= 0) {
+      out.push_back(lookup[(val >> valb) & 0x3F]);
+      valb -= 6;
+    }
+  }
+
+  if (valb > -6) {
+    out.push_back(lookup[((val << 8) >> (valb + 8)) & 0x3F]);
+  }
+
+  while (out.size() % 4) {
+    out.push_back('=');
+  }
+
   return out;
 }

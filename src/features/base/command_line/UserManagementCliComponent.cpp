@@ -1,6 +1,8 @@
 #include "base_library/features/base/command_line/UserManagementCliComponent.h"
 
 #include <tabulate/table.hpp>
+
+#include "base_library/features/base/configuration/Cryption.h"
 UserManagementCliComponent::UserManagementCliComponent(
     std::shared_ptr<UserApi> userApi)
     : CommandLineComponent(m_name, m_alias), m_userApi(std::move(userApi)) {
@@ -20,6 +22,18 @@ UserManagementCliComponent::UserManagementCliComponent(
               "Limits search result to given user name or pattern matching",
               true),
       AllUsers);
+  m_commandParser.addCommand(
+      Command("user_add", "Creates user!")
+          .addArgument({"--first-name", "-f"}, &m_firstName,
+                       "Firstname of user", false)
+          .addArgument({"--last-name", "-l"}, &m_lastName, "lastname of user",
+                       false)
+          .addArgument({"--email", "-e"}, &m_eMail, "email of user", false)
+          .addArgument({"--password", "-p"}, &m_password, "password of user",
+                       false)
+          .addArgument({"--username", "-u"}, &m_userName, "username of user",
+                       false),
+      AddUser);
 }
 void UserManagementCliComponent::onCommand(
     const UserDto& userDto, const std::string& input,
@@ -41,6 +55,20 @@ void UserManagementCliComponent::onCommand(
         break;
       case AllUsers: {
         printUsers(m_userApi->allUsersOf());
+        break;
+      }
+      case AddUser: {
+        if (!m_firstName.has_value() || !m_lastName.has_value() ||
+            !m_eMail.has_value() || !m_userName.has_value() ||
+            !m_password.has_value()) {
+          std::cerr << "ERROR: please make sure that all arguments are "
+                       "correctly filled\n";
+        }
+        User user(m_firstName.value(), m_lastName.value(), User::Sex::Male,
+                  m_eMail.value(), m_userName.value(), m_password.value(), {});
+        UserDto userDtoNew(user);
+        userDtoNew.setPassword(Cryption::encodeBase64(m_password.value()));
+        m_userApi->createOf(userDtoNew);
         break;
       }
       default:
@@ -94,7 +122,8 @@ void UserManagementCliComponent::printUsers(const std::vector<UserDto>& users) {
   }
   std::cout << table.str() << "\n";
 }
-std::string UserManagementCliComponent::printUserGroups(const std::vector<GroupDto>& groups) {
+std::string UserManagementCliComponent::printUserGroups(
+    const std::vector<GroupDto>& groups) {
   std::string printString;
   for (std::size_t i = 0; i < groups.size(); i++) {
     GroupDto group = groups[i];

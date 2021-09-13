@@ -29,6 +29,7 @@ class UserApi {
                               bool isVirtualGroup);
   std::vector<GroupDto> allOf(bool isVirtualGroup);
   std::vector<UserDto> allUsersOf();
+  void createOf(const UserDto &userDto);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERAPI_H
