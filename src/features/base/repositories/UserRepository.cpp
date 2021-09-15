@@ -103,6 +103,21 @@ void UserRepository::createOf(const User &user) {
   }
 }
 
+void UserRepository::addGroupsOf(const User &user,
+                                 const std::set<Group> &groups) {
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::PreparedStatement statement(connection, R"(
+    insert into user_groups_relation(user_name, group_name) values(?, ?))",
+                                  "insert_group_relations");
+  for (const auto &iter : groups) {
+    if (user.has(iter)) {
+      continue;
+    }
+    statement.execute({user.getUserName(), iter.getGroupName()});
+  }
+}
+
 void UserRepository::addGroupOf(const User &user, const Group &group) {
   auto found = std::find_if(user.getGroups().begin(), user.getGroups().end(),
                             [&](const Group &b) -> bool {
@@ -119,12 +134,22 @@ void UserRepository::addGroupOf(const User &user, const Group &group) {
   )",
                     {user.getUserName(), group.getGroupName()});
 }
+void UserRepository::removeGroupsOf(const User &user,
+                                    const std::set<Group> &groups) {
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::PreparedStatement preparedStatement(connection, R"(
+    delete from user_groups_relation where user_name = ? and group_name = ?)",
+                                          "delete_user_group_relations");
+  for (auto &iter : groups) {
+    if (!user.has(iter)) {
+      continue;
+    }
+    preparedStatement.execute({user.getUserName(), iter.getGroupName()});
+  }
+}
 void UserRepository::removeGroupOf(const User &user, const Group &group) {
-  auto found = std::find_if(user.getGroups().begin(), user.getGroups().end(),
-                            [&](const Group &b) -> bool {
-                              return group.getGroupName() == b.getGroupName();
-                            });
-  if (found == user.getGroups().end()) {
+  if (!user.has(group)) {
     return;
   }
   db::Connection connection(m_connectionEntry);

@@ -36,7 +36,7 @@ class UserDto : public JsonSerializable {
   [[nodiscard]] const std::string &getEMail() const;
   [[nodiscard]] const std::string &getUserName() const;
   [[nodiscard]] const std::string &getId() const;
-  [[nodiscard]] const std::vector<GroupDto> getGroups() const;
+  [[nodiscard]] std::vector<GroupDto> getGroups() const;
   [[nodiscard]] const date::sys_time<std::chrono::microseconds>
       &getCreatedTimestamp() const;
   // password is only used for creating an user

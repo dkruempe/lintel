@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_USERREPOSITORY_H
 
 #include <optional>
+#include <set>
 
 #include "base_library/core/persistence/ConnectionConfigurations.h"
 #include "base_library/features/base/configuration/ConnectionEntry.h"
@@ -27,7 +28,11 @@ class UserRepository {
 
   void deleteOf(const User &user);
 
+  void addGroupsOf(const User &user, const std::set<Group> &groups);
+
   void addGroupOf(const User &user, const Group &group);
+
+  void removeGroupsOf(const User &user, const std::set<Group> &groups);
 
   void removeGroupOf(const User &user, const Group &group);
 

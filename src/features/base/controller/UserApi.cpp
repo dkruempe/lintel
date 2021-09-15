@@ -1,6 +1,7 @@
 #include "base_library/features/base/controller/UserApi.h"
 
 #include "base_library/features/base/controller/UserDto.h"
+#include "base_library/features/base/controller/UserGroupDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
@@ -158,6 +159,24 @@ void UserApi::createOf(const UserDto& userDto) {
     default:
       LOG_ERROR("{} failed to create user {}", userDto.getUserName(),
                 status.getCode());
+      break;
+  }
+}
+void UserApi::updateOf(const std::string& userName,
+                       const std::set<std::string>& addGroups,
+                       const std::set<std::string>& removeGroups) {
+  UserGroupDto userGroupDto(addGroups, removeGroups, userName);
+  std::string body = userGroupDto.JsonSerializable::serialize();
+  httplib::Result result =
+      m_client->put("/user/update", body, "application/json");
+  HttpStatusCodes status(result->status);
+  switch (status) {
+    case HttpStatusCodes::Unauthorized:
+      throw HttpUnauthorizedException();
+    case HttpStatusCodes::OK:
+      break;
+    default:
+      LOG_ERROR("{} failed to update user {}", userName, status.getCode());
       break;
   }
 }

@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <optional>
+#include <set>
 #include <vector>
 
 #include "base_library/features/base/controller/UserDto.h"
@@ -30,6 +31,9 @@ class UserApi {
   std::vector<GroupDto> allOf(bool isVirtualGroup);
   std::vector<UserDto> allUsersOf();
   void createOf(const UserDto &userDto);
+  void updateOf(const std::string &userName,
+                const std::set<std::string> &addGroups,
+                const std::set<std::string> &removeGroups);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERAPI_H

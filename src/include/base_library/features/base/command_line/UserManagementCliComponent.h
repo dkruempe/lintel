@@ -51,6 +51,7 @@ class UserManagementCliComponent : public CommandLineComponent {
   std::optional<std::string> m_lastName;
   std::optional<std::string> m_eMail;
   std::optional<std::string> m_password;
+  std::optional<std::string> m_groupRemoved;
 
   CommandParser<Commands, Undefined> m_commandParser;
   static void printUsers(const std::vector<UserDto> &users);

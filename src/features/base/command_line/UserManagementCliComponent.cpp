@@ -34,6 +34,15 @@ UserManagementCliComponent::UserManagementCliComponent(
           .addArgument({"--username", "-u"}, &m_userName, "username of user",
                        false),
       AddUser);
+  m_commandParser.addCommand(
+      Command("user_update", "Update user!")
+          .addArgument({"--group-add", "-g"}, &m_groupName,
+                       "Group which should be added to user!", true)
+          .addArgument({"--group-remove", "-gr"}, &m_groupRemoved,
+                       "Group which should be removed from user!", true)
+          .addArgument({"--user", "-u"}, &m_userName,
+                       "User Name which should be updated", false),
+      UpdateUser);
 }
 void UserManagementCliComponent::onCommand(
     const UserDto& userDto, const std::string& input,
@@ -69,6 +78,18 @@ void UserManagementCliComponent::onCommand(
         UserDto userDtoNew(user);
         userDtoNew.setPassword(Cryption::encodeBase64(m_password.value()));
         m_userApi->createOf(userDtoNew);
+        break;
+      }
+      case UpdateUser: {
+        std::set<std::string> groupAdds;
+        std::set<std::string> groupRemoves;
+        if (m_groupName.has_value()) {
+          groupAdds.insert(m_groupName.value());
+        }
+        if (m_groupRemoved.has_value()) {
+          groupRemoves.insert(m_groupRemoved.value());
+        }
+        m_userApi->updateOf(m_userName.value(), groupAdds, groupRemoves);
         break;
       }
       default:

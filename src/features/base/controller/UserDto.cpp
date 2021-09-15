@@ -121,7 +121,7 @@ bool UserDto::deserialize(const rapidjson::Value& obj) {
   return success;
 }
 const std::string& UserDto::getId() const { return m_id; }
-const std::vector<GroupDto> UserDto::getGroups() const {
+std::vector<GroupDto> UserDto::getGroups() const {
   if (m_groups == nullptr) {
     return {};
   }

@@ -1,13 +1,16 @@
 #include "base_library/features/base/controller/UserController.h"
 
+#include <algorithm>
 #include <utility>
 
 #include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/base/configuration/Cryption.h"
 #include "base_library/features/base/controller/UserDto.h"
+#include "base_library/features/base/controller/UserGroupDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"
 #include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
+
 void UserController::loginOfPost(const httplib::Request& request,
                                  httplib::Response& response,
                                  const ContentType& contentType,
@@ -212,12 +215,69 @@ void UserController::addUserPost(const httplib::Request& request,
         response.set_content("", contentType.getName().c_str());
         return;
       }
-      std::string password =
-          Cryption::hashOf(Cryption::decodeBase64(userDto.getPassword().value()));
+      std::string password = Cryption::hashOf(
+          Cryption::decodeBase64(userDto.getPassword().value()));
       User userNew(userDto.getFirstName(), userDto.getLastName(),
                    User::Sex::Male, userDto.getEMail(), userDto.getUserName(),
                    password, {});
       m_userRepository->createOf(userNew);
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
+void UserController::updateUserPut(const httplib::Request& request,
+                                   httplib::Response& response,
+                                   const ContentType& contentType,
+                                   const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      UserGroupDto userGroupDto;
+      userGroupDto.JsonSerializable::deserialize(request.body);
+      // check user
+      std::optional<User> userTemp =
+          m_userRepository->of(userGroupDto.getUserName());
+      if (!userTemp.has_value()) {
+        response.status = HttpStatusCodes::Forbidden;
+        response.set_content("", contentType.getName().c_str());
+        return;
+      }
+      // transform to group
+      std::set<std::string> groupAddStrings = userGroupDto.getGroupAdds();
+      std::set<std::string> groupRemoveStrings = userGroupDto.getGroupRemoves();
+      std::set<Group> groupAdds;
+      for (auto& iter : groupAddStrings) {
+        auto optGroup = m_groupRepository->of(iter);
+        if (!optGroup.has_value()) {
+          continue;
+        }
+        groupAdds.insert(optGroup.value());
+      }
+      std::set<Group> groupRemoves;
+      for (auto& iter : groupRemoveStrings) {
+        auto optGroup = m_groupRepository->of(iter);
+        if (!optGroup.has_value()) {
+          continue;
+        }
+        groupRemoves.insert(optGroup.value());
+      }
+      // operate
+      m_userRepository->addGroupsOf(userTemp.value(), groupAdds);
+      m_userRepository->removeGroupsOf(userTemp.value(), groupRemoves);
       break;
     }
     default: {
