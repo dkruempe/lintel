@@ -59,19 +59,12 @@ void CommandLineService::onComponentCommand(
       break;
   }
 }
-void CommandLineService::onStart() {
-  m_userDto = m_authCliService->onLogin();
-  std::string startInformation =
-      "Welcome to the Command Line Interface:\n"
-      "Try >help< for a list of commands\n"
-      "Try >exit< to go back or exit the Command Line Interface\n";
-  fmt::print(startInformation);
-}
+void CommandLineService::onStart() { m_userDto = m_authCliService->onLogin(); }
 void CommandLineService::onHelp() {
   m_commandParser.printHelp(
       "MAIN", "",
       "This is the base entering point for the whole cli service. Here you can "
-      "list all available menus and select your prefered one!");
+      "list all available menus and select your preferred one!");
 }
 void CommandLineService::onPrompt() {
   // timestamp MENU %
@@ -82,11 +75,23 @@ void CommandLineService::onPrompt() {
   fmt::print("{:%Y-%m-%d %H:%M:%S} {} % ", point, currentMenu);
 }
 void CommandLineService::run() {
+  bool start = true;
   onStart();
   while (m_running) {
     onPrompt();
+    if (start) {
+      std::cout << "\n";
+      start = false;
+    }
     std::string temp;
     std::getline(std::cin, temp);
+    if (std::cin.eof()) {
+      m_authCliService->onLogout(std::move(m_userDto));
+      SignalService::raiseSignal(SIGINT);
+      m_running.store(false);
+      continue;
+    }
+    LOG_TRACE("received input >{}<", temp);
     std::vector<std::string> flags = StringUtils::split(temp, ' ');
     std::string input;
     if (!flags.empty()) {
