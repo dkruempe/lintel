@@ -22,6 +22,7 @@ class UserApi {
   // basic user functions for login / logout
   std::optional<UserDto> loginOf(const UserLoginDto &userLoginDto);
   bool logoutOf(const UserTokenDto &userLoginTokenDto);
+  bool isLoggedIn();
 
   // user management functions
   std::vector<GroupDto> allOf();

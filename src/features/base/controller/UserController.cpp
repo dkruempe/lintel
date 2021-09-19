@@ -287,3 +287,20 @@ void UserController::updateUserPut(const httplib::Request& request,
     }
   }
 }
+void UserController::loginStateOfGet(const httplib::Request& request,
+                                     httplib::Response& response,
+                                     const ContentType& contentType,
+                                     const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  response.status = HttpStatusCodes::OK;
+  response.set_content("", contentType.getName().c_str());
+}

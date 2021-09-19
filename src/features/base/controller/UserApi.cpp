@@ -180,3 +180,12 @@ void UserApi::updateOf(const std::string& userName,
       break;
   }
 }
+bool UserApi::isLoggedIn() {
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  const httplib::Result& result = m_client->get("/user/state", headers);
+  if (result->status != HttpStatusCodes::OK) {
+    return false;
+  }
+  return true;
+}

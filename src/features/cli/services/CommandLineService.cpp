@@ -10,14 +10,17 @@
 #include "base_library/core/services/SignalService.h"
 #include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
+#include "base_library/features/cli/utils/CommandLineUtils.h"
 
 CommandLineService::CommandLineService(
     const std::vector<std::shared_ptr<CommandLineComponent>> &components,
     const std::shared_ptr<Configuration> &configuration,
-    std::shared_ptr<AuthCliService> authCliService)
+    std::shared_ptr<AuthCliService> authCliService,
+    std::shared_ptr<UserApi> userApi)
     : m_menu(components),
       m_thread([&]() { run(); }),
-      m_authCliService(std::move(authCliService)) {
+      m_authCliService(std::move(authCliService)),
+      m_userApi(std::move(userApi)) {
   m_commandParser.addCommand(
       Command("help",
               "Show all available commands in the current selected menu."),
@@ -53,7 +56,7 @@ void CommandLineService::onComponentCommand(
       m_menu.onExit();
       break;
     case CommandClear:
-      std::cout << m_clear;
+      CommandLineUtils::clear();
       break;
     default:
       break;
@@ -73,24 +76,42 @@ void CommandLineService::onPrompt() {
   std::chrono::system_clock::time_point point =
       std::chrono::system_clock::now();
   fmt::print("{:%Y-%m-%d %H:%M:%S} {} % ", point, currentMenu);
+  if (m_startThread) {
+    std::cout << "\n";
+    m_startThread = false;
+  }
 }
 void CommandLineService::run() {
-  bool start = true;
+  // Disable terminal cache mode to support tab actions
+  // DISABLED CommandLineUtils::disableOfCanonicalMode();
   onStart();
   while (m_running) {
+    // I prompt
     onPrompt();
-    if (start) {
-      std::cout << "\n";
-      start = false;
-    }
+    // II read input
     std::string temp;
+    //    char delimiter;
+    // DISABLED CommandLineUtils::getline(std::cin, temp, {'\t', '\n'},
+    // delimiter);
     std::getline(std::cin, temp);
-    if (std::cin.eof()) {
-      m_authCliService->onLogout(std::move(m_userDto));
+    bool isLoggedIn = m_userApi->isLoggedIn();
+    if (!isLoggedIn) {
+      std::cout << "WARNING: timeout of login server wise => shutdown cli\n";
       SignalService::raiseSignal(SIGINT);
       m_running.store(false);
       continue;
     }
+    // III handle EOF signal
+    if (std::cin.eof()) {
+      onEndOfFile();
+      continue;
+    }
+    // IV complte comamnd ?!
+    //    if (delimiter == '\t') {
+    //      std::cout << "tab delimiter => temp >" << temp << "<\n";
+    //      continue;
+    //    }
+    // IV try to execute command
     LOG_TRACE("received input >{}<", temp);
     std::vector<std::string> flags = StringUtils::split(temp, ' ');
     std::string input;
@@ -102,35 +123,47 @@ void CommandLineService::run() {
       onComponentCommand(input, flags);
       continue;
     }
-    Commands command = m_commandParser.parse(input, flags);
-    if (command == CommandUndefined) {
-      if (input.empty()) {
-        continue;
-      }
-      if (!m_menu.onMenu(input)) {
-        fmt::print(
-            "ERROR: Invalid command '{}'! Please use the help function\n",
-            input);
-        continue;
-      }
+    onCommand(input, flags);
+  }
+  // Enable terminal cache mode again
+  // DISABLED CommandLineUtils::enableOfCanonicalMode();
+}
+
+void CommandLineService::onEndOfFile() {
+  m_authCliService->onLogout(std::move(m_userDto));
+  SignalService::raiseSignal(SIGINT);
+  m_running.store(false);
+}
+
+void CommandLineService::onCommand(const std::string &input,
+                                   const std::vector<std::string> &flags) {
+  Commands command = m_commandParser.parse(input, flags);
+  if (command == CommandUndefined) {
+    if (input.empty()) {
+      return;
     }
-    switch (command) {
-      case CommandExit:
-        m_authCliService->onLogout(std::move(m_userDto));
-        SignalService::raiseSignal(SIGINT);
-        m_running.store(false);
-        break;
-      case CommandHelp:
-        onHelp();
-        break;
-      case CommandClear:
-        std::cout << m_clear;
-        break;
-      case CommandMenu:
-        m_menu.onShowMenu();
-        break;
-      default:
-        break;
+    if (!m_menu.onMenu(input)) {
+      fmt::print("ERROR: Invalid command '{}'! Please use the help function\n",
+                 input);
+      return;
     }
+  }
+  switch (command) {
+    case CommandExit:
+      m_authCliService->onLogout(std::move(m_userDto));
+      SignalService::raiseSignal(SIGINT);
+      m_running.store(false);
+      break;
+    case CommandHelp:
+      onHelp();
+      break;
+    case CommandClear:
+      CommandLineUtils::clear();
+      break;
+    case CommandMenu:
+      m_menu.onShowMenu();
+      break;
+    default:
+      break;
   }
 }

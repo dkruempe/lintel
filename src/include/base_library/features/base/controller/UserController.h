@@ -15,6 +15,7 @@ class UserController : public Controller {
 
   ADD_HANDLER_METHOD("/user/login", Post, loginOf);
   ADD_HANDLER_METHOD("/user/logout", Delete, logoutOf);
+  ADD_HANDLER_METHOD("/user/state", Get, loginStateOf);
   ADD_HANDLER_METHOD(R"(/user/groups)", Get, allGroupsOf);
   ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+))", Get,
                      allGroupsOfGroupNameOrIsVirtualGroup);

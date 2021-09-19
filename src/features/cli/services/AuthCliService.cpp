@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "base_library/features/cli/utils/CommandLineUtils.h"
+
 AuthCliService::AuthCliService(std::shared_ptr<UserApi> userApi)
     : m_userApi(std::move(userApi)) {}
 UserDto AuthCliService::onLogin() {
@@ -18,7 +20,7 @@ UserDto AuthCliService::onLogin() {
     if (optUserDto.has_value()) {
       success = true;
     }
-    std::cout << m_clear << std::endl;
+    CommandLineUtils::clear();
   }
   return std::move(optUserDto.value());
 }
@@ -32,25 +34,12 @@ void AuthCliService::onLogout(UserDto &&userDto) {
   }
   std::cout << "INFO: succesfull logout of >" << userDto.getUserName() << "<\n";
 }
-void AuthCliService::hideStdinKeystrokes() {
-  termios tty{};
-  tcgetattr(STDIN_FILENO, &tty);
-  /* we want to disable echo */
-  tty.c_lflag &= static_cast<unsigned long>(~ECHO);
-  tcsetattr(STDIN_FILENO, TCSANOW, &tty);
-}
-void AuthCliService::showStdinKeystrokes() {
-  termios tty{};
-  tcgetattr(STDIN_FILENO, &tty);
-  /* we want to reenable echo */
-  tty.c_lflag |= ECHO;
-  tcsetattr(STDIN_FILENO, TCSANOW, &tty);
-}
+
 std::string AuthCliService::readPassword() {
   std::cout << "Please enter the password: ";
   std::string password;
-  hideStdinKeystrokes();
+  CommandLineUtils::disableOfInputEcho();
   std::cin >> password;
-  showStdinKeystrokes();
+  CommandLineUtils::enableOfInputEcho();
   return password;
 }
