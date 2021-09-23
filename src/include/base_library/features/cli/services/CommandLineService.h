@@ -11,6 +11,9 @@
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
 #include "base_library/features/cli/models/CommandParser.h"
 #include "base_library/features/cli/services/AuthCliService.h"
+#include "base_library/features/cli/services/InputService.h"
+#include "base_library/features/cli/services/TerminalService.h"
+#include "base_library/features/cli/utils/CommandLineUtils.h"
 #include "base_library/features/http/provider/ClientProvider.h"
 
 class CommandLineComponent;
@@ -28,11 +31,13 @@ class CommandLineService {
   AbstractCommandLineMenu m_menu;
   std::thread m_thread;
   std::atomic<bool> m_running = true;
-  bool m_startThread = true;
   CommandParser<Commands, CommandUndefined> m_commandParser;
   std::shared_ptr<AuthCliService> m_authCliService;
   std::shared_ptr<UserApi> m_userApi;
+  std::shared_ptr<CommandLineUtils> m_commandLineUtils;
   UserDto m_userDto;
+  InputService m_inputService;
+  TerminalService m_terminalService;
 
   void onComponentCommand(const std::string &input,
                           const std::vector<std::string> &flags);
@@ -55,7 +60,8 @@ class CommandLineService {
       const std::vector<std::shared_ptr<CommandLineComponent>> &components,
       const std::shared_ptr<Configuration> &configuration,
       std::shared_ptr<AuthCliService> authCliService,
-      std::shared_ptr<UserApi> userApi);
+      std::shared_ptr<UserApi> userApi,
+      std::shared_ptr<CommandLineUtils> commandLineUtils);
   ~CommandLineService();
 };
 

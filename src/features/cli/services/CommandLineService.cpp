@@ -16,11 +16,13 @@ CommandLineService::CommandLineService(
     const std::vector<std::shared_ptr<CommandLineComponent>> &components,
     const std::shared_ptr<Configuration> &configuration,
     std::shared_ptr<AuthCliService> authCliService,
-    std::shared_ptr<UserApi> userApi)
+    std::shared_ptr<UserApi> userApi,
+    std::shared_ptr<CommandLineUtils> commandLineUtils)
     : m_menu(components),
       m_thread([&]() { run(); }),
       m_authCliService(std::move(authCliService)),
-      m_userApi(std::move(userApi)) {
+      m_userApi(std::move(userApi)),
+      m_commandLineUtils(std::move(commandLineUtils)) {
   m_commandParser.addCommand(
       Command("help",
               "Show all available commands in the current selected menu."),
@@ -30,6 +32,8 @@ CommandLineService::CommandLineService(
   m_commandParser.addCommand(
       Command("exit", "Exit of current menu or whole cli"), CommandExit);
   m_commandParser.addCommand(Command("clear", "Clear cli"), CommandClear);
+  m_authCliService->setInputService(m_inputService);
+  m_authCliService->setTerminalService(m_terminalService);
 }
 
 CommandLineService::~CommandLineService() {
@@ -76,24 +80,31 @@ void CommandLineService::onPrompt() {
   std::chrono::system_clock::time_point point =
       std::chrono::system_clock::now();
   fmt::print("{:%Y-%m-%d %H:%M:%S} {} % ", point, currentMenu);
-  if (m_startThread) {
-    std::cout << "\n";
-    m_startThread = false;
-  }
 }
 void CommandLineService::run() {
-  // Disable terminal cache mode to support tab actions
-  // DISABLED CommandLineUtils::disableOfCanonicalMode();
   onStart();
+  Symbol other = Symbol::Nothing;
   while (m_running) {
     // I prompt
-    onPrompt();
+    if (other == Symbol::Command) {
+      onPrompt();
+    }
     // II read input
     std::string temp;
-    //    char delimiter;
-    // DISABLED CommandLineUtils::getline(std::cin, temp, {'\t', '\n'},
-    // delimiter);
-    std::getline(std::cin, temp);
+    KeyPressed keyPressed = m_inputService.onRead();
+    SymbolEvent symbolEvent = m_terminalService.onKeyPressed(keyPressed);
+    LOG_INFO("symbol >{}< text >{}<", magic_enum::enum_name(symbolEvent.first),
+             symbolEvent.second);
+    other = symbolEvent.first;
+    if (other == Symbol::Tab && symbolEvent.second.empty()) {
+      m_commandParser.printCommandList();
+      other = Symbol::Command;
+      continue;
+    }
+    if (other != Symbol::Command) {
+      continue;
+    }
+    temp = symbolEvent.second;
     bool isLoggedIn = m_userApi->isLoggedIn();
     if (!isLoggedIn) {
       std::cout << "WARNING: timeout of login server wise => shutdown cli\n";
@@ -106,11 +117,6 @@ void CommandLineService::run() {
       onEndOfFile();
       continue;
     }
-    // IV complte comamnd ?!
-    //    if (delimiter == '\t') {
-    //      std::cout << "tab delimiter => temp >" << temp << "<\n";
-    //      continue;
-    //    }
     // IV try to execute command
     LOG_TRACE("received input >{}<", temp);
     std::vector<std::string> flags = StringUtils::split(temp, ' ');
@@ -125,8 +131,6 @@ void CommandLineService::run() {
     }
     onCommand(input, flags);
   }
-  // Enable terminal cache mode again
-  // DISABLED CommandLineUtils::enableOfCanonicalMode();
 }
 
 void CommandLineService::onEndOfFile() {

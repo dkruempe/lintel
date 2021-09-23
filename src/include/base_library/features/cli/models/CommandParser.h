@@ -17,6 +17,7 @@ class CommandParser {
    */
   std::map<std::string, Command> m_commands;
   std::map<std::string, ENUM> m_enumCommand;
+  static constexpr int32_t m_maxCommandPerLine = 10;
 
  public:
   CommandParser() = default;
@@ -51,6 +52,22 @@ class CommandParser {
       // make break between all kind of commands for an easier separation
       std::cout << "\n";
     }
+  }
+
+  void printCommandList(std::ostream &os = std::cout) {
+    os << "\n";
+    int32_t i = 0;
+    for (const auto &item : m_commands) {
+      i++;
+      if (i % m_maxCommandPerLine == 0) {
+        os << "\n";
+      }
+      os << item.first;
+      if (i % m_maxCommandPerLine > 0) {
+        os << "\t";
+      }
+    }
+    os << "\n";
   }
 };
 

@@ -4,8 +4,11 @@
 
 #include "base_library/features/cli/utils/CommandLineUtils.h"
 
-AuthCliService::AuthCliService(std::shared_ptr<UserApi> userApi)
-    : m_userApi(std::move(userApi)) {}
+AuthCliService::AuthCliService(
+    std::shared_ptr<UserApi> userApi,
+    std::shared_ptr<CommandLineUtils> commandLineUtils)
+    : m_userApi(std::move(userApi)),
+      m_commandLineUtils(std::move(commandLineUtils)) {}
 UserDto AuthCliService::onLogin() {
   bool success = false;
   std::optional<UserDto> optUserDto;
@@ -13,7 +16,15 @@ UserDto AuthCliService::onLogin() {
     std::cout << "Please enter the username: ";
     std::string userName;
     std::string password;
-    std::cin >> userName;
+    Symbol event = Symbol::Nothing;
+    while (event != Symbol::Command) {
+      KeyPressed keyPressed = m_inputService.onRead();
+      SymbolEvent symbolEvent = m_terminalService.onKeyPressed(keyPressed);
+      event = symbolEvent.first;
+      if (event == Symbol::Command) {
+        userName = symbolEvent.second;
+      }
+    }
     password = readPassword();
     UserLoginDto userLoginDto(userName, password);
     optUserDto = m_userApi->loginOf(userLoginDto);
@@ -38,8 +49,13 @@ void AuthCliService::onLogout(UserDto &&userDto) {
 std::string AuthCliService::readPassword() {
   std::cout << "Please enter the password: ";
   std::string password;
-  CommandLineUtils::disableOfInputEcho();
   std::cin >> password;
-  CommandLineUtils::enableOfInputEcho();
   return password;
+}
+void AuthCliService::setTerminalService(
+    const TerminalService &terminalService) {
+  m_terminalService = terminalService;
+}
+void AuthCliService::setInputService(const InputService &inputService) {
+  m_inputService = inputService;
 }
