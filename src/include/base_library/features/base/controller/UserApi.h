@@ -31,6 +31,7 @@ class UserApi {
                               bool isVirtualGroup);
   std::vector<GroupDto> allOf(bool isVirtualGroup);
   std::vector<UserDto> allUsersOf();
+  std::vector<UserDto> allUsersOf(const std::string &userName);
   void createOf(const UserDto &userDto);
   void updateOf(const std::string &userName,
                 const std::set<std::string> &addGroups,

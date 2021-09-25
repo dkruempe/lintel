@@ -63,7 +63,11 @@ void UserManagementCliComponent::onCommand(
         }
         break;
       case AllUsers: {
-        printUsers(m_userApi->allUsersOf());
+        if (m_userName.has_value()) {
+          printUsers(m_userApi->allUsersOf(m_userName.value()));
+        } else {
+          printUsers(m_userApi->allUsersOf());
+        }
         break;
       }
       case AddUser: {

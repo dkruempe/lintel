@@ -70,6 +70,28 @@ std::vector<UserDto> UserApi::allUsersOf() {
   }
   return usersDto.getUsers();
 }
+std::vector<UserDto> UserApi::allUsersOf(const std::string& userName) {
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  httplib::Result result = m_client->get("/user/users/" + userName, headers);
+  HttpStatusCodes status(result->status);
+  switch (status) {
+    case HttpStatusCodes::Unauthorized:
+      throw HttpUnauthorizedException();
+    case HttpStatusCodes::OK:
+      break;
+    default:
+      LOG_ERROR("failed to show users {}", status.getCode());
+      break;
+  }
+  UsersDto usersDto;
+  try {
+    usersDto.JsonSerializable::deserialize(result->body);
+  } catch (std::exception& exception) {
+    return {};
+  }
+  return usersDto.getUsers();
+}
 std::vector<GroupDto> UserApi::allOf(const std::string& groupName) {
   httplib::Headers headers{};
   headers.insert({"Content-Type", "application/json"});

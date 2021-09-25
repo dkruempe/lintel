@@ -24,6 +24,8 @@ class UserRepository {
 
   std::vector<User> allOf();
 
+  std::vector<User> allOf(const std::string &userNameMatches);
+
   void createOf(const User &user);
 
   void deleteOf(const User &user);

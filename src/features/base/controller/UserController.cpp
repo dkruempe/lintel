@@ -191,6 +191,34 @@ void UserController::allUsersOfGet(const httplib::Request& request,
     }
   }
 }
+void UserController::allUsersOfUserNameGet(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      std::string userName = request.matches[1];
+      UsersDto usersDto(m_userRepository->allOf(userName));
+      response.set_content(usersDto.JsonSerializable::serialize(),
+                           contentType.getName().c_str());
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
 void UserController::addUserPost(const httplib::Request& request,
                                  httplib::Response& response,
                                  const ContentType& contentType,

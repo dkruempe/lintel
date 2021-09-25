@@ -22,6 +22,7 @@ class UserController : public Controller {
   ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+)/([^\/]+))", Get,
                      allGroupsOfGroupNameAndIsVirtualGroup);
   ADD_HANDLER_METHOD(R"(/user/users)", Get, allUsersOf);
+  ADD_HANDLER_METHOD(R"(/user/users/([^\/]+))", Get, allUsersOfUserName);
   ADD_HANDLER_METHOD("/user/add", Post, addUser);
   ADD_HANDLER_METHOD("/user/update", Put, updateUser);
 
