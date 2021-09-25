@@ -1,7 +1,4 @@
 #include "base_library/features/property/command_line/PropertyCliComponent.h"
-#define FMT_HEADER_ONLY
-#include <fmt/format.h>
-
 #include <tabulate/table.hpp>
 
 #include "base_library/core/services/LoggerService.h"
@@ -131,7 +128,7 @@ void PropertyCliComponent::printProperties(
                    property.getName(), property.getType(), property.getValue(),
                    property.getRepositoryType().toString()});
   }
-  fmt::print("{}\n", table.str());
+  std::cout << table.str() << "\n";
 }
 
 void PropertyCliComponent::onHelp() {
@@ -140,7 +137,9 @@ void PropertyCliComponent::onHelp() {
 
 bool PropertyCliComponent::onMenu(const std::string &component) { return true; }
 
-void PropertyCliComponent::onShowMenu() { fmt::print("No submenu available!"); }
+void PropertyCliComponent::onShowMenu() {
+  std::cout << "No submenu available!";
+}
 
 bool PropertyCliComponent::onExit() { return true; }
 void PropertyCliComponent::printProperty(
@@ -160,4 +159,7 @@ void PropertyCliComponent::printProperty(
   table.add_row({"Value:", propertyDto.getValue()});
   table.add_row({"Data Storage:", propertyDto.getRepositoryType().toString()});
   std::cout << table.str() << "\n";
+}
+void PropertyCliComponent::printCommandList() {
+  m_commandParser.printCommandList();
 }

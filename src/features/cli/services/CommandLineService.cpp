@@ -25,7 +25,9 @@ CommandLineService::CommandLineService(
       m_commandLineUtils(std::move(commandLineUtils)) {
   m_commandParser.addCommand(
       Command("help",
-              "Show all available commands in the current selected menu."),
+              "Show all available commands in the current selected menu.")
+          .addArgument({"--component", "-c"}, &m_helpComponentName,
+                       "component name", true),
       CommandHelp);
   m_commandParser.addCommand(Command("menu", "Show all available menus"),
                              CommandMenu);
@@ -83,27 +85,41 @@ void CommandLineService::onPrompt() {
 }
 void CommandLineService::run() {
   onStart();
-  Symbol other = Symbol::Nothing;
+  bool printPrompt = true;
+  bool tabPressed = true;
   while (m_running) {
     // I prompt
-    if (other == Symbol::Command) {
+    if (printPrompt) {
       onPrompt();
     }
     // II read input
     std::string temp;
     KeyPressed keyPressed = m_inputService.onRead();
     SymbolEvent symbolEvent = m_terminalService.onKeyPressed(keyPressed);
-    LOG_INFO("symbol >{}< text >{}<", magic_enum::enum_name(symbolEvent.first),
+    LOG_TRACE("symbol >{}< text >{}<", magic_enum::enum_name(symbolEvent.first),
              symbolEvent.second);
-    other = symbolEvent.first;
-    if (other == Symbol::Tab && symbolEvent.second.empty()) {
-      m_commandParser.printCommandList();
-      other = Symbol::Command;
+    if (symbolEvent.first == Symbol::Tab && symbolEvent.second.empty()) {
+      if (!tabPressed) {
+        CommandLineUtils::beep();
+        tabPressed = true;
+        printPrompt = false;
+        continue;
+      }
+      if (m_menu.currentOf() != nullptr) {
+        m_menu.printCommandList();
+      } else {
+        m_commandParser.printCommandList();
+      }
+      printPrompt = true;
+      tabPressed = false;
       continue;
     }
-    if (other != Symbol::Command) {
+    tabPressed = false;
+    if (symbolEvent.first != Symbol::Command) {
+      printPrompt = false;
       continue;
     }
+    printPrompt = true;
     temp = symbolEvent.second;
     bool isLoggedIn = m_userApi->isLoggedIn();
     if (!isLoggedIn) {
@@ -159,6 +175,10 @@ void CommandLineService::onCommand(const std::string &input,
       m_running.store(false);
       break;
     case CommandHelp:
+      if (m_helpComponentName.has_value()) {
+        m_commandParser.printHelp(m_helpComponentName.value());
+        break;
+      }
       onHelp();
       break;
     case CommandClear:

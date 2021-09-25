@@ -4,6 +4,7 @@
 #include <atomic>
 #include <map>
 #include <memory>
+#include <optional>
 #include <thread>
 #include <vector>
 
@@ -38,6 +39,7 @@ class CommandLineService {
   UserDto m_userDto;
   InputService m_inputService;
   TerminalService m_terminalService;
+  std::optional<std::string> m_helpComponentName;
 
   void onComponentCommand(const std::string &input,
                           const std::vector<std::string> &flags);

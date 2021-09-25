@@ -28,6 +28,8 @@ class AbstractCommandLineMenu {
 
   bool onExit();
 
+  void printCommandList();
+
   void onCommand(const UserDto &userDto, const std::string &command,
                  const std::vector<std::string> &parameters);
 

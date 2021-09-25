@@ -1,6 +1,6 @@
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
-#define FMT_HEADER_ONLY
-#include <fmt/format.h>
+
+#include <tabulate/table.hpp>
 
 #include "base_library/features/cli/models/CommandLineComponent.h"
 
@@ -24,13 +24,14 @@ void AbstractCommandLineMenu::onShowMenu() {
     m_current->onShowMenu();
     return;
   }
-
-  fmt::print("Menu Overview\n");
   int index = 0;
+  tabulate::Table table;
+  table.add_row({"Index", "Menu Name", "Menu Alias"});
   for (auto &component : m_components) {
-    fmt::print("{}) {} [{}]\n", ++index, component->getName(),
-               component->getAlias());
+    table.add_row({std::to_string(++index), std::string(component->getName()),
+                   std::string(component->getAlias())});
   }
+  std::cout << table.str() << "\n";
 }
 
 bool AbstractCommandLineMenu::onMenu(const std::string &command) {
@@ -69,4 +70,10 @@ void AbstractCommandLineMenu::onHelp() {
 const std::shared_ptr<CommandLineComponent>
     &AbstractCommandLineMenu::currentOf() {
   return m_current;
+}
+void AbstractCommandLineMenu::printCommandList() {
+  if (m_current == nullptr) {
+    return;
+  }
+  m_current->printCommandList();
 }

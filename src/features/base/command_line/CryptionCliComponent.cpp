@@ -90,3 +90,4 @@ void CryptionCliComponent::onHelp() {
 }
 
 bool CryptionCliComponent::onExit() { return true; }
+void CryptionCliComponent::printCommandList() {}

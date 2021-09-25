@@ -155,3 +155,6 @@ std::string UserManagementCliComponent::printUserGroups(
   }
   return printString;
 }
+void UserManagementCliComponent::printCommandList() {
+  m_commandParser.printCommandList();
+}

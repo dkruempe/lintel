@@ -32,6 +32,8 @@ class CommandLineComponent {
   virtual bool onMenu(const std::string &component) = 0;
 
   virtual bool onExit() = 0;
+
+  virtual void printCommandList() = 0;
 };
 
 #endif  // CPP_BASE_LIBRARY_COMMANDLINECOMPONENT_H

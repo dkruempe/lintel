@@ -38,6 +38,8 @@ class CryptionCliComponent : public CommandLineComponent {
   bool onMenu(const std::string &component) override;
 
   bool onExit() override;
+
+  void printCommandList() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_CRYPTIONCLICOMPONENT_H
