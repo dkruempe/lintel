@@ -246,6 +246,19 @@ void UserController::deleteUserDelete(const httplib::Request& request,
         userNamesString.push_back(userName.getUserName());
         LOG_TRACE("user_name={}", userName.getUserName());
       }
+      auto found =
+          std::find_if(userNamesString.begin(), userNamesString.end(),
+                       [&user](const std::string& userName) -> bool {
+                         return user.value().m_user.getUserName() == userName;
+                       });
+      if (found != userNamesString.end()) {
+        LOG_WARN(
+            "{} abort delete user bc. current user wanted to delete himself",
+            user->m_user.getUserName());
+        response.status = HttpStatusCodes::Forbidden;
+        response.set_content("", contentType.getName().c_str());
+        break;
+      }
       m_userRepository->deleteOf(userNamesString);
       break;
     }
