@@ -36,6 +36,7 @@ class UserApi {
   void updateOf(const std::string &userName,
                 const std::set<std::string> &addGroups,
                 const std::set<std::string> &removeGroups);
+  void deleteOf(const std::vector<std::string> &userNames);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERAPI_H

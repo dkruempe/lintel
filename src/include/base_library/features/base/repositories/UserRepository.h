@@ -30,6 +30,8 @@ class UserRepository {
 
   void deleteOf(const User &user);
 
+  void deleteOf(const std::vector<std::string> &userNames);
+
   void addGroupsOf(const User &user, const std::set<Group> &groups);
 
   void addGroupOf(const User &user, const Group &group);

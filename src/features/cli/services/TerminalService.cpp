@@ -74,10 +74,8 @@ SymbolEvent TerminalService::onKeyPressed(KeyPressed k) {
         return std::make_pair(Symbol::Tab, m_currentLine);
       } else {
         const auto pos = static_cast<std::string::difference_type>(m_position);
-        LOG_TRACE("before log of >{}<", c);
         // output the new char:
         std::cout << c;
-        LOG_TRACE("after log of >{}<", c);
         // and the rest of the string:
         std::cout << std::string(m_currentLine.begin() + pos,
                                  m_currentLine.end());

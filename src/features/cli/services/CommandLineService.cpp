@@ -96,8 +96,6 @@ void CommandLineService::run() {
     std::string temp;
     KeyPressed keyPressed = m_inputService.onRead();
     SymbolEvent symbolEvent = m_terminalService.onKeyPressed(keyPressed);
-    LOG_TRACE("symbol >{}< text >{}<", magic_enum::enum_name(symbolEvent.first),
-             symbolEvent.second);
     if (symbolEvent.first == Symbol::Tab && symbolEvent.second.empty()) {
       if (!tabPressed) {
         CommandLineUtils::beep();

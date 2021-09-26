@@ -2,6 +2,7 @@
 
 #include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/base/controller/UserGroupDto.h"
+#include "base_library/features/base/controller/UserNameDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
@@ -210,4 +211,21 @@ bool UserApi::isLoggedIn() {
     return false;
   }
   return true;
+}
+void UserApi::deleteOf(const std::vector<std::string>& userNames) {
+  UserNamesDto userNameDto(userNames);
+  std::string body = userNameDto.JsonSerializable::serialize();
+  LOG_TRACE("body={}", body);
+  httplib::Result result =
+      m_client->deletes("/user/delete", body, "application/json");
+  HttpStatusCodes status(result->status);
+  switch (status) {
+    case HttpStatusCodes::Unauthorized:
+      throw HttpUnauthorizedException();
+    case HttpStatusCodes::OK:
+      break;
+    default:
+      LOG_ERROR("failed to delete users {}", status.getCode());
+      break;
+  }
 }

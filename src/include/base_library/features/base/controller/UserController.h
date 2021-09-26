@@ -25,6 +25,7 @@ class UserController : public Controller {
   ADD_HANDLER_METHOD(R"(/user/users/([^\/]+))", Get, allUsersOfUserName);
   ADD_HANDLER_METHOD("/user/add", Post, addUser);
   ADD_HANDLER_METHOD("/user/update", Put, updateUser);
+  ADD_HANDLER_METHOD("/user/delete", Delete, deleteUser);
 
  public:
   explicit UserController(const std::shared_ptr<AuthService> &authService,

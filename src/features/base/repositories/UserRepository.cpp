@@ -2,6 +2,7 @@
 
 #include <date/tz.h>
 
+#include <algorithm>
 #include <chrono>
 #include <utility>
 
@@ -84,6 +85,10 @@ void UserRepository::createOf(const User &user) {
     db::Connection connection(m_connectionEntry);
     db::Transaction transaction(connection);
     db::Statement statement(connection);
+    std::string createdTimestamp =
+        date::format("%Y-%m-%d %H:%M:%S%Ez", user.getCreatedTimestamp());
+    std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
+    LOG_TRACE("created_timestamp = {}", createdTimestamp);
     statement.execute(
         R"(
     insert into public.user (
@@ -96,8 +101,7 @@ void UserRepository::createOf(const User &user) {
     values (?, ?, ?, ?, ?, ?)
   )",
         {user.getUserName(), user.getPassword(), user.getEmail(),
-         user.getFirstName(), user.getLastName(),
-         date::format("%Y-%m-%d %H:%M:%S%Ez", user.getCreatedTimestamp())});
+         user.getFirstName(), user.getLastName(), createdTimestamp});
   } catch (const db::SQLException &exception) {
     LOG_ERROR("cannot create new User {}", exception.what());
   }
@@ -356,4 +360,21 @@ void UserRepository::changeEMailOf(const User &user, const std::string &eMail) {
     where user_name = ?
   )",
                     {eMail, user.getUserName()});
+}
+void UserRepository::deleteOf(const std::vector<std::string> &userNames) {
+  db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::Statement statement(connection);
+  for (auto &userName : userNames) {
+    statement.execute(R"(
+    delete from public.user_groups_relation
+    where user_name = ?
+  )",
+                      {userName});
+    statement.execute(R"(
+    delete from public.user
+    where user_name = ?
+  )",
+                      {userName});
+  }
 }

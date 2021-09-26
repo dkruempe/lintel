@@ -43,6 +43,11 @@ UserManagementCliComponent::UserManagementCliComponent(
           .addArgument({"--user", "-u"}, &m_userName,
                        "User Name which should be updated", false),
       UpdateUser);
+  m_commandParser.addCommand(
+      Command("user_delete", "Delete user!")
+          .addArgument({"--user-name", "-u"}, &m_userName,
+                       "Username which should be deleted!", false),
+      RemoveUser);
 }
 void UserManagementCliComponent::onCommand(
     const UserDto& userDto, const std::string& input,
@@ -94,6 +99,16 @@ void UserManagementCliComponent::onCommand(
           groupRemoves.insert(m_groupRemoved.value());
         }
         m_userApi->updateOf(m_userName.value(), groupAdds, groupRemoves);
+        break;
+      }
+      case RemoveUser: {
+        if (!m_userName.has_value()) {
+          std::cout << "ERROR: Please add username as value\n";
+          break;
+        }
+        std::vector<std::string> userRemoves;
+        userRemoves.push_back(m_userName.value());
+        m_userApi->deleteOf(userRemoves);
         break;
       }
       default:

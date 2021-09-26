@@ -8,6 +8,7 @@
 #include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/base/controller/UserGroupDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"
+#include "base_library/features/base/controller/UserNameDto.h"
 #include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 
@@ -219,6 +220,42 @@ void UserController::allUsersOfUserNameGet(
     }
   }
 }
+void UserController::deleteUserDelete(const httplib::Request& request,
+                                      httplib::Response& response,
+                                      const ContentType& contentType,
+                                      const std::optional<UserToken>& user) {
+  LOG_TRACE("received user delete");
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      UserNamesDto userNamesDto;
+      userNamesDto.JsonSerializable::deserialize(request.body);
+      std::vector<UserNameDto> userNames = userNamesDto.getUserNames();
+      std::vector<std::string> userNamesString;
+      userNamesString.reserve(userNames.size());
+      for (const auto& userName : userNames) {
+        userNamesString.push_back(userName.getUserName());
+        LOG_TRACE("user_name={}", userName.getUserName());
+      }
+      m_userRepository->deleteOf(userNamesString);
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
 void UserController::addUserPost(const httplib::Request& request,
                                  httplib::Response& response,
                                  const ContentType& contentType,
@@ -248,6 +285,9 @@ void UserController::addUserPost(const httplib::Request& request,
       User userNew(userDto.getFirstName(), userDto.getLastName(),
                    User::Sex::Male, userDto.getEMail(), userDto.getUserName(),
                    password, {});
+      std::stringstream ss;
+      ss << userNew;
+      LOG_TRACE("{}", ss.str());
       m_userRepository->createOf(userNew);
       break;
     }
