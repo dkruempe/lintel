@@ -5,7 +5,7 @@
 
 #include "base_library/core/persistence/postgresql/Connection.h"
 #include "base_library/core/persistence/sqlite3/Connection.h"
-#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace db {
 
@@ -29,7 +29,7 @@ class Connection {
   explicit Connection(ConnectionType connectionType,
                       const std::string &connectionInfo);
 
-  explicit Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry);
+  explicit Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
   explicit Connection(Connection &connection) = delete;
 };

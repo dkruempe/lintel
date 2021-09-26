@@ -3,18 +3,18 @@
 
 #include <memory>
 
-#include "base_library/core/persistence/ConnectionConfigurations.h"
-#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
+#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
 class DatabasePropertyRepository : public PropertyRepository {
  private:
-  std::shared_ptr<ConnectionConfigurations> m_connectionConfigurations;
-  std::shared_ptr<ConnectionEntry> m_connectionEntry;
+  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+  std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
 
  public:
   explicit DatabasePropertyRepository(
-      std::shared_ptr<ConnectionConfigurations> connectionConfigurations);
+      std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations);
 
   PropertyRepositoryType getType() override;
 

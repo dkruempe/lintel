@@ -1,12 +1,12 @@
-#ifndef CPP_BASE_LIBRARY_CONNECTIONENTRY_H
-#define CPP_BASE_LIBRARY_CONNECTIONENTRY_H
+#ifndef CPP_BASE_LIBRARY_DATABASECONNECTIONENTRY_H
+#define CPP_BASE_LIBRARY_DATABASECONNECTIONENTRY_H
 
 #include <ostream>
 
 #include "base_library/core/persistence/ConnectionType.h"
 #include "base_library/features/base/configuration/Entry.h"
 
-class ConnectionEntry : public Entry {
+class DatabaseConnectionEntry : public Entry {
  private:
   const std::string m_connection;
   const std::string m_userName;
@@ -17,7 +17,7 @@ class ConnectionEntry : public Entry {
   const std::string m_databaseName;
 
  public:
-  ConnectionEntry(std::string_view component, std::string connection,
+  DatabaseConnectionEntry(std::string_view component, std::string connection,
                   std::string userName, std::string password,
                   db::ConnectionType type, std::string name, int32_t port,
                   std::string databaseName);
@@ -31,7 +31,7 @@ class ConnectionEntry : public Entry {
   [[nodiscard]] const std::string &getDatabaseName() const;
 
   friend std::ostream &operator<<(std::ostream &os,
-                                  const ConnectionEntry &entry);
+                                  const DatabaseConnectionEntry &entry);
 };
 
-#endif  // CPP_BASE_LIBRARY_CONNECTIONENTRY_H
+#endif  // CPP_BASE_LIBRARY_DATABASECONNECTIONENTRY_H

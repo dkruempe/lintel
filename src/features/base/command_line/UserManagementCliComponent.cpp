@@ -2,7 +2,7 @@
 
 #include <tabulate/table.hpp>
 
-#include "base_library/features/base/configuration/Cryption.h"
+#include "base_library/core/utils/Cryption.h"
 UserManagementCliComponent::UserManagementCliComponent(
     std::shared_ptr<UserApi> userApi)
     : CommandLineComponent(m_name, m_alias), m_userApi(std::move(userApi)) {

@@ -16,7 +16,7 @@ db::Connection::Connection(ConnectionType connectionType,
 }
 
 db::Connection::Connection(
-    const std::shared_ptr<ConnectionEntry> &connectionEntry)
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
     : m_connectionType(connectionEntry->getType()) {
   switch (m_connectionType) {
     case ConnectionType::SQLite:

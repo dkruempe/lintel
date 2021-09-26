@@ -10,7 +10,7 @@
 #include "base_library/core/services/LoggerService.h"
 
 GroupRepository::GroupRepository(
-    std::shared_ptr<ConnectionConfigurations> connectionConfigurations,
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
     const std::shared_ptr<ProcessName>& processName)
     : AbstractService<GroupRepository>(processName->getProcessName()),
       m_connectionConfigurations(std::move(connectionConfigurations)),

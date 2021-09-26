@@ -4,7 +4,7 @@
 #include <functional>
 
 #include "base_library/core/exceptions/SQLException.h"
-#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace sqlite {
 Connection::Connection(const std::string &connectionInfo) : m_db(nullptr) {
@@ -13,7 +13,7 @@ Connection::Connection(const std::string &connectionInfo) : m_db(nullptr) {
     throw db::SQLException("Can't open database: " + getErrorMessage());
   }
 }
-Connection::Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry)
+Connection::Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
     : m_db(nullptr) {
   int rc = sqlite3_open(connectionEntry->getConnection().c_str(), &m_db);
   if (rc != SQLITE_OK) {

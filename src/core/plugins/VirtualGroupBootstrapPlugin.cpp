@@ -7,7 +7,7 @@
 #include "base_library/core/utils/StringUtils.h"
 
 VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
-    const std::shared_ptr<ConnectionConfigurations> &connectionConfigurations,
+    const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
     std::vector<std::shared_ptr<GroupProvider>> groupProviders)
     : m_groupProviders(std::move(groupProviders)),
       m_connectionEntry(connectionConfigurations->of("DEFAULT")) {}

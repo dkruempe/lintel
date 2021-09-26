@@ -44,7 +44,7 @@ Connection::Connection(const std::string &connectionInfo)
   }
 }
 
-Connection::Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry)
+Connection::Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
     : m_conn(nullptr) {
   std::string connInfo;
   if (!connectionEntry->getUserName().empty()) {

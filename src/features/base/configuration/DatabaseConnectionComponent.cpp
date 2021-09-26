@@ -1,17 +1,17 @@
-#include "base_library/features/base/configuration/ConnectionComponent.h"
+#include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
 
 #include <tinyxml2.h>
 
 #include "base_library/core/persistence/ConnectionType.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/TypeName.h"
-#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
-ConnectionComponent::Shapes ConnectionComponent::shape{};
+DatabaseConnectionComponent::Shapes DatabaseConnectionComponent::shape{};
 
-ConnectionComponent::ConnectionComponent() : Component(shape.CONFIG_ROOT) {}
+DatabaseConnectionComponent::DatabaseConnectionComponent() : Component(shape.CONFIG_ROOT) {}
 
-std::vector<std::shared_ptr<Entry>> ConnectionComponent::parse(
+std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
     const std::string &content, const std::string &fileName,
     const int32_t lineOffset) {
   std::vector<std::shared_ptr<Entry>> databaseEntries;
@@ -86,8 +86,8 @@ std::vector<std::shared_ptr<Entry>> ConnectionComponent::parse(
       databaseName = "";
     }
 
-    databaseEntries.push_back(std::make_shared<ConnectionEntry>(
-        type_name<ConnectionComponent>(), connection, userName, password, type,
+    databaseEntries.push_back(std::make_shared<DatabaseConnectionEntry>(
+        type_name<DatabaseConnectionComponent>(), connection, userName, password, type,
         name, port, databaseName));
   }
   return databaseEntries;

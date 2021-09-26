@@ -21,7 +21,7 @@ void DatabaseBootstrapPlugin::onStart() {
   }
 }
 void DatabaseBootstrapPlugin::handle(
-    const std::shared_ptr<ConnectionEntry> &connectionEntry) {
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry) {
   auto optResult = hasSchemaVersionTable(connectionEntry);
   std::filesystem::path dbPath = m_configPath.string() +
                                  std::filesystem::path::preferred_separator +
@@ -86,10 +86,10 @@ BootstrapSequence DatabaseBootstrapPlugin::getPriority() {
   return {BootstrapSequence::Database};
 }
 DatabaseBootstrapPlugin::DatabaseBootstrapPlugin(
-    std::shared_ptr<ConnectionConfigurations> connectionConfigurations)
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
     : m_connectionConfigurations(std::move(connectionConfigurations)) {}
 std::optional<db::Result> DatabaseBootstrapPlugin::hasSchemaVersionTable(
-    const std::shared_ptr<ConnectionEntry> &connectionEntry) {
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry) {
   try {
     db::Connection connection(connectionEntry);
     db::Statement statement(connection);
@@ -103,7 +103,7 @@ std::optional<db::Result> DatabaseBootstrapPlugin::hasSchemaVersionTable(
   return std::nullopt;
 }
 void DatabaseBootstrapPlugin::createSchemaVersionTable(
-    const std::shared_ptr<ConnectionEntry> &connectionEntry) {
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry) {
   // don't handle for database exception to make sure that bootstrap procedure
   // aborts for database connection
   db::Connection connection(connectionEntry);
@@ -111,7 +111,7 @@ void DatabaseBootstrapPlugin::createSchemaVersionTable(
   statement.execute(std::string(m_createSchemaVersion));
 }
 void DatabaseBootstrapPlugin::initDatabase(
-    const std::shared_ptr<ConnectionEntry> &connectionEntry,
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
     const std::map<std::string, std::vector<FileInformation>> &initFiles,
     const std::map<std::string, int32_t> &schemaVersions) {
   for (const auto &[schemaName, inits] : initFiles) {

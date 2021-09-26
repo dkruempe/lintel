@@ -4,20 +4,20 @@
 #include <optional>
 #include <set>
 
-#include "base_library/core/persistence/ConnectionConfigurations.h"
-#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
+#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 #include "base_library/features/base/models/User.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
 
 class UserRepository {
  private:
-  std::shared_ptr<ConnectionConfigurations> m_connectionConfigurations;
-  std::shared_ptr<ConnectionEntry> m_connectionEntry;
+  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+  std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
   std::shared_ptr<GroupRepository> m_groupRepository;
 
  public:
   UserRepository(
-      std::shared_ptr<ConnectionConfigurations> connectionConfigurations,
+      std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
       std::shared_ptr<GroupRepository> groupRepository);
 
   std::optional<User> of(const std::string &userName);

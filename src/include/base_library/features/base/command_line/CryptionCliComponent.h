@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-#include "base_library/features/base/configuration/Cryption.h"
+#include "base_library/core/utils/Cryption.h"
 #include "base_library/features/base/controller/UserApi.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 

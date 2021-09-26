@@ -6,7 +6,7 @@
 #include <optional>
 
 #include "base_library/config.h"
-#include "base_library/core/persistence/ConnectionConfigurations.h"
+#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/core/persistence/Result.h"
 #include "base_library/core/plugins/BootstrapPlugin.h"
 
@@ -51,20 +51,20 @@ class DatabaseBootstrapPlugin : public BootstrapPlugin {
   std::filesystem::path m_configPath =
       std::string(CONFIG_DIRECTORY) +
       std::filesystem::path::preferred_separator + "database";
-  std::shared_ptr<ConnectionConfigurations> m_connectionConfigurations;
+  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
 
   static constexpr std::string_view m_createSchemaVersion =
       "CREATE TABLE \"schema_version\" (\"name\" TEXT NOT NULL PRIMARY "
       "KEY,\"version\" BIGINT NOT NULL);";
 
   static std::optional<db::Result> hasSchemaVersionTable(
-      const std::shared_ptr<ConnectionEntry>& connectionEntry);
+      const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry);
 
   static void createSchemaVersionTable(
-      const std::shared_ptr<ConnectionEntry>& connectionEntry);
+      const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry);
 
   static void initDatabase(
-      const std::shared_ptr<ConnectionEntry>& connectionEntry,
+      const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry,
       const std::map<std::string, std::vector<FileInformation>>& initFiles,
       const std::map<std::string, int32_t>& schemaVersions);
 
@@ -76,11 +76,11 @@ class DatabaseBootstrapPlugin : public BootstrapPlugin {
 
   static int32_t versionOf(const std::string& version);
 
-  void handle(const std::shared_ptr<ConnectionEntry> &connectionEntry);
+  void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
  public:
   explicit DatabaseBootstrapPlugin(
-      std::shared_ptr<ConnectionConfigurations> connectionConfigurations);
+      std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations);
   void onStart() override;
   BootstrapSequence getPriority() override;
 };

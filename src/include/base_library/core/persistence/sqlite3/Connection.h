@@ -9,7 +9,7 @@
 
 #include "base_library/core/persistence/Parameter.h"
 #include "base_library/core/persistence/sqlite3/Result.h"
-#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace sqlite {
 class Transaction;
@@ -49,7 +49,7 @@ class Connection {
  public:
   explicit Connection(const std::string &connectionInfo);
 
-  explicit Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry);
+  explicit Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
   Connection(Connection &connection) = delete;
 

@@ -13,7 +13,7 @@
 #include "base_library/core/services/LoggerService.h"
 
 UserRepository::UserRepository(
-    std::shared_ptr<ConnectionConfigurations> connectionConfigurations,
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
     std::shared_ptr<GroupRepository> groupRepository)
     : m_connectionConfigurations(std::move(connectionConfigurations)),
       m_connectionEntry(m_connectionConfigurations->of("DEFAULT")),

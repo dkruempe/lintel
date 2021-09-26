@@ -1,22 +1,22 @@
-#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 #include <utility>
-const std::string &ConnectionEntry::getConnection() const { return m_connection; }
+const std::string &DatabaseConnectionEntry::getConnection() const { return m_connection; }
 
-const std::string &ConnectionEntry::getUserName() const { return m_userName; }
+const std::string &DatabaseConnectionEntry::getUserName() const { return m_userName; }
 
-const std::string &ConnectionEntry::getPassword() const { return m_password; }
+const std::string &DatabaseConnectionEntry::getPassword() const { return m_password; }
 
-const std::string &ConnectionEntry::getName() const { return m_name; }
+const std::string &DatabaseConnectionEntry::getName() const { return m_name; }
 
-std::ostream &operator<<(std::ostream &os, const ConnectionEntry &entry) {
+std::ostream &operator<<(std::ostream &os, const DatabaseConnectionEntry &entry) {
   os << static_cast<const Entry &>(entry) << " connection: " << entry.m_connection
      << " userName: " << entry.m_userName << " password: " << entry.m_password
      << " type: " << entry.m_type << " name: " << entry.m_name
      << " databaseName: " << entry.m_databaseName << " port: " << entry.m_port;
   return os;
 }
-ConnectionEntry::ConnectionEntry(std::string_view component,
+DatabaseConnectionEntry::DatabaseConnectionEntry(std::string_view component,
                                  std::string connection, std::string userName,
                                  std::string password, db::ConnectionType type,
                                  std::string name, int32_t port,
@@ -30,8 +30,8 @@ ConnectionEntry::ConnectionEntry(std::string_view component,
       m_port(port),
       m_databaseName(std::move(databaseName)) {}
 
-const db::ConnectionType &ConnectionEntry::getType() const { return m_type; }
-int32_t ConnectionEntry::getPort() const { return m_port; }
-const std::string &ConnectionEntry::getDatabaseName() const {
+const db::ConnectionType &DatabaseConnectionEntry::getType() const { return m_type; }
+int32_t DatabaseConnectionEntry::getPort() const { return m_port; }
+const std::string &DatabaseConnectionEntry::getDatabaseName() const {
   return m_databaseName;
 }

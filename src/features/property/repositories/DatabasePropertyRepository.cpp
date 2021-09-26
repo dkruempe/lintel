@@ -10,7 +10,7 @@
 #include "base_library/features/property/factories/PropertyFactory.h"
 
 DatabasePropertyRepository::DatabasePropertyRepository(
-    std::shared_ptr<ConnectionConfigurations> connectionConfigurations)
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
     : PropertyRepository(),
       m_connectionConfigurations(std::move(connectionConfigurations)),
       m_connectionEntry(m_connectionConfigurations->of("DEFAULT")) {}

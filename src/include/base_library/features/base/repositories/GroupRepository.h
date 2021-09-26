@@ -4,7 +4,7 @@
 #include <memory>
 #include <optional>
 
-#include "base_library/core/persistence/ConnectionConfigurations.h"
+#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/models/Group.h"
 #include "base_library/features/base/models/ProcessName.h"
@@ -13,8 +13,8 @@ class GroupRepository : public AbstractService<GroupRepository> {
  private:
   // Variables:
   // injections
-  std::shared_ptr<ConnectionConfigurations> m_connectionConfigurations;
-  std::shared_ptr<ConnectionEntry> m_connectionEntry;
+  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+  std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
   // cache of groups
   std::vector<Group> m_groups;
   std::map<std::string, Group> m_groupMap;
@@ -23,7 +23,7 @@ class GroupRepository : public AbstractService<GroupRepository> {
 
  public:
   explicit GroupRepository(
-      std::shared_ptr<ConnectionConfigurations> connectionConfigurations,
+      std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
       const std::shared_ptr<ProcessName> &processName);
 
   virtual ~GroupRepository() = default;

@@ -10,7 +10,7 @@
 #include "base_library/core/exceptions/SQLException.h"
 #include "base_library/core/persistence/Parameter.h"
 #include "base_library/core/persistence/postgresql/Result.h"
-#include "base_library/features/base/configuration/ConnectionEntry.h"
+#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace postgresql {
 class Transaction;
@@ -45,7 +45,7 @@ class Connection {
  public:
   explicit Connection(const std::string &connectionInfo);
 
-  explicit Connection(const std::shared_ptr<ConnectionEntry> &connectionEntry);
+  explicit Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
   Connection(Connection &connection) = delete;
 

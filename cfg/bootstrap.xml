@@ -1,9 +1,9 @@
 <Configuration>
-    <Connections>
+    <DatabaseConnections>
         <!--<Connection name="DEFAULT" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite"/>-->
-        <Connection name="DEFAULT" user_name="dkruempe" password="${ADMIN_PASSWORD}" database_name="keyValueStore"
+        <DatabaseConnection name="DEFAULT" user_name="dkruempe" password="${ADMIN_PASSWORD}" database_name="keyValueStore"
                     type="PostgreSQL"/>
-    </Connections>
+    </DatabaseConnections>
     <HttpHost>
         <Server host="0.0.0.0" port="8080"/>
         <Client host="localhost" port="8080" connection_timeout="5000"/>

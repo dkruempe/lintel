@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <utility>
 
+#include "base_library/core/utils/Cryption.h"
 #include "base_library/core/utils/StringUtils.h"
-#include "base_library/features/base/configuration/Cryption.h"
 #include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/base/controller/UserGroupDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"

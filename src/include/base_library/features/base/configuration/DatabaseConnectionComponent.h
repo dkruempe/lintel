@@ -1,13 +1,13 @@
-#ifndef CPP_BASE_LIBRARY_CONNECTIONCOMPONENT_H
-#define CPP_BASE_LIBRARY_CONNECTIONCOMPONENT_H
+#ifndef CPP_BASE_LIBRARY_DATABASECONNECTIONCOMPONENT_H
+#define CPP_BASE_LIBRARY_DATABASECONNECTIONCOMPONENT_H
 
 #include "Component.h"
 
-class ConnectionComponent : public Component {
+class DatabaseConnectionComponent : public Component {
  private:
   static struct Shapes {
-    const std::string CONFIG_ROOT = "Connections";
-    const std::string DATABASE_ROOT = "Connection";
+    const std::string CONFIG_ROOT = "DatabaseConnections";
+    const std::string DATABASE_ROOT = "DatabaseConnection";
     const std::string CONNECTION_NAME = "name";
     const std::string CONNECTION_TYPE = "type";
     const std::string CONNECTION_USER_NAME = "user_name";
@@ -18,11 +18,11 @@ class ConnectionComponent : public Component {
   } shape;
 
  public:
-  ConnectionComponent();
+  DatabaseConnectionComponent();
 
   std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
                                             const std::string &fileName,
                                             int32_t lineOffset) override;
 };
 
-#endif  // CPP_BASE_LIBRARY_CONNECTIONCOMPONENT_H
+#endif  // CPP_BASE_LIBRARY_DATABASECONNECTIONCOMPONENT_H

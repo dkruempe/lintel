@@ -3,8 +3,8 @@
 #include <boost/asio.hpp>
 
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/Cryption.h"
 #include "base_library/core/utils/UUID.h"
-#include "base_library/features/base/configuration/Cryption.h"
 
 AuthService::AuthService(const std::shared_ptr<ProcessName>& processName,
                          std::shared_ptr<UserRepository> userRepository,
