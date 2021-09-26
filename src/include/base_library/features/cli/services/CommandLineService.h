@@ -37,8 +37,8 @@ class CommandLineService {
   std::shared_ptr<UserApi> m_userApi;
   std::shared_ptr<CommandLineUtils> m_commandLineUtils;
   UserDto m_userDto;
-  InputService m_inputService;
-  TerminalService m_terminalService;
+  std::shared_ptr<InputService> m_inputService;
+  std::shared_ptr<TerminalService> m_terminalService;
   std::optional<std::string> m_helpComponentName;
 
   void onComponentCommand(const std::string &input,
@@ -63,7 +63,9 @@ class CommandLineService {
       const std::shared_ptr<Configuration> &configuration,
       std::shared_ptr<AuthCliService> authCliService,
       std::shared_ptr<UserApi> userApi,
-      std::shared_ptr<CommandLineUtils> commandLineUtils);
+      std::shared_ptr<CommandLineUtils> commandLineUtils,
+      std::shared_ptr<InputService> inputService,
+      std::shared_ptr<TerminalService> terminalService);
   ~CommandLineService();
 };
 

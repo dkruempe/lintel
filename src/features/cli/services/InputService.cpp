@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-KeyPressed InputService::onRead() {
+KeyEvent InputService::onRead() {
   int ch = std::getchar();
   switch (ch) {
     case EOF:

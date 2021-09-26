@@ -1,6 +1,8 @@
 #include "base_library/features/cli/CommandLineFeature.h"
 
 #include "base_library/features/cli/services/AuthCliService.h"
+#include "base_library/features/cli/services/InputService.h"
+#include "base_library/features/cli/services/TerminalService.h"
 #include "base_library/features/cli/utils/CommandLineUtils.h"
 
 CommandLineFeature::CommandLineFeature()
@@ -10,6 +12,8 @@ void CommandLineFeature::registerTypes(Hypodermic::ContainerBuilder& builder) {
   builder.registerType<CommandLineService>().singleInstance();
   builder.registerType<AuthCliService>().singleInstance();
   builder.registerType<CommandLineUtils>().singleInstance();
+  builder.registerType<TerminalService>().singleInstance();
+  builder.registerType<InputService>().singleInstance();
 }
 
 void CommandLineFeature::initialize(

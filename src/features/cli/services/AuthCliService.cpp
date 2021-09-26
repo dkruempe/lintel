@@ -6,9 +6,13 @@
 
 AuthCliService::AuthCliService(
     std::shared_ptr<UserApi> userApi,
-    std::shared_ptr<CommandLineUtils> commandLineUtils)
+    std::shared_ptr<CommandLineUtils> commandLineUtils,
+    std::shared_ptr<InputService> inputService,
+    std::shared_ptr<TerminalService> terminalService)
     : m_userApi(std::move(userApi)),
-      m_commandLineUtils(std::move(commandLineUtils)) {}
+      m_commandLineUtils(std::move(commandLineUtils)),
+      m_inputService(std::move(inputService)),
+      m_terminalService(std::move(terminalService)) {}
 UserDto AuthCliService::onLogin() {
   bool success = false;
   std::optional<UserDto> optUserDto;
@@ -18,8 +22,8 @@ UserDto AuthCliService::onLogin() {
     std::string password;
     Symbol event = Symbol::Nothing;
     while (event != Symbol::Command) {
-      KeyPressed keyPressed = m_inputService.onRead();
-      SymbolEvent symbolEvent = m_terminalService.onKeyPressed(keyPressed);
+      KeyEvent keyPressed = m_inputService->onRead();
+      SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
       event = symbolEvent.first;
       if (event == Symbol::Command) {
         userName = symbolEvent.second;
@@ -51,11 +55,4 @@ std::string AuthCliService::readPassword() {
   std::string password;
   std::cin >> password;
   return password;
-}
-void AuthCliService::setTerminalService(
-    const TerminalService &terminalService) {
-  m_terminalService = terminalService;
-}
-void AuthCliService::setInputService(const InputService &inputService) {
-  m_inputService = inputService;
 }

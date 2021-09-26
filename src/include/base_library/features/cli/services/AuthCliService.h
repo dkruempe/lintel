@@ -13,18 +13,18 @@ class AuthCliService {
  private:
   std::shared_ptr<UserApi> m_userApi;
   std::shared_ptr<CommandLineUtils> m_commandLineUtils;
-  InputService m_inputService;
-  TerminalService m_terminalService;
+  std::shared_ptr<InputService> m_inputService;
+  std::shared_ptr<TerminalService> m_terminalService;
 
   std::string readPassword();
 
  public:
   explicit AuthCliService(std::shared_ptr<UserApi> userApi,
-                          std::shared_ptr<CommandLineUtils> commandLineUtils);
+                          std::shared_ptr<CommandLineUtils> commandLineUtils,
+                          std::shared_ptr<InputService> inputService,
+                          std::shared_ptr<TerminalService> terminalService);
   UserDto onLogin();
   void onLogout(UserDto &&userDto);
-  void setTerminalService(const TerminalService &terminalService);
-  void setInputService(const InputService &inputService);
 };
 
 #endif  // CPP_BASE_LIBRARY_AUTHCLISERVICE_H

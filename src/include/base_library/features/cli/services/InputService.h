@@ -21,7 +21,7 @@ enum class KeyType {
   Ignored
 };
 
-using KeyPressed = std::pair<KeyType, char>;
+using KeyEvent = std::pair<KeyType, char>;
 
 class InputService {
  private:
@@ -31,7 +31,7 @@ class InputService {
  public:
   InputService();
   ~InputService();
-  KeyPressed onRead();
+  KeyEvent onRead();
 };
 
 #endif  // CPP_BASE_LIBRARY_INPUTSERVICE_H

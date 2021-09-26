@@ -17,12 +17,16 @@ CommandLineService::CommandLineService(
     const std::shared_ptr<Configuration> &configuration,
     std::shared_ptr<AuthCliService> authCliService,
     std::shared_ptr<UserApi> userApi,
-    std::shared_ptr<CommandLineUtils> commandLineUtils)
+    std::shared_ptr<CommandLineUtils> commandLineUtils,
+    std::shared_ptr<InputService> inputService,
+    std::shared_ptr<TerminalService> terminalService)
     : m_menu(components),
       m_thread([&]() { run(); }),
       m_authCliService(std::move(authCliService)),
       m_userApi(std::move(userApi)),
-      m_commandLineUtils(std::move(commandLineUtils)) {
+      m_commandLineUtils(std::move(commandLineUtils)),
+      m_inputService(std::move(inputService)),
+      m_terminalService(std::move(terminalService)) {
   m_commandParser.addCommand(
       Command("help",
               "Show all available commands in the current selected menu.")
@@ -34,8 +38,6 @@ CommandLineService::CommandLineService(
   m_commandParser.addCommand(
       Command("exit", "Exit of current menu or whole cli"), CommandExit);
   m_commandParser.addCommand(Command("clear", "Clear cli"), CommandClear);
-  m_authCliService->setInputService(m_inputService);
-  m_authCliService->setTerminalService(m_terminalService);
 }
 
 CommandLineService::~CommandLineService() {
@@ -94,8 +96,8 @@ void CommandLineService::run() {
     }
     // II read input
     std::string temp;
-    KeyPressed keyPressed = m_inputService.onRead();
-    SymbolEvent symbolEvent = m_terminalService.onKeyPressed(keyPressed);
+    KeyEvent keyPressed = m_inputService->onRead();
+    SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
     if (symbolEvent.first == Symbol::Tab && symbolEvent.second.empty()) {
       if (!tabPressed) {
         CommandLineUtils::beep();

@@ -16,7 +16,7 @@ class TerminalService {
 
  public:
   void log(const std::string &text);
-  SymbolEvent onKeyPressed(KeyPressed);
+  SymbolEvent onKeyPressed(KeyEvent);
   void resetCursor();
   const std::string &getLine();
 };

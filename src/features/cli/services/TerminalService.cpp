@@ -18,7 +18,7 @@ void TerminalService::log(const std::string& text) {
   m_currentLine = text;
   m_position = m_currentLine.size();
 }
-SymbolEvent TerminalService::onKeyPressed(KeyPressed k) {
+SymbolEvent TerminalService::onKeyPressed(KeyEvent k) {
   switch (k.first) {
     case KeyType::Eof:
       return std::make_pair(Symbol::Eof, std::string{});
