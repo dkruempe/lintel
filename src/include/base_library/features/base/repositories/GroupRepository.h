@@ -26,6 +26,8 @@ class GroupRepository : public AbstractService<GroupRepository> {
       std::shared_ptr<ConnectionConfigurations> connectionConfigurations,
       const std::shared_ptr<ProcessName> &processName);
 
+  virtual ~GroupRepository() = default;
+
   std::optional<Group> of(const std::string &groupName);
 
   std::vector<Group> allOf();
