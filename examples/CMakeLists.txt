@@ -38,12 +38,6 @@ add_executable(spdlogExample spdlogExample.cpp)
 target_compile_features(spdlogExample PUBLIC cxx_std_17)
 target_link_libraries(spdlogExample PUBLIC fmt::fmt spdlog::spdlog)
 
-# user authentification example
-add_executable(user user.cpp)
-target_compile_features(user PUBLIC cxx_std_17)
-target_include_directories(user PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(user PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib date::date)
-
 # main example
 add_executable(main main.cpp)
 target_compile_features(main PUBLIC cxx_std_17)
