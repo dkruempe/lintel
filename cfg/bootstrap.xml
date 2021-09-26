@@ -6,7 +6,7 @@
     </Connections>
     <HttpHost>
         <Server host="0.0.0.0" port="8080"/>
-        <Client host="localhost" port="8080" connection_timeout="1000"/>
+        <Client host="localhost" port="8080" connection_timeout="5000"/>
     </HttpHost>
     <Properties>
         <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService"
