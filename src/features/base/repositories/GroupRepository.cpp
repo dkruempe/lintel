@@ -10,11 +10,11 @@
 #include "base_library/core/services/LoggerService.h"
 
 GroupRepository::GroupRepository(
-    std::shared_ptr<ConnectionConfigurations> connectionConfigurations)
-    : m_connectionConfigurations(std::move(connectionConfigurations)),
-      m_connectionEntry(m_connectionConfigurations->of("DEFAULT")) {
-  initGroups();
-}
+    std::shared_ptr<ConnectionConfigurations> connectionConfigurations,
+    const std::shared_ptr<ProcessName>& processName)
+    : AbstractService<GroupRepository>(processName->getProcessName()),
+      m_connectionConfigurations(std::move(connectionConfigurations)),
+      m_connectionEntry(m_connectionConfigurations->of("DEFAULT")) {}
 void GroupRepository::initGroups() {
   db::Connection connection(m_connectionEntry);
   db::Statement statement(connection);
@@ -124,10 +124,12 @@ std::vector<Group> GroupRepository::allOf(const std::string& groupName,
     return temp;
   }
   std::regex match(groupName);
-  temp.erase(std::remove_if(
-      temp.begin(), temp.end(), [&match](const Group& group) -> bool {
-        return !std::regex_match(group.getGroupName(), match);
-      }), temp.end());
+  temp.erase(std::remove_if(temp.begin(), temp.end(),
+                            [&match](const Group& group) -> bool {
+                              return !std::regex_match(group.getGroupName(),
+                                                       match);
+                            }),
+             temp.end());
   return temp;
 }
 void GroupRepository::createOf(const Group& group) {
@@ -204,3 +206,4 @@ void GroupRepository::removeGroupOf(const Group& group, const Group& remove) {
       )",
       {group.getGroupName(), remove.getGroupName()});
 }
+void GroupRepository::onInitialize() { initGroups(); }

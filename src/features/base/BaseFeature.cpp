@@ -12,6 +12,8 @@
 #include "base_library/features/base/controller/UserApi.h"
 #include "base_library/features/base/controller/UserController.h"
 #include "base_library/features/base/provider/GroupProvider.h"
+#include "base_library/features/base/repositories/GroupRepository.h"
+#include "base_library/features/base/repositories/UserRepository.h"
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/InitializeService.h"
@@ -63,4 +65,9 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .as<GroupProvider>()
       .asSelf()
       .singleInstance();
+  builder.registerType<GroupRepository>()
+      .as<AbstractServiceInterface>()
+      .asSelf()
+      .singleInstance();
+  builder.registerType<UserRepository>().singleInstance();
 }

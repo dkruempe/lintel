@@ -4,6 +4,7 @@
 #include "base_library/core/persistence/PreparedStatement.h"
 #include "base_library/core/persistence/Transaction.h"
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/StringUtils.h"
 
 VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
     const std::shared_ptr<ConnectionConfigurations> &connectionConfigurations,
@@ -21,16 +22,48 @@ void VirtualGroupBootstrapPlugin::onStart() {
   }
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
-  db::PreparedStatement statement(
-      connection,
-      "insert into public.group(name, virtual) values(?, ?) ON CONFLICT ON "
-      "CONSTRAINT group_pk DO NOTHING",
-      "insert_group");
-  for (const auto &group : groups) {
-    statement.execute(
-        {group.getGroupName(), db::Serialization<bool>::serialize(
-                                   group.isVirtual(), m_connectionEntry)});
+  {
+    db::PreparedStatement statement(
+        connection,
+        "insert into public.group(name, virtual) values(?, ?) ON CONFLICT ON "
+        "CONSTRAINT group_pk DO NOTHING",
+        "insert_group");
+    for (const auto &group : groups) {
+      statement.execute(
+          {group.getGroupName(), db::Serialization<bool>::serialize(
+                                     group.isVirtual(), m_connectionEntry)});
+    }
+    statement.close();
   }
-  statement.close();
+  /*
+   * HACKY implementation of adding default base groups directly to exising
+   * groups like User or Admin
+   *
+   * Future Solution:
+   * Remove this HACK Workaround and add parameter to defining if the mentioned
+   * group is an admin group or an user group.
+   */
+
+  {
+    db::PreparedStatement statement(
+        connection,
+        "insert into public.group_groups_relation(group_name, base_group_name) "
+        "values(?, ?) ON CONFLICT ON CONSTRAINT group_groups_relation_pk DO "
+        "NOTHING",
+        "add_relation");
+    for (const auto &group : groups) {
+      bool isAdminGroup =
+          StringUtils::startsWith(group.getGroupName(), "Admin");
+      if (isAdminGroup) {
+        statement.execute({"Admin", group.getGroupName()});
+        continue;
+      }
+      bool isUserGroup = StringUtils::startsWith(group.getGroupName(), "User");
+      if (isUserGroup) {
+        statement.execute({"User", group.getGroupName()});
+        continue;
+      }
+    }
+  }
   LOG_INFO("start");
 }

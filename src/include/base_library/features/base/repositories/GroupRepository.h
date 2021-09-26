@@ -5,9 +5,11 @@
 #include <optional>
 
 #include "base_library/core/persistence/ConnectionConfigurations.h"
+#include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/models/Group.h"
+#include "base_library/features/base/models/ProcessName.h"
 
-class GroupRepository {
+class GroupRepository : public AbstractService<GroupRepository> {
  private:
   // Variables:
   // injections
@@ -21,7 +23,8 @@ class GroupRepository {
 
  public:
   explicit GroupRepository(
-      std::shared_ptr<ConnectionConfigurations> connectionConfigurations);
+      std::shared_ptr<ConnectionConfigurations> connectionConfigurations,
+      const std::shared_ptr<ProcessName> &processName);
 
   std::optional<Group> of(const std::string &groupName);
 
@@ -40,6 +43,8 @@ class GroupRepository {
   void addGroupOf(const Group &group, const Group &add);
 
   void removeGroupOf(const Group &group, const Group &remove);
+
+  void onInitialize() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUPREPOSITORY_H
