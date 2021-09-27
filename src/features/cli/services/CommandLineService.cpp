@@ -89,63 +89,85 @@ void CommandLineService::run() {
   onStart();
   bool printPrompt = true;
   bool tabPressed = true;
+  std::function<void(const SymbolEvent &symbolEvent)> handleCommand =
+      [&](const SymbolEvent &symbolEvent) {
+        tabPressed = false;
+        printPrompt = true;
+        std::string temp = symbolEvent.second;
+        bool isLoggedIn = m_userApi->isLoggedIn();
+        if (!isLoggedIn) {
+          std::cout
+              << "WARNING: timeout of login server wise => shutdown cli\n";
+          SignalService::raiseSignal(SIGINT);
+          m_running.store(false);
+          return;
+        }
+        // III handle EOF signal
+        if (std::cin.eof()) {
+          onEndOfFile();
+          return;
+        }
+        // IV try to execute command
+        LOG_TRACE("received input >{}<", temp);
+        std::vector<std::string> flags = StringUtils::split(temp, ' ');
+        std::string input;
+        if (!flags.empty()) {
+          input = flags[0];
+          flags.erase(flags.begin());
+        }
+        if (m_menu.currentOf() != nullptr) {
+          onComponentCommand(input, flags);
+          return;
+        }
+        onCommand(input, flags);
+      };
+  std::function<void(const SymbolEvent &symbolEvent)> handleTab =
+      [&](const SymbolEvent &symbolEvent) {
+        if (symbolEvent.second.empty() && !tabPressed) {
+          CommandLineUtils::beep();
+          tabPressed = true;
+          printPrompt = false;
+          return;
+        }
+        if (!symbolEvent.second.empty()) {
+          return;
+        }
+        printPrompt = true;
+        tabPressed = false;
+        if (m_menu.currentOf() != nullptr) {
+          m_menu.printCommandList();
+          return;
+        }
+        m_commandParser.printCommandList();
+        return;
+      };
   while (m_running) {
     // I prompt
     if (printPrompt) {
       onPrompt();
     }
     // II read input
-    std::string temp;
     KeyEvent keyPressed = m_inputService->onRead();
     SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
-    if (symbolEvent.first == Symbol::Tab && symbolEvent.second.empty()) {
-      if (!tabPressed) {
-        CommandLineUtils::beep();
-        tabPressed = true;
+    switch (symbolEvent.first) {
+      case Symbol::Tab:
+        handleTab(symbolEvent);
+        break;
+      case Symbol::Command:
+        handleCommand(symbolEvent);
+        break;
+      case Symbol::Eof: {
+        tabPressed = false;
         printPrompt = false;
-        continue;
+        onEndOfFile();
+        break;
       }
-      if (m_menu.currentOf() != nullptr) {
-        m_menu.printCommandList();
-      } else {
-        m_commandParser.printCommandList();
+      default: {
+        tabPressed = false;
+        printPrompt = false;
+        break;
       }
-      printPrompt = true;
-      tabPressed = false;
-      continue;
     }
-    tabPressed = false;
-    if (symbolEvent.first != Symbol::Command) {
-      printPrompt = false;
-      continue;
-    }
-    printPrompt = true;
-    temp = symbolEvent.second;
-    bool isLoggedIn = m_userApi->isLoggedIn();
-    if (!isLoggedIn) {
-      std::cout << "WARNING: timeout of login server wise => shutdown cli\n";
-      SignalService::raiseSignal(SIGINT);
-      m_running.store(false);
-      continue;
-    }
-    // III handle EOF signal
-    if (std::cin.eof()) {
-      onEndOfFile();
-      continue;
-    }
-    // IV try to execute command
-    LOG_TRACE("received input >{}<", temp);
-    std::vector<std::string> flags = StringUtils::split(temp, ' ');
-    std::string input;
-    if (!flags.empty()) {
-      input = flags[0];
-      flags.erase(flags.begin());
-    }
-    if (m_menu.currentOf() != nullptr) {
-      onComponentCommand(input, flags);
-      continue;
-    }
-    onCommand(input, flags);
   }
 }
 
