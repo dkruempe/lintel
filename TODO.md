@@ -6,8 +6,6 @@
 - [ ] replace log4cxx with spdlog. Note for this spdlog need to have key system like log4cxx::MDC
 - [x] database implementation for postgres optimizations
 
-      - implement template for setting parameters and use StringifyService ?
-      - implement class for parameters ?
       - change string to string_view for performance 
       - switch to constexpr ?
       - better exception handling
