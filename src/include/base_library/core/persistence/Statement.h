@@ -1,7 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_STATEMENT_H
 #define CPP_BASE_LIBRARY_STATEMENT_H
-#include "Connection.h"
-#include "Result.h"
+#include "base_library/core/persistence/Connection.h"
+#include "base_library/core/persistence/ParameterBuilder.h"
+#include "base_library/core/persistence/Result.h"
 #include "base_library/core/persistence/postgresql/Statement.h"
 #include "base_library/core/persistence/sqlite3/Statement.h"
 namespace db {
@@ -16,8 +17,7 @@ class Statement {
 
   Result execute(const std::string &query);
 
-  Result execute(const std::string &query,
-                 const std::vector<std::string> &params);
+  Result execute(const std::string &query, const db::ParameterBuilder &builder);
 };
 }  // namespace db
 

@@ -23,6 +23,8 @@ std::optional<User> UserRepository::of(const std::string &userName) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(userName);
   db::Result result = statement.execute(R"(
   select group_name,
          first_name,
@@ -34,7 +36,7 @@ std::optional<User> UserRepository::of(const std::string &userName) {
   left join public.user_groups_relation ru
     on u.user_name = ru.user_name
   where u.user_name = ?)",
-                                        {userName});
+                                        builder);
   if (result.getSize() <= 0) {
     return std::nullopt;
   }
@@ -68,16 +70,18 @@ void UserRepository::deleteOf(const User &user) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(user.getUserName());
   statement.execute(R"(
     delete from public.user_groups_relation
     where user_name = ?
   )",
-                    {user.getUserName()});
+                    builder);
   statement.execute(R"(
     delete from public.user
     where user_name = ?
   )",
-                    {user.getUserName()});
+                    builder);
 }
 
 void UserRepository::createOf(const User &user) {
@@ -89,6 +93,13 @@ void UserRepository::createOf(const User &user) {
         date::format("%Y-%m-%d %H:%M:%S%Ez", user.getCreatedTimestamp());
     std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
     LOG_TRACE("created_timestamp = {}", createdTimestamp);
+    db::ParameterBuilder builder(m_connectionEntry);
+    builder.add(user.getUserName())
+        .add(user.getPassword())
+        .add(user.getEmail())
+        .add(user.getFirstName())
+        .add(user.getLastName())
+        .add(createdTimestamp);
     statement.execute(
         R"(
     insert into public.user (
@@ -100,8 +111,7 @@ void UserRepository::createOf(const User &user) {
     created_timestamp)
     values (?, ?, ?, ?, ?, ?)
   )",
-        {user.getUserName(), user.getPassword(), user.getEmail(),
-         user.getFirstName(), user.getLastName(), createdTimestamp});
+        builder);
   } catch (const db::SQLException &exception) {
     LOG_ERROR("cannot create new User {}", exception.what());
   }
@@ -118,7 +128,9 @@ void UserRepository::addGroupsOf(const User &user,
     if (user.has(iter)) {
       continue;
     }
-    statement.execute({user.getUserName(), iter.getGroupName()});
+    db::ParameterBuilder builder(m_connectionEntry);
+    builder.add(user.getUserName()).add(iter.getGroupName());
+    statement.execute(builder);
   }
 }
 
@@ -133,10 +145,12 @@ void UserRepository::addGroupOf(const User &user, const Group &group) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(user.getUserName()).add(group.getGroupName());
   statement.execute(R"(
     insert into user_groups_relation(user_name, group_name) values(?, ?)
   )",
-                    {user.getUserName(), group.getGroupName()});
+                    builder);
 }
 void UserRepository::removeGroupsOf(const User &user,
                                     const std::set<Group> &groups) {
@@ -149,7 +163,9 @@ void UserRepository::removeGroupsOf(const User &user,
     if (!user.has(iter)) {
       continue;
     }
-    preparedStatement.execute({user.getUserName(), iter.getGroupName()});
+    db::ParameterBuilder builder(m_connectionEntry);
+    builder.add(user.getUserName()).add(iter.getGroupName());
+    preparedStatement.execute(builder);
   }
 }
 void UserRepository::removeGroupOf(const User &user, const Group &group) {
@@ -159,10 +175,12 @@ void UserRepository::removeGroupOf(const User &user, const Group &group) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(user.getUserName()).add(group.getGroupName());
   statement.execute(R"(
     delete from user_groups_relation where user_name = ? and group_name = ?
   )",
-                    {user.getUserName(), group.getGroupName()});
+                    builder);
 }
 std::vector<User> UserRepository::allOf(const std::string &userNameMatches) {
   std::vector<User> users;
@@ -170,6 +188,8 @@ std::vector<User> UserRepository::allOf(const std::string &userNameMatches) {
     db::Connection connection(m_connectionEntry);
     db::Transaction transaction(connection);
     db::Statement statement(connection);
+    db::ParameterBuilder builder(m_connectionEntry);
+    builder.add(userNameMatches);
     db::Result result = statement.execute(R"(
     select ru.group_name,
            u.first_name,
@@ -183,7 +203,7 @@ std::vector<User> UserRepository::allOf(const std::string &userNameMatches) {
       on u.user_name = ru.user_name
     where u.user_name ~ ?
     order by u.user_name asc)",
-                                          {userNameMatches});
+                                          builder);
     std::string lastUserName;
     std::string lastFirstName;
     std::string lastLastName;
@@ -307,74 +327,86 @@ void UserRepository::changeFirstNameOf(const User &user,
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(firstName).add(user.getUserName());
   statement.execute(R"(
     update public.user
     set first_name = ?
     where user_name = ?
   )",
-                    {firstName, user.getUserName()});
+                    builder);
 }
 void UserRepository::changeLastNameOf(const User &user,
                                       const std::string &lastName) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(lastName).add(user.getUserName());
   statement.execute(R"(
     update public.user
     set last_name = ?
     where user_name = ?
   )",
-                    {lastName, user.getUserName()});
+                    builder);
 }
 void UserRepository::changeUserNameOf(const User &user,
                                       const std::string &userName) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(userName).add(user.getUserName());
   statement.execute(R"(
     update public.user
     set user_name = ?
     where user_name = ?
   )",
-                    {userName, user.getUserName()});
+                    builder);
 }
 void UserRepository::changePasswordOf(const User &user,
                                       const std::string &password) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(password).add(user.getUserName());
   statement.execute(R"(
     update public.user
     set password = ?
     where user_name = ?
   )",
-                    {password, user.getUserName()});
+                    builder);
 }
 void UserRepository::changeEMailOf(const User &user, const std::string &eMail) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(eMail).add(user.getUserName());
   statement.execute(R"(
     update public.user
     set e_mail = ?
     where user_name = ?
   )",
-                    {eMail, user.getUserName()});
+                    builder);
 }
 void UserRepository::deleteOf(const std::vector<std::string> &userNames) {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   db::Statement statement(connection);
   for (auto &userName : userNames) {
+    db::ParameterBuilder builder(m_connectionEntry);
+    builder.add(userName);
     statement.execute(R"(
     delete from public.user_groups_relation
     where user_name = ?
   )",
-                      {userName});
+                      builder);
     statement.execute(R"(
     delete from public.user
     where user_name = ?
   )",
-                      {userName});
+                      builder);
   }
 }

@@ -22,20 +22,6 @@ PreparedStatement::PreparedStatement(const Connection &connection,
   }
 }
 
-db::Result PreparedStatement::execute(const std::vector<std::string> &params) {
-  switch (m_connection.m_connectionType) {
-    case ConnectionType::SQLite:
-      m_preparedStatementSQLite->execute(params);
-      break;
-    case ConnectionType::PostgreSQL:
-      m_preparedStatement->execute(params);
-      break;
-    case ConnectionType::UNDEFINED:
-      throw db::SQLException("Undefined Database Type");
-  }
-  return Result();
-}
-
 int32_t PreparedStatement::initNParams(const std::string &tempStatement) {
   return postgresql::PreparedStatement::initNParams(tempStatement);
 }
@@ -54,5 +40,18 @@ void PreparedStatement::close() {
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
   }
+}
+Result PreparedStatement::execute(const ParameterBuilder &builder) {
+  switch (m_connection.m_connectionType) {
+    case ConnectionType::SQLite:
+      m_preparedStatementSQLite->execute(builder.build());
+      break;
+    case ConnectionType::PostgreSQL:
+      m_preparedStatement->execute(builder.build());
+      break;
+    case ConnectionType::UNDEFINED:
+      throw db::SQLException("Undefined Database Type");
+  }
+  return {};
 }
 }  // namespace db

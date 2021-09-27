@@ -1,8 +1,9 @@
 #ifndef CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
 #define CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
 
-#include "Connection.h"
-#include "Result.h"
+#include "base_library/core/persistence/Connection.h"
+#include "base_library/core/persistence/ParameterBuilder.h"
+#include "base_library/core/persistence/Result.h"
 #include "base_library/core/persistence/postgresql/PreparedStatement.h"
 #include "base_library/core/persistence/sqlite3/PreparedStatement.h"
 
@@ -11,7 +12,8 @@ class PreparedStatement {
  private:
   const Connection &m_connection;
   std::unique_ptr<postgresql::PreparedStatement> m_preparedStatement = nullptr;
-  std::unique_ptr<sqlite::PreparedStatement> m_preparedStatementSQLite = nullptr;
+  std::unique_ptr<sqlite::PreparedStatement> m_preparedStatementSQLite =
+      nullptr;
 
  public:
   static int32_t initNParams(const std::string &tempStatement);
@@ -29,7 +31,7 @@ class PreparedStatement {
 
   ~PreparedStatement() = default;
 
-  Result execute(const std::vector<std::string> &params);
+  Result execute(const ParameterBuilder &builder);
 
   void close();
 };

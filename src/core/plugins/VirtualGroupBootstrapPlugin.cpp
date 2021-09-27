@@ -7,7 +7,8 @@
 #include "base_library/core/utils/StringUtils.h"
 
 VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
-    const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
+    const std::shared_ptr<DatabaseConnectionConfigurations>
+        &connectionConfigurations,
     std::vector<std::shared_ptr<GroupProvider>> groupProviders)
     : m_groupProviders(std::move(groupProviders)),
       m_connectionEntry(connectionConfigurations->of("DEFAULT")) {}
@@ -29,9 +30,9 @@ void VirtualGroupBootstrapPlugin::onStart() {
         "CONSTRAINT group_pk DO NOTHING",
         "insert_group");
     for (const auto &group : groups) {
-      statement.execute(
-          {group.getGroupName(), db::Serialization<bool>::serialize(
-                                     group.isVirtual(), m_connectionEntry)});
+      db::ParameterBuilder builder(m_connectionEntry);
+      builder.add(group.getGroupName()).add(group.isVirtual());
+      statement.execute(builder);
     }
     statement.close();
   }
@@ -55,12 +56,16 @@ void VirtualGroupBootstrapPlugin::onStart() {
       bool isAdminGroup =
           StringUtils::startsWith(group.getGroupName(), "Admin");
       if (isAdminGroup) {
-        statement.execute({"Admin", group.getGroupName()});
+        db::ParameterBuilder builder(m_connectionEntry);
+        builder.add<std::string>("Admin").add(group.getGroupName());
+        statement.execute(builder);
         continue;
       }
       bool isUserGroup = StringUtils::startsWith(group.getGroupName(), "User");
       if (isUserGroup) {
-        statement.execute({"User", group.getGroupName()});
+        db::ParameterBuilder builder(m_connectionEntry);
+        builder.add<std::string>("User").add(group.getGroupName());
+        statement.execute(builder);
         continue;
       }
     }

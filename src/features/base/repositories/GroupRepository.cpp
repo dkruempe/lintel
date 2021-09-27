@@ -147,24 +147,26 @@ void GroupRepository::createOf(const Group& group) {
   db::PreparedStatement preparedStatement(
       connection, "insert into public.group(name, virtual) values(?, ?)",
       "insert_group");
-  preparedStatement.execute(
-      {group.getGroupName(), group.isVirtual() ? "t" : "f"});
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(group.getGroupName()).add(group.isVirtual());
+  preparedStatement.execute(builder);
   m_groupMap.insert({group.getGroupName(), group});
   m_groups.push_back(group);
 }
 void GroupRepository::deleteOf(const Group& group) {
   db::Connection connection(m_connectionEntry);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(group.getGroupName());
   db::Result result = statement.execute(
       "select user_name, group_name from public.user_groups_relation where "
       "group_name = ?",
-      {group.getGroupName()});
+      builder);
   if (result.getSize() > 0) {
     throw std::runtime_error(
         "cannot remove group which is in usage of an user");
   }
-  statement.execute("delete from public.group where name = ?",
-                    {group.getGroupName()});
+  statement.execute("delete from public.group where name = ?", builder);
 }
 void GroupRepository::addGroupOf(const Group& group, const Group& add) {
   auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(),
@@ -184,11 +186,12 @@ void GroupRepository::addGroupOf(const Group& group, const Group& add) {
   }
   db::Connection connection(m_connectionEntry);
   db::Statement statement(connection);
-  db::Result result =
-      statement.execute(R"(
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(group.getGroupName()).add(add.getGroupName());
+  db::Result result = statement.execute(R"(
     insert into group_groups_relation(group_name, base_group_name) values(?,?)
   )",
-                        {group.getGroupName(), add.getGroupName()});
+                                        builder);
 }
 void GroupRepository::removeGroupOf(const Group& group, const Group& remove) {
   auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(),
@@ -200,10 +203,12 @@ void GroupRepository::removeGroupOf(const Group& group, const Group& remove) {
   }
   db::Connection connection(m_connectionEntry);
   db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(group.getGroupName()).add(remove.getGroupName());
   db::Result result = statement.execute(
       R"(
     delete from group_groups_relation(group_name, base_group_name) where group_name = ? and base_group_name = ?
       )",
-      {group.getGroupName(), remove.getGroupName()});
+      builder);
 }
 void GroupRepository::onInitialize() { initGroups(); }

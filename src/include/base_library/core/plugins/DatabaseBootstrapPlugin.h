@@ -68,19 +68,21 @@ class DatabaseBootstrapPlugin : public BootstrapPlugin {
       const std::map<std::string, std::vector<FileInformation>>& initFiles,
       const std::map<std::string, int32_t>& schemaVersions);
 
-  static void updateSchemaVersion(const db::Connection& connection,
-                                  const std::string& schemaName,
-                                  int32_t schemaVersion, bool insert = true);
+  static void updateSchemaVersion(
+      const db::Connection& connection,
+      const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry,
+      const std::string& schemaName, int32_t schemaVersion, bool insert = true);
 
   static std::string schemaNameOf(const std::string& fileName);
 
   static int32_t versionOf(const std::string& version);
 
-  void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+  void handle(const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry);
 
  public:
   explicit DatabaseBootstrapPlugin(
-      std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations);
+      std::shared_ptr<DatabaseConnectionConfigurations>
+          connectionConfigurations);
   void onStart() override;
   BootstrapSequence getPriority() override;
 };

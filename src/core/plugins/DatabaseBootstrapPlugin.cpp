@@ -12,7 +12,8 @@ void DatabaseBootstrapPlugin::onStart() {
     try {
       handle(connectionEntry);
     } catch (const db::SQLException &exception) {
-      LOG_ERROR("{} - failed to ahndle database bootstrap plugin - {}", connectionEntry->getName(), exception.what());
+      LOG_ERROR("{} - failed to ahndle database bootstrap plugin - {}",
+                connectionEntry->getName(), exception.what());
       throw exception;
     } catch (std::exception &exception) {
       LOG_ERROR("{} - failed to handle database bootstrap plugin - {}",
@@ -170,8 +171,8 @@ void DatabaseBootstrapPlugin::initDatabase(
         statement.execute(token);
       }
     }
-    updateSchemaVersion(connection, schemaName, currentSchemaVersion,
-                        schemaVersionStart == 0);
+    updateSchemaVersion(connection, connectionEntry, schemaName,
+                        currentSchemaVersion, schemaVersionStart == 0);
   }
 }
 std::string DatabaseBootstrapPlugin::schemaNameOf(const std::string &fileName) {
@@ -191,19 +192,24 @@ int32_t DatabaseBootstrapPlugin::versionOf(const std::string &fileName) {
       fileName.substr(beginPos + 9, fileName.length() - beginPos - 9));
 }
 void DatabaseBootstrapPlugin::updateSchemaVersion(
-    const db::Connection &connection, const std::string &schemaName,
-    int32_t schemaVersion, bool insert) {
+    const db::Connection &connection,
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
+    const std::string &schemaName, int32_t schemaVersion, bool insert) {
   if (schemaVersion <= 0) {
     // no persistence
     return;
   }
   if (insert) {
     db::Statement statement(connection);
+    db::ParameterBuilder builder(connectionEntry);
+    builder.add(schemaName).add(schemaVersion);
     statement.execute("insert into schema_version(name, version) values(?, ?)",
-                      {schemaName, std::to_string(schemaVersion)});
+                      builder);
     return;
   }
   db::Statement statement(connection);
+  db::ParameterBuilder builder(connectionEntry);
+  builder.add(schemaVersion).add(schemaName);
   statement.execute("update schema_version set version = ? where name = ?",
-                    {std::to_string(schemaVersion), schemaName});
+                    builder);
 }

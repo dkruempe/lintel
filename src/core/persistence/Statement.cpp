@@ -27,19 +27,19 @@ Result Statement::execute(const std::string &query) {
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
   }
-  return Result();
+  return {};
 }
 Result Statement::execute(const std::string &query,
-                          const std::vector<std::string> &params) {
+                          const ParameterBuilder &builder) {
   switch (m_connection.m_connectionType) {
     case ConnectionType::SQLite:
-      return Result(m_statementSQLite->execute(query, params));
+      return Result(m_statementSQLite->execute(query, builder.build()));
       break;
     case ConnectionType::PostgreSQL:
-      return Result(m_statement->execute(query, params));
+      return Result(m_statement->execute(query, builder.build()));
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
   }
-  return Result();
+  return {};
 }
 }  // namespace db

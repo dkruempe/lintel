@@ -11,10 +11,13 @@ class DatabasePropertyRepository : public PropertyRepository {
  private:
   std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
   std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
+  DataStorage m_currentDataStorage =
+      DataStorage(PropertyRepositoryType::DATABASE_REPOSITORY, "");
 
  public:
   explicit DatabasePropertyRepository(
-      std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations);
+      std::shared_ptr<DatabaseConnectionConfigurations>
+          connectionConfigurations);
 
   PropertyRepositoryType getType() override;
 

@@ -18,7 +18,7 @@ PropertyRepositoryType DatabasePropertyRepository::getType() {
   return PropertyRepositoryType::DATABASE_REPOSITORY;
 }
 DataStorage DatabasePropertyRepository::getDataStorage() {
-  return DataStorage(PropertyRepositoryType::DATABASE_REPOSITORY, "");
+  return m_currentDataStorage;
 }
 bool DatabasePropertyRepository::isMutable() { return true; }
 void DatabasePropertyRepository::save(
@@ -48,10 +48,15 @@ void DatabasePropertyRepository::save(
     db::PreparedStatement preparedStatement(connection, query,
                                             "update_properties");
     for (const auto& item : properties) {
-      preparedStatement.execute({item->getName(), item->getInstanceName(),
-                                 item->getClassName(), item->getProcessName(),
-                                 item->getType(), item->toString(),
-                                 item->toString()});
+      db::ParameterBuilder builder(m_connectionEntry);
+      builder.add(item->getName())
+          .add(item->getInstanceName())
+          .add(item->getClassName())
+          .add(item->getProcessName())
+          .add(item->getType())
+          .add(item->toString())
+          .add(item->toString());
+      preparedStatement.execute(builder);
     }
   } catch (db::SQLException& exception) {
     LOG_ERROR("failed to update property {}", exception.what());
