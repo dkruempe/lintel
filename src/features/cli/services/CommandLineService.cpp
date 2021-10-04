@@ -19,9 +19,10 @@ CommandLineService::CommandLineService(
     std::shared_ptr<UserApi> userApi,
     std::shared_ptr<CommandLineUtils> commandLineUtils,
     std::shared_ptr<InputService> inputService,
-    std::shared_ptr<TerminalService> terminalService)
-    : m_menu(components),
-      m_thread([&]() { run(); }),
+    std::shared_ptr<TerminalService> terminalService,
+    std::shared_ptr<ProcessName> processName)
+    : AbstractService<CommandLineService>(processName->getProcessName()),
+      m_menu(components),
       m_authCliService(std::move(authCliService)),
       m_userApi(std::move(userApi)),
       m_commandLineUtils(std::move(commandLineUtils)),
@@ -212,4 +213,7 @@ void CommandLineService::onCommand(const std::string &input,
     default:
       break;
   }
+}
+void CommandLineService::onInitialize() {
+  m_thread = std::thread([&]() { run(); });
 }

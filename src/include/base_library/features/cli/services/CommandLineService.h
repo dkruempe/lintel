@@ -8,6 +8,7 @@
 #include <thread>
 #include <vector>
 
+#include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
 #include "base_library/features/cli/models/CommandParser.h"
@@ -19,7 +20,7 @@
 
 class CommandLineComponent;
 
-class CommandLineService {
+class CommandLineService : public AbstractService<CommandLineService> {
  private:
   enum Commands {
     CommandHelp,
@@ -65,8 +66,11 @@ class CommandLineService {
       std::shared_ptr<UserApi> userApi,
       std::shared_ptr<CommandLineUtils> commandLineUtils,
       std::shared_ptr<InputService> inputService,
-      std::shared_ptr<TerminalService> terminalService);
+      std::shared_ptr<TerminalService> terminalService,
+      std::shared_ptr<ProcessName> processName);
   ~CommandLineService();
+
+  void onInitialize() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_COMMANDLINESERVICE_H

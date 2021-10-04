@@ -17,6 +17,7 @@
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/InitializeService.h"
+#include "base_library/features/base/services/ProcessArgumentService.h"
 #include "base_library/features/base/services/SchedulerService.h"
 
 BaseFeature::BaseFeature() : Feature(type_name<BaseFeature>()) {}
@@ -70,4 +71,5 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .asSelf()
       .singleInstance();
   builder.registerType<UserRepository>().singleInstance();
+  builder.registerType<ProcessArgumentService>().singleInstance();
 }

@@ -18,9 +18,10 @@ class StartupBuilder {
   std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
   static StartupBuilder *m_startupBuilder;
   std::condition_variable m_conditionVariable;
+  std::vector<std::string> m_arguments;
 
-  explicit StartupBuilder(Process::ProcessInfo &&processInfo,
-                          ProcessName &&processName);
+  StartupBuilder(Process::ProcessInfo &&processInfo, ProcessName &&processName,
+                 std::vector<std::string> &&arguments);
 
  public:
   StartupBuilder() = delete;

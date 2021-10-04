@@ -9,14 +9,17 @@
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/InitializeService.h"
+#include "base_library/features/base/services/ProcessArgumentService.h"
 
 StartupBuilder *StartupBuilder::m_startupBuilder = nullptr;
 
 StartupBuilder::StartupBuilder(Process::ProcessInfo &&processInfo,
-                               ProcessName &&name)
+                               ProcessName &&name,
+                               std::vector<std::string> &&arguments)
     : m_processInfo(
           std::make_shared<Process::ProcessInfo>(std::move(processInfo))),
-      m_name(std::make_shared<ProcessName>(std::move(name))) {
+      m_name(std::make_shared<ProcessName>(std::move(name))),
+      m_arguments(std::move(arguments)) {
   signal(SIGINT, StartupBuilder::receiveSignal);
   signal(SIGCHLD, StartupBuilder::receiveSignal);
   signal(SIGTERM, StartupBuilder::receiveSignal);
@@ -25,8 +28,14 @@ StartupBuilder::StartupBuilder(Process::ProcessInfo &&processInfo,
 StartupBuilder &StartupBuilder::with(int argc, char *argv[]) {
   Process::ProcessInfo info = ProcessService::ofCurrentProcess(argc, argv);
   ProcessName name(argc, argv);
+  std::vector<std::string> arguments;
+  // ignore name of process => start with 1
+  for (int i = 1; i < argc; i++) {
+    arguments.push_back(argv[i]);
+  }
   DECLARE_LOGGER(info.name);
-  m_startupBuilder = new StartupBuilder(std::move(info), std::move(name));
+  m_startupBuilder = new StartupBuilder(std::move(info), std::move(name),
+                                        std::move(arguments));
   return *m_startupBuilder;
 }
 
@@ -55,6 +64,9 @@ StartupBuilder &StartupBuilder::start() {
   for (auto &&feature : m_features) {
     feature->initialize(m_container);
   }
+  std::shared_ptr<ProcessArgumentService> processArgumentService =
+      m_container->resolve<ProcessArgumentService>();
+  processArgumentService->parseArguments(m_arguments);
   // awake all from persistence
   std::shared_ptr<PersistableService> persistableService =
       m_container->resolve<PersistableService>();

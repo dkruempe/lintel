@@ -1,8 +1,8 @@
 <Configuration>
     <DatabaseConnections>
-        <!--<Connection name="DEFAULT" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite"/>-->
+        <!--<DatabaseConnection name="DEFAULT" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite"/>-->
         <DatabaseConnection name="DEFAULT" user_name="dkruempe" password="${ADMIN_PASSWORD}" database_name="keyValueStore"
-                    type="PostgreSQL"/>
+                            type="PostgreSQL"/>
     </DatabaseConnections>
     <HttpHost>
         <Server host="0.0.0.0" port="8080"/>
