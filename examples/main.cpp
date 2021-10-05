@@ -5,11 +5,11 @@
 #include <base_library/features/property/PropertyFeature.h>
 
 int main(int argc, char *argv[]) {
-  StartupBuilder &builder = StartupBuilder::with(argc, argv)
-                                .addFeature<PropertyFeature>()
-                                .addFeature<BaseFeature>()
-                                .addFeature<CommandLineFeature>()
-                                .addFeature<HttpFeature>()
-                                .start();
+  std::shared_ptr<StartupBuilder> builder = StartupBuilder::with(argc, argv);
+  builder->addFeature<PropertyFeature>();
+  builder->addFeature<BaseFeature>();
+  builder->addFeature<CommandLineFeature>();
+  builder->addFeature<HttpFeature>();
+  builder->start();
   return 0;
 }

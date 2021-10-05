@@ -25,7 +25,7 @@ StartupBuilder::StartupBuilder(Process::ProcessInfo &&processInfo,
   signal(SIGTERM, StartupBuilder::receiveSignal);
 }
 
-StartupBuilder &StartupBuilder::with(int argc, char *argv[]) {
+std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
   Process::ProcessInfo info = ProcessService::ofCurrentProcess(argc, argv);
   ProcessName name(argc, argv);
   std::vector<std::string> arguments;
@@ -34,9 +34,10 @@ StartupBuilder &StartupBuilder::with(int argc, char *argv[]) {
     arguments.push_back(argv[i]);
   }
   DECLARE_LOGGER(info.name);
-  m_startupBuilder = new StartupBuilder(std::move(info), std::move(name),
-                                        std::move(arguments));
-  return *m_startupBuilder;
+  std::shared_ptr<StartupBuilder> builder = std::make_shared<StartupBuilder>(
+      std::move(info), std::move(name), std::move(arguments));
+  m_startupBuilder = builder.get();
+  return builder;
 }
 
 void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
@@ -47,7 +48,7 @@ void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
                    m_features.end());
 }
 
-StartupBuilder &StartupBuilder::start() {
+void StartupBuilder::start() {
   // injection
   Hypodermic::ContainerBuilder builder;
   for (auto &&feature : m_features) {
@@ -80,19 +81,18 @@ StartupBuilder &StartupBuilder::start() {
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   m_conditionVariable.wait(lock);
-  return *this;
 }
 
 void StartupBuilder::receiveSignal(int signal) {
   switch (signal) {
-    case SIGINT:
-    case SIGCHLD:
-    case SIGTERM:
-      m_startupBuilder->onShutdown();
-      break;
-    default:
-      LOG_ERROR("{} undefined signal", signal);
-      break;
+  case SIGINT:
+  case SIGCHLD:
+  case SIGTERM:
+    m_startupBuilder->onShutdown();
+    break;
+  default:
+    LOG_ERROR("{} undefined signal", signal);
+    break;
   }
 }
 

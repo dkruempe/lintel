@@ -21,8 +21,7 @@ CommandLineService::CommandLineService(
     std::shared_ptr<TerminalService> terminalService,
     std::shared_ptr<ProcessName> processName)
     : AbstractService<CommandLineService>(processName->getProcessName()),
-      m_menu(components),
-      m_authCliService(std::move(authCliService)),
+      m_menu(components), m_authCliService(std::move(authCliService)),
       m_userApi(std::move(userApi)),
       m_commandLineUtils(std::move(commandLineUtils)),
       m_inputService(std::move(inputService)),
@@ -43,7 +42,9 @@ CommandLineService::CommandLineService(
 CommandLineService::~CommandLineService() {
   m_running.store(false);
   LOG_TRACE("finish command line service");
-  m_thread.join();
+  if (m_thread.joinable()) {
+    m_thread.join();
+  }
   LOG_INFO("stopped command line service");
 }
 void CommandLineService::onComponentCommand(
@@ -54,20 +55,20 @@ void CommandLineService::onComponentCommand(
     return;
   }
   switch (command) {
-    case CommandHelp:
-      m_menu.onHelp();
-      break;
-    case CommandMenu:
-      m_menu.onShowMenu();
-      break;
-    case CommandExit:
-      m_menu.onExit();
-      break;
-    case CommandClear:
-      CommandLineUtils::clear();
-      break;
-    default:
-      break;
+  case CommandHelp:
+    m_menu.onHelp();
+    break;
+  case CommandMenu:
+    m_menu.onShowMenu();
+    break;
+  case CommandExit:
+    m_menu.onExit();
+    break;
+  case CommandClear:
+    CommandLineUtils::clear();
+    break;
+  default:
+    break;
   }
 }
 void CommandLineService::onStart() { m_userDto = m_authCliService->onLogin(); }
@@ -150,25 +151,30 @@ void CommandLineService::run() {
     KeyEvent keyPressed = m_inputService->onRead();
     SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
     switch (symbolEvent.first) {
-      case Symbol::Tab:
-        handleTab(symbolEvent);
-        break;
-      case Symbol::Command:
-        handleCommand(symbolEvent);
-        break;
-      case Symbol::Eof: {
-        tabPressed = false;
-        printPrompt = false;
-        onEndOfFile();
-        break;
-      }
-      default: {
-        tabPressed = false;
-        printPrompt = false;
-        break;
-      }
+    case Symbol::Tab:
+      handleTab(symbolEvent);
+      break;
+    case Symbol::Command:
+      handleCommand(symbolEvent);
+      break;
+    case Symbol::Eof: {
+      tabPressed = false;
+      printPrompt = false;
+      onEndOfFile();
+      break;
+    }
+    default: {
+      tabPressed = false;
+      printPrompt = false;
+      break;
+    }
+    }
+    if (!m_running) {
+      LOG_TRACE("abort loop");
+      break;
     }
   }
+  LOG_TRACE("finished endless loop");
 }
 
 void CommandLineService::onEndOfFile() {
@@ -191,26 +197,26 @@ void CommandLineService::onCommand(const std::string &input,
     }
   }
   switch (command) {
-    case CommandExit:
-      m_authCliService->onLogout(std::move(m_userDto));
-      SignalService::raiseSignal(SIGINT);
-      m_running.store(false);
+  case CommandExit:
+    m_authCliService->onLogout(std::move(m_userDto));
+    SignalService::raiseSignal(SIGINT);
+    m_running.store(false);
+    break;
+  case CommandHelp:
+    if (m_helpComponentName.has_value()) {
+      m_commandParser.printHelp(m_helpComponentName.value());
       break;
-    case CommandHelp:
-      if (m_helpComponentName.has_value()) {
-        m_commandParser.printHelp(m_helpComponentName.value());
-        break;
-      }
-      onHelp();
-      break;
-    case CommandClear:
-      CommandLineUtils::clear();
-      break;
-    case CommandMenu:
-      m_menu.onShowMenu();
-      break;
-    default:
-      break;
+    }
+    onHelp();
+    break;
+  case CommandClear:
+    CommandLineUtils::clear();
+    break;
+  case CommandMenu:
+    m_menu.onShowMenu();
+    break;
+  default:
+    break;
   }
 }
 void CommandLineService::onInitialize() {

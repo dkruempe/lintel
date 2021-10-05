@@ -3,6 +3,7 @@
 
 #include <date/tz.h>
 
+#include <atomic>
 #include <chrono>
 #include <optional>
 
@@ -29,7 +30,7 @@ struct UserToken {
 };
 
 class AuthService : public AbstractService<AuthService> {
- private:
+private:
   // properties
   DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),
                   "schedule rate of user tokens checks in seconds", true);
@@ -39,15 +40,16 @@ class AuthService : public AbstractService<AuthService> {
   std::map<std::string, UserToken> m_userTokens;
   std::shared_ptr<UserRepository> m_userRepository;
   std::shared_ptr<SchedulerService> m_scheduler;
+  std::atomic_bool m_running = true;
 
   void onCheck();
 
- public:
+public:
   AuthService(const std::shared_ptr<ProcessName> &processName,
               std::shared_ptr<UserRepository> userRepository,
               std::shared_ptr<SchedulerService> schedulerService);
 
-  virtual ~AuthService() = default;
+  virtual ~AuthService();
 
   std::optional<UserToken> onLoginOf(const UserLogin &userLogin);
 
@@ -58,4 +60,4 @@ class AuthService : public AbstractService<AuthService> {
   void onInitialize() override;
 };
 
-#endif  // CPP_BASE_LIBRARY_AUTHSERVICE_H
+#endif // CPP_BASE_LIBRARY_AUTHSERVICE_H

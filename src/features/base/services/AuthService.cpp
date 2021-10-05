@@ -94,8 +94,12 @@ void AuthService::onCheck() {
   for (const auto &iter : toBeRemoved) {
     m_userTokens.erase(iter);
   }
-  m_scheduler->schedule_after(m_scheduleRate->getValue(), [&]() { onCheck(); });
+  if (m_running) {
+    m_scheduler->schedule_after(m_scheduleRate->getValue(),
+                                [&]() { onCheck(); });
+  }
 }
 void AuthService::onInitialize() {
   m_scheduler->schedule_after(m_scheduleRate->getValue(), [&]() { onCheck(); });
 }
+AuthService::~AuthService() { m_running.store(false); }
