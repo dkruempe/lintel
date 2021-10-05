@@ -45,7 +45,7 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin) {
   std::string id = UUID::generate();
   UserToken userToken{userLogin.m_ipAddress, id,
                       std::chrono::time_point_cast<std::chrono::microseconds>(
-                          std::chrono::high_resolution_clock::now()),
+                          std::chrono::system_clock::now()),
                       user};
   m_userTokens.insert({userToken.m_id, userToken});
   LOG_INFO("{}: {} {} success full login", userLogin.m_ipAddress,
@@ -62,7 +62,7 @@ AuthService::onAccessOf(const UserTokenLogin &userTokenLogin) {
   }
   found->second.m_lastAccessTimestamps =
       std::chrono::time_point_cast<std::chrono::microseconds>(
-          std::chrono::high_resolution_clock::now());
+          std::chrono::system_clock::now());
   return std::make_optional(found->second);
 }
 void AuthService::onLogoutOf(const UserTokenLogin &userToken) {
@@ -81,7 +81,7 @@ void AuthService::onLogoutOf(const UserTokenLogin &userToken) {
 void AuthService::onCheck() {
   date::sys_time<std::chrono::microseconds> now =
       std::chrono::time_point_cast<std::chrono::microseconds>(
-          std::chrono::high_resolution_clock::now());
+          std::chrono::system_clock::now());
   std::vector<std::string> toBeRemoved;
   for (auto &iter : m_userTokens) {
     if ((now - iter.second.m_lastAccessTimestamps) <

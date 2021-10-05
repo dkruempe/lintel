@@ -42,7 +42,7 @@ public:
        std::string userName, std::string password, std::vector<Group> groups,
        date::sys_time<std::chrono::microseconds> createdTimestamp =
            std::chrono::time_point_cast<std::chrono::microseconds>(
-               std::chrono::high_resolution_clock::now()));
+               std::chrono::system_clock::now()));
   [[nodiscard]] const std::string &getFirstName() const;
   [[nodiscard]] const std::string &getLastName() const;
   [[nodiscard]] Sex getSex() const;
