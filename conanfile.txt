@@ -17,4 +17,6 @@ date/3.0.1
 cmake_find_package
 
 [options]
+fmt:header_only=True
 cpp-httplib:with_openssl=True
+spdlog:header_only=True

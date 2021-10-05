@@ -1,5 +1,4 @@
 #include "base_library/features/cli/services/CommandLineService.h"
-#define FMT_HEADER_ONLY
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 

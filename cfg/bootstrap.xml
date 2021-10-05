@@ -1,7 +1,7 @@
 <Configuration>
     <DatabaseConnections>
         <!--<DatabaseConnection name="DEFAULT" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite"/>-->
-        <DatabaseConnection name="DEFAULT" user_name="dkruempe" password="${ADMIN_PASSWORD}" database_name="keyValueStore"
+        <DatabaseConnection name="DEFAULT" user_name="dkruempe" password="${ADMIN_PASSWORD}" connection="127.0.0.1" database_name="keyValueStore"
                             type="PostgreSQL"/>
     </DatabaseConnections>
     <HttpHost>

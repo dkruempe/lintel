@@ -4,7 +4,6 @@
 /**
  * LoggerService class for easier logging in process itself
  */
-#define FMT_HEADER_ONLY
 #include <fmt/format.h>
 #include <log4cxx/log4cxx.h>
 #include <log4cxx/logger.h>

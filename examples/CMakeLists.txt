@@ -31,6 +31,7 @@ find_package(spdlog REQUIRED)
 find_package(httplib REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(date REQUIRED)
+find_package(spdlog REQUIRED)
 find_package(Boost 1.75.0 REQUIRED COMPONENTS container) # interprocess process asio are header only libraries
 
 # spdlog example

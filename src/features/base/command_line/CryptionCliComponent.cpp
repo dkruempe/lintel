@@ -1,5 +1,4 @@
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
-#define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
 #include <utility>
