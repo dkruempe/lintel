@@ -18,6 +18,7 @@ enum class KeyType {
   End,
   Ret,
   Eof,
+  CtrlC,
   Ignored
 };
 

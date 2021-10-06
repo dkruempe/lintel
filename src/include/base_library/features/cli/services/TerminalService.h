@@ -6,7 +6,7 @@
 #include <string>
 #include <utility>
 
-enum class Symbol { Nothing, Command, Up, Down, Tab, Eof };
+enum class Symbol { Nothing, Command, Up, Down, Tab, Eof, CtrlC };
 using SymbolEvent = std::pair<Symbol, std::string>;
 
 class TerminalService {

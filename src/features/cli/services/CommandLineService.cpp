@@ -151,6 +151,9 @@ void CommandLineService::run() {
     KeyEvent keyPressed = m_inputService->onRead();
     SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
     switch (symbolEvent.first) {
+    case Symbol::CtrlC:
+      onEndOfFile();
+      break;
     case Symbol::Tab:
       handleTab(symbolEvent);
       break;
