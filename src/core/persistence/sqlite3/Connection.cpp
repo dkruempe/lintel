@@ -13,7 +13,8 @@ Connection::Connection(const std::string &connectionInfo) : m_db(nullptr) {
     throw db::SQLException("Can't open database: " + getErrorMessage());
   }
 }
-Connection::Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
+Connection::Connection(
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
     : m_db(nullptr) {
   int rc = sqlite3_open(connectionEntry->getConnection().c_str(), &m_db);
   if (rc != SQLITE_OK) {

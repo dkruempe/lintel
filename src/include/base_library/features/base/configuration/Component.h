@@ -18,9 +18,9 @@ class Component {
 
   [[nodiscard]] const std::string &getConfigRoot() const;
 
-  virtual std::vector<std::shared_ptr<Entry>> parse(
-      const std::string &content, const std::string &fileName,
-      int32_t lineOffset) = 0;
+  virtual std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
+                                                    const std::string &fileName,
+                                                    int32_t lineOffset) = 0;
 };
 
 #endif  // CPP_BASE_LIBRARY_COMPONENT_H

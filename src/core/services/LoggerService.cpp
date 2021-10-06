@@ -22,7 +22,8 @@ LoggerService::LoggerService(const std::string &processName)
 }
 
 LoggerService::LoggerService()
-    : m_processName("DUMMY"), m_logger(log4cxx::Logger::getLogger(m_processName)) {
+    : m_processName("DUMMY"),
+      m_logger(log4cxx::Logger::getLogger(m_processName)) {
   configure(true);
 }
 

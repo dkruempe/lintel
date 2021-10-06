@@ -15,26 +15,26 @@
 #include "base_library/features/http/service/ContentType.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 
-#define ADD_HANDLER_METHOD(pattern, httpType, name)                       \
-  Handler name##httpType##Function =                                      \
-      addMethod<std::function<HandlerArgs>, httpType>(                    \
-          pattern, [&](const httplib::Request &request,       \
-                                   httplib::Response &response) {         \
-            std::string auth = request.get_header_value("Authorization"); \
-            const std::string contentTypeString =                         \
-                request.get_header_value("Content-Type");                 \
-            ContentType contentType(contentTypeString);                   \
-            bool isBearerToken = StringUtils::startsWith(auth, "Bearer"); \
-            std::optional<UserToken> user = std::nullopt;                 \
-            if (isBearerToken) {                                          \
-              std::string id = auth.substr(7);                            \
-              UserTokenLogin userTokenLogin{request.remote_addr, id};     \
-              user = m_authService->onAccessOf(userTokenLogin);           \
-            }                                                             \
-            name##httpType(request, response, contentType, user);         \
-          });                                                             \
-  void name##httpType(                                                    \
-      const httplib::Request &request, httplib::Response &response,       \
+#define ADD_HANDLER_METHOD(pattern, httpType, name)                           \
+  Handler name##httpType##Function =                                          \
+      addMethod<std::function<HandlerArgs>, httpType>(                        \
+          pattern,                                                            \
+          [&](const httplib::Request &request, httplib::Response &response) { \
+            std::string auth = request.get_header_value("Authorization");     \
+            const std::string contentTypeString =                             \
+                request.get_header_value("Content-Type");                     \
+            ContentType contentType(contentTypeString);                       \
+            bool isBearerToken = StringUtils::startsWith(auth, "Bearer");     \
+            std::optional<UserToken> user = std::nullopt;                     \
+            if (isBearerToken) {                                              \
+              std::string id = auth.substr(7);                                \
+              UserTokenLogin userTokenLogin{request.remote_addr, id};         \
+              user = m_authService->onAccessOf(userTokenLogin);               \
+            }                                                                 \
+            name##httpType(request, response, contentType, user);             \
+          });                                                                 \
+  void name##httpType(                                                        \
+      const httplib::Request &request, httplib::Response &response,           \
       const ContentType &contentType, const std::optional<UserToken> &user)
 #define ADD_HANDLER_CONTENT_READER_METHOD(pattern, httpType, name)          \
   HandlerWithContentReader name##httpType##Function =                       \

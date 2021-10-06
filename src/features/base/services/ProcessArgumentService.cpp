@@ -114,8 +114,10 @@ ArgumentProvider::ArgumentProvider(std::vector<Argument> arguments)
     : m_arguments(std::move(arguments)) {}
 Argument::Argument(std::string flag, std::string shortFlag,
                    std::string description, const Argument::Value &value)
-    : m_flag(std::move(flag)), m_shortFlag(std::move(shortFlag)),
-      m_description(std::move(description)), m_value(value) {}
+    : m_flag(std::move(flag)),
+      m_shortFlag(std::move(shortFlag)),
+      m_description(std::move(description)),
+      m_value(value) {}
 void Argument::printHelp(std::ostream &os) const {
   os << "\t" << m_flag << ", " << m_shortFlag << " " << m_description << "\n";
 }
@@ -147,9 +149,10 @@ void Argument::parse(const std::string &argument) {
   }
   // In all other cases there must be a value.
   else if (argument.empty()) {
-    throw std::runtime_error("Failed to parse command line arguments: "
-                             "Missing value for argument \"" +
-                             m_shortFlag + "\"!");
+    throw std::runtime_error(
+        "Failed to parse command line arguments: "
+        "Missing value for argument \"" +
+        m_shortFlag + "\"!");
   }
   // For a std::string, we take the entire value.
   else if (std::holds_alternative<std::string *>(m_value)) {

@@ -24,11 +24,11 @@ void StopWatchService::stop() {
 std::chrono::nanoseconds StopWatchService::elapsed() const {
   if (m_stopVar) {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(m_endTime -
-                                                                    m_startTime);
+                                                                m_startTime);
   }
   if (!m_run) {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(m_startTime -
-                                                                    m_startTime);
+                                                                m_startTime);
   }
   return std::chrono::duration_cast<std::chrono::nanoseconds>(
       std::chrono::steady_clock::now() - m_startTime);

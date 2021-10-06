@@ -1,9 +1,10 @@
 #ifndef CPP_BASE_LIBRARY_GROUPDTO_H
 #define CPP_BASE_LIBRARY_GROUPDTO_H
 
+#include <memory>
+
 #include "base_library/core/models/JsonSerializable.h"
 #include "base_library/features/base/models/Group.h"
-#include <memory>
 
 class GroupsDto;
 

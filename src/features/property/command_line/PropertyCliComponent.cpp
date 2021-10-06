@@ -1,4 +1,5 @@
 #include "base_library/features/property/command_line/PropertyCliComponent.h"
+
 #include <tabulate/table.hpp>
 
 #include "base_library/core/services/LoggerService.h"

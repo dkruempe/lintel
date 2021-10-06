@@ -18,9 +18,7 @@ int Result::getNumOfAttributes() const {
 }
 
 int Result::getSize() const { return static_cast<int>(m_arguments.size()); }
-db::Arguments& Result::of(std::size_t pos) {
-  return m_arguments.at(pos);
-}
+db::Arguments& Result::of(std::size_t pos) { return m_arguments.at(pos); }
 void Result::add(const db::Arguments& arguments) {
   m_arguments.push_back(arguments);
 }

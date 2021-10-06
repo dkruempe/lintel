@@ -5,7 +5,7 @@ InitializeService::InitializeService(
         &abstractServices)
     : m_abstractServices(abstractServices) {
   for (const std::shared_ptr<AbstractServiceInterface> &abstractService :
-      m_abstractServices) {
+       m_abstractServices) {
     abstractService->onInitialize();
   }
 }

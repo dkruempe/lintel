@@ -12,7 +12,7 @@ using SymbolEvent = std::pair<Symbol, std::string>;
 class TerminalService {
  private:
   std::string m_currentLine;
-  std::size_t m_position = 0; // next writing position in currentLine
+  std::size_t m_position = 0;  // next writing position in currentLine
 
  public:
   void log(const std::string &text);

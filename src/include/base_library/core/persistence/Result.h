@@ -43,15 +43,16 @@ class Result {
 
   class ConstIterator
       : public std::iterator<std::random_access_iterator_tag, Arguments,
-      std::ptrdiff_t, const Arguments *, const Arguments &> {
+                             std::ptrdiff_t, const Arguments *,
+                             const Arguments &> {
    private:
     const Result &m_result;
     std::size_t m_pos;
 
    public:
     explicit ConstIterator(const Result &result, bool end = false)
-    : m_result(result),
-    m_pos(end ? static_cast<std::size_t>(m_result.getSize()) : 0) {}
+        : m_result(result),
+          m_pos(end ? static_cast<std::size_t>(m_result.getSize()) : 0) {}
 
     ConstIterator &operator++() {
       ++m_pos;
@@ -70,13 +71,9 @@ class Result {
 
   Iterator end() { return Iterator(*this, true); }
 
-  ConstIterator begin() const {
-    return ConstIterator(*this);
-  }
+  ConstIterator begin() const { return ConstIterator(*this); }
 
-  ConstIterator end() const {
-    return ConstIterator(*this, true);
-  }
+  ConstIterator end() const { return ConstIterator(*this, true); }
 
   Result() = default;
 

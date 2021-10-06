@@ -29,10 +29,6 @@ const std::shared_ptr<ClientConfiguration>& HttpEntry::getClientConfiguration()
     const {
   return m_clientConfiguration;
 }
-bool HttpEntry::isServer() {
-  return m_serverConfiguration != nullptr;
-}
+bool HttpEntry::isServer() { return m_serverConfiguration != nullptr; }
 
-bool HttpEntry::isClient() {
-  return m_clientConfiguration != nullptr;
-}
+bool HttpEntry::isClient() { return m_clientConfiguration != nullptr; }

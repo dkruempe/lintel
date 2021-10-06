@@ -1,8 +1,9 @@
 #include "base_library/features/base/services/AuthService.h"
 
+#include <date/date.h>
+
 #include <boost/asio.hpp>
 #include <chrono>
-#include <date/date.h>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/Cryption.h"
@@ -52,8 +53,8 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin) {
            userLogin.m_userName, id);
   return userToken;
 }
-std::optional<UserToken>
-AuthService::onAccessOf(const UserTokenLogin &userTokenLogin) {
+std::optional<UserToken> AuthService::onAccessOf(
+    const UserTokenLogin &userTokenLogin) {
   auto found = m_userTokens.find(userTokenLogin.m_id);
   if (found == m_userTokens.end()) {
     LOG_ERROR("{}: {} user not logged in", userTokenLogin.m_ipAddress,

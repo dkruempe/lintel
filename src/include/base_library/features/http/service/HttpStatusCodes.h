@@ -81,9 +81,7 @@ class HttpStatusCodes {
 
   explicit HttpStatusCodes(int statusCode);
 
-  operator Value() const {
-    return m_value;
-  }
+  operator Value() const { return m_value; }
 
   explicit operator bool() = delete;
 

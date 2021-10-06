@@ -33,7 +33,8 @@ std::vector<UserNameDto> UserNamesDto::init(const std::vector<User>& users) {
   }
   return userNames;
 }
-std::vector<UserNameDto> UserNamesDto::init(const std::vector<std::string>& users) {
+std::vector<UserNameDto> UserNamesDto::init(
+    const std::vector<std::string>& users) {
   std::vector<UserNameDto> userNames;
   userNames.reserve(users.size());
   for (const auto& user : users) {

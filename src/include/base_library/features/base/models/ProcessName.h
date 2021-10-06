@@ -12,7 +12,9 @@ class ProcessName {
 
   explicit ProcessName(std::string processName) : m_path(processName){};
 
-  [[nodiscard]] std::string getProcessName() const { return m_path.filename().string(); }
+  [[nodiscard]] std::string getProcessName() const {
+    return m_path.filename().string();
+  }
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSNAME_H

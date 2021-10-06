@@ -9,7 +9,8 @@
 
 DatabaseConnectionComponent::Shapes DatabaseConnectionComponent::shape{};
 
-DatabaseConnectionComponent::DatabaseConnectionComponent() : Component(shape.CONFIG_ROOT) {}
+DatabaseConnectionComponent::DatabaseConnectionComponent()
+    : Component(shape.CONFIG_ROOT) {}
 
 std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
     const std::string &content, const std::string &fileName,
@@ -87,8 +88,8 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
     }
 
     databaseEntries.push_back(std::make_shared<DatabaseConnectionEntry>(
-        type_name<DatabaseConnectionComponent>(), connection, userName, password, type,
-        name, port, databaseName));
+        type_name<DatabaseConnectionComponent>(), connection, userName,
+        password, type, name, port, databaseName));
   }
   return databaseEntries;
 }

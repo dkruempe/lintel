@@ -12,7 +12,8 @@ class VirtualGroupBootstrapPlugin : public BootstrapPlugin {
 
  public:
   explicit VirtualGroupBootstrapPlugin(
-      const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
+      const std::shared_ptr<DatabaseConnectionConfigurations>
+          &connectionConfigurations,
       std::vector<std::shared_ptr<GroupProvider>> groupProviders);
   void onStart() override;
   BootstrapSequence getPriority() override;

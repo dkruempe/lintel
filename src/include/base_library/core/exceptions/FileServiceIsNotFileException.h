@@ -13,7 +13,7 @@ class FileServiceIsNotFileException : public std::exception {
   explicit FileServiceIsNotFileException(const std::filesystem::path &path)
       : m_path(path),
         m_message(fmt::format("No Operation possible bc. {} is not a file",
-                            path.string())) {}
+                              path.string())) {}
 
   [[nodiscard]] const char *what() const noexcept override {
     return m_message.c_str();

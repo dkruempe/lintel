@@ -10,7 +10,7 @@
 #include "base_library/features/base/models/ProcessName.h"
 
 class StartupBuilder {
-private:
+ private:
   std::vector<std::shared_ptr<Feature>> m_features;
   std::shared_ptr<Hypodermic::Container> m_container = nullptr;
   std::shared_ptr<Process::ProcessInfo> m_processInfo;
@@ -20,14 +20,15 @@ private:
   std::condition_variable m_conditionVariable;
   std::vector<std::string> m_arguments;
 
-public:
+ public:
   StartupBuilder(Process::ProcessInfo &&processInfo, ProcessName &&processName,
                  std::vector<std::string> &&arguments);
   StartupBuilder() = delete;
 
   static std::shared_ptr<StartupBuilder> with(int argc, char *argv[]);
 
-  template <typename FEATURE> void addFeature() {
+  template <typename FEATURE>
+  void addFeature() {
     m_features.push_back(std::make_shared<FEATURE>());
   }
 
@@ -40,4 +41,4 @@ public:
   void start();
 };
 
-#endif // CPP_BASE_LIBRARY_STARTUPBUILDER_H
+#endif  // CPP_BASE_LIBRARY_STARTUPBUILDER_H

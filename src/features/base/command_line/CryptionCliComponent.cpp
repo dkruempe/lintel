@@ -1,4 +1,5 @@
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
+
 #include <fmt/format.h>
 
 #include <utility>

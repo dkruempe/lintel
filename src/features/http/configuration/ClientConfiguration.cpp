@@ -3,30 +3,34 @@
 #include <utility>
 
 ClientConfiguration::ClientConfiguration(
-        std::string host, int32_t port, std::chrono::milliseconds readTimeOut,
-        std::chrono::milliseconds writeTimeOut,
-        std::chrono::milliseconds connectionTimeout,
-        std::filesystem::path certFile, std::filesystem::path keyFile)
-    : m_host(std::move(host)), m_port(port), m_readTimeOut(readTimeOut),
-      m_writeTimeOut(writeTimeOut), m_connectionTimeout(connectionTimeout),
-      m_certFile(std::move(certFile)), m_keyFile(std::move(keyFile)) {}
+    std::string host, int32_t port, std::chrono::milliseconds readTimeOut,
+    std::chrono::milliseconds writeTimeOut,
+    std::chrono::milliseconds connectionTimeout, std::filesystem::path certFile,
+    std::filesystem::path keyFile)
+    : m_host(std::move(host)),
+      m_port(port),
+      m_readTimeOut(readTimeOut),
+      m_writeTimeOut(writeTimeOut),
+      m_connectionTimeout(connectionTimeout),
+      m_certFile(std::move(certFile)),
+      m_keyFile(std::move(keyFile)) {}
 const std::string &ClientConfiguration::getHost() const { return m_host; }
 int32_t ClientConfiguration::getPort() const { return m_port; }
 const std::chrono::milliseconds &ClientConfiguration::getReadTimeOut() const {
-    return m_readTimeOut;
+  return m_readTimeOut;
 }
 const std::chrono::milliseconds &ClientConfiguration::getWriteTimeOut() const {
-    return m_writeTimeOut;
+  return m_writeTimeOut;
 }
-const std::chrono::milliseconds &
-ClientConfiguration::getConnectionTimeout() const {
-    return m_connectionTimeout;
+const std::chrono::milliseconds &ClientConfiguration::getConnectionTimeout()
+    const {
+  return m_connectionTimeout;
 }
 const std::filesystem::path &ClientConfiguration::getCertFile() const {
-    return m_certFile;
+  return m_certFile;
 }
 const std::filesystem::path &ClientConfiguration::getKeyFile() const {
-    return m_keyFile;
+  return m_keyFile;
 }
 std::ostream &operator<<(std::ostream &os,
                          const ClientConfiguration &configuration) {

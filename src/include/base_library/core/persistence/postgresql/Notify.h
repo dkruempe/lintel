@@ -20,7 +20,9 @@ class Notify {
 
   std::string m_tableName;
   std::function<void()> m_callBack;
-  struct timeval m_timeout {m_timeoutSeconds, 0};
+  struct timeval m_timeout {
+    m_timeoutSeconds, 0
+  };
 
   void run();
   void listen();

@@ -15,7 +15,8 @@ class PropertyController : public Controller {
                      allPropertiesOfProcessAndClass);
   ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+))", Get,
                      allPropertiesOfProcessClassAndInstance);
-  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Get, propertyOf);
+  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Get,
+                     propertyOf);
   ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Put,
                      updateProperty);
 

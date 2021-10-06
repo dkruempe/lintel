@@ -3,7 +3,8 @@ DirectoryService::DirectoryService(std::filesystem::path path)
     : m_path(std::move(path)) {}
 
 bool DirectoryService::exists() {
-  return std::filesystem::is_directory(m_path) && std::filesystem::exists(m_path);
+  return std::filesystem::is_directory(m_path) &&
+         std::filesystem::exists(m_path);
 }
 
 std::string DirectoryService::getName() { return m_path.filename(); }

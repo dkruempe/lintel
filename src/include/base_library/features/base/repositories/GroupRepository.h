@@ -22,9 +22,9 @@ class GroupRepository : public AbstractService<GroupRepository> {
   void initGroups();
 
  public:
-  explicit GroupRepository(
-      std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
-      const std::shared_ptr<ProcessName> &processName);
+  explicit GroupRepository(std::shared_ptr<DatabaseConnectionConfigurations>
+                               connectionConfigurations,
+                           const std::shared_ptr<ProcessName> &processName);
 
   virtual ~GroupRepository() = default;
 

@@ -19,8 +19,10 @@ class HttpEntry : public Entry {
   HttpEntry(std::string_view component,
             std::shared_ptr<ClientConfiguration> clientConfiguration);
 
-  [[nodiscard]] const std::shared_ptr<ServerConfiguration> &getServerConfiguration() const;
-  [[nodiscard]] const std::shared_ptr<ClientConfiguration> &getClientConfiguration() const;
+  [[nodiscard]] const std::shared_ptr<ServerConfiguration>
+      &getServerConfiguration() const;
+  [[nodiscard]] const std::shared_ptr<ClientConfiguration>
+      &getClientConfiguration() const;
   bool isServer();
   bool isClient();
 

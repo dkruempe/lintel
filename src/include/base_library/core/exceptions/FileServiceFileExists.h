@@ -13,7 +13,7 @@ class FileServiceFileExists : public std::exception {
   explicit FileServiceFileExists(const std::filesystem::path &path)
       : m_path(path),
         m_message(fmt::format("No Operation possible bc. {} exists",
-                            path.string())) {}
+                              path.string())) {}
 
   [[nodiscard]] const char *what() const noexcept override {
     return m_message.c_str();

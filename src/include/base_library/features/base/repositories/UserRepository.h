@@ -16,9 +16,9 @@ class UserRepository {
   std::shared_ptr<GroupRepository> m_groupRepository;
 
  public:
-  UserRepository(
-      std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
-      std::shared_ptr<GroupRepository> groupRepository);
+  UserRepository(std::shared_ptr<DatabaseConnectionConfigurations>
+                     connectionConfigurations,
+                 std::shared_ptr<GroupRepository> groupRepository);
 
   std::optional<User> of(const std::string &userName);
 

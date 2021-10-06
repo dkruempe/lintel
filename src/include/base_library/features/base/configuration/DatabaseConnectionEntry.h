@@ -18,9 +18,9 @@ class DatabaseConnectionEntry : public Entry {
 
  public:
   DatabaseConnectionEntry(std::string_view component, std::string connection,
-                  std::string userName, std::string password,
-                  db::ConnectionType type, std::string name, int32_t port,
-                  std::string databaseName);
+                          std::string userName, std::string password,
+                          db::ConnectionType type, std::string name,
+                          int32_t port, std::string databaseName);
 
   [[nodiscard]] const std::string &getConnection() const;
   [[nodiscard]] const std::string &getUserName() const;

@@ -10,8 +10,8 @@ void SchedulerService::clear() {
 void SchedulerService::run() {
   while (!m_exit || !m_tasks.empty()) {
     auto time = m_tasks.empty() ? std::chrono::steady_clock::now() +
-                                    std::chrono::seconds(60)
-                              : m_tasks.front().time;
+                                      std::chrono::seconds(60)
+                                : m_tasks.front().time;
     std::function<void()> funcTask;
     {
       std::unique_lock<std::mutex> lock(m_mutex);
@@ -27,7 +27,8 @@ void SchedulerService::run() {
         continue;
       }
 
-      if ((std::chrono::steady_clock::now() - m_tasks.front().time).count() < 0) {
+      if ((std::chrono::steady_clock::now() - m_tasks.front().time).count() <
+          0) {
         continue;
       }
 

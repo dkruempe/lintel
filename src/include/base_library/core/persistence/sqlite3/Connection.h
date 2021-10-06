@@ -49,7 +49,8 @@ class Connection {
  public:
   explicit Connection(const std::string &connectionInfo);
 
-  explicit Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+  explicit Connection(
+      const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
   Connection(Connection &connection) = delete;
 

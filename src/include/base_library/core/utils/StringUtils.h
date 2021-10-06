@@ -22,7 +22,6 @@ class StringUtils {
   static std::vector<std::string> split(const std::string &s, char delimiter);
 
   static bool startsWith(const std::string &s, const std::string &start);
-
 };
 
 #endif  // CPP_BASE_LIBRARY_STRINGUTILS_H

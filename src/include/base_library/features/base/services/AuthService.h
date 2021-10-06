@@ -30,7 +30,7 @@ struct UserToken {
 };
 
 class AuthService : public AbstractService<AuthService> {
-private:
+ private:
   // properties
   DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),
                   "schedule rate of user tokens checks in seconds", true);
@@ -44,7 +44,7 @@ private:
 
   void onCheck();
 
-public:
+ public:
   AuthService(const std::shared_ptr<ProcessName> &processName,
               std::shared_ptr<UserRepository> userRepository,
               std::shared_ptr<SchedulerService> schedulerService);
@@ -60,4 +60,4 @@ public:
   void onInitialize() override;
 };
 
-#endif // CPP_BASE_LIBRARY_AUTHSERVICE_H
+#endif  // CPP_BASE_LIBRARY_AUTHSERVICE_H

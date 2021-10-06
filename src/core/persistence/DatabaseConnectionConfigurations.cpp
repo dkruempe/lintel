@@ -1,17 +1,19 @@
+#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
+
 #include <algorithm>
 #include <map>
 
 #include "base_library/core/exceptions/SQLException.h"
-#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
 
 DatabaseConnectionConfigurations::DatabaseConnectionConfigurations(
     const std::shared_ptr<Configuration> &configuration)
-    : m_connections(
-          build(configuration->configurationOf<DatabaseConnectionComponent>())) {}
+    : m_connections(build(
+          configuration->configurationOf<DatabaseConnectionComponent>())) {}
 
 std::map<std::string, std::shared_ptr<DatabaseConnectionEntry>>
-DatabaseConnectionConfigurations::build(std::vector<std::shared_ptr<Entry>> entries) {
+DatabaseConnectionConfigurations::build(
+    std::vector<std::shared_ptr<Entry>> entries) {
   std::map<std::string, std::shared_ptr<DatabaseConnectionEntry>> connections;
   std::transform(
       entries.begin(), entries.end(),

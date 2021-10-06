@@ -1,8 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_USERGROUP_H
 #define CPP_BASE_LIBRARY_USERGROUP_H
 
-#include <string>
 #include <set>
+#include <string>
 
 #include "base_library/core/models/JsonSerializable.h"
 

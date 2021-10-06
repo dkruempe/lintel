@@ -8,7 +8,8 @@ Statement::Statement(const Connection &connection) : m_connection(connection) {}
 std::shared_ptr<Result> Statement::execute(const std::string &query) {
   std::shared_ptr<Result> result = m_connection.execute(query);
   if (!result->isState(PGRES_TUPLES_OK) && !result->isState(PGRES_COMMAND_OK)) {
-    throw db::SQLException("Statement failed: " + m_connection.getErrorMessage());
+    throw db::SQLException("Statement failed: " +
+                           m_connection.getErrorMessage());
   }
   return result;
 }
@@ -41,9 +42,10 @@ std::shared_ptr<Result> Statement::execute(
         "nParams != params.size() => check statement or parameters");
   }
   std::shared_ptr<Result> result =
-          m_connection.executeParameters(statement, db::Parameters(params));
+      m_connection.executeParameters(statement, db::Parameters(params));
   if (!result->isState(PGRES_TUPLES_OK) && !result->isState(PGRES_COMMAND_OK)) {
-    throw db::SQLException("Statement failed: " + m_connection.getErrorMessage());
+    throw db::SQLException("Statement failed: " +
+                           m_connection.getErrorMessage());
   }
   return result;
 }

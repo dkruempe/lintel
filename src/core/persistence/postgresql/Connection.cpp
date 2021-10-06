@@ -18,8 +18,8 @@ std::shared_ptr<Result> Connection::executeParameters(
 [[nodiscard]] std::shared_ptr<Result> Connection::prepareStatement(
     const std::string &statementName, const std::string &query,
     int32_t nParams) const {
-  return std::make_shared<Result>(
-      PQprepare(m_conn, statementName.c_str(), query.c_str(), nParams, nullptr));
+  return std::make_shared<Result>(PQprepare(m_conn, statementName.c_str(),
+                                            query.c_str(), nParams, nullptr));
 }
 
 [[nodiscard]] std::shared_ptr<Result> Connection::executePreparedStatement(
@@ -44,7 +44,8 @@ Connection::Connection(const std::string &connectionInfo)
   }
 }
 
-Connection::Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
+Connection::Connection(
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
     : m_conn(nullptr) {
   std::string connInfo;
   if (!connectionEntry->getUserName().empty()) {

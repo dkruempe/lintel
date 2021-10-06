@@ -11,7 +11,8 @@ class BootstrapService {
   std::vector<std::shared_ptr<BootstrapPlugin>> m_bootstrapPlugins;
 
  public:
-  explicit BootstrapService(std::vector<std::shared_ptr<BootstrapPlugin>> bootstrapPlugins);
+  explicit BootstrapService(
+      std::vector<std::shared_ptr<BootstrapPlugin>> bootstrapPlugins);
 
   void onStart();
 };

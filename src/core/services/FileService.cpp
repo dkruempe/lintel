@@ -14,11 +14,14 @@ std::string FileService::Stream::getLine() {
   return line;
 }
 
-FileService::FileService(std::filesystem::path path) : m_path(std::move(path)) {}
+FileService::FileService(std::filesystem::path path)
+    : m_path(std::move(path)) {}
 
 bool FileService::isFile() { return std::filesystem::is_regular_file(m_path); }
 
-bool FileService::exists() { return std::filesystem::exists(m_path) && isFile(); }
+bool FileService::exists() {
+  return std::filesystem::exists(m_path) && isFile();
+}
 
 std::string FileService::readFile() {
   std::ifstream file(m_path.string());
@@ -70,14 +73,16 @@ void FileService::deleteFile() {
   }
   std::filesystem::remove(m_path);
 }
-std::size_t FileService::getSize() { return std::filesystem::file_size(m_path); }
+std::size_t FileService::getSize() {
+  return std::filesystem::file_size(m_path);
+}
 void FileService::createFile(std::size_t sizeOfFile) {
   if (exists()) {
     throw FileServiceFileExists(m_path);
   }
   std::filebuf fbuf;
   fbuf.open(m_path, std::ios_base::in | std::ios_base::out |
-                      std::ios_base::trunc | std::ios_base::binary);
+                        std::ios_base::trunc | std::ios_base::binary);
   // Set the size
   fbuf.pubseekoff(static_cast<long long>(sizeOfFile - 1), std::ios_base::beg);
   fbuf.sputc(0);

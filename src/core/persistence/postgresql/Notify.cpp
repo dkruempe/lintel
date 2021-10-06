@@ -20,7 +20,7 @@ void Notify::listen() {
   auto result = m_connection.execute("LISTEN " + m_tableName);
   if (!result->isState(ExecStatusType::PGRES_COMMAND_OK)) {
     throw db::SQLException("LISTEN command failed: " +
-                               m_connection.getErrorMessage());
+                           m_connection.getErrorMessage());
   }
   int sock = PQsocket(m_connection.m_conn);
 

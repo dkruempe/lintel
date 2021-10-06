@@ -12,7 +12,7 @@ class Result {
   std::vector<db::Arguments> m_arguments;
 
  public:
-  void add(const db::Arguments &arguments);
+  void add(const db::Arguments& arguments);
 
   [[nodiscard]] std::string getValue(int row, int attribute);
 

@@ -1,13 +1,14 @@
 #ifndef CPP_BASE_LIBRARY_PROPERTYDTO_H
 #define CPP_BASE_LIBRARY_PROPERTYDTO_H
 
+#include <memory>
+
 #include "base_library/core/models/JsonSerializable.h"
 #include "base_library/features/property/models/PropertyBase.h"
 #include "base_library/features/property/models/PropertyRepositoryType.h"
-#include <memory>
 
 class PropertyDto : public JsonSerializable {
-private:
+ private:
   std::string m_name;
   std::string m_instanceName;
   std::string m_className;
@@ -32,7 +33,7 @@ private:
     const std::string EXTRA_INFORMATION = "extra_information";
   } shape;
 
-public:
+ public:
   explicit PropertyDto(const std::shared_ptr<PropertyBase> &property);
   PropertyDto() = default;
   [[nodiscard]] const std::string &getName() const;
@@ -45,9 +46,9 @@ public:
   [[nodiscard]] const std::string &getExtraInformation() const;
   [[nodiscard]] const std::string &getValue() const;
   [[nodiscard]] const std::string &getType() const;
-  void
-  serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+  void serialize(
+      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
   bool deserialize(const rapidjson::Value &obj) override;
 };
 
-#endif // CPP_BASE_LIBRARY_PROPERTYDTO_H
+#endif  // CPP_BASE_LIBRARY_PROPERTYDTO_H

@@ -5,8 +5,8 @@ void ExecutorService::run() {
     {
       std::unique_lock<std::mutex> lock(m_mutex);
       auto time = std::chrono::steady_clock::now() + std::chrono::seconds(60);
-      m_conditionVariable.wait_until(lock, time,
-                                   [&] { return m_exit || !m_tasks.empty(); });
+      m_conditionVariable.wait_until(
+          lock, time, [&] { return m_exit || !m_tasks.empty(); });
       if (m_exit && m_tasks.empty()) {
         return;
       }

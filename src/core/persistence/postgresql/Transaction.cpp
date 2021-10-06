@@ -4,7 +4,7 @@ namespace postgresql {
 void Transaction::checkState(const std::shared_ptr<Result> &result) {
   if (!result->isState(PGRES_COMMAND_OK)) {
     throw db::SQLException("Connection to database failed: " +
-                               m_connection.getErrorMessage());
+                           m_connection.getErrorMessage());
   }
 }
 

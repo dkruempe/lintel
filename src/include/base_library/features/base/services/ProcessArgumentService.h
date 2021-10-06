@@ -12,12 +12,12 @@
 #include "base_library/core/utils/StringUtils.h"
 
 class Argument {
-private:
+ private:
   std::string m_flag;
   std::string m_shortFlag;
   std::string m_description;
 
-public:
+ public:
   typedef std::variant<int32_t *, uint32_t *, double *, float *, bool *,
                        std::string *, std::optional<int32_t> *,
                        std::optional<uint32_t> *, std::optional<double> *,
@@ -31,34 +31,34 @@ public:
   [[nodiscard]] const std::string &getFlag() const;
   [[nodiscard]] const std::string &getShortFlag() const;
 
-private:
+ private:
   Value m_value;
 };
 
 class ArgumentProvider {
-private:
+ private:
   std::vector<Argument> m_arguments;
 
-public:
+ public:
   explicit ArgumentProvider(std::vector<Argument> arguments);
   [[nodiscard]] const std::vector<Argument> &provide() const;
 };
 
 class ProcessArgumentService {
-private:
+ private:
   std::map<std::string, Argument> m_flagArgumentMap;
   std::vector<Argument> m_arguments;
 
-  static std::map<std::string, Argument>
-  init(const std::vector<std::shared_ptr<ArgumentProvider>> &argumentProviders);
+  static std::map<std::string, Argument> init(
+      const std::vector<std::shared_ptr<ArgumentProvider>> &argumentProviders);
 
-  static std::vector<Argument>
-  initArgs(const std::vector<std::shared_ptr<ArgumentProvider>> &vector);
+  static std::vector<Argument> initArgs(
+      const std::vector<std::shared_ptr<ArgumentProvider>> &vector);
 
-public:
+ public:
   explicit ProcessArgumentService(
       const std::vector<std::shared_ptr<ArgumentProvider>> &argumentProviders);
   void parseArguments(const std::vector<std::string> &arguments);
 };
 
-#endif // CPP_BASE_LIBRARY_PROCESSARGUMENTSERVICE_H
+#endif  // CPP_BASE_LIBRARY_PROCESSARGUMENTSERVICE_H

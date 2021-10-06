@@ -15,9 +15,10 @@ class CryptionCliComponent : public CommandLineComponent {
     CommandDecrypt,
     CommandUndefined,
   };
-  std::map<std::string_view, Command> m_commands = {
-      {"encrypt", CommandEncrypt},  {"enc", CommandEncrypt},
-      {"decrypt", CommandDecrypt},  {"dec", CommandDecrypt}};
+  std::map<std::string_view, Command> m_commands = {{"encrypt", CommandEncrypt},
+                                                    {"enc", CommandEncrypt},
+                                                    {"decrypt", CommandDecrypt},
+                                                    {"dec", CommandDecrypt}};
   static constexpr std::string_view m_name = "Cryption";
   static constexpr std::string_view m_alias = "Crypt";
   Command m_currentCommand = CommandUndefined;

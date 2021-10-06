@@ -21,7 +21,7 @@
 class CommandLineComponent;
 
 class CommandLineService : public AbstractService<CommandLineService> {
-private:
+ private:
   enum Commands {
     CommandHelp,
     CommandClear,
@@ -58,7 +58,7 @@ private:
 
   void run();
 
-public:
+ public:
   explicit CommandLineService(
       const std::vector<std::shared_ptr<CommandLineComponent>> &components,
       const std::shared_ptr<Configuration> &configuration,
@@ -73,4 +73,4 @@ public:
   void onInitialize() override;
 };
 
-#endif // CPP_BASE_LIBRARY_COMMANDLINESERVICE_H
+#endif  // CPP_BASE_LIBRARY_COMMANDLINESERVICE_H

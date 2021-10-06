@@ -23,9 +23,11 @@ class Client {
 
   ~Client();
 
-  [[maybe_unused]] void setBasicAuth(const std::string &userName, const std::string &password);
+  [[maybe_unused]] void setBasicAuth(const std::string &userName,
+                                     const std::string &password);
 
-  [[maybe_unused]] void setDigestAuth(const std::string &userName, const std::string &password);
+  [[maybe_unused]] void setDigestAuth(const std::string &userName,
+                                      const std::string &password);
 
   [[maybe_unused]] void setBearerTokenAuth(const std::string &token);
 

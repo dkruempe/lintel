@@ -85,14 +85,14 @@ void StartupBuilder::start() {
 
 void StartupBuilder::receiveSignal(int signal) {
   switch (signal) {
-  case SIGINT:
-  case SIGCHLD:
-  case SIGTERM:
-    m_startupBuilder->onShutdown();
-    break;
-  default:
-    LOG_ERROR("{} undefined signal", signal);
-    break;
+    case SIGINT:
+    case SIGCHLD:
+    case SIGTERM:
+      m_startupBuilder->onShutdown();
+      break;
+    default:
+      LOG_ERROR("{} undefined signal", signal);
+      break;
   }
 }
 

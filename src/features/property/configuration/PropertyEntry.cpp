@@ -1,5 +1,7 @@
 #include "base_library/features/property/configuration/PropertyEntry.h"
-std::shared_ptr<PropertyBase> &PropertyEntry::getProperty() { return m_property; }
+std::shared_ptr<PropertyBase> &PropertyEntry::getProperty() {
+  return m_property;
+}
 
 PropertyEntry::PropertyEntry(std::string_view component,
                              std::shared_ptr<PropertyBase> property)
