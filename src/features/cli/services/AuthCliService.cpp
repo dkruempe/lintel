@@ -32,7 +32,7 @@ UserDto AuthCliService::onLogin() {
     if (userName.empty()) {
       std::cout << "Please enter the username: ";
       Symbol event = Symbol::Nothing;
-      while (event != Symbol::Command) {
+      while (event != Symbol::Command && userName.empty()) {
         KeyEvent keyPressed = m_inputService->onRead();
         SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
         event = symbolEvent.first;
@@ -41,11 +41,13 @@ UserDto AuthCliService::onLogin() {
         }
       }
     }
-    password = readPassword();
-    UserLoginDto userLoginDto(userName, password);
-    optUserDto = m_userApi->loginOf(userLoginDto);
-    if (optUserDto.has_value()) {
-      success = true;
+    if (!userName.empty()) {
+      password = readPassword();
+      UserLoginDto userLoginDto(userName, password);
+      optUserDto = m_userApi->loginOf(userLoginDto);
+      if (optUserDto.has_value()) {
+        success = true;
+      }
     }
     CommandLineUtils::clear();
   }
