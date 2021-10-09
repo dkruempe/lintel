@@ -2,11 +2,14 @@
 
 #include <algorithm>
 #include <csignal>
+#include <memory>
 
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/PersistableService.h"
 #include "base_library/core/services/ProcessService.h"
+#include "base_library/features/base/configuration/Component.h"
+#include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/InitializeService.h"
 #include "base_library/features/base/services/ProcessArgumentService.h"
@@ -19,21 +22,32 @@ StartupBuilder::StartupBuilder(Process::ProcessInfo &&processInfo,
     : m_processInfo(
           std::make_shared<Process::ProcessInfo>(std::move(processInfo))),
       m_name(std::make_shared<ProcessName>(std::move(name))),
-      m_arguments(std::move(arguments)) {
+      m_arguments(std::move(arguments)),
+      m_configurationComponentBuilder(
+          std::make_shared<ConfigurationComponentBuilder>()) {
   signal(SIGINT, StartupBuilder::receiveSignal);
   signal(SIGCHLD, StartupBuilder::receiveSignal);
   signal(SIGTERM, StartupBuilder::receiveSignal);
 }
 
+void StartupBuilder::withConfigurationComponent(
+    std::shared_ptr<Component> &&component) {
+  m_configurationComponentBuilder->add(std::move(component));
+}
+
 std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
+  // I process informations
   Process::ProcessInfo info = ProcessService::ofCurrentProcess(argc, argv);
   ProcessName name(argc, argv);
+  // II arguments
   std::vector<std::string> arguments;
-  // ignore name of process => start with 1
+  // III ignore name of process => start with 1
   for (int i = 1; i < argc; i++) {
     arguments.push_back(argv[i]);
   }
+  // IV logger
   DECLARE_LOGGER(info.name);
+  // VI instantiate startupbuilder
   std::shared_ptr<StartupBuilder> builder = std::make_shared<StartupBuilder>(
       std::move(info), std::move(name), std::move(arguments));
   m_startupBuilder = builder.get();
@@ -49,35 +63,37 @@ void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
 }
 
 void StartupBuilder::start() {
-  // injection
+  // I injection
   Hypodermic::ContainerBuilder builder;
   for (auto &&feature : m_features) {
     feature->registerTypes(builder);
   }
   builder.registerInstance(m_processInfo);
   builder.registerInstance(m_name);
+  m_configuration =
+      std::make_shared<Configuration>(m_configurationComponentBuilder->build());
+  builder.registerInstance(m_configuration);
   m_container = builder.build();
-  // boostrap plugins trigger initialization
+  // II boostrap plugins trigger initialization
   std::shared_ptr<BootstrapService> bootstrapService =
       m_container->resolve<BootstrapService>();
   bootstrapService->onStart();
-  // start services
+  // III start services
   for (auto &&feature : m_features) {
     feature->initialize(m_container);
   }
   std::shared_ptr<ProcessArgumentService> processArgumentService =
       m_container->resolve<ProcessArgumentService>();
   processArgumentService->parseArguments(m_arguments);
-  // awake all from persistence
+  // IV awake all from persistence
   std::shared_ptr<PersistableService> persistableService =
       m_container->resolve<PersistableService>();
   persistableService->awake();
-  // initialize services
+  // V initialize services
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
   LOG_INFO("{} finished initialization", m_processInfo->name);
-  // wait for signal to shutdown
-
+  // VI wait for signal to shutdown
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   m_conditionVariable.wait(lock);

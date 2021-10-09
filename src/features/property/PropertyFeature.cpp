@@ -2,7 +2,6 @@
 
 #include "base_library/core/services/PersistableBean.h"
 #include "base_library/features/property/command_line/PropertyCliComponent.h"
-#include "base_library/features/property/configuration/PropertyComponent.h"
 #include "base_library/features/property/controller/PropertyApi.h"
 #include "base_library/features/property/controller/PropertyController.h"
 #include "base_library/features/property/repositories/DatabasePropertyRepository.h"
@@ -25,10 +24,6 @@ void PropertyFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .singleInstance();
   builder.registerType<XMLConfigSerializationStrategy>()
       .as<ConfigSerializationStrategy>()
-      .asSelf()
-      .singleInstance();
-  builder.registerType<PropertyComponent>()
-      .as<Component>()
       .asSelf()
       .singleInstance();
   builder.registerType<PropertyController>()

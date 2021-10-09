@@ -7,8 +7,6 @@
 #include "base_library/core/services/PersistableService.h"
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
 #include "base_library/features/base/command_line/UserManagementCliComponent.h"
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
 #include "base_library/features/base/controller/UserApi.h"
 #include "base_library/features/base/controller/UserController.h"
 #include "base_library/features/base/provider/GroupProvider.h"
@@ -36,11 +34,6 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .singleInstance();
   builder.registerType<InitializeService>().singleInstance();
   builder.registerType<ExecutorService>();
-  builder.registerType<DatabaseConnectionComponent>()
-      .as<Component>()
-      .asSelf()
-      .singleInstance();
-  builder.registerType<Configuration>().singleInstance();
   builder.registerType<DatabaseConnectionConfigurations>().singleInstance();
   builder.registerType<CryptionCliComponent>()
       .as<CommandLineComponent>()

@@ -6,6 +6,9 @@
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/Feature.h"
+#include "base_library/features/base/configuration/Component.h"
+#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
 #include "base_library/features/base/models/Process.h"
 #include "base_library/features/base/models/ProcessName.h"
 
@@ -19,6 +22,9 @@ class StartupBuilder {
   static StartupBuilder *m_startupBuilder;
   std::condition_variable m_conditionVariable;
   std::vector<std::string> m_arguments;
+  std::shared_ptr<ConfigurationComponentBuilder>
+      m_configurationComponentBuilder;
+  std::shared_ptr<Configuration> m_configuration = nullptr;
 
  public:
   StartupBuilder(Process::ProcessInfo &&processInfo, ProcessName &&processName,
@@ -26,6 +32,8 @@ class StartupBuilder {
   StartupBuilder() = delete;
 
   static std::shared_ptr<StartupBuilder> with(int argc, char *argv[]);
+
+  void withConfigurationComponent(std::shared_ptr<Component> &&component);
 
   template <typename FEATURE>
   void addFeature() {

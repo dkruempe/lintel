@@ -1,7 +1,6 @@
 #include "base_library/features/http/HttpFeature.h"
 
 #include "base_library/features/http/ExampleController.h"
-#include "base_library/features/http/configuration/HttpComponent.h"
 #include "base_library/features/http/provider/ClientProvider.h"
 #include "base_library/features/http/service/Controller.h"
 
@@ -13,10 +12,6 @@ void HttpFeature::registerTypes(Hypodermic::ContainerBuilder& builder) {
   builder.registerType<ExampleController>()
       .as<Controller>()
       .as<GroupProvider>()
-      .asSelf()
-      .singleInstance();
-  builder.registerType<HttpComponent>()
-      .as<Component>()
       .asSelf()
       .singleInstance();
 }
