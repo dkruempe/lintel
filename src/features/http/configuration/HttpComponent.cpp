@@ -1,8 +1,8 @@
 #include "base_library/features/http/configuration/HttpComponent.h"
 
 #include <base_library/core/utils/TypeName.h>
+#include <base_library/features/base/configuration/ConfigurationException.h>
 
-#include "base_library/core/services/LoggerService.h"
 #include "base_library/features/http/configuration/HttpEntry.h"
 
 HttpComponent::Shapes HttpComponent::shape{};
@@ -50,35 +50,33 @@ std::vector<std::shared_ptr<Entry>> HttpComponent::parse(
     int32_t lineNumber = httpElement->GetLineNum() + lineOffset - 1;
 
     if (host == nullptr) {
-      LOG_ERROR("host at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "host is null", lineNumber);
     }
 
     if (port == nullptr) {
-      LOG_ERROR("port at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "port is null", lineNumber);
     }
 
     if (isClient && idleTimeout != nullptr) {
-      LOG_ERROR("idle timeout for client defined which is unused {}",
-                lineNumber);
-      continue;
+      throw ConfigurationException(
+          getConfigRoot(), "idle timeout for client defined which is unused",
+          lineNumber);
     }
 
     if (!isClient && connectionTimeOut != nullptr) {
-      LOG_ERROR("connection timeout for server defiend which is unsed {}",
-                lineNumber);
-      continue;
+      throw ConfigurationException(
+          getConfigRoot(),
+          "connection tiemout for server defined which is unused", lineNumber);
     }
 
     if (readClientConfiguration && isClient) {
-      LOG_ERROR("no double configuration for client at line {}", lineNumber);
-      continue;
+      throw ConfigurationException(
+          getConfigRoot(), "no double configuration for client", lineNumber);
     }
 
     if (readServerConfiguration && !isClient) {
-      LOG_ERROR("no duoble configuration for server at line {}", lineNumber);
-      continue;
+      throw ConfigurationException(
+          getConfigRoot(), "no double configuration for server", lineNumber);
     }
 
     if (isClient) {

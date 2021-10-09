@@ -1,6 +1,7 @@
 #include "base_library/features/property/configuration/PropertyComponent.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include <base_library/features/base/configuration/ConfigurationException.h>
+
 #include "base_library/core/utils/TypeName.h"
 #include "base_library/features/property/configuration/PropertyEntry.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
@@ -46,33 +47,33 @@ std::vector<std::shared_ptr<Entry>> PropertyComponent::parse(
     int32_t lineNumber = propertyElement->GetLineNum() + lineOffset - 1;
 
     if (processName == nullptr) {
-      LOG_ERROR("process name at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "process name is null",
+                                   lineNumber);
     }
 
     if (className == nullptr) {
-      LOG_ERROR("class name at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "class name is null",
+                                   lineNumber);
     }
 
     if (instanceName == nullptr) {
-      LOG_ERROR("instance name at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "instance name is null",
+                                   lineNumber);
     }
 
     if (propertyName == nullptr) {
-      LOG_ERROR("property name at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "property name is null",
+                                   lineNumber);
     }
 
     if (propertyType == nullptr) {
-      LOG_ERROR("property type at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "property type is null",
+                                   lineNumber);
     }
 
     if (propertyValue == nullptr) {
-      LOG_ERROR("property value at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "property value is null",
+                                   lineNumber);
     }
 
     std::shared_ptr<PropertyBase> property = PropertyFactory::Create(

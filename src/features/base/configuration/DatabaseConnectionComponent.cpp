@@ -3,8 +3,8 @@
 #include <tinyxml2.h>
 
 #include "base_library/core/persistence/ConnectionType.h"
-#include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/TypeName.h"
+#include "base_library/features/base/configuration/ConfigurationException.h"
 #include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 DatabaseConnectionComponent::Shapes DatabaseConnectionComponent::shape{};
@@ -50,8 +50,8 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
     int32_t lineNumber = propertyElement->GetLineNum() + lineOffset - 1;
 
     if (typeName == nullptr) {
-      LOG_ERROR("type string at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "type string is null",
+                                   lineNumber);
     }
 
     if (connection == nullptr) {
@@ -62,13 +62,14 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
     int32_t port = -1;
 
     if (type == db::ConnectionType::UNDEFINED) {
-      LOG_ERROR("type {} is not valid at line {}", typeName, lineNumber);
-      continue;
+      throw ConfigurationException(
+          getConfigRoot(), "type " + std::string(typeName) + " is not valid",
+          lineNumber);
     }
 
     if (name == nullptr) {
-      LOG_ERROR("name string at line {} is null", lineNumber);
-      continue;
+      throw ConfigurationException(getConfigRoot(), "name string is null",
+                                   lineNumber);
     }
 
     if (portTemp != nullptr) {

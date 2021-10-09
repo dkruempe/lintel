@@ -36,7 +36,7 @@ void StartupBuilder::withConfigurationComponent(
 }
 
 std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
-  // I process informations
+  // I process Informations
   Process::ProcessInfo info = ProcessService::ofCurrentProcess(argc, argv);
   ProcessName name(argc, argv);
   // II arguments
@@ -45,9 +45,7 @@ std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
   for (int i = 1; i < argc; i++) {
     arguments.push_back(argv[i]);
   }
-  // IV logger
-  DECLARE_LOGGER(info.name);
-  // VI instantiate startupbuilder
+  // IV instantiate startupbuilder
   std::shared_ptr<StartupBuilder> builder = std::make_shared<StartupBuilder>(
       std::move(info), std::move(name), std::move(arguments));
   m_startupBuilder = builder.get();
@@ -74,26 +72,28 @@ void StartupBuilder::start() {
       std::make_shared<Configuration>(m_configurationComponentBuilder->build());
   builder.registerInstance(m_configuration);
   m_container = builder.build();
-  // II boostrap plugins trigger initialization
+  // II logger
+  DECLARE_LOGGER(m_processInfo->name);
+  // III boostrap plugins trigger initialization
   std::shared_ptr<BootstrapService> bootstrapService =
       m_container->resolve<BootstrapService>();
   bootstrapService->onStart();
-  // III start services
+  // IV start services
   for (auto &&feature : m_features) {
     feature->initialize(m_container);
   }
   std::shared_ptr<ProcessArgumentService> processArgumentService =
       m_container->resolve<ProcessArgumentService>();
   processArgumentService->parseArguments(m_arguments);
-  // IV awake all from persistence
+  // V awake all from persistence
   std::shared_ptr<PersistableService> persistableService =
       m_container->resolve<PersistableService>();
   persistableService->awake();
-  // V initialize services
+  // VI initialize services
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
   LOG_INFO("{} finished initialization", m_processInfo->name);
-  // VI wait for signal to shutdown
+  // VII wait for signal to shutdown
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   m_conditionVariable.wait(lock);

@@ -7,7 +7,7 @@
 
 #include "base_library/config.h"
 #include "base_library/core/services/FileService.h"
-#include "base_library/core/services/LoggerService.h"
+#include "base_library/features/base/configuration/ConfigurationException.h"
 
 Configuration::Configuration(
     const std::vector<std::shared_ptr<Component>> &components)
@@ -46,10 +46,9 @@ void Configuration::loadConfiguration() {
   for (tinyxml2::XMLElement *iter = rootElement->FirstChildElement();
        iter != nullptr; iter = iter->NextSiblingElement()) {
     std::string componentName(iter->Name());
-    LOG_INFO("deserialize of {}", componentName);
     if (componentName.empty()) {
-      LOG_ERROR("no component name avaialble at {}", iter->GetLineNum());
-      continue;
+      throw ConfigurationException(
+          "Configuration", "no component name available", iter->GetLineNum());
     }
 
     int32_t lineOffset = iter->GetLineNum();
@@ -58,8 +57,9 @@ void Configuration::loadConfiguration() {
 
     auto found = m_components.find(componentName);
     if (found == m_components.end()) {
-      LOG_ERROR("no component defined for {}", componentName);
-      continue;
+      throw ConfigurationException(
+          "Configuration", "no component name defined for " + componentName,
+          iter->GetLineNum());
     }
 
     auto entries =
