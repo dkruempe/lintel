@@ -30,7 +30,7 @@ StartupBuilder::StartupBuilder(Process::ProcessInfo &&processInfo,
   signal(SIGTERM, StartupBuilder::receiveSignal);
 }
 
-void StartupBuilder::withConfigurationComponent(
+void StartupBuilder::addConfigurationComponent(
     std::shared_ptr<Component> &&component) {
   m_configurationComponentBuilder->add(std::move(component));
 }

@@ -33,7 +33,7 @@ class StartupBuilder {
 
   static std::shared_ptr<StartupBuilder> with(int argc, char *argv[]);
 
-  void withConfigurationComponent(std::shared_ptr<Component> &&component);
+  void addConfigurationComponent(std::shared_ptr<Component> &&component);
 
   template <typename FEATURE>
   void addFeature() {
