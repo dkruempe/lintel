@@ -1,6 +1,27 @@
 <Configuration>
+    <Loggers>
+        <!-- path to logger directory -->
+        <Path path="<logger path>" create_sub_dirs="true"/>
+        <!-- Special template for logger -->
+        <Logger process_name="main" pattern="...." level="Info" async="false">
+            <LoggerSink type="ConsoleSink"/>
+            <LoggerSink type="DailyFileSink" file_name="better.log" level="Debug" time="2:30"/>
+            <LoggerSink type="RotatingFileSink" level="Debug" size="5MB"/>
+            <LoggerSink type="TcpSink" level="Debug" pattern="..." connection="localhost" port="1234"/>
+            <LoggerSink type="SysLogSink" level="Error" pattern="..." id="ident"/>
+        </Logger>
+        <!-- Default template for logger itself -->
+        <Logger process_name=".*" pattern="...." level="Info" async="true">
+            <LoggerSink type="ConsoleSink"/>
+            <!-- default file name is process_name.log -->
+            <LoggerSink type="DailyFileSink" level="Debug" time="2:30"/>
+            <LoggerSink type="RotatingFileSink" level="Debug" size="5MB"/>
+            <LoggerSink type="TcpSink" pattern="..." connection="localhost" port="1234"/>
+        </Logger>
+    </Loggers>
     <DatabaseConnections>
         <!--<DatabaseConnection name="DEFAULT" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite"/>-->
+
         <DatabaseConnection name="DEFAULT" user_name="dkruempe" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
                             database_name="keyValueStore"
                             type="PostgreSQL"/>

@@ -11,10 +11,10 @@ void DatabaseBootstrapPlugin::onStart() {
   for (const auto &connectionEntry : m_connectionConfigurations->allof()) {
     try {
       handle(connectionEntry);
-    } catch (const db::SQLException &exception) {
-      LOG_ERROR("{} - failed to ahndle database bootstrap plugin - {}",
+    } catch (db::SQLException &exception) {
+      LOG_ERROR("{} - failed to handle database bootstrap plugin - {}",
                 connectionEntry->getName(), exception.what());
-      throw exception;
+      throw std::move(exception);
     } catch (std::exception &exception) {
       LOG_ERROR("{} - failed to handle database bootstrap plugin - {}",
                 connectionEntry->getName(), exception.what());

@@ -71,29 +71,30 @@ void StartupBuilder::start() {
   m_configuration =
       std::make_shared<Configuration>(m_configurationComponentBuilder->build());
   builder.registerInstance(m_configuration);
-  m_container = builder.build();
   // II logger
   DECLARE_LOGGER(m_processInfo->name);
-  // III boostrap plugins trigger initialization
+  // III start IOC Container build
+  m_container = builder.build();
+  // IV boostrap plugins trigger initialization
   std::shared_ptr<BootstrapService> bootstrapService =
       m_container->resolve<BootstrapService>();
   bootstrapService->onStart();
-  // IV start services
+  // V start services
   for (auto &&feature : m_features) {
     feature->initialize(m_container);
   }
   std::shared_ptr<ProcessArgumentService> processArgumentService =
       m_container->resolve<ProcessArgumentService>();
   processArgumentService->parseArguments(m_arguments);
-  // V awake all from persistence
+  // VI awake all from persistence
   std::shared_ptr<PersistableService> persistableService =
       m_container->resolve<PersistableService>();
   persistableService->awake();
-  // VI initialize services
+  // VII initialize services
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
   LOG_INFO("{} finished initialization", m_processInfo->name);
-  // VII wait for signal to shutdown
+  // VIII wait for signal to shutdown
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   m_conditionVariable.wait(lock);
