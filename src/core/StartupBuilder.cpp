@@ -72,7 +72,7 @@ void StartupBuilder::start() {
       std::make_shared<Configuration>(m_configurationComponentBuilder->build());
   builder.registerInstance(m_configuration);
   // II logger
-  DECLARE_LOGGER(m_processInfo->name);
+  DECLARE_LOGGER(m_processInfo, m_configuration);
   // III start IOC Container build
   m_container = builder.build();
   // IV boostrap plugins trigger initialization

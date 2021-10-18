@@ -4,110 +4,71 @@
 /**
  * LoggerService class for easier logging in process itself
  */
-#include <fmt/format.h>
-#include <log4cxx/log4cxx.h>
-#include <log4cxx/logger.h>
-#include <log4cxx/spi/loggingevent.h>
+#include <spdlog/spdlog.h>
 
-#include <chrono>
-#include <filesystem>
-#include <iostream>
-#include <map>
-#include <mutex>
-#include <thread>
+#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/features/base/models/Process.h"
 
 class LoggerService {
  private:
-  // constexpr constants
-  constexpr static std::string_view m_templateConfig = "template_log4cxx.xml";
-  constexpr static std::string_view m_templateMarker = "template.log";
-
   // variables
-  const std::string m_processName;
-  log4cxx::LoggerPtr m_logger;
+  std::shared_ptr<Process::ProcessInfo> m_processInfo;
+  std::shared_ptr<Configuration> m_configuration;
+  std::shared_ptr<spdlog::logger> m_logger;
 
+  std::shared_ptr<spdlog::logger> init();
   void configure(bool consoleOnly);
 
   static LoggerService *m_instance;
   static std::once_flag m_initInstanceFlag;
 
  public:
-  explicit LoggerService(const std::string &processName);
+  LoggerService(std::shared_ptr<Process::ProcessInfo> processInfo,
+                std::shared_ptr<Configuration> configuration);
 
-  explicit LoggerService();
+  LoggerService() = delete;
 
   ~LoggerService();
 
-  static LoggerService &getOrCreate(const std::string &argv);
+  static LoggerService &getOrCreate(
+      const std::shared_ptr<Process::ProcessInfo> &processInfo,
+      const std::shared_ptr<Configuration> &configuration);
+
   static LoggerService &get();
-  static void initSingleton(const std::string &processName);
-  static void init();
+  static void initSingleton(
+      const std::shared_ptr<Process::ProcessInfo> &processInfo,
+      const std::shared_ptr<Configuration> &configuration);
 
-  template <class... Args>
-  void info(const std::string &function, const std::string &file, int line,
-            const std::string &message, Args... args) {
-    m_logger->info(
-        fmt::format(message, args...),
-        log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
-  }
-
-  template <class... Args>
-  void debug(const std::string &function, const std::string &file, int line,
-             const std::string &message, Args... args) {
-    m_logger->debug(
-        fmt::format(message, args...),
-        log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
-  }
-
-  template <class... Args>
-  void trace(const std::string &function, const std::string &file, int line,
-             const std::string &message, Args... args) {
-    m_logger->trace(
-        fmt::format(message, args...),
-        log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
-  }
-
-  template <class... Args>
-  void error(const std::string &function, const std::string &file, int line,
-             const std::string &message, Args... args) {
-    m_logger->error(
-        fmt::format(message, args...),
-        log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
-  }
-
-  template <class... Args>
-  void fatal(const std::string &function, const std::string &file, int line,
-             const std::string &message, Args... args) {
-    m_logger->fatal(
-        fmt::format(message, args...),
-        log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
-  }
-
-  template <class... Args>
-  void warn(const std::string &function, const std::string &file, int line,
-            const std::string &message, Args... args) {
-    m_logger->warn(
-        fmt::format(message, args...),
-        log4cxx::spi::LocationInfo(file.c_str(), function.c_str(), line));
+  template <typename... Args>
+  void log(spdlog::source_loc source, spdlog::level::level_enum lvl,
+           fmt::format_string<Args...> fmt, Args &&...args) {
+    m_logger->log(source, lvl, fmt, std::forward<Args>(args)...);
   }
 };
-#define DECLARE_LOGGER(argv) LoggerService::getOrCreate(argv)
-#define LOG_INFO(message, ...)                                             \
-  LoggerService::get().info(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
-                            ##__VA_ARGS__)
-#define LOG_DEBUG(message, ...)                                             \
-  LoggerService::get().debug(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
-                             ##__VA_ARGS__)
-#define LOG_TRACE(message, ...)                                             \
-  LoggerService::get().trace(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
-                             ##__VA_ARGS__)
-#define LOG_ERROR(message, ...)                                             \
-  LoggerService::get().error(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
-                             ##__VA_ARGS__)
-#define LOG_FATAL(message, ...)                                             \
-  LoggerService::get().fatal(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
-                             ##__VA_ARGS__)
-#define LOG_WARN(message, ...)                                             \
-  LoggerService::get().warn(__LOG4CXX_FUNC__, __FILE__, __LINE__, message, \
-                            ##__VA_ARGS__)
+#define DECLARE_LOGGER(processInfo, configuration) \
+  LoggerService::getOrCreate(processInfo, configuration)
+#define LOG_INFO(message, ...)                                 \
+  LoggerService::get().log(                                    \
+      spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \
+      spdlog::level::info, message, ##__VA_ARGS__)
+#define LOG_DEBUG(message, ...)                                \
+  LoggerService::get().log(                                    \
+      spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \
+      spdlog::level::debug, message, ##__VA_ARGS__)
+#define LOG_TRACE(message, ...)                                \
+  LoggerService::get().log(                                    \
+      spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \
+      spdlog::level::trace, message, ##__VA_ARGS__)
+#define LOG_ERROR(message, ...)                                \
+  LoggerService::get().log(                                    \
+      spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \
+      spdlog::level::err, message, ##__VA_ARGS__)
+#define LOG_FATAL(message, ...)                                \
+  LoggerService::get().log(                                    \
+      spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \
+      spdlog::level::critical, message, ##__VA_ARGS__)
+#define LOG_WARN(message, ...)                                 \
+  LoggerService::get().log(                                    \
+      spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \
+      spdlog::level::warn, message, ##__VA_ARGS__)
 #endif  // LOGGING_LOGGER_H

@@ -24,6 +24,7 @@ class LoggerComponent : public Component {
     const std::string LOGGER_SINK_TIME = "time";
     const std::string LOGGER_SINK_FILE_NAME = "file_name";
     const std::string LOGGER_SINK_SIZE = "size";
+    const std::string LOGGER_SINK_MAX_FILES = "max_files";
     const std::string LOGGER_SINK_ID = "id";
     // PATH
     const std::string PATH_ROOT = "Path";

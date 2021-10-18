@@ -23,6 +23,7 @@ class LoggerSinkConfiguration {
   std::string m_time;
   // ROTATING
   std::size_t m_fileSize;
+  std::size_t m_maxFiles;
   // TCP
   std::string m_connection;
   int32_t m_port;
@@ -40,7 +41,7 @@ class LoggerSinkConfiguration {
   // ROTATING
   LoggerSinkConfiguration(LoggerSinkType type, std::string level,
                           std::string pattern, std::string fileName,
-                          std::size_t fileSize);
+                          std::size_t fileSize, std::size_t maxFiles);
   // TCP
   LoggerSinkConfiguration(LoggerSinkType type, std::string level,
                           std::string pattern, std::string connection,
@@ -58,6 +59,7 @@ class LoggerSinkConfiguration {
   [[nodiscard]] const std::string& getConnection() const;
   [[nodiscard]] int32_t getPort() const;
   [[nodiscard]] const std::string& getId() const;
+  [[nodiscard]] size_t getMaxFiles() const;
 };
 
 #endif  // CPP_BASE_LIBRARY_LOGGERSINKCONFIGURATION_H

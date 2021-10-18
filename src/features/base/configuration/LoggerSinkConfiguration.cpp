@@ -6,6 +6,7 @@ LoggerSinkConfiguration::LoggerSinkConfiguration(
       m_level(std::move(level)),
       m_pattern(std::move(pattern)),
       m_fileSize(0),
+      m_maxFiles(0),
       m_port(-1) {}
 LoggerSinkConfiguration::LoggerSinkConfiguration(
     LoggerSinkConfiguration::LoggerSinkType type, std::string level,
@@ -16,15 +17,18 @@ LoggerSinkConfiguration::LoggerSinkConfiguration(
       m_fileName(std::move(fileName)),
       m_time(std::move(time)),
       m_fileSize(0),
+      m_maxFiles(0),
       m_port(-1) {}
 LoggerSinkConfiguration::LoggerSinkConfiguration(
     LoggerSinkConfiguration::LoggerSinkType type, std::string level,
-    std::string pattern, std::string fileName, std::size_t fileSize)
+    std::string pattern, std::string fileName, std::size_t fileSize,
+    std::size_t maxFiles)
     : m_type(type),
       m_level(std::move(level)),
       m_pattern(std::move(pattern)),
       m_fileName(std::move(fileName)),
       m_fileSize(fileSize),
+      m_maxFiles(maxFiles),
       m_port(-1) {}
 LoggerSinkConfiguration::LoggerSinkConfiguration(
     LoggerSinkConfiguration::LoggerSinkType type, std::string level,
@@ -33,6 +37,7 @@ LoggerSinkConfiguration::LoggerSinkConfiguration(
       m_level(std::move(level)),
       m_pattern(std::move(pattern)),
       m_fileSize(0),
+      m_maxFiles(0),
       m_connection(std::move(connection)),
       m_port(port) {}
 LoggerSinkConfiguration::LoggerSinkConfiguration(
@@ -42,6 +47,7 @@ LoggerSinkConfiguration::LoggerSinkConfiguration(
       m_level(std::move(level)),
       m_pattern(std::move(pattern)),
       m_fileSize(0),
+      m_maxFiles(0),
       m_port(-1),
       m_id(std::move(id)) {}
 LoggerSinkConfiguration::LoggerSinkType LoggerSinkConfiguration::getType()
@@ -62,3 +68,4 @@ const std::string& LoggerSinkConfiguration::getConnection() const {
 }
 int32_t LoggerSinkConfiguration::getPort() const { return m_port; }
 const std::string& LoggerSinkConfiguration::getId() const { return m_id; }
+size_t LoggerSinkConfiguration::getMaxFiles() const { return m_maxFiles; }

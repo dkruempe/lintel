@@ -18,3 +18,11 @@ bool LoggerEntry::isLoggerConfiguration() const {
 bool LoggerEntry::isLoggerPathConfiguration() const {
   return m_loggerPathConfiguration != nullptr;
 }
+const std::shared_ptr<LoggerConfiguration>&
+LoggerEntry::getLoggerConfiguration() const {
+  return m_loggerConfiguration;
+}
+const std::shared_ptr<LoggerPathConfiguration>&
+LoggerEntry::getLoggerPathConfiguration() const {
+  return m_loggerPathConfiguration;
+}

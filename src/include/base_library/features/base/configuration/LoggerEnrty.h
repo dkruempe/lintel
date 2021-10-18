@@ -22,7 +22,10 @@ class LoggerEntry : public Entry {
 
   [[nodiscard]] bool isLoggerConfiguration() const;
   [[nodiscard]] bool isLoggerPathConfiguration() const;
+  [[nodiscard]] const std::shared_ptr<LoggerConfiguration>&
+  getLoggerConfiguration() const;
+  [[nodiscard]] const std::shared_ptr<LoggerPathConfiguration>&
+  getLoggerPathConfiguration() const;
 };
-
 
 #endif  // CPP_BASE_LIBRARY_LOGGERENRTY_H

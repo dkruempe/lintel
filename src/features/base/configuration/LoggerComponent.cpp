@@ -38,7 +38,7 @@ std::vector<std::shared_ptr<Entry>> LoggerComponent::parse(
     // parse logger path element
     loggerEntries.push_back(parseLoggerPath(loggerElement, lineNumber));
   }
-  return {};
+  return loggerEntries;
 }
 std::shared_ptr<Entry> LoggerComponent::parseLogger(
     tinyxml2::XMLElement* loggerElement, int32_t& lineNumber,
@@ -55,8 +55,7 @@ std::shared_ptr<Entry> LoggerComponent::parseLogger(
                                  lineNumber);
   }
   if (pattern == nullptr) {
-    throw ConfigurationException(getConfigRoot(), "logger pattern is null",
-                                 lineNumber);
+    pattern = "";
   }
   if (level == nullptr) {
     throw ConfigurationException(getConfigRoot(), "logger level is null",
@@ -113,6 +112,8 @@ std::shared_ptr<Entry> LoggerComponent::parseLogger(
     // RotatingFileSink
     const char* size =
         loggerSinkElement->Attribute(shape.LOGGER_SINK_SIZE.c_str());
+    const char* maxFiles =
+        loggerSinkElement->Attribute(shape.LOGGER_SINK_MAX_FILES.c_str());
     // TcpSink
     const char* connection =
         loggerSinkElement->Attribute(shape.LOGGER_SINK_CONNECTION.c_str());
@@ -158,8 +159,11 @@ std::shared_ptr<Entry> LoggerComponent::parseLogger(
           throw ConfigurationException(getConfigRoot(),
                                        "LoggerSinks size nullptr", lineNo);
         }
+        if (maxFiles == nullptr) {
+          throw ConfigurationException(getConfigRoot(), "LoggerSinks maxFiles nullptr", lineNo);
+        }
         loggerSinks.emplace_back(type, loggerSinkLevel, loggerSinkPattern,
-                                 loggerSinkFileName, std::stoul(size));
+                                 loggerSinkFileName, std::stoul(size), std::stoul(maxFiles));
         break;
       }
       case LoggerSinkConfiguration::SysLogSink:
