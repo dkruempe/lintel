@@ -105,6 +105,13 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
         if (is_regular_file(path)) {
           throw std::runtime_error("path is file and not directory");
         }
+        bool isCreateSubDirectories =
+            loggerPathEntry->getLoggerPathConfiguration()
+                ->isCreateSubDirectories();
+        if (isCreateSubDirectories) {
+          path = path.concat(std::filesystem::path::preferred_separator +
+                             m_processInfo->name);
+        }
         if (!exists(path)) {
           create_directories(path);
         }
@@ -132,6 +139,13 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
         int32_t hour = std::stoi(time.substr(0, 2));
         int32_t minute = std::stoi(time.substr(3, 2));
         auto path = loggerPathEntry->getLoggerPathConfiguration()->getPath();
+        bool isCreateSubDirectories =
+            loggerPathEntry->getLoggerPathConfiguration()
+                ->isCreateSubDirectories();
+        if (isCreateSubDirectories) {
+          path = path.concat(std::filesystem::path::preferred_separator +
+                             m_processInfo->name);
+        }
         if (is_regular_file(path)) {
           throw std::runtime_error("path is file and not directory");
         }
