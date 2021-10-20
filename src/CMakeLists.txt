@@ -24,8 +24,6 @@ if (NOT TARGET kruempelmann::Hypodermic)
 else ()
     include_directories(../external/Hypodermic/include)
 endif ()
-find_library(LOG4CXX NAMES log4cxx)
-find_path(LOG4CXX_INCLUDES NAMES log4cxx/log4cxx.h)
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(tinyxml2 REQUIRED)
@@ -47,10 +45,10 @@ add_library(base_library SHARED ${headers} ${sources})
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library
         SYSTEM PUBLIC
-        "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES};${Boost_INCLUDE_DIRS};${tabulate_INCLUDES};${CMAKE_CURRENT_SOURCE_DIR}/include>"
-        "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${LOG4CXX_INCLUDES};${Boost_INCLUDE_DIRS};${tabulate_INCLUDES};include>"
+        "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${Boost_INCLUDE_DIRS};${tabulate_INCLUDES};${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${Boost_INCLUDE_DIRS};${tabulate_INCLUDES};include>"
         )
-target_link_libraries(base_library PRIVATE ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3 Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib RapidJSON::RapidJSON date::date project_warnings)
+target_link_libraries(base_library PRIVATE fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3 Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib RapidJSON::RapidJSON date::date project_warnings)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets

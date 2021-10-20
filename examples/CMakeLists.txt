@@ -18,9 +18,6 @@ else ()
 endif ()
 
 # dependencies
-find_library(LOG4CXX NAMES log4cxx)
-find_path(LOG4CXX_INCLUDES NAMES log4cxx/log4cxx.h)
-
 find_package(Threads REQUIRED)
 find_package(fmt REQUIRED)
 find_package(tinyxml2 REQUIRED)
@@ -42,5 +39,5 @@ target_link_libraries(spdlogExample PUBLIC fmt::fmt spdlog::spdlog)
 # main example
 add_executable(main main.cpp)
 target_compile_features(main PUBLIC cxx_std_17)
-target_include_directories(main PRIVATE ${LOG4CXX_INCLUDES} ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(main PRIVATE kruempelmann::base_library ${LOG4CXX} fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib date::date)
+target_include_directories(main PRIVATE ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(main PRIVATE kruempelmann::base_library fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib date::date)
