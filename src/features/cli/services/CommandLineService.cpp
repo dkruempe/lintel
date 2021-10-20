@@ -1,7 +1,6 @@
 #include "base_library/features/cli/services/CommandLineService.h"
 
-#include <fmt/chrono.h>
-#include <fmt/format.h>
+#include <date/tz.h>
 
 #include <chrono>
 #include <string>
@@ -84,9 +83,11 @@ void CommandLineService::onPrompt() {
   // timestamp MENU %
   std::string_view currentMenu =
       m_menu.currentOf() == nullptr ? "MAIN" : m_menu.currentOf()->getName();
-  std::chrono::system_clock::time_point point =
-      std::chrono::system_clock::now();
-  fmt::print("{:%Y-%m-%d %H:%M:%S} {} % ", point, currentMenu);
+  using namespace std;
+  using namespace std::chrono;
+  using namespace date;
+  cout << format("%FT%TZ", floor<seconds>(system_clock::now())) << " "
+       << currentMenu << " % ";
 }
 void CommandLineService::run() {
   onStart();
@@ -196,8 +197,8 @@ void CommandLineService::onCommand(const std::string &input,
       return;
     }
     if (!m_menu.onMenu(input)) {
-      fmt::print("ERROR: Invalid command '{}'! Please use the help function\n",
-                 input);
+      std::cout << "ERROR: Invalid command '" << input
+                << "'! Please use the help function\n";
       return;
     }
   }

@@ -1,6 +1,7 @@
 <Configuration>
     <Loggers>
         <!-- path to logger directory -->
+        <!-- <Path path="/home/server/dev/log/cpp-base-library" create_sub_dirs="true"/> -->
         <Path path="/Users/dkruempe/dev/log/cpp-base-library" create_sub_dirs="true"/>
         <!-- Special template for logger -->
         <Logger process_name=".*" level="info" async="false">

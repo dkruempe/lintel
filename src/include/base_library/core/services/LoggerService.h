@@ -41,8 +41,8 @@ class LoggerService {
 
   template <typename... Args>
   void log(spdlog::source_loc source, spdlog::level::level_enum lvl,
-           fmt::format_string<Args...> fmt, Args &&...args) {
-    m_logger->log(source, lvl, fmt, std::forward<Args>(args)...);
+           spdlog::string_view_t message, Args &&...args) {
+    m_logger->log(source, lvl, message, args...);
   }
 };
 #define DECLARE_LOGGER(processInfo, configuration) \
@@ -66,7 +66,7 @@ class LoggerService {
 #define LOG_FATAL(message, ...)                                \
   LoggerService::get().log(                                    \
       spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \
-      spdlog::level::critical, message, ##__VA_ARGS__)
+      spdlog::level::critical, message, ##_VA_ARGS__)
 #define LOG_WARN(message, ...)                                 \
   LoggerService::get().log(                                    \
       spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \
