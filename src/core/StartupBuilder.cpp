@@ -1,5 +1,7 @@
 #include "base_library/core/StartupBuilder.h"
 
+#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
+
 #include <algorithm>
 #include <csignal>
 #include <memory>
@@ -24,7 +26,8 @@ StartupBuilder::StartupBuilder(Process::ProcessInfo &&processInfo,
       m_name(std::make_shared<ProcessName>(std::move(name))),
       m_arguments(std::move(arguments)),
       m_configurationComponentBuilder(
-          std::make_shared<ConfigurationComponentBuilder>()) {
+          std::make_shared<ConfigurationComponentBuilder>()),
+      m_environmentConfiguration(std::make_shared<EnvironmentConfiguration>()) {
   signal(SIGINT, StartupBuilder::receiveSignal);
   signal(SIGCHLD, StartupBuilder::receiveSignal);
   signal(SIGTERM, StartupBuilder::receiveSignal);
@@ -68,8 +71,9 @@ void StartupBuilder::start() {
   }
   builder.registerInstance(m_processInfo);
   builder.registerInstance(m_name);
-  m_configuration =
-      std::make_shared<Configuration>(m_configurationComponentBuilder->build());
+  builder.registerInstance(m_environmentConfiguration);
+  m_configuration = std::make_shared<Configuration>(
+      m_configurationComponentBuilder->build(), m_environmentConfiguration);
   builder.registerInstance(m_configuration);
   // II logger
   DECLARE_LOGGER(m_processInfo, m_configuration);

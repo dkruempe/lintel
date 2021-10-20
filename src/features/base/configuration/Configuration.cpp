@@ -10,8 +10,10 @@
 #include "base_library/features/base/configuration/ConfigurationException.h"
 
 Configuration::Configuration(
-    const std::vector<std::shared_ptr<Component>> &components)
+    const std::vector<std::shared_ptr<Component>> &components,
+    std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
     : m_components(initialize(components)),
+      m_environmentConfiguration(std::move(environmentConfiguration)),
       m_configurationFile(std::string(CONFIG_DIRECTORY) +
                           std::filesystem::path::preferred_separator +
                           std::string(BOOTSTRAP_CONFIG_NAME) + ".xml") {

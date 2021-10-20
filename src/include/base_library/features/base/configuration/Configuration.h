@@ -9,6 +9,7 @@
 #include "Component.h"
 #include "Entry.h"
 #include "base_library/core/utils/TypeName.h"
+#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 
 /**
  * General Configuration Parser
@@ -23,6 +24,7 @@ class Configuration {
  private:
   std::map<std::string, std::shared_ptr<Component>> m_components;
   std::vector<std::shared_ptr<Entry>> m_configurationEntries;
+  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
   std::filesystem::path m_configurationFile;
 
   void loadConfiguration();
@@ -32,7 +34,8 @@ class Configuration {
 
  public:
   explicit Configuration(
-      const std::vector<std::shared_ptr<Component>> &components);
+      const std::vector<std::shared_ptr<Component>> &components,
+      std::shared_ptr<EnvironmentConfiguration> EnvironmentConfiguration);
 
   // constructor for testing purposes
   void setEntries(std::vector<std::shared_ptr<Entry>> entries);

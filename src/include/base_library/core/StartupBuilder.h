@@ -9,6 +9,7 @@
 #include "base_library/features/base/configuration/Component.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
+#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 #include "base_library/features/base/models/Process.h"
 #include "base_library/features/base/models/ProcessName.h"
 
@@ -25,6 +26,8 @@ class StartupBuilder {
   std::shared_ptr<ConfigurationComponentBuilder>
       m_configurationComponentBuilder;
   std::shared_ptr<Configuration> m_configuration = nullptr;
+  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration =
+      nullptr;
 
  public:
   StartupBuilder(Process::ProcessInfo &&processInfo, ProcessName &&processName,
