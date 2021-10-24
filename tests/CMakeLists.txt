@@ -10,38 +10,27 @@ if (NOT TARGET kruempelmann::base_library)
     include_directories(${base_library_INCLUDE_DIRS})
 endif ()
 find_package(Catch2 REQUIRED)
-find_package(Threads REQUIRED)
-find_package(fmt REQUIRED)
-find_package(tinyxml2 REQUIRED)
-find_package(PostgreSQL REQUIRED)
-find_package(magic_enum REQUIRED)
-find_package(Boost REQUIRED)
-find_package(date REQUIRED)
 
 # property Test
 ADD_EXECUTABLE(propertyTest models/PropertyTest.cpp)
 target_compile_features(propertyTest PUBLIC cxx_std_17)
-target_include_directories(propertyTest PRIVATE ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(propertyTest PRIVATE kruempelmann::base_library Catch2::Catch2 fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads date::date)
+target_link_libraries(propertyTest PRIVATE kruempelmann::base_library Catch2::Catch2)
 ADD_TEST(NAME BaseLibrary.PropertyTest COMMAND propertyTest)
 
 # propertyFactory Test
 ADD_EXECUTABLE(propertyFactoryTest factories/PropertyFactoryTest.cpp)
 target_compile_features(propertyFactoryTest PUBLIC cxx_std_17)
-target_include_directories(propertyFactoryTest PRIVATE ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library Catch2::Catch2 fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads date::date)
+target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library Catch2::Catch2)
 ADD_TEST(NAME BaseLibrary.PropertyFactoryTest COMMAND propertyFactoryTest)
 
 # property Service Test
 ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
 target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
-target_include_directories(propertyServiceTest PRIVATE ${magic_enum_INCLUDE_DIRS})
-target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2 fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL Threads::Threads date::date)
+target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2)
 ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
 
 
 ADD_EXECUTABLE(ProcessServiceTest services/ProcessServiceTest.cpp)
 target_compile_features(ProcessServiceTest PUBLIC cxx_std_17)
-target_include_directories(ProcessServiceTest PRIVATE ${Boost_INCLUDE_DIRS})
-TARGET_LINK_LIBRARIES(ProcessServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2 Threads::Threads date::date)
+TARGET_LINK_LIBRARIES(ProcessServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2)
 ADD_TEST(NAME BaseLibrary.ProcessServiceTest COMMAND ProcessServiceTest)
