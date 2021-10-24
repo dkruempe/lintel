@@ -12,7 +12,8 @@ class ShmSegmentNotFound : public std::exception {
  public:
   explicit ShmSegmentNotFound(const std::string_view &name)
       : name(name),
-        message(this->name + ": segment not constructed in SharedMemoryService") {}
+        message(this->name +
+                ": segment not constructed in SharedMemoryService") {}
 
   [[nodiscard]] const std::string &getName() const { return name; }
 

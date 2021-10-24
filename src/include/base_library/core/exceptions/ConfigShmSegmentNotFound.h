@@ -10,7 +10,8 @@ class ConfigShmSegmentNotFound : public std::exception {
 
  public:
   explicit ConfigShmSegmentNotFound(const std::string_view &name)
-      : name(name), message(this->name + ": segment not defined in configuration") {}
+      : name(name),
+        message(this->name + ": segment not defined in configuration") {}
 
   [[nodiscard]] const std::string &getName() const { return name; }
 

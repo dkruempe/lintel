@@ -33,9 +33,11 @@ class LoggerComponent : public Component {
 
   } shape;
 
-  std::shared_ptr<Entry> parseLoggerPath(tinyxml2::XMLElement* loggerElement, int32_t &lineNumber);
+  std::shared_ptr<Entry> parseLoggerPath(tinyxml2::XMLElement* loggerElement,
+                                         int32_t& lineNumber);
 
-  std::shared_ptr<Entry> parseLogger(tinyxml2::XMLElement* loggerElement, int32_t &lineNumber, int32_t lineOffset);
+  std::shared_ptr<Entry> parseLogger(tinyxml2::XMLElement* loggerElement,
+                                     int32_t& lineNumber, int32_t lineOffset);
 
  public:
   LoggerComponent();

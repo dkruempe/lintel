@@ -160,10 +160,12 @@ std::shared_ptr<Entry> LoggerComponent::parseLogger(
                                        "LoggerSinks size nullptr", lineNo);
         }
         if (maxFiles == nullptr) {
-          throw ConfigurationException(getConfigRoot(), "LoggerSinks maxFiles nullptr", lineNo);
+          throw ConfigurationException(getConfigRoot(),
+                                       "LoggerSinks maxFiles nullptr", lineNo);
         }
         loggerSinks.emplace_back(type, loggerSinkLevel, loggerSinkPattern,
-                                 loggerSinkFileName, std::stoul(size), std::stoul(maxFiles));
+                                 loggerSinkFileName, std::stoul(size),
+                                 std::stoul(maxFiles));
         break;
       }
       case LoggerSinkConfiguration::SysLogSink:

@@ -5,7 +5,9 @@
 SharedMemorySegment::SharedMemorySegment(std::filesystem::path sharedMemoryPath,
                                          std::string name,
                                          const std::size_t size)
-    : sharedMemoryPath(std::move(sharedMemoryPath)), name(std::move(name)), size(size) {}
+    : sharedMemoryPath(std::move(sharedMemoryPath)),
+      name(std::move(name)),
+      size(size) {}
 
 [[nodiscard]] std::filesystem::path SharedMemorySegment::getPath() const {
   return std::filesystem::path(sharedMemoryPath.string() +
