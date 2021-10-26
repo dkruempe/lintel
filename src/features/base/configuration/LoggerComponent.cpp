@@ -164,7 +164,7 @@ std::shared_ptr<Entry> LoggerComponent::parseLogger(
                                        "LoggerSinks maxFiles nullptr", lineNo);
         }
         loggerSinks.emplace_back(type, loggerSinkLevel, loggerSinkPattern,
-                                 loggerSinkFileName, std::stoul(size),
+                                 loggerSinkFileName, convertToBytes(size),
                                  std::stoul(maxFiles));
         break;
       }

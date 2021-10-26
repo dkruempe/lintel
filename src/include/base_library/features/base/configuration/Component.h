@@ -11,6 +11,14 @@ class Component {
  private:
   std::string m_configRoot;
 
+ protected:
+  /**
+   * convert string to bytes
+   * @param size
+   * @return
+   */
+  static std::size_t convertToBytes(const std::string &size);
+
  public:
   explicit Component(std::string configRoot);
 

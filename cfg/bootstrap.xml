@@ -7,7 +7,7 @@
         <Logger process_name=".*" level="info" async="false">
             <!--<LoggerSink type="ConsoleSink" level="trace"/>-->
             <!--<LoggerSink type="DailyFileSink" level="debug" time="02:30"/>-->
-            <LoggerSink type="RotatingFileSink" level="trace" size="5242880" max_files="10"/>
+            <LoggerSink type="RotatingFileSink" level="trace" size="5MB" max_files="10"/>
             <!--<LoggerSink type="TcpSink" level="debug"
                         pattern='{"timestamp":"%Y-%m-%dT%H:%M:%S.%fZ", "logger":"%n", "@severity":"%l", "file":"%s", "line":"%#", "message":"%v"}'
                         connection="localhost" port="1234"/>-->
