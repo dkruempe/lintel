@@ -103,4 +103,7 @@ void AuthService::onCheck() {
 void AuthService::onInitialize() {
   m_scheduler->schedule_after(m_scheduleRate->getValue(), [&]() { onCheck(); });
 }
-AuthService::~AuthService() { m_running.store(false); }
+void AuthService::onShutdown() {
+  LOG_INFO("stop auth service");
+  m_running.store(false);
+}

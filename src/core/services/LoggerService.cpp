@@ -25,8 +25,6 @@ LoggerService::LoggerService(std::shared_ptr<Process::ProcessInfo> processInfo,
     : m_processInfo(std::move(processInfo)),
       m_configuration(std::move(configuration)),
       m_logger(init()) {
-  configure(false);
-  m_logger->flush_on(spdlog::level::info);
 }
 std::shared_ptr<spdlog::logger> LoggerService::init() {
   std::vector<spdlog::sink_ptr> sinks;
@@ -178,55 +176,40 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
       }
     }
   }
-  return std::make_shared<spdlog::logger>(m_processInfo->name, sinks.begin(),
-                                          sinks.end());
+  auto logger = std::make_shared<spdlog::logger>(m_processInfo->name,
+                                                 sinks.begin(), sinks.end());
+  std::string loggerLevel =
+      loggerConfigEntry->getLoggerConfiguration()->getLevel();
+  {
+    if (loggerLevel == "critical") {
+      logger->set_level(spdlog::level::critical);
+      logger->flush_on(spdlog::level::critical);
+    } else if (loggerLevel == "warn") {
+      logger->set_level(spdlog::level::warn);
+      logger->flush_on(spdlog::level::warn);
+    } else if (loggerLevel == "err") {
+      logger->set_level(spdlog::level::err);
+      logger->flush_on(spdlog::level::err);
+    } else if (loggerLevel == "info") {
+      logger->set_level(spdlog::level::info);
+      logger->flush_on(spdlog::level::info);
+    } else if (loggerLevel == "debug") {
+      logger->set_level(spdlog::level::debug);
+      logger->flush_on(spdlog::level::debug);
+    } else if (loggerLevel == "trace") {
+      logger->set_level(spdlog::level::trace);
+      logger->flush_on(spdlog::level::trace);
+    } else if (loggerLevel == "off") {
+      logger->set_level(spdlog::level::off);
+      logger->flush_on(spdlog::level::off);
+    }
+  }
+  m_logger->flush_on(spdlog::level::trace);
+  m_logger->set_level(spdlog::level::trace);
+  return logger;
 }
 
 LoggerService::~LoggerService() = default;
-
-void LoggerService::configure(bool consoleOnly) {
-  /*bool createError = false;
-
-  if (consoleOnly) {
-    log4cxx::BasicConfigurator::configure();
-    return;
-  }
-
-  FileService templateFile(std::string(CONFIG_DIRECTORY) + "/" +
-                           std::string(m_templateConfig));
-  FileService configFile(std::string(CONFIG_DIRECTORY) + "/" + m_processName +
-                         "_log4cxx.xml");
-  DirectoryService logDir(std::string(LOG_DIRECTORY));
-  if (!logDir.exists()) {
-    logDir.createDirectories();
-  }
-  if (!configFile.exists() && templateFile.exists()) {
-    std::string content = templateFile.readFile();
-    auto found = content.find(m_templateMarker);
-    if (found != std::string::npos) {
-      content.replace(found, std::string(m_templateMarker).length(),
-                      std::string(LOG_DIRECTORY) + std::string("/") +
-                          m_processName + std::string(".log"));
-      configFile.writeToFile(content, false);
-    } else {
-      createError = true;
-    }
-  }
-
-  // II load configuration file or load basic configuration if no configuration
-  // file found
-  if (!templateFile.exists() || createError) {
-    if (!templateFile.exists()) {
-      std::cerr << "Template not found" << std::endl;
-    } else {
-      std::cerr << "Parse error with template config" << std::endl;
-    }
-    log4cxx::BasicConfigurator::configure();
-  } else {
-    log4cxx::xml::DOMConfigurator::configureAndWatch(
-        configFile.getPath().string(), 30000);
-  }*/
-}
 
 LoggerService &LoggerService::getOrCreate(
     const std::shared_ptr<Process::ProcessInfo> &processInfo,

@@ -82,6 +82,7 @@ void StartupBuilder::start() {
   // IV boostrap plugins trigger initialization
   std::shared_ptr<BootstrapService> bootstrapService =
       m_container->resolve<BootstrapService>();
+  m_abstractServices = m_container->resolveAll<AbstractServiceInterface>();
   bootstrapService->onStart();
   // V start services
   for (auto &&feature : m_features) {
@@ -119,10 +120,10 @@ void StartupBuilder::receiveSignal(int signal) {
 
 void StartupBuilder::onShutdown() {
   LOG_INFO("{} shutdown", m_processInfo->name);
-
-  m_conditionVariable.notify_all();
   // trigger shutdown
-  for (auto &&abstractService : m_abstractServices) {
+  for (const auto &abstractService : m_abstractServices) {
+    LOG_TRACE("shutdown of {}", abstractService->getClassName());
     abstractService->onShutdown();
   }
+  m_conditionVariable.notify_all();
 }

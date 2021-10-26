@@ -17,6 +17,8 @@ class AbstractServiceInterface {
   virtual void onInitialize() = 0;
   virtual void onShutdown() = 0;
 
+  virtual std::string_view getClassName() const = 0;
+
  private:
   virtual std::vector<std::shared_ptr<PropertyBase>> getProperties() = 0;
   friend class PropertyService;
@@ -74,7 +76,7 @@ class AbstractService : public AbstractServiceInterface {
   [[nodiscard]] const std::string &getInstanceName() const {
     return m_instanceName;
   }
-  [[nodiscard]] constexpr std::string_view getClassName() const {
+  [[nodiscard]] std::string_view getClassName() const override {
     return type_name<T>();
   }
   friend std::ostream &operator<<(std::ostream &os,

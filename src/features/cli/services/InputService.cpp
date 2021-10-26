@@ -7,7 +7,6 @@
 
 KeyEvent InputService::onRead() {
   int ch = std::getchar();
-  LOG_TRACE("{}", ch);
   switch (ch) {
     case EOF:
     case 3:  // CtrlC

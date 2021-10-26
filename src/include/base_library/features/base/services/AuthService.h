@@ -49,7 +49,7 @@ class AuthService : public AbstractService<AuthService> {
               std::shared_ptr<UserRepository> userRepository,
               std::shared_ptr<SchedulerService> schedulerService);
 
-  virtual ~AuthService();
+  virtual ~AuthService() = default;
 
   std::optional<UserToken> onLoginOf(const UserLogin &userLogin);
 
@@ -58,6 +58,8 @@ class AuthService : public AbstractService<AuthService> {
   void onLogoutOf(const UserTokenLogin &userToken);
 
   void onInitialize() override;
+
+  void onShutdown() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_AUTHSERVICE_H
