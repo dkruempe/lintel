@@ -21,7 +21,7 @@ class DatabaseConnectionConfigurations {
   [[nodiscard]] std::shared_ptr<DatabaseConnectionEntry> of(
       const std::string &connectionName);
 
-  [[nodiscard]] std::vector<std::shared_ptr<DatabaseConnectionEntry>> allof();
+  [[nodiscard]] std::vector<std::shared_ptr<DatabaseConnectionEntry>> allOf();
 };
 
 #endif  // CPP_BASE_LIBRARY_DATABASECONNECTIONCONFIGURATIONS_H

@@ -5,6 +5,7 @@
 #include "base_library/core/plugins/VirtualGroupBootstrapPlugin.h"
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/PersistableService.h"
+#include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
 #include "base_library/features/base/command_line/UserManagementCliComponent.h"
 #include "base_library/features/base/controller/UserApi.h"
@@ -17,6 +18,7 @@
 #include "base_library/features/base/services/InitializeService.h"
 #include "base_library/features/base/services/ProcessArgumentService.h"
 #include "base_library/features/base/services/SchedulerService.h"
+#include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
 BaseFeature::BaseFeature() : Feature(type_name<BaseFeature>()) {}
 
@@ -65,4 +67,9 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .singleInstance();
   builder.registerType<UserRepository>().singleInstance();
   builder.registerType<ProcessArgumentService>().singleInstance();
+  builder.registerType<SharedMemorySegmentManager>().singleInstance();
+  builder.registerType<SharedMemoryService>()
+      .as<AbstractServiceInterface>()
+      .asSelf()
+      .singleInstance();
 }

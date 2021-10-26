@@ -28,6 +28,7 @@ IMPLEMENT_STRINGIFY_SERVICE_FOR(uint8_t, std::to_string, std::stoul)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(uint16_t, std::to_string, std::stoul)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(uint32_t, std::to_string, std::stoul)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(uint64_t, std::to_string, std::stoul)
+IMPLEMENT_STRINGIFY_SERVICE_FOR(std::size_t, std::to_string, std::stoul)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(float, std::to_string, std::stof)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(double, std::to_string, std::stod)
 IMPLEMENT_STRINGIFY_SERVICE_FOR(

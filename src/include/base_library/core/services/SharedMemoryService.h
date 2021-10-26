@@ -2,29 +2,49 @@
 #define CPP_BASE_LIBRARY_SHAREDMEMORYSERVICE_H
 
 #include <array>
+#include <atomic>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/interprocess/containers/string.hpp>
 #include <boost/interprocess/containers/vector.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <ostream>
 #include <set>
 #include <utility>
 
 #include "base_library/core/exceptions/ShmSegmentNotFound.h"
-#include "base_library/core/models/AbstractShmConfig.h"
 #include "base_library/core/models/SharedMemorySegment.h"
+#include "base_library/core/services/AbstractService.h"
+#include "base_library/features/base/services/SchedulerService.h"
+#include "base_library/features/base/services/SharedMemorySegmentManager.h"
+#include "base_library/features/property/models/Property.h"
 
-class SharedMemoryService {
+class SharedMemoryService : public AbstractService<SchedulerService> {
  private:
-  std::map<std::string,
-           std::shared_ptr<boost::interprocess::managed_mapped_file>>
-      segments;
-  static std::map<std::string,
-                  std::shared_ptr<boost::interprocess::managed_mapped_file>>
-  create(const std::vector<SharedMemorySegment> &set);
+  struct MappedFile {
+    std::shared_ptr<boost::interprocess::managed_mapped_file>
+        m_managedMappedFile;
+    std::shared_ptr<SharedMemorySegment> m_sharedMemorySegment;
+  };
+  // variables
+  std::map<std::string, MappedFile> m_segments;
+  std::shared_ptr<SchedulerService> m_schedulerService;
+  std::atomic_bool m_running;
+  // properties
+  DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),
+                  "schedule rate of user tokens checks in seconds", true);
+  DEFINE_PROPERTY(m_autoExtend, bool, true, "auto extend shared memory", true);
+  DEFINE_PROPERTY(m_autoExtendEpsilon, std::size_t, 1000,
+                  "epsilon when auto extend gets triggered", true);
+
+  // initializer function
+  static std::map<std::string, MappedFile> create(
+      const std::vector<std::shared_ptr<SharedMemorySegment>> &set);
+
+  void onCheck();
 
  public:
   typedef boost::interprocess::allocator<
@@ -34,8 +54,14 @@ class SharedMemoryService {
                                             charAllocator>
       ShmString;
 
-  explicit SharedMemoryService(
-      std::shared_ptr<AbstractShmConfig> abstractShmConfig);
+  SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager>
+                          &sharedMemorySegmentManager,
+                      std::shared_ptr<SchedulerService> schedulerService,
+                      const std::shared_ptr<ProcessName> &processName);
+
+  virtual ~SharedMemoryService() = default;
+  void onInitialize() override;
+  void onShutdown() override;
 
   /**
    * grows the size of the mentioned shared memory block
@@ -62,9 +88,10 @@ class SharedMemoryService {
   std::array<Object, size> &constructArray(const std::string &sharedMemoryName,
                                            const std::string &name) {
     try {
-      auto &segment = segments.at(sharedMemoryName);
+      auto &segment = m_segments.at(sharedMemoryName);
       return *(
-          segment->find_or_construct<std::array<Object, size>>(name.c_str())());
+          segment.m_managedMappedFile
+              ->find_or_construct<std::array<Object, size>>(name.c_str())());
     } catch (std::out_of_range &exception) {
       throw ShmSegmentNotFound(sharedMemoryName);
     }
@@ -80,11 +107,13 @@ class SharedMemoryService {
         Object, boost::interprocess::managed_mapped_file::segment_manager>
         persistentSetAllocator;
     try {
-      auto &segment = segments.at(sharedMemoryName);
-      persistentSetAllocator allocator(segment->get_segment_manager());
-      return *(segment->find_or_construct<boost::interprocess::set<
-                   Object, std::less<Object>, persistentSetAllocator>>(
-          name.c_str())(std::less<Object>(), allocator));
+      auto &segment = m_segments.at(sharedMemoryName);
+      persistentSetAllocator allocator(
+          segment.m_managedMappedFile->get_segment_manager());
+      return *(segment.m_managedMappedFile
+                   ->find_or_construct<boost::interprocess::set<
+                       Object, std::less<Object>, persistentSetAllocator>>(
+                       name.c_str())(std::less<Object>(), allocator));
     } catch (std::out_of_range &exception) {
       throw ShmSegmentNotFound(sharedMemoryName);
     }
@@ -102,11 +131,13 @@ class SharedMemoryService {
         pairType, boost::interprocess::managed_mapped_file::segment_manager>
         persistentMapAllocator;
     try {
-      auto &segment = segments.at(sharedMemoryName);
-      persistentMapAllocator allocator(segment->get_segment_manager());
-      return *(segment->find_or_construct<boost::interprocess::map<
-                   Key, Value, std::less<Key>, persistentMapAllocator>>(
-          name.c_str())(std::less<Key>(), allocator));
+      auto &segment = m_segments.at(sharedMemoryName);
+      persistentMapAllocator allocator(
+          segment.m_managedMappedFile->get_segment_manager());
+      return *(segment.m_managedMappedFile
+                   ->find_or_construct<boost::interprocess::map<
+                       Key, Value, std::less<Key>, persistentMapAllocator>>(
+                       name.c_str())(std::less<Key>(), allocator));
     } catch (std::out_of_range &exception) {
       throw ShmSegmentNotFound(sharedMemoryName);
     }
@@ -123,9 +154,10 @@ class SharedMemoryService {
         Object, boost::interprocess::managed_mapped_file::segment_manager>
         persistentVectorAllocator;
     try {
-      auto &segment = segments.at(sharedMemoryName);
-      persistentVectorAllocator allocator(segment->get_segment_manager());
-      return *(segment->find_or_construct<
+      auto &segment = m_segments.at(sharedMemoryName);
+      persistentVectorAllocator allocator(
+          segment.m_managedMappedFile->get_segment_manager());
+      return *(segment.m_managedMappedFile->find_or_construct<
                boost::interprocess::vector<Object, persistentVectorAllocator>>(
           name.c_str())(allocator));
     } catch (std::out_of_range &exception) {
@@ -137,8 +169,9 @@ class SharedMemoryService {
   Object &constructObject(const std::string &sharedMemoryName,
                           const std::string &name) {
     try {
-      auto &segment = segments.at(sharedMemoryName);
-      return *(segment->find_or_construct<Object>(name.c_str())());
+      auto &segment = m_segments.at(sharedMemoryName);
+      return *(segment.m_managedMappedFile->find_or_construct<Object>(
+          name.c_str())());
     } catch (std::out_of_range &exception) {
       throw ShmSegmentNotFound(sharedMemoryName);
     }

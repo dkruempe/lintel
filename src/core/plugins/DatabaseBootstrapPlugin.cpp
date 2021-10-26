@@ -8,7 +8,7 @@
 #include "base_library/core/utils/StringUtils.h"
 
 void DatabaseBootstrapPlugin::onStart() {
-  for (const auto &connectionEntry : m_connectionConfigurations->allof()) {
+  for (const auto &connectionEntry : m_connectionConfigurations->allOf()) {
     try {
       handle(connectionEntry);
     } catch (db::SQLException &exception) {

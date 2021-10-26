@@ -81,6 +81,8 @@ IMPLEMENT_PROPERTY(uint32_t, StringifyService<uint32_t>::serializeToString,
                    StringifyService<uint32_t>::deserializeFromString)
 IMPLEMENT_PROPERTY(uint64_t, StringifyService<uint64_t>::serializeToString,
                    StringifyService<uint64_t>::deserializeFromString)
+IMPLEMENT_PROPERTY(std::size_t, StringifyService<std::size_t>::serializeToString,
+                   StringifyService<std::size_t>::deserializeFromString)
 IMPLEMENT_PROPERTY(float, StringifyService<float>::serializeToString,
                    StringifyService<float>::deserializeFromString)
 IMPLEMENT_PROPERTY(double, StringifyService<double>::serializeToString,
