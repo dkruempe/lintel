@@ -79,10 +79,10 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
       }
       SegmentTemp segmentTemp;
       segmentTemp.m_name = name;
-      segmentTemp.m_size = std::stoul(sizeStr);
+      segmentTemp.m_size = convertToBytes(sizeStr);
       if (maxSizeStr != nullptr) {
-        segmentTemp.m_maxSize = std::stoul(maxSizeStr);
-        segmentTemp.m_autoExtendSize = std::stoul(autoExtendSizeStr);
+        segmentTemp.m_maxSize = convertToBytes(maxSizeStr);
+        segmentTemp.m_autoExtendSize = convertToBytes(autoExtendSizeStr);
         segmentTemp.m_autoExtend = true;
       }
       segments.emplace_back(segmentTemp);
