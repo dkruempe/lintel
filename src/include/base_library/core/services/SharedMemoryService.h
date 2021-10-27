@@ -22,7 +22,7 @@
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 #include "base_library/features/property/models/Property.h"
 
-class SharedMemoryService : public AbstractService<SchedulerService> {
+class SharedMemoryService : public AbstractService<SharedMemoryService> {
  private:
   struct MappedFile {
     std::shared_ptr<boost::interprocess::managed_mapped_file>
