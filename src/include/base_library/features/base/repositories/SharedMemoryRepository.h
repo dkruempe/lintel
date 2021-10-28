@@ -40,7 +40,7 @@ class SharedMemorySetRepository : public SharedMemoryRepository {
       boost::interprocess::allocator<
           DATA, boost::interprocess::managed_mapped_file::segment_manager>>
       Set;
-  Set m_set;
+  Set &m_set;
 
  protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -60,7 +60,7 @@ class SharedMemorySetRepository : public SharedMemoryRepository {
 template <typename DATA, std::size_t MAX_SIZE>
 class SharedMemoryArrayRepository : public SharedMemoryRepository {
  private:
-  std::array<DATA, MAX_SIZE> m_array;
+  std::array<DATA, MAX_SIZE> &m_array;
 
  protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -85,7 +85,7 @@ class SharedMemoryVectorRepository : public SharedMemoryRepository {
       boost::interprocess::allocator<
           DATA, boost::interprocess::managed_mapped_file::segment_manager>>
       Vector;
-  Vector m_vector;
+  Vector &m_vector;
 
  protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -110,8 +110,8 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
       boost::interprocess::allocator<
           std::pair<const KEY, VALUE>,
           boost::interprocess::managed_mapped_file::segment_manager>>
-      & Map;
-  Map m_map;
+      Map;
+  Map &m_map;
 
  protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -133,7 +133,7 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
 template <typename DATA>
 class SharedMemoryObjectRepository : public SharedMemoryRepository {
  private:
-  DATA m_data;
+  DATA &m_data;
 
  protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;

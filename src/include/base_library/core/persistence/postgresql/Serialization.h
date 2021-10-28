@@ -29,7 +29,9 @@ IMPLEMENT_SERIALIZE(uint8_t, std::to_string, std::stoul)
 IMPLEMENT_SERIALIZE(uint16_t, std::to_string, std::stoul)
 IMPLEMENT_SERIALIZE(uint32_t, std::to_string, std::stoul)
 IMPLEMENT_SERIALIZE(uint64_t, std::to_string, std::stoul)
-//IMPLEMENT_SERIALIZE(std::size_t, std::to_string, std::stoul);
+#ifdef __APPLE__
+IMPLEMENT_SERIALIZE(std::size_t, std::to_string, std::stoul);
+#endif
 IMPLEMENT_SERIALIZE(float, std::to_string, std::stof)
 IMPLEMENT_SERIALIZE(double, std::to_string, std::stod)
 IMPLEMENT_SERIALIZE(
