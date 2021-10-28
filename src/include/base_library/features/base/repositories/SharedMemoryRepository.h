@@ -110,7 +110,7 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
       boost::interprocess::allocator<
           std::pair<const KEY, VALUE>,
           boost::interprocess::managed_mapped_file::segment_manager>>
-      Map;
+      & Map;
   Map m_map;
 
  protected:

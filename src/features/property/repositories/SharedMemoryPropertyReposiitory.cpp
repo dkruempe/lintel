@@ -66,6 +66,7 @@ SharedMemoryPropertyRepository::awake() {
         property.m_name.c_str(), property.m_instanceName.c_str(),
         property.m_className.c_str(), property.m_processName.c_str(),
         property.m_type.c_str(), property.m_value.c_str(), "", false);
+    tmp->setDataStorage(m_currentDataStorage);
     properties.push_back(tmp);
     std::stringstream ss;
     ss << *tmp;
