@@ -18,6 +18,7 @@
 #include "base_library/core/exceptions/ShmSegmentNotFound.h"
 #include "base_library/core/models/SharedMemorySegment.h"
 #include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/services/SchedulerService.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 #include "base_library/features/property/models/Property.h"
@@ -134,10 +135,17 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
       auto &segment = m_segments.at(sharedMemoryName);
       persistentMapAllocator allocator(
           segment.m_managedMappedFile->get_segment_manager());
-      return *(segment.m_managedMappedFile
-                   ->find_or_construct<boost::interprocess::map<
-                       Key, Value, std::less<Key>, persistentMapAllocator>>(
-                       name.c_str())(std::less<Key>(), allocator));
+      boost::interprocess::map<
+          Key, Value, std::less<Key>,
+          boost::interprocess::allocator<
+              std::pair<const Key, Value>,
+              boost::interprocess::managed_mapped_file::segment_manager>> *map =
+          segment.m_managedMappedFile
+              ->find_or_construct<boost::interprocess::map<
+                  Key, Value, std::less<Key>, persistentMapAllocator>>(
+                  name.c_str())(std::less<Key>(), allocator);
+      LOG_TRACE("map {}", map->size());
+      return *map;
     } catch (std::out_of_range &exception) {
       throw ShmSegmentNotFound(sharedMemoryName);
     }

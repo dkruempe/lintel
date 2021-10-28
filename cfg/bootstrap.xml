@@ -23,8 +23,7 @@
     </DatabaseConnections>
     <SharedMemorySegments>
         <Path path="/Users/dkruempe/dev/shm"/>
-        <SharedMemorySegment name="shm_set" size="5MB"/>
-        <SharedMemorySegment name="shm_get" size="5MB" auto_extend_size="2MB" max_size="100MB"/>
+        <SharedMemorySegment name="shm_property" size="5MB" auto_extend_size="2MB" max_size="100MB"/>
     </SharedMemorySegments>
     <HttpHost>
         <Server host="0.0.0.0" port="8080"/>

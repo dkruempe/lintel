@@ -6,6 +6,7 @@
 #include "base_library/features/property/controller/PropertyController.h"
 #include "base_library/features/property/repositories/DatabasePropertyRepository.h"
 #include "base_library/features/property/repositories/FilePropertyRepository.h"
+#include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
 #include "base_library/features/property/strategies/XMLConfigSerializationStrategy.h"
 
 PropertyFeature::PropertyFeature() : Feature(type_name<PropertyFeature>()) {}
@@ -16,6 +17,11 @@ void PropertyFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .singleInstance();
   builder.registerType<DatabasePropertyRepository>()
       .as<PropertyRepository>()
+      .asSelf()
+      .singleInstance();
+  builder.registerType<SharedMemoryPropertyRepository>()
+      .as<PropertyRepository>()
+      .as<SharedMemoryRepository>()
       .asSelf()
       .singleInstance();
   builder.registerType<PropertyService>()

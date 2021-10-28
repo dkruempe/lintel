@@ -8,7 +8,12 @@
 class BootstrapSequence {
  public:
   // value is defining priority of property repository type
-  enum Value { Undefined = 0, Database = 1, VirtualGroups = 2 };
+  enum Value {
+    Undefined = 0,
+    Database = 1,
+    VirtualGroups = 2,
+    SharedMemory = 3
+  };
 
   BootstrapSequence() = default;
 

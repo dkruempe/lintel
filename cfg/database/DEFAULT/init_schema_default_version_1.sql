@@ -40,3 +40,11 @@ CREATE TABLE public.group_groups_relation
     CONSTRAINT group_groups_relation_fk FOREIGN KEY (group_name) REFERENCES public."group" ("name"),
     CONSTRAINT group_groups_relation_fk_1 FOREIGN KEY (base_group_name) REFERENCES public."group" ("name")
 );
+CREATE TABLE public.shared_memory_repositories
+(
+    shared_memory_segment    text    NOT NULL,
+    shared_memory_repository text    NOT NULL,
+    current_version          INTEGER NOT NULL,
+    current_data_size        INTEGER NOT NULL,
+    CONSTRAINT shared_memory_repositories_pk PRIMARY KEY (shared_memory_segment, shared_memory_repository)
+);

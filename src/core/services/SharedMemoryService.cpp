@@ -8,6 +8,7 @@ SharedMemoryService::SharedMemoryService(
     : AbstractService(processName->getProcessName()),
       m_segments(create(sharedMemorySegmentManager->allOf())),
       m_schedulerService(std::move(schedulerService)) {}
+
 void SharedMemoryService::growOf(const SharedMemorySegment &segment,
                                  std::size_t grow) {
   boost::interprocess::managed_mapped_file::grow(segment.getPath().c_str(),

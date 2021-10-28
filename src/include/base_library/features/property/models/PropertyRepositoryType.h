@@ -12,7 +12,8 @@ class PropertyRepositoryType {
     UNDEFINED = -1,
     DEFAULT = 0,
     FILE_REPOSITORY = 1,
-    DATABASE_REPOSITORY
+    DATABASE_REPOSITORY = 2,
+    SHM_REPOSITORY = 3,
   };
 
   PropertyRepositoryType() = default;

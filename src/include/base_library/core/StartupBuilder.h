@@ -28,6 +28,7 @@ class StartupBuilder {
   std::shared_ptr<Configuration> m_configuration = nullptr;
   std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration =
       nullptr;
+  bool m_bootStrapServiceActive = true;
 
  public:
   StartupBuilder(Process::ProcessInfo &&processInfo, ProcessName &&processName,
@@ -42,6 +43,8 @@ class StartupBuilder {
   void addFeature() {
     m_features.push_back(std::make_shared<FEATURE>());
   }
+
+  void disableBootstrapService();
 
   void withOutFeature(std::string_view nameOfFeature);
 

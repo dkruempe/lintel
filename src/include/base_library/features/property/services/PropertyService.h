@@ -26,7 +26,8 @@
 class PropertyService : public PersistableBean {
  private:
   std::vector<std::shared_ptr<PropertyRepository>> m_propertyRepositories;
-  std::shared_ptr<PropertyRepository> m_propertyRepository;
+  std::vector<std::shared_ptr<PropertyRepository>>
+      m_mutablePropertyRepositories;
   std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
   // variables
   std::map<std::string, std::shared_ptr<PropertyBase>>
@@ -38,15 +39,18 @@ class PropertyService : public PersistableBean {
                                       const std::string &processName);
   static std::map<std::string, std::shared_ptr<PropertyBase>> init(
       const std::vector<std::shared_ptr<PropertyRepository>> &repoProperties);
-  static std::shared_ptr<PropertyRepository> searchRuntimeRepository(
+  static std::vector<std::shared_ptr<PropertyRepository>>
+  filterMutableRepositories(
       const std::vector<std::shared_ptr<PropertyRepository>>
           &propertyRepository);
 
  public:
-  PropertyService(const std::vector<std::shared_ptr<PropertyRepository>>
-                      &propertyRepositories,
-                  const std::vector<std::shared_ptr<AbstractServiceInterface>>
-                      &abstractServices);
+  PropertyService(
+      const std::vector<std::shared_ptr<PropertyRepository>>
+          &propertyRepositories,
+      std::vector<std::shared_ptr<AbstractServiceInterface>> abstractServices);
+
+  virtual ~PropertyService() = default;
 
   void onAwake() override;
 
@@ -95,8 +99,12 @@ std::shared_ptr<Property<T>> PropertyService::getOrCreate(
                                                   processName, defaultValue,
                                                   description, runtimeChange);
     m_properties.insert({property->getIdentifier(), property});
-    if (m_propertyRepository != nullptr) {
-      m_propertyRepository->save(property);
+    if (m_mutablePropertyRepositories.empty()) {
+      LOG_ERROR("no mutable property repositories available");
+      return;
+    }
+    for (const auto &item : m_mutablePropertyRepositories) {
+      item->save(property);
     }
     return property;
   }
@@ -111,10 +119,14 @@ void PropertyService::changeValueOf(
     throw PropertyNoRuntimeChangeSupported(propertyBase);
   }
   std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
-  if (m_propertyRepository != nullptr) {
-    std::static_pointer_cast<Property<T>>(propertyBase)
-        ->setDataStorage(m_propertyRepository->getDataStorage());
-    m_propertyRepository->save(propertyBase);
+  if (m_mutablePropertyRepositories.empty()) {
+    LOG_ERROR("no mutable property repositories available");
+    return;
+  }
+  std::static_pointer_cast<Property<T>>(propertyBase)
+      ->setDataStorage(m_mutablePropertyRepositories[0]->getDataStorage());
+  for (const auto &item : m_mutablePropertyRepositories) {
+    item->save(propertyBase);
   }
 }
 

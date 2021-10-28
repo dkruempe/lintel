@@ -80,26 +80,29 @@ void StartupBuilder::start() {
   // III start IOC Container build
   m_container = builder.build();
   // IV boostrap plugins trigger initialization
-  std::shared_ptr<BootstrapService> bootstrapService =
-      m_container->resolve<BootstrapService>();
+  if (m_bootStrapServiceActive) {
+    std::shared_ptr<BootstrapService> bootstrapService =
+        m_container->resolve<BootstrapService>();
+    bootstrapService->onStart();
+  }
+  // V set AbstractService for shutdown event
   m_abstractServices = m_container->resolveAll<AbstractServiceInterface>();
-  bootstrapService->onStart();
-  // V start services
+  // VI start services
   for (auto &&feature : m_features) {
     feature->initialize(m_container);
   }
   std::shared_ptr<ProcessArgumentService> processArgumentService =
       m_container->resolve<ProcessArgumentService>();
   processArgumentService->parseArguments(m_arguments);
-  // VI awake all from persistence
+  // VII awake all from persistence
   std::shared_ptr<PersistableService> persistableService =
       m_container->resolve<PersistableService>();
   persistableService->awake();
-  // VII initialize services
+  // VIII initialize services
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
   LOG_INFO("{} finished initialization", m_processInfo->name);
-  // VIII wait for signal to shutdown
+  // IX wait for signal to shutdown
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
   m_conditionVariable.wait(lock);
@@ -126,4 +129,7 @@ void StartupBuilder::onShutdown() {
     abstractService->onShutdown();
   }
   m_conditionVariable.notify_all();
+}
+void StartupBuilder::disableBootstrapService() {
+  m_bootStrapServiceActive = false;
 }

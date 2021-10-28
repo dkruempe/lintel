@@ -2,6 +2,7 @@
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/core/plugins/DatabaseBootstrapPlugin.h"
+#include "base_library/core/plugins/SharedMemoryBootstrapPlugin.h"
 #include "base_library/core/plugins/VirtualGroupBootstrapPlugin.h"
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/PersistableService.h"
@@ -51,6 +52,10 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .asSelf()
       .singleInstance();
   builder.registerType<VirtualGroupBootstrapPlugin>()
+      .as<BootstrapPlugin>()
+      .asSelf()
+      .singleInstance();
+  builder.registerType<SharedMemoryBootstrapPlugin>()
       .as<BootstrapPlugin>()
       .asSelf()
       .singleInstance();

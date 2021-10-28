@@ -42,7 +42,8 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
   return propertiesMap;
 }
 
-std::shared_ptr<PropertyRepository> PropertyService::searchRuntimeRepository(
+std::vector<std::shared_ptr<PropertyRepository>>
+PropertyService::filterMutableRepositories(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepository) {
   std::vector<std::shared_ptr<PropertyRepository>> repositories(
@@ -53,23 +54,24 @@ std::shared_ptr<PropertyRepository> PropertyService::searchRuntimeRepository(
               return r1->getType() > r2->getType();
             });
 
+  std::vector<std::shared_ptr<PropertyRepository>> mutableRepositories;
   for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
     if (repository->isMutable()) {
-      return repository;
+      mutableRepositories.push_back(repository);
     }
   }
 
-  return nullptr;
+  return mutableRepositories;
 }
 
 PropertyService::PropertyService(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
-    const std::vector<std::shared_ptr<AbstractServiceInterface>>
-        &abstractServices)
+    std::vector<std::shared_ptr<AbstractServiceInterface>> abstractServices)
     : m_propertyRepositories(propertyRepositories),
-      m_propertyRepository(searchRuntimeRepository(propertyRepositories)),
-      m_abstractServices(abstractServices),
+      m_mutablePropertyRepositories(
+          filterMutableRepositories(propertyRepositories)),
+      m_abstractServices(std::move(abstractServices)),
       m_properties() {}
 void PropertyService::onAwake() {
   m_properties = init(m_propertyRepositories);
@@ -177,8 +179,15 @@ void PropertyService::changeStringValueOf(
   ss << *property;
   LOG_INFO("{} change to {}", ss.str(), value);
   propertyBase->setValueString(value);
-  propertyBase->setDataStorage(m_propertyRepository->getDataStorage());
-  if (m_propertyRepository != nullptr) {
-    m_propertyRepository->save(propertyBase);
+  if (m_mutablePropertyRepositories.empty()) {
+    LOG_ERROR("{} not mutable property repository");
+    return;
+  }
+  // PropertyRepository with highest priority wins => DataStorage of the highest
+  // priority is set
+  propertyBase->setDataStorage(
+      m_mutablePropertyRepositories[0]->getDataStorage());
+  for (const auto &iter : m_mutablePropertyRepositories) {
+    iter->save(propertyBase);
   }
 }
