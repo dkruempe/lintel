@@ -18,12 +18,9 @@
 
 StartupBuilder *StartupBuilder::m_startupBuilder = nullptr;
 
-StartupBuilder::StartupBuilder(Process::ProcessInfo &&processInfo,
-                               ProcessName &&name,
+StartupBuilder::StartupBuilder(ProcessName &&name,
                                std::vector<std::string> &&arguments)
-    : m_processInfo(
-          std::make_shared<Process::ProcessInfo>(std::move(processInfo))),
-      m_name(std::make_shared<ProcessName>(std::move(name))),
+    : m_name(std::make_shared<ProcessName>(std::move(name))),
       m_arguments(std::move(arguments)),
       m_configurationComponentBuilder(
           std::make_shared<ConfigurationComponentBuilder>()),
@@ -40,17 +37,16 @@ void StartupBuilder::addConfigurationComponent(
 
 std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
   // I process Informations
-  Process::ProcessInfo info = ProcessService::ofCurrentProcess(argc, argv);
   ProcessName name(argc, argv);
   // II arguments
   std::vector<std::string> arguments;
   // III ignore name of process => start with 1
   for (int i = 1; i < argc; i++) {
-    arguments.push_back(argv[i]);
+    arguments.emplace_back(argv[i]);
   }
   // IV instantiate startupbuilder
-  std::shared_ptr<StartupBuilder> builder = std::make_shared<StartupBuilder>(
-      std::move(info), std::move(name), std::move(arguments));
+  std::shared_ptr<StartupBuilder> builder =
+      std::make_shared<StartupBuilder>(std::move(name), std::move(arguments));
   m_startupBuilder = builder.get();
   return builder;
 }
@@ -69,14 +65,13 @@ void StartupBuilder::start() {
   for (auto &&feature : m_features) {
     feature->registerTypes(builder);
   }
-  builder.registerInstance(m_processInfo);
   builder.registerInstance(m_name);
   builder.registerInstance(m_environmentConfiguration);
   m_configuration = std::make_shared<Configuration>(
       m_configurationComponentBuilder->build(), m_environmentConfiguration);
   builder.registerInstance(m_configuration);
   // II logger
-  DECLARE_LOGGER(m_processInfo, m_configuration);
+  DECLARE_LOGGER(m_name, m_configuration);
   // III start IOC Container build
   m_container = builder.build();
   // IV boostrap plugins trigger initialization
@@ -101,7 +96,7 @@ void StartupBuilder::start() {
   // VIII initialize services
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
-  LOG_INFO("{} finished initialization", m_processInfo->name);
+  LOG_INFO("{} finished initialization", m_name->getProcessName());
   // IX wait for signal to shutdown
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
@@ -122,7 +117,7 @@ void StartupBuilder::receiveSignal(int signal) {
 }
 
 void StartupBuilder::onShutdown() {
-  LOG_INFO("{} shutdown", m_processInfo->name);
+  LOG_INFO("{} shutdown", m_name->getProcessName());
   // trigger shutdown
   for (const auto &abstractService : m_abstractServices) {
     LOG_TRACE("shutdown of {}", abstractService->getClassName());

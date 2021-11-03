@@ -17,7 +17,6 @@ class StartupBuilder {
  private:
   std::vector<std::shared_ptr<Feature>> m_features;
   std::shared_ptr<Hypodermic::Container> m_container = nullptr;
-  std::shared_ptr<Process::ProcessInfo> m_processInfo;
   std::shared_ptr<ProcessName> m_name;
   std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
   static StartupBuilder *m_startupBuilder;
@@ -31,7 +30,7 @@ class StartupBuilder {
   bool m_bootStrapServiceActive = true;
 
  public:
-  StartupBuilder(Process::ProcessInfo &&processInfo, ProcessName &&processName,
+  StartupBuilder(ProcessName &&processName,
                  std::vector<std::string> &&arguments);
   StartupBuilder() = delete;
 

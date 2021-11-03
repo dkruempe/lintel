@@ -32,6 +32,10 @@ class SignalService {
     raise(signal);
     LOG_TRACE("raise {} signal", signal);
   }
+
+  static void kill(pid_t pid, int32_t signal) {
+    ::kill(pid, signal);
+  }
 };
 
 #endif  // CPP_BASE_LIBRARY_SIGNALSERVICE_H

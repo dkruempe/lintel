@@ -1,67 +1,70 @@
 #include "base_library/features/base/models/Process.h"
-bool Process::ProcessComparator::operator()(const Process &left,
-                                            const Process &right) const {
-  return right.getStartSequence() > left.getStartSequence();
+
+Process::Process(std::filesystem::path path, std::vector<std::string> args)
+    : m_path(std::move(path)), m_args(std::move(args)) {}
+
+void Process::onStart() {
+  if (m_onStart == nullptr) {
+    return;
+  }
+  (*m_onStart)(*this);
 }
-
-std::ostream &operator<<(std::ostream &os, const Process::ProcessInfo &info) {
-  os << "id: " << info.id << " enabled: " << info.enabled
-     << " name: " << info.name << " running: " << info.running
-     << " processId: " << info.processId << " exitCode: " << info.exitCode;
-  return os;
+void Process::onStop() {
+  if (m_onStop == nullptr) {
+    return;
+  }
+  (*m_onStop)(*this);
 }
-
-Process::Process(int startSequence, std::string name,
-                 std::filesystem::path path, std::vector<std::string> args,
-                 bool enabled, bool automaticRestart, int maxRestarts)
-    : m_enabled(enabled),
-      m_automaticRestart(automaticRestart),
-      m_maxRestarts(maxRestarts),
-      m_startSequence(startSequence),
-      m_name(std::move(name)),
-      m_path(std::move(path)),
-      m_args(std::move(args)) {}
-
-int64_t Process::getId() const { return m_id; }
-
-void Process::setId(int64_t newId) { Process::m_id = newId; }
-
-bool Process::isEnabled() const { return m_enabled; }
-
-void Process::setEnable(bool enable) { m_enabled = enable; }
-
-bool Process::isAutomaticRestart() const { return m_automaticRestart; }
-
-int Process::getRestarts() const { return m_restarts; }
-
-void Process::setRestarts(int newRestarts) {
-  Process::m_restarts = newRestarts;
+void Process::onFinish() {
+  if (m_onFinish == nullptr) {
+    return;
+  }
+  (*m_onFinish)(*this);
 }
-
-int Process::getMaxRestarts() const { return m_maxRestarts; }
-
-int Process::getStartSequence() const { return m_startSequence; }
-
-const std::string &Process::getName() const { return m_name; }
-
+void Process::onRestart() {
+  if (m_onRestart == nullptr) {
+    return;
+  }
+  (*m_onRestart)(*this);
+}
+void Process::onTerminate() {
+  if (m_onTerminate == nullptr) {
+    return;
+  }
+  (*m_onTerminate)(*this);
+}
+void Process::addOnStartEvent(
+    std::shared_ptr<std::function<void(const Process &)>> onStart) {
+  m_onStart = std::move(onStart);
+}
+void Process::addOnStopEvent(
+    std::shared_ptr<std::function<void(const Process &)>> onStop) {
+  m_onStop = std::move(onStop);
+}
+void Process::addOnRestartEvent(
+    std::shared_ptr<std::function<void(const Process &)>> onRestart) {
+  m_onRestart = std::move(onRestart);
+}
+void Process::addOnTerminateEvent(
+    std::shared_ptr<std::function<void(const Process &)>> onTerminate) {
+  m_onTerminate = std::move(onTerminate);
+}
+void Process::addOnFinishEvent(
+    std::shared_ptr<std::function<void(const Process &)>> onFinish) {
+  m_onFinish = std::move(onFinish);
+}
+void Process::enableAutoStart(int maxAutoRestarts) {
+  m_autoRestart = true;
+  m_maxAutoRestarts = maxAutoRestarts;
+}
+void Process::disableAutoStart() {
+  m_autoRestart = true;
+  m_maxAutoRestarts = -1;
+}
+const std::string &Process::getId() const { return m_id; }
 const std::filesystem::path &Process::getPath() const { return m_path; }
-
+bool Process::isAutoRestart() const { return m_autoRestart; }
+int Process::getMaxAutoRestarts() const { return m_maxAutoRestarts; }
 const std::vector<std::string> &Process::getArgs() const { return m_args; }
-
-const std::shared_ptr<boost::process::child> &Process::getChild() const {
-  return m_child;
-}
-
-int Process::getExitCode() const { return m_exitCode; }
-
-void Process::setExitCode(int newExitCode) {
-  Process::m_exitCode = newExitCode;
-}
-void Process::startChild() {
-  m_exitCode = -1;
-  std::filesystem::path newPath(
-      m_path.string() + std::filesystem::path::preferred_separator + m_name);
-  m_child = std::make_shared<boost::process::child>(
-      newPath.string(), m_args, boost::process::std_out > boost::process::null,
-      boost::process::std_err > stderr);
-}
+void Process::increaseRestarts() { m_restarts++; }
+int Process::currentRestarts() const { return m_restarts; }

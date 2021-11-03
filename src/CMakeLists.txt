@@ -32,11 +32,12 @@ find_package(magic_enum REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(httplib REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(Boost 1.75.0 REQUIRED)
+find_package(Boost 1.75.0 COMPONENTS filesystem system REQUIRED)
 find_package(RapidJSON REQUIRED)
 find_package(tabulate REQUIRED)
 find_package(date REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(TBB REQUIRED)
 
 # build
 FILE(GLOB_RECURSE headers include/*.h)
@@ -51,7 +52,7 @@ target_include_directories(base_library
         )
 target_link_libraries(base_library PUBLIC fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
         Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib RapidJSON::RapidJSON date::date spdlog::spdlog
-        kruempelmann::Hypodermic PRIVATE project_warnings)
+        kruempelmann::Hypodermic TBB::tbb ${Boost_LIBRARIES} PRIVATE project_warnings)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library
         EXPORT base_library_targets

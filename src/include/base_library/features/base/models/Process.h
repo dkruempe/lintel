@@ -1,60 +1,63 @@
 #ifndef CPP_SYSTEM_LIBRARY_PROCESS_H
 #define CPP_SYSTEM_LIBRARY_PROCESS_H
-#include <boost/process.hpp>
+
 #include <filesystem>
-#include <optional>
+#include <functional>
+#include <memory>
 #include <string>
+#include <vector>
+
+#include "base_library/core/utils/UUID.h"
+
 class Process {
  private:
-  static constexpr int INFINITE_RESTARTS = -1;  // infinite restarts;
-  int64_t m_id = -1;
-  bool m_enabled;
-  bool m_automaticRestart;
-  int m_restarts = 0;
-  int m_maxRestarts;  // -1 infinite
-  int m_startSequence;
-  std::string m_name;
+  // UUID
+  std::string m_id = UUID::generate();
+  // process
   std::filesystem::path m_path;
   std::vector<std::string> m_args;
-  std::shared_ptr<boost::process::child> m_child = nullptr;
-  int m_exitCode = -1;
+  // configuration
+  bool m_autoRestart = false;
+  int32_t m_restarts = 0;
+  int m_maxAutoRestarts = -1;
+  // events
+  std::shared_ptr<std::function<void(const Process &)>> m_onStart = nullptr;
+  std::shared_ptr<std::function<void(const Process &)>> m_onStop = nullptr;
+  std::shared_ptr<std::function<void(const Process &)>> m_onRestart = nullptr;
+  std::shared_ptr<std::function<void(const Process &)>> m_onTerminate = nullptr;
+  std::shared_ptr<std::function<void(const Process &)>> m_onFinish = nullptr;
 
  public:
-  // Comprators
-  struct ProcessComparator {
-    bool operator()(const Process &left, const Process &right) const;
-  };
+  explicit Process(std::filesystem::path path, std::vector<std::string> args);
 
-  // Info Process struct
-  struct ProcessInfo {
-    int64_t id;
-    bool enabled;
-    std::string name;
-    bool running;
-    pid_t processId;
-    int exitCode;
-    friend std::ostream &operator<<(std::ostream &os, const ProcessInfo &info);
-  };
+  // setter
+  void addOnStartEvent(
+      std::shared_ptr<std::function<void(const Process &)>> onStart);
+  void addOnStopEvent(
+      std::shared_ptr<std::function<void(const Process &)>> onStop);
+  void addOnRestartEvent(
+      std::shared_ptr<std::function<void(const Process &)>> onRestart);
+  void addOnTerminateEvent(
+      std::shared_ptr<std::function<void(const Process &)>> onTerminate);
+  void addOnFinishEvent(
+      std::shared_ptr<std::function<void(const Process &)>> onFinish);
+  void enableAutoStart(int maxAutoRestarts = -1);
+  void disableAutoStart();
+  void increaseRestarts();
+  [[nodiscard]] int currentRestarts() const;
 
-  Process(int startSequence, std::string name, std::filesystem::path path,
-          std::vector<std::string> args, bool enabled,
-          bool automaticRestart = false, int maxRestarts = INFINITE_RESTARTS);
-
-  [[nodiscard]] int64_t getId() const;
-  void setId(int64_t newId);
-  [[nodiscard]] bool isEnabled() const;
-  void setEnable(bool enable);
-  [[nodiscard]] bool isAutomaticRestart() const;
-  [[nodiscard]] int getRestarts() const;
-  void setRestarts(int newRestarts);
-  [[nodiscard]] int getMaxRestarts() const;
-  [[nodiscard]] int getStartSequence() const;
-  [[nodiscard]] const std::string &getName() const;
+  // getter
+  [[nodiscard]] const std::string &getId() const;
   [[nodiscard]] const std::filesystem::path &getPath() const;
+  [[nodiscard]] bool isAutoRestart() const;
+  [[nodiscard]] int getMaxAutoRestarts() const;
   [[nodiscard]] const std::vector<std::string> &getArgs() const;
-  [[nodiscard]] const std::shared_ptr<boost::process::child> &getChild() const;
-  void startChild();
-  [[nodiscard]] int getExitCode() const;
-  void setExitCode(int newExitCode);
+
+  // events
+  void onStart();
+  void onStop();
+  void onRestart();
+  void onTerminate();
+  void onFinish();
 };
 #endif  // CPP_SYSTEM_LIBRARY_PROCESS_H

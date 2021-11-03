@@ -1,27 +1,135 @@
 #include "base_library/core/services/ProcessService.h"
 
-#include <algorithm>
-#include <boost/process/environment.hpp>
+#include "base_library/core/services/LoggerService.h"
+#include "base_library/core/services/SignalService.h"
 
-ProcessService::ProcessService(std::vector<Process> processes,
-                               std::chrono::seconds waitTimeForShutdown,
-                               std::chrono::milliseconds monitorDuration)
-    : m_processes(transformFunction(std::move(processes))),
-      m_waitTimeForShutdown(waitTimeForShutdown),
-      m_monitorThread([&] { run(); }),
-      m_monitorDuration(monitorDuration) {}
-ProcessService::~ProcessService() {
-  m_exit = true;
-  m_monitorThread.join();
-  monitor();
-}
-void ProcessService::startOf(std::size_t id) {
-  Process &process = m_processes[id];
-  if (!process.isEnabled()) {
-    return;
+ProcessService::ProcessService(std::shared_ptr<ProcessName> processName)
+    : AbstractService<ProcessService>(processName->getProcessName()),
+      m_processName(std::move(processName)),
+      m_monitorThread([&] { run(); }) {}
+
+std::future<int> ProcessService::startOf(const Process& process) {
+  std::promise<void> promise;
+  ProcessMap::accessor found;
+  m_processes.find(found, process.getId());
+  if (!found.empty()) {
+    LOG_ERROR("{}/{}: process already found in list", process.getId(),
+              process.getPath().filename().string());
+    return found->second.getFuture();
   }
-  process.startChild();
+
+  std::filesystem::path path = process.getPath();
+  if (!is_regular_file(process.getPath())) {
+    auto realPath = boost::process::search_path(process.getPath().string());
+    path = realPath.string();
+    if (!is_regular_file(path)) {
+      LOG_ERROR("{}/{}: is not a file", process.getId(),
+                process.getPath().string());
+      std::promise<int> p;
+      p.set_value(-1);
+      return p.get_future();
+    }
+    path = realPath.string();
+  }
+
+  ProcessMap::accessor insert;
+  m_processes.insert(insert, process.getId());
+  insert->second.setProcess(std::make_unique<Process>(process));
+  insert->second.setChild(boost::process::child(
+      path.string(), insert->second.getProcess()->getArgs(),
+      boost::process::std_out > stdout, boost::process::std_err > stderr));
+  insert->second.getProcess()->onStart();
+  return insert->second.getFuture();
 }
+
+void ProcessService::onShutdown() {
+  m_running.store(false);
+  m_condition.notify_all();
+}
+
+void ProcessService::run() {
+  while (m_running) {
+    std::unique_lock<std::mutex> lock(m_mutex);
+    m_condition.wait_for(lock, std::chrono::seconds(1));
+    monitor();
+  }
+}
+
+void ProcessService::monitor() {
+  for (auto& [name, processExecutes] : m_processes) {
+    bool running = processExecutes.getChild().running();
+    if (running) {
+      continue;
+    }
+    if (processExecutes.getProcess()->getMaxAutoRestarts() != 0 &&
+        processExecutes.getProcess()->currentRestarts() <
+            processExecutes.getProcess()->getMaxAutoRestarts()) {
+      processExecutes.getProcess()->increaseRestarts();
+      std::filesystem::path path;
+      if (!is_regular_file(processExecutes.getProcess()->getPath())) {
+        auto tmp = boost::process::search_path(
+            processExecutes.getProcess()->getPath().string());
+        if (is_regular_file(tmp)) {
+          path = tmp.string();
+        }
+      }
+      processExecutes.setChild(boost::process::child(
+          path.string(), processExecutes.getProcess()->getArgs(),
+          boost::process::std_out > boost::process::null,
+          boost::process::std_err > stderr));
+      LOG_INFO("{}/{} process restarted", processExecutes.getProcess()->getId(),
+               processExecutes.getProcess()->getPath().filename().string());
+      processExecutes.getProcess()->onRestart();
+      continue;
+    }
+    int exitCode = processExecutes.getChild().exit_code();
+    processExecutes.setPromiseValue(exitCode);
+    processExecutes.getProcess()->onStop();
+    m_processes.erase(name);
+  }
+}
+
+ProcessService::~ProcessService() {
+  if (m_monitorThread.joinable()) {
+    m_monitorThread.join();
+  }
+}
+bool ProcessService::stopOf(const Process& process) {
+  ProcessMap::accessor found;
+  m_processes.find(found, process.getId());
+  if (found.empty()) {
+    return false;
+  }
+  LOG_INFO("{}/{} send kill {} SIGINT", process.getId(),
+           process.getPath().filename().string(),
+           found->second.getChild().id());
+  SignalService::kill(found->second.getChild().id(), SIGINT);
+  bool success = true;
+  // only wait if process is still running
+  if (found->second.getChild().running()) {
+    LOG_INFO("{}/{} -> process is still running with  {}", process.getId(),
+             process.getPath().filename().string(),
+             found->second.getChild().id());
+    std::condition_variable cond;
+    std::mutex mutex;
+    std::unique_lock lock(mutex);
+    bool ret = cond.wait_for(
+        lock, std::chrono::milliseconds(200),
+        [&]() -> bool { return !found->second.getChild().running(); });
+    LOG_INFO("{}/{} -> process shutdown {}", process.getId(),
+             process.getPath().filename().string(), ret ? "true" : "false");
+  }
+  if (!found->second.getChild().running()) {
+    found->second.setPromiseValue(found->second.getChild().exit_code());
+    found->second.getProcess()->onStop();
+  }
+  if (success) {
+    m_processes.erase(found);
+  }
+  return success;
+}
+
+/*
 std::vector<Process::ProcessInfo> ProcessService::allProcesses() {
   std::vector<Process::ProcessInfo> tmp;
   std::transform(
@@ -31,26 +139,15 @@ std::vector<Process::ProcessInfo> ProcessService::allProcesses() {
             process.getId(),
             process.isEnabled(),
             process.getName(),
-            process.getChild() != nullptr && process.getChild()->running(),
-            process.getChild() != nullptr && process.getChild()->running()
-                ? process.getChild()->id()
+            process.getChild() != nullptr && process.getChild().running(),
+            process.getChild() != nullptr && process.getChild().running()
+                ? process.getChild().id()
                 : 0,
             process.getExitCode()};
       });
-  //    return Process::ProcessInfo{
-  //        .id{process.getId()},
-  //        .enabled = process.isEnabled(),
-  //        .name = process.getName(),
-  //        .running = process.getChild() != nullptr &&
-  //                   process.getChild()->running(),
-  //        .processId = process.getChild() != nullptr &&
-  //                             process.getChild()->running()
-  //                         ? process.getChild()->id()
-  //                         : 0,
-  //        .exitCode = process.getExitCode()};
-  //  });
   return tmp;
 }
+
 void ProcessService::startAll() {
   for (auto &process : m_processes) {
     if (process.getChild() != nullptr || !process.isEnabled()) {
@@ -60,75 +157,74 @@ void ProcessService::startAll() {
     process.startChild();
   }
 }
+
 bool ProcessService::isRunning(std::size_t id) {
   Process &process = m_processes[id];
   if (process.getChild() == nullptr) {
     return false;
   }
-  return process.getChild()->running();
+  return process.getChild().running();
 }
+
 void ProcessService::terminateOf(std::size_t id) {
   Process &process = m_processes[id];
   if (process.getChild() == nullptr) {
     return;
   }
-  process.getChild()->terminate();
+  process.getChild().terminate();
 }
+
 void ProcessService::terminateAll() {
   for (auto &process : m_processes) {
     if (process.getChild() == nullptr) {
       continue;
     }
-    process.getChild()->terminate();
+    process.getChild().terminate();
   }
 }
+
 void ProcessService::stopOf(std::size_t id) {
   Process &process = m_processes[id];
-  if (process.getChild() == nullptr || !process.getChild()->running()) {
+  if (process.getChild() == nullptr || !process.getChild().running()) {
     return;
   }
-  process.getChild()->wait_for(m_waitTimeForShutdown);
+  process.getChild().wait_for(m_waitTimeForShutdown);
 }
+
 void ProcessService::stopAll() {
   for (auto &process : m_processes) {
     if (process.getChild() == nullptr) {
       continue;
     }
-    if (!process.getChild()->running()) {
+    if (!process.getChild().running()) {
       continue;
     }
-    process.getChild()->wait_for(m_waitTimeForShutdown);
+    process.getChild().wait_for(m_waitTimeForShutdown);
   }
 }
+
 void ProcessService::restartOf(std::size_t id) {
   Process &process = m_processes[id];
-  if (process.getChild() != nullptr && process.getChild()->running()) {
-    process.getChild()->wait_for(m_waitTimeForShutdown);
+  if (process.getChild() != nullptr && process.getChild().running()) {
+    process.getChild().wait_for(m_waitTimeForShutdown);
   }
   process.startChild();
 }
+
 void ProcessService::restartAll() {
   for (auto &process : m_processes) {
-    if (process.getChild() != nullptr && process.getChild()->running()) {
-      process.getChild()->wait_for(m_waitTimeForShutdown);
+    if (process.getChild() != nullptr && process.getChild().running()) {
+      process.getChild().wait_for(m_waitTimeForShutdown);
     }
     process.startChild();
   }
 }
-std::vector<Process> ProcessService::transformFunction(
-    std::vector<Process> processes) {
-  std::sort(processes.begin(), processes.end(), Process::ProcessComparator());
-  int64_t id = 0;
-  for (auto &iter : processes) {
-    iter.setId(id);
-    id++;
-  }
-  return processes;
-}
+
 void ProcessService::detachOf(std::size_t id) {
   Process &process = m_processes[id];
-  process.getChild()->detach();
+  process.getChild().detach();
 }
+
 void ProcessService::enableOf(std::size_t id) {
   Process &process = m_processes[id];
   if (process.isEnabled()) {
@@ -137,23 +233,16 @@ void ProcessService::enableOf(std::size_t id) {
   process.setEnable(true);
 }
 
-void ProcessService::run() {
-  do {
-    std::this_thread::sleep_for(m_monitorDuration);
-    monitor();
-  } while (!m_exit);
-}
-
 void ProcessService::monitor() {
   for (auto &process : m_processes) {
     // check if process unexpected stopped
-    if (process.getChild() != nullptr && !process.getChild()->running() &&
+    if (process.getChild() != nullptr && !process.getChild().running() &&
         process.isEnabled() && process.getExitCode() == -1) {
-      process.setExitCode(process.getChild()->exit_code());
+      process.setExitCode(process.getChild().exit_code());
       checkExitCodeOf(process);
     }
     // check if restart is needed
-    if (process.getChild() != nullptr && !process.getChild()->running() &&
+    if (process.getChild() != nullptr && !process.getChild().running() &&
         process.isEnabled() && process.isAutomaticRestart() &&
         (process.getMaxRestarts() > process.getRestarts() ||
          process.getMaxRestarts() == -1)) {
@@ -194,11 +283,12 @@ void ProcessService::checkExitCodeOf(Process &process) {
               exitCode);
       break;
   }
-}
-Process::ProcessInfo ProcessService::ofCurrentProcess(int argc, char *argv[]) {
-  const int processId = boost::this_process::get_id();
-  std::filesystem::path path = argv[0];
-  Process::ProcessInfo processInfo{-1,   true,      path.filename().string(),
-                                   true, processId, -1};
-  return processInfo;
-}
+}*/
+// Process::ProcessInfo ProcessService::ofCurrentProcess(int argc, char *argv[])
+// {
+//   const int processId = boost::this_process::get_id();
+//   std::filesystem::path path = argv[0];
+//   Process::ProcessInfo processInfo{-1,   true,      path.filename().string(),
+//                                    true, processId, -1};
+//   return processInfo;
+// }

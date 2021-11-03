@@ -7,12 +7,12 @@
 #include <spdlog/spdlog.h>
 
 #include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/models/Process.h"
+#include "base_library/features/base/models/ProcessName.h"
 
 class LoggerService {
  private:
   // variables
-  std::shared_ptr<Process::ProcessInfo> m_processInfo;
+  std::shared_ptr<ProcessName> m_processName;
   std::shared_ptr<Configuration> m_configuration;
   std::shared_ptr<spdlog::logger> m_logger;
 
@@ -22,21 +22,23 @@ class LoggerService {
   static std::once_flag m_initInstanceFlag;
 
  public:
-  LoggerService(std::shared_ptr<Process::ProcessInfo> processInfo,
-                std::shared_ptr<Configuration> configuration);
+  LoggerService();
 
-  LoggerService() = delete;
+  LoggerService(std::shared_ptr<ProcessName> processNmae,
+                std::shared_ptr<Configuration> configuration);
 
   ~LoggerService();
 
   static LoggerService &getOrCreate(
-      const std::shared_ptr<Process::ProcessInfo> &processInfo,
+      const std::shared_ptr<ProcessName> &processInfo,
       const std::shared_ptr<Configuration> &configuration);
 
   static LoggerService &get();
   static void initSingleton(
-      const std::shared_ptr<Process::ProcessInfo> &processInfo,
+      const std::shared_ptr<ProcessName> &processInfo,
       const std::shared_ptr<Configuration> &configuration);
+
+  static void initSingleton2();
 
   template <typename... Args>
   void log(spdlog::source_loc source, spdlog::level::level_enum lvl,
@@ -44,8 +46,8 @@ class LoggerService {
     m_logger->log(source, lvl, message, args...);
   }
 };
-#define DECLARE_LOGGER(processInfo, configuration) \
-  LoggerService::getOrCreate(processInfo, configuration)
+#define DECLARE_LOGGER(processName, configuration) \
+  LoggerService::getOrCreate(processName, configuration)
 #define LOG_INFO(message, ...)                                 \
   LoggerService::get().log(                                    \
       spdlog::source_loc{__FILE__, __LINE__, SPDLOG_FUNCTION}, \

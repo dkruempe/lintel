@@ -20,12 +20,16 @@
 LoggerService *LoggerService::m_instance = nullptr;
 std::once_flag LoggerService::m_initInstanceFlag;
 
-LoggerService::LoggerService(std::shared_ptr<Process::ProcessInfo> processInfo,
+LoggerService::LoggerService()
+    : m_processName(nullptr),
+      m_configuration(nullptr),
+      m_logger(spdlog::stdout_color_mt("test")) {}
+
+LoggerService::LoggerService(std::shared_ptr<ProcessName> processName,
                              std::shared_ptr<Configuration> configuration)
-    : m_processInfo(std::move(processInfo)),
+    : m_processName(std::move(processName)),
       m_configuration(std::move(configuration)),
-      m_logger(init()) {
-}
+      m_logger(init()) {}
 std::shared_ptr<spdlog::logger> LoggerService::init() {
   std::vector<spdlog::sink_ptr> sinks;
   auto entries = m_configuration->configurationOf<LoggerComponent>();
@@ -48,8 +52,9 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
           return false;
         }
         std::regex regex(loggerConfiguration->getProcessName());
-        return loggerConfiguration->getProcessName() == m_processInfo->name ||
-               std::regex_match(m_processInfo->name, regex);
+        return loggerConfiguration->getProcessName() ==
+                   m_processName->getProcessName() ||
+               std::regex_match(m_processName->getProcessName(), regex);
       });
   if (loggerConfiguration == entries.end()) {
     throw std::runtime_error("No matching Logger Configuration found");
@@ -108,7 +113,7 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
                 ->isCreateSubDirectories();
         if (isCreateSubDirectories) {
           path = path.concat(std::filesystem::path::preferred_separator +
-                             m_processInfo->name);
+                             m_processName->getProcessName());
         }
         if (!exists(path)) {
           create_directories(path);
@@ -116,7 +121,7 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
         std::filesystem::path filePath;
         if (logSinkConfig.getFileName().empty()) {
           filePath = path.concat(std::filesystem::path::preferred_separator +
-                                 m_processInfo->name + ".log");
+                                 m_processName->getProcessName() + ".log");
         } else {
           filePath = path.concat(std::filesystem::path::preferred_separator +
                                  logSinkConfig.getFileName() + ".log");
@@ -142,7 +147,7 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
                 ->isCreateSubDirectories();
         if (isCreateSubDirectories) {
           path = path.concat(std::filesystem::path::preferred_separator +
-                             m_processInfo->name);
+                             m_processName->getProcessName());
         }
         if (is_regular_file(path)) {
           throw std::runtime_error("path is file and not directory");
@@ -153,7 +158,7 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
         std::filesystem::path filePath;
         if (logSinkConfig.getFileName().empty()) {
           filePath = path.concat(std::filesystem::path::preferred_separator +
-                                 m_processInfo->name + ".log");
+                                 m_processName->getProcessName() + ".log");
         } else {
           filePath = path.concat(std::filesystem::path::preferred_separator +
                                  logSinkConfig.getFileName() + ".log");
@@ -176,8 +181,8 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
       }
     }
   }
-  auto logger = std::make_shared<spdlog::logger>(m_processInfo->name,
-                                                 sinks.begin(), sinks.end());
+  auto logger = std::make_shared<spdlog::logger>(
+      m_processName->getProcessName(), sinks.begin(), sinks.end());
   std::string loggerLevel =
       loggerConfigEntry->getLoggerConfiguration()->getLevel();
   {
@@ -212,7 +217,7 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
 LoggerService::~LoggerService() = default;
 
 LoggerService &LoggerService::getOrCreate(
-    const std::shared_ptr<Process::ProcessInfo> &processInfo,
+    const std::shared_ptr<ProcessName> &processInfo,
     const std::shared_ptr<Configuration> &configuration) {
   std::call_once(m_initInstanceFlag, &LoggerService::initSingleton, processInfo,
                  configuration);
@@ -221,13 +226,13 @@ LoggerService &LoggerService::getOrCreate(
 
 LoggerService &LoggerService::get() {
   if (m_instance == nullptr) {
-    throw std::runtime_error(
-        "LoggerService not initialized. Please call Marco DECLARE_LOGGER");
+    std::call_once(m_initInstanceFlag, &LoggerService::initSingleton2);
   }
   return *m_instance;
 }
 void LoggerService::initSingleton(
-    const std::shared_ptr<Process::ProcessInfo> &processInfo,
+    const std::shared_ptr<ProcessName> &processInfo,
     const std::shared_ptr<Configuration> &configuration) {
   m_instance = new LoggerService(processInfo, configuration);
 }
+void LoggerService::initSingleton2() { m_instance = new LoggerService(); }

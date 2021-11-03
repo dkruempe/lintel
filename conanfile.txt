@@ -12,6 +12,7 @@ boost/1.77.0
 rapidjson/cci.20200410
 tabulate/1.4
 date/3.0.1
+onetbb/2021.3.0
 
 [generators]
 cmake_find_package
