@@ -51,7 +51,7 @@ void ProcessService::onShutdown() {
 void ProcessService::run() {
   while (m_running) {
     std::unique_lock<std::mutex> lock(m_mutex);
-    m_condition.wait_for(lock, std::chrono::seconds(1));
+    m_condition.wait_for(lock, m_monitorWaitTime->getValue());
     monitorProcess();
     monitorProcessGroups();
   }
@@ -133,7 +133,7 @@ bool ProcessService::stopOf(const Process& process) {
     std::mutex mutex;
     std::unique_lock lock(mutex);
     bool ret = cond.wait_for(
-        lock, std::chrono::milliseconds(200),
+        lock, m_processStopWaitTime->getValue(),
         [&]() -> bool { return !found->second.getChild().running(); });
     LOG_INFO("{}/{} -> process shutdown {}", process.getId(),
              process.getPath().filename().string(), ret ? "true" : "false");

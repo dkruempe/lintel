@@ -55,6 +55,14 @@ IMPLEMENT_STRINGIFY_SERVICE_FOR(
       return lt;
     })
 IMPLEMENT_STRINGIFY_SERVICE_FOR(
+    std::chrono::milliseconds ,
+    [](const std::chrono::milliseconds &duration) -> std::string {
+      return std::to_string(duration.count());
+    },
+    [](const std::string &duration) -> std::chrono::milliseconds {
+      return std::chrono::milliseconds(std::stoull(duration));
+    })
+IMPLEMENT_STRINGIFY_SERVICE_FOR(
     std::chrono::seconds,
     [](const std::chrono::seconds &duration) -> std::string {
       return std::to_string(duration.count());

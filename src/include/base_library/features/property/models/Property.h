@@ -96,6 +96,10 @@ IMPLEMENT_PROPERTY(std::string,
 IMPLEMENT_PROPERTY(bool, StringifyService<bool>::serializeToString,
                    StringifyService<bool>::deserializeFromString)
 IMPLEMENT_PROPERTY(
+    std::chrono::milliseconds,
+    StringifyService<std::chrono::milliseconds>::serializeToString,
+    StringifyService<std::chrono::milliseconds>::deserializeFromString)
+IMPLEMENT_PROPERTY(
     std::chrono::seconds,
     StringifyService<std::chrono::seconds>::serializeToString,
     StringifyService<std::chrono::seconds>::deserializeFromString)

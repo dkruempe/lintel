@@ -16,8 +16,9 @@
 #include "base_library/features/base/models/Process.h"
 #include "base_library/features/base/models/ProcessGroup.h"
 #include "base_library/features/base/models/ProcessName.h"
+#include "base_library/features/property/services/PropertyService.h"
 
-class ProcessService : AbstractService<ProcessService> {
+class ProcessService : public AbstractService<ProcessService> {
  private:
   class ProcessExecutes {
    private:
@@ -58,12 +59,20 @@ class ProcessService : AbstractService<ProcessService> {
   // variables
   typedef tbb::concurrent_hash_map<std::string, ProcessExecutes> ProcessMap;
   ProcessMap m_processes;
-  typedef tbb::concurrent_hash_map<std::string, std::unique_ptr<ProcessGroup>> ProcessGroupMap;
+  typedef tbb::concurrent_hash_map<std::string, std::unique_ptr<ProcessGroup>>
+      ProcessGroupMap;
   ProcessGroupMap m_processGroups;
   std::thread m_monitorThread;
   std::atomic_bool m_running = true;
   std::condition_variable m_condition;
   std::mutex m_mutex;
+  // properties
+  DEFINE_PROPERTY(m_monitorWaitTime, std::chrono::seconds,
+                  std::chrono::seconds(1), "Wait time after monitor cycle",
+                  true);
+  DEFINE_PROPERTY(m_processStopWaitTime, std::chrono::milliseconds,
+                  std::chrono::milliseconds(200),
+                  "Wait time for stopping a process", true);
 
   void run();
   void monitorProcess();

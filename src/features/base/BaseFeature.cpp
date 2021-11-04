@@ -6,6 +6,7 @@
 #include "base_library/core/plugins/VirtualGroupBootstrapPlugin.h"
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/PersistableService.h"
+#include "base_library/core/services/ProcessService.h"
 #include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
 #include "base_library/features/base/command_line/UserManagementCliComponent.h"
@@ -74,6 +75,10 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
   builder.registerType<ProcessArgumentService>().singleInstance();
   builder.registerType<SharedMemorySegmentManager>().singleInstance();
   builder.registerType<SharedMemoryService>()
+      .as<AbstractServiceInterface>()
+      .asSelf()
+      .singleInstance();
+  builder.registerType<ProcessService>()
       .as<AbstractServiceInterface>()
       .asSelf()
       .singleInstance();
