@@ -14,6 +14,7 @@
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/models/Process.h"
+#include "base_library/features/base/models/ProcessGroup.h"
 #include "base_library/features/base/models/ProcessName.h"
 
 class ProcessService : AbstractService<ProcessService> {
@@ -23,7 +24,7 @@ class ProcessService : AbstractService<ProcessService> {
     // variables
     std::unique_ptr<Process> m_process = nullptr;
     boost::process::child m_child;
-    std::promise<int> m_promise;
+    std::unique_ptr<std::promise<int>> m_promise = nullptr;
 
    public:
     ProcessExecutes() = default;
@@ -38,13 +39,18 @@ class ProcessService : AbstractService<ProcessService> {
     }
     [[nodiscard]] boost::process::child &getChild() { return m_child; }
 
-    void setPromiseValue(int exitCode) { m_promise.set_value(exitCode); }
+    void setPromiseValue(int exitCode) { m_promise->set_value(exitCode); }
 
     void setPromiseException(const std::exception_ptr &p) {
-      m_promise.set_exception(p);
+      m_promise->set_exception(p);
     }
 
-    std::future<int> getFuture() { return m_promise.get_future(); }
+    std::future<int> getFuture() {
+      if (m_promise == nullptr) {
+        m_promise = std::make_unique<std::promise<int>>();
+      }
+      return m_promise->get_future();
+    }
   };
 
   // injections
@@ -52,38 +58,37 @@ class ProcessService : AbstractService<ProcessService> {
   // variables
   typedef tbb::concurrent_hash_map<std::string, ProcessExecutes> ProcessMap;
   ProcessMap m_processes;
+  typedef tbb::concurrent_hash_map<std::string, std::unique_ptr<ProcessGroup>> ProcessGroupMap;
+  ProcessGroupMap m_processGroups;
   std::thread m_monitorThread;
   std::atomic_bool m_running = true;
   std::condition_variable m_condition;
   std::mutex m_mutex;
 
   void run();
-  void monitor();
-  //  static void checkExitCodeOf(Process &process);
+  void monitorProcess();
+  void monitorProcessGroups();
 
  public:
   explicit ProcessService(std::shared_ptr<ProcessName> processName);
   virtual ~ProcessService();
 
+  // Process operations
   std::future<int> startOf(const Process &process);
+  void restartOf(const Process &process);
   bool stopOf(const Process &process);
+  void terminateOf(const Process &process);
+  void detachOf(const Process &process);
 
+  // Process group operations
+  void startOf(const ProcessGroup &processGroup);
+  void restartOf(const ProcessGroup &processGroup);
+  bool stopOf(const ProcessGroup &processGroup);
+  void terminateOf(const ProcessGroup &processGroup);
+  void detachOf(const ProcessGroup &processGroup);
+
+  // AbstractService Functions
   void onShutdown() override;
-
-  // static Process::ProcessInfo ofCurrentProcess(int argc, char *argv[]);
-
-  //  std::vector<Process::ProcessInfo> allProcesses();
-  //  void startOf(std::size_t id);
-  //  void startAll();
-  //  void enableOf(std::size_t id);
-  //  bool isRunning(std::size_t id);
-  //  void terminateOf(std::size_t id);
-  //  void terminateAll();
-  //  void stopOf(std::size_t id);
-  //  void stopAll();
-  //  void restartOf(std::size_t id);
-  //  void restartAll();
-  //  void detachOf(std::size_t id);
 };
 
 #endif  // CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H

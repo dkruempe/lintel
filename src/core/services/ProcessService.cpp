@@ -37,7 +37,8 @@ std::future<int> ProcessService::startOf(const Process& process) {
   insert->second.setProcess(std::make_unique<Process>(process));
   insert->second.setChild(boost::process::child(
       path.string(), insert->second.getProcess()->getArgs(),
-      boost::process::std_out > stdout, boost::process::std_err > stderr));
+      boost::process::std_out > boost::process::null,
+      boost::process::std_err > boost::process::null));
   insert->second.getProcess()->onStart();
   return insert->second.getFuture();
 }
@@ -51,11 +52,28 @@ void ProcessService::run() {
   while (m_running) {
     std::unique_lock<std::mutex> lock(m_mutex);
     m_condition.wait_for(lock, std::chrono::seconds(1));
-    monitor();
+    monitorProcess();
+    monitorProcessGroups();
   }
 }
 
-void ProcessService::monitor() {
+void ProcessService::monitorProcessGroups() {
+  for (const auto& [name, processGroup] : m_processGroups) {
+    auto processes = processGroup->getProcesses();
+    bool remove = true;
+    for (const auto& process : processes) {
+      ProcessMap::accessor found;
+      m_processes.find(found, process.getId());
+      if (!found.empty()) {
+        remove = false;
+      }
+    }
+    m_processGroups.erase(name);
+  }
+}
+
+void ProcessService::monitorProcess() {
+  // check state of process
   for (auto& [name, processExecutes] : m_processes) {
     bool running = processExecutes.getChild().running();
     if (running) {
@@ -76,7 +94,7 @@ void ProcessService::monitor() {
       processExecutes.setChild(boost::process::child(
           path.string(), processExecutes.getProcess()->getArgs(),
           boost::process::std_out > boost::process::null,
-          boost::process::std_err > stderr));
+          boost::process::std_err > boost::process::null));
       LOG_INFO("{}/{} process restarted", processExecutes.getProcess()->getId(),
                processExecutes.getProcess()->getPath().filename().string());
       processExecutes.getProcess()->onRestart();
@@ -98,7 +116,8 @@ bool ProcessService::stopOf(const Process& process) {
   ProcessMap::accessor found;
   m_processes.find(found, process.getId());
   if (found.empty()) {
-    return false;
+    // process not available => stop successful bc. not available
+    return true;
   }
   LOG_INFO("{}/{} send kill {} SIGINT", process.getId(),
            process.getPath().filename().string(),
@@ -128,167 +147,108 @@ bool ProcessService::stopOf(const Process& process) {
   }
   return success;
 }
-
-/*
-std::vector<Process::ProcessInfo> ProcessService::allProcesses() {
-  std::vector<Process::ProcessInfo> tmp;
-  std::transform(
-      m_processes.begin(), m_processes.end(), std::back_inserter(tmp),
-      [](const Process &process) -> Process::ProcessInfo {
-        return Process::ProcessInfo{
-            process.getId(),
-            process.isEnabled(),
-            process.getName(),
-            process.getChild() != nullptr && process.getChild().running(),
-            process.getChild() != nullptr && process.getChild().running()
-                ? process.getChild().id()
-                : 0,
-            process.getExitCode()};
-      });
-  return tmp;
-}
-
-void ProcessService::startAll() {
-  for (auto &process : m_processes) {
-    if (process.getChild() != nullptr || !process.isEnabled()) {
-      // process started ignore
-      continue;
-    }
-    process.startChild();
+void ProcessService::restartOf(const Process& process) {
+  bool success = stopOf(process);
+  if (!success) {
+    LOG_INFO("{}/{} force stop of process", process.getId(),
+             process.getPath().filename().string());
+    terminateOf(process);
   }
+  startOf(process);
 }
-
-bool ProcessService::isRunning(std::size_t id) {
-  Process &process = m_processes[id];
-  if (process.getChild() == nullptr) {
-    return false;
-  }
-  return process.getChild().running();
-}
-
-void ProcessService::terminateOf(std::size_t id) {
-  Process &process = m_processes[id];
-  if (process.getChild() == nullptr) {
+void ProcessService::terminateOf(const Process& process) {
+  ProcessMap::accessor found;
+  m_processes.find(found, process.getId());
+  if (found.empty()) {
     return;
   }
-  process.getChild().terminate();
-}
-
-void ProcessService::terminateAll() {
-  for (auto &process : m_processes) {
-    if (process.getChild() == nullptr) {
-      continue;
-    }
-    process.getChild().terminate();
+  bool running = found->second.getChild().running();
+  if (running) {
+    found->second.getChild().terminate();
   }
+  found->second.setPromiseValue(found->second.getChild().exit_code());
+  found->second.getProcess()->onTerminate();
+  m_processes.erase(found);
 }
-
-void ProcessService::stopOf(std::size_t id) {
-  Process &process = m_processes[id];
-  if (process.getChild() == nullptr || !process.getChild().running()) {
+void ProcessService::detachOf(const Process& process) {
+  ProcessMap::accessor found;
+  m_processes.find(found, process.getId());
+  if (found.empty()) {
+    LOG_ERROR("{}/{} process not found", process.getId(),
+              process.getPath().filename().string());
     return;
   }
-  process.getChild().wait_for(m_waitTimeForShutdown);
+  // detach process => erase process from list bc. of separate running process
+  // with no further monitoring
+  found->second.getChild().detach();
+  // inform about success exit bc. no further monitoring
+  found->second.setPromiseValue(EXIT_SUCCESS);
+  m_processes.erase(found);
 }
-
-void ProcessService::stopAll() {
-  for (auto &process : m_processes) {
-    if (process.getChild() == nullptr) {
-      continue;
-    }
-    if (!process.getChild().running()) {
-      continue;
-    }
-    process.getChild().wait_for(m_waitTimeForShutdown);
-  }
-}
-
-void ProcessService::restartOf(std::size_t id) {
-  Process &process = m_processes[id];
-  if (process.getChild() != nullptr && process.getChild().running()) {
-    process.getChild().wait_for(m_waitTimeForShutdown);
-  }
-  process.startChild();
-}
-
-void ProcessService::restartAll() {
-  for (auto &process : m_processes) {
-    if (process.getChild() != nullptr && process.getChild().running()) {
-      process.getChild().wait_for(m_waitTimeForShutdown);
-    }
-    process.startChild();
-  }
-}
-
-void ProcessService::detachOf(std::size_t id) {
-  Process &process = m_processes[id];
-  process.getChild().detach();
-}
-
-void ProcessService::enableOf(std::size_t id) {
-  Process &process = m_processes[id];
-  if (process.isEnabled()) {
+void ProcessService::startOf(const ProcessGroup& processGroup) {
+  ProcessGroupMap::accessor found;
+  m_processGroups.find(found, processGroup.getId());
+  if (!found.empty()) {
+    LOG_ERROR("{}/{} processGroup exits", processGroup.getId(),
+              processGroup.getName());
     return;
   }
-  process.setEnable(true);
-}
-
-void ProcessService::monitor() {
-  for (auto &process : m_processes) {
-    // check if process unexpected stopped
-    if (process.getChild() != nullptr && !process.getChild().running() &&
-        process.isEnabled() && process.getExitCode() == -1) {
-      process.setExitCode(process.getChild().exit_code());
-      checkExitCodeOf(process);
-    }
-    // check if restart is needed
-    if (process.getChild() != nullptr && !process.getChild().running() &&
-        process.isEnabled() && process.isAutomaticRestart() &&
-        (process.getMaxRestarts() > process.getRestarts() ||
-         process.getMaxRestarts() == -1)) {
-      process.startChild();
-      process.setRestarts(process.getRestarts() + 1);
-    }
+  ProcessGroupMap::accessor insert;
+  m_processGroups.insert(insert, processGroup.getId());
+  insert->second = std::make_unique<ProcessGroup>(processGroup);
+  for (const auto& process : insert->second->getProcesses()) {
+    startOf(process);
   }
 }
-void ProcessService::checkExitCodeOf(Process &process) {
-  int exitCode = process.getExitCode();
-  const std::string &name = process.getName();
-  switch (exitCode) {
-    case EXIT_SUCCESS:
-      // all went fine
-      break;
-    case SIGQUIT:
-      fprintf(stderr, "%s: ERROR quit\n", name.c_str());
-      break;
-    case SIGILL:
-      fprintf(stderr, "%s: ERROR illegal instruction (not reset when caught)\n",
-              name.c_str());
-      break;
-    case SIGABRT:
-      fprintf(stderr, "%s: ERROR abort()\n", name.c_str());
-      break;
-    case SIGFPE:
-      fprintf(stderr, "%s: ERROR floating point exception\n", name.c_str());
-      break;
-    case SIGSEGV:
-      fprintf(stderr, "%s: ERROR segmentation violation\n", name.c_str());
-      break;
-    case SIGTERM:
-      fprintf(stderr, "%s ERROR software termination signal from kill\n",
-              name.c_str());
-      break;
-    default:
-      fprintf(stderr, "%s shutdown with exit code %d\n", name.c_str(),
-              exitCode);
-      break;
+bool ProcessService::stopOf(const ProcessGroup& processGroup) {
+  ProcessGroupMap::accessor found;
+  m_processGroups.find(found, processGroup.getId());
+  if (found.empty()) {
+    LOG_ERROR("{}/{} processGroup doesn't exists => stop not available",
+              processGroup.getId(), processGroup.getName());
+    return true;
   }
-}*/
-// Process::ProcessInfo ProcessService::ofCurrentProcess(int argc, char *argv[])
-// {
-//   const int processId = boost::this_process::get_id();
-//   std::filesystem::path path = argv[0];
-//   Process::ProcessInfo processInfo{-1,   true,      path.filename().string(),
-//                                    true, processId, -1};
-//   return processInfo;
-// }
+  bool success = true;
+  for (const auto& process : found->second->getProcesses()) {
+    bool ret = stopOf(process);
+    if (!ret) {
+      success = false;
+    }
+  }
+  if (success) {
+    m_processGroups.erase(found);
+  }
+  return success;
+}
+void ProcessService::restartOf(const ProcessGroup& processGroup) {
+  bool success = stopOf(processGroup);
+  if (!success) {
+    terminateOf(processGroup);
+  }
+  startOf(processGroup);
+}
+void ProcessService::terminateOf(const ProcessGroup& processGroup) {
+  ProcessGroupMap::accessor found;
+  m_processGroups.find(found, processGroup.getId());
+  if (found.empty()) {
+    LOG_ERROR("{}/{} processGroup doesn't exists => no terminate",
+              processGroup.getId(), processGroup.getName());
+    return;
+  }
+  for (const auto& process : found->second->getProcesses()) {
+    terminateOf(process);
+  }
+  m_processGroups.erase(found);
+}
+void ProcessService::detachOf(const ProcessGroup& processGroup) {
+  ProcessGroupMap::accessor found;
+  m_processGroups.find(found, processGroup.getId());
+  if (found.empty()) {
+    LOG_ERROR("{}/{} processGrouop doesn't exists => no detach available");
+    return;
+  }
+  for (const auto& process : found->second->getProcesses()) {
+    detachOf(process);
+  }
+  m_processGroups.erase(found);
+}
