@@ -2,7 +2,28 @@
 #include <base_library/core/services/ProcessService.h>
 
 #include <catch2/catch.hpp>
-
+TEST_CASE("ProcessService Start Process Group") {
+  Process df("df", {"-h"});
+  Process ls("ls", {"-lrth"});
+  bool startedDf = false;
+  bool startedLs = false;
+  int32_t stoppedDf = 0;
+  int32_t stoppedLs = 0;
+  auto onStartDf = std::make_shared<std::function<void(const Process &)>>(
+      [&](const Process &process) { startedDf = true; });
+  auto onStartLs = std::make_shared<std::function<void(const Process &)>>(
+      [&](const Process &process) { startedLs = true; });
+  df.addOnStartEvent(onStartDf);
+  ls.addOnStartEvent(onStartLs);
+  ProcessGroup group("testGroup", {df, ls});
+  std::shared_ptr<ProcessName> processName =
+      std::make_shared<ProcessName>("test");
+  ProcessService processService(processName);
+  processService.startOf(group);
+  REQUIRE(startedDf);
+  REQUIRE(startedLs);
+  processService.onShutdown();
+}
 TEST_CASE("ProcessService Start Process") {
   Process process("df", {"-h"});
   bool started = false;
