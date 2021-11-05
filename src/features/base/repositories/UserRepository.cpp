@@ -16,7 +16,7 @@ UserRepository::UserRepository(
     std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
     std::shared_ptr<GroupRepository> groupRepository)
     : m_connectionConfigurations(std::move(connectionConfigurations)),
-      m_connectionEntry(m_connectionConfigurations->of("DEFAULT")),
+      m_connectionEntry(m_connectionConfigurations->ofDefault()),
       m_groupRepository(std::move(groupRepository)) {}
 
 std::optional<User> UserRepository::of(const std::string &userName) {
@@ -32,8 +32,8 @@ std::optional<User> UserRepository::of(const std::string &userName) {
          e_mail,
          password,
          created_timestamp
-  from public.user u
-  left join public.user_groups_relation ru
+  from users u
+  left join user_groups_relation ru
     on u.user_name = ru.user_name
   where u.user_name = ?)",
                                         builder);
@@ -73,12 +73,12 @@ void UserRepository::deleteOf(const User &user) {
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(user.getUserName());
   statement.execute(R"(
-    delete from public.user_groups_relation
+    delete from user_groups_relation
     where user_name = ?
   )",
                     builder);
   statement.execute(R"(
-    delete from public.user
+    delete from users
     where user_name = ?
   )",
                     builder);
@@ -89,8 +89,11 @@ void UserRepository::createOf(const User &user) {
     db::Connection connection(m_connectionEntry);
     db::Transaction transaction(connection);
     db::Statement statement(connection);
+    using namespace date;
+    using namespace std::chrono;
     std::string createdTimestamp =
-        date::format("%Y-%m-%d %H:%M:%S%Ez", user.getCreatedTimestamp());
+        format("%Y-%m-%d %H:%M:%S%Ez",
+               make_zoned(current_zone(), user.getCreatedTimestamp()));
     std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
     LOG_TRACE("created_timestamp = {}", createdTimestamp);
     db::ParameterBuilder builder(m_connectionEntry);
@@ -102,7 +105,7 @@ void UserRepository::createOf(const User &user) {
         .add(createdTimestamp);
     statement.execute(
         R"(
-    insert into public.user (
+    insert into users(
     user_name,
     password,
     e_mail,
@@ -198,8 +201,8 @@ std::vector<User> UserRepository::allOf(const std::string &userNameMatches) {
            u.password,
            u.created_timestamp,
            u.user_name
-    from public.user u
-    left join public.user_groups_relation ru
+    from users u
+    left join user_groups_relation ru
       on u.user_name = ru.user_name
     where u.user_name ~ ?
     order by u.user_name asc)",
@@ -268,8 +271,8 @@ std::vector<User> UserRepository::allOf() {
            u.password,
            u.created_timestamp,
            u.user_name
-    from public.user u
-    left join public.user_groups_relation ru
+    from users u
+    left join user_groups_relation ru
       on u.user_name = ru.user_name
     order by u.user_name asc)");
     std::string lastUserName;
@@ -330,7 +333,7 @@ void UserRepository::changeFirstNameOf(const User &user,
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(firstName).add(user.getUserName());
   statement.execute(R"(
-    update public.user
+    update users
     set first_name = ?
     where user_name = ?
   )",
@@ -344,7 +347,7 @@ void UserRepository::changeLastNameOf(const User &user,
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(lastName).add(user.getUserName());
   statement.execute(R"(
-    update public.user
+    update users
     set last_name = ?
     where user_name = ?
   )",
@@ -358,7 +361,7 @@ void UserRepository::changeUserNameOf(const User &user,
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(userName).add(user.getUserName());
   statement.execute(R"(
-    update public.user
+    update users
     set user_name = ?
     where user_name = ?
   )",
@@ -372,7 +375,7 @@ void UserRepository::changePasswordOf(const User &user,
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(password).add(user.getUserName());
   statement.execute(R"(
-    update public.user
+    update users
     set password = ?
     where user_name = ?
   )",
@@ -385,7 +388,7 @@ void UserRepository::changeEMailOf(const User &user, const std::string &eMail) {
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(eMail).add(user.getUserName());
   statement.execute(R"(
-    update public.user
+    update users
     set e_mail = ?
     where user_name = ?
   )",
@@ -399,12 +402,12 @@ void UserRepository::deleteOf(const std::vector<std::string> &userNames) {
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(userName);
     statement.execute(R"(
-    delete from public.user_groups_relation
+    delete from user_groups_relation
     where user_name = ?
   )",
                       builder);
     statement.execute(R"(
-    delete from public.user
+    delete from users
     where user_name = ?
   )",
                       builder);

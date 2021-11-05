@@ -15,6 +15,7 @@ class DatabaseConnectionComponent : public Component {
     const std::string CONNECTION_CONNECTION = "connection";
     const std::string CONNECTION_DATBASE_NAME = "database_name";
     const std::string CONNECTION_PORT = "port";
+    const std::string CONNECTION_DEFAULT = "default";
   } shape;
 
  public:

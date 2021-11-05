@@ -27,7 +27,7 @@ std::ostream &operator<<(std::ostream &os,
 DatabaseConnectionEntry::DatabaseConnectionEntry(
     std::string_view component, std::string connection, std::string userName,
     std::string password, db::ConnectionType type, std::string name,
-    int32_t port, std::string databaseName)
+    int32_t port, std::string databaseName, bool isDefault)
     : Entry(component),
       m_connection(std::move(connection)),
       m_userName(std::move(userName)),
@@ -35,7 +35,8 @@ DatabaseConnectionEntry::DatabaseConnectionEntry(
       m_type(type),
       m_name(std::move(name)),
       m_port(port),
-      m_databaseName(std::move(databaseName)) {}
+      m_databaseName(std::move(databaseName)),
+      m_isDefault(isDefault) {}
 
 const db::ConnectionType &DatabaseConnectionEntry::getType() const {
   return m_type;
@@ -44,3 +45,4 @@ int32_t DatabaseConnectionEntry::getPort() const { return m_port; }
 const std::string &DatabaseConnectionEntry::getDatabaseName() const {
   return m_databaseName;
 }
+bool DatabaseConnectionEntry::isDefault() const { return m_isDefault; }

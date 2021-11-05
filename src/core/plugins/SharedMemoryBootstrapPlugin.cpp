@@ -11,7 +11,7 @@ SharedMemoryBootstrapPlugin::SharedMemoryBootstrapPlugin(
         connectionConfigurations,
     std::vector<std::shared_ptr<SharedMemoryRepository>>
         sharedMemoryRepositories)
-    : m_connectionEntry(connectionConfigurations->of("DEFAULT")),
+    : m_connectionEntry(connectionConfigurations->ofDefault()),
       m_sharedMemoryRepositories(std::move(sharedMemoryRepositories)) {}
 
 BootstrapSequence SharedMemoryBootstrapPlugin::getPriority() {

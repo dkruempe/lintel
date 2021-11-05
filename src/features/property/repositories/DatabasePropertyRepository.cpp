@@ -13,7 +13,7 @@ DatabasePropertyRepository::DatabasePropertyRepository(
     std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
     : PropertyRepository(),
       m_connectionConfigurations(std::move(connectionConfigurations)),
-      m_connectionEntry(m_connectionConfigurations->of("DEFAULT")) {}
+      m_connectionEntry(m_connectionConfigurations->ofDefault()) {}
 PropertyRepositoryType DatabasePropertyRepository::getType() {
   return PropertyRepositoryType::DATABASE_REPOSITORY;
 }
@@ -30,7 +30,6 @@ void DatabasePropertyRepository::save(
     std::string query;
     switch (m_connectionEntry->getType()) {
       case db::ConnectionType::PostgreSQL:
-      case db::ConnectionType::SQLite:
         query = R"(insert into property (name,
                                          instance_name,
                                          class_name,
@@ -41,6 +40,15 @@ void DatabasePropertyRepository::save(
                    ON CONFLICT ON CONSTRAINT property_pk
                    DO UPDATE SET value = ?
         )";
+      case db::ConnectionType::SQLite:
+        query = R"(insert or replace into property 
+                  (name, 
+                   instance_name,
+                   class_name,
+                   process_name,
+                   type,
+                   value) 
+                  values (?, ?, ?, ?, ?, ?))";
         break;
       default:
         throw db::SQLException("not supported database type for query");

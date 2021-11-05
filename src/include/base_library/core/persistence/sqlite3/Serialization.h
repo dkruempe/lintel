@@ -41,9 +41,21 @@ IMPLEMENT_SERIALIZE(
     [](const std::string &string) -> std::string { return string; },
     [](const std::string &string) -> std::string { return string; })
 IMPLEMENT_SERIALIZE(
-    bool, [](bool value) -> std::string { return value ? "t" : "f"; },
+    bool, [](bool value) -> std::string { return value ? "t" : "0"; },
     [](const std::string &string) -> bool {
       return string == "t" ? true : false;
+    })
+IMPLEMENT_SERIALIZE(
+    date::sys_time<std::chrono::microseconds>,
+    [](const date::sys_time<std::chrono::microseconds> &time) -> std::string {
+      return date::format("%Y-%m-%d %H:%M:%S%Ez", time);
+    },
+    [](const std::string &timeString)
+        -> date::sys_time<std::chrono::microseconds> {
+      std::stringstream ss(timeString);
+      date::sys_time<std::chrono::microseconds> lt;
+      ss >> date::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
+      return lt;
     })
 }  // namespace sqlite
 

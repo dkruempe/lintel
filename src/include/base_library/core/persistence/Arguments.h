@@ -28,6 +28,8 @@ class Argument {
     switch (m_connectionType) {
       case ConnectionType::PostgreSQL:
         return postgresql::Serialization<TYPE>::deserialize(m_value);
+      case ConnectionType::SQLite:
+        return sqlite::Serialization<TYPE>::deserialize(m_value);
       case ConnectionType::UNDEFINED:
         return StringifyService<TYPE>::deserializeFromString(m_value);
     }

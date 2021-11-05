@@ -10,21 +10,22 @@
 #include "base_library/core/services/LoggerService.h"
 
 GroupRepository::GroupRepository(
-    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
-    const std::shared_ptr<ProcessName>& processName)
-    : AbstractService<GroupRepository>(processName->getProcessName()),
-      m_connectionConfigurations(std::move(connectionConfigurations)),
-      m_connectionEntry(m_connectionConfigurations->of("DEFAULT")) {}
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
+    : m_connectionConfigurations(std::move(connectionConfigurations)),
+      m_connectionEntry(m_connectionConfigurations->ofDefault()) {}
 void GroupRepository::initGroups() {
   db::Connection connection(m_connectionEntry);
   db::Statement statement(connection);
   // initialize virtual groups
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(true);
   db::Result result = statement.execute(R"(
   select name,
          virtual
-  from public.group
-  where virtual = true
-  )");
+  from groups
+  where virtual = ?
+  )",
+                                        builder);
   for (auto& iter : result) {
     std::string groupName = iter.of(0).getValue();
     bool isVirtual = iter.of(1).getValue<bool>();
@@ -35,17 +36,20 @@ void GroupRepository::initGroups() {
     m_groupMap.insert({group.getGroupName(), group});
     m_groups.push_back(group);
   }
+  db::ParameterBuilder builder1(m_connectionEntry);
+  builder1.add(false);
   // initialize non virtual groups
   result = statement.execute(R"(
   select g.name,
          g.virtual,
          gr.base_group_name
-  from public.group g
+  from groups g
   left join group_groups_relation gr
     on gr.group_name = g.name
-  where g.virtual = false
+  where g.virtual = ?
   order by g.name;
-  )");
+  )",
+                             builder1);
   std::string lastGroupName;
   bool lastIsVirtual;
   std::vector<std::string> groupNames;
@@ -145,7 +149,7 @@ void GroupRepository::createOf(const Group& group) {
   }
   db::Connection connection(m_connectionEntry);
   db::PreparedStatement preparedStatement(
-      connection, "insert into public.group(name, virtual) values(?, ?)",
+      connection, "insert into groups(name, virtual) values(?, ?)",
       "insert_group");
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(group.getGroupName()).add(group.isVirtual());
@@ -166,7 +170,7 @@ void GroupRepository::deleteOf(const Group& group) {
     throw std::runtime_error(
         "cannot remove group which is in usage of an user");
   }
-  statement.execute("delete from public.group where name = ?", builder);
+  statement.execute("delete from groups where name = ?", builder);
 }
 void GroupRepository::addGroupOf(const Group& group, const Group& add) {
   auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(),
@@ -211,4 +215,4 @@ void GroupRepository::removeGroupOf(const Group& group, const Group& remove) {
       )",
       builder);
 }
-void GroupRepository::onInitialize() { initGroups(); }
+void GroupRepository::onAwake() { initGroups(); }

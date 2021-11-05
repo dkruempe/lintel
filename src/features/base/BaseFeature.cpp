@@ -68,7 +68,7 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .asSelf()
       .singleInstance();
   builder.registerType<GroupRepository>()
-      .as<AbstractServiceInterface>()
+      .as<PersistableBean>()
       .asSelf()
       .singleInstance();
   builder.registerType<UserRepository>().singleInstance();

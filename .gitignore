@@ -5,5 +5,4 @@ build*
 .vscode
 tags
 log
-cfg
 include/config.h

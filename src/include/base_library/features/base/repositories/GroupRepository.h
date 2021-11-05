@@ -5,11 +5,11 @@
 #include <optional>
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
-#include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/PersistableBean.h"
 #include "base_library/features/base/models/Group.h"
 #include "base_library/features/base/models/ProcessName.h"
 
-class GroupRepository : public AbstractService<GroupRepository> {
+class GroupRepository : public PersistableBean {
  private:
   // Variables:
   // injections
@@ -23,8 +23,7 @@ class GroupRepository : public AbstractService<GroupRepository> {
 
  public:
   explicit GroupRepository(std::shared_ptr<DatabaseConnectionConfigurations>
-                               connectionConfigurations,
-                           const std::shared_ptr<ProcessName> &processName);
+                               connectionConfigurations);
 
   virtual ~GroupRepository() = default;
 
@@ -46,7 +45,7 @@ class GroupRepository : public AbstractService<GroupRepository> {
 
   void removeGroupOf(const Group &group, const Group &remove);
 
-  void onInitialize() override;
+  void onAwake() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUPREPOSITORY_H

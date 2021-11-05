@@ -8,7 +8,9 @@
 
 DatabaseConnectionConfigurations::DatabaseConnectionConfigurations(
     const std::shared_ptr<Configuration> &configuration)
-    : m_connections(build(
+    : m_connections(
+          build(configuration->configurationOf<DatabaseConnectionComponent>())),
+      m_defaultConnection(findDefault(
           configuration->configurationOf<DatabaseConnectionComponent>())) {}
 
 std::map<std::string, std::shared_ptr<DatabaseConnectionEntry>>
@@ -41,4 +43,20 @@ DatabaseConnectionConfigurations::allOf() {
     connections.push_back(connection);
   }
   return connections;
+}
+std::shared_ptr<DatabaseConnectionEntry>
+DatabaseConnectionConfigurations::ofDefault() {
+  return m_defaultConnection;
+}
+std::shared_ptr<DatabaseConnectionEntry>
+DatabaseConnectionConfigurations::findDefault(
+    const std::vector<std::shared_ptr<Entry>> &entries) {
+  for (const auto &entry : entries) {
+    auto databaseEntry =
+        std::static_pointer_cast<DatabaseConnectionEntry>(entry);
+    if (databaseEntry->isDefault()) {
+      return databaseEntry;
+    }
+  }
+  return nullptr;
 }

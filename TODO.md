@@ -5,3 +5,6 @@
 - [ ] http: implement partly better exception handling
 - [ ] db: change std::string implementations to std::string_view for better performance
 - [ ] db: switch partly to constexpr implementation ?!
+- [ ] http: support of paging
+- [ ] cli: add shared memory and process service to cli
+- [ ] db: support sqlite again with sql statements

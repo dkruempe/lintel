@@ -11,7 +11,7 @@ VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
         &connectionConfigurations,
     std::vector<std::shared_ptr<GroupProvider>> groupProviders)
     : m_groupProviders(std::move(groupProviders)),
-      m_connectionEntry(connectionConfigurations->of("DEFAULT")) {}
+      m_connectionEntry(connectionConfigurations->ofDefault()) {}
 BootstrapSequence VirtualGroupBootstrapPlugin::getPriority() {
   return BootstrapSequence::VirtualGroups;
 }
@@ -24,11 +24,22 @@ void VirtualGroupBootstrapPlugin::onStart() {
   db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
   {
-    db::PreparedStatement statement(
-        connection,
-        "insert into public.group(name, virtual) values(?, ?) ON CONFLICT ON "
-        "CONSTRAINT group_pk DO NOTHING",
-        "insert_group");
+    std::string stmt;
+    switch (m_connectionEntry->getType()) {
+      case db::ConnectionType::PostgreSQL:
+        stmt = R"(insert into groups(name, virtual)
+                  values(?, ?)
+                  ON CONFLICT
+                  ON CONSTRAINT group_pk DO NOTHING)";
+        break;
+      case db::ConnectionType::SQLite:
+        stmt = R"(insert or ignore into groups(name, virtual)
+                  values(?, ?))";
+        break;
+      default:
+        throw std::runtime_error("unknown db type");
+    }
+    db::PreparedStatement statement(connection, stmt, "insert_group");
     for (const auto &group : groups) {
       db::ParameterBuilder builder(m_connectionEntry);
       builder.add(group.getGroupName()).add(group.isVirtual());
@@ -46,12 +57,29 @@ void VirtualGroupBootstrapPlugin::onStart() {
    */
 
   {
-    db::PreparedStatement statement(
-        connection,
-        "insert into public.group_groups_relation(group_name, base_group_name) "
-        "values(?, ?) ON CONFLICT ON CONSTRAINT group_groups_relation_pk DO "
-        "NOTHING",
-        "add_relation");
+    std::string stmt;
+    switch (m_connectionEntry->getType()) {
+      case db::ConnectionType::PostgreSQL:
+        stmt = R"(
+            insert into group_groups_relation
+              (group_name,
+               base_group_name)
+            values(?, ?)
+            ON CONFLICT
+            ON CONSTRAINT group_groups_relation_pk
+            DO NOTHING)";
+        break;
+      case db::ConnectionType::SQLite:
+        stmt = R"(
+            insert or ignore into group_groups_relation
+              (group_name,
+               base_group_name)
+            values(?, ?))";
+        break;
+      default:
+        throw std::runtime_error("unknown db type");
+    }
+    db::PreparedStatement statement(connection, stmt, "add_relation");
     for (const auto &group : groups) {
       bool isAdminGroup =
           StringUtils::startsWith(group.getGroupName(), "Admin");

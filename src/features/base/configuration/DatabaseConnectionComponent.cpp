@@ -25,6 +25,7 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
     return databaseEntries;
   }
 
+  bool foundConnectionWithDefault = false;
   for (tinyxml2::XMLElement *propertyElement = rootNode->FirstChildElement();
        propertyElement != nullptr;
        propertyElement = propertyElement->NextSiblingElement()) {
@@ -46,12 +47,25 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
         propertyElement->Attribute(shape.CONNECTION_PORT.c_str());
     const char *databaseName =
         propertyElement->Attribute(shape.CONNECTION_DATBASE_NAME.c_str());
+    const char *defaultName =
+        propertyElement->Attribute(shape.CONNECTION_DEFAULT.c_str());
 
     int32_t lineNumber = propertyElement->GetLineNum() + lineOffset - 1;
 
     if (typeName == nullptr) {
       throw ConfigurationException(getConfigRoot(), "type string is null",
                                    lineNumber);
+    }
+
+    bool isDefault = false;
+    if (defaultName != nullptr) {
+      isDefault = std::strcmp(defaultName, "true") == 0 ||
+                  std::strcmp(defaultName, "t") == 0;
+      if (foundConnectionWithDefault) {
+        throw ConfigurationException(
+            getConfigRoot(), "default can only once set to true", lineNumber);
+      }
+      foundConnectionWithDefault = true;
     }
 
     if (connection == nullptr) {
@@ -90,7 +104,11 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
 
     databaseEntries.push_back(std::make_shared<DatabaseConnectionEntry>(
         type_name<DatabaseConnectionComponent>(), connection, userName,
-        password, type, name, port, databaseName));
+        password, type, name, port, databaseName, isDefault));
+  }
+  if (!foundConnectionWithDefault) {
+    throw ConfigurationException(
+        getConfigRoot(), "please configure a default database", lineOffset);
   }
   return databaseEntries;
 }

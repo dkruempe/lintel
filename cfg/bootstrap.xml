@@ -15,9 +15,8 @@
         </Logger>
     </Loggers>
     <DatabaseConnections>
-        <!--<DatabaseConnection name="DEFAULT" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite"/>-->
-
-        <DatabaseConnection name="DEFAULT" user_name="dkruempe" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
+        <DatabaseConnection name="DEFAULT_SQLITE" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite" default="true"/>
+        <DatabaseConnection name="DEFAULT_PSQL" user_name="dkruempe" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
                             database_name="keyValueStore"
                             type="PostgreSQL"/>
     </DatabaseConnections>
@@ -29,7 +28,7 @@
         <Server host="0.0.0.0" port="8080"/>
         <Client host="localhost" port="8080" connection_timeout="1000"/>
     </HttpHost>
-    <Properties>
+    <Properties>N
         <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService"
                   instance="__DEFAULT"/>
     </Properties>
