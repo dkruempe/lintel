@@ -22,11 +22,11 @@ class StartupBuilder {
   static StartupBuilder *m_startupBuilder;
   std::condition_variable m_conditionVariable;
   std::vector<std::string> m_arguments;
+  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration =
+      nullptr;
   std::shared_ptr<ConfigurationComponentBuilder>
       m_configurationComponentBuilder;
   std::shared_ptr<Configuration> m_configuration = nullptr;
-  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration =
-      nullptr;
   bool m_bootStrapServiceActive = true;
 
  public:

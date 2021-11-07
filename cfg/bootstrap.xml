@@ -1,8 +1,8 @@
 <Configuration>
     <Loggers>
         <!-- path to logger directory -->
-        <!--<Path path="/home/server/dev/log/cpp-base-library" create_sub_dirs="true"/>-->
-        <Path path="/Users/dkruempe/dev/log/cpp-base-library" create_sub_dirs="true"/>
+        <Path path="/home/server/dev/log/cpp-base-library" create_sub_dirs="true"/>
+        <!--<Path path="/Users/dkruempe/dev/log/cpp-base-library" create_sub_dirs="true"/>-->
         <!-- Special template for logger -->
         <Logger process_name=".*" level="info" async="false">
             <!--<LoggerSink type="ConsoleSink" level="trace"/>-->
@@ -15,20 +15,22 @@
         </Logger>
     </Loggers>
     <DatabaseConnections>
-        <DatabaseConnection name="DEFAULT_SQLITE" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite" default="true"/>
+        <!--<DatabaseConnection name="DEFAULT_SQLITE" connection="/Users/dkruempe/Documents/dev/plc/test.db" type="SQLite" default="true"/>-->
+        <DatabaseConnection name="DEFAULT_SQLITE" connection="/home/server/temp.db" type="SQLite" default="true"/>
         <DatabaseConnection name="DEFAULT_PSQL" user_name="dkruempe" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
                             database_name="keyValueStore"
                             type="PostgreSQL"/>
     </DatabaseConnections>
     <SharedMemorySegments>
-        <Path path="/Users/dkruempe/dev/shm"/>
+        <!--<Path path="/Users/dkruempe/dev/shm"/>-->
+        <Path path="~/dev/shm"/>
         <SharedMemorySegment name="shm_property" size="5MB" auto_extend_size="2MB" max_size="100MB"/>
     </SharedMemorySegments>
     <HttpHost>
         <Server host="0.0.0.0" port="8080"/>
         <Client host="localhost" port="8080" connection_timeout="1000"/>
     </HttpHost>
-    <Properties>N
+    <Properties>
         <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService"
                   instance="__DEFAULT"/>
     </Properties>

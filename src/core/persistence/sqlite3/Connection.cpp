@@ -140,8 +140,14 @@ std::shared_ptr<Result> Connection::executeParameters(
     for (int j = 0; j < count; j++) {
       text = sqlite3_column_text(stmt, j);
       name = sqlite3_column_name(stmt, j);
-      std::basic_string<unsigned char> temp = text;
-      std::string value(temp.begin(), temp.end());
+      std::string value;
+      if (text != nullptr) {
+        std::basic_string<unsigned char> temp = text;
+        value = std::string(temp.begin(), temp.end());
+      }
+      if (name == nullptr) {
+        continue;
+      }
       db::Argument argument(value, name);
       arguments.add(argument);
     }
@@ -160,7 +166,11 @@ std::shared_ptr<Result> Connection::execute(
       [&](int argc, char **argv, char **column) {
         db::Arguments arguments(db::ConnectionType::SQLite);
         for (int i = 0; i < argc; i++) {
-          db::Argument argument(argv[i], column[i]);
+          std::string value;
+          if (argv[i] != nullptr) {
+            value = argv[i];
+          }
+          db::Argument argument(value, column[i]);
           arguments.add(argument);
         }
         result->add(arguments);

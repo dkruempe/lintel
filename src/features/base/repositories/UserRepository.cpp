@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <exception>
 #include <utility>
 
 #include "base_library/core/persistence/Connection.h"
@@ -92,8 +93,7 @@ void UserRepository::createOf(const User &user) {
     using namespace date;
     using namespace std::chrono;
     std::string createdTimestamp =
-        format("%Y-%m-%d %H:%M:%S%Ez",
-               make_zoned(current_zone(), user.getCreatedTimestamp()));
+        format("%Y-%m-%d %H:%M:%S%Ez", user.getCreatedTimestamp());
     std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
     LOG_TRACE("created_timestamp = {}", createdTimestamp);
     db::ParameterBuilder builder(m_connectionEntry);
@@ -105,7 +105,7 @@ void UserRepository::createOf(const User &user) {
         .add(createdTimestamp);
     statement.execute(
         R"(
-    insert into users(
+    insert into users (
     user_name,
     password,
     e_mail,
@@ -116,6 +116,8 @@ void UserRepository::createOf(const User &user) {
   )",
         builder);
   } catch (const db::SQLException &exception) {
+    LOG_ERROR("cannot create new User {}", exception.what());
+  } catch (const std::exception &exception) {
     LOG_ERROR("cannot create new User {}", exception.what());
   }
 }
@@ -254,6 +256,8 @@ std::vector<User> UserRepository::allOf(const std::string &userNameMatches) {
     func();
   } catch (const db::SQLException &exception) {
     LOG_ERROR("{}", exception.what());
+  } catch (const std::exception &exception) {
+    LOG_ERROR("{}", exception.what());
   }
   return users;
 }
@@ -321,6 +325,8 @@ std::vector<User> UserRepository::allOf() {
     }
     func();
   } catch (const db::SQLException &exception) {
+    LOG_ERROR("{}", exception.what());
+  } catch (const std::exception &exception) {
     LOG_ERROR("{}", exception.what());
   }
   return users;

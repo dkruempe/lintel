@@ -22,9 +22,10 @@ StartupBuilder::StartupBuilder(ProcessName &&name,
                                std::vector<std::string> &&arguments)
     : m_name(std::make_shared<ProcessName>(std::move(name))),
       m_arguments(std::move(arguments)),
+      m_environmentConfiguration(std::make_shared<EnvironmentConfiguration>()),
       m_configurationComponentBuilder(
-          std::make_shared<ConfigurationComponentBuilder>()),
-      m_environmentConfiguration(std::make_shared<EnvironmentConfiguration>()) {
+          std::make_shared<ConfigurationComponentBuilder>(
+              m_environmentConfiguration)) {
   signal(SIGINT, StartupBuilder::receiveSignal);
   signal(SIGCHLD, StartupBuilder::receiveSignal);
   signal(SIGTERM, StartupBuilder::receiveSignal);

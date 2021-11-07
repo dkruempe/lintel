@@ -2,6 +2,7 @@
 
 #include <base_library/core/utils/TypeName.h>
 #include <base_library/features/base/configuration/ConfigurationException.h>
+#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
 #include <base_library/features/base/configuration/SharedMemorySegmentEntry.h>
 #include <tinyxml2.h>
 
@@ -9,8 +10,10 @@
 
 SharedMemorySegmentComponent::Shapes SharedMemorySegmentComponent::shape{};
 
-SharedMemorySegmentComponent::SharedMemorySegmentComponent()
-    : Component(shape.CONFIG_ROOT) {}
+SharedMemorySegmentComponent::SharedMemorySegmentComponent(
+    std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
+    : Component(shape.CONFIG_ROOT),
+      m_environmentConfiguration(std::move(environmentConfiguration)) {}
 std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
     const std::string& content, const std::string& fileName,
     int32_t lineOffset) {
@@ -57,7 +60,13 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
         throw ConfigurationException(getConfigRoot(), "path value is nullptr",
                                      lineNumber);
       }
-      path = std::filesystem::path(pathStr);
+      std::string tmpPath = pathStr;
+      if (tmpPath[1] == '~') {
+        tmpPath =
+            m_environmentConfiguration->of(EnvironmentConfiguration::Home);
+        tmpPath += pathStr;
+      }
+      path = std::filesystem::path(tmpPath);
       if (path.empty() || (!is_directory(path) && exists(path))) {
         throw ConfigurationException(getConfigRoot(), "wrong configured path",
                                      lineNumber);

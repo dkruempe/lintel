@@ -5,7 +5,7 @@
 
 class EnvironmentConfiguration {
  public:
-  enum Environment { ConfigDirectory, BootstrapConfigName };
+  enum Environment { ConfigDirectory, BootstrapConfigName, Home };
 
   EnvironmentConfiguration();
   ~EnvironmentConfiguration() = default;
@@ -13,5 +13,6 @@ class EnvironmentConfiguration {
  private:
   std::map<Environment, std::string> m_environmentConfigurations;
 
+ public:
   [[nodiscard]] const std::string& of(Environment environment);
 };

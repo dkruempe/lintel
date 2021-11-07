@@ -8,7 +8,8 @@
 #include "base_library/features/http/configuration/HttpComponent.h"
 #include "base_library/features/property/configuration/PropertyComponent.h"
 
-ConfigurationComponentBuilder::ConfigurationComponentBuilder() {
+ConfigurationComponentBuilder::ConfigurationComponentBuilder(
+    const std::shared_ptr<EnvironmentConfiguration> &environmentConfiguration) {
   m_components.push_back(std::make_shared<DatabaseConnectionComponent>());
   m_components.push_back(std::make_shared<HttpComponent>());
   m_components.push_back(std::make_shared<PropertyComponent>());

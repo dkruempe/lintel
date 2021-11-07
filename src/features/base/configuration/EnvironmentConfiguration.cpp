@@ -21,6 +21,11 @@ EnvironmentConfiguration::EnvironmentConfiguration() {
   } else {
     m_environmentConfigurations.insert({ConfigDirectory, CONFIG_DIRECTORY});
   }
+  // HOME
+  const char* home = std::getenv("HOME");
+  if (home != nullptr) {
+    m_environmentConfigurations.insert({Home, home});
+  }
 }
 
 const std::string& EnvironmentConfiguration::of(

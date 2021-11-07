@@ -1,10 +1,15 @@
 #ifndef CPP_BASE_LIBRARY_SHAREDMEMORYSEGMENTCOMPONENT_H
 #define CPP_BASE_LIBRARY_SHAREDMEMORYSEGMENTCOMPONENT_H
 
+#include <memory>
+
 #include "Component.h"
+#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 
 class SharedMemorySegmentComponent : public Component {
  private:
+  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
+
   static struct Shapes {
     const std::string CONFIG_ROOT = "SharedMemorySegments";
     const std::string SHM_SEGMENT_ROOT = "SharedMemorySegment";
@@ -17,7 +22,8 @@ class SharedMemorySegmentComponent : public Component {
   } shape;
 
  public:
-  SharedMemorySegmentComponent();
+  SharedMemorySegmentComponent(
+      std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
 
   std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
                                             const std::string &fileName,
