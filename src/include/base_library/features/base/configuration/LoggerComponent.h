@@ -1,12 +1,17 @@
 #ifndef CPP_BASE_LIBRARY_LOGGERCOMPONENT_H
 #define CPP_BASE_LIBRARY_LOGGERCOMPONENT_H
 
+#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
 #include <tinyxml2.h>
+
+#include <memory>
 
 #include "base_library/features/base/configuration/Component.h"
 
 class LoggerComponent : public Component {
  private:
+  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
+
   static struct Shapes {
     const std::string CONFIG_ROOT = "Loggers";
     // LOGGER
@@ -40,7 +45,8 @@ class LoggerComponent : public Component {
                                      int32_t& lineNumber, int32_t lineOffset);
 
  public:
-  LoggerComponent();
+  LoggerComponent(
+      std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
 
   std::vector<std::shared_ptr<Entry>> parse(const std::string& content,
                                             const std::string& fileName,

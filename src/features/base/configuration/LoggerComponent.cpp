@@ -1,5 +1,7 @@
 #include "base_library/features/base/configuration/LoggerComponent.h"
 
+#include <memory>
+
 #include "base_library/core/utils/TypeName.h"
 #include "base_library/features/base/configuration/ConfigurationException.h"
 #include "base_library/features/base/configuration/LoggerEnrty.h"
@@ -7,7 +9,11 @@
 
 LoggerComponent::Shapes LoggerComponent::shape{};
 
-LoggerComponent::LoggerComponent() : Component(shape.CONFIG_ROOT) {}
+LoggerComponent::LoggerComponent(
+    std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
+    : Component(shape.CONFIG_ROOT),
+      m_environmentConfiguration(std::move(environmentConfiguration)) {}
+
 std::vector<std::shared_ptr<Entry>> LoggerComponent::parse(
     const std::string& content, const std::string& fileName,
     int32_t lineOffset) {
@@ -201,7 +207,14 @@ std::shared_ptr<Entry> LoggerComponent::parseLoggerPath(
     throw ConfigurationException(getConfigRoot(), "create_sub_dirs nullptr",
                                  lineNumber);
   }
-  std::filesystem::path path(pathStr);
+  std::string tmpPath = pathStr;
+  if (tmpPath[0] == '~') {
+    std::string restPath(tmpPath.begin() + 1, tmpPath.end());
+    tmpPath = m_environmentConfiguration->of(EnvironmentConfiguration::Home);
+    tmpPath += '/';
+    tmpPath += restPath;
+  }
+  std::filesystem::path path(tmpPath);
   if (path.empty() ||
       (!std::filesystem::is_directory(path) && std::filesystem::exists(path))) {
     throw ConfigurationException(

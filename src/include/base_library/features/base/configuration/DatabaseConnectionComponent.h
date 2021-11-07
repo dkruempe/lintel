@@ -1,10 +1,13 @@
 #ifndef CPP_BASE_LIBRARY_DATABASECONNECTIONCOMPONENT_H
 #define CPP_BASE_LIBRARY_DATABASECONNECTIONCOMPONENT_H
 
+#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
+
 #include "Component.h"
 
 class DatabaseConnectionComponent : public Component {
  private:
+  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
   static struct Shapes {
     const std::string CONFIG_ROOT = "DatabaseConnections";
     const std::string DATABASE_ROOT = "DatabaseConnection";
@@ -19,7 +22,8 @@ class DatabaseConnectionComponent : public Component {
   } shape;
 
  public:
-  DatabaseConnectionComponent();
+  DatabaseConnectionComponent(
+      std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
 
   std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
                                             const std::string &fileName,

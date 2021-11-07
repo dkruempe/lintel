@@ -1,6 +1,10 @@
 #include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
 
+#include <base_library/core/persistence/Connection.h>
 #include <tinyxml2.h>
+
+#include <iostream>
+#include <memory>
 
 #include "base_library/core/persistence/ConnectionType.h"
 #include "base_library/core/utils/TypeName.h"
@@ -9,8 +13,10 @@
 
 DatabaseConnectionComponent::Shapes DatabaseConnectionComponent::shape{};
 
-DatabaseConnectionComponent::DatabaseConnectionComponent()
-    : Component(shape.CONFIG_ROOT) {}
+DatabaseConnectionComponent::DatabaseConnectionComponent(
+    std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
+    : Component(shape.CONFIG_ROOT),
+      m_environmentConfiguration(std::move(environmentConfiguration)) {}
 
 std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
     const std::string &content, const std::string &fileName,
@@ -56,6 +62,7 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
       throw ConfigurationException(getConfigRoot(), "type string is null",
                                    lineNumber);
     }
+    std::string connectionString = connection != nullptr ? connection : "";
 
     bool isDefault = false;
     if (defaultName != nullptr) {
@@ -68,10 +75,6 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
       foundConnectionWithDefault = true;
     }
 
-    if (connection == nullptr) {
-      connection = "";
-    }
-
     db::ConnectionType type(typeName);
     int32_t port = -1;
 
@@ -79,6 +82,17 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
       throw ConfigurationException(
           getConfigRoot(), "type " + std::string(typeName) + " is not valid",
           lineNumber);
+    }
+    if (type == db::ConnectionType::SQLite) {
+      std::string tmpPath = connection;
+      if (tmpPath[0] == '~') {
+        std::string restPath(tmpPath.begin() + 1, tmpPath.end());
+        tmpPath =
+            m_environmentConfiguration->of(EnvironmentConfiguration::Home);
+        tmpPath += '/';
+        tmpPath += restPath;
+      }
+      connectionString = tmpPath.c_str();
     }
 
     if (name == nullptr) {
@@ -103,7 +117,7 @@ std::vector<std::shared_ptr<Entry>> DatabaseConnectionComponent::parse(
     }
 
     databaseEntries.push_back(std::make_shared<DatabaseConnectionEntry>(
-        type_name<DatabaseConnectionComponent>(), connection, userName,
+        type_name<DatabaseConnectionComponent>(), connectionString, userName,
         password, type, name, port, databaseName, isDefault));
   }
   if (!foundConnectionWithDefault) {

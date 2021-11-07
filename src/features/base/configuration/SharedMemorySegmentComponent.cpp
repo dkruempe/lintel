@@ -61,7 +61,9 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
                                      lineNumber);
       }
       std::string tmpPath = pathStr;
+      // is home directory ? => replace with home extension
       if (tmpPath[0] == '~') {
+        // skip first char bc. of home variable
         std::string rest(tmpPath.begin() + 1, tmpPath.end());
         tmpPath =
             m_environmentConfiguration->of(EnvironmentConfiguration::Home);
