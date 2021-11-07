@@ -4,28 +4,60 @@
 #include <memory>
 #include <vector>
 
+#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/features/property/configuration/PropertyRepositoryComponent.h"
+#include "base_library/features/property/configuration/PropertyRepositoryEntry.h"
 #include "base_library/features/property/models/DataStorage.h"
 #include "base_library/features/property/models/PropertyRepositoryType.h"
 
 class PropertyBase;
 
 class PropertyRepository {
+ private:
+  PropertyRepositoryType m_type;
+  std::shared_ptr<PropertyRepositoryEntry> m_propertyRepositoryEntry;
+
+  std::shared_ptr<PropertyRepositoryEntry> init(
+      const std::vector<std::shared_ptr<Entry>> &entries) {
+    std::shared_ptr<PropertyRepositoryEntry> propertyRepositoryEntry;
+    for (const auto &entry : entries) {
+      std::shared_ptr<PropertyRepositoryEntry> tmp =
+          std::static_pointer_cast<PropertyRepositoryEntry>(entry);
+      if (tmp->getType() != m_type) {
+        continue;
+      }
+      propertyRepositoryEntry = tmp;
+    }
+    return propertyRepositoryEntry;
+  }
+
  public:
-  PropertyRepository() = default;
+  PropertyRepository(PropertyRepositoryType type,
+                     const std::shared_ptr<Configuration> &configuration)
+      : m_type(std::move(type)),
+        m_propertyRepositoryEntry(init(
+            configuration->configurationOf<PropertyRepositoryComponent>())) {}
 
   virtual ~PropertyRepository() = default;
 
   /**
    * returns priority of repository
    */
-  virtual PropertyRepositoryType getType() = 0;
+  PropertyRepositoryType getType() { return m_type; }
+
+  bool isEnabled() const { return m_propertyRepositoryEntry != nullptr; }
 
   virtual DataStorage getDataStorage() = 0;
 
   /**
    * returns if save operations are supported or not
    */
-  virtual bool isMutable() = 0;
+  bool isMutable() {
+    if (m_propertyRepositoryEntry == nullptr) {
+      return false;
+    }
+    return m_propertyRepositoryEntry->isMutable();
+  }
 
   /**
    * save properties to repository

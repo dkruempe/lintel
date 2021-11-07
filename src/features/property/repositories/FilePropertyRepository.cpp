@@ -14,20 +14,16 @@ std::vector<std::shared_ptr<PropertyBase>> FilePropertyRepository::awake() {
   return m_properties;
 }
 
-PropertyRepositoryType FilePropertyRepository::getType() {
-  return PropertyRepositoryType::FILE_REPOSITORY;
-}
-
 DataStorage FilePropertyRepository::getDataStorage() {
   // unused only needed for mutable repositories
   return DataStorage(getType(), "");
 }
 
-bool FilePropertyRepository::isMutable() { return false; }
-
 FilePropertyRepository::FilePropertyRepository(
     std::shared_ptr<Configuration> configuration)
-    : m_configuration(std::move(configuration)) {
+    : PropertyRepository(PropertyRepositoryType::FILE_REPOSITORY,
+                         configuration),
+      m_configuration(std::move(configuration)) {
   auto entries = m_configuration->configurationOf<PropertyComponent>();
   m_properties.reserve(entries.size());
   for (auto &&entry : entries) {

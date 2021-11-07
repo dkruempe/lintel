@@ -17,16 +17,10 @@ class DatabasePropertyRepository : public PropertyRepository {
  public:
   explicit DatabasePropertyRepository(
       std::shared_ptr<DatabaseConnectionConfigurations>
-          connectionConfigurations);
-
-  PropertyRepositoryType getType() override;
+          connectionConfigurations,
+      const std::shared_ptr<Configuration> &configuration);
 
   DataStorage getDataStorage() override;
-
-  /**
-   * returns if save operations are supported or not
-   */
-  bool isMutable() override;
 
   /**
    * save properties to repository

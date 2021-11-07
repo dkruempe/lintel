@@ -1,3 +1,5 @@
+#include <base_library/features/property/models/PropertyRepositoryType.h>
+
 #include <regex>
 
 #include "base_library/features/property/factories/PropertyFactory.h"
@@ -6,19 +8,17 @@
 SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
     const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
     const std::shared_ptr<SharedMemorySegmentManager>
-        &sharedMemorySegmentManager)
+        &sharedMemorySegmentManager,
+    const std::shared_ptr<Configuration> &configuration)
     : SharedMemoryMapRepository<SharedMemoryService::ShmString, PropertyData>(
           sharedMemoryService, sharedMemorySegmentManager->of("shm_property"),
           m_version),
-      PropertyRepository() {}
+      PropertyRepository(PropertyRepositoryType::SHM_REPOSITORY,
+                         configuration) {}
 
-PropertyRepositoryType SharedMemoryPropertyRepository::getType() {
-  return PropertyRepositoryType::SHM_REPOSITORY;
-}
 DataStorage SharedMemoryPropertyRepository::getDataStorage() {
   return m_currentDataStorage;
 }
-bool SharedMemoryPropertyRepository::isMutable() { return true; }
 
 void SharedMemoryPropertyRepository::save(
     std::shared_ptr<PropertyBase> property) {

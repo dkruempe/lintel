@@ -40,6 +40,10 @@ class PropertyService : public PersistableBean {
   static std::map<std::string, std::shared_ptr<PropertyBase>> init(
       const std::vector<std::shared_ptr<PropertyRepository>> &repoProperties);
   static std::vector<std::shared_ptr<PropertyRepository>>
+  filterEnabledRepositories(
+      const std::vector<std::shared_ptr<PropertyRepository>>
+          &propertyRepositories);
+  static std::vector<std::shared_ptr<PropertyRepository>>
   filterMutableRepositories(
       const std::vector<std::shared_ptr<PropertyRepository>>
           &propertyRepository);

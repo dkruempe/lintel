@@ -27,13 +27,10 @@ class SharedMemoryPropertyRepository
   SharedMemoryPropertyRepository(
       const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
       const std::shared_ptr<SharedMemorySegmentManager>
-          &sharedMemorySegmentManager);
-
-  PropertyRepositoryType getType() override;
+          &sharedMemorySegmentManager,
+      const std::shared_ptr<Configuration> &configuration);
 
   DataStorage getDataStorage() override;
-
-  bool isMutable() override;
 
   void save(
       const std::vector<std::shared_ptr<PropertyBase>> &properties) override;

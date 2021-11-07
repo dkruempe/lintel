@@ -43,6 +43,20 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
 }
 
 std::vector<std::shared_ptr<PropertyRepository>>
+PropertyService::filterEnabledRepositories(
+    const std::vector<std::shared_ptr<PropertyRepository>>
+        &propertyRepositories) {
+  std::vector<std::shared_ptr<PropertyRepository>> tmp;
+  for (const auto &iter : propertyRepositories) {
+    if (!iter->isEnabled()) {
+      continue;
+    }
+    tmp.push_back(iter);
+  }
+  return tmp;
+}
+
+std::vector<std::shared_ptr<PropertyRepository>>
 PropertyService::filterMutableRepositories(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepository) {
@@ -56,6 +70,9 @@ PropertyService::filterMutableRepositories(
 
   std::vector<std::shared_ptr<PropertyRepository>> mutableRepositories;
   for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
+    if (!repository->isEnabled()) {
+      continue;
+    }
     if (repository->isMutable()) {
       mutableRepositories.push_back(repository);
     }
@@ -68,7 +85,7 @@ PropertyService::PropertyService(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
     std::vector<std::shared_ptr<AbstractServiceInterface>> abstractServices)
-    : m_propertyRepositories(propertyRepositories),
+    : m_propertyRepositories(filterEnabledRepositories(propertyRepositories)),
       m_mutablePropertyRepositories(
           filterMutableRepositories(propertyRepositories)),
       m_abstractServices(std::move(abstractServices)),

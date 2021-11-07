@@ -6,13 +6,11 @@
         <Path path="~/dev/log/cpp-base-library" create_sub_dirs="true" />
         <!-- Special template for logger -->
         <Logger process_name=".*" level="info" async="false">
-            <!--<LoggerSink type="ConsoleSink" level="trace"/>-->
-            <!--<LoggerSink type="DailyFileSink" level="debug" time="02:30"/>-->
+            <!-- <LoggerSink type="ConsoleSink" level="trace"/> -->
+            <!-- <LoggerSink type="DailyFileSink" level="debug" time="02:30"/> -->
             <LoggerSink type="RotatingFileSink" level="trace" size="5MB" max_files="10" />
-            <!--<LoggerSink type="TcpSink" level="debug"
-                        pattern='{"timestamp":"%Y-%m-%dT%H:%M:%S.%fZ", "logger":"%n", "@severity":"%l", "file":"%s", "line":"%#", "message":"%v"}'
-                        connection="localhost" port="1234"/>-->
-            <!--<LoggerSink type="SysLogSink" level="error" pattern="..." id="ident"/>-->
+            <!-- <LoggerSink type="TcpSink" level="debug" pattern='{"timestamp":"%Y-%m-%dT%H:%M:%S.%fZ", "logger":"%n", "@severity":"%l", "file":"%s", "line":"%#", "message":"%v"}' connection="localhost" port="1234" /> -->
+            <!-- <LoggerSink type="SysLogSink" level="error" pattern="..." id="ident"/> -->
         </Logger>
     </Loggers>
     <!-- Datbase Connections Configuration -->
@@ -31,6 +29,11 @@
         <Client host="localhost" port="8080" connection_timeout="1000" />
     </HttpHost>
     <!-- Property Configurations -->
+    <PropertyRepositories>
+        <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="false" />
+        <PropertyRepository type="DATABASE_REPOSITORY" mutable="true" shadow="true" />
+        <PropertyRepository type="SHM_REPOSITORY" mutable="true" shadow="true" />
+    </PropertyRepositories>
     <Properties>
         <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService" instance="__DEFAULT" />
     </Properties>

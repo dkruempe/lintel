@@ -7,6 +7,7 @@
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/http/configuration/HttpComponent.h"
 #include "base_library/features/property/configuration/PropertyComponent.h"
+#include "base_library/features/property/configuration/PropertyRepositoryComponent.h"
 
 ConfigurationComponentBuilder::ConfigurationComponentBuilder(
     const std::shared_ptr<EnvironmentConfiguration> &environmentConfiguration) {
@@ -18,6 +19,7 @@ ConfigurationComponentBuilder::ConfigurationComponentBuilder(
       std::make_shared<LoggerComponent>(environmentConfiguration));
   m_components.push_back(
       std::make_shared<SharedMemorySegmentComponent>(environmentConfiguration));
+  m_components.push_back(std::make_shared<PropertyRepositoryComponent>());
 }
 void ConfigurationComponentBuilder::add(
     std::shared_ptr<Component> &&component) {

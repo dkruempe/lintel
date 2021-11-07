@@ -26,16 +26,6 @@ class FilePropertyRepository : public PropertyRepository {
   DataStorage getDataStorage() override;
 
   /**
-   * returns priority of repository
-   */
-  PropertyRepositoryType getType() override;
-
-  /**
-   * returns if save operations are supported or not
-   */
-  bool isMutable() override;
-
-  /**
    * save property to repository
    * - saves property in file
    * - waits until awake was called

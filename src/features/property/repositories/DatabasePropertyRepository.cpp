@@ -10,17 +10,15 @@
 #include "base_library/features/property/factories/PropertyFactory.h"
 
 DatabasePropertyRepository::DatabasePropertyRepository(
-    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
-    : PropertyRepository(),
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
+    const std::shared_ptr<Configuration>& configuration)
+    : PropertyRepository(PropertyRepositoryType::DATABASE_REPOSITORY,
+                         configuration),
       m_connectionConfigurations(std::move(connectionConfigurations)),
       m_connectionEntry(m_connectionConfigurations->ofDefault()) {}
-PropertyRepositoryType DatabasePropertyRepository::getType() {
-  return PropertyRepositoryType::DATABASE_REPOSITORY;
-}
 DataStorage DatabasePropertyRepository::getDataStorage() {
   return m_currentDataStorage;
 }
-bool DatabasePropertyRepository::isMutable() { return true; }
 void DatabasePropertyRepository::save(
     const std::vector<std::shared_ptr<PropertyBase>>& properties) {
   LOG_TRACE("start persistence of properties");
