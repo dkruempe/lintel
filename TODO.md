@@ -7,4 +7,4 @@
 - [ ] db: switch partly to constexpr implementation ?!
 - [ ] http: support of paging
 - [ ] cli: add shared memory and process service to cli
-- [ ] db: support sqlite again with sql statements
+- [x] db: support sqlite again with sql statements
