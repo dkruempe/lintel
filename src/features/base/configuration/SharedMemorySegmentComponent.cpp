@@ -61,10 +61,12 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
                                      lineNumber);
       }
       std::string tmpPath = pathStr;
-      if (tmpPath[1] == '~') {
+      if (tmpPath[0] == '~') {
+        std::string rest(tmpPath.begin() + 1, tmpPath.end());
         tmpPath =
             m_environmentConfiguration->of(EnvironmentConfiguration::Home);
-        tmpPath += pathStr;
+        tmpPath += '/';
+        tmpPath += rest;
       }
       path = std::filesystem::path(tmpPath);
       if (path.empty() || (!is_directory(path) && exists(path))) {

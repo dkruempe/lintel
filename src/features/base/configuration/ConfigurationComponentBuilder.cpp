@@ -14,7 +14,8 @@ ConfigurationComponentBuilder::ConfigurationComponentBuilder(
   m_components.push_back(std::make_shared<HttpComponent>());
   m_components.push_back(std::make_shared<PropertyComponent>());
   m_components.push_back(std::make_shared<LoggerComponent>());
-  m_components.push_back(std::make_shared<SharedMemorySegmentComponent>());
+  m_components.push_back(
+      std::make_shared<SharedMemorySegmentComponent>(environmentConfiguration));
 }
 void ConfigurationComponentBuilder::add(
     std::shared_ptr<Component> &&component) {
