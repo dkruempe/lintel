@@ -1,5 +1,7 @@
 #include "base_library/core/plugins/DatabaseBootstrapPlugin.h"
 
+#include <base_library/core/persistence/ConnectionType.h>
+
 #include "base_library/core/persistence/Connection.h"
 #include "base_library/core/persistence/Statement.h"
 #include "base_library/core/persistence/Transaction.h"
@@ -23,6 +25,10 @@ void DatabaseBootstrapPlugin::onStart() {
 }
 void DatabaseBootstrapPlugin::handle(
     const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry) {
+  if (connectionEntry->getType() == db::ConnectionType::SQLite) {
+    // open close connection for indirectly create of sqlite database
+    db::Connection connection(connectionEntry);
+  }
   auto optResult = hasSchemaVersionTable(connectionEntry);
   std::filesystem::path dbPath = m_configPath.string() +
                                  std::filesystem::path::preferred_separator +
