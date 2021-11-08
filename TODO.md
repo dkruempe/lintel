@@ -14,7 +14,7 @@
 - [ ] property: add device name or host name to table of DatabasePropertyRepository
 - [ ] property: add regex support to cli command like commands of UserM
 - [ ] property: cleanup entries if default value is same no repository in shadow mode at startup
-- [ ] property: add configuration check of Propertyrepository configuration
+- [x] property: add configuration check of Propertyrepository configuration
 - [ ] property: only awake properties of current process
 - [ ] shm: cli provide interface
 - [ ] general: find general std::size_t serialize solution instead of limiting it to __APPLE__ 
