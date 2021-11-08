@@ -45,6 +45,13 @@ class PropertyRepository {
    */
   PropertyRepositoryType getType() { return m_type; }
 
+  bool isShadow() const {
+    if (m_propertyRepositoryEntry == nullptr) {
+      return false;
+    }
+    return m_propertyRepositoryEntry->isShadow();
+  }
+
   bool isEnabled() const { return m_propertyRepositoryEntry != nullptr; }
 
   virtual DataStorage getDataStorage() = 0;

@@ -167,6 +167,7 @@ std::shared_ptr<PropertyBase> &PropertyService::get(
 }
 void PropertyService::getOrCreate(
     const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
+  std::vector<std::shared_ptr<PropertyBase>> tmp;
   for (const std::shared_ptr<PropertyBase> &property : propertiesVec) {
     try {
       auto &newProperty =
@@ -177,7 +178,14 @@ void PropertyService::getOrCreate(
       newProperty = property;
     } catch (PropertyNotFoundException &exception) {
       m_properties.insert({property->getIdentifier(), property});
+      tmp.push_back(property);
     }
+  }
+  for (auto &iter : m_mutablePropertyRepositories) {
+    if (!iter->isMutable() || !iter->isEnabled() || !iter->isShadow()) {
+      continue;
+    }
+    iter->save(tmp);
   }
 }
 
