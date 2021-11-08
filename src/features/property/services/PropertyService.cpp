@@ -173,8 +173,12 @@ void PropertyService::getOrCreate(
       auto &newProperty =
           get(property->getName(), property->getInstanceName(),
               property->getClassName(), property->getProcessName());
-      property->setValueString(newProperty->toString());
-      property->setDataStorage(newProperty->getDataStorage());
+      // only overwrite value and Datastorage if value is different then default
+      if (newProperty->toString() != property->toString()) {
+        property->setValueString(newProperty->toString());
+        property->setDataStorage(newProperty->getDataStorage());
+        continue;
+      }
       newProperty = property;
     } catch (PropertyNotFoundException &exception) {
       m_properties.insert({property->getIdentifier(), property});
