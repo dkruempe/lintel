@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(base_examples)
+project(base_tests)
 cmake_policy(SET CMP0025 NEW)
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
