@@ -1,5 +1,7 @@
 #include "base_library/features/property/repositories/DatabasePropertyRepository.h"
 
+#include <base_library/core/persistence/ParameterBuilder.h>
+
 #include <utility>
 
 #include "base_library/core/persistence/Connection.h"
@@ -11,11 +13,13 @@
 
 DatabasePropertyRepository::DatabasePropertyRepository(
     std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
-    const std::shared_ptr<Configuration>& configuration)
+    const std::shared_ptr<Configuration>& configuration,
+    std::shared_ptr<ProcessName> processName)
     : PropertyRepository(PropertyRepositoryType::DATABASE_REPOSITORY,
                          configuration),
       m_connectionConfigurations(std::move(connectionConfigurations)),
-      m_connectionEntry(m_connectionConfigurations->ofDefault()) {}
+      m_connectionEntry(m_connectionConfigurations->ofDefault()),
+      m_processName(std::move(processName)) {}
 DataStorage DatabasePropertyRepository::getDataStorage() {
   return m_currentDataStorage;
 }
@@ -79,10 +83,19 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake() {
     db::Connection connection(m_connectionEntry);
     db::Transaction transaction(connection);
     db::Statement query(connection);
-    db::Result result = query.execute(
-        "select name, instance_name, class_name, process_name, value, type "
-        "from "
-        "property");
+    std::string stmt = R"(
+      select name,
+             instance_name,
+             class_name,
+             process_name,
+             value,
+             type
+      from property
+      where process = ?
+    )";
+    db::ParameterBuilder builder(m_connectionEntry);
+    builder.add(m_processName->getProcessName());
+    db::Result result = query.execute(stmt, builder);
     for (int i = 0; i < result.getSize(); i++) {
       std::string name = result.getValue(i, 0);
       std::string instanceName = result.getValue(i, 1);

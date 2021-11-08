@@ -20,14 +20,19 @@ DataStorage FilePropertyRepository::getDataStorage() {
 }
 
 FilePropertyRepository::FilePropertyRepository(
-    std::shared_ptr<Configuration> configuration)
+    std::shared_ptr<Configuration> configuration,
+    const std::shared_ptr<ProcessName> &processName)
     : PropertyRepository(PropertyRepositoryType::FILE_REPOSITORY,
                          configuration),
       m_configuration(std::move(configuration)) {
   auto entries = m_configuration->configurationOf<PropertyComponent>();
   m_properties.reserve(entries.size());
   for (auto &&entry : entries) {
-    m_properties.push_back(
-        std::static_pointer_cast<PropertyEntry>(entry)->getProperty());
+    std::shared_ptr<PropertyBase> property =
+        std::static_pointer_cast<PropertyEntry>(entry)->getProperty();
+    if (property->getProcessName() != processName->getProcessName()) {
+      continue;
+    }
+    m_properties.push_back(property);
   }
 }

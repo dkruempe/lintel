@@ -9,12 +9,13 @@ SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
     const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
     const std::shared_ptr<SharedMemorySegmentManager>
         &sharedMemorySegmentManager,
-    const std::shared_ptr<Configuration> &configuration)
+    const std::shared_ptr<Configuration> &configuration,
+    std::shared_ptr<ProcessName> processName)
     : SharedMemoryMapRepository<SharedMemoryService::ShmString, PropertyData>(
           sharedMemoryService, sharedMemorySegmentManager->of("shm_property"),
           m_version),
-      PropertyRepository(PropertyRepositoryType::SHM_REPOSITORY,
-                         configuration) {}
+      PropertyRepository(PropertyRepositoryType::SHM_REPOSITORY, configuration),
+      m_processName(std::move(processName)) {}
 
 DataStorage SharedMemoryPropertyRepository::getDataStorage() {
   return m_currentDataStorage;
@@ -66,6 +67,9 @@ SharedMemoryPropertyRepository::awake() {
         property.m_name.c_str(), property.m_instanceName.c_str(),
         property.m_className.c_str(), property.m_processName.c_str(),
         property.m_type.c_str(), property.m_value.c_str(), "", false);
+    if (m_processName->getProcessName() != tmp->getProcessName()) {
+      continue;
+    }
     tmp->setDataStorage(m_currentDataStorage);
     properties.push_back(tmp);
     std::stringstream ss;

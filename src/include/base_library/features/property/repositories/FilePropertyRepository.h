@@ -2,6 +2,7 @@
 #define LOGGING_FILEPROPERTYREPOSITORY_H
 
 #include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/property/models/DataStorage.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
@@ -18,7 +19,9 @@ class FilePropertyRepository : public PropertyRepository {
   std::vector<std::shared_ptr<PropertyBase>> m_properties;
 
  public:
-  explicit FilePropertyRepository(std::shared_ptr<Configuration> configuration);
+  explicit FilePropertyRepository(
+      std::shared_ptr<Configuration> configuration,
+      const std::shared_ptr<ProcessName> &processName);
 
   /**
    * returns basic data storage information of repository

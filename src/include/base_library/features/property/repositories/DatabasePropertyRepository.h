@@ -5,20 +5,23 @@
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
 class DatabasePropertyRepository : public PropertyRepository {
  private:
   std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
   std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
+  std::shared_ptr<ProcessName> m_processName;
   DataStorage m_currentDataStorage =
       DataStorage(PropertyRepositoryType::DATABASE_REPOSITORY, "");
 
  public:
-  explicit DatabasePropertyRepository(
+  DatabasePropertyRepository(
       std::shared_ptr<DatabaseConnectionConfigurations>
           connectionConfigurations,
-      const std::shared_ptr<Configuration> &configuration);
+      const std::shared_ptr<Configuration> &configuration,
+      std::shared_ptr<ProcessName> processName);
 
   DataStorage getDataStorage() override;
 

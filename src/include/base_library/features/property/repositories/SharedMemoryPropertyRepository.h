@@ -20,6 +20,7 @@ class SharedMemoryPropertyRepository
       public PropertyRepository {
  private:
   static constexpr int32_t m_version = 0;
+  std::shared_ptr<ProcessName> m_processName;
   DataStorage m_currentDataStorage =
       DataStorage(PropertyRepositoryType::SHM_REPOSITORY, "");
 
@@ -28,7 +29,8 @@ class SharedMemoryPropertyRepository
       const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
       const std::shared_ptr<SharedMemorySegmentManager>
           &sharedMemorySegmentManager,
-      const std::shared_ptr<Configuration> &configuration);
+      const std::shared_ptr<Configuration> &configuration,
+      std::shared_ptr<ProcessName> processName);
 
   DataStorage getDataStorage() override;
 
