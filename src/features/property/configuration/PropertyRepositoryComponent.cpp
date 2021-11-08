@@ -66,6 +66,19 @@ std::vector<std::shared_ptr<Entry>> PropertyRepositoryComponent::parse(
     bool isShadow = std::strcmp(isShadowStr, "true") == 0;
     bool isMutable = std::strcmp(isMutableStr, "true") == 0;
 
+    if (type == PropertyRepositoryType::FILE_REPOSITORY &&
+        (isShadow || isMutable)) {
+      throw ConfigurationException(
+          getConfigRoot(), "file repository cannot be an shadow or mutable",
+          lineNumber);
+    }
+
+    if ((type == PropertyRepositoryType::SHM_REPOSITORY ||
+         type == PropertyRepositoryType::DATABASE_REPOSITORY) &&
+        isShadow && !isMutable) {
+      throw ConfigurationException(getConfigRoot(),
+                                   "can only be shadow if mutable", lineNumber);
+    }
     std::shared_ptr<PropertyRepositoryEntry> propertyRepositoryEntry =
         std::make_shared<PropertyRepositoryEntry>(
             type_name<PropertyRepositoryComponent>(), type, isShadow,
