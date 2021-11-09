@@ -40,6 +40,12 @@ class DatabasePropertyRepository : public PropertyRepository {
    * load all properties from repository and return result
    */
   std::vector<std::shared_ptr<PropertyBase>> awake() override;
+
+  std::vector<std::shared_ptr<PropertyBase>> allOf(
+      const std::string &processName = ".*",
+      const std::string &className = ".*",
+      const std::string &instanceName = ".*0",
+      const std::string &name = ".*") override;
 };
 
 #endif  // CPP_BASE_LIBRARY_DATABASEPROPERTYREPOSITORY_H

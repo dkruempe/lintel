@@ -1,6 +1,8 @@
 #include "base_library/features/property/services/PropertyService.h"
 
 #include <algorithm>
+#include <regex>
+#include <sstream>
 
 #include "base_library/features/property/exceptions/PropertyNotFoundException.h"
 
@@ -99,54 +101,68 @@ void PropertyService::onAwake() {
       });
 }
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf() {
-  std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-  std::transform(m_properties.begin(), m_properties.end(),
-                 std::back_inserter(propertiesVector),
-                 [](const auto &iter) { return iter.second; });
-  return propertiesVector;
+  if (m_mutablePropertyRepositories.empty()) {
+    std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+    std::transform(m_properties.begin(), m_properties.end(),
+                   std::back_inserter(propertiesVector),
+                   [](const auto &iter) { return iter.second; });
+    return propertiesVector;
+  }
+  return m_mutablePropertyRepositories[0]->allOf();
 }
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
     const std::string &processName) {
-  std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-  for (const auto &property : m_properties) {
-    if (property.second->getProcessName() != processName) {
-      continue;
-    }
-    propertiesVector.push_back(property.second);
+  if (m_mutablePropertyRepositories.empty()) {
+    std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+    std::transform(m_properties.begin(), m_properties.end(),
+                   std::back_inserter(propertiesVector),
+                   [](const auto &iter) { return iter.second; });
+    return propertiesVector;
   }
-  return propertiesVector;
+  return m_mutablePropertyRepositories[0]->allOf(processName);
 }
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
     const std::string &processName, const std::string &className) {
-  std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-  for (const auto &property : m_properties) {
-    if (property.second->getProcessName() != processName) {
-      continue;
+  if (m_mutablePropertyRepositories.empty()) {
+    std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+    std::regex classRegex(className);
+    for (const auto &property : m_properties) {
+      if (property.second->getProcessName() != processName) {
+        continue;
+      }
+      if (!std::regex_match(property.second->getClassName(), classRegex)) {
+        continue;
+      }
+      propertiesVector.push_back(property.second);
     }
-    if (property.second->getClassName() != className) {
-      continue;
-    }
-    propertiesVector.push_back(property.second);
+    return propertiesVector;
   }
-  return propertiesVector;
+  return m_mutablePropertyRepositories[0]->allOf(processName, className);
 }
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
     const std::string &processName, const std::string &className,
     const std::string &instanceName) {
-  std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-  for (const auto &property : m_properties) {
-    if (property.second->getProcessName() != processName) {
-      continue;
+  if (m_mutablePropertyRepositories.empty()) {
+    std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+    std::regex classRegex(className);
+    std::regex instanceRegex(instanceName);
+    for (const auto &property : m_properties) {
+      if (property.second->getProcessName() != processName) {
+        continue;
+      }
+      if (!std::regex_match(property.second->getClassName(), classRegex)) {
+        continue;
+      }
+      if (!std::regex_match(property.second->getInstanceName(),
+                            instanceRegex)) {
+        continue;
+      }
+      propertiesVector.push_back(property.second);
     }
-    if (property.second->getClassName() != className) {
-      continue;
-    }
-    if (property.second->getInstanceName() != instanceName) {
-      continue;
-    }
-    propertiesVector.push_back(property.second);
+    return propertiesVector;
   }
-  return propertiesVector;
+  return m_mutablePropertyRepositories[0]->allOf(processName, className,
+                                                 instanceName);
 }
 std::string PropertyService::createIdentifier(const std::string &name,
                                               const std::string &instanceName,
@@ -167,7 +183,6 @@ std::shared_ptr<PropertyBase> &PropertyService::get(
 }
 void PropertyService::getOrCreate(
     const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
-  std::vector<std::shared_ptr<PropertyBase>> tmp;
   for (const std::shared_ptr<PropertyBase> &property : propertiesVec) {
     try {
       auto &newProperty =
@@ -177,19 +192,18 @@ void PropertyService::getOrCreate(
       if (newProperty->toString() != property->toString()) {
         property->setValueString(newProperty->toString());
         property->setDataStorage(newProperty->getDataStorage());
-        continue;
       }
       newProperty = property;
     } catch (PropertyNotFoundException &exception) {
       m_properties.insert({property->getIdentifier(), property});
-      tmp.push_back(property);
     }
   }
   for (auto &iter : m_mutablePropertyRepositories) {
     if (!iter->isMutable() || !iter->isEnabled() || !iter->isShadow()) {
       continue;
     }
-    iter->save(tmp);
+    // TODO optimize software wise ?!
+    iter->save(propertiesVec);
   }
 }
 

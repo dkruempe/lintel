@@ -1,14 +1,17 @@
 #include "base_library/features/property/repositories/DatabasePropertyRepository.h"
 
-#include <base_library/core/persistence/ParameterBuilder.h>
-
+#include <iostream>
+#include <stdexcept>
 #include <utility>
 
 #include "base_library/core/persistence/Connection.h"
+#include "base_library/core/persistence/ConnectionType.h"
+#include "base_library/core/persistence/ParameterBuilder.h"
 #include "base_library/core/persistence/PreparedStatement.h"
 #include "base_library/core/persistence/Statement.h"
 #include "base_library/core/persistence/Transaction.h"
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
 
 DatabasePropertyRepository::DatabasePropertyRepository(
@@ -105,6 +108,57 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake() {
       std::string type = result.getValue(i, 5);
       std::shared_ptr<PropertyBase> property = PropertyFactory::Create(
           name, instanceName, className, processName, type, value, "", false);
+      property->setDataStorage(
+          DataStorage(PropertyRepositoryType::DATABASE_REPOSITORY, ""));
+      properties.push_back(property);
+    }
+  } catch (db::SQLException& exception) {
+    LOG_ERROR("{}", exception.what());
+  }
+  return properties;
+}
+std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::allOf(
+    const std::string& processName, const std::string& className,
+    const std::string& instanceName, const std::string& name) {
+  std::string processNameLike = StringUtils::replaceAll(processName, ".*", "%");
+  std::string classNameLike = StringUtils::replaceAll(className, ".*", "%");
+  std::string instanceNameLike =
+      StringUtils::replaceAll(instanceName, ".*", "%");
+  std::string nameLike = StringUtils::replaceAll(name, ".*", "%");
+  std::vector<std::shared_ptr<PropertyBase>> properties;
+  try {
+    db::Connection connection(m_connectionEntry);
+    db::Transaction transaction(connection);
+    db::Statement query(connection);
+    std::string stmt = R"(
+            select name,
+                   instance_name,
+                   class_name,
+                   process_name,
+                   value,
+                   type 
+            from property
+            where process_name like ?
+              and class_name like ?
+              and instance_name like ?
+              and name like ?
+            )";
+    db::ParameterBuilder builder(m_connectionEntry);
+    builder.add(processNameLike);
+    builder.add(classNameLike);
+    builder.add(instanceNameLike);
+    builder.add(nameLike);
+    db::Result result = query.execute(stmt, builder);
+    for (int i = 0; i < result.getSize(); i++) {
+      std::string nameTmp = result.getValue(i, 0);
+      std::string instanceNameTmp = result.getValue(i, 1);
+      std::string classNameTmp = result.getValue(i, 2);
+      std::string processNameTmp = result.getValue(i, 3);
+      std::string value = result.getValue(i, 4);
+      std::string type = result.getValue(i, 5);
+      std::shared_ptr<PropertyBase> property =
+          PropertyFactory::Create(nameTmp, instanceNameTmp, classNameTmp,
+                                  processNameTmp, type, value, "", false);
       property->setDataStorage(
           DataStorage(PropertyRepositoryType::DATABASE_REPOSITORY, ""));
       properties.push_back(property);

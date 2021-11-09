@@ -81,6 +81,13 @@ class PropertyRepository {
    * load all properties from repository and return result
    */
   virtual std::vector<std::shared_ptr<PropertyBase>> awake() = 0;
+
+  virtual std::vector<std::shared_ptr<PropertyBase>> allOf(
+      const std::string &processName = ".*",
+      const std::string &className = ".*",
+      const std::string &instanceName = ".*", const std::string &name = ".*") {
+    return {};
+  }
 };
 
 #endif  // LOGGING_PROPERTYREPOSITORY_H

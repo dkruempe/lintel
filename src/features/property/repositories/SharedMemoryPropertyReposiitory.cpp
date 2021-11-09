@@ -78,4 +78,40 @@ SharedMemoryPropertyRepository::awake() {
   }
   return properties;
 }
+std::vector<std::shared_ptr<PropertyBase>>
+SharedMemoryPropertyRepository::allOf(const std::string &processName,
+                                      const std::string &className,
+                                      const std::string &instanceName,
+                                      const std::string &name) {
+  LOG_TRACE("start awake {}", getMap().size());
+  std::vector<std::shared_ptr<PropertyBase>> properties;
+  std::regex processRegex(processName);
+  std::regex classRegex(className);
+  std::regex instanceRegex(instanceName);
+  std::regex nameRegex(name);
+  for (const auto &[id, property] : getMap()) {
+    std::shared_ptr<PropertyBase> tmp = PropertyFactory::Create(
+        property.m_name.c_str(), property.m_instanceName.c_str(),
+        property.m_className.c_str(), property.m_processName.c_str(),
+        property.m_type.c_str(), property.m_value.c_str(), "", false);
+    if (!std::regex_match(tmp->getProcessName(), processRegex)) {
+      continue;
+    }
+    if (!std::regex_match(tmp->getClassName(), classRegex)) {
+      continue;
+    }
+    if (!std::regex_match(tmp->getInstanceName(), instanceRegex)) {
+      continue;
+    }
+    if (!std::regex_match(tmp->getName(), nameRegex)) {
+      continue;
+    }
+    tmp->setDataStorage(m_currentDataStorage);
+    properties.push_back(tmp);
+    std::stringstream ss;
+    ss << *tmp;
+    LOG_TRACE("awake of {}", ss.str());
+  }
+  return properties;
+}
 void SharedMemoryPropertyRepository::onMigrate(int32_t currentActiveVersion) {}

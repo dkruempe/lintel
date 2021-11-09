@@ -24,6 +24,9 @@ class StringUtils {
   static bool startsWith(const std::string &s, const std::string &start);
 
   static bool endsWith(const std::string &s, const std::string &end);
+
+  static std::string replaceAll(const std::string &s, std::string &&replace,
+                                std::string &&with);
 };
 
 #endif  // CPP_BASE_LIBRARY_STRINGUTILS_H
