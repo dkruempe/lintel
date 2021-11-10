@@ -1,5 +1,9 @@
 #include <base_library/features/property/models/PropertyRepositoryType.h>
 
+#include <boost/interprocess/creation_tags.hpp>
+#include <boost/interprocess/interprocess_fwd.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
+#include <boost/interprocess/sync/sharable_lock.hpp>
 #include <regex>
 #include <sstream>
 
@@ -16,7 +20,9 @@ SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
           sharedMemoryService, sharedMemorySegmentManager->of("shm_property"),
           m_version),
       PropertyRepository(PropertyRepositoryType::SHM_REPOSITORY, configuration),
-      m_processName(std::move(processName)) {}
+      m_processName(std::move(processName)),
+      m_upgradableMutex(boost::interprocess::open_or_create,
+                        "shm_property_mutex_upgradable") {}
 
 DataStorage SharedMemoryPropertyRepository::getDataStorage() {
   return m_currentDataStorage;
@@ -29,6 +35,9 @@ void SharedMemoryPropertyRepository::save(
 }
 void SharedMemoryPropertyRepository::save(
     const std::vector<std::shared_ptr<PropertyBase>> &properties) {
+  // write lock
+  boost::interprocess::scoped_lock<boost::interprocess::named_upgradable_mutex>
+      lock(m_upgradableMutex);
   LOG_TRACE("save properties {}", getMap().size());
   for (auto &property : properties) {
     auto found = getMap().find(m_sharedMemoryService->constructString(
@@ -61,6 +70,9 @@ void SharedMemoryPropertyRepository::save(
 }
 std::vector<std::shared_ptr<PropertyBase>>
 SharedMemoryPropertyRepository::awake() {
+  boost::interprocess::sharable_lock<
+      boost::interprocess::named_upgradable_mutex>
+      lock(m_upgradableMutex);
   LOG_TRACE("start awake {}", getMap().size());
   std::vector<std::shared_ptr<PropertyBase>> properties;
   for (const auto &[id, property] : getMap()) {
@@ -84,6 +96,9 @@ SharedMemoryPropertyRepository::allOf(const std::string &processName,
                                       const std::string &className,
                                       const std::string &instanceName,
                                       const std::string &name) {
+  boost::interprocess::sharable_lock<
+      boost::interprocess::named_upgradable_mutex>
+      lock(m_upgradableMutex);
   LOG_TRACE("start awake {}", getMap().size());
   std::vector<std::shared_ptr<PropertyBase>> properties;
   std::regex processRegex(processName);
@@ -117,6 +132,8 @@ SharedMemoryPropertyRepository::allOf(const std::string &processName,
 }
 void SharedMemoryPropertyRepository::deleteOf(
     const std::vector<std::shared_ptr<PropertyBase>> &properties) {
+  boost::interprocess::scoped_lock<boost::interprocess::named_upgradable_mutex>
+      lock(m_upgradableMutex);
   LOG_INFO("start deleteOf with {}", properties.size());
   for (const auto &property : properties) {
     auto found = getMap().find(m_sharedMemoryService->constructString(

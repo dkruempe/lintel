@@ -1,6 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_SHAREDMEMORYPROPERTYREPOSITORY_H
 #define CPP_BASE_LIBRARY_SHAREDMEMORYPROPERTYREPOSITORY_H
 
+#include <boost/interprocess/sync/named_upgradable_mutex.hpp>
+
 #include "base_library/features/base/repositories/SharedMemoryRepository.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
@@ -23,6 +25,7 @@ class SharedMemoryPropertyRepository
   std::shared_ptr<ProcessName> m_processName;
   DataStorage m_currentDataStorage =
       DataStorage(PropertyRepositoryType::SHM_REPOSITORY, "");
+  boost::interprocess::named_upgradable_mutex m_upgradableMutex;
 
  public:
   SharedMemoryPropertyRepository(
