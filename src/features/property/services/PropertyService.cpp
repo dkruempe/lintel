@@ -5,10 +5,14 @@
 #include <sstream>
 
 #include "base_library/features/property/exceptions/PropertyNotFoundException.h"
+#include "base_library/features/property/models/PropertyBase.h"
+#include "base_library/features/property/models/PropertyRepositoryType.h"
 
 std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
     const std::vector<std::shared_ptr<PropertyRepository>>
-        &propertyRepositories) {
+        &propertyRepositories,
+    std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
+        &propertiesMap) {
   // sort repositories highest repository first
   std::vector<std::shared_ptr<PropertyRepository>> repositories(
       propertyRepositories);
@@ -19,29 +23,31 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
             });
 
   // create local map store
-  std::map<std::string, std::shared_ptr<PropertyBase>> propertiesMap;
+  std::map<std::string, std::shared_ptr<PropertyBase>> propertiesMapLocal;
 
   // function to add properties to map
   std::function<void(std::vector<std::shared_ptr<PropertyBase>>)>
-      addProperties =
-          [&propertiesMap](const std::vector<std::shared_ptr<PropertyBase>>
-                               &repoProperties) {
-            for (const auto &property : repoProperties) {
-              auto found = propertiesMap.find(property->getIdentifier());
-              if (found != propertiesMap.end()) {
-                found->second = property;
-              } else {
-                propertiesMap.insert({property->getIdentifier(), property});
-              }
-            }
-          };
+      addProperties = [&propertiesMapLocal](
+                          const std::vector<std::shared_ptr<PropertyBase>>
+                              &repoProperties) {
+        for (const auto &property : repoProperties) {
+          auto found = propertiesMapLocal.find(property->getIdentifier());
+          if (found != propertiesMapLocal.end()) {
+            found->second = property;
+          } else {
+            propertiesMapLocal.insert({property->getIdentifier(), property});
+          }
+        }
+      };
 
   // add properties to map
   for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
+    std::vector<std::shared_ptr<PropertyBase>> tmp = repository->awake();
+    propertiesMap.insert({repository->getType(), tmp});
     // highest property wins, bc. std::map insert only if not available
-    addProperties(repository->awake());
+    addProperties(tmp);
   }
-  return propertiesMap;
+  return propertiesMapLocal;
 }
 
 std::vector<std::shared_ptr<PropertyRepository>>
@@ -122,14 +128,19 @@ PropertyService::PropertyService(
       m_abstractServices(std::move(abstractServices)),
       m_properties() {}
 void PropertyService::onAwake() {
-  m_properties = init(m_propertyRepositories);
+  // get properties from PropertyRepository
+  std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
+      map;
+  m_properties = init(m_propertyRepositories, map);
+  // get properties of AbstractServices
   std::vector<std::shared_ptr<PropertyBase>> properties;
   for (const auto &iter : m_abstractServices) {
     for (const auto &property : iter->getProperties()) {
       properties.push_back(property);
     }
   }
-  getOrCreate(properties);
+  // enable properties
+  getOrCreate(properties, map);
   // std::for_each(
   //     m_abstractServices.begin(), m_abstractServices.end(),
   //     [&](const std::shared_ptr<AbstractServiceInterface> &abstractService) {
@@ -224,7 +235,10 @@ std::shared_ptr<PropertyBase> &PropertyService::get(
   return found->second;
 }
 void PropertyService::getOrCreate(
-    const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
+    const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec,
+    std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
+        &map) {
+  // enable properties
   for (const std::shared_ptr<PropertyBase> &property : propertiesVec) {
     try {
       auto &newProperty =
@@ -240,31 +254,30 @@ void PropertyService::getOrCreate(
       m_properties.insert({property->getIdentifier(), property});
     }
   }
-  for (auto &iter : m_mutablePropertyRepositories) {
-    LOG_TRACE(
-        "mutable properties repositories {} with (isEnabled, isMutable, "
-        "isShadow)/({},{},{})",
-        iter->getType().toString(), iter->isEnabled(), iter->isMutable(),
-        iter->isShadow());
-    if (!iter->isShadow()) {
-      LOG_INFO("start deleting of shadow properties {}",
-               iter->getType().toString());
-      std::vector<std::shared_ptr<PropertyBase>> propertiesCopy = propertiesVec;
-      propertiesCopy.erase(
-          std::remove_if(
-              propertiesCopy.begin(), propertiesCopy.end(),
-              [&](const std::shared_ptr<PropertyBase> &property) -> bool {
-                return property->getDataStorage().getType() == iter->getType();
-              }),
-          propertiesCopy.end());
-      iter->deleteOf(propertiesCopy);
-      continue;
+  // add missing properties to shadow repositories and cleanup not needed
+  // properties from mutable repositories but not shadow
+  for (auto &iter : m_shadowPropertyRepositories) {
+    // create temp map for easier handling
+    auto found = map.find(iter->getType());
+    auto vec = found->second;
+    std::map<std::string, std::shared_ptr<PropertyBase>> tmpMap;
+    for (const auto &iterVec : vec) {
+      tmpMap.insert({iterVec->getIdentifier(), iterVec});
     }
     if (!iter->isMutable() || !iter->isEnabled()) {
       continue;
     }
-    // TODO optimize software wise ?!
-    iter->save(propertiesVec);
+    std::vector<std::shared_ptr<PropertyBase>> properties = propertiesVec;
+    properties.erase(
+        std::remove_if(
+            properties.begin(), properties.end(),
+            [&](const std::shared_ptr<PropertyBase> &property) -> bool {
+              // don't compare value of property bc. each value change implies
+              // change of repository
+              return tmpMap.find(property->getIdentifier()) != tmpMap.end();
+            }),
+        properties.end());
+    iter->save(properties);
   }
 }
 

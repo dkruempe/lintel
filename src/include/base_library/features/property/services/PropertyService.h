@@ -12,6 +12,7 @@
 #include "base_library/features/property/exceptions/PropertyNoRuntimeChangeSupported.h"
 #include "base_library/features/property/exceptions/PropertyNotFoundException.h"
 #include "base_library/features/property/models/Property.h"
+#include "base_library/features/property/models/PropertyRepositoryType.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
 #define DEFINE_PROPERTY(name, type, defaultValue, description, runtime)     \
@@ -39,7 +40,9 @@ class PropertyService : public PersistableBean {
                                       const std::string &className,
                                       const std::string &processName);
   static std::map<std::string, std::shared_ptr<PropertyBase>> init(
-      const std::vector<std::shared_ptr<PropertyRepository>> &repoProperties);
+      const std::vector<std::shared_ptr<PropertyRepository>> &repoProperties,
+      std::map<PropertyRepositoryType,
+               std::vector<std::shared_ptr<PropertyBase>>> &propertiesMap);
   static std::vector<std::shared_ptr<PropertyRepository>>
   filterEnabledRepositories(
       const std::vector<std::shared_ptr<PropertyRepository>>
@@ -53,6 +56,11 @@ class PropertyService : public PersistableBean {
       const std::vector<std::shared_ptr<PropertyRepository>>
           &propertyRepository);
 
+  void getOrCreate(
+      const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec,
+      std::map<PropertyRepositoryType,
+               std::vector<std::shared_ptr<PropertyBase>>> &map);
+
  public:
   PropertyService(
       const std::vector<std::shared_ptr<PropertyRepository>>
@@ -63,6 +71,13 @@ class PropertyService : public PersistableBean {
 
   void onAwake() override;
 
+  void getOrCreate(
+      const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
+    std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
+        map;
+    return getOrCreate(propertiesVec, map);
+  }
+
   template <class T>
   std::shared_ptr<Property<T>> getOrCreate(const std::string &name,
                                            const std::string &instanceName,
@@ -71,8 +86,7 @@ class PropertyService : public PersistableBean {
                                            const std::string &description,
                                            bool runtimeChange,
                                            const T &defaultValue = T());
-  void getOrCreate(
-      const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec);
+
   std::shared_ptr<PropertyBase> &get(const std::string &name,
                                      const std::string &instanceName,
                                      const std::string &className,
