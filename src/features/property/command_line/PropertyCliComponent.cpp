@@ -10,39 +10,17 @@ PropertyCliComponent::PropertyCliComponent(
       m_propertyApi(std::move(propertyApi)) {
   // Command: show all properties
   m_commandParser.addCommand(
-      Command("sap", "Shows all available valid properties!"), AllProperties);
-  // Command: show all properties of process
-  m_commandParser.addCommand(
-      Command("sapp", "Shows all available valid properties for given process!")
-          .addArgument({"--process_name", "-p"}, &m_processName,
-                       "Process Name where property is defined!"),
-      ProcessProperties);
-  // Command: show all properties of process and class
-  m_commandParser.addCommand(
-      Command(
-          "sappc",
-          "Shows all available valid properties for given process and class!")
-          .addArgument({"--process_name", "-p"}, &m_processName,
-                       "Process Name where property is defined!")
-          .addArgument({"--class_name", "-c"}, &m_className,
-                       "Class name where property is defined!"),
-      ProcessClassProperties);
-  // Command: show all properties of process, class and instance
-  m_commandParser.addCommand(
-      Command(
-          "sappci",
-          "Shows all available valid properties for given process, class and "
-          "instance!")
-          .addArgument({"--process_name", "-p"}, &m_processName,
-                       "Process Name where property is defined!")
-          .addArgument({"--class_name", "-c"}, &m_className,
-                       "Class Name where property is defined!")
-          .addArgument({"--instance_name", "-i"}, &m_instanceName,
-                       "Instance Name where property is defined!"),
-      ProcessClassInstanceProperties);
+      Command("show_properties", "Shows all available valid properties!")
+          .addArgument({"--proocess-name", "-p"}, &m_processName,
+                       "Process Name of property")
+          .addArgument({"--class-name", "-c"}, &m_className,
+                       "Class Name of property")
+          .addArgument({"--instance-name", "-i"}, &m_instanceName,
+                       "Instance Name of property"),
+      ShowProperties);
   // Command: show property
   m_commandParser.addCommand(
-      Command("sp", "Show given property")
+      Command("show_property", "Show given property")
           .addArgument({"--process_name", "-p"}, &m_processName,
                        "Process Name of property!")
           .addArgument({"--class_name", "-c"}, &m_className,
@@ -53,7 +31,7 @@ PropertyCliComponent::PropertyCliComponent(
       ShowProperty);
   // Command: update property
   m_commandParser.addCommand(
-      Command("up", "Update given property")
+      Command("update_property", "Update given property")
           .addArgument({"--process_name", "-p"}, &m_processName,
                        "Process Name of property!")
           .addArgument({"--class_name", "-c"}, &m_className,
@@ -70,32 +48,28 @@ void PropertyCliComponent::onCommand(
   try {
     Commands command = m_commandParser.parse(input, parameters);
     switch (command) {
-      case AllProperties: {
-        printProperties(m_propertyApi->allOf());
-        break;
-      }
-      case ProcessProperties: {
-        printProperties(m_propertyApi->allOf(m_processName));
-        break;
-      }
-      case ProcessClassProperties: {
-        printProperties(m_propertyApi->allOf(m_processName, m_className));
-        break;
-      }
-      case ProcessClassInstanceProperties: {
-        printProperties(
-            m_propertyApi->allOf(m_processName, m_className, m_instanceName));
+      case ShowProperties: {
+        std::string processNameArg =
+            m_processName.has_value() ? m_processName.value() : ".*";
+        std::string classNameArg =
+            m_className.has_value() ? m_className.value() : ".*";
+        std::string instanceNameArg =
+            m_instanceName.has_value() ? m_instanceName.value() : ".*";
+        printProperties(m_propertyApi->allOf(processNameArg, classNameArg,
+                                             instanceNameArg));
         break;
       }
       case ShowProperty: {
-        auto optProperty = m_propertyApi->of(m_processName, m_className,
-                                             m_instanceName, m_propertyName);
+        auto optProperty =
+            m_propertyApi->of(m_processName.value(), m_className.value(),
+                              m_instanceName.value(), m_propertyName.value());
         printProperty(optProperty);
         break;
       }
       case UpdateProperty: {
-        auto optProperty = m_propertyApi->of(m_processName, m_className,
-                                             m_instanceName, m_propertyName);
+        auto optProperty =
+            m_propertyApi->of(m_processName.value(), m_className.value(),
+                              m_instanceName.value(), m_propertyName.value());
         if (!optProperty.has_value()) {
           std::cerr << "Property with given values is not preset => No Update "
                        "possible \n";
@@ -103,9 +77,10 @@ void PropertyCliComponent::onCommand(
         }
         std::cout << "Before Update: \n";
         printProperty(optProperty);
-        m_propertyApi->updateOf(optProperty.value(), m_value);
-        optProperty = m_propertyApi->of(m_processName, m_className,
-                                        m_instanceName, m_propertyName);
+        m_propertyApi->updateOf(optProperty.value(), m_value.value());
+        optProperty =
+            m_propertyApi->of(m_processName.value(), m_className.value(),
+                              m_instanceName.value(), m_propertyName.value());
         std::cout << "After Update: \n";
         printProperty(optProperty);
         break;
@@ -120,14 +95,14 @@ void PropertyCliComponent::onCommand(
 void PropertyCliComponent::printProperties(
     const std::vector<PropertyDto> &properties) {
   tabulate::Table table;
-  table.add_row({"No.", "Process", "Class", "Instance", "Name", "Type", "Value",
-                 "Data Storage"});
+  table.add_row(
+      {"No.", "Process", "Class", "Instance", "Name", "Type", "Value"});
   std::size_t iter = 0;
   for (const auto &property : properties) {
     table.add_row({std::to_string(++iter), property.getProcessName(),
                    property.getClassName(), property.getInstanceName(),
-                   property.getName(), property.getType(), property.getValue(),
-                   property.getRepositoryType().toString()});
+                   property.getName(), property.getType(),
+                   property.getValue()});
   }
   std::cout << table.str() << "\n";
 }

@@ -19,6 +19,8 @@ class AbstractServiceInterface {
 
   virtual std::string_view getClassName() const = 0;
 
+  virtual ~AbstractServiceInterface() = default;
+
  private:
   virtual std::vector<std::shared_ptr<PropertyBase>> getProperties() = 0;
   friend class PropertyService;

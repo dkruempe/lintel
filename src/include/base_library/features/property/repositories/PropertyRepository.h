@@ -78,6 +78,12 @@ class PropertyRepository {
   virtual void save(std::shared_ptr<PropertyBase> property) = 0;
 
   /**
+   * deletes properties in the mentioned repository
+   */
+  virtual void deleteOf(
+      const std::vector<std::shared_ptr<PropertyBase>> &properties) {}
+
+  /**
    * load all properties from repository and return result
    */
   virtual std::vector<std::shared_ptr<PropertyBase>> awake() = 0;

@@ -31,8 +31,8 @@
     <!-- Property Configurations -->
     <PropertyRepositories>
         <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="false" />
-        <PropertyRepository type="DATABASE_REPOSITORY" mutable="true" shadow="true" />
-        <PropertyRepository type="SHM_REPOSITORY" mutable="true" shadow="true" />
+        <PropertyRepository type="DATABASE_REPOSITORY" mutable="true" shadow="false" />
+        <PropertyRepository type="SHM_REPOSITORY" mutable="true" shadow="false" />
     </PropertyRepositories>
     <Properties>
         <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService" instance="__DEFAULT" />

@@ -81,8 +81,8 @@ std::vector<std::shared_ptr<Entry>> PropertyRepositoryComponent::parse(
     }
     std::shared_ptr<PropertyRepositoryEntry> propertyRepositoryEntry =
         std::make_shared<PropertyRepositoryEntry>(
-            type_name<PropertyRepositoryComponent>(), type, isShadow,
-            isMutable);
+            type_name<PropertyRepositoryComponent>(), type, isMutable,
+            isShadow);
     tmp.push_back(propertyRepositoryEntry);
   }
   return tmp;

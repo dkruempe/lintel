@@ -19,22 +19,14 @@ class PropertyCliComponent : public CommandLineComponent {
   std::shared_ptr<PropertyApi> m_propertyApi;
 
   // Commands
-  enum Commands {
-    Undefined,
-    AllProperties,
-    ProcessProperties,
-    ProcessClassProperties,
-    ProcessClassInstanceProperties,
-    ShowProperty,
-    UpdateProperty
-  };
+  enum Commands { Undefined, ShowProperties, ShowProperty, UpdateProperty };
 
   // Flags
-  std::string m_processName;
-  std::string m_className;
-  std::string m_instanceName;
-  std::string m_propertyName;
-  std::string m_value;
+  std::optional<std::string> m_processName;
+  std::optional<std::string> m_className;
+  std::optional<std::string> m_instanceName;
+  std::optional<std::string> m_propertyName;
+  std::optional<std::string> m_value;
 
   CommandParser<Commands, Undefined> m_commandParser;
 

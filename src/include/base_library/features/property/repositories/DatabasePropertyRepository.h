@@ -36,6 +36,9 @@ class DatabasePropertyRepository : public PropertyRepository {
    */
   void save(std::shared_ptr<PropertyBase> property) override;
 
+  void deleteOf(
+      const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
+
   /**
    * load all properties from repository and return result
    */

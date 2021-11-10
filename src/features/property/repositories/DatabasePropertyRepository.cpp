@@ -1,6 +1,9 @@
 #include "base_library/features/property/repositories/DatabasePropertyRepository.h"
 
+#include <base_library/core/exceptions/SQLException.h>
+
 #include <iostream>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 
@@ -94,7 +97,7 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake() {
              value,
              type
       from property
-      where process = ?
+      where process_name = ?
     )";
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(m_processName->getProcessName());
@@ -116,6 +119,34 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake() {
     LOG_ERROR("{}", exception.what());
   }
   return properties;
+}
+void DatabasePropertyRepository::deleteOf(
+    const std::vector<std::shared_ptr<PropertyBase>>& properties) {
+  LOG_INFO("deleteOf properties with size {}", properties.size());
+  try {
+    db::Connection connection(m_connectionEntry);
+    db::Transaction transaction(connection);
+    db::PreparedStatement stmt(connection,
+                               R"(delete from property 
+                                  where process_name = ? 
+                                    and class_name = ? 
+                                    and instance_name = ? 
+                                    and name = ?)",
+                               "delete_properties");
+    for (const auto& property : properties) {
+      std::stringstream ss;
+      ss << *property;
+      LOG_TRACE("deleteOf({})", ss.str());
+      db::ParameterBuilder builder(m_connectionEntry);
+      builder.add(property->getProcessName());
+      builder.add(property->getClassName());
+      builder.add(property->getInstanceName());
+      builder.add(property->getName());
+      stmt.execute(builder);
+    }
+  } catch (db::SQLException& exception) {
+    LOG_ERROR("delete failed: {}", exception.what());
+  }
 }
 std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::allOf(
     const std::string& processName, const std::string& className,

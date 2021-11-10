@@ -1,6 +1,7 @@
 #include <base_library/features/property/models/PropertyRepositoryType.h>
 
 #include <regex>
+#include <sstream>
 
 #include "base_library/features/property/factories/PropertyFactory.h"
 #include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
@@ -113,5 +114,20 @@ SharedMemoryPropertyRepository::allOf(const std::string &processName,
     LOG_TRACE("awake of {}", ss.str());
   }
   return properties;
+}
+void SharedMemoryPropertyRepository::deleteOf(
+    const std::vector<std::shared_ptr<PropertyBase>> &properties) {
+  LOG_INFO("start deleteOf with {}", properties.size());
+  for (const auto &property : properties) {
+    auto found = getMap().find(m_sharedMemoryService->constructString(
+        getSharedMemorySegment()->getName(), property->getIdentifier()));
+    if (found == getMap().end()) {
+      continue;
+    }
+    getMap().erase(found);
+    std::stringstream ss;
+    ss << *property;
+    LOG_TRACE("deleteOf({})", ss.str());
+  }
 }
 void SharedMemoryPropertyRepository::onMigrate(int32_t currentActiveVersion) {}

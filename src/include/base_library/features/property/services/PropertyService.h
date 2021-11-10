@@ -28,6 +28,7 @@ class PropertyService : public PersistableBean {
   std::vector<std::shared_ptr<PropertyRepository>> m_propertyRepositories;
   std::vector<std::shared_ptr<PropertyRepository>>
       m_mutablePropertyRepositories;
+  std::vector<std::shared_ptr<PropertyRepository>> m_shadowPropertyRepositories;
   std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
   // variables
   std::map<std::string, std::shared_ptr<PropertyBase>>
@@ -45,6 +46,10 @@ class PropertyService : public PersistableBean {
           &propertyRepositories);
   static std::vector<std::shared_ptr<PropertyRepository>>
   filterMutableRepositories(
+      const std::vector<std::shared_ptr<PropertyRepository>>
+          &propertyRepository);
+  static std::vector<std::shared_ptr<PropertyRepository>>
+  filterShadowRepositories(
       const std::vector<std::shared_ptr<PropertyRepository>>
           &propertyRepository);
 

@@ -9,12 +9,8 @@ class PropertyController : public Controller {
   std::shared_ptr<PropertyService> m_propertyService;
   Group m_adminGroup;
   Group m_userGroup;
-  ADD_HANDLER_METHOD("/properties", Get, allPropertiesOf);
-  ADD_HANDLER_METHOD(R"(/properties/([^\/]+))", Get, allPropertiesOfProcess);
-  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+))", Get,
-                     allPropertiesOfProcessAndClass);
   ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+))", Get,
-                     allPropertiesOfProcessClassAndInstance);
+                     allPropertiesOf);
   ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Get,
                      propertyOf);
   ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Put,

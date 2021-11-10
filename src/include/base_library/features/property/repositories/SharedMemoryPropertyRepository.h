@@ -48,6 +48,9 @@ class SharedMemoryPropertyRepository
       const std::string &name = ".*") override;
 
   void onMigrate(int32_t currentActiveVersion) override;
+
+  void deleteOf(
+      const std::vector<std::shared_ptr<PropertyBase>> &properties) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYPROPERTYREPOSITORY_H
