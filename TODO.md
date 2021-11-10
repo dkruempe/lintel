@@ -12,8 +12,7 @@
 - [ ] process: provide cli interface
 - [x] property: SharedMemoryRepository add read/write process lock
 - [x] property: SharedMemroyRepository add update information about changes to all connected processes
-- [ ] property: cli adobt available commands to multi processes
-- [ ] property: add device name or host name to table of DatabasePropertyRepository
+- [x] property: cli adobt available commands to multi processes
 - [x] property: add regex support to cli command like commands of UserM
 - [ ] property: cleanup entries if default value is same no repository in shadow mode at startup
 - [x] property: add configuration check of Propertyrepository configuration
