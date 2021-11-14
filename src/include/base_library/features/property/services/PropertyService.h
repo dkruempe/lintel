@@ -124,7 +124,8 @@ std::shared_ptr<Property<T>> PropertyService::getOrCreate(
     m_properties.insert({property->getIdentifier(), property});
     if (m_mutablePropertyRepositories.empty()) {
       LOG_ERROR("no mutable property repositories available");
-      return;
+      // no save of property but return property bc. its updated in cache
+      return property;
     }
     for (const auto &item : m_mutablePropertyRepositories) {
       item->save(property);
