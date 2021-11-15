@@ -18,7 +18,7 @@ class LoggerService {
 
   std::shared_ptr<spdlog::logger> init();
 
-  static LoggerService *m_instance;
+  static std::unique_ptr<LoggerService> m_instance;
   static std::once_flag m_initInstanceFlag;
 
  public:

@@ -17,7 +17,7 @@
 #include "base_library/features/base/configuration/LoggerComponent.h"
 #include "base_library/features/base/configuration/LoggerEnrty.h"
 // initialization of static variables
-LoggerService *LoggerService::m_instance = nullptr;
+std::unique_ptr<LoggerService> LoggerService::m_instance = nullptr;
 std::once_flag LoggerService::m_initInstanceFlag;
 
 LoggerService::LoggerService()
@@ -233,6 +233,8 @@ LoggerService &LoggerService::get() {
 void LoggerService::initSingleton(
     const std::shared_ptr<ProcessName> &processInfo,
     const std::shared_ptr<Configuration> &configuration) {
-  m_instance = new LoggerService(processInfo, configuration);
+  m_instance = std::make_unique<LoggerService>(processInfo, configuration);
 }
-void LoggerService::initSingleton2() { m_instance = new LoggerService(); }
+void LoggerService::initSingleton2() {
+  m_instance = std::make_unique<LoggerService>();
+}
