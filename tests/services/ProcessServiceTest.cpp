@@ -1,4 +1,7 @@
+#include <filesystem>
 #define CATCH_CONFIG_MAIN
+#include <base_library/config.h>
+#include <base_library/core/services/LoggerService.h>
 #include <base_library/core/services/ProcessService.h>
 
 #include <catch2/catch.hpp>
@@ -25,6 +28,7 @@ TEST_CASE("ProcessService Start Process Group") {
   processService.onShutdown();
 }
 TEST_CASE("ProcessService Start Process") {
+  LOG_INFO("ProcessService Start Process Start");
   Process process("df", {"-h"});
   bool started = false;
   auto func = std::make_shared<std::function<void(const Process &)>>(
@@ -37,8 +41,10 @@ TEST_CASE("ProcessService Start Process") {
   REQUIRE(started);
   REQUIRE(future.get() == 0);
   processService.onShutdown();
+  LOG_INFO("ProcessService Start Process End");
 }
 TEST_CASE("ProcessService Start/Restart Process") {
+  LOG_INFO("ProcessServicie Start/Restart Process Start");
   Process process("ls", {"-la", "/"});
   process.enableAutoStart(5);
   bool started = false;
@@ -62,11 +68,14 @@ TEST_CASE("ProcessService Start/Restart Process") {
   REQUIRE(restarted == 5);
   REQUIRE(stopped == 1);
   processService.onShutdown();
+  LOG_INFO("ProcessService Start/Restart Process End");
 }
 TEST_CASE("ProcessService Start/Stop Process") {
-  Process process(
-      "/Users/dkruempe/CLionProjects/cpp-base-library/tests/services/test.sh",
-      {});
+  Process process(std::string(PROJECT_PATH) +
+                      std::filesystem::path::preferred_separator + ".." +
+                      std::filesystem::path::preferred_separator +
+                      "tests/services/test.sh",
+                  {});
   bool started = false;
   int32_t stopped = 0;
   bool restarted = false;
@@ -84,8 +93,10 @@ TEST_CASE("ProcessService Start/Stop Process") {
   ProcessService processService(processName);
   std::future<int> future = processService.startOf(process);
   REQUIRE(started);
+  processService.restartOf(process);
+  REQUIRE(restarted == true);
   processService.stopOf(process);
   REQUIRE(future.get() == 2);
-  REQUIRE(stopped == 1);
+  REQUIRE(stopped == 2);
   processService.onShutdown();
 }

@@ -23,22 +23,26 @@ class ProcessService : public AbstractService<ProcessService> {
   class ProcessExecutes {
    private:
     // variables
-    std::unique_ptr<Process> m_process = nullptr;
-    boost::process::child m_child;
-    std::unique_ptr<std::promise<int>> m_promise = nullptr;
+    std::shared_ptr<Process> m_process = nullptr;
+    std::shared_ptr<boost::process::child> m_child;
+    std::shared_ptr<std::promise<int>> m_promise = nullptr;
 
    public:
     ProcessExecutes() = default;
 
-    void setProcess(std::unique_ptr<Process> &&process) {
+    void setProcess(std::shared_ptr<Process> process) {
       m_process = std::move(process);
     }
 
-    void setChild(boost::process::child &&child) { m_child = std::move(child); }
-    [[nodiscard]] const std::unique_ptr<Process> &getProcess() const {
+    void setChild(std::shared_ptr<boost::process::child> child) {
+      m_child = std::move(child);
+    }
+    [[nodiscard]] const std::shared_ptr<Process> &getProcess() const {
       return m_process;
     }
-    [[nodiscard]] boost::process::child &getChild() { return m_child; }
+    [[nodiscard]] std::shared_ptr<boost::process::child> &getChild() {
+      return m_child;
+    }
 
     void setPromiseValue(int exitCode) { m_promise->set_value(exitCode); }
 
@@ -48,7 +52,7 @@ class ProcessService : public AbstractService<ProcessService> {
 
     std::future<int> getFuture() {
       if (m_promise == nullptr) {
-        m_promise = std::make_unique<std::promise<int>>();
+        m_promise = std::make_shared<std::promise<int>>();
       }
       return m_promise->get_future();
     }
@@ -57,11 +61,10 @@ class ProcessService : public AbstractService<ProcessService> {
   // injections
   std::shared_ptr<ProcessName> m_processName;
   // variables
-  typedef tbb::concurrent_hash_map<std::string, ProcessExecutes> ProcessMap;
-  ProcessMap m_processes;
-  typedef tbb::concurrent_hash_map<std::string, std::unique_ptr<ProcessGroup>>
-      ProcessGroupMap;
-  ProcessGroupMap m_processGroups;
+  std::mutex m_processesMutex;
+  std::map<std::string, ProcessExecutes> m_processes;
+  std::mutex m_processGroupMutex;
+  std::map<std::string, std::shared_ptr<ProcessGroup>> m_processGroups;
   std::thread m_monitorThread;
   std::atomic_bool m_running = true;
   std::condition_variable m_condition;

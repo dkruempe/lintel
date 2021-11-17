@@ -54,10 +54,10 @@ class Process {
   [[nodiscard]] const std::vector<std::string> &getArgs() const;
 
   // events
-  void onStart();
-  void onStop();
-  void onRestart();
-  void onTerminate();
-  void onFinish();
+  void onStart() const;
+  void onStop() const;
+  void onRestart() const;
+  void onTerminate() const;
+  void onFinish() const;
 };
 #endif  // CPP_SYSTEM_LIBRARY_PROCESS_H

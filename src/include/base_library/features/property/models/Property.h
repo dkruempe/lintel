@@ -38,12 +38,12 @@ class Property;
     static bool registered;                                                    \
                                                                                \
     void setValue(const type &value) {                                         \
-      std::unique_lock<std::shared_mutex> lock(m_mutex);                       \
+      std::lock_guard<std::shared_mutex> lock(m_mutex);                       \
       m_value = value;                                                         \
     }                                                                          \
                                                                                \
     void setValueString(const std::string &value) override {                   \
-      std::unique_lock<std::shared_mutex> lock(m_mutex);                       \
+      std::lock_guard<std::shared_mutex> lock(m_mutex);                       \
       m_value = convertToValue(value);                                         \
     }                                                                          \
                                                                                \

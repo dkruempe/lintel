@@ -3,31 +3,31 @@
 Process::Process(std::filesystem::path path, std::vector<std::string> args)
     : m_path(std::move(path)), m_args(std::move(args)) {}
 
-void Process::onStart() {
+void Process::onStart() const {
   if (m_onStart == nullptr) {
     return;
   }
   (*m_onStart)(*this);
 }
-void Process::onStop() {
+void Process::onStop() const {
   if (m_onStop == nullptr) {
     return;
   }
   (*m_onStop)(*this);
 }
-void Process::onFinish() {
+void Process::onFinish() const {
   if (m_onFinish == nullptr) {
     return;
   }
   (*m_onFinish)(*this);
 }
-void Process::onRestart() {
+void Process::onRestart() const {
   if (m_onRestart == nullptr) {
     return;
   }
   (*m_onRestart)(*this);
 }
-void Process::onTerminate() {
+void Process::onTerminate() const {
   if (m_onTerminate == nullptr) {
     return;
   }

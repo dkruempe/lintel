@@ -5,6 +5,9 @@ set(CMAKE_MACOSX_RPATH OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
 # configuration of default path
+if (NOT DEFINED PROJECT_PATH)
+    set(PROJECT_PATH "${PROJECT_SOURCE_DIR}")
+endif ()
 if (NOT DEFINED CONFIG_DIRECTORY)
     set(CONFIG_DIRECTORY "${PROJECT_SOURCE_DIR}/../cfg")
 endif ()
