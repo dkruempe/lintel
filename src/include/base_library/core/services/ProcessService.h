@@ -1,8 +1,6 @@
 #ifndef CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H
 #define CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H
 
-#include <oneapi/tbb/concurrent_hash_map.h>
-
 #include <atomic>
 #include <boost/process.hpp>
 #include <condition_variable>
@@ -13,6 +11,7 @@
 #include <thread>
 
 #include "base_library/core/services/AbstractService.h"
+#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 #include "base_library/features/base/models/Process.h"
 #include "base_library/features/base/models/ProcessGroup.h"
 #include "base_library/features/base/models/ProcessName.h"
@@ -60,6 +59,7 @@ class ProcessService : public AbstractService<ProcessService> {
 
   // injections
   std::shared_ptr<ProcessName> m_processName;
+  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
   // variables
   std::mutex m_processesMutex;
   std::map<std::string, ProcessExecutes> m_processes;
@@ -82,7 +82,9 @@ class ProcessService : public AbstractService<ProcessService> {
   void monitorProcessGroups();
 
  public:
-  explicit ProcessService(std::shared_ptr<ProcessName> processName);
+  ProcessService(
+      std::shared_ptr<ProcessName> processName,
+      std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
   virtual ~ProcessService();
 
   // Process operations

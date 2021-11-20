@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <memory>
 #define CATCH_CONFIG_MAIN
 #include <base_library/config.h>
 #include <base_library/core/services/LoggerService.h>
@@ -21,7 +22,9 @@ TEST_CASE("ProcessService Start Process Group") {
   ProcessGroup group("testGroup", {df, ls});
   std::shared_ptr<ProcessName> processName =
       std::make_shared<ProcessName>("test");
-  ProcessService processService(processName);
+  std::shared_ptr<EnvironmentConfiguration> env =
+      std::make_shared<EnvironmentConfiguration>();
+  ProcessService processService(processName, env);
   processService.startOf(group);
   REQUIRE(startedDf);
   REQUIRE(startedLs);
@@ -36,7 +39,9 @@ TEST_CASE("ProcessService Start Process") {
   process.addOnStartEvent(func);
   std::shared_ptr<ProcessName> processName =
       std::make_shared<ProcessName>("test");
-  ProcessService processService(processName);
+  std::shared_ptr<EnvironmentConfiguration> env =
+      std::make_shared<EnvironmentConfiguration>();
+  ProcessService processService(processName, env);
   std::future<int> future = processService.startOf(process);
   REQUIRE(started);
   REQUIRE(future.get() == 0);
@@ -61,7 +66,9 @@ TEST_CASE("ProcessService Start/Restart Process") {
   process.addOnStopEvent(onStop);
   std::shared_ptr<ProcessName> processName =
       std::make_shared<ProcessName>("test");
-  ProcessService processService(processName);
+  std::shared_ptr<EnvironmentConfiguration> env =
+      std::make_shared<EnvironmentConfiguration>();
+  ProcessService processService(processName, env);
   std::future<int> future = processService.startOf(process);
   REQUIRE(started);
   REQUIRE(future.get() == 0);
@@ -90,7 +97,9 @@ TEST_CASE("ProcessService Start/Stop Process") {
   process.addOnRestartEvent(onRestart);
   std::shared_ptr<ProcessName> processName =
       std::make_shared<ProcessName>("test");
-  ProcessService processService(processName);
+  std::shared_ptr<EnvironmentConfiguration> env =
+      std::make_shared<EnvironmentConfiguration>();
+  ProcessService processService(processName, env);
   std::future<int> future = processService.startOf(process);
   REQUIRE(started);
   processService.restartOf(process);

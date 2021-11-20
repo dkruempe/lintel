@@ -9,9 +9,12 @@
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
 
-ProcessService::ProcessService(std::shared_ptr<ProcessName> processName)
+ProcessService::ProcessService(
+    std::shared_ptr<ProcessName> processName,
+    std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
     : AbstractService<ProcessService>(processName->getProcessName()),
-      m_processName(std::move(processName)) {
+      m_processName(std::move(processName)),
+      m_environmentConfiguration(std::move(environmentConfiguration)) {
   // make sure that all variables are initialized for starting the thread
   m_monitorThread = std::thread([&] { run(); });
 }
@@ -31,14 +34,14 @@ std::future<int> ProcessService::startOf(const Process& process) {
   // II check path of process
   std::filesystem::path path = process.getPath();
   if (!is_regular_file(process.getPath())) {
-    auto realPath = boost::process::search_path(process.getPath().string());
-    path = realPath.string();
-    if (!is_regular_file(path)) {
+    std::string tmp = process.getPath().string();
+    auto optPath = m_environmentConfiguration->pathOf(tmp);
+    if (!optPath.has_value()) {
       throw std::runtime_error(process.getId() + "/" +
                                process.getPath().filename().string() +
                                ": is not a file");
     }
-    path = realPath.string();
+    path = optPath.value();
   }
 
   // III insert process
@@ -104,11 +107,12 @@ void ProcessService::monitorProcess() {
       processExecutes.getProcess()->increaseRestarts();
       std::filesystem::path path;
       if (!is_regular_file(processExecutes.getProcess()->getPath())) {
-        auto tmp = boost::process::search_path(
-            processExecutes.getProcess()->getPath().string());
-        if (is_regular_file(tmp)) {
-          path = tmp.string();
+        std::string tmp = processExecutes.getProcess()->getPath().string();
+        auto optPath = m_environmentConfiguration->pathOf(tmp);
+        if (!optPath.has_value()) {
+          throw std::runtime_error("path invalid");
         }
+        path = optPath.value();
       }
       processExecutes.setChild(std::make_shared<boost::process::child>(
           path.string(), processExecutes.getProcess()->getArgs(),
