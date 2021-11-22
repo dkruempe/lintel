@@ -48,19 +48,18 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
   void onCheck();
 
  public:
-  typedef boost::interprocess::allocator<
-      char, boost::interprocess::managed_mapped_file::segment_manager>
-      charAllocator;
-  typedef boost::interprocess::basic_string<char, std::char_traits<char>,
-                                            charAllocator>
-      ShmString;
+  using charAllocator = boost::interprocess::allocator<
+      char, boost::interprocess::managed_mapped_file::segment_manager>;
+  using ShmString =
+      boost::interprocess::basic_string<char, std::char_traits<char>,
+                                        charAllocator>;
 
   SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager>
                           &sharedMemorySegmentManager,
                       std::shared_ptr<SchedulerService> schedulerService,
                       const std::shared_ptr<ProcessName> &processName);
 
-  virtual ~SharedMemoryService() = default;
+  ~SharedMemoryService() override = default;
   void onInitialize() override;
   void onShutdown() override;
 
@@ -85,16 +84,17 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
   [[nodiscard]] std::string showStateOf(
       const std::string &sharedMemoryName) const;
 
-  template <class Object, std::size_t size>
-  std::array<Object, size> &constructArray(const std::string &sharedMemoryName,
-                                           const std::string &name) {
+  template <class Object, std::size_t Size>
+  std::array<Object, Size> &constructArray(
+      const std::shared_ptr<SharedMemorySegment> &segment,
+      const std::string &name) {
     try {
-      auto &segment = m_segments.at(sharedMemoryName);
+      auto &segmentCopy = m_segments.at(segment->getName());
       return *(
-          segment.m_managedMappedFile
-              ->find_or_construct<std::array<Object, size>>(name.c_str())());
+          segmentCopy.m_managedMappedFile
+              ->find_or_construct<std::array<Object, Size>>(name.c_str())());
     } catch (std::out_of_range &exception) {
-      throw ShmSegmentNotFound(sharedMemoryName);
+      throw ShmSegmentNotFound(segment->getName());
     }
   }
 
@@ -102,21 +102,21 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
   boost::interprocess::set<
       Object, std::less<Object>,
       boost::interprocess::allocator<
-          Object, boost::interprocess::managed_mapped_file::segment_manager>> &
-  constructSet(const std::string &sharedMemoryName, const std::string &name) {
-    typedef boost::interprocess::allocator<
-        Object, boost::interprocess::managed_mapped_file::segment_manager>
-        persistentSetAllocator;
+          Object, boost::interprocess::managed_mapped_file::segment_manager>>
+      &constructSet(const std::shared_ptr<SharedMemorySegment> &segment,
+                    const std::string &name) {
+    using persistentSetAllocator = boost::interprocess::allocator<
+        Object, boost::interprocess::managed_mapped_file::segment_manager>;
     try {
-      auto &segment = m_segments.at(sharedMemoryName);
+      auto &segmentCopy = m_segments.at(segment->getName());
       persistentSetAllocator allocator(
-          segment.m_managedMappedFile->get_segment_manager());
-      return *(segment.m_managedMappedFile
+          segmentCopy.m_managedMappedFile->get_segment_manager());
+      return *(segmentCopy.m_managedMappedFile
                    ->find_or_construct<boost::interprocess::set<
                        Object, std::less<Object>, persistentSetAllocator>>(
                        name.c_str())(std::less<Object>(), allocator));
     } catch (std::out_of_range &exception) {
-      throw ShmSegmentNotFound(sharedMemoryName);
+      throw ShmSegmentNotFound(segment->getName());
     }
   }
 
@@ -125,29 +125,29 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
       Key, Value, std::less<Key>,
       boost::interprocess::allocator<
           std::pair<const Key, Value>,
-          boost::interprocess::managed_mapped_file::segment_manager>> &
-  constructMap(const std::string &sharedMemoryName, const std::string &name) {
-    typedef std::pair<const Key, Value> pairType;
-    typedef boost::interprocess::allocator<
-        pairType, boost::interprocess::managed_mapped_file::segment_manager>
-        persistentMapAllocator;
+          boost::interprocess::managed_mapped_file::segment_manager>>
+      &constructMap(const std::shared_ptr<SharedMemorySegment> &segment,
+                    const std::string &name) {
+    using pairType = std::pair<const Key, Value>;
+    using persistentMapAllocator = boost::interprocess::allocator<
+        pairType, boost::interprocess::managed_mapped_file::segment_manager>;
     try {
-      auto &segment = m_segments.at(sharedMemoryName);
+      auto &segmentCopy = m_segments.at(segment->getName());
       persistentMapAllocator allocator(
-          segment.m_managedMappedFile->get_segment_manager());
+          segmentCopy.m_managedMappedFile->get_segment_manager());
       boost::interprocess::map<
           Key, Value, std::less<Key>,
           boost::interprocess::allocator<
               std::pair<const Key, Value>,
               boost::interprocess::managed_mapped_file::segment_manager>> *map =
-          segment.m_managedMappedFile
+          segmentCopy.m_managedMappedFile
               ->find_or_construct<boost::interprocess::map<
                   Key, Value, std::less<Key>, persistentMapAllocator>>(
                   name.c_str())(std::less<Key>(), allocator);
       LOG_TRACE("map {}", map->size());
       return *map;
     } catch (std::out_of_range &exception) {
-      throw ShmSegmentNotFound(sharedMemoryName);
+      throw ShmSegmentNotFound(segment->getName());
     }
   }
 
@@ -156,37 +156,36 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
       Object,
       boost::interprocess::allocator<
           Object, boost::interprocess::managed_mapped_file::segment_manager>>
-      &constructVector(const std::string &sharedMemoryName,
+      &constructVector(const std::shared_ptr<SharedMemorySegment> &segment,
                        const std::string &name) {
-    typedef boost::interprocess::allocator<
-        Object, boost::interprocess::managed_mapped_file::segment_manager>
-        persistentVectorAllocator;
+    using persistentVectorAllocator = boost::interprocess::allocator<
+        Object, boost::interprocess::managed_mapped_file::segment_manager>;
     try {
-      auto &segment = m_segments.at(sharedMemoryName);
+      auto &segmentCopy = m_segments.at(segment->getName());
       persistentVectorAllocator allocator(
-          segment.m_managedMappedFile->get_segment_manager());
-      return *(segment.m_managedMappedFile->find_or_construct<
+          segmentCopy.m_managedMappedFile->get_segment_manager());
+      return *(segmentCopy.m_managedMappedFile->find_or_construct<
                boost::interprocess::vector<Object, persistentVectorAllocator>>(
           name.c_str())(allocator));
     } catch (std::out_of_range &exception) {
-      throw ShmSegmentNotFound(sharedMemoryName);
+      throw ShmSegmentNotFound(segment->getName());
     }
   }
 
   template <class Object>
-  Object &constructObject(const std::string &sharedMemoryName,
+  Object &constructObject(const std::shared_ptr<SharedMemorySegment> &segment,
                           const std::string &name) {
     try {
-      auto &segment = m_segments.at(sharedMemoryName);
-      return *(segment.m_managedMappedFile->find_or_construct<Object>(
+      auto &segmentCopy = m_segments.at(segment->getName());
+      return *(segmentCopy.m_managedMappedFile->find_or_construct<Object>(
           name.c_str())());
     } catch (std::out_of_range &exception) {
-      throw ShmSegmentNotFound(sharedMemoryName);
+      throw ShmSegmentNotFound(segment->getName());
     }
   }
 
-  ShmString constructString(const std::string &sharedMemoryName,
-                            const std::string &string);
+  ShmString constructString(const std::shared_ptr<SharedMemorySegment> &segment,
+                            const std::string &name);
 
   friend std::ostream &operator<<(std::ostream &os,
                                   const SharedMemoryService &service);

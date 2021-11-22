@@ -1,5 +1,7 @@
 #include "base_library/core/services/SharedMemoryService.h"
 
+#include <base_library/core/models/SharedMemorySegment.h>
+
 SharedMemoryService::SharedMemoryService(
     const std::shared_ptr<SharedMemorySegmentManager>
         &sharedMemorySegmentManager,
@@ -21,10 +23,11 @@ void SharedMemoryService::shrinkOf(const SharedMemorySegment &segment) {
 std::string SharedMemoryService::showStateOf(
     const std::string &sharedMemoryName) const {
   try {
-    auto &segment = m_segments.at(sharedMemoryName);
+    const auto &segment = m_segments.at(sharedMemoryName);
     std::string state = "SharedMemory: " + sharedMemoryName + "\n";
-    state += "Sanity: " +
-             std::to_string(segment.m_managedMappedFile->check_sanity()) + "\n";
+    state += "Sanity: ";
+    state += segment.m_managedMappedFile->check_sanity() ? "true" : "false";
+    state += "\n";
     state +=
         "Size: " + std::to_string(segment.m_managedMappedFile->get_size()) +
         "\n";
@@ -70,16 +73,17 @@ std::ostream &operator<<(std::ostream &os, const SharedMemoryService &service) {
   return os;
 }
 SharedMemoryService::ShmString SharedMemoryService::constructString(
-    const std::string &sharedMemoryName, const std::string &string) {
+    const std::shared_ptr<SharedMemorySegment> &segment,
+    const std::string &name) {
   try {
-    auto &segment = m_segments.at(sharedMemoryName);
+    auto &segmentCopy = m_segments.at(segment->getName());
     charAllocator charallocator(
-        segment.m_managedMappedFile->get_segment_manager());
+        segmentCopy.m_managedMappedFile->get_segment_manager());
     ShmString myString(charallocator);
-    myString = string.c_str();
+    myString = name.c_str();
     return myString;
   } catch (std::out_of_range &exception) {
-    throw ShmSegmentNotFound(sharedMemoryName);
+    throw ShmSegmentNotFound(segment->getName());
   }
 }
 void SharedMemoryService::onInitialize() {
@@ -96,8 +100,7 @@ void SharedMemoryService::onCheck() {
     }
     const auto freeMemory = mappedFile.m_managedMappedFile->get_free_memory();
     if (freeMemory < m_autoExtendEpsilon->getValue()) {
-      const unsigned long currentSize =
-          mappedFile.m_managedMappedFile->get_size();
+      const uint64_t currentSize = mappedFile.m_managedMappedFile->get_size();
       growOf(*sharedMemorySegment, sharedMemorySegment->getAutoExtendSize());
       LOG_INFO("{}: extend current {}/{} -> increase by {}", name,
                currentSize - freeMemory, currentSize,

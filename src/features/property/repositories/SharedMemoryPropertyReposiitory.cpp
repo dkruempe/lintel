@@ -39,32 +39,28 @@ void SharedMemoryPropertyRepository::save(
   boost::interprocess::scoped_lock<boost::interprocess::named_upgradable_mutex>
       lock(m_upgradableMutex);
   LOG_TRACE("save properties {}", getMap().size());
-  for (auto &property : properties) {
+  std::shared_ptr<SharedMemorySegment> segment = getSharedMemorySegment();
+  for (const auto &property : properties) {
     auto found = getMap().find(m_sharedMemoryService->constructString(
-        getSharedMemorySegment()->getName(), property->getIdentifier()));
+        segment, property->getIdentifier()));
     if (found != getMap().end()) {
-      found->second.m_value = m_sharedMemoryService->constructString(
-          getSharedMemorySegment()->getName(), property->toString());
+      found->second.m_value =
+          m_sharedMemoryService->constructString(segment, property->toString());
       continue;
-    } else {
-      SharedMemoryService::ShmString id =
-          m_sharedMemoryService->constructString(
-              getSharedMemorySegment()->getName(), property->getIdentifier());
-      PropertyData propertyData{
-          m_sharedMemoryService->constructString(
-              getSharedMemorySegment()->getName(), property->getProcessName()),
-          m_sharedMemoryService->constructString(
-              getSharedMemorySegment()->getName(), property->getClassName()),
-          m_sharedMemoryService->constructString(
-              getSharedMemorySegment()->getName(), property->getInstanceName()),
-          m_sharedMemoryService->constructString(
-              getSharedMemorySegment()->getName(), property->getName()),
-          m_sharedMemoryService->constructString(
-              getSharedMemorySegment()->getName(), property->toString()),
-          m_sharedMemoryService->constructString(
-              getSharedMemorySegment()->getName(), property->getType())};
-      getMap().insert({id, propertyData});
     }
+    SharedMemoryService::ShmString id = m_sharedMemoryService->constructString(
+        segment, property->getIdentifier());
+    PropertyData propertyData{
+        m_sharedMemoryService->constructString(segment,
+                                               property->getProcessName()),
+        m_sharedMemoryService->constructString(segment,
+                                               property->getClassName()),
+        m_sharedMemoryService->constructString(segment,
+                                               property->getInstanceName()),
+        m_sharedMemoryService->constructString(segment, property->getName()),
+        m_sharedMemoryService->constructString(segment, property->toString()),
+        m_sharedMemoryService->constructString(segment, property->getType())};
+    getMap().insert({id, propertyData});
   }
   LOG_TRACE("finished save properties {}", getMap().size());
 }
@@ -137,7 +133,7 @@ void SharedMemoryPropertyRepository::deleteOf(
   LOG_INFO("start deleteOf with {}", properties.size());
   for (const auto &property : properties) {
     auto found = getMap().find(m_sharedMemoryService->constructString(
-        getSharedMemorySegment()->getName(), property->getIdentifier()));
+        getSharedMemorySegment(), property->getIdentifier()));
     if (found == getMap().end()) {
       continue;
     }

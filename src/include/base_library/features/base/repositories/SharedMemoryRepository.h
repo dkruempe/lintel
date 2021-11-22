@@ -35,11 +35,10 @@ class SharedMemoryRepository {
 template <typename DATA>
 class SharedMemorySetRepository : public SharedMemoryRepository {
  private:
-  typedef boost::interprocess::set<
+  using Set = boost::interprocess::set<
       DATA, std::less<DATA>,
       boost::interprocess::allocator<
-          DATA, boost::interprocess::managed_mapped_file::segment_manager>>
-      Set;
+          DATA, boost::interprocess::managed_mapped_file::segment_manager>>;
   Set &m_set;
 
  protected:
@@ -52,19 +51,19 @@ class SharedMemorySetRepository : public SharedMemoryRepository {
       const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
       : SharedMemoryRepository(segment, sizeof(DATA), type_name<DATA>(),
                                codeVersion),
-        m_set(sharedMemoryService->constructSet<DATA>(segment->getName(),
+        m_set(sharedMemoryService->constructSet<DATA>(segment,
                                                       type_name<DATA>())),
         m_sharedMemoryService(sharedMemoryService) {}
 };
 
-template <typename DATA, std::size_t MAX_SIZE>
+template <typename DATA, std::size_t MaxSize>
 class SharedMemoryArrayRepository : public SharedMemoryRepository {
  private:
-  std::array<DATA, MAX_SIZE> &m_array;
+  std::array<DATA, MaxSize> &m_array;
 
  protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
-  std::array<DATA, MAX_SIZE> &getArray() const { return m_array; }
+  std::array<DATA, MaxSize> &getArray() const { return m_array; }
 
  public:
   SharedMemoryArrayRepository(
@@ -72,19 +71,18 @@ class SharedMemoryArrayRepository : public SharedMemoryRepository {
       const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
       : SharedMemoryRepository(segment, sizeof(DATA), type_name<DATA>(),
                                codeVersion),
-        m_array(sharedMemoryService->constructArray<DATA, MAX_SIZE>(
-            segment->getName(), type_name<DATA>())),
+        m_array(sharedMemoryService->constructArray<DATA, MaxSize>(
+            segment, type_name<DATA>())),
         m_sharedMemoryService(sharedMemoryService) {}
 };
 
 template <typename DATA>
 class SharedMemoryVectorRepository : public SharedMemoryRepository {
  private:
-  typedef boost::interprocess::vector<
+  using Vector = boost::interprocess::vector<
       DATA,
       boost::interprocess::allocator<
-          DATA, boost::interprocess::managed_mapped_file::segment_manager>>
-      Vector;
+          DATA, boost::interprocess::managed_mapped_file::segment_manager>>;
   Vector &m_vector;
 
  protected:
@@ -97,7 +95,7 @@ class SharedMemoryVectorRepository : public SharedMemoryRepository {
       const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
       : SharedMemoryRepository(segment, sizeof(DATA), type_name<DATA>(),
                                codeVersion),
-        m_vector(sharedMemoryService->constructVector<DATA>(segment->getName(),
+        m_vector(sharedMemoryService->constructVector<DATA>(segment,
                                                             type_name<DATA>())),
         m_sharedMemoryService(sharedMemoryService) {}
 };
@@ -105,12 +103,11 @@ class SharedMemoryVectorRepository : public SharedMemoryRepository {
 template <typename KEY, typename VALUE>
 class SharedMemoryMapRepository : public SharedMemoryRepository {
  private:
-  typedef boost::interprocess::map<
+  using Map = boost::interprocess::map<
       KEY, VALUE, std::less<KEY>,
       boost::interprocess::allocator<
           std::pair<const KEY, VALUE>,
-          boost::interprocess::managed_mapped_file::segment_manager>>
-      Map;
+          boost::interprocess::managed_mapped_file::segment_manager>>;
   Map &m_map;
 
  protected:
@@ -124,7 +121,7 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
       : SharedMemoryRepository(segment, sizeof(VALUE),
                                std::string(type_name<VALUE>()), codeVersion),
         m_map(sharedMemoryService->constructMap<KEY, VALUE>(
-            segment->getName(), getSharedMemoryRepository())),
+            segment, getSharedMemoryRepository())),
         m_sharedMemoryService(sharedMemoryService) {
     LOG_TRACE("map loaded with size of {}", m_map.size());
   }
@@ -145,7 +142,7 @@ class SharedMemoryObjectRepository : public SharedMemoryRepository {
       const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
       : SharedMemoryRepository(segment, sizeof(DATA), type_name<DATA>(),
                                codeVersion),
-        m_data(sharedMemoryService->constructObject<DATA>(segment->getName(),
+        m_data(sharedMemoryService->constructObject<DATA>(segment,
                                                           type_name<DATA>())),
         m_sharedMemoryService(sharedMemoryService) {}
 };
