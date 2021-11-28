@@ -114,7 +114,7 @@ void PropertyCliComponent::onHelp() {
 bool PropertyCliComponent::onMenu(const std::string &component) { return true; }
 
 void PropertyCliComponent::onShowMenu() {
-  std::cout << "No submenu available!";
+  std::cout << "No submenu available!\n";
 }
 
 bool PropertyCliComponent::onExit() { return true; }

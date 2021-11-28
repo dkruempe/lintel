@@ -1,5 +1,8 @@
 #include "base_library/core/services/ProcessService.h"
 
+#include <base_library/features/base/models/ProcessGroup.h>
+#include <base_library/features/base/models/ProcessInfo.h>
+
 #include <boost/process/detail/child_decl.hpp>
 #include <boost/process/io.hpp>
 #include <memory>
@@ -17,6 +20,38 @@ ProcessService::ProcessService(
       m_environmentConfiguration(std::move(environmentConfiguration)) {
   // make sure that all variables are initialized for starting the thread
   m_monitorThread = std::thread([&] { run(); });
+  m_process = std::make_shared<Process>(m_processName->getPath(),
+                                        m_processName->getArgs());
+}
+std::vector<ProcessInfo> ProcessService::allActiveOf() {
+  std::map<std::string, std::shared_ptr<ProcessGroup>> processGroupMap;
+  {
+    std::lock_guard<std::mutex> locker(m_processGroupMutex);
+    for (auto& [id, processGroup] : m_processGroups) {
+      for (const auto& process : processGroup->getProcesses()) {
+        processGroupMap.insert({process.getId(), processGroup});
+      }
+    }
+  }
+  std::vector<ProcessInfo> temp;
+  {
+    std::lock_guard<std::mutex> locker(m_processesMutex);
+    for (auto& [id, process] : m_processes) {
+      auto found = processGroupMap.find(id);
+      if (found != processGroupMap.end()) {
+        temp.emplace_back(process.getProcess(), process.getChild()->id(),
+                          process.getChild()->running(),
+                          process.getChild()->exit_code(),
+                          found->second->getName(), found->second->getId());
+      } else {
+        temp.emplace_back(process.getProcess(), process.getChild()->id(),
+                          process.getChild()->running(),
+                          process.getChild()->exit_code(), "none", "none");
+      }
+    }
+  }
+  temp.push_back(currentOf());
+  return temp;
 }
 
 std::future<int> ProcessService::startOf(const Process& process) {
@@ -309,4 +344,8 @@ void ProcessService::detachOf(const ProcessGroup& processGroup) {
     detachOf(process);
   }
   m_processGroups.erase(processGroup.getId());
+}
+ProcessInfo ProcessService::currentOf() {
+  ProcessInfo info(m_process, boost::this_process::get_id(), true, -1, "", "");
+  return info;
 }

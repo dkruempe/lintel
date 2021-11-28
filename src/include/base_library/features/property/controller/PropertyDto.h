@@ -31,7 +31,7 @@ class PropertyDto : public JsonSerializable {
     const std::string REPOSITORY_TYPE = "repository_type";
     const std::string VALUE = "value";
     const std::string EXTRA_INFORMATION = "extra_information";
-  } shape;
+  } m_shape;
 
  public:
   explicit PropertyDto(const std::shared_ptr<PropertyBase> &property);

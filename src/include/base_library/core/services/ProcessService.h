@@ -14,6 +14,7 @@
 #include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 #include "base_library/features/base/models/Process.h"
 #include "base_library/features/base/models/ProcessGroup.h"
+#include "base_library/features/base/models/ProcessInfo.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/property/services/PropertyService.h"
 
@@ -60,6 +61,7 @@ class ProcessService : public AbstractService<ProcessService> {
   // injections
   std::shared_ptr<ProcessName> m_processName;
   std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
+  std::shared_ptr<Process> m_process;
   // variables
   std::mutex m_processesMutex;
   std::map<std::string, ProcessExecutes> m_processes;
@@ -85,7 +87,11 @@ class ProcessService : public AbstractService<ProcessService> {
   ProcessService(
       std::shared_ptr<ProcessName> processName,
       std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
-  virtual ~ProcessService();
+  ~ProcessService() override;
+
+  // Process Informations
+  std::vector<ProcessInfo> allActiveOf();
+  ProcessInfo currentOf();
 
   // Process operations
   std::future<int> startOf(const Process &process);

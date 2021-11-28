@@ -9,7 +9,10 @@
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/features/base/command_line/CryptionCliComponent.h"
+#include "base_library/features/base/command_line/ProcessCliComponent.h"
 #include "base_library/features/base/command_line/UserManagementCliComponent.h"
+#include "base_library/features/base/controller/ProcessApi.h"
+#include "base_library/features/base/controller/ProcessController.h"
 #include "base_library/features/base/controller/UserApi.h"
 #include "base_library/features/base/controller/UserController.h"
 #include "base_library/features/base/provider/GroupProvider.h"
@@ -80,6 +83,13 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
       .singleInstance();
   builder.registerType<ProcessService>()
       .as<AbstractServiceInterface>()
+      .asSelf()
+      .singleInstance();
+  builder.registerType<ProcessCliComponent>().as<CommandLineComponent>().asSelf().singleInstance();
+  builder.registerType<ProcessApi>().singleInstance();
+  builder.registerType<ProcessController>()
+      .as<Controller>()
+      .as<GroupProvider>()
       .asSelf()
       .singleInstance();
 }
