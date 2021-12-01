@@ -3,6 +3,7 @@
 
 #include "base_library/features/base/controller/ProcessInfoDto.h"
 #include "base_library/features/http/provider/ClientProvider.h"
+#include "ProcessGroupDto.h"
 
 class ProcessApi {
  private:
@@ -12,6 +13,8 @@ class ProcessApi {
   explicit ProcessApi(const std::shared_ptr<ClientProvider> &clientProvicer);
 
   std::vector<ProcessInfoDto> allOf(const std::string &processName);
+
+  std::vector<ProcessGroupDto> allGroupsOf(const std::string &groupName);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSAPI_H

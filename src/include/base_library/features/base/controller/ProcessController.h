@@ -10,7 +10,8 @@ class ProcessController : public Controller {
   Group m_adminGroup;
   Group m_userGroup;
 
-  ADD_HANDLER_METHOD(R"(/process/([^\/]+))", Get, allProcessOf);
+  ADD_HANDLER_METHOD(R"(/process/processes/([^\/]+))", Get, allProcessOf);
+  ADD_HANDLER_METHOD(R"(/process/groups/([^\/]+))", Get, allProcessGroupsOf);
 
  public:
   ProcessController(const std::shared_ptr<AuthService> &authService,

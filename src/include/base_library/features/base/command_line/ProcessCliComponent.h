@@ -13,14 +13,17 @@ class ProcessCliComponent : public CommandLineComponent {
   std::shared_ptr<ProcessApi> m_processApi;
 
   // Commands
-  enum Commands { Undefined, ShowProcesses };
+  enum Commands { Undefined, ShowProcesses, ShowProcessGroups };
 
   // Flags
   std::optional<std::string> m_processName;
+  std::optional<std::string> m_processGroup;
 
   CommandParser<Commands, Undefined> m_commandParser;
 
   static void printProcesses(const std::vector<ProcessInfoDto> &processInfo);
+  static void printProcessGroups(
+      const std::vector<ProcessGroupDto> &processGroup);
 
  public:
   explicit ProcessCliComponent(std::shared_ptr<ProcessApi> processApi);

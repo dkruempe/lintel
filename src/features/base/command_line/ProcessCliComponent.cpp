@@ -10,6 +10,11 @@ ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
               {"-process-name", "-p"}, &m_processName,
               "Process Name of process itself, which is same as the filename."),
       ShowProcesses);
+  m_commandParser.addCommand(
+      Command("show_process_groups", "Show all process groups")
+          .addArgument({"--process-group", "-g"}, &m_processGroup,
+                       "Process Group Name"),
+      ShowProcessGroups);
 }
 void ProcessCliComponent::onCommand(
     const UserDto & /*userDto*/, const std::string &input,
@@ -27,6 +32,16 @@ void ProcessCliComponent::onCommand(
         printProcesses(temp);
         break;
       }
+      case ShowProcessGroups: {
+        std::vector<ProcessGroupDto> temp{};
+        if (m_processGroup.has_value()) {
+          temp = m_processApi->allGroupsOf(m_processGroup.value());
+        } else {
+          temp = m_processApi->allGroupsOf(".*");
+        }
+        printProcessGroups(temp);
+        break;
+      }
       case Undefined: {
         std::cout << "Undefined command >" << input << "<\n";
         break;
@@ -35,6 +50,16 @@ void ProcessCliComponent::onCommand(
   } catch (std::exception &exception) {
     std::cerr << "ERROR: " << exception.what() << "\n";
   }
+}
+void ProcessCliComponent::printProcessGroups(
+    const std::vector<ProcessGroupDto> &processGroup) {
+  tabulate::Table table;
+  table.add_row({"No.", "ProcessGroupName", "ProcessGroupId"});
+  std::size_t count = 0;
+  for (const auto &iter : processGroup) {
+    table.add_row({std::to_string(++count), iter.getName(), iter.getId()});
+  }
+  std::cout << table.str() << "\n";
 }
 void ProcessCliComponent::printProcesses(
     const std::vector<ProcessInfoDto> &processInfoDto) {

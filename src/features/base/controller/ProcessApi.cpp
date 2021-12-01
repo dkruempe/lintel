@@ -1,6 +1,7 @@
 #include "base_library/features/base/controller/ProcessApi.h"
 
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/features/base/controller/ProcessGroupsDto.h"
 #include "base_library/features/base/controller/ProcessInfosDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
@@ -11,7 +12,7 @@ std::vector<ProcessInfoDto> ProcessApi::allOf(const std::string& processName) {
   httplib::Headers headers{};
   headers.insert({"Content-Type", "application/json"});
   const httplib::Result& result =
-      m_client->get("/process/" + processName, headers);
+      m_client->get("/process/processes/" + processName, headers);
   HttpStatusCodes status(result->status);
   switch (status) {
     case HttpStatusCodes::Unauthorized:
@@ -31,4 +32,30 @@ std::vector<ProcessInfoDto> ProcessApi::allOf(const std::string& processName) {
     return {};
   }
   return processInfosDto.getProcessInfos();
+}
+std::vector<ProcessGroupDto> ProcessApi::allGroupsOf(
+    const std::string& groupName) {
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  const httplib::Result& result =
+      m_client->get("/process/groups/" + groupName, headers);
+  HttpStatusCodes status(result->status);
+  switch (status) {
+    case HttpStatusCodes::Unauthorized:
+      throw HttpUnauthorizedException();
+    case HttpStatusCodes::OK:
+      // all fine => no handling needed
+      break;
+    default:
+      // currently no extra handling
+      return {};
+  }
+  LOG_TRACE("{}", result->body);
+  ProcessGroupsDto processGroupsDto;
+  try {
+    processGroupsDto.deserialize(result->body);
+  } catch (std::exception& exception) {
+    return {};
+  }
+  return processGroupsDto.getProcessGroups();
 }

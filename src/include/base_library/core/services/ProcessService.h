@@ -12,6 +12,7 @@
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/configuration/EnvironmentConfiguration.h"
+#include "base_library/features/base/controller/ProcessGroupDto.h"
 #include "base_library/features/base/models/Process.h"
 #include "base_library/features/base/models/ProcessGroup.h"
 #include "base_library/features/base/models/ProcessInfo.h"
@@ -90,6 +91,7 @@ class ProcessService : public AbstractService<ProcessService> {
   ~ProcessService() override;
 
   // Process Informations
+  std::vector<ProcessGroupDto> allGroupsOf(const std::string &name);
   std::vector<ProcessInfo> allActiveOf();
   ProcessInfo currentOf();
 

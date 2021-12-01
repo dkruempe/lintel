@@ -1,16 +1,17 @@
 #include "base_library/core/services/ProcessService.h"
 
-#include <base_library/features/base/models/ProcessGroup.h>
-#include <base_library/features/base/models/ProcessInfo.h>
-
 #include <boost/process/detail/child_decl.hpp>
 #include <boost/process/io.hpp>
 #include <memory>
 #include <mutex>
+#include <regex>
 #include <stdexcept>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
+#include "base_library/features/base/controller/ProcessGroupDto.h"
+#include "base_library/features/base/models/ProcessGroup.h"
+#include "base_library/features/base/models/ProcessInfo.h"
 
 ProcessService::ProcessService(
     std::shared_ptr<ProcessName> processName,
@@ -348,4 +349,43 @@ void ProcessService::detachOf(const ProcessGroup& processGroup) {
 ProcessInfo ProcessService::currentOf() {
   ProcessInfo info(m_process, boost::this_process::get_id(), true, -1, "", "");
   return info;
+}
+std::vector<ProcessGroupDto> ProcessService::allGroupsOf(
+    const std::string& name) {
+  std::vector<std::shared_ptr<ProcessGroup>> groups;
+  std::regex nameRegex(name);
+  {
+    std::lock_guard<std::mutex> locker(m_processGroupMutex);
+    for (const auto& [id, group] : m_processGroups) {
+      if (!std::regex_match(name, nameRegex)) {
+        continue;
+      }
+      groups.push_back(group);
+    }
+  }
+  std::vector<ProcessGroupDto> dtos;
+  for (const auto& iter : groups) {
+    std::vector<ProcessInfo> processInfos;
+    for (const auto& process : iter->getProcesses()) {
+      {
+        std::lock_guard<std::mutex> locker(m_processesMutex);
+        auto found = m_processes.find(process.getId());
+        std::shared_ptr<Process> temp =
+            found != m_processes.end() ? found->second.getProcess() : nullptr;
+        boost::process::pid_t id =
+            found != m_processes.end() ? found->second.getChild()->id() : -1;
+        bool running =
+            found != m_processes.end() && found->second.getChild()->running();
+        int exitCode = found != m_processes.end()
+                           ? found->second.getChild()->exit_code()
+                           : -1;
+        ProcessInfo processInfo(temp, id, running, exitCode, iter->getName(),
+                                iter->getId());
+        processInfos.push_back(processInfo);
+      }
+    }
+    ProcessGroupDto dto(iter, processInfos);
+    dtos.push_back(dto);
+  }
+  return dtos;
 }
