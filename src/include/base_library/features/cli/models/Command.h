@@ -14,11 +14,12 @@ class Command {
   // with a std::stringstream. This std::variant can be easily extended if
   // the stream operator>> is overloaded. If not, you have to add a special
   // case to the parse() method.
-  typedef std::variant<
-      int32_t*, uint32_t*, double*, float*, bool*, std::string*,
-      std::optional<int32_t>*, std::optional<uint32_t>*, std::optional<double>*,
-      std::optional<float>*, std::optional<bool>*, std::optional<std::string>*>
-      Value;
+  using Value =
+      std::variant<int32_t *, uint32_t *, double *, float *, bool *,
+                   std::string *, std::vector<std::string> *,
+                   std::optional<int32_t> *, std::optional<uint32_t> *,
+                   std::optional<double> *, std::optional<float> *,
+                   std::optional<bool> *, std::optional<std::string> *>;
 
   // The description is printed as part of the help message.
   Command(std::string command, std::string description);
@@ -28,17 +29,17 @@ class Command {
   // cmd.addArgument({"--help", "-h"}, &printHelp, "Print this help message");
   // Then, after parse() has been called, printHelp will be true if the user
   // provided the flag.
-  Command& addArgument(const std::vector<std::string>& flags,
-                       Value defaultValue, const std::string& help,
+  Command &addArgument(const std::vector<std::string> &flags,
+                       Value defaultValue, const std::string &help,
                        bool optional = false);
 
-  Command& addArgument(const std::vector<std::string>&& flags,
+  Command &addArgument(const std::vector<std::string> &&flags,
                        Value defaultValue, std::string help,
                        bool optional = false);
 
   // Prints the description given to the constructor and the help
   // for each option.
-  void printHelp(std::ostream& os = std::cout) const;
+  void printHelp(std::ostream &os = std::cout) const;
 
   [[nodiscard]] std::string getCommand() const;
 
@@ -47,8 +48,8 @@ class Command {
   // finally used. This call will throw a std::runtime_error if a value is
   // missing for a given option. Unknown flags will cause a warning on
   // std::cerr.
-  void parse(const std::string& command,
-             const std::vector<std::string>& flags) const;
+  void parse(const std::string &command,
+             const std::vector<std::string> &flags) const;
 
  private:
   struct Argument {
@@ -62,7 +63,7 @@ class Command {
   std::string m_description;
   std::map<std::string, Argument> m_argumentsMap;
   std::vector<Argument> m_arguments;
-  static constexpr const char* m_tab = "\t";
+  static constexpr const char *m_tab = "\t";
 };
 
 #endif  // CPP_BASE_LIBRARY_COMMAND_H

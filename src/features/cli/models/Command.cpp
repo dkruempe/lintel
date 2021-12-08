@@ -2,6 +2,8 @@
 
 #include <iomanip>
 #include <sstream>
+
+#include "base_library/core/utils/StringUtils.h"
 Command::Command(std::string command, std::string description)
     : m_command(std::move(command)), m_description(std::move(description)) {}
 Command& Command::addArgument(const std::vector<std::string>& flags,
@@ -198,6 +200,11 @@ void Command::parse(const std::string& command,
               std::stringstream sstr(value);
               sstr >> temp;
               *arg = std::make_optional(temp);
+            } else if constexpr (std::is_same<
+                                     T, std::vector<std::string>*>::value) {
+              std::vector<std::string> temp;
+              temp = StringUtils::split(value, ',');
+              *arg = temp;
             } else {
               std::stringstream sstr(value);
               sstr >> *arg;

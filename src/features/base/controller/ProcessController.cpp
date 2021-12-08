@@ -78,3 +78,38 @@ void ProcessController::allProcessGroupsOfGet(
     }
   }
 }
+void ProcessController::startProcessPost(const httplib::Request& request,
+                                         httplib::Response& response,
+                                         const ContentType& contentType,
+                                         const std::optional<UserToken>& user) {
+  // no user logged in => Unauthorized
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  ProcessInfoDto processInfoDto;
+  processInfoDto.JsonSerializable::deserialize(request.body);
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      Process process(processInfoDto.getPath(), processInfoDto.getArgs());
+      if (processInfoDto.isAutoRestart()) {
+        process.enableAutoStart(processInfoDto.getMaxAutoRestarts());
+      } else {
+        process.disableAutoStart();
+      }
+      m_processService->startOf(process);
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}

@@ -12,6 +12,7 @@ class ProcessController : public Controller {
 
   ADD_HANDLER_METHOD(R"(/process/processes/([^\/]+))", Get, allProcessOf);
   ADD_HANDLER_METHOD(R"(/process/groups/([^\/]+))", Get, allProcessGroupsOf);
+  ADD_HANDLER_METHOD(R"(/process/start)", Post, startProcess);
 
  public:
   ProcessController(const std::shared_ptr<AuthService> &authService,

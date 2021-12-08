@@ -28,6 +28,7 @@ class ProcessInfoDto : public JsonSerializable {
   static struct Shapes {
     const std::string ID = "id";
     const std::string PATH = "path";
+    const std::string ARG = "arg";
     const std::string ARGS = "args";
     const std::string AUTO_RESTART = "auto_restart";
     const std::string RESTARTS = "restarts";

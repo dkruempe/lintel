@@ -44,6 +44,7 @@ void ProcessInfoDto::serialize(
   writer->StartArray();
   for (const auto &arg : m_args) {
     writer->StartObject();
+    writer->String(m_shape.ARG.c_str());
     writer->String(arg.c_str());
     writer->EndObject();
   }
@@ -95,7 +96,7 @@ bool ProcessInfoDto::deserialize(const rapidjson::Value &obj) {
   if (obj.HasMember(m_shape.ARGS.c_str())) {
     auto args = obj[m_shape.ARGS.c_str()].GetArray();
     for (const auto &arg : args) {
-      m_args.emplace_back(arg.GetString());
+      m_args.emplace_back(arg[m_shape.ARG.c_str()].GetString());
     }
   } else {
     LOG_WARN("{} not defined in json serilization", m_shape.ARGS.c_str());

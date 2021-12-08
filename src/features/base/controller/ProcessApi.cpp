@@ -59,3 +59,9 @@ std::vector<ProcessGroupDto> ProcessApi::allGroupsOf(
   }
   return processGroupsDto.getProcessGroups();
 }
+void ProcessApi::startOf(const std::shared_ptr<Process>& process) {
+  ProcessInfo processInfo(process, -1, false, -1, "", "");
+  ProcessInfoDto processInfoDto(processInfo);
+  std::string body = processInfoDto.JsonSerializable::serialize();
+  m_client->post("/process/start", body, "application/json");
+}

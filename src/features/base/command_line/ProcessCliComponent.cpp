@@ -15,6 +15,13 @@ ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
           .addArgument({"--process-group", "-g"}, &m_processGroup,
                        "Process Group Name"),
       ShowProcessGroups);
+  m_commandParser.addCommand(
+      Command("start_process", "Start Process")
+          .addArgument({"--process-path", "-p"}, &m_processName,
+                       "Path of Process")
+          .addArgument({"--arguments", "-a"}, &m_arguments,
+                       "Arguments of process"),
+      StartProcess);
 }
 void ProcessCliComponent::onCommand(
     const UserDto & /*userDto*/, const std::string &input,
@@ -40,6 +47,18 @@ void ProcessCliComponent::onCommand(
           temp = m_processApi->allGroupsOf(".*");
         }
         printProcessGroups(temp);
+        break;
+      }
+      case StartProcess: {
+        if (!m_processName.has_value()) {
+          std::cout << "ERROR: please enter path\n";
+          return;
+        }
+        std::filesystem::path path(m_processName.value());
+        std::shared_ptr<Process> process =
+            std::make_shared<Process>(path, m_arguments);
+        m_processApi->startOf(process);
+        m_arguments.clear();
         break;
       }
       case Undefined: {
