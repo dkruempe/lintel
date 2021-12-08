@@ -106,8 +106,10 @@ void StartupBuilder::start() {
 
 void StartupBuilder::receiveSignal(int signal) {
   switch (signal) {
-    case SIGINT:
     case SIGCHLD:
+      // ignore signal bc. informs about shutdown of childs
+      break;
+    case SIGINT:
     case SIGTERM:
       m_startupBuilder->onShutdown();
       break;
