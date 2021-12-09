@@ -61,10 +61,8 @@ void ProcessCliComponent::onCommand(
         m_arguments.clear();
         break;
       }
-      case Undefined: {
-        std::cout << "Undefined command >" << input << "<\n";
+      default:
         break;
-      }
     }
   } catch (std::exception &exception) {
     std::cerr << "ERROR: " << exception.what() << "\n";

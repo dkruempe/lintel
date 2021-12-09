@@ -101,10 +101,11 @@ void StartupBuilder::start() {
   // IX wait for signal to shutdown
   std::mutex mutex;
   std::unique_lock<std::mutex> lock(mutex);
-  m_conditionVariable.wait(lock);
+  m_conditionVariable.wait(lock, [&]() -> bool { return m_stop; });
 }
 
 void StartupBuilder::receiveSignal(int signal) {
+  LOG_TRACE("receive signal {}", signal);
   switch (signal) {
     case SIGCHLD:
       // ignore signal bc. informs about shutdown of childs
@@ -120,6 +121,7 @@ void StartupBuilder::receiveSignal(int signal) {
 }
 
 void StartupBuilder::onShutdown() {
+  m_stop.store(true);
   LOG_INFO("{} shutdown", m_name->getProcessName());
   // trigger shutdown
   for (const auto &abstractService : m_abstractServices) {

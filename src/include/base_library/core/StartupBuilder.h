@@ -1,6 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_STARTUPBUILDER_H
 #define CPP_BASE_LIBRARY_STARTUPBUILDER_H
 
+#include <atomic>
 #include <memory>
 #include <vector>
 
@@ -21,6 +22,7 @@ class StartupBuilder {
   std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
   static StartupBuilder *m_startupBuilder;
   std::condition_variable m_conditionVariable;
+  std::atomic_bool m_stop = false;
   std::vector<std::string> m_arguments;
   std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration =
       nullptr;
