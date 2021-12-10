@@ -19,6 +19,7 @@ class ProcessCliComponent : public CommandLineComponent {
   std::optional<std::string> m_processName;
   std::optional<std::string> m_processGroup;
   std::vector<std::string> m_arguments;
+  std::optional<int32_t> m_restarts;
 
   CommandParser<Commands, Undefined> m_commandParser;
 

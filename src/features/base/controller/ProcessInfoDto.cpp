@@ -9,8 +9,7 @@ ProcessInfoDto::ProcessInfoDto(const ProcessInfo &processInfo)
       m_path(processInfo.getProcess()->getPath()),
       m_args(processInfo.getProcess()->getArgs()),
       m_autoRestart(processInfo.getProcess()->isAutoRestart()),
-      // TODO(dkruempe) fix this
-      m_restarts(processInfo.getProcess()->getMaxAutoRestarts()),
+      m_restarts(processInfo.getProcess()->currentRestarts()),
       m_maxAutoRestarts(processInfo.getProcess()->getMaxAutoRestarts()),
       m_processId(processInfo.getProcessId()),
       m_isRunning(processInfo.isRunning()),

@@ -141,8 +141,8 @@ void ProcessService::monitorProcess() {
         processExecutes.getProcess()->currentRestarts() <
             processExecutes.getProcess()->getMaxAutoRestarts()) {
       processExecutes.getProcess()->increaseRestarts();
-      std::filesystem::path path;
-      if (!is_regular_file(processExecutes.getProcess()->getPath())) {
+      std::filesystem::path path = processExecutes.getProcess()->getPath();
+      if (!is_regular_file(path)) {
         std::string tmp = processExecutes.getProcess()->getPath().string();
         auto optPath = m_environmentConfiguration->pathOf(tmp);
         if (!optPath.has_value()) {

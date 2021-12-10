@@ -20,7 +20,9 @@ ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
           .addArgument({"--process-path", "-p"}, &m_processName,
                        "Path of Process")
           .addArgument({"--arguments", "-a"}, &m_arguments,
-                       "Arguments of process"),
+                       "Arguments of process")
+          .addArgument({"--restarts", "-r"}, &m_restarts,
+                       "Restarts of process"),
       StartProcess);
 }
 void ProcessCliComponent::onCommand(
@@ -57,6 +59,9 @@ void ProcessCliComponent::onCommand(
         std::filesystem::path path(m_processName.value());
         std::shared_ptr<Process> process =
             std::make_shared<Process>(path, m_arguments);
+        if (m_restarts.has_value() && m_restarts.value() > 0) {
+          process->enableAutoStart(m_restarts.value());
+        }
         m_processApi->startOf(process);
         m_arguments.clear();
         break;
@@ -98,9 +103,9 @@ void ProcessCliComponent::printProcesses(
         {std::to_string(++iter), processInfo.getPath().filename().string(),
          std::to_string(processInfo.getProcessId()), processInfo.getId(),
          processInfo.isAutoRestart() ? "true" : "false",
-         std::to_string(processInfo.getRestarts()),
          std::to_string(processInfo.getMaxAutoRestarts()),
-         processInfo.getGroupName(), processInfo.getGroupId()});
+         std::to_string(processInfo.getRestarts()), processInfo.getGroupName(),
+         processInfo.getGroupId()});
   }
   std::cout << table.str() << "\n";
 }
