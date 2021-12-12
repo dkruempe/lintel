@@ -24,6 +24,14 @@ ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
           .addArgument({"--restarts", "-r"}, &m_restarts,
                        "Restarts of process"),
       StartProcess);
+  m_commandParser.addCommand(
+      Command("stop_process", "Stop Process")
+          .addArgument({"--process-id", "-i"}, &m_processId, "Id of Process"),
+      StopProcess);
+  m_commandParser.addCommand(
+      Command("terminate_process", "Terminate Process")
+          .addArgument({"--process-id", "-i"}, &m_processId, "Id of Process"),
+      TerminateProcess);
 }
 void ProcessCliComponent::onCommand(
     const UserDto & /*userDto*/, const std::string &input,
@@ -64,6 +72,22 @@ void ProcessCliComponent::onCommand(
         }
         m_processApi->startOf(process);
         m_arguments.clear();
+        break;
+      }
+      case StopProcess: {
+        if (m_processId.empty()) {
+          std::cout << "ERROR: please enter valid process id\n";
+          return;
+        }
+        m_processApi->stopOf(m_processId);
+        break;
+      }
+      case TerminateProcess: {
+        if (m_processId.empty()) {
+          std::cout << "ERROR: pleqase enter valid process id \n";
+          return;
+        }
+        m_processApi->terminateOf(m_processId);
         break;
       }
       default:

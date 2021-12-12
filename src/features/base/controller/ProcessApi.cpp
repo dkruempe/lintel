@@ -65,3 +65,13 @@ void ProcessApi::startOf(const std::shared_ptr<Process>& process) {
   std::string body = processInfoDto.JsonSerializable::serialize();
   m_client->post("/process/start", body, "application/json");
 }
+void ProcessApi::stopOf(const std::string& id) {
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  m_client->deletes("/process/stop/" + id, headers);
+}
+void ProcessApi::terminateOf(const std::string& id) {
+  httplib::Headers headers{};
+  headers.insert({"Content-Type", "application/json"});
+  m_client->deletes("/process/terminate/" + id, headers);
+}

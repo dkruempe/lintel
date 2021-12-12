@@ -389,3 +389,12 @@ std::vector<ProcessGroupDto> ProcessService::allGroupsOf(
   }
   return dtos;
 }
+std::optional<std::shared_ptr<Process>> ProcessService::of(
+    const std::string& id) {
+  std::lock_guard<std::mutex> locker(m_processesMutex);
+  auto found = m_processes.find(id);
+  if (found == m_processes.end()) {
+    return std::nullopt;
+  }
+  return std::make_optional(found->second.getProcess());
+}

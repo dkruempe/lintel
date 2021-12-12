@@ -94,6 +94,7 @@ class ProcessService : public AbstractService<ProcessService> {
   std::vector<ProcessGroupDto> allGroupsOf(const std::string &name);
   std::vector<ProcessInfo> allActiveOf();
   ProcessInfo currentOf();
+  std::optional<std::shared_ptr<Process>> of(const std::string &id);
 
   // Process operations
   std::future<int> startOf(const Process &process);

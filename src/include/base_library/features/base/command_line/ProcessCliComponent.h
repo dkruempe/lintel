@@ -13,13 +13,21 @@ class ProcessCliComponent : public CommandLineComponent {
   std::shared_ptr<ProcessApi> m_processApi;
 
   // Commands
-  enum Commands { Undefined, ShowProcesses, ShowProcessGroups, StartProcess };
+  enum Commands {
+    Undefined,
+    ShowProcesses,
+    ShowProcessGroups,
+    StartProcess,
+    StopProcess,
+    TerminateProcess
+  };
 
   // Flags
   std::optional<std::string> m_processName;
   std::optional<std::string> m_processGroup;
   std::vector<std::string> m_arguments;
   std::optional<int32_t> m_restarts;
+  std::string m_processId;
 
   CommandParser<Commands, Undefined> m_commandParser;
 

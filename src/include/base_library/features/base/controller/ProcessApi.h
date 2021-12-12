@@ -17,6 +17,10 @@ class ProcessApi {
   std::vector<ProcessGroupDto> allGroupsOf(const std::string &groupName);
 
   void startOf(const std::shared_ptr<Process> &process);
+
+  void stopOf(const std::string &id);
+
+  void terminateOf(const std::string &id);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSAPI_H
