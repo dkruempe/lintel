@@ -18,7 +18,7 @@ class AuthCliService {
   std::shared_ptr<TerminalService> m_terminalService;
   std::shared_ptr<AuthArgumentProvider> m_authArgumentProvider;
 
-  std::string readPassword();
+  static std::string readPassword();
 
  public:
   AuthCliService(std::shared_ptr<UserApi> userApi,

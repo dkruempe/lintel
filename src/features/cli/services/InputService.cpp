@@ -26,10 +26,10 @@ KeyEvent InputService::onRead() {
         switch (ch) {
           case 51:
             ch = std::getchar();
-            if (ch == 126)
+            if (ch == 126) {
               return std::make_pair(KeyType::Canc, ' ');
-            else
-              return std::make_pair(KeyType::Ignored, ' ');
+            }
+            return std::make_pair(KeyType::Ignored, ' ');
             break;
           case 65:
             return std::make_pair(KeyType::Up, ' ');
