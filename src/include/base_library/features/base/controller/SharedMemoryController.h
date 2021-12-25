@@ -1,0 +1,55 @@
+#ifndef CPP_BASE_LIBRARY_SHAREDMEMORYCONTROLLER_H
+#define CPP_BASE_LIBRARY_SHAREDMEMORYCONTROLLER_H
+
+#include "base_library/core/services/SharedMemoryService.h"
+#include "base_library/features/http/service/Controller.h"
+
+class SharedMemoryController : public Controller {
+ private:
+  std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
+  std::shared_ptr<SharedMemorySegmentManager> m_sharedMemorySegmentManager;
+  Group m_adminGroup;
+  Group m_userGroup;
+
+  // Shared Memory Segment functions
+  /**
+   * shows all segment information with matching name
+   */
+  ADD_HANDLER_METHOD(R"(/shm/segments/([^\/]+))", Get, allSegmentsOf);
+  /**
+   * shrinks size of segment of given name
+   */
+  // ADD_HANDLER_METHOD(R"(/shm/segments/([^\/]+))", Put, shrinkSegmentOf);
+  /**
+   * extends size of segment of given name
+   */
+  // ADD_HANDLER_METHOD(R"(/shm/segments/([^\/]+))", Put, growSegmentOf);
+  /**
+   * Shows all information about giving segment
+   */
+  // ADD_HANDLER_METHOD(R"(/shm/segment/([^\/]+))", Get, segmentOf);
+
+  // Shared Memory Repository functions
+  /**
+   * Shows all repositories with matching name
+   * - show general information about repository
+   * - shows linked SharedMemorySegment
+   * - give possibility to search for all repositories of given segment
+   */
+  // ADD_HANDLER_METHOD(R"(/shm/repositories/([^\/]+)/([^\/]+))", Get,
+  //                    allRepositoriesOf);
+  /*
+   * TODO implement abstract import / export to SharedMemoryRepository
+   * - general import / export to json file
+   */
+  // ADD_HANDLER_METHOD(R"(/shm/repository/([^\/]+))", Get, exportRepositoryOf);
+  // ADD_HANDLER_METHOD(R"(/shm/repository/([^\/]+))", Put, importRepositoryOf);
+
+ public:
+  SharedMemoryController(
+      const std::shared_ptr<AuthService> &authServicie,
+      std::shared_ptr<SharedMemoryService> sharedMemoryService,
+      std::shared_ptr<SharedMemorySegmentManager> sharedMemorySegmentManager);
+};
+
+#endif  // CPP_BASE_LIBRARY_SHAREDMEMORYCONTROLLER_H

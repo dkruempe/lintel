@@ -14,6 +14,7 @@
 #include <ostream>
 #include <set>
 #include <utility>
+#include <base_library/features/base/models/SharedMemorySegmentInfo.h>
 
 #include "base_library/core/exceptions/ShmSegmentNotFound.h"
 #include "base_library/core/models/SharedMemorySegment.h"
@@ -68,21 +69,22 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
    * @param sharedMemoryName
    * @param grow size to be added to shared memory itself
    */
-  static void growOf(const SharedMemorySegment &segment, std::size_t grow);
+  static void growOf(const std::shared_ptr<SharedMemorySegment> &segment,
+                     std::size_t grow);
 
   /**
    * shrinks the shared memory size to the minimum
    * @param sharedMemoryName
    */
-  static void shrinkOf(const SharedMemorySegment &segment);
+  static void shrinkOf(const std::shared_ptr<SharedMemorySegment> &segment);
 
   /**
    * shows state of the mentioned shared memory segment
-   * @param sharedMemoryName
+   * @param segment
    * @return string with the printed information
    */
-  [[nodiscard]] std::string showStateOf(
-      const std::string &sharedMemoryName) const;
+  [[nodiscard]] SharedMemorySegmentInfo showStateOf(
+      const std::shared_ptr<SharedMemorySegment> &segment) const;
 
   template <class Object, std::size_t Size>
   std::array<Object, Size> &constructArray(
@@ -186,9 +188,6 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
 
   ShmString constructString(const std::shared_ptr<SharedMemorySegment> &segment,
                             const std::string &name);
-
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const SharedMemoryService &service);
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYSERVICE_H

@@ -1,6 +1,7 @@
 #include "base_library/core/services/SharedMemoryService.h"
 
 #include <base_library/core/models/SharedMemorySegment.h>
+#include <base_library/features/base/models/SharedMemorySegmentInfo.h>
 
 SharedMemoryService::SharedMemoryService(
     const std::shared_ptr<SharedMemorySegmentManager>
@@ -11,41 +12,33 @@ SharedMemoryService::SharedMemoryService(
       m_segments(create(sharedMemorySegmentManager->allOf())),
       m_schedulerService(std::move(schedulerService)) {}
 
-void SharedMemoryService::growOf(const SharedMemorySegment &segment,
-                                 std::size_t grow) {
-  boost::interprocess::managed_mapped_file::grow(segment.getPath().c_str(),
+void SharedMemoryService::growOf(
+    const std::shared_ptr<SharedMemorySegment> &segment, std::size_t grow) {
+  boost::interprocess::managed_mapped_file::grow(segment->getPath().c_str(),
                                                  grow);
 }
-void SharedMemoryService::shrinkOf(const SharedMemorySegment &segment) {
+void SharedMemoryService::shrinkOf(
+    const std::shared_ptr<SharedMemorySegment> &segment) {
   boost::interprocess::managed_mapped_file::shrink_to_fit(
-      segment.getPath().c_str());
+      segment->getPath().c_str());
 }
-std::string SharedMemoryService::showStateOf(
-    const std::string &sharedMemoryName) const {
-  try {
-    const auto &segment = m_segments.at(sharedMemoryName);
-    std::string state = "SharedMemory: " + sharedMemoryName + "\n";
-    state += "Sanity: ";
-    state += segment.m_managedMappedFile->check_sanity() ? "true" : "false";
-    state += "\n";
-    state +=
-        "Size: " + std::to_string(segment.m_managedMappedFile->get_size()) +
-        "\n";
-    state += "Free: " +
-             std::to_string(segment.m_managedMappedFile->get_free_memory()) +
-             "\n";
-    state +=
-        "Num of Named Objects: " +
-        std::to_string(segment.m_managedMappedFile->get_num_named_objects()) +
-        "\n";
-    state +=
-        "Num of Unique Objects: " +
-        std::to_string(segment.m_managedMappedFile->get_num_unique_objects()) +
-        "\n";
-    return state;
-  } catch (std::out_of_range &exception) {
-    throw ShmSegmentNotFound(sharedMemoryName);
+SharedMemorySegmentInfo SharedMemoryService::showStateOf(
+    const std::shared_ptr<SharedMemorySegment> &segment) const {
+  auto found = m_segments.find(segment->getName());
+  if (found == m_segments.end()) {
+    throw ShmSegmentNotFound(segment->getName());
   }
+  std::size_t currentSize = found->second.m_managedMappedFile->get_size();
+  std::size_t freeSize = found->second.m_managedMappedFile->get_free_memory();
+  std::size_t namedObjects =
+      found->second.m_managedMappedFile->get_num_named_objects();
+  std::size_t uniqueObjects =
+      found->second.m_managedMappedFile->get_num_unique_objects();
+  bool sanity = found->second.m_managedMappedFile->check_sanity();
+
+  SharedMemorySegmentInfo info(segment, currentSize, freeSize, namedObjects,
+                               uniqueObjects, sanity);
+  return info;
 }
 
 std::map<std::string, SharedMemoryService::MappedFile>
@@ -65,12 +58,6 @@ SharedMemoryService::create(
         return {segment->getName(), mappedFile};
       });
   return map;
-}
-std::ostream &operator<<(std::ostream &os, const SharedMemoryService &service) {
-  std::for_each(
-      service.m_segments.begin(), service.m_segments.end(),
-      [&](const auto &iter) { os << service.showStateOf(iter.first) << "\n"; });
-  return os;
 }
 SharedMemoryService::ShmString SharedMemoryService::constructString(
     const std::shared_ptr<SharedMemorySegment> &segment,
@@ -101,7 +88,7 @@ void SharedMemoryService::onCheck() {
     const auto freeMemory = mappedFile.m_managedMappedFile->get_free_memory();
     if (freeMemory < m_autoExtendEpsilon->getValue()) {
       const uint64_t currentSize = mappedFile.m_managedMappedFile->get_size();
-      growOf(*sharedMemorySegment, sharedMemorySegment->getAutoExtendSize());
+      growOf(sharedMemorySegment, sharedMemorySegment->getAutoExtendSize());
       LOG_INFO("{}: extend current {}/{} -> increase by {}", name,
                currentSize - freeMemory, currentSize,
                sharedMemorySegment->getAutoExtendSize());
