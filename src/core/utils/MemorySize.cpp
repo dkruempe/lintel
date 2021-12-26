@@ -1,6 +1,8 @@
 #include "base_library/core/utils/MemorySize.h"
 
-#include <base_library/core/utils/StringUtils.h>
+#include <fmt/format.h>
+
+#include "base_library/core/utils/StringUtils.h"
 std::size_t MemorySize::deserialize(const std::string& size) {
   bool isByte = StringUtils::endsWith(size, "B");
   bool isKiloByte = StringUtils::endsWith(size, "kB");
@@ -35,19 +37,23 @@ std::string MemorySize::serialize(std::size_t byte) {
   double megaByte = static_cast<double>(byte) / 1000000.0;
   double kiloByte = static_cast<double>(byte) / 1000.0;
   if (petaByte > 1) {
-    return std::to_string(petaByte) + "PB";
+    return toString(petaByte) + "PB";
   }
   if (teraByte > 1) {
-    return std::to_string(teraByte) + "TB";
+    return toString(teraByte) + "TB";
   }
   if (gigaByte > 1) {
-    return std::to_string(gigaByte) + "GB";
+    return toString(gigaByte) + "GB";
   }
   if (megaByte > 1) {
-    return std::to_string(megaByte) + "MB";
+    return toString(megaByte) + "MB";
   }
   if (kiloByte > 1) {
-    return std::to_string(kiloByte) + "KB";
+    return toString(kiloByte) + "KB";
   }
   return std::to_string(byte) + "B";
+}
+std::string MemorySize::toString(double value) {
+  std::string temp = fmt::format("{}", value);
+  return temp;
 }

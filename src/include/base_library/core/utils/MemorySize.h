@@ -4,6 +4,8 @@
 #include <string>
 
 class MemorySize {
+ private:
+  static std::string toString(double value);
  public:
   /**
    * deserialize memory size typically to byte as integer value
