@@ -14,7 +14,7 @@ class SharedMemoryApi {
   explicit SharedMemoryApi(
       const std::shared_ptr<ClientProvider> &clientProvider);
 
-  std::vector<SharedMemorySegmentDto> allOf();
+  std::vector<SharedMemorySegmentDto> allOf(const std::string &segmentName = ".*");
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYAPI_H

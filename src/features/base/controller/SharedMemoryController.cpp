@@ -34,9 +34,10 @@ void SharedMemoryController::allSegmentsOfGet(
     return;
   }
   // TODO variables
+  const std::string segmentName = request.matches[1];
   switch (contentType) {
     case ContentType::ApplicationJson: {
-      auto segments = m_sharedMemorySegmentManager->allOf();
+      auto segments = m_sharedMemorySegmentManager->allOf(segmentName);
       std::vector<SharedMemorySegmentDto> vec;
       for (const auto& segment : segments) {
         SharedMemorySegmentDto dto(m_sharedMemoryService->showStateOf(segment));

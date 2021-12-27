@@ -8,11 +8,11 @@
 
 #include <filesystem>
 
-SharedMemorySegmentComponent::Shapes SharedMemorySegmentComponent::shape{};
+SharedMemorySegmentComponent::Shapes SharedMemorySegmentComponent::m_shape{};
 
 SharedMemorySegmentComponent::SharedMemorySegmentComponent(
     std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
-    : Component(shape.CONFIG_ROOT),
+    : Component(m_shape.CONFIG_ROOT),
       m_environmentConfiguration(std::move(environmentConfiguration)) {}
 std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
     const std::string& content, const std::string& fileName,
@@ -40,21 +40,21 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
   for (tinyxml2::XMLElement* shmElement = rootNode->FirstChildElement();
        shmElement != nullptr; shmElement = shmElement->NextSiblingElement()) {
     lineNumber++;
-    bool isPath = std::strcmp(shmElement->Name(), shape.PATH_ROOT.c_str()) == 0;
+    bool isPath = std::strcmp(shmElement->Name(), m_shape.PATH_ROOT.c_str()) == 0;
     bool isSegment =
-        std::strcmp(shmElement->Name(), shape.SHM_SEGMENT_ROOT.c_str()) == 0;
+        std::strcmp(shmElement->Name(), m_shape.SHM_SEGMENT_ROOT.c_str()) == 0;
     if (!isPath && !isSegment) {
       throw ConfigurationException(getConfigRoot(),
                                    "Root is not PATH_ROOT or SHM_SEGMENT_ROOT",
                                    lineNumber);
     }
-    const char* name = shmElement->Attribute(shape.SHM_SEGMENT_NAME.c_str());
-    const char* sizeStr = shmElement->Attribute(shape.SHM_SEGMENT_SIZE.c_str());
-    const char* pathStr = shmElement->Attribute(shape.PATH_PATH.c_str());
+    const char* name = shmElement->Attribute(m_shape.SHM_SEGMENT_NAME.c_str());
+    const char* sizeStr = shmElement->Attribute(m_shape.SHM_SEGMENT_SIZE.c_str());
+    const char* pathStr = shmElement->Attribute(m_shape.PATH_PATH.c_str());
     const char* maxSizeStr =
-        shmElement->Attribute(shape.SHM_SEGMENT_MAX_SIZE.c_str());
+        shmElement->Attribute(m_shape.SHM_SEGMENT_MAX_SIZE.c_str());
     const char* autoExtendSizeStr =
-        shmElement->Attribute(shape.SHM_SEGMENT_AUTO_EXTEND_SIZE.c_str());
+        shmElement->Attribute(m_shape.SHM_SEGMENT_AUTO_EXTEND_SIZE.c_str());
     if (isPath) {
       if (pathStr == nullptr) {
         throw ConfigurationException(getConfigRoot(), "path value is nullptr",

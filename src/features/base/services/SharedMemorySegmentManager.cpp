@@ -1,5 +1,7 @@
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
+#include <regex>
+
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
@@ -25,7 +27,7 @@ std::map<std::string, std::shared_ptr<SharedMemorySegment>>
 SharedMemorySegmentManager::init(
     const std::vector<std::shared_ptr<Entry>>& entries) {
   std::map<std::string, std::shared_ptr<SharedMemorySegment>> map;
-  for (auto& entry : entries) {
+  for (const auto& entry : entries) {
     std::shared_ptr<SharedMemorySegmentEntry> temp =
         std::static_pointer_cast<SharedMemorySegmentEntry>(entry);
     if (temp->getSharedMemoryPath() != nullptr) {
@@ -37,9 +39,13 @@ SharedMemorySegmentManager::init(
   return map;
 }
 std::vector<std::shared_ptr<SharedMemorySegment>>
-SharedMemorySegmentManager::allOf() {
+SharedMemorySegmentManager::allOf(const std::string& segmentName) {
+  std::regex segmentRegex(segmentName);
   std::vector<std::shared_ptr<SharedMemorySegment>> segments;
   for (const auto& [name, segment] : m_sharedMemorySegments) {
+    if (!std::regex_match(segment->getName(), segmentRegex)) {
+      continue;
+    }
     segments.push_back(segment);
   }
   return segments;

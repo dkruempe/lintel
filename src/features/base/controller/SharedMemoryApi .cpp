@@ -7,11 +7,12 @@
 SharedMemoryApi::SharedMemoryApi(
     const std::shared_ptr<ClientProvider>& clientProvider)
     : m_client(clientProvider->provide()) {}
-std::vector<SharedMemorySegmentDto> SharedMemoryApi::allOf() {
+std::vector<SharedMemorySegmentDto> SharedMemoryApi::allOf(
+    const std::string& segmentName) {
   httplib::Headers headers{};
   headers.insert({"Content-Type", "application/json"});
-  // TODO replace .* with parameter
-  const httplib::Result& result = m_client->get("/shm/segments/.*", headers);
+  const httplib::Result& result =
+      m_client->get("/shm/segments/" + segmentName, headers);
   HttpStatusCodes status(result->status);
   switch (status) {
     case HttpStatusCodes::Unauthorized:

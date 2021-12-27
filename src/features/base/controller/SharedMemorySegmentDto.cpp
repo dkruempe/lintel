@@ -124,18 +124,19 @@ bool SharedMemorySegmentDto::deserialize(const rapidjson::Value &obj) {
     LOG_ERROR("{} not defined in json serialization", m_shape.MAX_SIZE.c_str());
   }
   // SANITY
-  if (obj.HasMember(m_shape.NAME.c_str())) {
-    m_name = obj[m_shape.NAME.c_str()].GetString();
+  if (obj.HasMember(m_shape.SANITY.c_str())) {
+    m_isSanity = obj[m_shape.SANITY.c_str()].GetBool();
   } else {
     success = false;
-    LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
+    LOG_ERROR("{} not defined in json serialization", m_shape.SANITY.c_str());
   }
   // CURRENT_SIZE
-  if (obj.HasMember(m_shape.NAME.c_str())) {
-    m_name = obj[m_shape.NAME.c_str()].GetString();
+  if (obj.HasMember(m_shape.CURRENT_SIZE.c_str())) {
+    m_currentSize = std::stoul(obj[m_shape.CURRENT_SIZE.c_str()].GetString());
   } else {
     success = false;
-    LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
+    LOG_ERROR("{} not defined in json serialization",
+              m_shape.CURRENT_SIZE.c_str());
   }
   // FREE_SIZE
   if (obj.HasMember(m_shape.FREE_SIZE.c_str())) {

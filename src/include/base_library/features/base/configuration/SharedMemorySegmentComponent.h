@@ -19,10 +19,10 @@ class SharedMemorySegmentComponent : public Component {
     const std::string SHM_SEGMENT_MAX_SIZE = "max_size";
     const std::string PATH_ROOT = "Path";
     const std::string PATH_PATH = "path";
-  } shape;
+  } m_shape;
 
  public:
-  SharedMemorySegmentComponent(
+  explicit SharedMemorySegmentComponent(
       std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
 
   std::vector<std::shared_ptr<Entry>> parse(const std::string &content,

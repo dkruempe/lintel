@@ -18,7 +18,7 @@ class SharedMemoryCliComponent : public CommandLineComponent {
   enum Commands { Undefined, ShowSegments };
 
   // Flags
-
+  std::optional<std::string> m_segmentName;
   CommandParser<Commands, Undefined> m_commandParser;
   static void printSegments(
       const std::vector<SharedMemorySegmentDto> &segments);

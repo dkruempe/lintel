@@ -23,7 +23,8 @@ class SharedMemorySegmentManager {
   std::shared_ptr<SharedMemorySegment> of(
       const std::string &sharedMemorySegmentName);
 
-  std::vector<std::shared_ptr<SharedMemorySegment>> allOf();
+  std::vector<std::shared_ptr<SharedMemorySegment>> allOf(
+      const std::string &segmentName = ".*");
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYSEGMENTMANAGER_H

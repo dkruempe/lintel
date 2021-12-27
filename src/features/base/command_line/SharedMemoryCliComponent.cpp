@@ -7,8 +7,11 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(
     std::shared_ptr<SharedMemoryApi> sharedMemoryApi)
     : CommandLineComponent(m_name, m_alias),
       m_sharedMemoryApi(std::move(sharedMemoryApi)) {
-  m_commandParser.addCommand(Command("show_segments", "Show all segments"),
-                             ShowSegments);
+  m_commandParser.addCommand(
+      Command("show_segments", "Show all segments")
+          .addArgument({"--segment-name", "-s"}, &m_segmentName,
+                       "Segment Name or pattern matching"),
+      ShowSegments);
 }
 void SharedMemoryCliComponent::onCommand(
     const UserDto & /*userDto*/, const std::string &input,
@@ -17,8 +20,12 @@ void SharedMemoryCliComponent::onCommand(
     Commands command = m_commandParser.parse(input, parameters);
     switch (command) {
       case ShowSegments: {
-        auto res = m_sharedMemoryApi->allOf();
+        if (!m_segmentName.has_value()) {
+          m_segmentName = std::make_optional(".*");
+        }
+        auto res = m_sharedMemoryApi->allOf(m_segmentName.value());
         printSegments(res);
+        m_segmentName->clear();
         break;
       }
       default:
