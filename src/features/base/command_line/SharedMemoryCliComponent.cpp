@@ -12,6 +12,13 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(
           .addArgument({"--segment-name", "-s"}, &m_segmentName,
                        "Segment Name or pattern matching"),
       ShowSegments);
+  m_commandParser.addCommand(
+      Command("show_repositories", "Show all repositories")
+          .addArgument({"--segment-name", "-s"}, &m_segmentName,
+                       "Segment Name or pattern matching")
+          .addArgument({"--repository-name", "-r"}, &m_repositoryName,
+                       "Repository Name or pattern matching"),
+      ShowRepositories);
 }
 void SharedMemoryCliComponent::onCommand(
     const UserDto & /*userDto*/, const std::string &input,
@@ -23,10 +30,23 @@ void SharedMemoryCliComponent::onCommand(
         if (!m_segmentName.has_value()) {
           m_segmentName = std::make_optional(".*");
         }
-        auto res = m_sharedMemoryApi->allOf(m_segmentName.value());
+        auto res = m_sharedMemoryApi->allSegmentsOf(m_segmentName.value());
         printSegments(res);
         m_segmentName->clear();
         break;
+      }
+      case ShowRepositories: {
+        if (!m_segmentName.has_value()) {
+          m_segmentName = std::make_optional(".*");
+        }
+        if (!m_repositoryName.has_value()) {
+          m_repositoryName = std::make_optional(".*");
+        }
+        auto res = m_sharedMemoryApi->allRepositoriesOf(
+            m_repositoryName.value(), m_segmentName.value());
+        printRepositories(res);
+        m_segmentName->clear();
+        m_repositoryName->clear();
       }
       default:
         break;
@@ -68,4 +88,18 @@ bool SharedMemoryCliComponent::onMenu(const std::string & /*component*/) {
 }
 void SharedMemoryCliComponent::onHelp() {
   m_commandParser.printHelp(getName(), getAlias(), m_description);
+}
+void SharedMemoryCliComponent::printRepositories(
+    const std::vector<SharedMemoryRepositoryDto> &repositories) {
+  tabulate::Table table;
+  table.add_row(
+      {"No.", "SegmentName", "RepositoryName", "Size", "Type", "Version"});
+  std::size_t count = 0;
+  for (const auto &iter : repositories) {
+    table.add_row({std::to_string(++count), iter.getSegmentName(),
+                   iter.getName(), std::to_string(iter.getSize()),
+                   std::string(magic_enum::enum_name<>(iter.getType())),
+                   std::to_string(iter.getCurrentVersion())});
+  }
+  std::cout << table.str() << "\n";
 }

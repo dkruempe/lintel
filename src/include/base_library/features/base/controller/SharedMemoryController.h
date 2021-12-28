@@ -2,12 +2,15 @@
 #define CPP_BASE_LIBRARY_SHAREDMEMORYCONTROLLER_H
 
 #include "base_library/core/services/SharedMemoryService.h"
+#include "base_library/features/base/repositories/SharedMemoryRepository.h"
 #include "base_library/features/http/service/Controller.h"
 
 class SharedMemoryController : public Controller {
  private:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
   std::shared_ptr<SharedMemorySegmentManager> m_sharedMemorySegmentManager;
+  std::vector<std::shared_ptr<SharedMemoryRepository>>
+      m_sharedMemoryRepositories;
   Group m_adminGroup;
   Group m_userGroup;
 
@@ -36,8 +39,8 @@ class SharedMemoryController : public Controller {
    * - shows linked SharedMemorySegment
    * - give possibility to search for all repositories of given segment
    */
-  // ADD_HANDLER_METHOD(R"(/shm/repositories/([^\/]+)/([^\/]+))", Get,
-  //                    allRepositoriesOf);
+  ADD_HANDLER_METHOD(R"(/shm/repositories/([^\/]+)/([^\/]+))", Get,
+                     allRepositoriesOf);
   /*
    * TODO implement abstract import / export to SharedMemoryRepository
    * - general import / export to json file
@@ -49,7 +52,8 @@ class SharedMemoryController : public Controller {
   SharedMemoryController(
       const std::shared_ptr<AuthService> &authServicie,
       std::shared_ptr<SharedMemoryService> sharedMemoryService,
-      std::shared_ptr<SharedMemorySegmentManager> sharedMemorySegmentManager);
+      std::shared_ptr<SharedMemorySegmentManager> sharedMemorySegmentManager,
+      std::vector<std::shared_ptr<SharedMemoryRepository>> sharedMemoryRepositories);
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYCONTROLLER_H

@@ -15,13 +15,16 @@ class SharedMemoryCliComponent : public CommandLineComponent {
   std::shared_ptr<SharedMemoryApi> m_sharedMemoryApi;
 
   // Commands
-  enum Commands { Undefined, ShowSegments };
+  enum Commands { Undefined, ShowSegments, ShowRepositories };
 
   // Flags
   std::optional<std::string> m_segmentName;
+  std::optional<std::string> m_repositoryName;
+
   CommandParser<Commands, Undefined> m_commandParser;
   static void printSegments(
       const std::vector<SharedMemorySegmentDto> &segments);
+  static void printRepositories(const std::vector<SharedMemoryRepositoryDto> &repositories);
 
  public:
   explicit SharedMemoryCliComponent(

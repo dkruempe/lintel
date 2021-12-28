@@ -8,6 +8,14 @@
 #include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/core/utils/TypeName.h"
 
+enum SharedMemoryType {
+  Map,
+  Set,
+  Vector,
+  Array,
+  Object
+};
+
 class SharedMemoryRepository {
  private:
   std::shared_ptr<SharedMemorySegment> m_sharedMemorySegment;
@@ -26,6 +34,7 @@ class SharedMemoryRepository {
   [[nodiscard]] std::size_t getSizeOfData() const;
   [[nodiscard]] const std::string &getSharedMemoryRepository() const;
   [[nodiscard]] int32_t getCodeVersion() const;
+  virtual SharedMemoryType getType() const = 0;
 
   virtual ~SharedMemoryRepository() = default;
 
@@ -54,6 +63,10 @@ class SharedMemorySetRepository : public SharedMemoryRepository {
         m_set(sharedMemoryService->constructSet<DATA>(segment,
                                                       type_name<DATA>())),
         m_sharedMemoryService(sharedMemoryService) {}
+
+  [[nodiscard]] SharedMemoryType getType() const {
+    return SharedMemoryType::Set;
+  }
 };
 
 template <typename DATA, std::size_t MaxSize>
@@ -74,6 +87,9 @@ class SharedMemoryArrayRepository : public SharedMemoryRepository {
         m_array(sharedMemoryService->constructArray<DATA, MaxSize>(
             segment, type_name<DATA>())),
         m_sharedMemoryService(sharedMemoryService) {}
+  [[nodiscard]] SharedMemoryType getType() const {
+    return SharedMemoryType::Array;
+  }
 };
 
 template <typename DATA>
@@ -98,6 +114,9 @@ class SharedMemoryVectorRepository : public SharedMemoryRepository {
         m_vector(sharedMemoryService->constructVector<DATA>(segment,
                                                             type_name<DATA>())),
         m_sharedMemoryService(sharedMemoryService) {}
+  [[nodiscard]] SharedMemoryType getType() const {
+    return SharedMemoryType::Vector;
+  }
 };
 
 template <typename KEY, typename VALUE>
@@ -125,6 +144,9 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
         m_sharedMemoryService(sharedMemoryService) {
     LOG_TRACE("map loaded with size of {}", m_map.size());
   }
+  [[nodiscard]] SharedMemoryType getType() const {
+    return SharedMemoryType::Map;
+  }
 };
 
 template <typename DATA>
@@ -145,6 +167,9 @@ class SharedMemoryObjectRepository : public SharedMemoryRepository {
         m_data(sharedMemoryService->constructObject<DATA>(segment,
                                                           type_name<DATA>())),
         m_sharedMemoryService(sharedMemoryService) {}
+  [[nodiscard]] SharedMemoryType getType() const {
+    return SharedMemoryType::Object;
+  }
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYREPOSITORY_H
