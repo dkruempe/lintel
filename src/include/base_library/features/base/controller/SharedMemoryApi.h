@@ -15,8 +15,11 @@ class SharedMemoryApi {
   explicit SharedMemoryApi(
       const std::shared_ptr<ClientProvider> &clientProvider);
 
+  // segment
   std::vector<SharedMemorySegmentDto> allSegmentsOf(
       const std::string &segmentName = ".*");
+  void shrinkOf(const std::string &segmentName);
+  // repositories
   std::vector<SharedMemoryRepositoryDto> allRepositoriesOf(
       const std::string &repositoryName = ".*",
       const std::string &segmentName = ".*");

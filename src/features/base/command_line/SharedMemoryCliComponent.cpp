@@ -19,6 +19,10 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(
           .addArgument({"--repository-name", "-r"}, &m_repositoryName,
                        "Repository Name or pattern matching"),
       ShowRepositories);
+  m_commandParser.addCommand(Command("shrink_segment", "Shrink segment")
+                                 .addArgument({"--segment-name", "-s"},
+                                              &m_segmentName, "Segment Name"),
+                             ShrinkSegment);
 }
 void SharedMemoryCliComponent::onCommand(
     const UserDto & /*userDto*/, const std::string &input,
@@ -47,6 +51,16 @@ void SharedMemoryCliComponent::onCommand(
         printRepositories(res);
         m_segmentName->clear();
         m_repositoryName->clear();
+        break;
+      }
+      case ShrinkSegment: {
+        if (!m_segmentName.has_value()) {
+          std::cout << "ERROR: please set segment name\n";
+          return;
+        }
+        m_sharedMemoryApi->shrinkOf(m_segmentName.value());
+        m_segmentName->clear();
+        break;
       }
       default:
         break;

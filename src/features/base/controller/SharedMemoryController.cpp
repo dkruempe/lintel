@@ -114,3 +114,36 @@ void SharedMemoryController::allRepositoriesOfGet(
     }
   }
 }
+void SharedMemoryController::shrinkSegmentOfPut(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& user) {
+  // no user loggedin => Unauthorized
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  const std::string segmentName = request.matches[1];
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      auto segment = m_sharedMemorySegmentManager->of(segmentName);
+      if (segment == nullptr) {
+        response.status = HttpStatusCodes::Forbidden;
+        response.set_content("", contentType.getName().c_str());
+        return;
+      }
+      m_sharedMemoryService->shrinkOf(segment);
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
