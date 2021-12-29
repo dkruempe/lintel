@@ -22,11 +22,11 @@ class SharedMemoryController : public Controller {
   /**
    * shrinks size of segment of given name
    */
-  ADD_HANDLER_METHOD(R"(/shm/segments/([^\/]+))", Put, shrinkSegmentOf);
+  ADD_HANDLER_METHOD(R"(/shm/segments/shrink/([^\/]+))", Put, shrinkSegmentOf);
   /**
    * extends size of segment of given name
    */
-  // ADD_HANDLER_METHOD(R"(/shm/segments/([^\/]+))", Put, growSegmentOf);
+  ADD_HANDLER_METHOD(R"(/shm/segments/grow/([^\/]+)/([^\/]+))", Put, growSegmentOf);
   /**
    * Shows all information about giving segment
    */

@@ -35,8 +35,8 @@ std::vector<SharedMemorySegmentDto> SharedMemoryApi::allSegmentsOf(
   return sharedMemorySegmentsDto.getSegments();
 }
 void SharedMemoryApi::shrinkOf(const std::string& segmentName) {
-  auto result =
-      m_client->put("/shm/segments/" + segmentName, "", "application/json");
+  auto result = m_client->put("/shm/segments/shrink/" + segmentName, "",
+                              "application/json");
   HttpStatusCodes status(result->status);
   switch (status) {
     case HttpStatusCodes::Unauthorized:
@@ -73,4 +73,21 @@ std::vector<SharedMemoryRepositoryDto> SharedMemoryApi::allRepositoriesOf(
     return {};
   }
   return sharedMemoryRepositoriesDto.getRepositories();
+}
+void SharedMemoryApi::growOf(const std::string& segmentName,
+                             const std::string& sizeStr) {
+  auto result =
+      m_client->put("/shm/segments/grow/" + segmentName + "/" + sizeStr, "",
+                    "application/json");
+  HttpStatusCodes status(result->status);
+  switch (status) {
+    case HttpStatusCodes::Unauthorized:
+      throw HttpUnauthorizedException();
+    case HttpStatusCodes::OK:
+      break;
+    default:
+      LOG_ERROR("error {}", status.getCode());
+      return;
+  }
+  LOG_TRACE("successfully shrinkg segment {}", segmentName);
 }

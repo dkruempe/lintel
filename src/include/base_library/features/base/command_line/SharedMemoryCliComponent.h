@@ -15,10 +15,11 @@ class SharedMemoryCliComponent : public CommandLineComponent {
   std::shared_ptr<SharedMemoryApi> m_sharedMemoryApi;
 
   // Commands
-  enum Commands { Undefined, ShowSegments, ShowRepositories, ShrinkSegment };
+  enum Commands { Undefined, ShowSegments, ShowRepositories, ShrinkSegment, GrowSegment };
 
   // Flags
   std::optional<std::string> m_segmentName;
+  std::optional<std::string> m_size;
   std::optional<std::string> m_repositoryName;
 
   CommandParser<Commands, Undefined> m_commandParser;

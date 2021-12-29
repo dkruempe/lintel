@@ -19,6 +19,7 @@ class SharedMemoryApi {
   std::vector<SharedMemorySegmentDto> allSegmentsOf(
       const std::string &segmentName = ".*");
   void shrinkOf(const std::string &segmentName);
+  void growOf(const std::string &segmentName, const std::string &sizeStr);
   // repositories
   std::vector<SharedMemoryRepositoryDto> allRepositoriesOf(
       const std::string &repositoryName = ".*",

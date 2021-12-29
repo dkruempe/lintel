@@ -23,6 +23,11 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(
                                  .addArgument({"--segment-name", "-s"},
                                               &m_segmentName, "Segment Name"),
                              ShrinkSegment);
+  m_commandParser.addCommand(
+      Command("grow_segment", "Shrink segment")
+          .addArgument({"--segment-name", "-s"}, &m_segmentName, "Segment Name")
+          .addArgument({"--grow-size", "-g"}, &m_size, "Grow Size"),
+      GrowSegment);
 }
 void SharedMemoryCliComponent::onCommand(
     const UserDto & /*userDto*/, const std::string &input,
@@ -59,6 +64,19 @@ void SharedMemoryCliComponent::onCommand(
           return;
         }
         m_sharedMemoryApi->shrinkOf(m_segmentName.value());
+        m_segmentName->clear();
+        break;
+      }
+      case GrowSegment: {
+        if (!m_segmentName.has_value()) {
+          std::cout << "ERROR: please set segment name\n";
+          return;
+        }
+        if (!m_size.has_value()) {
+          std::cout << "ERROR: please set grow size\n";
+          return;
+        }
+        m_sharedMemoryApi->growOf(m_segmentName.value(), m_size.value());
         m_segmentName->clear();
         break;
       }

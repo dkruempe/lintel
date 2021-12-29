@@ -2,6 +2,7 @@
 
 #include <utility>
 
+#include "base_library/core/utils/MemorySize.h"
 #include "base_library/features/base/controller/SharedMemoryRepsoitoriesDto.h"
 #include "base_library/features/base/controller/SharedMemorySegmentDto.h"
 #include "base_library/features/base/controller/SharedMemorySegmentsDto.h"
@@ -138,6 +139,41 @@ void SharedMemoryController::shrinkSegmentOfPut(
         return;
       }
       m_sharedMemoryService->shrinkOf(segment);
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
+void SharedMemoryController::growSegmentOfPut(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& user) {
+  // no user loggedin => Unauthorized
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  const std::string segmentName = request.matches[1];
+  const std::string sizeStr = request.matches[2];
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      std::size_t growSize = MemorySize::deserialize(sizeStr);
+      auto segment = m_sharedMemorySegmentManager->of(segmentName);
+      if (segment == nullptr) {
+        response.status = HttpStatusCodes::Forbidden;
+        response.set_content("", contentType.getName().c_str());
+        return;
+      }
+      m_sharedMemoryService->growOf(segment, growSize);
       break;
     }
     default: {
