@@ -27,10 +27,6 @@ class SharedMemoryController : public Controller {
    * extends size of segment of given name
    */
   ADD_HANDLER_METHOD(R"(/shm/segments/grow/([^\/]+)/([^\/]+))", Put, growSegmentOf);
-  /**
-   * Shows all information about giving segment
-   */
-  // ADD_HANDLER_METHOD(R"(/shm/segment/([^\/]+))", Get, segmentOf);
 
   // Shared Memory Repository functions
   /**
