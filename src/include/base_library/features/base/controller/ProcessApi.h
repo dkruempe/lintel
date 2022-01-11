@@ -1,9 +1,9 @@
 #ifndef CPP_BASE_LIBRARY_PROCESSAPI_H
 #define CPP_BASE_LIBRARY_PROCESSAPI_H
 
+#include "base_library/features/base/controller/ProcessGroupDto.h"
 #include "base_library/features/base/controller/ProcessInfoDto.h"
 #include "base_library/features/http/provider/ClientProvider.h"
-#include "ProcessGroupDto.h"
 
 class ProcessApi {
  private:

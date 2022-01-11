@@ -1,7 +1,6 @@
 #ifndef CPP_BASE_LIBRARY_PROCESSINFODTO_H
 #define CPP_BASE_LIBRARY_PROCESSINFODTO_H
 
-#include <boost/process/detail/child_decl.hpp>
 #include <memory>
 #include <string>
 

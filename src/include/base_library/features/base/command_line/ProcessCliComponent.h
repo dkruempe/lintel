@@ -1,9 +1,9 @@
 #ifndef CPP_BASE_LIBRARY_PROCESSCLICOMPONENT_H
 #define CPP_BASE_LIBRARY_PROCESSCLICOMPONENT_H
 
-#include <base_library/features/base/controller/ProcessApi.h>
-#include <base_library/features/cli/models/CommandLineComponent.h>
-#include <base_library/features/cli/models/CommandParser.h>
+#include "base_library/features/base/controller/ProcessApi.h"
+#include "base_library/features/cli/models/CommandLineComponent.h"
+#include "base_library/features/cli/models/CommandParser.h"
 class ProcessCliComponent : public CommandLineComponent {
  private:
   static constexpr std::string_view m_name = "Process";

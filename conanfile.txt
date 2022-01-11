@@ -6,7 +6,7 @@ tinyxml2/9.0.0
 magic_enum/0.7.3
 libpq/13.3
 sqlite3/3.36.0
-cpp-httplib/0.9.5
+cpp-httplib/0.10.1
 openssl/1.1.1l
 boost/1.77.0
 rapidjson/cci.20200410
