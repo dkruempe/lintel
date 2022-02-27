@@ -7,7 +7,7 @@ UserManagementCliComponent::UserManagementCliComponent(
     std::shared_ptr<UserApi> userApi)
     : CommandLineComponent(m_name, m_alias), m_userApi(std::move(userApi)) {
   m_commandParser.addCommand(
-      Command("sag", "Show all available groups!")
+      Command("show_groups", "Show all available groups!")
           .addArgument(
               {"--group-name", "-g"}, &m_groupName,
               "Limits search result to given group name or pattern matching",
@@ -16,7 +16,7 @@ UserManagementCliComponent::UserManagementCliComponent(
                        "Limits search result to virtual or non virtual groups"),
       AllGroups);
   m_commandParser.addCommand(
-      Command("sau", "Show all available users!")
+      Command("show_users", "Show all available users!")
           .addArgument(
               {"--user-name", "-u"}, &m_userName,
               "Limits search result to given user name or pattern matching",
