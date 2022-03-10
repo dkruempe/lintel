@@ -1,18 +1,17 @@
 [requires]
-catch2/2.13.0
-fmt/8.0.1
+catch2/2.13.8
+fmt/8.1.1
 spdlog/1.9.2
 tinyxml2/9.0.0
 magic_enum/0.7.3
-libpq/13.3
-sqlite3/3.36.0
+libpq/13.4
+sqlite3/3.37.2
 cpp-httplib/0.10.1
-openssl/1.1.1l
-boost/1.77.0
-rapidjson/cci.20200410
+openssl/1.1.1m
+boost/1.78.0
+rapidjson/cci.20211112
 tabulate/1.4
 date/3.0.1
-onetbb/2021.3.0
 
 [generators]
 cmake_find_package
