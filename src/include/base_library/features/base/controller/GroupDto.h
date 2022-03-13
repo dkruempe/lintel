@@ -28,7 +28,7 @@ class GroupDto : public JsonSerializable {
   bool deserialize(const rapidjson::Value &obj) override;
   [[nodiscard]] const std::string &getGroupName() const;
   [[nodiscard]] bool isVirtual() const;
-  std::vector<GroupDto> getSubGroups() const;
+  [[nodiscard]] std::vector<GroupDto> getSubGroups() const;
 };
 
 class GroupsDto : public JsonSerializable {
