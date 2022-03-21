@@ -11,7 +11,7 @@ class GroupsDto;
 class GroupDto : public JsonSerializable {
  private:
   std::string m_groupName;
-  std::shared_ptr<GroupsDto> m_groups;
+  std::vector<GroupDto> m_groups;
   bool m_isVirtual;
 
   static struct Shapes {
@@ -28,7 +28,7 @@ class GroupDto : public JsonSerializable {
   bool deserialize(const rapidjson::Value &obj) override;
   [[nodiscard]] const std::string &getGroupName() const;
   [[nodiscard]] bool isVirtual() const;
-  [[nodiscard]] std::vector<GroupDto> getSubGroups() const;
+  [[nodiscard]] const std::vector<GroupDto>& getSubGroups() const;
 };
 
 class GroupsDto : public JsonSerializable {
@@ -39,6 +39,7 @@ class GroupsDto : public JsonSerializable {
 
  public:
   explicit GroupsDto(const std::vector<Group> &groups);
+  explicit GroupsDto(std::vector<GroupDto> groups);
   GroupsDto() = default;
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
