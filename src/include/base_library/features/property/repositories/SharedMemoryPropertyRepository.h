@@ -7,13 +7,101 @@
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
-struct PropertyData {
+class PropertyData : public JsonSerializable {
+ private:
+  static struct Shapes {
+    const std::string PROCESS_NAME = "process_name";
+    const std::string CLASS_NAME = "class_name";
+    const std::string INSTANCE_NAME = "instance_name";
+    const std::string NAME = "name";
+    const std::string VALUE = "value";
+    const std::string TYPE = "type";
+  } m_shape;
+
+ public:
+  static int32_t getSize() {
+    return sizeof(SharedMemoryService::ShmString) * 6;
+  }
   SharedMemoryService::ShmString m_processName;
   SharedMemoryService::ShmString m_className;
   SharedMemoryService::ShmString m_instanceName;
   SharedMemoryService::ShmString m_name;
   SharedMemoryService::ShmString m_value;
   SharedMemoryService::ShmString m_type;
+  PropertyData(
+      SharedMemoryService::ShmString processName,
+      SharedMemoryService::ShmString className,
+      SharedMemoryService::ShmString instanceName,
+      SharedMemoryService::ShmString name,
+      SharedMemoryService::ShmString value,
+      SharedMemoryService::ShmString type);
+  void serialize(
+      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+    writer->StartObject();
+    // PROCESS NAME
+    writer->String(m_shape.PROCESS_NAME.c_str());
+    writer->String(m_processName.c_str());
+    writer->String(m_shape.CLASS_NAME.c_str());
+    writer->String(m_className.c_str());
+    writer->String(m_shape.INSTANCE_NAME.c_str());
+    writer->String(m_instanceName.c_str());
+    writer->String(m_shape.NAME.c_str());
+    writer->String(m_name.c_str());
+    writer->String(m_shape.VALUE.c_str());
+    writer->String(m_value.c_str());
+    writer->String(m_shape.TYPE.c_str());
+    writer->String(m_type.c_str());
+    writer->EndObject();
+  }
+  bool deserialize(const rapidjson::Value &obj) override {
+    bool success = true;
+    // PROCESS_NAME
+    if (obj.HasMember(m_shape.PROCESS_NAME.c_str())) {
+      // m_processName = obj[m_shape.PROCESS_NAME.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization",
+                m_shape.PROCESS_NAME.c_str());
+    }
+    // CLASS_NAME
+    if (obj.HasMember(m_shape.CLASS_NAME.c_str())) {
+      // m_className = obj[m_shape.CLASS_NAME.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization",
+                m_shape.CLASS_NAME.c_str());
+    }
+    // INSTANCE_NAME
+    if (obj.HasMember(m_shape.INSTANCE_NAME.c_str())) {
+      // m_instanceName = obj[m_shape.INSTANCE_NAME.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization",
+                m_shape.INSTANCE_NAME.c_str());
+    }
+    // NAME
+    if (obj.HasMember(m_shape.NAME.c_str())) {
+      // m_name = obj[m_shape.NAME.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
+    }
+    // VALUE
+    if (obj.HasMember(m_shape.VALUE.c_str())) {
+      // m_value = obj[m_shape.VALUE.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization", m_shape.VALUE.c_str());
+    }
+    // TYPE
+    if (obj.HasMember(m_shape.TYPE.c_str())) {
+      // m_type = obj[m_shape.TYPE.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization", m_shape.TYPE.c_str());
+    }
+    return success;
+  }
 };
 
 class SharedMemoryPropertyRepository

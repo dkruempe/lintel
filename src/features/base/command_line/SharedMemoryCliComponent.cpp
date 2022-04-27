@@ -1,6 +1,7 @@
 #include "base_library/features/base/command_line/SharedMemoryCliComponent.h"
 
 #include <base_library/core/utils/MemorySize.h>
+#include <rapidjson/prettywriter.h>
 
 #include <tabulate/table.hpp>
 SharedMemoryCliComponent::SharedMemoryCliComponent(
@@ -28,6 +29,11 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(
           .addArgument({"--segment-name", "-s"}, &m_segmentName, "Segment Name")
           .addArgument({"--grow-size", "-g"}, &m_size, "Grow Size"),
       GrowSegment);
+  m_commandParser.addCommand(
+      Command("export_repository", "Export Repository to json")
+          .addArgument({"--repository-name", "-r"}, &m_repositoryName,
+                       "Repository name"),
+      ExportRepository);
 }
 void SharedMemoryCliComponent::onCommand(
     const UserDto & /*userDto*/, const std::string &input,
@@ -78,6 +84,22 @@ void SharedMemoryCliComponent::onCommand(
         }
         m_sharedMemoryApi->growOf(m_segmentName.value(), m_size.value());
         m_segmentName->clear();
+        break;
+      }
+      case ExportRepository: {
+        if (!m_repositoryName.has_value()) {
+          std::cout << "ERROR: please set repository name\n";
+          return;
+        }
+        std::string result =
+            m_sharedMemoryApi->repositoryOf(m_repositoryName.value());
+        rapidjson::Document document;
+        document.Parse(result.c_str());
+        rapidjson::StringBuffer stringBuffer;
+        rapidjson::PrettyWriter writer(stringBuffer);
+        document.Accept(writer);
+        std::cout << stringBuffer.GetString() << "\n";
+        m_repositoryName->clear();
         break;
       }
       default:

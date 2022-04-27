@@ -23,6 +23,42 @@ SharedMemoryController::SharedMemoryController(
   add(m_userGroup);
 }
 
+void SharedMemoryController::exportRepositoryOfGet(
+    const httplib::Request& request, httplib::Response& response,
+    const ContentType& contentType, const std::optional<UserToken>& user) {
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  if (!user->m_user.has(m_userGroup) || !user->m_user.has(m_adminGroup)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
+  LOG_TRACE("Called export");
+  const std::string respositoryName = request.matches[1];
+  switch (contentType) {
+    case ContentType::ApplicationJson: {
+      LOG_TRACE("start searching repository {}", respositoryName);
+      for (auto& iter : m_sharedMemoryRepositories) {
+        if (iter->getSharedMemoryRepository() != respositoryName) {
+          LOG_TRACE("{} != {}", iter->getSharedMemoryRepository(),
+                    respositoryName);
+          continue;
+        }
+        LOG_TRACE("found repository");
+        response.set_content(iter->serialize(), contentType.getName().c_str());
+      }
+      break;
+    }
+    default: {
+      response.status = HttpStatusCodes::Forbidden;
+      response.set_content("", contentType.getName().c_str());
+      break;
+    }
+  }
+}
 void SharedMemoryController::allSegmentsOfGet(
     const httplib::Request& request, httplib::Response& response,
     const ContentType& contentType, const std::optional<UserToken>& user) {

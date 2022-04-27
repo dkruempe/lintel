@@ -5,10 +5,24 @@
 #include <boost/interprocess/sync/scoped_lock.hpp>
 #include <boost/interprocess/sync/sharable_lock.hpp>
 #include <regex>
-#include <sstream>
 
 #include "base_library/features/property/factories/PropertyFactory.h"
 #include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
+
+PropertyData::Shapes PropertyData::m_shape{};
+
+PropertyData::PropertyData(SharedMemoryService::ShmString processName,
+                           SharedMemoryService::ShmString className,
+                           SharedMemoryService::ShmString instanceName,
+                           SharedMemoryService::ShmString name,
+                           SharedMemoryService::ShmString value,
+                           SharedMemoryService::ShmString type)
+    : m_processName(processName),
+      m_className(className),
+      m_instanceName(instanceName),
+      m_name(name),
+      m_value(value),
+      m_type(type) {}
 
 SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
     const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
@@ -18,7 +32,7 @@ SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
     std::shared_ptr<ProcessName> processName)
     : SharedMemoryMapRepository<SharedMemoryService::ShmString, PropertyData>(
           sharedMemoryService, sharedMemorySegmentManager->of("shm_property"),
-          m_version),
+          m_version, PropertyData::getSize()),
       PropertyRepository(PropertyRepositoryType::SHM_REPOSITORY, configuration),
       m_processName(std::move(processName)),
       m_upgradableMutex(boost::interprocess::open_or_create,
@@ -50,16 +64,19 @@ void SharedMemoryPropertyRepository::save(
     }
     SharedMemoryService::ShmString id = m_sharedMemoryService->constructString(
         segment, property->getIdentifier());
-    PropertyData propertyData{
+    PropertyData propertyData(
         m_sharedMemoryService->constructString(segment,
                                                property->getProcessName()),
+
         m_sharedMemoryService->constructString(segment,
                                                property->getClassName()),
+
         m_sharedMemoryService->constructString(segment,
                                                property->getInstanceName()),
+
         m_sharedMemoryService->constructString(segment, property->getName()),
         m_sharedMemoryService->constructString(segment, property->toString()),
-        m_sharedMemoryService->constructString(segment, property->getType())};
+        m_sharedMemoryService->constructString(segment, property->getType()));
     getMap().insert({id, propertyData});
   }
   LOG_TRACE("finished save properties {}", getMap().size());
