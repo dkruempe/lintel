@@ -97,6 +97,7 @@ void StartupBuilder::start() {
   // VIII initialize services
   std::shared_ptr<InitializeService> initializeService =
       m_container->resolve<InitializeService>();
+  initializeService->onInitialize();
   LOG_INFO("{} finished initialization", m_name->getProcessName());
   // IX wait for signal to shutdown
   std::mutex mutex;

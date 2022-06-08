@@ -2,13 +2,14 @@
 
 #include <iostream>
 
-#include "base_library/core/services/LoggerService.h"
 void TerminalService::log(const std::string &text) {
-  std::cout << std::string(m_position, '\b') << text << std::flush;
+  if (!m_hideChars) {
+    std::cout << std::string(m_position, '\b') << text << std::flush;
+  }
 
   // if newLine is shorter then currentLine, we have
   // to clear the rest of the string
-  if (text.size() < m_currentLine.size()) {
+  if (text.size() < m_currentLine.size() && !m_hideChars) {
     std::cout << std::string(m_currentLine.size() - text.size(), ' ');
     // and go back
     std::cout << std::string(m_currentLine.size() - text.size(), '\b')
@@ -18,6 +19,7 @@ void TerminalService::log(const std::string &text) {
   m_currentLine = text;
   m_position = m_currentLine.size();
 }
+
 SymbolEvent TerminalService::onKeyPressed(KeyEvent k) {
   switch (k.first) {
     case KeyType::CtrlC:
@@ -26,10 +28,10 @@ SymbolEvent TerminalService::onKeyPressed(KeyEvent k) {
       return std::make_pair(Symbol::Eof, std::string{});
       break;
     case KeyType::Backspace: {
-      if (m_position == 0) break;
-
+      if (m_position == 0) {
+        break;
+      }
       --m_position;
-
       const auto pos = static_cast<std::string::difference_type>(m_position);
       // remove the char from buffer
       m_currentLine.erase(m_currentLine.begin() + pos);
@@ -52,16 +54,18 @@ SymbolEvent TerminalService::onKeyPressed(KeyEvent k) {
       return std::make_pair(Symbol::Down, std::string{});
       break;
     case KeyType::Left:
-      if (m_position > 0) {
-        std::cout << '\b' << std::flush;
-        --m_position;
+      if (m_position <= 0) {
+        break;
       }
+      --m_position;
+      std::cout << '\b' << std::flush;
       break;
     case KeyType::Right:
-      if (m_position < m_currentLine.size()) {
-        std::cout << m_currentLine[m_position] << std::flush;
-        ++m_position;
+      if (m_position >= m_currentLine.size()) {
+        break;
       }
+      std::cout << m_currentLine[m_position] << std::flush;
+      ++m_position;
       break;
     case KeyType::Ret: {
       std::cout << "\r\n";
@@ -69,28 +73,29 @@ SymbolEvent TerminalService::onKeyPressed(KeyEvent k) {
       m_currentLine.clear();
       m_position = 0;
       return std::make_pair(Symbol::Command, cmd);
-    } break;
+    }
     case KeyType::Ascii: {
       const char c = static_cast<char>(k.second);
       if (c == '\t') {
         return std::make_pair(Symbol::Tab, m_currentLine);
-      } else {
-        const auto pos = static_cast<std::string::difference_type>(m_position);
-        // output the new char:
-        std::cout << c;
-        // and the rest of the string:
-        std::cout << std::string(m_currentLine.begin() + pos,
-                                 m_currentLine.end());
-
-        // go back to the original position
-        std::cout << std::string(m_currentLine.size() - m_position, '\b')
-                  << std::flush;
-
-        // update the buffer and cursor position:
-        m_currentLine.insert(m_currentLine.begin() + pos, c);
-        ++m_position;
       }
+      const auto pos = static_cast<std::string::difference_type>(m_position);
+      // output the new char:
+      if (m_hideChars) {
+        std::cout << '*';
+      } else {
+        std::cout << c;
+      }
+      // and the rest of the string:
+      std::cout << std::string(m_currentLine.begin() + pos,
+                               m_currentLine.end());
 
+      // go back to the original position
+      std::cout << std::string(m_currentLine.size() - m_position, '\b')
+                << std::flush;
+      // update the buffer and cursor position:
+      m_currentLine.insert(m_currentLine.begin() + pos, c);
+      ++m_position;
       break;
     }
     case KeyType::Canc: {
@@ -126,11 +131,13 @@ SymbolEvent TerminalService::onKeyPressed(KeyEvent k) {
       break;
     }
     case KeyType::Ignored:
-      // TODO
       break;
   }
 
   return std::make_pair(Symbol::Nothing, std::string());
 }
 void TerminalService::resetCursor() { m_position = 0; }
+
 const std::string &TerminalService::getLine() { return m_currentLine; }
+void TerminalService::enableHideChars() { m_hideChars = true; }
+void TerminalService::disableHideChars() { m_hideChars = false; }

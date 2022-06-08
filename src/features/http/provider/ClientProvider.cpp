@@ -17,7 +17,7 @@ std::shared_ptr<Client> ClientProvider::build(
     if (httpEntry->isServer()) {
       continue;
     }
-    client = std::make_shared<Client>(*httpEntry->getClientConfiguration());
+    client = std::make_shared<Client>(httpEntry->getClientConfiguration());
   }
   return client;
 }

@@ -1,5 +1,7 @@
 #include "base_library/features/cli/services/AuthCliService.h"
 
+#include <base_library/core/services/SignalService.h>
+
 #include <utility>
 
 #include "base_library/features/cli/utils/CommandLineUtils.h"
@@ -15,20 +17,23 @@ AuthCliService::AuthCliService(
       m_inputService(std::move(inputService)),
       m_terminalService(std::move(terminalService)),
       m_authArgumentProvider(std::move(authArgumentProvider)) {}
+
 UserDto AuthCliService::onLogin() {
   bool success = false;
   std::optional<UserDto> optUserDto;
   std::string userName;
+  std::string password;
   auto optUserName = m_authArgumentProvider->getUserName();
   if (optUserName.has_value()) {
     userName = optUserName.value();
     LOG_TRACE("set user_name {}", userName);
   }
+
   while (!success) {
     if (!optUserName.has_value()) {
       userName.clear();
     }
-    std::string password;
+    password.clear();
     if (userName.empty()) {
       std::cout << "Please enter the username: ";
       Symbol event = Symbol::Nothing;
@@ -42,7 +47,22 @@ UserDto AuthCliService::onLogin() {
       }
     }
     if (!userName.empty()) {
-      password = readPassword();
+      Symbol event = Symbol::Nothing;
+      std::cout << "Please enter Password : ";
+      m_terminalService->resetCursor();
+      m_terminalService->enableHideChars();
+      while (event != Symbol::Command && password.empty()) {
+        KeyEvent keyPressed = m_inputService->onRead();
+        SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
+        event = symbolEvent.first;
+        if (event == Symbol::Command) {
+          password = symbolEvent.second;
+        }
+      }
+      if (password.empty()) {
+        continue;
+      }
+      m_terminalService->disableHideChars();
       UserLoginDto userLoginDto(userName, password);
       optUserDto = m_userApi->loginOf(userLoginDto);
       if (optUserDto.has_value()) {

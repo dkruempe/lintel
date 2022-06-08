@@ -1,46 +1,46 @@
 #include "base_library/features/http/service/Client.h"
 
 std::shared_ptr<httplib::SSLClient> Client::buildSslClient(
-    const ClientConfiguration &clientConfiguration) {
-  if (clientConfiguration.getKeyFile().empty()) {
+    const std::shared_ptr<ClientConfiguration> &clientConfiguration) {
+  if (clientConfiguration->getKeyFile().empty()) {
     return nullptr;
   }
-  if (clientConfiguration.getCertFile().empty()) {
+  if (clientConfiguration->getCertFile().empty()) {
     return nullptr;
   }
   return std::make_shared<httplib::SSLClient>(
-      clientConfiguration.getHost().c_str(), clientConfiguration.getPort(),
-      clientConfiguration.getCertFile().c_str(),
-      clientConfiguration.getKeyFile().c_str());
+      clientConfiguration->getHost().c_str(), clientConfiguration->getPort(),
+      clientConfiguration->getCertFile().c_str(),
+      clientConfiguration->getKeyFile().c_str());
 }
-Client::Client(const ClientConfiguration &clientConfiguration)
+Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
     : m_sslClient(buildSslClient(clientConfiguration)),
       m_client(std::make_shared<httplib::Client>(
-          clientConfiguration.getHost().c_str(),
-          clientConfiguration.getPort())) {
-  if (clientConfiguration.getReadTimeOut().count() != 0) {
+          clientConfiguration->getHost().c_str(),
+          clientConfiguration->getPort())) {
+  if (clientConfiguration->getReadTimeOut().count() != 0) {
     if (isSslClient()) {
-      m_sslClient->set_read_timeout(clientConfiguration.getReadTimeOut());
+      m_sslClient->set_read_timeout(clientConfiguration->getReadTimeOut());
     } else {
-      m_client->set_read_timeout(clientConfiguration.getReadTimeOut());
+      m_client->set_read_timeout(clientConfiguration->getReadTimeOut());
     }
   }
 
-  if (clientConfiguration.getWriteTimeOut().count() != 0) {
+  if (clientConfiguration->getWriteTimeOut().count() != 0) {
     if (isSslClient()) {
-      m_sslClient->set_write_timeout(clientConfiguration.getWriteTimeOut());
+      m_sslClient->set_write_timeout(clientConfiguration->getWriteTimeOut());
     } else {
-      m_client->set_write_timeout(clientConfiguration.getWriteTimeOut());
+      m_client->set_write_timeout(clientConfiguration->getWriteTimeOut());
     }
   }
 
-  if (clientConfiguration.getConnectionTimeout().count() != 0) {
+  if (clientConfiguration->getConnectionTimeout().count() != 0) {
     if (isSslClient()) {
       m_sslClient->set_connection_timeout(
-          clientConfiguration.getConnectionTimeout());
+          clientConfiguration->getConnectionTimeout());
     } else {
       m_client->set_connection_timeout(
-          clientConfiguration.getConnectionTimeout());
+          clientConfiguration->getConnectionTimeout());
     }
   }
 }
@@ -517,7 +517,9 @@ void Client::setBasicAuth(const std::string &userName,
     m_client->set_basic_auth(userName.c_str(), password.c_str());
     return;
   }
-  m_sslClient->set_basic_auth(userName.c_str(), password.c_str());
+  if (m_sslClient != nullptr) {
+    m_sslClient->set_basic_auth(userName.c_str(), password.c_str());
+  }
 }
 
 void Client::setDigestAuth(const std::string &userName,
@@ -526,7 +528,9 @@ void Client::setDigestAuth(const std::string &userName,
     m_client->set_digest_auth(userName.c_str(), password.c_str());
     return;
   }
-  m_sslClient->set_digest_auth(userName.c_str(), password.c_str());
+  if (m_sslClient != nullptr) {
+    m_sslClient->set_digest_auth(userName.c_str(), password.c_str());
+  }
 }
 
 void Client::setBearerTokenAuth(const std::string &token) {
@@ -534,5 +538,7 @@ void Client::setBearerTokenAuth(const std::string &token) {
     m_client->set_bearer_token_auth(token.c_str());
     return;
   }
-  m_sslClient->set_bearer_token_auth(token.c_str());
+  if (m_sslClient != nullptr) {
+    m_sslClient->set_bearer_token_auth(token.c_str());
+  }
 }

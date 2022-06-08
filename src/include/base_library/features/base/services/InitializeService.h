@@ -14,6 +14,8 @@ class InitializeService {
   explicit InitializeService(
       const std::vector<std::shared_ptr<AbstractServiceInterface>>
           &abstractServices);
+
+  void onInitialize();
 };
 
 #endif  // PLC_INITIALIZESERVICE_H

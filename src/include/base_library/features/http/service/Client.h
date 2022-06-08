@@ -14,12 +14,12 @@ class Client {
   std::shared_ptr<httplib::Client> m_client;
 
   static std::shared_ptr<httplib::SSLClient> buildSslClient(
-      const ClientConfiguration &clientConfiguration);
+      const std::shared_ptr<ClientConfiguration> &clientConfiguration);
 
   bool isSslClient();
 
  public:
-  explicit Client(const ClientConfiguration &clientConfiguration);
+  explicit Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration);
 
   ~Client();
 
