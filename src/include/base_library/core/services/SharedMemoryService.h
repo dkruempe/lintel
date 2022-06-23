@@ -2,7 +2,6 @@
 #define CPP_BASE_LIBRARY_SHAREDMEMORYSERVICE_H
 
 #include <array>
-#include <atomic>
 #include <boost/interprocess/containers/map.hpp>
 #include <boost/interprocess/containers/set.hpp>
 #include <boost/interprocess/containers/string.hpp>
@@ -34,7 +33,7 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
   // variables
   std::map<std::string, MappedFile> m_segments;
   std::shared_ptr<SchedulerService> m_schedulerService;
-  std::atomic_bool m_running;
+  volatile bool m_running = true;
   // properties
   DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),
                   "schedule rate of user tokens checks in seconds", true);

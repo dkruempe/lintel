@@ -74,16 +74,23 @@ SharedMemoryService::ShmString SharedMemoryService::constructString(
   }
 }
 void SharedMemoryService::onInitialize() {
-  m_schedulerService->schedule_after(m_scheduleRate->getValue(),
-                                     [&]() { onCheck(); });
+  m_schedulerService->schedule_at_fixed_rate(m_scheduleRate->getValue(),
+                                             m_scheduleRate->getValue(),
+                                             [&]() { onCheck(); });
 }
 void SharedMemoryService::onCheck() {
+  if (!m_running) {
+    return;
+  }
   // check all segments if max size is reached
   for (const auto &[name, mappedFile] : m_segments) {
     const std::shared_ptr<SharedMemorySegment> &sharedMemorySegment =
         mappedFile.m_sharedMemorySegment;
     if (!sharedMemorySegment->isAutoExtend()) {
       continue;
+    }
+    if (!m_running) {
+      return;
     }
     const auto freeMemory = mappedFile.m_managedMappedFile->get_free_memory();
     if (freeMemory < m_autoExtendEpsilon->getValue()) {
@@ -94,9 +101,5 @@ void SharedMemoryService::onCheck() {
                sharedMemorySegment->getAutoExtendSize());
     }
   }
-  if (m_running) {
-    m_schedulerService->schedule_after(m_scheduleRate->getValue(),
-                                       [&]() { onCheck(); });
-  }
 }
-void SharedMemoryService::onShutdown() { m_running.store(false); }
+void SharedMemoryService::onShutdown() { m_running = false; }

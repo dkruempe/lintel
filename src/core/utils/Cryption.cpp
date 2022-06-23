@@ -130,7 +130,7 @@ std::string Cryption::decryption(const std::string &cipherText) {
 }
 std::string Cryption::hashOf(const std::string &text) {
   SHA512_CTX ctx;
-  std::vector<unsigned char> buffer(SHA512_DIGEST_LENGTH);
+  unsigned char buffer[SHA512_DIGEST_LENGTH + 1];
 
   std::size_t i = 0;
   for (const auto &token : text) {
@@ -138,12 +138,13 @@ std::string Cryption::hashOf(const std::string &text) {
   }
 
   SHA512_Init(&ctx);
-  SHA512_Update(&ctx, buffer.data(), text.length());
-  SHA512_Final(buffer.data(), &ctx);
+  SHA512_Update(&ctx, buffer, text.length());
+  SHA512_Final(buffer, &ctx);
   buffer[SHA512_DIGEST_LENGTH] = 0;
 
   std::string tokens;
-  for (auto &token : buffer) {
+  for (int j = 0; j < SHA512_DIGEST_LENGTH; j++) {
+    unsigned char token = buffer[j];
     tokens += fmt::format("{:02x}", static_cast<int>(token));
   }
   return tokens;

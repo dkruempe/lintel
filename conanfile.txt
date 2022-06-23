@@ -12,6 +12,7 @@ boost/1.78.0
 rapidjson/cci.20211112
 tabulate/1.4
 date/3.0.1
+zlib/1.2.12
 
 [generators]
 cmake_find_package
