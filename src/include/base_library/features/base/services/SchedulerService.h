@@ -36,7 +36,7 @@ class SchedulerService : public AbstractService<SchedulerService> {
   std::vector<Task> m_tasks;
   std::mutex m_mutex;
   std::condition_variable m_conditionVariable;
-  volatile bool m_exit;
+  volatile std::atomic<bool> m_exit;
   std::vector<std::thread> m_threads;
 
   void run();

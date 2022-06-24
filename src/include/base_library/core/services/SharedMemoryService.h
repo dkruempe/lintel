@@ -13,12 +13,12 @@
 #include <ostream>
 #include <set>
 #include <utility>
-#include <base_library/features/base/models/SharedMemorySegmentInfo.h>
 
 #include "base_library/core/exceptions/ShmSegmentNotFound.h"
 #include "base_library/core/models/SharedMemorySegment.h"
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/features/base/models/SharedMemorySegmentInfo.h"
 #include "base_library/features/base/services/SchedulerService.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 #include "base_library/features/property/models/Property.h"
@@ -33,7 +33,6 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
   // variables
   std::map<std::string, MappedFile> m_segments;
   std::shared_ptr<SchedulerService> m_schedulerService;
-  volatile bool m_running = true;
   // properties
   DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),
                   "schedule rate of user tokens checks in seconds", true);
@@ -45,7 +44,7 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
   static std::map<std::string, MappedFile> create(
       const std::vector<std::shared_ptr<SharedMemorySegment>> &set);
 
-  void onCheck();
+  void onCheck() const;
 
  public:
   using charAllocator = boost::interprocess::allocator<
@@ -61,7 +60,6 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
 
   ~SharedMemoryService() override = default;
   void onInitialize() override;
-  void onShutdown() override;
 
   /**
    * grows the size of the mentioned shared memory block

@@ -8,13 +8,13 @@ void SchedulerService::clear() {
 }
 
 void SchedulerService::run() {
-  while (!m_exit || !m_tasks.empty()) {
-    auto time = m_tasks.empty() ? std::chrono::steady_clock::now() +
-                                      std::chrono::seconds(60)
-                                : m_tasks.front().time;
+  while (!m_exit) {
     std::function<void()> funcTask;
     {
       std::unique_lock<std::mutex> lock(m_mutex);
+      auto time = m_tasks.empty() ? std::chrono::steady_clock::now() +
+                                        std::chrono::seconds(60)
+                                  : m_tasks.front().time;
 
       m_conditionVariable.wait_until(lock, time, [&] {
         return m_exit || (!m_tasks.empty() && m_tasks.front().time != time);
@@ -49,8 +49,10 @@ void SchedulerService::run() {
 void SchedulerService::onInitialize() {
   LOG_INFO("start Scheduler with {} threads", numberOfThreads->getValue());
   m_threads.reserve(static_cast<std::size_t>(numberOfThreads->getValue()));
+  std::function<void()> func = [&]() { run(); };
   for (int i = 0; i < numberOfThreads->getValue(); i++) {
-    m_threads.emplace_back([&] { run(); });
+    std::thread temp(func);
+    m_threads.push_back(std::move(temp));
   }
 }
 
@@ -61,7 +63,6 @@ SchedulerService::SchedulerService(
 
 SchedulerService::~SchedulerService() {
   {
-    std::unique_lock<std::mutex> lock(m_mutex);
     m_exit = true;
   }
 
