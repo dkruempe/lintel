@@ -15,7 +15,7 @@ class PropertyCliComponent : public CommandLineComponent {
   static constexpr std::string_view m_alias = "Prop";
   static constexpr std::string_view m_description =
       "The component can be used to show and manipulate all kind of available "
-      "properties.";
+      "pmroperties.";
   std::shared_ptr<PropertyApi> m_propertyApi;
 
   // Commands
@@ -48,7 +48,9 @@ class PropertyCliComponent : public CommandLineComponent {
 
   bool onExit() override;
 
-  void printCommandList() override;
+  void printCommandList(std::set<std::string> menuAlias) override;
+
+  std::vector<std::string> allCommandsOf() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYCLICOMPONENT_H

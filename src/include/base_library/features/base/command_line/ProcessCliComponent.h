@@ -49,7 +49,9 @@ class ProcessCliComponent : public CommandLineComponent {
 
   bool onExit() override;
 
-  void printCommandList() override;
+  void printCommandList(std::set<std::string> menuAlias) override;
+
+  std::vector<std::string> allCommandsOf() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSCLICOMPONENT_H

@@ -136,6 +136,9 @@ void PropertyCliComponent::printProperty(
   table.add_row({"Data Storage:", propertyDto.getRepositoryType().toString()});
   std::cout << table.str() << "\n";
 }
-void PropertyCliComponent::printCommandList() {
-  m_commandParser.printCommandList();
+void PropertyCliComponent::printCommandList(std::set<std::string> menuAlias) {
+  m_commandParser.printCommandList(menuAlias);
+}
+std::vector<std::string> PropertyCliComponent::allCommandsOf() {
+  return m_commandParser.allCommandsOf();
 }

@@ -88,6 +88,9 @@ void CommandLineService::onPrompt() {
   using namespace date;
   cout << format("%FT%TZ", floor<seconds>(system_clock::now())) << " "
        << currentMenu << " % ";
+  if (!m_terminalService->getLine().empty()) {
+    cout << m_terminalService->getLine();
+  }
 }
 void CommandLineService::run() {
   onStart();
@@ -127,22 +130,77 @@ void CommandLineService::run() {
       };
   std::function<void(const SymbolEvent &symbolEvent)> handleTab =
       [&](const SymbolEvent &symbolEvent) {
+        // Tab pressed but nothing entered => Beep for missing symbol
         if (symbolEvent.second.empty() && !tabPressed) {
           CommandLineUtils::beep();
           tabPressed = true;
           printPrompt = false;
           return;
         }
+        // tab pressed with entered symbols
         if (!symbolEvent.second.empty()) {
+          std::vector<std::string> commands;
+          if (m_menu.currentOf() != nullptr) {
+            commands = m_menu.allCommandsOf();
+          } else {
+            commands = m_commandParser.allCommandsOf();
+            auto vec = m_menu.allCommandsOf();
+            for (const auto &iter : vec) {
+              commands.push_back(iter);
+            }
+          }
+          commands.erase(
+              std::remove_if(commands.begin(), commands.end(),
+                             [&symbolEvent](const std::string &command) {
+                               return !StringUtils::startsWith(
+                                   command, symbolEvent.second);
+                             }),
+              commands.end());
+          // found only one matching command => extend command
+          if (commands.size() == 1) {
+            std::string missingPart =
+                commands[0].substr(symbolEvent.second.length());
+            for (char c : missingPart) {
+              m_terminalService->onKeyPressed({KeyType::Ascii, c});
+            }
+            printPrompt = false;
+            tabPressed = false;
+            return;
+          }
+          // found no command for entered symbols => beep as error information
+          if (commands.empty()) {
+            CommandLineUtils::beep();
+            tabPressed = true;
+            printPrompt = false;
+            return;
+          }
+          // found multiple commands which matches => print all matching commands
+          // extend as much as possible
+          std::cout << "\n\t";
+          int32_t i = 0;
+          for (const auto &item : commands) {
+            i++;
+            if (i % 10 == 0) {
+              std::cout << "\n";
+            }
+            std::cout << item;
+            if (i % 10 > 0) {
+              std::cout << "\t";
+            }
+          }
+          std::cout << "\n";
+          printPrompt = true;
+          tabPressed = false;
           return;
         }
+        // Tab pressed twice with nothing entered => show helpful information
         printPrompt = true;
         tabPressed = false;
         if (m_menu.currentOf() != nullptr) {
           m_menu.printCommandList();
           return;
         }
-        m_commandParser.printCommandList();
+        m_commandParser.printCommandList(m_menu.allMenuEntriesOf());
         return;
       };
   while (m_running) {

@@ -174,6 +174,9 @@ std::string UserManagementCliComponent::printUserGroups(
   }
   return printString;
 }
-void UserManagementCliComponent::printCommandList() {
-  m_commandParser.printCommandList();
+void UserManagementCliComponent::printCommandList(std::set<std::string> menuAlias) {
+  m_commandParser.printCommandList(menuAlias);
+}
+std::vector<std::string> UserManagementCliComponent::allCommandsOf() {
+  return m_commandParser.allCommandsOf();
 }

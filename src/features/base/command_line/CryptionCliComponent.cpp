@@ -90,4 +90,5 @@ void CryptionCliComponent::onHelp() {
 }
 
 bool CryptionCliComponent::onExit() { return true; }
-void CryptionCliComponent::printCommandList() {}
+void CryptionCliComponent::printCommandList(std::set<std::string> menuAlias) {}
+std::vector<std::string> CryptionCliComponent::allCommandsOf() { return {}; }

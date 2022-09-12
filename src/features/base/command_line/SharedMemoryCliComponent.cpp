@@ -131,8 +131,8 @@ void SharedMemoryCliComponent::printSegments(
   std::cout << table.str() << "\n";
 }
 bool SharedMemoryCliComponent::onExit() { return true; }
-void SharedMemoryCliComponent::printCommandList() {
-  m_commandParser.printCommandList();
+void SharedMemoryCliComponent::printCommandList(std::set<std::string> menuAlias) {
+  m_commandParser.printCommandList(menuAlias);
 }
 void SharedMemoryCliComponent::onShowMenu() {
   std::cout << "No subMenu available\n";
@@ -156,4 +156,8 @@ void SharedMemoryCliComponent::printRepositories(
                    std::to_string(iter.getCurrentVersion())});
   }
   std::cout << table.str() << "\n";
+}
+
+std::vector<std::string> SharedMemoryCliComponent::allCommandsOf() {
+  return m_commandParser.allCommandsOf();
 }

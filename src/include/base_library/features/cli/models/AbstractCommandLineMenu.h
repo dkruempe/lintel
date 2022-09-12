@@ -24,6 +24,8 @@ class AbstractCommandLineMenu {
 
   void onShowMenu();
 
+  std::set<std::string> allMenuEntriesOf();
+
   bool onMenu(const std::string &command);
 
   bool onExit();
@@ -32,6 +34,8 @@ class AbstractCommandLineMenu {
 
   void onCommand(const UserDto &userDto, const std::string &command,
                  const std::vector<std::string> &parameters);
+
+  std::vector<std::string> allCommandsOf();
 
   void onHelp();
 

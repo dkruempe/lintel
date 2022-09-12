@@ -134,8 +134,8 @@ void ProcessCliComponent::printProcesses(
   std::cout << table.str() << "\n";
 }
 bool ProcessCliComponent::onExit() { return true; }
-void ProcessCliComponent::printCommandList() {
-  m_commandParser.printCommandList();
+void ProcessCliComponent::printCommandList(std::set<std::string> menuAlias) {
+  m_commandParser.printCommandList(menuAlias);
 }
 void ProcessCliComponent::onShowMenu() {
   std::cout << "No subMenu available\n";
@@ -145,4 +145,7 @@ bool ProcessCliComponent::onMenu(const std::string & /*component*/) {
 }
 void ProcessCliComponent::onHelp() {
   m_commandParser.printHelp(getName(), getAlias(), m_description);
+}
+std::vector<std::string> ProcessCliComponent::allCommandsOf() {
+  return m_commandParser.allCommandsOf();
 }

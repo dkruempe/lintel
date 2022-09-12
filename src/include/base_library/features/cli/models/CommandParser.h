@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_COMMANDPARSER_H
 
 #include <map>
+#include <set>
 #include <optional>
 #include <string>
 #include <vector>
@@ -64,7 +65,7 @@ class CommandParser {
     }
   }
 
-  void printCommandList(std::ostream &os = std::cout) {
+  void printCommandList(std::set<std::string> menuAlias, std::ostream &os = std::cout) {
     os << "\n\t";
     int32_t i = 0;
     for (const auto &item : m_commands) {
@@ -77,7 +78,27 @@ class CommandParser {
         os << "\t";
       }
     }
+    for (const auto &item : menuAlias) {
+      i++;
+      if (i % m_maxCommandPerLine == 0) {
+        os << "\n";
+      }
+      os << item;
+      if (i % m_maxCommandPerLine > 0) {
+        os << "\t";
+      }
+    }
     os << "\n";
+  }
+
+  std::vector<std::string> allCommandsOf() {
+    std::vector<std::string> temp;
+    std::transform(
+        m_commands.begin(), m_commands.end(), std::back_inserter(temp),
+        [](const std::pair<std::string, Command> &pair) -> std::string {
+          return pair.second.getCommand();
+        });
+    return temp;
   }
 };
 

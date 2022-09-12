@@ -33,7 +33,11 @@ class CommandLineComponent {
 
   virtual bool onExit() = 0;
 
-  virtual void printCommandList() = 0;
+  virtual void printCommandList(std::set<std::string> menuAlias) = 0;
+
+  virtual std::set<std::string> menuEntriesOf() { return {}; }
+
+  virtual std::vector<std::string> allCommandsOf() = 0;
 };
 
 #endif  // CPP_BASE_LIBRARY_COMMANDLINECOMPONENT_H
