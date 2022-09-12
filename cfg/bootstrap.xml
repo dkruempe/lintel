@@ -16,7 +16,7 @@
     <!-- Datbase Connections Configuration -->
     <DatabaseConnections>
         <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true" />
-	<!--<DatabaseConnection name="DEFAULT_PSQL" user_name="dkruempe" password="${ADMIN_PASSWORD}" connection="127.0.0.1" database_name="keyValueStore" type="PostgreSQL" />-->
+	    <DatabaseConnection name="DEFAULT_PSQL" user_name="dkruempe" password="${ADMIN_PASSWORD}" connection="127.0.0.1" database_name="temp" type="PostgreSQL" />
     </DatabaseConnections>
     <!-- Shared Memory Segments Configuration -->
     <SharedMemorySegments>

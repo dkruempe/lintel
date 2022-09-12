@@ -38,16 +38,35 @@ currently provided:
 6. TypeName util
 
    This util returns the real type of an object with given marcos like PRETTY_FUNCTION
+7. CommandLineService
+   
+   Interactive command line service, which can be extended by easy components. For all basic functions is a component
+   directly implemented. The service is http based, which implies a remote connection support.
+   Of course a user management is also available, so that you can easily restrict the access to 
+   special components.
+8. Shared Memory Service
+   Available basic implementation for shared memory usage itself. All basic objects for shared memory are available
+   for usage itself.
+9. BootstrapService
+   To support a direct boot without any manual interaction is a bootstrap service implemented. This service
+   also is available for the database initialization itself. 
 
 Note, if you need only the library, you'll just have to use the src directory directly. So, you don't have to execute
 the compilation for other directories "tests, example".
 
 ## 2 Dependencies
 
-1. Log4cxx library (Logging library)
+1. spdlog library 
 2. Fmt library (Will be removed with c++20 if available)
 3. Catch2 UnitTest Framework
 4. tinyxml2 Library
+5. boost interprocess library
+6. magic enum
+7. openssl
+8. rapidjson 
+9. tabulate
+10. date
+11. zlib
 
 ## 3 Examples
 
