@@ -26,7 +26,7 @@ class AuthCliService {
                  std::shared_ptr<InputService> inputService,
                  std::shared_ptr<TerminalService> terminalService,
                  std::shared_ptr<AuthArgumentProvider> argumentProvider);
-  UserDto onLogin();
+  std::optional<UserDto> onLogin();
   void onLogout(UserDto &&userDto);
 };
 

@@ -7,6 +7,7 @@
 #include <optional>
 #include <thread>
 #include <vector>
+#include <optional>
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/configuration/Configuration.h"

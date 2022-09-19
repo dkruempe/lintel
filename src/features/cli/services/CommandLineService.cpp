@@ -72,7 +72,15 @@ void CommandLineService::onComponentCommand(
       break;
   }
 }
-void CommandLineService::onStart() { m_userDto = m_authCliService->onLogin(); }
+void CommandLineService::onStart() {
+  auto userDtoOpt = m_authCliService->onLogin();
+  if (!userDtoOpt.has_value()) {
+    SignalService::raiseSignal(SIGINT);
+    m_running.store(false);
+    return;
+  }
+  m_userDto = userDtoOpt.value();
+}
 void CommandLineService::onHelp() {
   m_commandParser.printHelp(
       "MAIN", "",

@@ -18,7 +18,7 @@ AuthCliService::AuthCliService(
       m_terminalService(std::move(terminalService)),
       m_authArgumentProvider(std::move(authArgumentProvider)) {}
 
-UserDto AuthCliService::onLogin() {
+std::optional<UserDto> AuthCliService::onLogin() {
   bool success = false;
   std::optional<UserDto> optUserDto;
   std::string userName;
@@ -41,6 +41,21 @@ UserDto AuthCliService::onLogin() {
         KeyEvent keyPressed = m_inputService->onRead();
         SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
         event = symbolEvent.first;
+        switch (event) {
+          case Symbol::CtrlC:
+          case Symbol::Eof:
+          {
+            CommandLineUtils::clear();
+            return std::nullopt;
+          }
+          case Symbol::Command:
+          {
+            userName = symbolEvent.second;
+            break;
+          }
+          default:
+            break;
+        }
         if (event == Symbol::Command) {
           userName = symbolEvent.second;
         }
@@ -55,8 +70,21 @@ UserDto AuthCliService::onLogin() {
         KeyEvent keyPressed = m_inputService->onRead();
         SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
         event = symbolEvent.first;
-        if (event == Symbol::Command) {
-          password = symbolEvent.second;
+        switch (event) {
+          case Symbol::CtrlC:
+          case Symbol::Eof:
+          {
+            m_terminalService->disableHideChars();
+            CommandLineUtils::clear();
+            return std::nullopt;
+          }
+          case Symbol::Command:
+          {
+            password = symbolEvent.second;
+            break;
+          }
+          default:
+            break;
         }
       }
       if (password.empty()) {
@@ -71,7 +99,7 @@ UserDto AuthCliService::onLogin() {
     }
     CommandLineUtils::clear();
   }
-  return std::move(optUserDto.value());
+  return std::make_optional(std::move(optUserDto.value()));
 }
 void AuthCliService::onLogout(UserDto &&userDto) {
   UserTokenDto userTokenDto(userDto.getId());
