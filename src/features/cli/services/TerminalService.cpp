@@ -7,7 +7,7 @@ void TerminalService::log(const std::string &text) {
     std::cout << std::string(m_position, '\b') << text << std::flush;
   }
 
-  // if newLine is shorter then currentLine, we have
+  // if newLine is shorter than currentLine, we have
   // to clear the rest of the string
   if (text.size() < m_currentLine.size() && !m_hideChars) {
     std::cout << std::string(m_currentLine.size() - text.size(), ' ');

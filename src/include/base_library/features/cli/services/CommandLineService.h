@@ -7,7 +7,6 @@
 #include <optional>
 #include <thread>
 #include <vector>
-#include <optional>
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/configuration/Configuration.h"
@@ -62,13 +61,12 @@ class CommandLineService : public AbstractService<CommandLineService> {
  public:
   explicit CommandLineService(
       const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-      const std::shared_ptr<Configuration> &configuration,
       std::shared_ptr<AuthCliService> authCliService,
       std::shared_ptr<UserApi> userApi,
       std::shared_ptr<CommandLineUtils> commandLineUtils,
       std::shared_ptr<InputService> inputService,
       std::shared_ptr<TerminalService> terminalService,
-      std::shared_ptr<ProcessName> processName);
+      const std::shared_ptr<ProcessName> &processName);
   virtual ~CommandLineService();
 
   void onInitialize() override;

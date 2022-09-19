@@ -13,13 +13,12 @@
 
 CommandLineService::CommandLineService(
     const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-    const std::shared_ptr<Configuration> &configuration,
     std::shared_ptr<AuthCliService> authCliService,
     std::shared_ptr<UserApi> userApi,
     std::shared_ptr<CommandLineUtils> commandLineUtils,
     std::shared_ptr<InputService> inputService,
     std::shared_ptr<TerminalService> terminalService,
-    std::shared_ptr<ProcessName> processName)
+    const std::shared_ptr<ProcessName> &processName)
     : AbstractService<CommandLineService>(processName->getProcessName()),
       m_menu(components),
       m_authCliService(std::move(authCliService)),

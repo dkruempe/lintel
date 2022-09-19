@@ -111,19 +111,3 @@ void AuthCliService::onLogout(UserDto &&userDto) {
   }
   std::cout << "INFO: succesfull logout of >" << userDto.getUserName() << "<\n";
 }
-
-std::string AuthCliService::readPassword() {
-  std::cout << "Please enter the password: ";
-  std::string tempPassword;
-  std::cin >> tempPassword;
-  std::string password;
-  for (auto &iter : tempPassword) {
-    if (iter == 127) {
-      LOG_TRACE("pressed backspace during password read");
-      password = std::string(password.begin(), password.end() - 1);
-      continue;
-    }
-    password += iter;
-  }
-  return password;
-}
