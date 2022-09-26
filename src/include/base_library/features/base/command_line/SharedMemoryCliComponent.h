@@ -28,6 +28,7 @@ class SharedMemoryCliComponent : public CommandLineComponent {
   std::optional<std::string> m_segmentName;
   std::optional<std::string> m_size;
   std::optional<std::string> m_repositoryName;
+  std::optional<std::string> m_type;
 
   CommandParser<Commands, Undefined> m_commandParser;
   static void printSegments(

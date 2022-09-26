@@ -32,7 +32,9 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(
   m_commandParser.addCommand(
       Command("export_repository", "Export Repository to json")
           .addArgument({"--repository-name", "-r"}, &m_repositoryName,
-                       "Repository name"),
+                       "Repository name")
+          .addArgument({"--segment-name", "-s"}, &m_segmentName, "Segment Name")
+          .addArgument({"--type", "-t"}, &m_type, "Type"),
       ExportRepository);
 }
 void SharedMemoryCliComponent::onCommand(
@@ -89,10 +91,27 @@ void SharedMemoryCliComponent::onCommand(
       case ExportRepository: {
         if (!m_repositoryName.has_value()) {
           std::cout << "ERROR: please set repository name\n";
+          m_repositoryName->clear();
+          m_segmentName->clear();
+          m_type->clear();
+          return;
+        }
+        if (!m_segmentName.has_value()) {
+          std::cout << "ERROR: please set segment name\n";
+          m_repositoryName->clear();
+          m_segmentName->clear();
+          m_type->clear();
+          return;
+        }
+        if (!m_type.has_value()) {
+          std::cout << "ERROR: please set type\n";
+          m_repositoryName->clear();
+          m_segmentName->clear();
+          m_type->clear();
           return;
         }
         std::string result =
-            m_sharedMemoryApi->repositoryOf(m_repositoryName.value());
+            m_sharedMemoryApi->repositoryOf(m_repositoryName.value(), m_segmentName.value(), m_type.value());
         rapidjson::Document document;
         document.Parse(result.c_str());
         rapidjson::StringBuffer stringBuffer;
@@ -100,9 +119,13 @@ void SharedMemoryCliComponent::onCommand(
         document.Accept(writer);
         std::cout << stringBuffer.GetString() << "\n";
         m_repositoryName->clear();
+        m_segmentName->clear();
+        m_type->clear();
         break;
       }
       default:
+        break;
+      case Undefined:
         break;
     }
   } catch (std::exception &exception) {
@@ -131,7 +154,8 @@ void SharedMemoryCliComponent::printSegments(
   std::cout << table.str() << "\n";
 }
 bool SharedMemoryCliComponent::onExit() { return true; }
-void SharedMemoryCliComponent::printCommandList(std::set<std::string> menuAlias) {
+void SharedMemoryCliComponent::printCommandList(
+    std::set<std::string> menuAlias) {
   m_commandParser.printCommandList(menuAlias);
 }
 void SharedMemoryCliComponent::onShowMenu() {

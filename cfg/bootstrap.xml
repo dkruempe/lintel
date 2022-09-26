@@ -22,6 +22,7 @@
     <SharedMemorySegments>
         <Path path="~/dev/shm" />
         <SharedMemorySegment name="shm_property" size="5MB" auto_extend_size="2MB" max_size="100MB" />
+        <SharedMemorySegment name="shm_test" size="5MB" auto_extend_size="2MB" max_size="50MB" />
     </SharedMemorySegments>
     <!-- Http Server / Client Configuration -->
     <HttpHost>

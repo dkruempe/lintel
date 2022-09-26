@@ -113,14 +113,37 @@ class SharedMemoryVectorRepository : public SharedMemoryRepository {
   SharedMemoryVectorRepository(
       const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
       const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
-      : SharedMemoryRepository(segment, sizeof(DATA), type_name<DATA>(),
-                               codeVersion),
-        m_vector(sharedMemoryService->constructVector<DATA>(segment,
-                                                            type_name<DATA>())),
+      : SharedMemoryRepository(segment, sizeof(DATA),
+                               std::string(type_name<DATA>()), codeVersion),
+        m_vector(sharedMemoryService->constructVector<DATA>(
+            segment, getSharedMemoryRepository())),
         m_sharedMemoryService(sharedMemoryService) {}
   [[nodiscard]] SharedMemoryType getType() const override {
     return SharedMemoryType::Vector;
   }
+
+  void serialize(
+      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+    writer->StartObject();
+    writer->String("repository");
+    writer->String("SharedMemoryVectorRepository");
+    writer->String("vector");
+    writer->StartArray();
+    for (const auto &iter : m_vector) {
+      DATA d = iter;
+      LOG_TRACE("serialize vector entry");
+      if constexpr (std::is_base_of<JsonSerializable, DATA>()) {
+        d.serialize(writer);
+      } else if constexpr (std::is_same<SharedMemoryService::ShmString,
+                                        DATA>()) {
+        writer->String(d.c_str());
+      }
+    }
+    writer->EndArray();
+    writer->EndObject();
+  }
+
+  bool deserialize(const rapidjson::Value &obj) override {}
 };
 
 template <typename KEY, typename VALUE>

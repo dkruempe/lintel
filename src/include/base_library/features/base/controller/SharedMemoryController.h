@@ -41,7 +41,7 @@ class SharedMemoryController : public Controller {
    * TODO implement abstract import / export to SharedMemoryRepository
    * - general import / export to json file
    */
-  ADD_HANDLER_METHOD(R"(/shm/repository/([^\/]+))", Get, exportRepositoryOf);
+  ADD_HANDLER_METHOD(R"(/shm/repository/([^\/]+)/segment/([^\/]+)/type/([^\/]+))", Get, exportRepositoryOf);
   // ADD_HANDLER_METHOD(R"(/shm/repository/([^\/]+))", Put, importRepositoryOf);
 
  public:

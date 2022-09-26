@@ -38,6 +38,24 @@ void SharedMemoryController::exportRepositoryOfGet(
   }
   LOG_TRACE("Called export");
   const std::string respositoryName = request.matches[1];
+  const std::string segmentName = request.matches[2];
+  const std::string type = request.matches[3];
+  SharedMemoryType shmType;
+  //Map, Set, Vector, Array, Object
+  if (type == "Map") {
+    shmType = Map;
+  } else if (type == "Vector") {
+    shmType = Vector;
+  } else if (type == "Array") {
+    shmType = Array;
+  } else if (type == "Object") {
+    shmType = Object;
+  } else {
+    LOG_ERROR("type {} not valid", type);
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName().c_str());
+    return;
+  }
   switch (contentType) {
     case ContentType::ApplicationJson: {
       LOG_TRACE("start searching repository {}", respositoryName);
@@ -45,6 +63,14 @@ void SharedMemoryController::exportRepositoryOfGet(
         if (iter->getSharedMemoryRepository() != respositoryName) {
           LOG_TRACE("{} != {}", iter->getSharedMemoryRepository(),
                     respositoryName);
+          continue;
+        }
+        if (iter->getSharedMemorySegment()->getName() != segmentName) {
+          LOG_TRACE("{} != {}", iter->getSharedMemorySegment()->getName(), segmentName);
+          continue;
+        }
+        if (iter->getType() != shmType) {
+          LOG_TRACE("{} != {}", iter->getType(), shmType);
           continue;
         }
         LOG_TRACE("found repository");

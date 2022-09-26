@@ -24,7 +24,9 @@ class SharedMemoryApi {
   std::vector<SharedMemoryRepositoryDto> allRepositoriesOf(
       const std::string &repositoryName = ".*",
       const std::string &segmentName = ".*");
-  std::string repositoryOf(const std::string &repositoryName);
+  std::string repositoryOf(const std::string &repositoryName,
+                           const std::string &segmentName,
+                           const std::string &type);
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYAPI_H
