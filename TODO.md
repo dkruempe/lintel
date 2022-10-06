@@ -1,14 +1,27 @@
 # TODOs
-
-- [ ] general: automatic create conan package.
-- [ ] general: find general std::size_t serialize solution instead of limiting it to __APPLE__
-- [ ] http: implement partly better exception handling
-- [ ] http: support of paging
-- [ ] db: change std::string implementations to std::string_view for better performance
-- [ ] db: switch partly to constexpr implementation ?!
-- [ ] db: implement cursor object as usage
-- [ ] property: cleanup entries if default value is same no repository in shadow mode at startup
-- [ ] shm: fix automatic increase feature, bc. currently free_memory is always fixed
-- [ ] shm: export/import automatically SharedMemoryRepository
-- [ ] shm: mutex wrap as box object and restrict interface to create to enum => all semaphores has to be defined in that
-  enum itself, that will directly provide an easy cleanup util.
+- General
+  - [ ] fix general std::size_t serialize soluation instead of limiting it to __APPLE__
+- Shared Memory
+  - [ ] remove set container (no shm support)
+  - [ ] fix automatic increase feature, bc. currently free_memory is always fixed
+  - [ ] backup or archive strategy for shm
+  - [ ] add better usage of semaphores
+- Property
+  - [ ] cleanup entries if default value is same no repository in shadow mode at startup
+  - [ ] DatabasePropertyRepository add INotify to table ?
+- Database
+  - [ ] mySql Support
+  - [ ] Cursor implementation
+  - [ ] adds constexpr impelmentation for better usage and performance
+- Queue Support
+  - [ ] use the ZeroMQ Library ipc feature
+  - [ ] implement basic api as feature
+  - [ ] add configuration to bootstrap configuration file
+  - [ ] add command line component for maintenance
+- Historization
+  - [ ] adds support for an easy historization via ZeroMQ or direct call Api Interface
+  - [ ] adds HistorizationService
+- Http
+  - [ ] implement better exception handling
+  - [ ] use enums in implementations
+  - [ ] support of paging
