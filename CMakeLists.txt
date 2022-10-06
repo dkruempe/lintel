@@ -9,6 +9,8 @@ add_library(project_warnings INTERFACE)
 # standard compiler warnings
 include(cmake/CompilerWarnings.cmake)
 set_project_warnings(project_warnings)
+SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+
 
 # Library
 ADD_SUBDIRECTORY(external)

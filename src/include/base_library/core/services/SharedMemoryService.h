@@ -97,28 +97,6 @@ class SharedMemoryService : public AbstractService<SharedMemoryService> {
     }
   }
 
-  template <class Object>
-  boost::interprocess::set<
-      Object, std::less<Object>,
-      boost::interprocess::allocator<
-          Object, boost::interprocess::managed_mapped_file::segment_manager>>
-      &constructSet(const std::shared_ptr<SharedMemorySegment> &segment,
-                    const std::string &name) {
-    using persistentSetAllocator = boost::interprocess::allocator<
-        Object, boost::interprocess::managed_mapped_file::segment_manager>;
-    try {
-      auto &segmentCopy = m_segments.at(segment->getName());
-      persistentSetAllocator allocator(
-          segmentCopy.m_managedMappedFile->get_segment_manager());
-      return *(segmentCopy.m_managedMappedFile
-                   ->find_or_construct<boost::interprocess::set<
-                       Object, std::less<Object>, persistentSetAllocator>>(
-                       name.c_str())(std::less<Object>(), allocator));
-    } catch (std::out_of_range &exception) {
-      throw ShmSegmentNotFound(segment->getName());
-    }
-  }
-
   template <class Key, class Value>
   boost::interprocess::map<
       Key, Value, std::less<Key>,

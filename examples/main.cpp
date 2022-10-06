@@ -6,8 +6,39 @@
 #include <base_library/features/http/HttpFeature.h>
 #include <base_library/features/property/PropertyFeature.h>
 
-class TestData : public JsonSerializable {
+#include <utility>
+
+struct ArrayDto {
+  char m_name[100];
+  char m_addr[100];
+  char m_plz[100];
+  char m_location[100];
+  int32_t m_age;
+  bool operator<(const ArrayDto &rhs) const {
+    if (m_name < rhs.m_name) return true;
+    if (rhs.m_name < m_name) return false;
+    if (m_addr < rhs.m_addr) return true;
+    if (rhs.m_addr < m_addr) return false;
+    if (m_plz < rhs.m_plz) return true;
+    if (rhs.m_plz < m_plz) return false;
+    if (m_location < rhs.m_location) return true;
+    if (rhs.m_location < m_location) return false;
+    return m_age < rhs.m_age;
+  }
+  bool operator>(const ArrayDto &rhs) const { return rhs < *this; }
+  bool operator<=(const ArrayDto &rhs) const { return !(rhs < *this); }
+  bool operator>=(const ArrayDto &rhs) const { return !(*this < rhs); }
+  bool operator==(const ArrayDto &rhs) const {
+    return m_name == rhs.m_name && m_addr == rhs.m_addr && m_plz == rhs.m_plz &&
+           m_location == rhs.m_location && m_age == rhs.m_age;
+  }
+  bool operator!=(const ArrayDto &rhs) const { return !(rhs == *this); }
+};
+
+class ArrayDao : public JsonSerializable {
  private:
+  const ArrayDto &m_dto;
+
   static struct Shapes {
     const std::string NAME = "name";
     const std::string ADDR = "addr";
@@ -17,45 +48,26 @@ class TestData : public JsonSerializable {
   } m_shape;
 
  public:
+  explicit ArrayDao(const ArrayDto &dto) : m_dto(dto) {}
+
   static int32_t getSize() {
-    return sizeof(SharedMemoryService::ShmString) * 4 + sizeof(int32_t);
+    return sizeof(char[100]) * 4 + sizeof(int32_t);
   }
-  SharedMemoryService::ShmString m_name;
-  SharedMemoryService::ShmString m_addr;
-  SharedMemoryService::ShmString m_plz;
-  SharedMemoryService::ShmString m_location;
-  int32_t m_age;
-  TestData(SharedMemoryService::ShmString name,
-           SharedMemoryService::ShmString addr,
-           SharedMemoryService::ShmString plz,
-           SharedMemoryService::ShmString location, int32_t age)
-      : m_name(name),
-        m_addr(addr),
-        m_plz(plz),
-        m_location(location),
-        m_age(age) {}
+
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
-    LOG_TRACE("start serialization");
     writer->StartObject();
-
     writer->String(m_shape.NAME.c_str());
-    writer->String(m_name.c_str());
-    LOG_TRACE("add name");
+    writer->String(m_dto.m_name);
     writer->String(m_shape.ADDR.c_str());
-    writer->String(m_addr.c_str());
-    LOG_TRACE("add addr");
+    writer->String(m_dto.m_addr);
     writer->String(m_shape.PLZ.c_str());
-    writer->String(m_plz.c_str());
-    LOG_TRACE("add plz");
+    writer->String(m_dto.m_plz);
     writer->String(m_shape.LOCATION.c_str());
-    writer->String(m_location.c_str());
-    LOG_TRACE("add location");
+    writer->String(m_dto.m_location);
     writer->String(m_shape.AGE.c_str());
-    writer->String(std::to_string(m_age).c_str());
-    LOG_TRACE("add age");
+    writer->String(std::to_string(m_dto.m_age).c_str());
     writer->EndObject();
-    LOG_TRACE("finished serialization");
   }
   bool deserialize(const rapidjson::Value &obj) override {
     bool success = true;
@@ -100,9 +112,165 @@ class TestData : public JsonSerializable {
   }
 };
 
-TestData::Shapes TestData::m_shape{};
+struct TestDataDto {
+  SharedMemoryService::ShmString m_name;
+  SharedMemoryService::ShmString m_addr;
+  SharedMemoryService::ShmString m_plz;
+  SharedMemoryService::ShmString m_location;
+  int32_t m_age;
 
-class ShmVec : public SharedMemoryVectorRepository<TestData> {
+  bool operator==(const TestDataDto &rhs) const {
+    return m_name == rhs.m_name && m_addr == rhs.m_addr && m_plz == rhs.m_plz &&
+           m_location == rhs.m_location && m_age == rhs.m_age;
+  }
+  bool operator!=(const TestDataDto &rhs) const { return !(rhs == *this); }
+  bool operator<(const TestDataDto &rhs) const {
+    if (m_name < rhs.m_name) return true;
+    if (rhs.m_name < m_name) return false;
+    if (m_addr < rhs.m_addr) return true;
+    if (rhs.m_addr < m_addr) return false;
+    if (m_plz < rhs.m_plz) return true;
+    if (rhs.m_plz < m_plz) return false;
+    if (m_location < rhs.m_location) return true;
+    if (rhs.m_location < m_location) return false;
+    return m_age < rhs.m_age;
+  }
+  bool operator>(const TestDataDto &rhs) const { return rhs < *this; }
+  bool operator<=(const TestDataDto &rhs) const { return !(rhs < *this); }
+  bool operator>=(const TestDataDto &rhs) const { return !(*this < rhs); }
+};
+
+class TestDataDao : public JsonSerializable {
+ private:
+  const TestDataDto &m_dto;
+
+  static struct Shapes {
+    const std::string NAME = "name";
+    const std::string ADDR = "addr";
+    const std::string PLZ = "plz";
+    const std::string LOCATION = "location";
+    const std::string AGE = "age";
+  } m_shape;
+
+ public:
+  explicit TestDataDao(const TestDataDto &dto) : m_dto(dto) {}
+
+  static int32_t getSize() {
+    return sizeof(SharedMemoryService::ShmString) * 4 + sizeof(int32_t);
+  }
+
+  void serialize(
+      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+    writer->StartObject();
+    writer->String(m_shape.NAME.c_str());
+    writer->String(m_dto.m_name.c_str());
+    writer->String(m_shape.ADDR.c_str());
+    writer->String(m_dto.m_addr.c_str());
+    writer->String(m_shape.PLZ.c_str());
+    writer->String(m_dto.m_plz.c_str());
+    writer->String(m_shape.LOCATION.c_str());
+    writer->String(m_dto.m_location.c_str());
+    writer->String(m_shape.AGE.c_str());
+    writer->String(std::to_string(m_dto.m_age).c_str());
+    writer->EndObject();
+  }
+  bool deserialize(const rapidjson::Value &obj) override {
+    bool success = true;
+    // PROCESS_NAME
+    if (obj.HasMember(m_shape.NAME.c_str())) {
+      // m_processName = obj[m_shape.PROCESS_NAME.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
+    }
+    // CLASS_NAME
+    if (obj.HasMember(m_shape.ADDR.c_str())) {
+      // m_className = obj[m_shape.CLASS_NAME.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization", m_shape.ADDR.c_str());
+    }
+    // INSTANCE_NAME
+    if (obj.HasMember(m_shape.PLZ.c_str())) {
+      // m_instanceName = obj[m_shape.INSTANCE_NAME.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization", m_shape.PLZ.c_str());
+    }
+    // NAME
+    if (obj.HasMember(m_shape.LOCATION.c_str())) {
+      // m_name = obj[m_shape.NAME.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization",
+                m_shape.LOCATION.c_str());
+    }
+    // VALUE
+    if (obj.HasMember(m_shape.AGE.c_str())) {
+      // m_value = obj[m_shape.VALUE.c_str()].GetString();
+    } else {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization", m_shape.AGE.c_str());
+    }
+    // TYPE
+    return success;
+  }
+};
+
+TestDataDao::Shapes TestDataDao::m_shape{};
+ArrayDao::Shapes ArrayDao::m_shape{};
+
+class ShmObject : public SharedMemoryObjectRepository<ArrayDto, ArrayDao> {
+ private:
+  static constexpr int32_t m_version = 0;
+
+ public:
+  ShmObject(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
+            const std::shared_ptr<SharedMemorySegmentManager>
+                &sharedMemorySegmentManager)
+      : SharedMemoryObjectRepository(sharedMemoryService,
+                                     sharedMemorySegmentManager->of("shm_test"),
+                                     m_version) {
+    if (getData().m_age == 0) {
+      ArrayDto &dto = getData();
+      std::strncpy(dto.m_name, "Example User", 100);
+      std::strncpy(dto.m_addr, "Musterstraße 1", 100);
+      std::strncpy(dto.m_plz, "48496", 100);
+      std::strncpy(dto.m_location, "Example City", 100);
+      dto.m_age = 1337;
+    }
+  }
+
+  void onMigrate(int32_t currentActiveVersion) override {}
+};
+
+class ShmArray : public SharedMemoryArrayRepository<ArrayDto, ArrayDao, 100> {
+ private:
+  static constexpr int32_t m_version = 0;
+
+ public:
+  ShmArray(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
+           const std::shared_ptr<SharedMemorySegmentManager>
+               &sharedMemorySegmentManager)
+      : SharedMemoryArrayRepository(sharedMemoryService,
+                                    sharedMemorySegmentManager->of("shm_test"),
+                                    m_version) {
+    if (getArray()[99].m_age == 0) {
+      for (int i = 0; i < 100; i++) {
+        ArrayDto &dto = getArray()[i];
+        std::strncpy(dto.m_name, "Example User", 100);
+        std::strncpy(dto.m_addr, "Musterstraße 1", 100);
+        std::strncpy(dto.m_plz, "48496", 100);
+        std::strncpy(dto.m_location, "Example City", 100);
+        dto.m_age = i;
+      }
+    }
+  }
+
+  void onMigrate(int32_t currentActiveVersion) override {}
+};
+
+class ShmVec : public SharedMemoryVectorRepository<TestDataDto, TestDataDao> {
  private:
   static constexpr int32_t m_version = 0;
 
@@ -110,20 +278,21 @@ class ShmVec : public SharedMemoryVectorRepository<TestData> {
   ShmVec(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
          const std::shared_ptr<SharedMemorySegmentManager>
              &sharedMemorySegmentManager)
-      : SharedMemoryVectorRepository<TestData>(
+      : SharedMemoryVectorRepository<TestDataDto, TestDataDao>(
             sharedMemoryService, sharedMemorySegmentManager->of("shm_test"),
             m_version) {
     if (getVector().empty()) {
       for (int i = 0; i < 100; i++) {
-        TestData d(m_sharedMemoryService->constructString(
-                       getSharedMemorySegment(), "Example User"),
-                   m_sharedMemoryService->constructString(
-                       getSharedMemorySegment(), "Musterstraße 1"),
-                   m_sharedMemoryService->constructString(
-                       getSharedMemorySegment(), "48496"),
-                   m_sharedMemoryService->constructString(
-                       getSharedMemorySegment(), "Halverde"), i);
-        getVector().push_back(d);
+        TestDataDto dto{.m_name = m_sharedMemoryService->constructString(
+                            getSharedMemorySegment(), "Example User"),
+                        .m_addr = m_sharedMemoryService->constructString(
+                            getSharedMemorySegment(), "Musterstraße 1"),
+                        .m_plz = m_sharedMemoryService->constructString(
+                            getSharedMemorySegment(), "48496"),
+                        .m_location = m_sharedMemoryService->constructString(
+                            getSharedMemorySegment(), "Example City"),
+                        .m_age = i};
+        getVector().push_back(dto);
       }
     }
   }
@@ -143,6 +312,14 @@ class TestFeature : public Feature {
         .as<SharedMemoryRepository>()
         .asSelf()
         .singleInstance();
+    builder.registerType<ShmArray>()
+        .as<SharedMemoryRepository>()
+        .asSelf()
+        .singleInstance();
+    builder.registerType<ShmObject>()
+        .as<SharedMemoryRepository>()
+        .asSelf()
+        .singleInstance();
   }
 
   void initialize(std::shared_ptr<Hypodermic::Container> container) override {
@@ -159,7 +336,7 @@ int main(int argc, char *argv[]) {
     builder->addFeature<HttpFeature>();
     builder->addFeature<TestFeature>();
     builder->start();
-  } catch (std::exception e) {
+  } catch (const std::exception &e) {
     LOG_INFO("exception: {}", e.what());
   } catch (...) {
     LOG_INFO("exception was thrown");

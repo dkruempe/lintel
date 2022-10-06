@@ -89,7 +89,7 @@ void SharedMemoryApi::growOf(const std::string& segmentName,
       LOG_ERROR("error {}", status.getCode());
       return;
   }
-  LOG_TRACE("successfully shrinkg segment {}", segmentName);
+  LOG_TRACE("successfully shrinking segment {}", segmentName);
 }
 std::string SharedMemoryApi::repositoryOf(const std::string& repositoryName, const std::string &segmentName, const std::string &type) {
   httplib::Headers headers{};

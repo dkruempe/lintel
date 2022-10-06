@@ -10,7 +10,7 @@
 #include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/core/utils/TypeName.h"
 
-enum SharedMemoryType { Map, Set, Vector, Array, Object };
+enum SharedMemoryType { Map, Vector, Array, Object };
 
 class SharedMemoryRepository : public JsonSerializable {
  private:
@@ -45,35 +45,7 @@ class SharedMemoryRepository : public JsonSerializable {
   virtual void onMigrate(int32_t currentActiveVersion) = 0;
 };
 
-template <typename DATA>
-class SharedMemorySetRepository : public SharedMemoryRepository {
- private:
-  using Set = boost::interprocess::set<
-      DATA, std::less<DATA>,
-      boost::interprocess::allocator<
-          DATA, boost::interprocess::managed_mapped_file::segment_manager>>;
-  Set &m_set;
-
- protected:
-  std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
-  [[nodiscard]] Set &getSet() const { return m_set; }
-
- public:
-  SharedMemorySetRepository(
-      const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
-      const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
-      : SharedMemoryRepository(segment, sizeof(DATA), type_name<DATA>(),
-                               codeVersion),
-        m_set(sharedMemoryService->constructSet<DATA>(segment,
-                                                      type_name<DATA>())),
-        m_sharedMemoryService(sharedMemoryService) {}
-
-  [[nodiscard]] SharedMemoryType getType() const override {
-    return SharedMemoryType::Set;
-  }
-};
-
-template <typename DATA, std::size_t MaxSize>
+template <typename DATA, typename DAO, std::size_t MaxSize>
 class SharedMemoryArrayRepository : public SharedMemoryRepository {
  private:
   std::array<DATA, MaxSize> &m_array;
@@ -86,17 +58,40 @@ class SharedMemoryArrayRepository : public SharedMemoryRepository {
   SharedMemoryArrayRepository(
       const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
       const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
-      : SharedMemoryRepository(segment, sizeof(DATA), type_name<DATA>(),
-                               codeVersion),
+      : SharedMemoryRepository(segment, sizeof(DATA),
+                               std::string(type_name<DATA>()), codeVersion),
         m_array(sharedMemoryService->constructArray<DATA, MaxSize>(
-            segment, type_name<DATA>())),
+            segment, getSharedMemoryRepository())),
         m_sharedMemoryService(sharedMemoryService) {}
   [[nodiscard]] SharedMemoryType getType() const override {
     return SharedMemoryType::Array;
   }
+
+  void serialize(
+      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+    writer->StartObject();
+    writer->String("repository");
+    writer->String("SharedMemoryArrayRepository");
+    writer->String("array");
+    writer->StartArray();
+    for (const auto &iter : m_array) {
+      LOG_TRACE("serialize vector entry");
+      if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
+        DAO dao(iter);
+        dao.serialize(writer);
+      } else if constexpr (std::is_same<SharedMemoryService::ShmString,
+                                        DATA>()) {
+        writer->String(iter.c_str());
+      }
+    }
+    writer->EndArray();
+    writer->EndObject();
+  }
+
+  bool deserialize(const rapidjson::Value &obj) override {}
 };
 
-template <typename DATA>
+template <typename DATA, typename DAO>
 class SharedMemoryVectorRepository : public SharedMemoryRepository {
  private:
   using Vector = boost::interprocess::vector<
@@ -130,13 +125,13 @@ class SharedMemoryVectorRepository : public SharedMemoryRepository {
     writer->String("vector");
     writer->StartArray();
     for (const auto &iter : m_vector) {
-      DATA d = iter;
       LOG_TRACE("serialize vector entry");
-      if constexpr (std::is_base_of<JsonSerializable, DATA>()) {
-        d.serialize(writer);
+      if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
+        DAO dao(iter);
+        dao.serialize(writer);
       } else if constexpr (std::is_same<SharedMemoryService::ShmString,
                                         DATA>()) {
-        writer->String(d.c_str());
+        writer->String(iter.c_str());
       }
     }
     writer->EndArray();
@@ -177,7 +172,7 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
   [[nodiscard]] SharedMemoryType getType() const override {
     return SharedMemoryType::Map;
   }
-  virtual void serialize(
+  void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
     writer->StartObject();
     writer->String("repository");
@@ -185,8 +180,8 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
     writer->String("map");
     writer->StartArray();
     for (auto &iterator : m_map) {
-      KEY key = iterator.first;
-      VALUE value = iterator.second;
+      const KEY &key = iterator.first;
+      const VALUE &value = iterator.second;
       LOG_TRACE("serialize map entry");
       writer->StartObject();
       writer->String("key");
@@ -208,7 +203,7 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
     writer->EndArray();
     writer->EndObject();
   }
-  virtual bool deserialize(const rapidjson::Value &obj) override {
+  bool deserialize(const rapidjson::Value &obj) override {
     bool success = true;
     // repository
     if (obj.HasMember("repository")) {
@@ -256,7 +251,7 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
   }
 };
 
-template <typename DATA>
+template <typename DATA, typename DAO>
 class SharedMemoryObjectRepository : public SharedMemoryRepository {
  private:
   DATA &m_data;
@@ -269,14 +264,31 @@ class SharedMemoryObjectRepository : public SharedMemoryRepository {
   SharedMemoryObjectRepository(
       const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
       const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
-      : SharedMemoryRepository(segment, sizeof(DATA), type_name<DATA>(),
-                               codeVersion),
-        m_data(sharedMemoryService->constructObject<DATA>(segment,
-                                                          type_name<DATA>())),
+      : SharedMemoryRepository(segment, sizeof(DATA),
+                               std::string(type_name<DATA>()), codeVersion),
+        m_data(sharedMemoryService->constructObject<DATA>(
+            segment, getSharedMemoryRepository())),
         m_sharedMemoryService(sharedMemoryService) {}
   [[nodiscard]] SharedMemoryType getType() const override {
     return SharedMemoryType::Object;
   }
+
+  void serialize(
+      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+    writer->StartObject();
+    writer->String("repository");
+    writer->String("SharedMemoryObjectRepository");
+    writer->String("object");
+    if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
+      DAO dao(m_data);
+      dao.serialize(writer);
+    } else if constexpr (std::is_same<SharedMemoryService::ShmString, DATA>()) {
+      writer->String(m_data.c_str());
+    }
+    writer->EndObject();
+  }
+
+  bool deserialize(const rapidjson::Value &obj) override {}
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYREPOSITORY_H
