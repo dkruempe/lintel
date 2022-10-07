@@ -1,6 +1,7 @@
 #include "base_library/features/base/command_line/SharedMemoryCliComponent.h"
 
 #include <base_library/core/utils/MemorySize.h>
+#include <base_library/core/utils/StringUtils.h>
 #include <rapidjson/prettywriter.h>
 
 #include <tabulate/table.hpp>
@@ -34,7 +35,8 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(
           .addArgument({"--repository-name", "-r"}, &m_repositoryName,
                        "Repository name")
           .addArgument({"--segment-name", "-s"}, &m_segmentName, "Segment Name")
-          .addArgument({"--type", "-t"}, &m_type, "Type"),
+          .addArgument({"--type", "-t"}, &m_type, "Type")
+          .addArgument({"--file", "-f"}, &m_file, "File"),
       ExportRepository);
 }
 void SharedMemoryCliComponent::onCommand(
@@ -110,14 +112,29 @@ void SharedMemoryCliComponent::onCommand(
           m_type->clear();
           return;
         }
-        std::string result =
-            m_sharedMemoryApi->repositoryOf(m_repositoryName.value(), m_segmentName.value(), m_type.value());
-        rapidjson::Document document;
-        document.Parse(result.c_str());
-        rapidjson::StringBuffer stringBuffer;
-        rapidjson::PrettyWriter writer(stringBuffer);
-        document.Accept(writer);
-        std::cout << stringBuffer.GetString() << "\n";
+        std::string result = m_sharedMemoryApi->repositoryOf(
+            m_repositoryName.value(), m_segmentName.value(), m_type.value());
+        if (m_file.has_value()) {
+          std::string file =
+              StringUtils::replaceAll(m_file.value(), "~", getenv("HOME"));
+          std::filesystem::path path(file);
+          bool parentPathExits = std::filesystem::exists(path.parent_path());
+          if (!parentPathExits) {
+            std::filesystem::create_directories(path.parent_path());
+          }
+          std::ofstream out =
+              std::ofstream(path, std::ofstream::trunc | std::ofstream::out);
+          out << result;
+          std::cout << "Exported SharedMemory to >" << path.filename() << "<\n";
+        } else {
+          rapidjson::Document document;
+          document.Parse(result.c_str());
+          rapidjson::StringBuffer stringBuffer;
+          rapidjson::PrettyWriter writer(stringBuffer);
+          document.Accept(writer);
+          std::cout << stringBuffer.GetString() << "\n";
+        }
+        m_file->clear();
         m_repositoryName->clear();
         m_segmentName->clear();
         m_type->clear();
