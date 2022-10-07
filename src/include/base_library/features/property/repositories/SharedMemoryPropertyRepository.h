@@ -7,7 +7,26 @@
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
-class PropertyData : public JsonSerializable {
+struct PropertyDataDto {
+  SharedMemoryService::ShmString m_processName;
+  SharedMemoryService::ShmString m_className;
+  SharedMemoryService::ShmString m_instanceName;
+  SharedMemoryService::ShmString m_name;
+  SharedMemoryService::ShmString m_value;
+  SharedMemoryService::ShmString m_type;
+
+  static int32_t getSize() {
+    return sizeof(SharedMemoryService::ShmString) * 4;
+  }
+  bool operator<(const PropertyDataDto &rhs) const;
+  bool operator>(const PropertyDataDto &rhs) const;
+  bool operator<=(const PropertyDataDto &rhs) const;
+  bool operator>=(const PropertyDataDto &rhs) const;
+  bool operator==(const PropertyDataDto &rhs) const;
+  bool operator!=(const PropertyDataDto &rhs) const;
+};
+
+class PropertyDataDao : public JsonSerializable {
  private:
   static struct Shapes {
     const std::string PROCESS_NAME = "process_name";
@@ -18,39 +37,27 @@ class PropertyData : public JsonSerializable {
     const std::string TYPE = "type";
   } m_shape;
 
+  const PropertyDataDto &m_dto;
+
  public:
-  static int32_t getSize() {
-    return sizeof(SharedMemoryService::ShmString) * 6;
-  }
-  SharedMemoryService::ShmString m_processName;
-  SharedMemoryService::ShmString m_className;
-  SharedMemoryService::ShmString m_instanceName;
-  SharedMemoryService::ShmString m_name;
-  SharedMemoryService::ShmString m_value;
-  SharedMemoryService::ShmString m_type;
-  PropertyData(
-      SharedMemoryService::ShmString processName,
-      SharedMemoryService::ShmString className,
-      SharedMemoryService::ShmString instanceName,
-      SharedMemoryService::ShmString name,
-      SharedMemoryService::ShmString value,
-      SharedMemoryService::ShmString type);
+  PropertyDataDao(const PropertyDataDto &dto) : m_dto(dto) {}
+
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
     writer->StartObject();
     // PROCESS NAME
     writer->String(m_shape.PROCESS_NAME.c_str());
-    writer->String(m_processName.c_str());
+    writer->String(m_dto.m_processName.c_str());
     writer->String(m_shape.CLASS_NAME.c_str());
-    writer->String(m_className.c_str());
+    writer->String(m_dto.m_className.c_str());
     writer->String(m_shape.INSTANCE_NAME.c_str());
-    writer->String(m_instanceName.c_str());
+    writer->String(m_dto.m_instanceName.c_str());
     writer->String(m_shape.NAME.c_str());
-    writer->String(m_name.c_str());
+    writer->String(m_dto.m_name.c_str());
     writer->String(m_shape.VALUE.c_str());
-    writer->String(m_value.c_str());
+    writer->String(m_dto.m_value.c_str());
     writer->String(m_shape.TYPE.c_str());
-    writer->String(m_type.c_str());
+    writer->String(m_dto.m_type.c_str());
     writer->EndObject();
   }
   bool deserialize(const rapidjson::Value &obj) override {
@@ -105,8 +112,9 @@ class PropertyData : public JsonSerializable {
 };
 
 class SharedMemoryPropertyRepository
-    : public SharedMemoryMapRepository<SharedMemoryService::ShmString,
-                                       PropertyData>,
+    : public SharedMemoryMapRepository<
+          SharedMemoryService::ShmString, PropertyDataDto,
+          SharedMemoryService::ShmString, PropertyDataDao>,
       public PropertyRepository {
  private:
   static constexpr int32_t m_version = 0;

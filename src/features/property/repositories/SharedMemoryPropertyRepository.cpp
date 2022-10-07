@@ -1,3 +1,5 @@
+#include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
+
 #include <base_library/features/property/models/PropertyRepositoryType.h>
 
 #include <boost/interprocess/creation_tags.hpp>
@@ -7,22 +9,8 @@
 #include <regex>
 
 #include "base_library/features/property/factories/PropertyFactory.h"
-#include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
 
-PropertyData::Shapes PropertyData::m_shape{};
-
-PropertyData::PropertyData(SharedMemoryService::ShmString processName,
-                           SharedMemoryService::ShmString className,
-                           SharedMemoryService::ShmString instanceName,
-                           SharedMemoryService::ShmString name,
-                           SharedMemoryService::ShmString value,
-                           SharedMemoryService::ShmString type)
-    : m_processName(processName),
-      m_className(className),
-      m_instanceName(instanceName),
-      m_name(name),
-      m_value(value),
-      m_type(type) {}
+PropertyDataDao::Shapes PropertyDataDao::m_shape{};
 
 SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
     const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
@@ -30,9 +18,11 @@ SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
         &sharedMemorySegmentManager,
     const std::shared_ptr<Configuration> &configuration,
     std::shared_ptr<ProcessName> processName)
-    : SharedMemoryMapRepository<SharedMemoryService::ShmString, PropertyData>(
+    : SharedMemoryMapRepository<SharedMemoryService::ShmString, PropertyDataDto,
+                                SharedMemoryService::ShmString,
+                                PropertyDataDao>(
           sharedMemoryService, sharedMemorySegmentManager->of("shm_property"),
-          m_version, PropertyData::getSize()),
+          m_version, PropertyDataDto::getSize()),
       PropertyRepository(PropertyRepositoryType::SHM_REPOSITORY, configuration),
       m_processName(std::move(processName)),
       m_upgradableMutex(boost::interprocess::open_or_create,
@@ -64,7 +54,7 @@ void SharedMemoryPropertyRepository::save(
     }
     SharedMemoryService::ShmString id = m_sharedMemoryService->constructString(
         segment, property->getIdentifier());
-    PropertyData propertyData(
+    PropertyDataDto propertyData{
         m_sharedMemoryService->constructString(segment,
                                                property->getProcessName()),
 
@@ -76,7 +66,7 @@ void SharedMemoryPropertyRepository::save(
 
         m_sharedMemoryService->constructString(segment, property->getName()),
         m_sharedMemoryService->constructString(segment, property->toString()),
-        m_sharedMemoryService->constructString(segment, property->getType()));
+        m_sharedMemoryService->constructString(segment, property->getType())};
     getMap().insert({id, propertyData});
   }
   LOG_TRACE("finished save properties {}", getMap().size());
@@ -161,3 +151,33 @@ void SharedMemoryPropertyRepository::deleteOf(
   }
 }
 void SharedMemoryPropertyRepository::onMigrate(int32_t currentActiveVersion) {}
+bool PropertyDataDto::operator<(const PropertyDataDto &rhs) const {
+  if (m_processName < rhs.m_processName) return true;
+  if (rhs.m_processName < m_processName) return false;
+  if (m_className < rhs.m_className) return true;
+  if (rhs.m_className < m_className) return false;
+  if (m_instanceName < rhs.m_instanceName) return true;
+  if (rhs.m_instanceName < m_instanceName) return false;
+  if (m_name < rhs.m_name) return true;
+  if (rhs.m_name < m_name) return false;
+  if (m_value < rhs.m_value) return true;
+  if (rhs.m_value < m_value) return false;
+  return m_type < rhs.m_type;
+}
+bool PropertyDataDto::operator>(const PropertyDataDto &rhs) const {
+  return rhs < *this;
+}
+bool PropertyDataDto::operator<=(const PropertyDataDto &rhs) const {
+  return !(rhs < *this);
+}
+bool PropertyDataDto::operator>=(const PropertyDataDto &rhs) const {
+  return !(*this < rhs);
+}
+bool PropertyDataDto::operator==(const PropertyDataDto &rhs) const {
+  return m_processName == rhs.m_processName && m_className == rhs.m_className &&
+         m_instanceName == rhs.m_instanceName && m_name == rhs.m_name &&
+         m_value == rhs.m_value && m_type == rhs.m_type;
+}
+bool PropertyDataDto::operator!=(const PropertyDataDto &rhs) const {
+  return !(rhs == *this);
+}

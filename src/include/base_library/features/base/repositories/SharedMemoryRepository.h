@@ -141,7 +141,7 @@ class SharedMemoryVectorRepository : public SharedMemoryRepository {
   bool deserialize(const rapidjson::Value &obj) override {}
 };
 
-template <typename KEY, typename VALUE>
+template <typename KEY, typename VALUE, typename KEY_DAO, typename VALUE_DAO>
 class SharedMemoryMapRepository : public SharedMemoryRepository {
  private:
   using Map = boost::interprocess::map<
@@ -165,8 +165,8 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
         m_map(sharedMemoryService->constructMap<KEY, VALUE>(
             segment, getSharedMemoryRepository())),
         m_sharedMemoryService(sharedMemoryService) {
-    static_assert(isSerializable<KEY>());
-    static_assert(isSerializable<VALUE>());
+    static_assert(isSerializable<KEY_DAO>());
+    static_assert(isSerializable<VALUE_DAO>());
     LOG_TRACE("map loaded with size of {}", m_map.size());
   }
   [[nodiscard]] SharedMemoryType getType() const override {
@@ -185,15 +185,17 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
       LOG_TRACE("serialize map entry");
       writer->StartObject();
       writer->String("key");
-      if constexpr (std::is_base_of<JsonSerializable, KEY>()) {
-        key.serialize(writer);
+      if constexpr (std::is_base_of<JsonSerializable, KEY_DAO>()) {
+        KEY_DAO dao(key);
+        dao.serialize(writer);
       } else if constexpr (std::is_same<SharedMemoryService::ShmString,
                                         KEY>()) {
         writer->String(key.c_str());
       }
       writer->String("value");
-      if constexpr (std::is_base_of<JsonSerializable, VALUE>()) {
-        value.serialize(writer);
+      if constexpr (std::is_base_of<JsonSerializable, VALUE_DAO>()) {
+        VALUE_DAO dao(value);
+        dao.serialize(writer);
       } else if constexpr (std::is_same<SharedMemoryService::ShmString,
                                         VALUE>()) {
         writer->String(value.c_str());
