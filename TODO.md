@@ -1,6 +1,8 @@
 # TODOs
 - General
   - [ ] fix general std::size_t serialize solution instead of limiting it to __APPLE__
+- Process
+  - [ ] adds better possibility to manages process automatically 
 - Shared Memory
   - [ ] remove set container (no shm support)
   - [ ] fix automatic increase feature, bc. currently free_memory is always fixed
@@ -10,7 +12,6 @@
         => fix BootstrapPlugin
 - Property
   - [ ] cleanup entries if default value is same no repository in shadow mode at startup
-  - [ ] DatabasePropertyRepository add INotify to table ?
 - Database
   - [ ] mySql Support
   - [ ] Cursor implementation
