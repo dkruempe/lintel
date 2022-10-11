@@ -1,18 +1,20 @@
 # TODOs
 - General
-  - [ ] fix general std::size_t serialize soluation instead of limiting it to __APPLE__
+  - [ ] fix general std::size_t serialize solution instead of limiting it to __APPLE__
 - Shared Memory
   - [ ] remove set container (no shm support)
   - [ ] fix automatic increase feature, bc. currently free_memory is always fixed
   - [ ] backup or archive strategy for shm
   - [ ] add better usage of semaphores
+  - [ ] better primary key for SharedMemoryRepository
+        => fix BootstrapPlugin
 - Property
   - [ ] cleanup entries if default value is same no repository in shadow mode at startup
   - [ ] DatabasePropertyRepository add INotify to table ?
 - Database
   - [ ] mySql Support
   - [ ] Cursor implementation
-  - [ ] adds constexpr impelmentation for better usage and performance
+  - [ ] adds constexpr implementation for better usage and performance
 - Queue Support
   - [ ] use the ZeroMQ Library ipc feature
   - [ ] implement basic api as feature
