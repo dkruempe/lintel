@@ -88,7 +88,9 @@ class SharedMemoryArrayRepository : public SharedMemoryRepository {
     writer->EndObject();
   }
 
-  bool deserialize(const rapidjson::Value &obj) override {}
+  bool deserialize(const rapidjson::Value &obj) override {
+    throw std::runtime_error("Unsupported operation");
+  }
 };
 
 template <typename DATA, typename DAO>
@@ -138,7 +140,9 @@ class SharedMemoryVectorRepository : public SharedMemoryRepository {
     writer->EndObject();
   }
 
-  bool deserialize(const rapidjson::Value &obj) override {}
+  bool deserialize(const rapidjson::Value &obj) override {
+    throw std::runtime_error("Unsupported operation");
+  }
 };
 
 template <typename KEY, typename VALUE, typename KeyDao, typename ValueDao>
@@ -206,50 +210,7 @@ class SharedMemoryMapRepository : public SharedMemoryRepository {
     writer->EndObject();
   }
   bool deserialize(const rapidjson::Value &obj) override {
-    bool success = true;
-    // repository
-    if (obj.HasMember("repository")) {
-      std::string repository = obj["repository"].GetString();
-      if (repository != "SharedMemoryMapRepository") {
-        LOG_ERROR("wrong repository defined => abort serialization");
-        return false;
-      }
-    } else {
-      LOG_ERROR("no repository defined => abort serialization");
-      return false;
-    }
-
-    if (!obj.HasMember("map")) {
-      LOG_ERROR("map not defined => abort serialization");
-      return false;
-    }
-    for (const auto &iter : obj["map"].GetArray()) {
-      if (!iter.HasMember("key") || !iter.HasMember("value")) {
-        LOG_ERROR("failed to deserialize key or value of map");
-        success = false;
-        break;
-      }
-      std::shared_ptr<KEY> key;
-      if constexpr (std::is_same<JsonSerializable, KEY>()) {
-        key->deserialize(iter["key"]);
-      } else if constexpr (std::is_same<KEY,
-                                        SharedMemoryService::ShmString>()) {
-        key = std::make_shared<KEY>(m_sharedMemoryService->constructString(
-            getSharedMemorySegment(), iter["key"].GetString()));
-      }
-      std::shared_ptr<VALUE> value;
-      if constexpr (std::is_same<JsonSerializable, VALUE>()) {
-        value->deserialize(iter["value"]);
-      } else if constexpr (std::is_same<VALUE,
-                                        SharedMemoryService::ShmString>()) {
-        value = std::make_shared<VALUE>(m_sharedMemoryService->constructString(
-            getSharedMemorySegment(), iter["value"].GetString()));
-      }
-      KEY copyKey = *key;
-      VALUE copyValue = *value;
-      m_map.insert({copyKey, copyValue});
-    }
-    return success;
+    throw std::runtime_error("Unsupported operation");
   }
 };
 
@@ -290,7 +251,9 @@ class SharedMemoryObjectRepository : public SharedMemoryRepository {
     writer->EndObject();
   }
 
-  bool deserialize(const rapidjson::Value &obj) override {}
+  bool deserialize(const rapidjson::Value &obj) override {
+    throw std::runtime_error("Unsupported operation");
+  }
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYREPOSITORY_H
