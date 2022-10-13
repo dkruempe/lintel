@@ -34,6 +34,8 @@ class PropertyService : public PersistableBean {
   // variables
   std::map<std::string, std::shared_ptr<PropertyBase>>
       m_properties;  // identifier (name_instanceName_processName), Property
+  std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>>
+      m_typeRepositoryMap;
   // functions
   static std::string createIdentifier(const std::string &name,
                                       const std::string &instanceName,
@@ -105,6 +107,8 @@ class PropertyService : public PersistableBean {
 
   void changeStringValueOf(const std::shared_ptr<PropertyBase> &property,
                            const std::string &value);
+  std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>>
+  buildMap(const std::vector<std::shared_ptr<PropertyRepository>> &vector);
 };
 // template functions implementations
 template <class T>
@@ -153,5 +157,4 @@ void PropertyService::changeValueOf(
     item->save(propertyBase);
   }
 }
-
 #endif  // LOGGING_PROPERTYSERVICE_H

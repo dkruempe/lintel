@@ -43,7 +43,7 @@ class PropertyRepository {
   /**
    * returns priority of repository
    */
-  PropertyRepositoryType getType() { return m_type; }
+  PropertyRepositoryType getType() const { return m_type; }
 
   bool isShadow() const {
     if (m_propertyRepositoryEntry == nullptr) {
@@ -59,7 +59,7 @@ class PropertyRepository {
   /**
    * returns if save operations are supported or not
    */
-  bool isMutable() {
+  bool isMutable() const {
     if (m_propertyRepositoryEntry == nullptr) {
       return false;
     }

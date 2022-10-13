@@ -13,7 +13,7 @@ std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
         &propertyRepositories,
     std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
         &propertiesMap) {
-  // sort repositories highest repository first
+  // sort repositories the highest repository first
   std::vector<std::shared_ptr<PropertyRepository>> repositories(
       propertyRepositories);
   std::sort(repositories.begin(), repositories.end(),
@@ -116,6 +116,16 @@ PropertyService::filterShadowRepositories(
   return shadowRepositories;
 }
 
+std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>>
+PropertyService::buildMap(
+    const std::vector<std::shared_ptr<PropertyRepository>> &vector) {
+  std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>> map;
+  for (const auto &item : vector) {
+    map.insert({item->getType(), item});
+  }
+  return map;
+}
+
 PropertyService::PropertyService(
     const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
@@ -126,7 +136,7 @@ PropertyService::PropertyService(
       m_shadowPropertyRepositories(
           filterShadowRepositories(propertyRepositories)),
       m_abstractServices(std::move(abstractServices)),
-      m_properties() {}
+      m_typeRepositoryMap(buildMap(propertyRepositories)) {}
 void PropertyService::onAwake() {
   // get properties from PropertyRepository
   std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
@@ -135,17 +145,64 @@ void PropertyService::onAwake() {
   // get properties of AbstractServices
   std::vector<std::shared_ptr<PropertyBase>> properties;
   for (const auto &iter : m_abstractServices) {
-    for (const auto &property : iter->getProperties()) {
-      properties.push_back(property);
+    auto temp = iter->getProperties();
+    properties.insert(properties.end(), temp.begin(), temp.end());
+  }
+
+  std::vector<std::shared_ptr<PropertyBase>> temp;
+  for (const auto &[type, props] : map) {
+    temp.insert(temp.end(), props.begin(), props.end());
+  }
+  bool reInit = false;
+  for (const auto &iter : properties) {
+    std::vector<std::shared_ptr<PropertyBase>> matches;
+    std::copy_if(temp.begin(), temp.end(), std::back_inserter(matches),
+                 [&](const std::shared_ptr<PropertyBase> &ptr) {
+                   return ptr->getIdentifier() == iter->getIdentifier();
+                 });
+    if (matches.empty()) {
+      // nothing to do
+      continue;
     }
+    matches.erase(
+        std::remove_if(matches.begin(), matches.end(),
+                       [&](const std::shared_ptr<PropertyBase> &property) {
+                         return property->toString() != iter->toString();
+                       }),
+        matches.end());
+    if (matches.empty()) {
+      // nothing to do
+      continue;
+    }
+    // remove now all elements from repository if possible bc. no need of those
+    for (const auto &property : matches) {
+      auto found =
+          m_typeRepositoryMap.find(property->getDataStorage().getType());
+      if (found == m_typeRepositoryMap.end()) {
+        continue;
+      }
+      if (!found->second->isEnabled() || !found->second->isMutable()) {
+        LOG_WARN(
+            "non mutable or disabled repository found with same value as the "
+            "default value for {} in {}",
+            iter->getIdentifier(), found->first.toString());
+        continue;
+      }
+      if (found->second->isShadow()) {
+        continue;
+      }
+      LOG_INFO("removed {} from {}", found->first.toString(),
+               property->getIdentifier());
+      reInit = true;
+      found->second->deleteOf({property});
+    }
+  }
+  if (reInit) {
+    LOG_INFO("reInit properties bc. of cleanup");
+    m_properties = init(m_propertyRepositories, map);
   }
   // enable properties
   getOrCreate(properties, map);
-  // std::for_each(
-  //     m_abstractServices.begin(), m_abstractServices.end(),
-  //     [&](const std::shared_ptr<AbstractServiceInterface> &abstractService) {
-  //       getOrCreate(abstractService->getProperties());
-  //     });
 }
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf() {
   if (m_shadowPropertyRepositories.empty()) {
