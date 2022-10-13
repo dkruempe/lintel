@@ -11,7 +11,7 @@
   - [ ] better primary key for SharedMemoryRepository
         => fix BootstrapPlugin
 - Property
-  - [ ] cleanup entries if default value is same no repository in shadow mode at startup
+  - [x] cleanup entries if default value is same no repository in shadow mode at startup
 - Database
   - [ ] mySql Support
   - [ ] Cursor implementation
