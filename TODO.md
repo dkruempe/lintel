@@ -4,8 +4,8 @@
 - Process
   - [ ] adds better possibility to manages process automatically 
 - Shared Memory
-  - [ ] remove set container (no shm support)
-  - [ ] fix automatic increase feature, bc. currently free_memory is always fixed
+  - [x] remove set container (no shm support)
+  - [x] fix automatic increase feature, bc. currently free_memory is always fixed
   - [ ] backup or archive strategy for shm
   - [ ] add better usage of semaphores
   - [ ] better primary key for SharedMemoryRepository

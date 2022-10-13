@@ -37,7 +37,7 @@ void StartupBuilder::addConfigurationComponent(
 }
 
 std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
-  // I process Informations
+  // I process Information
   ProcessName name(argc, argv);
   // II arguments
   std::vector<std::string> arguments;
