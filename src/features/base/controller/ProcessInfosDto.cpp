@@ -24,16 +24,11 @@ void ProcessInfosDto::serialize(
   }
   writer->EndArray();
 }
-void ProcessInfosDto::deserialize(const std::string& json) {
-  rapidjson::Document document;
-  document.Parse(json.c_str());
-  if (!document.IsArray()) {
-    LOG_WARN("document is not an array");
-    return;
-  }
-  for (const auto& iter : document.GetArray()) {
+bool ProcessInfosDto::deserialize(const rapidjson::Value& obj) {
+  for (const auto& iter : obj.GetArray()) {
     ProcessInfoDto processInfoDto;
     processInfoDto.deserialize(iter);
     m_processInfos.push_back(processInfoDto);
   }
+  return true;
 }

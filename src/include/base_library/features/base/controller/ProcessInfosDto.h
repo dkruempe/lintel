@@ -23,7 +23,8 @@ class ProcessInfosDto : public JsonSerializable {
 
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
-  void deserialize(const std::string &json) override;
+
+  bool deserialize(const rapidjson::Value& obj) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSINFOSDTO_H

@@ -1,5 +1,7 @@
 #include "base_library/core/services/ProcessService.h"
 
+#include <base_library/features/base/configuration/ProcessEntry.h>
+
 #include <boost/process/detail/child_decl.hpp>
 #include <boost/process/io.hpp>
 #include <memory>
@@ -9,20 +11,37 @@
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
+#include "base_library/features/base/configuration/ProcessComponent.h"
 #include "base_library/features/base/controller/ProcessGroupDto.h"
 #include "base_library/features/base/models/ProcessGroup.h"
 #include "base_library/features/base/models/ProcessInfo.h"
 
 ProcessService::ProcessService(
     std::shared_ptr<ProcessName> processName,
-    std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
+    std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,
+    std::shared_ptr<Configuration> configuration)
     : AbstractService<ProcessService>(processName->getProcessName()),
       m_processName(std::move(processName)),
-      m_environmentConfiguration(std::move(environmentConfiguration)) {
+      m_environmentConfiguration(std::move(environmentConfiguration)),
+      m_configuration(std::move(configuration)) {
   // make sure that all variables are initialized for starting the thread
   m_monitorThread = std::thread([&] { run(); });
   m_process = std::make_shared<Process>(m_processName->getPath(),
                                         m_processName->getArgs());
+  std::vector<std::shared_ptr<Entry>> entries =
+      m_configuration->configurationOf<ProcessComponent>();
+  for (const auto& entry : entries) {
+    std::shared_ptr<ProcessEntry> processEntry =
+        std::static_pointer_cast<ProcessEntry>(entry);
+    if (processEntry->getProcess() != nullptr) {
+      std::shared_ptr<Process> process = processEntry->getProcess();
+      startOf(*process);
+      continue;
+    }
+    std::shared_ptr<ProcessGroup> processGroup =
+        processEntry->getProcessGroup();
+    startOf(*processGroup);
+  }
 }
 std::vector<ProcessInfo> ProcessService::allActiveOf() {
   std::map<std::string, std::shared_ptr<ProcessGroup>> processGroupMap;
@@ -138,8 +157,10 @@ void ProcessService::monitorProcess() {
       continue;
     }
     if (processExecutes.getProcess()->getMaxAutoRestarts() != 0 &&
-        processExecutes.getProcess()->currentRestarts() <
-            processExecutes.getProcess()->getMaxAutoRestarts()) {
+        ((processExecutes.getProcess()->currentRestarts() <
+          processExecutes.getProcess()->getMaxAutoRestarts()) ||
+         (processExecutes.getProcess()->isAutoRestart() &&
+          processExecutes.getProcess()->getMaxAutoRestarts() == -1))) {
       processExecutes.getProcess()->increaseRestarts();
       std::filesystem::path path = processExecutes.getProcess()->getPath();
       if (!is_regular_file(path)) {

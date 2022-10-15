@@ -27,7 +27,7 @@ std::vector<ProcessInfoDto> ProcessApi::allOf(const std::string& processName) {
   LOG_TRACE("{}", result->body);
   ProcessInfosDto processInfosDto;
   try {
-    processInfosDto.deserialize(result->body);
+    processInfosDto.JsonSerializable::deserialize(result->body);
   } catch (std::exception& exception) {
     return {};
   }

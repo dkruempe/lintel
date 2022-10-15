@@ -63,6 +63,7 @@ class ProcessService : public AbstractService<ProcessService> {
   std::shared_ptr<ProcessName> m_processName;
   std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
   std::shared_ptr<Process> m_process;
+  std::shared_ptr<Configuration> m_configuration;
   // variables
   std::mutex m_processesMutex;
   std::map<std::string, ProcessExecutes> m_processes;
@@ -87,10 +88,11 @@ class ProcessService : public AbstractService<ProcessService> {
  public:
   ProcessService(
       std::shared_ptr<ProcessName> processName,
-      std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
+      std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,
+      std::shared_ptr<Configuration> configuration);
   ~ProcessService() override;
 
-  // Process Informations
+  // Process Information
   std::vector<ProcessGroupDto> allGroupsOf(const std::string &name);
   std::vector<ProcessInfo> allActiveOf();
   ProcessInfo currentOf();

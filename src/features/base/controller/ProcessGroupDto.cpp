@@ -41,7 +41,7 @@ bool ProcessGroupDto::deserialize(const rapidjson::Value &obj) {
   // PROCESSES
   if (obj.HasMember(m_shape.PROCESSES.c_str())) {
     ProcessInfosDto processInfosDto;
-    processInfosDto.deserialize(obj.GetString());
+    processInfosDto.deserialize(obj[m_shape.PROCESSES.c_str()]);
     m_processInfosDto = processInfosDto;
   } else {
     success = false;

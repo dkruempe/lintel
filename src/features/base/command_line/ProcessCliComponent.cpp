@@ -11,7 +11,7 @@ ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
               "Process Name of process itself, which is same as the filename."),
       ShowProcesses);
   m_commandParser.addCommand(
-      Command("show_process_groups", "Show all process groups")
+      Command("show_groups", "Show all process groups")
           .addArgument({"--process-group", "-g"}, &m_processGroup,
                        "Process Group Name"),
       ShowProcessGroups);
