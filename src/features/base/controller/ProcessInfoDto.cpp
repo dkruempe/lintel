@@ -59,7 +59,7 @@ void ProcessInfoDto::serialize(
   writer->Int(m_maxAutoRestarts);
   // PROCESS_ID
   writer->String(m_shape.PROCESS_ID.c_str());
-  writer->Int(getpgid(m_processId));
+  writer->Int(static_cast<int32_t>(m_processId));
   // RUNS
   writer->String(m_shape.RUNS.c_str());
   writer->Bool(m_isRunning);

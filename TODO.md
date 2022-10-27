@@ -3,6 +3,7 @@
   - [ ] fix general std::size_t serialize solution instead of limiting it to __APPLE__
 - Process
   - [ ] adds better possibility to manages process automatically 
+  - [ ] need to add later Historization support for following operations for processes
 - Shared Memory
   - [x] remove set container (no shm support)
   - [x] fix automatic increase feature, bc. currently free_memory is always fixed

@@ -183,6 +183,8 @@ void ProcessService::monitorProcess() {
     int exitCode = processExecutes.getChild()->exit_code();
     processExecutes.setPromiseValue(exitCode);
     processExecutes.getProcess()->onStop();
+    LOG_INFO("{}/{} process stopped", processExecutes.getProcess()->getId(),
+             processExecutes.getProcess()->getPath().filename().string());
     removes.push_back(name);
   }
   for (const auto& name : removes) {
