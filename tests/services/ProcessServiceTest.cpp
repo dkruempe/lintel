@@ -20,11 +20,14 @@ TEST_CASE("ProcessService Start Process Group") {
   df.addOnStartEvent(onStartDf);
   ls.addOnStartEvent(onStartLs);
   ProcessGroup group("testGroup", {df, ls});
+  std::vector<std::shared_ptr<Component>> components{};
   std::shared_ptr<ProcessName> processName =
       std::make_shared<ProcessName>("test");
   std::shared_ptr<EnvironmentConfiguration> env =
       std::make_shared<EnvironmentConfiguration>();
-  ProcessService processService(processName, env);
+  std::shared_ptr<Configuration> configuration =
+      std::make_shared<Configuration>(components, env);
+  ProcessService processService(processName, env, configuration );
   processService.startOf(group);
   REQUIRE(startedDf);
   REQUIRE(startedLs);
@@ -37,11 +40,14 @@ TEST_CASE("ProcessService Start Process") {
   auto func = std::make_shared<std::function<void(const Process &)>>(
       [&](const Process &process) { started = true; });
   process.addOnStartEvent(func);
+  std::vector<std::shared_ptr<Component>> components{};
   std::shared_ptr<ProcessName> processName =
       std::make_shared<ProcessName>("test");
   std::shared_ptr<EnvironmentConfiguration> env =
       std::make_shared<EnvironmentConfiguration>();
-  ProcessService processService(processName, env);
+  std::shared_ptr<Configuration> configuration =
+      std::make_shared<Configuration>(components, env);
+  ProcessService processService(processName, env, configuration);
   std::future<int> future = processService.startOf(process);
   REQUIRE(started);
   REQUIRE(future.get() == 0);
@@ -64,11 +70,14 @@ TEST_CASE("ProcessService Start/Restart Process") {
   process.addOnStartEvent(onStart);
   process.addOnRestartEvent(onRestart);
   process.addOnStopEvent(onStop);
+  std::vector<std::shared_ptr<Component>> components{};
   std::shared_ptr<ProcessName> processName =
       std::make_shared<ProcessName>("test");
   std::shared_ptr<EnvironmentConfiguration> env =
       std::make_shared<EnvironmentConfiguration>();
-  ProcessService processService(processName, env);
+  std::shared_ptr<Configuration> configuration =
+      std::make_shared<Configuration>(components, env);
+  ProcessService processService(processName, env, configuration);
   std::future<int> future = processService.startOf(process);
   REQUIRE(started);
   REQUIRE(future.get() == 0);
@@ -95,11 +104,14 @@ TEST_CASE("ProcessService Start/Stop Process") {
   process.addOnStartEvent(onStart);
   process.addOnStopEvent(onStop);
   process.addOnRestartEvent(onRestart);
+  std::vector<std::shared_ptr<Component>> components{};
   std::shared_ptr<ProcessName> processName =
       std::make_shared<ProcessName>("test");
   std::shared_ptr<EnvironmentConfiguration> env =
       std::make_shared<EnvironmentConfiguration>();
-  ProcessService processService(processName, env);
+  std::shared_ptr<Configuration> configuration =
+      std::make_shared<Configuration>(components, env);
+  ProcessService processService(processName, env, configuration);
   std::future<int> future = processService.startOf(process);
   REQUIRE(started);
   processService.restartOf(process);
