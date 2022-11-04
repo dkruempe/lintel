@@ -48,9 +48,10 @@ TEST_CASE("ProcessService Start Process") {
   std::shared_ptr<Configuration> configuration =
       std::make_shared<Configuration>(components, env);
   ProcessService processService(processName, env, configuration);
-  std::future<int> future = processService.startOf(process);
+  std::optional<std::future<int>> future = processService.startOf(process);
   REQUIRE(started);
-  REQUIRE(future.get() == 0);
+  REQUIRE(future.has_value());
+  REQUIRE(future.value().get() == 0);
   processService.onShutdown();
   LOG_INFO("ProcessService Start Process End");
 }
@@ -78,9 +79,10 @@ TEST_CASE("ProcessService Start/Restart Process") {
   std::shared_ptr<Configuration> configuration =
       std::make_shared<Configuration>(components, env);
   ProcessService processService(processName, env, configuration);
-  std::future<int> future = processService.startOf(process);
+  std::optional<std::future<int>> future = processService.startOf(process);
   REQUIRE(started);
-  REQUIRE(future.get() == 0);
+  REQUIRE(future.has_value());
+  REQUIRE(future.value().get() == 0);
   REQUIRE(restarted == 5);
   REQUIRE(stopped == 1);
   processService.onShutdown();
@@ -112,12 +114,13 @@ TEST_CASE("ProcessService Start/Stop Process") {
   std::shared_ptr<Configuration> configuration =
       std::make_shared<Configuration>(components, env);
   ProcessService processService(processName, env, configuration);
-  std::future<int> future = processService.startOf(process);
+  std::optional<std::future<int>> future = processService.startOf(process);
   REQUIRE(started);
   processService.restartOf(process);
   REQUIRE(restarted == true);
   processService.stopOf(process);
-  REQUIRE(future.get() == 2);
+  REQUIRE(future.has_value());
+  REQUIRE(future.value().get() == 2);
   REQUIRE(stopped == 2);
   processService.onShutdown();
 }

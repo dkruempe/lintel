@@ -6,6 +6,7 @@
         <ProcessGroup name="test_group">
             <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true" maxRestarts="-1"/>
             <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true" maxRestarts="5"/>
+            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test_process.sh" args="" autoRestart="true" maxRestarts="2"/>
         </ProcessGroup>
     </Processes>
     <!-- Logging Configuration for Application -->

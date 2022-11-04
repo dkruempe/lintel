@@ -99,7 +99,7 @@ class ProcessService : public AbstractService<ProcessService> {
   std::optional<std::shared_ptr<Process>> of(const std::string &id);
 
   // Process operations
-  std::future<int> startOf(const Process &process);
+  std::optional<std::future<int>> startOf(const Process &process);
   void restartOf(const Process &process);
   bool stopOf(const Process &process);
   void terminateOf(const Process &process);

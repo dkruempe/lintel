@@ -74,7 +74,11 @@ std::vector<ProcessInfo> ProcessService::allActiveOf() {
   return temp;
 }
 
-std::future<int> ProcessService::startOf(const Process& process) {
+std::optional<std::future<int>> ProcessService::startOf(
+    const Process& process) {
+  if (!m_running) {
+    return std::nullopt;
+  }
   // I check if process is available
   {
     std::lock_guard<std::mutex> lock(m_processesMutex);
@@ -113,7 +117,7 @@ std::future<int> ProcessService::startOf(const Process& process) {
     m_processes.insert({process.getId(), processExecutes});
   }
   process.onStart();
-  return future;
+  return std::make_optional<std::future<int>>(std::move(future));
 }
 
 void ProcessService::onShutdown() {
@@ -196,6 +200,28 @@ ProcessService::~ProcessService() {
   if (m_monitorThread.joinable()) {
     m_monitorThread.join();
   }
+  std::vector<ProcessExecutes> runningProcesses;
+  {
+    std::lock_guard<std::mutex> locker(m_processesMutex);
+    for (auto& [id, process] : m_processes) {
+      if (!process.getChild()->running()) {
+        continue;
+      }
+      runningProcesses.push_back(process);
+    }
+  }
+  for (auto& item : runningProcesses) {
+    if (!item.getChild()->running()) {
+      continue;
+    }
+    stopOf(*item.getProcess());
+  }
+  for (auto& item : runningProcesses) {
+    if (!item.getChild()->running()) {
+      continue;
+    }
+    terminateOf(*item.getProcess());
+  }
 }
 bool ProcessService::stopOf(const Process& process) {
   ProcessExecutes processExecutes;
@@ -237,6 +263,9 @@ bool ProcessService::stopOf(const Process& process) {
   return success;
 }
 void ProcessService::restartOf(const Process& process) {
+  if (!m_running) {
+    return;
+  }
   bool success = stopOf(process);
   if (!success) {
     LOG_INFO("{}/{} force stop of process", process.getId(),
@@ -272,6 +301,9 @@ void ProcessService::terminateOf(const Process& process) {
   m_processes.erase(processExecutes.getProcess()->getId());
 }
 void ProcessService::detachOf(const Process& process) {
+  if (!m_running) {
+    return;
+  }
   ProcessExecutes processExecutes;
   {
     std::lock_guard<std::mutex> locker(m_processesMutex);
@@ -292,6 +324,9 @@ void ProcessService::detachOf(const Process& process) {
   m_processes.erase(processExecutes.getProcess()->getId());
 }
 void ProcessService::startOf(const ProcessGroup& processGroup) {
+  if (!m_running) {
+    std::runtime_error("ProcessService is onShutdown => no more startOf");
+  }
   {
     std::lock_guard<std::mutex> locker(m_processGroupMutex);
     auto found = m_processGroups.find(processGroup.getId());
@@ -334,6 +369,9 @@ bool ProcessService::stopOf(const ProcessGroup& processGroup) {
   return success;
 }
 void ProcessService::restartOf(const ProcessGroup& processGroup) {
+  if (!m_running) {
+    return;
+  }
   bool success = stopOf(processGroup);
   if (!success) {
     terminateOf(processGroup);
@@ -356,6 +394,9 @@ void ProcessService::terminateOf(const ProcessGroup& processGroup) {
   m_processGroups.erase(processGroup.getId());
 }
 void ProcessService::detachOf(const ProcessGroup& processGroup) {
+  if (!m_running) {
+    return;
+  }
   {
     std::lock_guard<std::mutex> locker(m_processGroupMutex);
     auto found = m_processGroups.find(processGroup.getId());
