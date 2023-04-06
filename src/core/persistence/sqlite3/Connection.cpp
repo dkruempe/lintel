@@ -8,7 +8,7 @@
 
 namespace sqlite {
 Connection::Connection(const std::string &connectionInfo) : m_db(nullptr) {
-  int rc = sqlite3_open(connectionInfo.c_str(), &m_db);
+  int const rc = sqlite3_open(connectionInfo.c_str(), &m_db);
   if (rc != SQLITE_OK) {
     throw db::SQLException("Can't open database: " + getErrorMessage());
   }
@@ -16,7 +16,7 @@ Connection::Connection(const std::string &connectionInfo) : m_db(nullptr) {
 Connection::Connection(
     const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
     : m_db(nullptr) {
-  int rc = sqlite3_open(connectionEntry->getConnection().c_str(), &m_db);
+  int const rc = sqlite3_open(connectionEntry->getConnection().c_str(), &m_db);
   if (rc != SQLITE_OK) {
     throw db::SQLException("Can't open database: " + getErrorMessage());
   }
@@ -72,7 +72,7 @@ std::shared_ptr<Result> Connection::executePreparedStatement(
   }
 
   int counter = 0;
-  for (auto param : parameters.getParameters()) {
+  for (const auto &param : parameters.getParameters()) {
     if (std::strlen(param) > 0) {
       sqlite3_bind_text(found->second, ++counter, param, -1, SQLITE_TRANSIENT);
     } else {
@@ -81,7 +81,6 @@ std::shared_ptr<Result> Connection::executePreparedStatement(
   }
   std::shared_ptr<Result> result = std::make_shared<Result>();
   int step = -1;
-  int row = 0;
   do {
     step = sqlite3_step(found->second);
     if (step != SQLITE_ROW) {
@@ -100,7 +99,6 @@ std::shared_ptr<Result> Connection::executePreparedStatement(
       arguments.add(argument);
     }
     result->add(arguments);
-    row++;
   } while (step == SQLITE_ROW);
   sqlite3_reset(found->second);
   return result;
@@ -127,7 +125,6 @@ std::shared_ptr<Result> Connection::executeParameters(
   }
 
   int step = -1;
-  int row = 0;
   do {
     step = sqlite3_step(stmt);
     if (step != SQLITE_ROW) {
@@ -152,7 +149,6 @@ std::shared_ptr<Result> Connection::executeParameters(
       arguments.add(argument);
     }
     result->add(arguments);
-    row++;
   } while (step == SQLITE_ROW);
   sqlite3_finalize(stmt);
   return result;
@@ -180,7 +176,7 @@ std::shared_ptr<Result> Connection::execute(
       sqlite3_exec(m_db, statement.c_str(), callBack, funcPtr, &errorMessage);
 
   if (rc != SQLITE_OK) {
-    std::string errMsg = (errorMessage);
+    std::string const errMsg = (errorMessage);
     sqlite3_free(errorMessage);
     throw db::SQLException("SQLite execution error: " + errMsg);
   }

@@ -21,7 +21,9 @@
 #include "base_library/features/base/controller/UserController.h"
 #include "base_library/features/base/provider/GroupProvider.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
+#include "base_library/features/base/repositories/HistoryRepository.h"
 #include "base_library/features/base/repositories/UserRepository.h"
+#include "base_library/features/base/services/HistoryService.h"
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/InitializeService.h"
@@ -107,6 +109,11 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
   builder.registerType<SharedMemoryApi>().singleInstance();
   builder.registerType<SharedMemoryCliComponent>()
       .as<CommandLineComponent>()
+      .asSelf()
+      .singleInstance();
+  builder.registerType<HistoryRepository>().singleInstance();
+  builder.registerType<HistoryService>()
+      .as<AbstractServiceInterface>()
       .asSelf()
       .singleInstance();
 }

@@ -4,6 +4,7 @@
 
 #include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
 #include "base_library/features/base/configuration/LoggerComponent.h"
+#include "base_library/features/base/configuration/MessageQueueComponent.h"
 #include "base_library/features/base/configuration/ProcessComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/http/configuration/HttpComponent.h"
@@ -22,6 +23,7 @@ ConfigurationComponentBuilder::ConfigurationComponentBuilder(
       std::make_shared<SharedMemorySegmentComponent>(environmentConfiguration));
   m_components.push_back(std::make_shared<PropertyRepositoryComponent>());
   m_components.push_back(std::make_shared<ProcessComponent>());
+  m_components.push_back(std::make_shared<MessageQueueComponent>());
 }
 void ConfigurationComponentBuilder::add(
     std::shared_ptr<Component> &&component) {

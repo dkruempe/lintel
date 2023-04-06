@@ -16,6 +16,13 @@ if (NOT DEFINED BOOTSTRAP_CONFIG_NAME)
     set(BOOTSTRAP_CONFIG_NAME "bootstrap")
 endif ()
 
+IF (NOT DEFINED MSG_QUEUE_NAME_SIZE)
+    set(MSG_QUEUE_NAME_SIZE 100)
+endif ()
+IF (NOT DEFINED MSG_QUUEUE_CONTENT_SIZE)
+    set(MSG_QUUEUE_CONTENT_SIZE 1000)
+endif ()
+
 configure_file(
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h.in
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h)
@@ -37,7 +44,6 @@ find_package(httplib REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Boost 1.75.0 COMPONENTS filesystem system REQUIRED)
 find_package(RapidJSON REQUIRED)
-find_package(tabulate REQUIRED)
 find_package(date REQUIRED)
 find_package(spdlog REQUIRED)
 
@@ -49,11 +55,11 @@ add_library(base_library SHARED ${headers} ${sources})
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library
         SYSTEM PUBLIC
-        "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${Boost_INCLUDE_DIRS};${tabulate_INCLUDES};${CMAKE_CURRENT_SOURCE_DIR}/include>"
-        "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${Boost_INCLUDE_DIRS};${tabulate_INCLUDES};include>"
+        "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${rapidjson_INCLUDE_DIRS_DEBUG};${Boost_INCLUDE_DIRS};${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${rapidjson_INCLUDE_DIRS_DEBUG};${Boost_INCLUDE_DIRS};include>"
         )
-target_link_libraries(base_library PUBLIC fmt::fmt tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
-        Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib RapidJSON::RapidJSON date::date spdlog::spdlog
+target_link_libraries(base_library PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
+        Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib ${rapidjson_LIBRARIES_DEBUG} date::date spdlog::spdlog_header_only
         kruempelmann::Hypodermic ${Boost_LIBRARIES} PRIVATE project_warnings)
 add_library(kruempelmann::base_library ALIAS base_library)
 INSTALL(TARGETS base_library

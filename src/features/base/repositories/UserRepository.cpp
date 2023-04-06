@@ -90,19 +90,13 @@ void UserRepository::createOf(const User &user) {
     db::Connection connection(m_connectionEntry);
     db::Transaction transaction(connection);
     db::Statement statement(connection);
-    using namespace date;
-    using namespace std::chrono;
-    std::string createdTimestamp =
-        format("%Y-%m-%d %H:%M:%S%Ez", user.getCreatedTimestamp());
-    std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
-    LOG_TRACE("created_timestamp = {}", createdTimestamp);
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(user.getUserName())
         .add(user.getPassword())
         .add(user.getEmail())
         .add(user.getFirstName())
         .add(user.getLastName())
-        .add(createdTimestamp);
+        .add(user.getCreatedTimestamp());
     statement.execute(
         R"(
     insert into users (

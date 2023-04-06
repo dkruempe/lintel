@@ -17,6 +17,7 @@
 #include "base_library/features/base/models/ProcessGroup.h"
 #include "base_library/features/base/models/ProcessInfo.h"
 #include "base_library/features/base/models/ProcessName.h"
+#include "base_library/features/base/services/HistoryService.h"
 #include "base_library/features/property/services/PropertyService.h"
 
 class ProcessService : public AbstractService<ProcessService> {
@@ -64,6 +65,7 @@ class ProcessService : public AbstractService<ProcessService> {
   std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
   std::shared_ptr<Process> m_process;
   std::shared_ptr<Configuration> m_configuration;
+  std::shared_ptr<HistoryService> m_historyService;
   // variables
   std::mutex m_processesMutex;
   std::map<std::string, ProcessExecutes> m_processes;
@@ -89,7 +91,8 @@ class ProcessService : public AbstractService<ProcessService> {
   ProcessService(
       std::shared_ptr<ProcessName> processName,
       std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,
-      std::shared_ptr<Configuration> configuration);
+      std::shared_ptr<Configuration> configuration,
+      std::shared_ptr<HistoryService> historyService);
   ~ProcessService() override;
 
   // Process Information
@@ -112,8 +115,6 @@ class ProcessService : public AbstractService<ProcessService> {
   void terminateOf(const ProcessGroup &processGroup);
   void detachOf(const ProcessGroup &processGroup);
 
-  // AbstractService Functions
-  void onShutdown() override;
 };
 
 #endif  // CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H

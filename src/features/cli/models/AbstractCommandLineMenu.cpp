@@ -1,6 +1,6 @@
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
 
-#include <tabulate/table.hpp>
+#include <base_library/core/utils/TableBuilder.h>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
@@ -26,13 +26,13 @@ void AbstractCommandLineMenu::onShowMenu() {
     return;
   }
   int index = 0;
-  tabulate::Table table;
-  table.add_row({"Index", "Menu Name", "Menu Alias"});
+  TableBuilder<3> builder;
+  builder.add({"Index", "Menu Name", "Menu Alias"});
   for (auto &component : m_components) {
-    table.add_row({std::to_string(++index), std::string(component->getName()),
+    builder.add({std::to_string(++index), std::string(component->getName()),
                    std::string(component->getAlias())});
   }
-  std::cout << table.str() << "\n";
+  std::cout << builder.build() << "\n";
 }
 
 bool AbstractCommandLineMenu::onMenu(const std::string &command) {

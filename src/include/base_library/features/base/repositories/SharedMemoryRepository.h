@@ -39,6 +39,18 @@ class SharedMemoryRepository : public JsonSerializable {
   [[nodiscard]] const std::string &getSharedMemoryRepository() const;
   [[nodiscard]] int32_t getCodeVersion() const;
   [[nodiscard]] virtual SharedMemoryType getType() const = 0;
+  [[nodiscard]] std::string getTypeName() const {
+    if (getType() == SharedMemoryType::Map) {
+      return "Map";
+    }
+    if (getType() == SharedMemoryType::Vector) {
+      return "Vector";
+    }
+    if (getType() == SharedMemoryType::Array) {
+      return "Array";
+    }
+    return "Object";
+  }
 
   ~SharedMemoryRepository() override = default;
 

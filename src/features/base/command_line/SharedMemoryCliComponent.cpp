@@ -2,9 +2,9 @@
 
 #include <base_library/core/utils/MemorySize.h>
 #include <base_library/core/utils/StringUtils.h>
+#include <base_library/core/utils/TableBuilder.h>
 #include <rapidjson/prettywriter.h>
 
-#include <tabulate/table.hpp>
 SharedMemoryCliComponent::SharedMemoryCliComponent(
     std::shared_ptr<SharedMemoryApi> sharedMemoryApi)
     : CommandLineComponent(m_name, m_alias),
@@ -151,13 +151,13 @@ void SharedMemoryCliComponent::onCommand(
 }
 void SharedMemoryCliComponent::printSegments(
     const std::vector<SharedMemorySegmentDto> &segments) {
-  tabulate::Table table;
-  table.add_row({"No.", "SegmentName", "Size", "AutoExtend", "AutoExtendSize",
+  TableBuilder<11> builder;
+  builder.add({"No.", "SegmentName", "Size", "AutoExtend", "AutoExtendSize",
                  "MaxSize", "CurrentSize", "FreeSize", "NamedObjects",
                  "UniqueObjects", "Sanity"});
   std::size_t count = 0;
   for (const auto &iter : segments) {
-    table.add_row({std::to_string(++count), iter.getName(),
+    builder.add({std::to_string(++count), iter.getName(),
                    MemorySize::serialize(iter.getSize()),
                    iter.isAutoExtend() ? "true" : "false",
                    MemorySize::serialize(iter.getAutoExtendSize()),
@@ -168,7 +168,7 @@ void SharedMemoryCliComponent::printSegments(
                    std::to_string(iter.getAmountUniqueObjects()),
                    iter.isSanity() ? "true" : "false"});
   }
-  std::cout << table.str() << "\n";
+  std::cout << builder.build() << "\n";
 }
 bool SharedMemoryCliComponent::onExit() { return true; }
 void SharedMemoryCliComponent::printCommandList(
@@ -186,17 +186,17 @@ void SharedMemoryCliComponent::onHelp() {
 }
 void SharedMemoryCliComponent::printRepositories(
     const std::vector<SharedMemoryRepositoryDto> &repositories) {
-  tabulate::Table table;
-  table.add_row(
+  TableBuilder<6> builder;
+  builder.add(
       {"No.", "SegmentName", "RepositoryName", "Size", "Type", "Version"});
   std::size_t count = 0;
   for (const auto &iter : repositories) {
-    table.add_row({std::to_string(++count), iter.getSegmentName(),
+    builder.add({std::to_string(++count), iter.getSegmentName(),
                    iter.getName(), std::to_string(iter.getSize()),
                    std::string(magic_enum::enum_name<>(iter.getType())),
                    std::to_string(iter.getCurrentVersion())});
   }
-  std::cout << table.str() << "\n";
+  std::cout << builder.build() << "\n";
 }
 
 std::vector<std::string> SharedMemoryCliComponent::allCommandsOf() {

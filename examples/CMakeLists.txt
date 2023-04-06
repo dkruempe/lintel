@@ -9,6 +9,16 @@ if (NOT TARGET kruempelmann::base_library)
     include_directories(${base_library_INCLUDE_DIRS})
 endif ()
 
+# named_pipe_server example
+add_executable(named_pipe_server named_pipe_server.cpp)
+target_compile_features(named_pipe_server PUBLIC cxx_std_17)
+
+# message queue
+add_executable(message_queue message_queue.cpp)
+target_compile_features(message_queue PUBLIC cxx_std_17)
+target_include_directories(message_queue PRIVATE ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(message_queue PRIVATE kruempelmann::base_library)
+
 # main example
 add_executable(main main.cpp)
 target_compile_features(main PUBLIC cxx_std_17)

@@ -54,8 +54,7 @@ class DatabaseBootstrapPlugin : public BootstrapPlugin {
   std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
 
   static constexpr std::string_view m_createSchemaVersion =
-      "CREATE TABLE \"schema_version\" (\"name\" TEXT NOT NULL PRIMARY "
-      "KEY,\"version\" BIGINT NOT NULL);";
+      R"(CREATE TABLE schema_version (name TEXT NOT NULL PRIMARY KEY,version BIGINT NOT NULL);)";
 
   static std::optional<db::Result> hasSchemaVersionTable(
       const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry);

@@ -50,9 +50,7 @@ class ArrayDao : public JsonSerializable {
  public:
   explicit ArrayDao(const ArrayDto &dto) : m_dto(dto) {}
 
-  static int32_t getSize() {
-    return sizeof(char[100]) * 4 + sizeof(int32_t);
-  }
+  static int32_t getSize() { return sizeof(char[100]) * 4 + sizeof(int32_t); }
 
   void serialize(
       rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
@@ -328,18 +326,12 @@ class TestFeature : public Feature {
 };
 
 int main(int argc, char *argv[]) {
-  try {
-    std::shared_ptr<StartupBuilder> builder = StartupBuilder::with(argc, argv);
-    builder->addFeature<PropertyFeature>();
-    builder->addFeature<BaseFeature>();
-    builder->addFeature<CommandLineFeature>();
-    builder->addFeature<HttpFeature>();
-    builder->addFeature<TestFeature>();
-    builder->start();
-  } catch (const std::exception &e) {
-    LOG_INFO("exception: {}", e.what());
-  } catch (...) {
-    LOG_INFO("exception was thrown");
-  }
+  std::shared_ptr<StartupBuilder> builder = StartupBuilder::with(argc, argv);
+  builder->addFeature<PropertyFeature>();
+  builder->addFeature<BaseFeature>();
+  builder->addFeature<CommandLineFeature>();
+  builder->addFeature<HttpFeature>();
+  builder->addFeature<TestFeature>();
+  builder->start();
   return 0;
 }

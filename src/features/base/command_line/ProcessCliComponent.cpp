@@ -1,6 +1,7 @@
 #include "base_library/features/base/command_line/ProcessCliComponent.h"
 
-#include <tabulate/table.hpp>
+#include <base_library/core/utils/TableBuilder.h>
+
 ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
     : CommandLineComponent(m_name, m_alias),
       m_processApi(std::move(processApi)) {
@@ -99,18 +100,18 @@ void ProcessCliComponent::onCommand(
 }
 void ProcessCliComponent::printProcessGroups(
     const std::vector<ProcessGroupDto> &processGroup) {
-  tabulate::Table table;
-  table.add_row({"No.", "ProcessGroupName", "ProcessGroupId"});
+  TableBuilder<3> builder;
+  builder.add({"No.", "ProcessGroupName", "ProcessGroupId"});
   std::size_t count = 0;
   for (const auto &iter : processGroup) {
-    table.add_row({std::to_string(++count), iter.getName(), iter.getId()});
+    builder.add({std::to_string(++count), iter.getName(), iter.getId()});
   }
-  std::cout << table.str() << "\n";
+  std::cout << builder.build() << "\n";
 }
 void ProcessCliComponent::printProcesses(
     const std::vector<ProcessInfoDto> &processInfoDto) {
-  tabulate::Table table;
-  table.add_row({
+  TableBuilder<9> builder;
+  builder.add({
       "No.",
       "ProcessName",
       "SystemProcessId",
@@ -123,7 +124,7 @@ void ProcessCliComponent::printProcesses(
   });
   std::size_t iter = 0;
   for (const auto &processInfo : processInfoDto) {
-    table.add_row(
+    builder.add(
         {std::to_string(++iter), processInfo.getPath().filename().string(),
          std::to_string(processInfo.getProcessId()), processInfo.getId(),
          processInfo.isAutoRestart() ? "true" : "false",
@@ -131,7 +132,7 @@ void ProcessCliComponent::printProcesses(
          std::to_string(processInfo.getRestarts()), processInfo.getGroupName(),
          processInfo.getGroupId()});
   }
-  std::cout << table.str() << "\n";
+  std::cout << builder.build() << "\n";
 }
 bool ProcessCliComponent::onExit() { return true; }
 void ProcessCliComponent::printCommandList(std::set<std::string> menuAlias) {

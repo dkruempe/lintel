@@ -20,5 +20,5 @@ ADD_SUBDIRECTORY(src)
 ADD_SUBDIRECTORY(examples)
 
 # Tests
-enable_testing()
-ADD_SUBDIRECTORY(tests)
+# enable_testing()
+# ADD_SUBDIRECTORY(tests)

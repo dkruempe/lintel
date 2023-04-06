@@ -2,49 +2,65 @@
 <Configuration>
     <!-- Process Configuration for Application -->
     <Processes>
-        <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true" maxRestarts="-1"/>
+        <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"
+                 maxRestarts="-1"/>
         <ProcessGroup name="test_group">
-            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true" maxRestarts="-1"/>
-            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true" maxRestarts="5"/>
-            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test_process.sh" args="" autoRestart="true" maxRestarts="2"/>
+            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"
+                     maxRestarts="-1"/>
+            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"
+                     maxRestarts="5"/>
+            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test_process.sh" args=""
+                     autoRestart="true" maxRestarts="2"/>
         </ProcessGroup>
     </Processes>
+
     <!-- Logging Configuration for Application -->
     <Loggers>
         <!-- path to logger directory -->
-        <Path path="~/dev/log/cpp-base-library" create_sub_dirs="true" />
+        <Path path="~/dev/log/cpp-base-library" create_sub_dirs="true"/>
         <!-- Special template for logger -->
         <Logger process_name=".*" level="info" async="false">
             <!-- <LoggerSink type="ConsoleSink" level="trace"/> -->
             <!-- <LoggerSink type="DailyFileSink" level="debug" time="02:30"/> -->
-            <LoggerSink type="RotatingFileSink" level="trace" size="5MB" max_files="10" />
+            <LoggerSink type="RotatingFileSink" level="trace" size="5MB" max_files="10"/>
             <!-- <LoggerSink type="TcpSink" level="debug" pattern='{"timestamp":"%Y-%m-%dT%H:%M:%S.%fZ", "logger":"%n", "@severity":"%l", "file":"%s", "line":"%#", "message":"%v"}' connection="localhost" port="1234" /> -->
             <!-- <LoggerSink type="SysLogSink" level="error" pattern="..." id="ident"/> -->
         </Logger>
     </Loggers>
-    <!-- Datbase Connections Configuration -->
+
+    <!-- Message Queue Configuration -->
+    <MessageQueues>
+        <MessageQueue process_name="main" name="myQueue" max_messages="1000"  remove_on_shutdown="false" />
+    </MessageQueues>
+
+    <!-- Database Connections Configuration -->
     <DatabaseConnections>
-        <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true" />
-	    <DatabaseConnection name="DEFAULT_PSQL" user_name="dkruempe" password="${ADMIN_PASSWORD}" connection="127.0.0.1" database_name="temp" type="PostgreSQL" />
+        <!--<DatabaseConnection name="DEFAULT_PSQL" user_name="server" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
+                            database_name="temp" type="PostgreSQL"/>-->
+        <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true"/>
     </DatabaseConnections>
+
     <!-- Shared Memory Segments Configuration -->
     <SharedMemorySegments>
-        <Path path="~/dev/shm" />
-        <SharedMemorySegment name="shm_property" size="5MB" auto_extend_size="2MB" max_size="100MB" />
-        <SharedMemorySegment name="shm_test" size="5MB" auto_extend_size="2MB" max_size="50MB" />
+        <Path path="~/dev/shm"/>
+        <SharedMemorySegment name="shm_property" size="5MB" auto_extend_size="2MB" max_size="100MB"/>
+        <SharedMemorySegment name="shm_test" size="5MB" auto_extend_size="2MB" max_size="50MB"/>
     </SharedMemorySegments>
+
     <!-- Http Server / Client Configuration -->
     <HttpHost>
-        <Server host="0.0.0.0" port="8080" />
-        <Client host="localhost" port="8080" connection_timeout="1000" />
+        <Server host="0.0.0.0" port="8080"/>
+        <Client host="localhost" port="8080" connection_timeout="1000"/>
     </HttpHost>
+
     <!-- Property Configurations -->
     <PropertyRepositories>
-        <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="false" />
-        <PropertyRepository type="DATABASE_REPOSITORY" mutable="true" shadow="false" />
-        <PropertyRepository type="SHM_REPOSITORY" mutable="true" shadow="false" />
+        <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="false"/>
+        <PropertyRepository type="DATABASE_REPOSITORY" mutable="true" shadow="false"/>
+        <PropertyRepository type="SHM_REPOSITORY" mutable="true" shadow="false"/>
     </PropertyRepositories>
     <Properties>
-        <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService" instance="__DEFAULT" />
+        <Property name="numberOfThreads" type="int32_t" value="2" process="main" class="SchedulerService"
+                  instance="__DEFAULT"/>
     </Properties>
 </Configuration>

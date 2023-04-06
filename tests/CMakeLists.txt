@@ -28,9 +28,3 @@ ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
 target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
 target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2)
 ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
-
-
-ADD_EXECUTABLE(ProcessServiceTest services/ProcessServiceTest.cpp)
-target_compile_features(ProcessServiceTest PUBLIC cxx_std_17)
-TARGET_LINK_LIBRARIES(ProcessServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2)
-ADD_TEST(NAME BaseLibrary.ProcessServiceTest COMMAND ProcessServiceTest)

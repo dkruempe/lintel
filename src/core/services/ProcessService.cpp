@@ -19,11 +19,13 @@
 ProcessService::ProcessService(
     std::shared_ptr<ProcessName> processName,
     std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,
-    std::shared_ptr<Configuration> configuration)
+    std::shared_ptr<Configuration> configuration,
+    std::shared_ptr<HistoryService> historyService)
     : AbstractService<ProcessService>(processName->getProcessName()),
       m_processName(std::move(processName)),
       m_environmentConfiguration(std::move(environmentConfiguration)),
-      m_configuration(std::move(configuration)) {
+      m_configuration(std::move(configuration)),
+      m_historyService(std::move(historyService)) {
   // make sure that all variables are initialized for starting the thread
   m_monitorThread = std::thread([&] { run(); });
   m_process = std::make_shared<Process>(m_processName->getPath(),
@@ -116,13 +118,14 @@ std::optional<std::future<int>> ProcessService::startOf(
     future = processExecutes.getFuture();
     m_processes.insert({process.getId(), processExecutes});
   }
+  LOG_INFO("{}/{} started", process.getId(),
+           process.getPath().filename().string());
+  DEFINE_HISTORY_ENTRY(historyEntry, "PROCESS",
+                       fmt::format("{}/{} started", process.getId(),
+                                   process.getPath().filename().string()));
+  m_historyService->historizeOf({historyEntry});
   process.onStart();
   return std::make_optional<std::future<int>>(std::move(future));
-}
-
-void ProcessService::onShutdown() {
-  m_running.store(false);
-  m_condition.notify_all();
 }
 
 void ProcessService::run() {
@@ -179,6 +182,12 @@ void ProcessService::monitorProcess() {
           path.string(), processExecutes.getProcess()->getArgs(),
           boost::process::std_out > boost::process::null,
           boost::process::std_err > boost::process::null));
+      DEFINE_HISTORY_ENTRY(
+          historyEntry, "PROCESS",
+          fmt::format(
+              "{}/{} process restarted", processExecutes.getProcess()->getId(),
+              processExecutes.getProcess()->getPath().filename().string()));
+      m_historyService->historizeOf({historyEntry});
       LOG_INFO("{}/{} process restarted", processExecutes.getProcess()->getId(),
                processExecutes.getProcess()->getPath().filename().string());
       processExecutes.getProcess()->onRestart();
@@ -187,6 +196,12 @@ void ProcessService::monitorProcess() {
     int exitCode = processExecutes.getChild()->exit_code();
     processExecutes.setPromiseValue(exitCode);
     processExecutes.getProcess()->onStop();
+    DEFINE_HISTORY_ENTRY(
+        historyEntry, "PROCESS",
+        fmt::format(
+            "{}/{} process stopped", processExecutes.getProcess()->getId(),
+            processExecutes.getProcess()->getPath().filename().string()));
+    m_historyService->historizeOf({historyEntry});
     LOG_INFO("{}/{} process stopped", processExecutes.getProcess()->getId(),
              processExecutes.getProcess()->getPath().filename().string());
     removes.push_back(name);
@@ -197,6 +212,8 @@ void ProcessService::monitorProcess() {
 }
 
 ProcessService::~ProcessService() {
+  m_running.store(false);
+  m_condition.notify_all();
   if (m_monitorThread.joinable()) {
     m_monitorThread.join();
   }
@@ -260,6 +277,12 @@ bool ProcessService::stopOf(const Process& process) {
     std::lock_guard<std::mutex> locker(m_processesMutex);
     m_processes.erase(processExecutes.getProcess()->getId());
   }
+  DEFINE_HISTORY_ENTRY(
+      historyEntry, "PROCESS",
+      fmt::format("{}/{} process stopped",
+                  processExecutes.getProcess()->getId(),
+                  processExecutes.getProcess()->getPath().filename().string()));
+  m_historyService->historizeOf({historyEntry});
   return success;
 }
 void ProcessService::restartOf(const Process& process) {
@@ -281,6 +304,11 @@ void ProcessService::restartOf(const Process& process) {
     }
     found->second.getProcess()->onRestart();
   }
+  DEFINE_HISTORY_ENTRY(
+      historyEntry, "PROCESS",
+      fmt::format("PROCESS", "{}/{} restarted", process.getId(),
+                  process.getPath().filename().string()));
+  m_historyService->historizeOf({historyEntry});
 }
 void ProcessService::terminateOf(const Process& process) {
   ProcessExecutes processExecutes;
@@ -298,6 +326,10 @@ void ProcessService::terminateOf(const Process& process) {
   }
   processExecutes.setPromiseValue(processExecutes.getChild()->exit_code());
   processExecutes.getProcess()->onTerminate();
+  DEFINE_HISTORY_ENTRY(historyEntry, "PROCESS",
+                       fmt::format("{}/{} process terminated", process.getId(),
+                                   process.getPath().filename().string()));
+  m_historyService->historizeOf({historyEntry});
   m_processes.erase(processExecutes.getProcess()->getId());
 }
 void ProcessService::detachOf(const Process& process) {
@@ -319,13 +351,19 @@ void ProcessService::detachOf(const Process& process) {
   // detach process => erase process from list bc. of separate running process
   // with no further monitoring
   processExecutes.getChild()->detach();
+  DEFINE_HISTORY_ENTRY(
+      historyEntry, "PROCESS",
+      fmt::format("{}/{} process detached",
+                  processExecutes.getProcess()->getId(),
+                  processExecutes.getProcess()->getPath().filename().string()));
+  m_historyService->historizeOf({historyEntry});
   // inform about success exit bc. no further monitoring
   processExecutes.setPromiseValue(EXIT_SUCCESS);
   m_processes.erase(processExecutes.getProcess()->getId());
 }
 void ProcessService::startOf(const ProcessGroup& processGroup) {
   if (!m_running) {
-    std::runtime_error("ProcessService is onShutdown => no more startOf");
+    throw std::runtime_error("ProcessService is onShutdown => no more startOf");
   }
   {
     std::lock_guard<std::mutex> locker(m_processGroupMutex);
@@ -344,6 +382,11 @@ void ProcessService::startOf(const ProcessGroup& processGroup) {
   for (const auto& process : processGroup.getProcesses()) {
     startOf(process);
   }
+  DEFINE_HISTORY_ENTRY(
+      historyEntry, "PROCESS",
+      fmt::format("{}/{} processGroup started", processGroup.getId(),
+                  processGroup.getName()));
+  m_historyService->historizeOf({historyEntry});
 }
 bool ProcessService::stopOf(const ProcessGroup& processGroup) {
   {
@@ -366,6 +409,11 @@ bool ProcessService::stopOf(const ProcessGroup& processGroup) {
     std::lock_guard<std::mutex> locker(m_processGroupMutex);
     m_processGroups.erase(processGroup.getId());
   }
+  DEFINE_HISTORY_ENTRY(
+      historyEntry, "PROCESS",
+      fmt::format("{}/{} processGroup stopped", processGroup.getId(),
+                  processGroup.getName()));
+  m_historyService->historizeOf({historyEntry});
   return success;
 }
 void ProcessService::restartOf(const ProcessGroup& processGroup) {
@@ -377,6 +425,10 @@ void ProcessService::restartOf(const ProcessGroup& processGroup) {
     terminateOf(processGroup);
   }
   startOf(processGroup);
+  DEFINE_HISTORY_ENTRY(historyEntry, "PROCESS",
+                       fmt::format("{}/{} restarted", processGroup.getId(),
+                                   processGroup.getName()));
+  m_historyService->historizeOf({historyEntry});
 }
 void ProcessService::terminateOf(const ProcessGroup& processGroup) {
   {
@@ -391,6 +443,11 @@ void ProcessService::terminateOf(const ProcessGroup& processGroup) {
   for (const auto& process : processGroup.getProcesses()) {
     terminateOf(process);
   }
+  DEFINE_HISTORY_ENTRY(
+      historyEntry, "PROCESS",
+      fmt::format("PROCESS", "{}/{} processGroup terminated",
+                  processGroup.getId(), processGroup.getName()));
+  m_historyService->historizeOf({historyEntry});
   m_processGroups.erase(processGroup.getId());
 }
 void ProcessService::detachOf(const ProcessGroup& processGroup) {
@@ -409,6 +466,10 @@ void ProcessService::detachOf(const ProcessGroup& processGroup) {
     detachOf(process);
   }
   m_processGroups.erase(processGroup.getId());
+  DEFINE_HISTORY_ENTRY(historyEntry, "PROCESS",
+                       fmt::format("{}/{} detached", processGroup.getId(),
+                                   processGroup.getName()));
+  m_historyService->historizeOf({historyEntry});
 }
 ProcessInfo ProcessService::currentOf() {
   ProcessInfo info(m_process, boost::this_process::get_id(), true, -1, "", "");

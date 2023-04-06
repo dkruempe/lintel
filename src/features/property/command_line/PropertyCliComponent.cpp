@@ -1,8 +1,7 @@
 #include "base_library/features/property/command_line/PropertyCliComponent.h"
 
-#include <tabulate/table.hpp>
-
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/TableBuilder.h"
 
 PropertyCliComponent::PropertyCliComponent(
     std::shared_ptr<PropertyApi> propertyApi)
@@ -94,17 +93,15 @@ void PropertyCliComponent::onCommand(
 }
 void PropertyCliComponent::printProperties(
     const std::vector<PropertyDto> &properties) {
-  tabulate::Table table;
-  table.add_row(
-      {"No.", "Process", "Class", "Instance", "Name", "Type", "Value"});
+  TableBuilder<7> builder;
+  builder.add({"No.", "Process", "Class", "Instance", "Name", "Type", "Value"});
   std::size_t iter = 0;
   for (const auto &property : properties) {
-    table.add_row({std::to_string(++iter), property.getProcessName(),
-                   property.getClassName(), property.getInstanceName(),
-                   property.getName(), property.getType(),
-                   property.getValue()});
+    builder.add({std::to_string(++iter), property.getProcessName(),
+                 property.getClassName(), property.getInstanceName(),
+                 property.getName(), property.getType(), property.getValue()});
   }
-  std::cout << table.str() << "\n";
+  std::cout << builder.build() << "\n";
 }
 
 void PropertyCliComponent::onHelp() {
@@ -119,22 +116,22 @@ void PropertyCliComponent::onShowMenu() {
 
 bool PropertyCliComponent::onExit() { return true; }
 void PropertyCliComponent::printProperty(
-    const optional<PropertyDto> &optionalProperty) {
+    const std::optional<PropertyDto> &optionalProperty) {
   if (!optionalProperty.has_value()) {
     std::cerr << "Property with given values is not preset => No Update "
                  "possible \n";
     return;
   }
   const PropertyDto &propertyDto = optionalProperty.value();
-  tabulate::Table table;
-  table.add_row({"Process:", propertyDto.getProcessName()});
-  table.add_row({"Class:", propertyDto.getClassName()});
-  table.add_row({"Instance:", propertyDto.getInstanceName()});
-  table.add_row({"Name:", propertyDto.getName()});
-  table.add_row({"Type:", propertyDto.getType()});
-  table.add_row({"Value:", propertyDto.getValue()});
-  table.add_row({"Data Storage:", propertyDto.getRepositoryType().toString()});
-  std::cout << table.str() << "\n";
+  TableBuilder<2> builder;
+  builder.add({"Process:", propertyDto.getProcessName()});
+  builder.add({"Class:", propertyDto.getClassName()});
+  builder.add({"Instance:", propertyDto.getInstanceName()});
+  builder.add({"Name:", propertyDto.getName()});
+  builder.add({"Type:", propertyDto.getType()});
+  builder.add({"Value:", propertyDto.getValue()});
+  builder.add({"Data Storage:", propertyDto.getRepositoryType().toString()});
+  std::cout << builder.build() << "\n";
 }
 void PropertyCliComponent::printCommandList(std::set<std::string> menuAlias) {
   m_commandParser.printCommandList(menuAlias);

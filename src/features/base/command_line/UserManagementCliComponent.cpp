@@ -1,6 +1,6 @@
 #include "base_library/features/base/command_line/UserManagementCliComponent.h"
 
-#include <tabulate/table.hpp>
+#include <base_library/core/utils/TableBuilder.h>
 
 #include "base_library/core/utils/Cryption.h"
 UserManagementCliComponent::UserManagementCliComponent(
@@ -128,15 +128,15 @@ bool UserManagementCliComponent::onMenu(const std::string& component) {
 bool UserManagementCliComponent::onExit() { return true; }
 void UserManagementCliComponent::printGroups(
     const std::vector<GroupDto>& groups) {
-  tabulate::Table table;
-  table.add_row({"No.", "Name", "IsVirtual", "SubGroups"});
+  TableBuilder<4> builder;
+  builder.add({"No.", "Name", "IsVirtual", "SubGroups"});
   std::size_t iter = 0;
   for (const auto& group : groups) {
-    table.add_row({std::to_string(++iter), group.getGroupName(),
+    builder.add({std::to_string(++iter), group.getGroupName(),
                    group.isVirtual() ? "true" : "false",
                    printSubGroups(group)});
   }
-  std::cout << table.str() << "\n";
+  std::cout << builder.build() << "\n";
 }
 std::string UserManagementCliComponent::printSubGroups(const GroupDto& group) {
   std::string printString;
@@ -151,16 +151,16 @@ std::string UserManagementCliComponent::printSubGroups(const GroupDto& group) {
   return printString;
 }
 void UserManagementCliComponent::printUsers(const std::vector<UserDto>& users) {
-  tabulate::Table table;
-  table.add_row(
+  TableBuilder<6> builder;
+  builder.add(
       {"No.", "firstname", "lastname", "e-mail", "username", "groups"});
   std::size_t iter = 0;
   for (const auto& user : users) {
-    table.add_row({std::to_string(++iter), user.getFirstName(),
+    builder.add({std::to_string(++iter), user.getFirstName(),
                    user.getLastName(), user.getEMail(), user.getUserName(),
                    printUserGroups(user.getGroups())});
   }
-  std::cout << table.str() << "\n";
+  std::cout << builder.build() << "\n";
 }
 std::string UserManagementCliComponent::printUserGroups(
     const std::vector<GroupDto>& groups) {

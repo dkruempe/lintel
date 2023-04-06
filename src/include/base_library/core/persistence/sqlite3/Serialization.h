@@ -48,7 +48,9 @@ IMPLEMENT_SERIALIZE(
 IMPLEMENT_SERIALIZE(
     date::sys_time<std::chrono::microseconds>,
     [](const date::sys_time<std::chrono::microseconds> &time) -> std::string {
-      return date::format("%Y-%m-%d %H:%M:%S%Ez", time);
+      std::string createdTimestamp = date::format("%Y-%m-%d %H:%M:%S%Ez", time);
+      std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
+      return createdTimestamp;
     },
     [](const std::string &timeString)
         -> date::sys_time<std::chrono::microseconds> {

@@ -17,15 +17,18 @@
   - [ ] mySql Support
   - [ ] Cursor implementation
   - [ ] adds constexpr implementation for better usage and performance
-- Queue Support
-  - [ ] use the ZeroMQ Library ipc feature
+- Queue Support 
   - [ ] implement basic api as feature
   - [ ] add configuration to bootstrap configuration file
   - [ ] add command line component for maintenance
 - Historization
-  - [ ] adds support for an easy historization via ZeroMQ or direct call Api Interface
-  - [ ] adds HistorizationService
+  - [ ] adds support for an easy historization via Queue or direct call Api Interface
+  - [x] adds HistorizationService
 - Http
   - [ ] implement better exception handling
   - [ ] use enums in implementations
   - [ ] support of paging
+- Docker Support
+  - [ ] add support for testing software via docker
+  - [ ] working docker container for testing linux
+  - [ ] working docker container for testing macOS ?

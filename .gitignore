@@ -7,3 +7,4 @@ bin*
 tags
 log
 include/config.h
+CMakeUserPresets.json

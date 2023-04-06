@@ -18,6 +18,8 @@ class AbstractServiceInterface {
   virtual void onShutdown() = 0;
 
   virtual std::string_view getClassName() const = 0;
+  virtual const std::string &getProcessName() const = 0;
+  virtual const std::string &getInstanceName() const = 0;
 
   virtual ~AbstractServiceInterface() = default;
 
@@ -72,10 +74,10 @@ class AbstractService : public AbstractServiceInterface {
       : m_processName(std::move(processName)), m_instanceName("__DEFAULT") {}
   void onInitialize() override {}
   void onShutdown() override {}
-  [[nodiscard]] const std::string &getProcessName() const {
+  [[nodiscard]] const std::string &getProcessName() const override {
     return m_processName;
   }
-  [[nodiscard]] const std::string &getInstanceName() const {
+  [[nodiscard]] const std::string &getInstanceName() const override {
     return m_instanceName;
   }
   [[nodiscard]] std::string_view getClassName() const override {

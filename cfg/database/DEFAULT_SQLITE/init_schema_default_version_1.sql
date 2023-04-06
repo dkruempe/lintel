@@ -1,3 +1,12 @@
+CREATE TABLE history
+(
+    process_name      TEXT                     NOT NULL,
+    service_name      TEXT                     NOT NULL,
+    label             TEXT                     NOT NULL,
+    text              TEXT                     NOT NULL,
+    created_timestamp timestamp with time zone NOT NULL,
+    CONSTRAINT history_PK PRIMARY KEY (process_name, service_name, created_timestamp)
+);
 CREATE TABLE property
 (
     name          TEXT NOT NULL,
@@ -43,8 +52,9 @@ CREATE TABLE group_groups_relation
 CREATE TABLE shared_memory_repositories
 (
     shared_memory_segment    text    NOT NULL,
+    shared_memory_type       text    NOT NULL,
     shared_memory_repository text    NOT NULL,
     current_version          INTEGER NOT NULL,
     current_data_size        INTEGER NOT NULL,
-    CONSTRAINT shared_memory_repositories_pk PRIMARY KEY (shared_memory_segment, shared_memory_repository)
+    CONSTRAINT shared_memory_repositories_pk PRIMARY KEY (shared_memory_segment, shared_memory_type, shared_memory_repository)
 );
