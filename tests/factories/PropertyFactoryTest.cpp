@@ -1,8 +1,7 @@
-#define CATCH_CONFIG_MAIN
 #include <base_library/features/property/factories/PropertyFactory.h>
 #include <base_library/features/property/models/Property.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 TEST_CASE("basic propertyFactoryTest") {
   auto property =

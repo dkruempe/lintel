@@ -14,17 +14,17 @@ find_package(Catch2 REQUIRED)
 # property Test
 ADD_EXECUTABLE(propertyTest models/PropertyTest.cpp)
 target_compile_features(propertyTest PUBLIC cxx_std_17)
-target_link_libraries(propertyTest PRIVATE kruempelmann::base_library Catch2::Catch2)
+target_link_libraries(propertyTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.PropertyTest COMMAND propertyTest)
 
 # propertyFactory Test
 ADD_EXECUTABLE(propertyFactoryTest factories/PropertyFactoryTest.cpp)
 target_compile_features(propertyFactoryTest PUBLIC cxx_std_17)
-target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library Catch2::Catch2)
+target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.PropertyFactoryTest COMMAND propertyFactoryTest)
 
 # property Service Test
 ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
 target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
-target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2)
+target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)

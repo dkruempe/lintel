@@ -1,7 +1,6 @@
-#define CATCH_CONFIG_MAIN
 #include <base_library/features/property/services/PropertyService.h>
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_all.hpp>
 
 void createExampleProperties(PropertyService &propertyService) {
   std::shared_ptr<Property<int32_t>> intProperty =
