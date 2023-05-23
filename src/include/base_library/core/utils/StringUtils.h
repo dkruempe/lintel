@@ -8,25 +8,27 @@
  * Class for collecting of extra string utils
  */
 class StringUtils {
- public:
-  StringUtils() = delete;
-  StringUtils(StringUtils &) = delete;
-  StringUtils(StringUtils &&) = delete;
+public:
+    StringUtils() = delete;
 
-  /**
-   * function splits string with defined delimter into tokens
-   * @param s string to be split
-   * @param delimiter for differentiate between tokens
-   * @return tokens in vector
-   */
-  static std::vector<std::string> split(const std::string &s, char delimiter);
+    StringUtils(StringUtils &) = delete;
 
-  static bool startsWith(const std::string &s, const std::string &start);
+    StringUtils(StringUtils &&) = delete;
 
-  static bool endsWith(const std::string &s, const std::string &end);
+    /**
+     * function splits string with defined delimter into tokens
+     * @param s string to be split
+     * @param delimiter for differentiate between tokens
+     * @return tokens in vector
+     */
+    static std::vector<std::string> split(const std::string &s, char delimiter);
 
-  static std::string replaceAll(const std::string &s, std::string &&replace,
-                                std::string &&with);
+    static bool startsWith(const std::string &s, const std::string &start);
+
+    static bool endsWith(const std::string &s, const std::string &end);
+
+    static std::string replaceAll(const std::string &s, std::string &&replace,
+                                  std::string &&with);
 };
 
 #endif  // CPP_BASE_LIBRARY_STRINGUTILS_H

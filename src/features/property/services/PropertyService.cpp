@@ -9,359 +9,367 @@
 #include "base_library/features/property/models/PropertyRepositoryType.h"
 
 std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
-    const std::vector<std::shared_ptr<PropertyRepository>>
+        const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
-    std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
+        std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
         &propertiesMap) {
-  // sort repositories the highest repository first
-  std::vector<std::shared_ptr<PropertyRepository>> repositories(
-      propertyRepositories);
-  std::sort(repositories.begin(), repositories.end(),
-            [](const std::shared_ptr<PropertyRepository> &r1,
-               const std::shared_ptr<PropertyRepository> &r2) {
-              return r1->getType() < r2->getType();
-            });
+    // sort repositories the highest repository first
+    std::vector<std::shared_ptr<PropertyRepository>> repositories(
+            propertyRepositories);
+    std::sort(repositories.begin(), repositories.end(),
+              [](const std::shared_ptr<PropertyRepository> &r1,
+                 const std::shared_ptr<PropertyRepository> &r2) {
+                  return r1->getType() < r2->getType();
+              });
 
-  // create local map store
-  std::map<std::string, std::shared_ptr<PropertyBase>> propertiesMapLocal;
+    // create local map store
+    std::map<std::string, std::shared_ptr<PropertyBase>> propertiesMapLocal;
 
-  // function to add properties to map
-  std::function<void(std::vector<std::shared_ptr<PropertyBase>>)>
-      addProperties = [&propertiesMapLocal](
-                          const std::vector<std::shared_ptr<PropertyBase>>
-                              &repoProperties) {
-        for (const auto &property : repoProperties) {
-          auto found = propertiesMapLocal.find(property->getIdentifier());
-          if (found != propertiesMapLocal.end()) {
-            found->second = property;
-          } else {
-            propertiesMapLocal.insert({property->getIdentifier(), property});
-          }
+    // function to add properties to map
+    std::function<void(std::vector<std::shared_ptr<PropertyBase>>)>
+            addProperties = [&propertiesMapLocal](
+            const std::vector<std::shared_ptr<PropertyBase>>
+            &repoProperties) {
+        for (const auto &property: repoProperties) {
+            auto found = propertiesMapLocal.find(property->getIdentifier());
+            if (found != propertiesMapLocal.end()) {
+                found->second = property;
+            } else {
+                propertiesMapLocal.insert({property->getIdentifier(), property});
+            }
         }
-      };
+    };
 
-  // add properties to map
-  for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
-    std::vector<std::shared_ptr<PropertyBase>> tmp = repository->awake();
-    propertiesMap.insert({repository->getType(), tmp});
-    // highest property wins, bc. std::map insert only if not available
-    addProperties(tmp);
-  }
-  return propertiesMapLocal;
+    // add properties to map
+    for (const std::shared_ptr<PropertyRepository> &repository: repositories) {
+        std::vector<std::shared_ptr<PropertyBase>> tmp = repository->awake();
+        propertiesMap.insert({repository->getType(), tmp});
+        // highest property wins, bc. std::map insert only if not available
+        addProperties(tmp);
+    }
+    return propertiesMapLocal;
 }
 
 std::vector<std::shared_ptr<PropertyRepository>>
 PropertyService::filterEnabledRepositories(
-    const std::vector<std::shared_ptr<PropertyRepository>>
+        const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories) {
-  std::vector<std::shared_ptr<PropertyRepository>> tmp;
-  for (const auto &iter : propertyRepositories) {
-    if (!iter->isEnabled()) {
-      continue;
+    std::vector<std::shared_ptr<PropertyRepository>> tmp;
+    for (const auto &iter: propertyRepositories) {
+        if (!iter->isEnabled()) {
+            continue;
+        }
+        tmp.push_back(iter);
     }
-    tmp.push_back(iter);
-  }
-  return tmp;
+    return tmp;
 }
 
 std::vector<std::shared_ptr<PropertyRepository>>
 PropertyService::filterMutableRepositories(
-    const std::vector<std::shared_ptr<PropertyRepository>>
+        const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepository) {
-  std::vector<std::shared_ptr<PropertyRepository>> repositories(
-      propertyRepository);
-  std::sort(repositories.begin(), repositories.end(),
-            [](const std::shared_ptr<PropertyRepository> &r1,
-               const std::shared_ptr<PropertyRepository> &r2) {
-              return r1->getType() > r2->getType();
-            });
+    std::vector<std::shared_ptr<PropertyRepository>> repositories(
+            propertyRepository);
+    std::sort(repositories.begin(), repositories.end(),
+              [](const std::shared_ptr<PropertyRepository> &r1,
+                 const std::shared_ptr<PropertyRepository> &r2) {
+                  return r1->getType() > r2->getType();
+              });
 
-  std::vector<std::shared_ptr<PropertyRepository>> mutableRepositories;
-  for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
-    if (!repository->isEnabled()) {
-      continue;
+    std::vector<std::shared_ptr<PropertyRepository>> mutableRepositories;
+    for (const std::shared_ptr<PropertyRepository> &repository: repositories) {
+        if (!repository->isEnabled()) {
+            continue;
+        }
+        if (repository->isMutable()) {
+            LOG_TRACE("mutableRepositories({})", repository->getType().toString());
+            mutableRepositories.push_back(repository);
+        }
     }
-    if (repository->isMutable()) {
-      LOG_TRACE("mutableRepositories({})", repository->getType().toString());
-      mutableRepositories.push_back(repository);
-    }
-  }
 
-  return mutableRepositories;
+    return mutableRepositories;
 }
 
 std::vector<std::shared_ptr<PropertyRepository>>
 PropertyService::filterShadowRepositories(
-    const std::vector<std::shared_ptr<PropertyRepository>>
+        const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepository) {
-  std::vector<std::shared_ptr<PropertyRepository>> repositories(
-      propertyRepository);
-  std::sort(repositories.begin(), repositories.end(),
-            [](const std::shared_ptr<PropertyRepository> &r1,
-               const std::shared_ptr<PropertyRepository> &r2) {
-              return r1->getType() > r2->getType();
-            });
+    std::vector<std::shared_ptr<PropertyRepository>> repositories(
+            propertyRepository);
+    std::sort(repositories.begin(), repositories.end(),
+              [](const std::shared_ptr<PropertyRepository> &r1,
+                 const std::shared_ptr<PropertyRepository> &r2) {
+                  return r1->getType() > r2->getType();
+              });
 
-  std::vector<std::shared_ptr<PropertyRepository>> shadowRepositories;
-  for (const std::shared_ptr<PropertyRepository> &repository : repositories) {
-    if (!repository->isEnabled()) {
-      continue;
+    std::vector<std::shared_ptr<PropertyRepository>> shadowRepositories;
+    for (const std::shared_ptr<PropertyRepository> &repository: repositories) {
+        if (!repository->isEnabled()) {
+            continue;
+        }
+        if (repository->isMutable() && repository->isShadow()) {
+            LOG_TRACE("shadowRepositories({})", repository->getType().toString());
+            shadowRepositories.push_back(repository);
+        }
     }
-    if (repository->isMutable() && repository->isShadow()) {
-      LOG_TRACE("shadowRepositories({})", repository->getType().toString());
-      shadowRepositories.push_back(repository);
-    }
-  }
 
-  return shadowRepositories;
+    return shadowRepositories;
 }
 
 std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>>
 PropertyService::buildMap(
-    const std::vector<std::shared_ptr<PropertyRepository>> &vector) {
-  std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>> map;
-  for (const auto &item : vector) {
-    map.insert({item->getType(), item});
-  }
-  return map;
+        const std::vector<std::shared_ptr<PropertyRepository>> &vector) {
+    std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>> map;
+    for (const auto &item: vector) {
+        map.insert({item->getType(), item});
+    }
+    return map;
 }
 
 PropertyService::PropertyService(
-    const std::vector<std::shared_ptr<PropertyRepository>>
+        const std::vector<std::shared_ptr<PropertyRepository>>
         &propertyRepositories,
-    std::vector<std::shared_ptr<AbstractServiceInterface>> abstractServices)
-    : m_propertyRepositories(filterEnabledRepositories(propertyRepositories)),
-      m_mutablePropertyRepositories(
-          filterMutableRepositories(propertyRepositories)),
-      m_shadowPropertyRepositories(
-          filterShadowRepositories(propertyRepositories)),
-      m_abstractServices(std::move(abstractServices)),
-      m_typeRepositoryMap(buildMap(propertyRepositories)) {}
-void PropertyService::onAwake() {
-  // get properties from PropertyRepository
-  std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
-      map;
-  m_properties = init(m_propertyRepositories, map);
-  // get properties of AbstractServices
-  std::vector<std::shared_ptr<PropertyBase>> properties;
-  for (const auto &iter : m_abstractServices) {
-    auto temp = iter->getProperties();
-    properties.insert(properties.end(), temp.begin(), temp.end());
-  }
+        std::vector<std::shared_ptr<AbstractServiceInterface>> abstractServices)
+        : m_propertyRepositories(filterEnabledRepositories(propertyRepositories)),
+          m_mutablePropertyRepositories(
+                  filterMutableRepositories(propertyRepositories)),
+          m_shadowPropertyRepositories(
+                  filterShadowRepositories(propertyRepositories)),
+          m_abstractServices(std::move(abstractServices)),
+          m_typeRepositoryMap(buildMap(propertyRepositories)) {}
 
-  std::vector<std::shared_ptr<PropertyBase>> temp;
-  for (const auto &[type, props] : map) {
-    temp.insert(temp.end(), props.begin(), props.end());
-  }
-  bool reInit = false;
-  for (const auto &iter : properties) {
-    std::vector<std::shared_ptr<PropertyBase>> matches;
-    std::copy_if(temp.begin(), temp.end(), std::back_inserter(matches),
-                 [&](const std::shared_ptr<PropertyBase> &ptr) {
-                   return ptr->getIdentifier() == iter->getIdentifier();
-                 });
-    if (matches.empty()) {
-      // nothing to do
-      continue;
-    }
-    matches.erase(
-        std::remove_if(matches.begin(), matches.end(),
-                       [&](const std::shared_ptr<PropertyBase> &property) {
-                         return property->toString() != iter->toString();
-                       }),
-        matches.end());
-    if (matches.empty()) {
-      // nothing to do
-      continue;
-    }
-    // remove now all elements from repository if possible bc. no need of those
-    for (const auto &property : matches) {
-      auto found =
-          m_typeRepositoryMap.find(property->getDataStorage().getType());
-      if (found == m_typeRepositoryMap.end()) {
-        continue;
-      }
-      if (!found->second->isEnabled() || !found->second->isMutable()) {
-        LOG_WARN(
-            "non mutable or disabled repository found with same value as the "
-            "default value for {} in {}",
-            iter->getIdentifier(), found->first.toString());
-        continue;
-      }
-      if (found->second->isShadow()) {
-        continue;
-      }
-      LOG_INFO("removed {} from {}", found->first.toString(),
-               property->getIdentifier());
-      reInit = true;
-      found->second->deleteOf({property});
-    }
-  }
-  if (reInit) {
-    LOG_INFO("reInit properties bc. of cleanup");
+void PropertyService::onAwake() {
+    // get properties from PropertyRepository
+    std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
+            map;
     m_properties = init(m_propertyRepositories, map);
-  }
-  // enable properties
-  getOrCreate(properties, map);
+    // get properties of AbstractServices
+    std::vector<std::shared_ptr<PropertyBase>> properties;
+    for (const auto &iter: m_abstractServices) {
+        auto temp = iter->getProperties();
+        properties.insert(properties.end(), temp.begin(), temp.end());
+    }
+
+    std::vector<std::shared_ptr<PropertyBase>> temp;
+    for (const auto &[type, props]: map) {
+        temp.insert(temp.end(), props.begin(), props.end());
+    }
+    bool reInit = false;
+    for (const auto &iter: properties) {
+        std::vector<std::shared_ptr<PropertyBase>> matches;
+        std::copy_if(temp.begin(), temp.end(), std::back_inserter(matches),
+                     [&](const std::shared_ptr<PropertyBase> &ptr) {
+                         return ptr->getIdentifier() == iter->getIdentifier();
+                     });
+        if (matches.empty()) {
+            // nothing to do
+            continue;
+        }
+        matches.erase(
+                std::remove_if(matches.begin(), matches.end(),
+                               [&](const std::shared_ptr<PropertyBase> &property) {
+                                   return property->toString() != iter->toString();
+                               }),
+                matches.end());
+        if (matches.empty()) {
+            // nothing to do
+            continue;
+        }
+        // remove now all elements from repository if possible bc. no need of those
+        for (const auto &property: matches) {
+            auto found =
+                    m_typeRepositoryMap.find(property->getDataStorage().getType());
+            if (found == m_typeRepositoryMap.end()) {
+                continue;
+            }
+            if (!found->second->isEnabled() || !found->second->isMutable()) {
+                LOG_WARN(
+                        "non mutable or disabled repository found with same value as the "
+                        "default value for {} in {}",
+                        iter->getIdentifier(), found->first.toString());
+                continue;
+            }
+            if (found->second->isShadow()) {
+                continue;
+            }
+            LOG_INFO("removed {} from {}", found->first.toString(),
+                     property->getIdentifier());
+            reInit = true;
+            found->second->deleteOf({property});
+        }
+    }
+    if (reInit) {
+        LOG_INFO("reInit properties bc. of cleanup");
+        m_properties = init(m_propertyRepositories, map);
+    }
+    // enable properties
+    getOrCreate(properties, map);
 }
+
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf() {
-  if (m_shadowPropertyRepositories.empty()) {
-    std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-    std::transform(m_properties.begin(), m_properties.end(),
-                   std::back_inserter(propertiesVector),
-                   [](const auto &iter) { return iter.second; });
-    return propertiesVector;
-  }
-  return m_shadowPropertyRepositories[0]->allOf();
-}
-std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
-    const std::string &processName) {
-  if (m_shadowPropertyRepositories.empty()) {
-    std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-    std::transform(m_properties.begin(), m_properties.end(),
-                   std::back_inserter(propertiesVector),
-                   [](const auto &iter) { return iter.second; });
-    return propertiesVector;
-  }
-  return m_shadowPropertyRepositories[0]->allOf(processName);
-}
-std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
-    const std::string &processName, const std::string &className) {
-  if (m_shadowPropertyRepositories.empty()) {
-    std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-    std::regex processRegex(processName);
-    std::regex classRegex(className);
-    for (const auto &property : m_properties) {
-      if (!std::regex_match(property.second->getProcessName(), processRegex)) {
-        continue;
-      }
-      if (!std::regex_match(property.second->getClassName(), classRegex)) {
-        continue;
-      }
-      propertiesVector.push_back(property.second);
+    if (m_shadowPropertyRepositories.empty()) {
+        std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+        std::transform(m_properties.begin(), m_properties.end(),
+                       std::back_inserter(propertiesVector),
+                       [](const auto &iter) { return iter.second; });
+        return propertiesVector;
     }
-    return propertiesVector;
-  }
-  return m_shadowPropertyRepositories[0]->allOf(processName, className);
+    return m_shadowPropertyRepositories[0]->allOf();
 }
+
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
-    const std::string &processName, const std::string &className,
-    const std::string &instanceName) {
-  LOG_TRACE("shadowPropertyRepositories({})",
-            m_shadowPropertyRepositories.size());
-  if (m_shadowPropertyRepositories.empty()) {
-    std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
-    std::regex processRegex(processName);
-    std::regex classRegex(className);
-    std::regex instanceRegex(instanceName);
-    LOG_TRACE("({},{},{}) properties({})", processName, className, instanceName,
-              m_properties.size());
-    for (const auto &property : m_properties) {
-      if (!std::regex_match(property.second->getProcessName(), processRegex)) {
-        continue;
-      }
-      if (!std::regex_match(property.second->getClassName(), classRegex)) {
-        continue;
-      }
-      if (!std::regex_match(property.second->getInstanceName(),
-                            instanceRegex)) {
-        continue;
-      }
-      propertiesVector.push_back(property.second);
+        const std::string &processName) {
+    if (m_shadowPropertyRepositories.empty()) {
+        std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+        std::transform(m_properties.begin(), m_properties.end(),
+                       std::back_inserter(propertiesVector),
+                       [](const auto &iter) { return iter.second; });
+        return propertiesVector;
     }
-    return propertiesVector;
-  }
-  return m_shadowPropertyRepositories[0]->allOf(processName, className,
-                                                instanceName);
+    return m_shadowPropertyRepositories[0]->allOf(processName);
 }
+
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
+        const std::string &processName, const std::string &className) {
+    if (m_shadowPropertyRepositories.empty()) {
+        std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+        std::regex processRegex(processName);
+        std::regex classRegex(className);
+        for (const auto &property: m_properties) {
+            if (!std::regex_match(property.second->getProcessName(), processRegex)) {
+                continue;
+            }
+            if (!std::regex_match(property.second->getClassName(), classRegex)) {
+                continue;
+            }
+            propertiesVector.push_back(property.second);
+        }
+        return propertiesVector;
+    }
+    return m_shadowPropertyRepositories[0]->allOf(processName, className);
+}
+
+std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(
+        const std::string &processName, const std::string &className,
+        const std::string &instanceName) {
+    LOG_TRACE("shadowPropertyRepositories({})",
+              m_shadowPropertyRepositories.size());
+    if (m_shadowPropertyRepositories.empty()) {
+        std::vector<std::shared_ptr<PropertyBase>> propertiesVector;
+        std::regex processRegex(processName);
+        std::regex classRegex(className);
+        std::regex instanceRegex(instanceName);
+        LOG_TRACE("({},{},{}) properties({})", processName, className, instanceName,
+                  m_properties.size());
+        for (const auto &property: m_properties) {
+            if (!std::regex_match(property.second->getProcessName(), processRegex)) {
+                continue;
+            }
+            if (!std::regex_match(property.second->getClassName(), classRegex)) {
+                continue;
+            }
+            if (!std::regex_match(property.second->getInstanceName(),
+                                  instanceRegex)) {
+                continue;
+            }
+            propertiesVector.push_back(property.second);
+        }
+        return propertiesVector;
+    }
+    return m_shadowPropertyRepositories[0]->allOf(processName, className,
+                                                  instanceName);
+}
+
 std::string PropertyService::createIdentifier(const std::string &name,
                                               const std::string &instanceName,
                                               const std::string &className,
                                               const std::string &processName) {
-  return name + "_" + instanceName + "_" + className + "_" + processName;
+    return name + "_" + instanceName + "_" + className + "_" + processName;
 }
+
 std::shared_ptr<PropertyBase> &PropertyService::get(
-    const std::string &name, const std::string &instanceName,
-    const std::string &className, const std::string &processName) {
-  const std::string &identifier =
-      createIdentifier(name, instanceName, className, processName);
-  auto found = m_properties.find(identifier);
-  if (found == m_properties.end()) {
-    throw PropertyNotFoundException(name, instanceName, className, processName);
-  }
-  return found->second;
+        const std::string &name, const std::string &instanceName,
+        const std::string &className, const std::string &processName) {
+    const std::string &identifier =
+            createIdentifier(name, instanceName, className, processName);
+    auto found = m_properties.find(identifier);
+    if (found == m_properties.end()) {
+        throw PropertyNotFoundException(name, instanceName, className, processName);
+    }
+    return found->second;
 }
+
 void PropertyService::getOrCreate(
-    const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec,
-    std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
+        const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec,
+        std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
         &map) {
-  // enable properties
-  for (const std::shared_ptr<PropertyBase> &property : propertiesVec) {
-    try {
-      auto &newProperty =
-          get(property->getName(), property->getInstanceName(),
-              property->getClassName(), property->getProcessName());
-      // only overwrite value and Datastorage if value is different then default
-      if (newProperty->toString() != property->toString()) {
-        property->setValueString(newProperty->toString());
-        property->setDataStorage(newProperty->getDataStorage());
-      }
-      newProperty = property;
-    } catch (PropertyNotFoundException &exception) {
-      m_properties.insert({property->getIdentifier(), property});
+    // enable properties
+    for (const std::shared_ptr<PropertyBase> &property: propertiesVec) {
+        try {
+            auto &newProperty =
+                    get(property->getName(), property->getInstanceName(),
+                        property->getClassName(), property->getProcessName());
+            // only overwrite value and Datastorage if value is different then default
+            if (newProperty->toString() != property->toString()) {
+                property->setValueString(newProperty->toString());
+                property->setDataStorage(newProperty->getDataStorage());
+            }
+            newProperty = property;
+        } catch (PropertyNotFoundException &exception) {
+            m_properties.insert({property->getIdentifier(), property});
+        }
     }
-  }
-  // add missing properties to shadow repositories and cleanup not needed
-  // properties from mutable repositories but not shadow
-  for (auto &iter : m_shadowPropertyRepositories) {
-    // create temp map for easier handling
-    auto found = map.find(iter->getType());
-    auto vec = found->second;
-    std::map<std::string, std::shared_ptr<PropertyBase>> tmpMap;
-    for (const auto &iterVec : vec) {
-      tmpMap.insert({iterVec->getIdentifier(), iterVec});
+    // add missing properties to shadow repositories and cleanup not needed
+    // properties from mutable repositories but not shadow
+    for (auto &iter: m_shadowPropertyRepositories) {
+        // create temp map for easier handling
+        auto found = map.find(iter->getType());
+        auto vec = found->second;
+        std::map<std::string, std::shared_ptr<PropertyBase>> tmpMap;
+        for (const auto &iterVec: vec) {
+            tmpMap.insert({iterVec->getIdentifier(), iterVec});
+        }
+        if (!iter->isMutable() || !iter->isEnabled()) {
+            continue;
+        }
+        std::vector<std::shared_ptr<PropertyBase>> properties = propertiesVec;
+        properties.erase(
+                std::remove_if(
+                        properties.begin(), properties.end(),
+                        [&](const std::shared_ptr<PropertyBase> &property) -> bool {
+                            // don't compare value of property bc. each value change implies
+                            // change of repository
+                            return tmpMap.find(property->getIdentifier()) != tmpMap.end();
+                        }),
+                properties.end());
+        iter->save(properties);
     }
-    if (!iter->isMutable() || !iter->isEnabled()) {
-      continue;
-    }
-    std::vector<std::shared_ptr<PropertyBase>> properties = propertiesVec;
-    properties.erase(
-        std::remove_if(
-            properties.begin(), properties.end(),
-            [&](const std::shared_ptr<PropertyBase> &property) -> bool {
-              // don't compare value of property bc. each value change implies
-              // change of repository
-              return tmpMap.find(property->getIdentifier()) != tmpMap.end();
-            }),
-        properties.end());
-    iter->save(properties);
-  }
 }
 
 void PropertyService::changeStringValueOf(
-    const std::shared_ptr<PropertyBase> &property, const std::string &value) {
-  std::shared_ptr<PropertyBase> propertyBase =
-      get(property->getName(), property->getInstanceName(),
-          property->getClassName(), property->getProcessName());
-  if (!propertyBase->isRuntimeChange()) {
-    throw PropertyNoRuntimeChangeSupported(propertyBase);
-  }
-  if (propertyBase->toString() == value) {
-    return;
-  }
-  std::stringstream ss;
-  ss << *property;
-  LOG_INFO("{} change to {}", ss.str(), value);
-  propertyBase->setValueString(value);
-  if (m_mutablePropertyRepositories.empty()) {
-    LOG_ERROR("{} not mutable property repository");
-    return;
-  }
-  // PropertyRepository with highest priority wins => DataStorage of the highest
-  // priority is set
-  propertyBase->setDataStorage(
-      m_mutablePropertyRepositories[0]->getDataStorage());
-  for (const auto &iter : m_mutablePropertyRepositories) {
-    iter->save(propertyBase);
-  }
+        const std::shared_ptr<PropertyBase> &property, const std::string &value) {
+    std::shared_ptr<PropertyBase> propertyBase =
+            get(property->getName(), property->getInstanceName(),
+                property->getClassName(), property->getProcessName());
+    if (!propertyBase->isRuntimeChange()) {
+        throw PropertyNoRuntimeChangeSupported(propertyBase);
+    }
+    if (propertyBase->toString() == value) {
+        return;
+    }
+    std::stringstream ss;
+    ss << *property;
+    LOG_INFO("{} change to {}", ss.str(), value);
+    propertyBase->setValueString(value);
+    if (m_mutablePropertyRepositories.empty()) {
+        LOG_ERROR("{} not mutable property repository");
+        return;
+    }
+    // PropertyRepository with highest priority wins => DataStorage of the highest
+    // priority is set
+    propertyBase->setDataStorage(
+            m_mutablePropertyRepositories[0]->getDataStorage());
+    for (const auto &iter: m_mutablePropertyRepositories) {
+        iter->save(propertyBase);
+    }
 }

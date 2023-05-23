@@ -5,11 +5,12 @@
 
 namespace Hypodermic {
 
-class IRegistration;
-class IResolutionContext;
+    class IRegistration;
 
-typedef std::function<std::shared_ptr<void>(const IRegistration&,
-                                            IResolutionContext&)>
-    InstanceFactory;
+    class IResolutionContext;
+
+    typedef std::function<std::shared_ptr<void>(const IRegistration &,
+                                                IResolutionContext &)>
+            InstanceFactory;
 
 }  // namespace Hypodermic

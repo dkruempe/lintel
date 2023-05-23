@@ -6,20 +6,24 @@
 #include <vector>
 
 class EnvironmentConfiguration {
- public:
-  enum Environment { ConfigDirectory, BootstrapConfigName, Home, Path };
+public:
+    enum Environment {
+        ConfigDirectory, BootstrapConfigName, Home, Path
+    };
 
-  EnvironmentConfiguration();
-  ~EnvironmentConfiguration() = default;
+    EnvironmentConfiguration();
 
- private:
-  std::map<Environment, std::string> m_environmentConfigurations;
-  std::vector<std::filesystem::path> m_paths;
+    ~EnvironmentConfiguration() = default;
 
- public:
-  [[nodiscard]] const std::string& of(Environment environment);
+private:
+    std::map<Environment, std::string> m_environmentConfigurations;
+    std::vector<std::filesystem::path> m_paths;
 
-  // PATH belonging functions
-  std::vector<std::filesystem::path> pathsOf();
-  std::optional<std::filesystem::path> pathOf(const std::string& fileName);
+public:
+    [[nodiscard]] const std::string &of(Environment environment);
+
+    // PATH belonging functions
+    std::vector<std::filesystem::path> pathsOf();
+
+    std::optional<std::filesystem::path> pathOf(const std::string &fileName);
 };

@@ -30,14 +30,14 @@
 
     <!-- Message Queue Configuration -->
     <MessageQueues>
-        <MessageQueue process_name="main" name="myQueue" max_messages="1000"  remove_on_shutdown="false" />
+        <MessageQueue process_name="main" name="history" max_messages="1000" remove_on_shutdown="false"/>
     </MessageQueues>
 
     <!-- Database Connections Configuration -->
     <DatabaseConnections>
-        <!--<DatabaseConnection name="DEFAULT_PSQL" user_name="server" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
-                            database_name="temp" type="PostgreSQL"/>-->
-        <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true"/>
+        <DatabaseConnection name="DEFAULT_PSQL" user_name="example_user" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
+                            database_name="temp" type="PostgreSQL" default="true"/>
+        <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite"/>
     </DatabaseConnections>
 
     <!-- Shared Memory Segments Configuration -->

@@ -9,22 +9,24 @@
 #include "base_library/features/property/models/PropertyBase.h"
 
 class PropertiesDto : public JsonSerializable {
- private:
-  std::vector<PropertyDto> m_properties;
+private:
+    std::vector<PropertyDto> m_properties;
 
-  static std::vector<PropertyDto> build(
-      const std::vector<std::shared_ptr<PropertyBase>> &properties);
+    static std::vector<PropertyDto> build(
+            const std::vector<std::shared_ptr<PropertyBase>> &properties);
 
- public:
-  explicit PropertiesDto(
-      const std::vector<std::shared_ptr<PropertyBase>> &properties);
-  PropertiesDto() = default;
+public:
+    explicit PropertiesDto(
+            const std::vector<std::shared_ptr<PropertyBase>> &properties);
 
-  [[nodiscard]] const std::vector<PropertyDto> &getProperties() const;
+    PropertiesDto() = default;
 
-  void serialize(
-      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
-  void deserialize(const std::string &json) override;
+    [[nodiscard]] const std::vector<PropertyDto> &getProperties() const;
+
+    void serialize(
+            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+
+    void deserialize(const std::string &json) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTIESDTO_H

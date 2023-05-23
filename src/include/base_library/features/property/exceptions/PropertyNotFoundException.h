@@ -1,42 +1,47 @@
 #ifndef LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
 #define LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
+
 #include <fmt/format.h>
 
 #include <exception>
 #include <string>
 
 class PropertyNotFoundException : public std::exception {
- private:
-  std::string m_name;
-  std::string m_instanceName;
-  std::string m_className;
-  std::string m_processName;
-  std::string m_message;
+private:
+    std::string m_name;
+    std::string m_instanceName;
+    std::string m_className;
+    std::string m_processName;
+    std::string m_message;
 
- public:
-  PropertyNotFoundException(const std::string &name,
-                            const std::string &instanceName,
-                            const std::string &className,
-                            const std::string &processName)
-      : m_name(name),
-        m_instanceName(instanceName),
-        m_className(className),
-        m_processName(processName),
-        m_message(fmt::format("Property<> with name: {} instanceName: {} "
-                              "className: {} processName: {} not found",
-                              name, instanceName, className, processName)) {}
+public:
+    PropertyNotFoundException(const std::string &name,
+                              const std::string &instanceName,
+                              const std::string &className,
+                              const std::string &processName)
+            : m_name(name),
+              m_instanceName(instanceName),
+              m_className(className),
+              m_processName(processName),
+              m_message(fmt::format("Property<> with name: {} instanceName: {} "
+                                    "className: {} processName: {} not found",
+                                    name, instanceName, className, processName)) {}
 
-  [[nodiscard]] const char *what() const noexcept override {
-    return m_message.c_str();
-  }
-  [[nodiscard]] const std::string &getName() const { return m_name; }
-  [[nodiscard]] const std::string &getInstanceName() const {
-    return m_instanceName;
-  }
-  [[nodiscard]] const std::string &getClassName() const { return m_className; }
-  [[nodiscard]] const std::string &getProcessName() const {
-    return m_processName;
-  }
+    [[nodiscard]] const char *what() const noexcept override {
+        return m_message.c_str();
+    }
+
+    [[nodiscard]] const std::string &getName() const { return m_name; }
+
+    [[nodiscard]] const std::string &getInstanceName() const {
+        return m_instanceName;
+    }
+
+    [[nodiscard]] const std::string &getClassName() const { return m_className; }
+
+    [[nodiscard]] const std::string &getProcessName() const {
+        return m_processName;
+    }
 };
 
 #endif  // LOGGING_PROPERTYNOTFOUNDEXCEPTION_H

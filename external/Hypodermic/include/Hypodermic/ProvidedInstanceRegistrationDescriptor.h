@@ -10,81 +10,84 @@
 
 namespace Hypodermic {
 
-template <class TDescriptorInfo>
-class ProvidedInstanceRegistrationDescriptor
-    : public RegistrationDescriptorBase<
-          ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
-          TDescriptorInfo>,
-      public RegistrationDescriptorOperations::As<
-          ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
-          TDescriptorInfo>,
-      public RegistrationDescriptorOperations::AsSelf<
-          ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
-          TDescriptorInfo>,
-      public RegistrationDescriptorOperations::Named<
-          ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
-          TDescriptorInfo>,
-      public RegistrationDescriptorOperations::UseIfNone<
-          ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
-          TDescriptorInfo> {
-  friend class RegistrationDescriptorOperations::As<
-      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>;
-  friend class RegistrationDescriptorOperations::AsSelf<
-      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>;
-  friend class RegistrationDescriptorOperations::Named<
-      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>;
-  friend class RegistrationDescriptorOperations::UseIfNone<
-      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>;
+    template<class TDescriptorInfo>
+    class ProvidedInstanceRegistrationDescriptor
+            : public RegistrationDescriptorBase<
+                    ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
+                    TDescriptorInfo>,
+              public RegistrationDescriptorOperations::As<
+                      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
+                      TDescriptorInfo>,
+              public RegistrationDescriptorOperations::AsSelf<
+                      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
+                      TDescriptorInfo>,
+              public RegistrationDescriptorOperations::Named<
+                      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
+                      TDescriptorInfo>,
+              public RegistrationDescriptorOperations::UseIfNone<
+                      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>,
+                      TDescriptorInfo> {
+        friend class RegistrationDescriptorOperations::As<
+                ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>;
 
- public:
-  typedef RegistrationDescriptorBase<
-      ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>
-      BaseType;
+        friend class RegistrationDescriptorOperations::AsSelf<
+                ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>;
 
-  typedef typename TDescriptorInfo::InstanceType InstanceType;
+        friend class RegistrationDescriptorOperations::Named<
+                ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>;
 
-  template <class TNewDescriptorInfo>
-  struct UpdateDescriptor {
-    typedef ProvidedInstanceRegistrationDescriptor<TNewDescriptorInfo> Type;
-  };
+        friend class RegistrationDescriptorOperations::UseIfNone<
+                ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>;
 
- public:
-  explicit ProvidedInstanceRegistrationDescriptor(
-      const std::shared_ptr<InstanceType>& instance)
-      : BaseType(Utils::getMetaTypeInfo<InstanceType>()),
-        m_instance(instance) {}
+    public:
+        typedef RegistrationDescriptorBase<
+                ProvidedInstanceRegistrationDescriptor<TDescriptorInfo>, TDescriptorInfo>
+                BaseType;
 
-  ProvidedInstanceRegistrationDescriptor(
-      const TypeInfo& instanceType, const TypeAliases& typeAliases,
-      const DependencyFactories& dependencyFactories,
-      const ActivationHandlers& activationHandlers,
-      const std::shared_ptr<InstanceType>& instance)
-      : BaseType(instanceType, typeAliases, dependencyFactories,
-                 activationHandlers),
-        m_instance(instance) {}
+        typedef typename TDescriptorInfo::InstanceType InstanceType;
 
- protected:
-  template <class TNewDescriptorInfo>
-  std::shared_ptr<typename UpdateDescriptor<TNewDescriptorInfo>::Type>
-  createUpdate() const {
-    auto updatedDescriptor =
-        std::make_shared<typename UpdateDescriptor<TNewDescriptorInfo>::Type>(
-            this->instanceType(), this->typeAliases(),
-            this->dependencyFactories(), this->activationHandlers(),
-            m_instance);
+        template<class TNewDescriptorInfo>
+        struct UpdateDescriptor {
+            typedef ProvidedInstanceRegistrationDescriptor<TNewDescriptorInfo> Type;
+        };
 
-    return updatedDescriptor;
-  }
+    public:
+        explicit ProvidedInstanceRegistrationDescriptor(
+                const std::shared_ptr<InstanceType> &instance)
+                : BaseType(Utils::getMetaTypeInfo<InstanceType>()),
+                  m_instance(instance) {}
 
-  std::shared_ptr<IRegistration> describe() const override {
-    HYPODERMIC_LOG_INFO("Describing " << TDescriptorInfo::toString());
+        ProvidedInstanceRegistrationDescriptor(
+                const TypeInfo &instanceType, const TypeAliases &typeAliases,
+                const DependencyFactories &dependencyFactories,
+                const ActivationHandlers &activationHandlers,
+                const std::shared_ptr<InstanceType> &instance)
+                : BaseType(instanceType, typeAliases, dependencyFactories,
+                           activationHandlers),
+                  m_instance(instance) {}
 
-    return RegistrationBuilder<TDescriptorInfo>::buildForProvidedInstance(
-        m_instance, this->typeAliases());
-  }
+    protected:
+        template<class TNewDescriptorInfo>
+        std::shared_ptr<typename UpdateDescriptor<TNewDescriptorInfo>::Type>
+        createUpdate() const {
+            auto updatedDescriptor =
+                    std::make_shared<typename UpdateDescriptor<TNewDescriptorInfo>::Type>(
+                            this->instanceType(), this->typeAliases(),
+                            this->dependencyFactories(), this->activationHandlers(),
+                            m_instance);
 
- private:
-  std::shared_ptr<InstanceType> m_instance;
-};
+            return updatedDescriptor;
+        }
+
+        std::shared_ptr<IRegistration> describe() const override {
+            HYPODERMIC_LOG_INFO("Describing " << TDescriptorInfo::toString());
+
+            return RegistrationBuilder<TDescriptorInfo>::buildForProvidedInstance(
+                    m_instance, this->typeAliases());
+        }
+
+    private:
+        std::shared_ptr<InstanceType> m_instance;
+    };
 
 }  // namespace Hypodermic

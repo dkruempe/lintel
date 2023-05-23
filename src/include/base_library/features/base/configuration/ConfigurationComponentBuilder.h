@@ -8,14 +8,18 @@
 
 
 class ConfigurationComponentBuilder {
- private:
-  std::vector<std::shared_ptr<Component>> m_components;
+private:
+    std::vector<std::shared_ptr<Component>> m_components;
 
- public:
-  ConfigurationComponentBuilder(const std::shared_ptr<EnvironmentConfiguration>
-                                    &environmentConfiguration);
-  ~ConfigurationComponentBuilder() = default;
-  void add(std::shared_ptr<Component> &&component);
-  void add(const std::shared_ptr<Component> &component);
-  [[nodiscard]] const std::vector<std::shared_ptr<Component>> &build();
+public:
+    ConfigurationComponentBuilder(const std::shared_ptr<EnvironmentConfiguration>
+                                  &environmentConfiguration);
+
+    ~ConfigurationComponentBuilder() = default;
+
+    void add(std::shared_ptr<Component> &&component);
+
+    void add(const std::shared_ptr<Component> &component);
+
+    [[nodiscard]] const std::vector<std::shared_ptr<Component>> &build();
 };

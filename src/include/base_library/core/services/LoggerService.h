@@ -10,42 +10,44 @@
 #include "base_library/features/base/models/ProcessName.h"
 
 class LoggerService {
- private:
-  // variables
-  std::shared_ptr<ProcessName> m_processName;
-  std::shared_ptr<Configuration> m_configuration;
-  std::shared_ptr<spdlog::logger> m_logger;
+private:
+    // variables
+    std::shared_ptr<ProcessName> m_processName;
+    std::shared_ptr<Configuration> m_configuration;
+    std::shared_ptr<spdlog::logger> m_logger;
 
-  std::shared_ptr<spdlog::logger> init();
+    std::shared_ptr<spdlog::logger> init();
 
-  static std::unique_ptr<LoggerService> m_instance;
-  static std::once_flag m_initInstanceFlag;
+    static std::unique_ptr<LoggerService> m_instance;
+    static std::once_flag m_initInstanceFlag;
 
- public:
-  LoggerService();
+public:
+    LoggerService();
 
-  LoggerService(std::shared_ptr<ProcessName> processNmae,
-                std::shared_ptr<Configuration> configuration);
+    LoggerService(std::shared_ptr<ProcessName> processNmae,
+                  std::shared_ptr<Configuration> configuration);
 
-  ~LoggerService();
+    ~LoggerService();
 
-  static LoggerService &getOrCreate(
-      const std::shared_ptr<ProcessName> &processInfo,
-      const std::shared_ptr<Configuration> &configuration);
+    static LoggerService &getOrCreate(
+            const std::shared_ptr<ProcessName> &processInfo,
+            const std::shared_ptr<Configuration> &configuration);
 
-  static LoggerService &get();
-  static void initSingleton(
-      const std::shared_ptr<ProcessName> &processInfo,
-      const std::shared_ptr<Configuration> &configuration);
+    static LoggerService &get();
 
-  static void initSingleton2();
+    static void initSingleton(
+            const std::shared_ptr<ProcessName> &processInfo,
+            const std::shared_ptr<Configuration> &configuration);
 
-  template <typename... Args>
-  void log(spdlog::source_loc source, spdlog::level::level_enum lvl,
-           spdlog::string_view_t message, Args &&...args) {
-    m_logger->log(source, lvl, message, args...);
-  }
+    static void initSingleton2();
+
+    template<typename... Args>
+    void log(spdlog::source_loc source, spdlog::level::level_enum lvl,
+             spdlog::string_view_t message, Args &&...args) {
+        m_logger->log(source, lvl, message, args...);
+    }
 };
+
 #define DECLARE_LOGGER(processName, configuration) \
   LoggerService::getOrCreate(processName, configuration)
 #define LOG_INFO(message, ...)                                 \

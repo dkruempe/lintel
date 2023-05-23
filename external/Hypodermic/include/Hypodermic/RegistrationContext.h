@@ -4,27 +4,28 @@
 
 namespace Hypodermic {
 
-class IRegistration;
-class IResolutionContainer;
+    class IRegistration;
 
-class RegistrationContext {
- public:
-  RegistrationContext(IResolutionContainer& resolutionContainer,
-                      const std::shared_ptr<IRegistration>& registration)
-      : m_resolutionContainer(resolutionContainer),
-        m_registration(registration) {}
+    class IResolutionContainer;
 
-  IResolutionContainer& resolutionContainer() const {
-    return m_resolutionContainer;
-  }
+    class RegistrationContext {
+    public:
+        RegistrationContext(IResolutionContainer &resolutionContainer,
+                            const std::shared_ptr<IRegistration> &registration)
+                : m_resolutionContainer(resolutionContainer),
+                  m_registration(registration) {}
 
-  const std::shared_ptr<IRegistration>& registration() const {
-    return m_registration;
-  }
+        IResolutionContainer &resolutionContainer() const {
+            return m_resolutionContainer;
+        }
 
- private:
-  IResolutionContainer& m_resolutionContainer;
-  std::shared_ptr<IRegistration> m_registration;
-};
+        const std::shared_ptr<IRegistration> &registration() const {
+            return m_registration;
+        }
+
+    private:
+        IResolutionContainer &m_resolutionContainer;
+        std::shared_ptr<IRegistration> m_registration;
+    };
 
 }  // namespace Hypodermic

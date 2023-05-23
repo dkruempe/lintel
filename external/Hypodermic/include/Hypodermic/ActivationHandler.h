@@ -5,9 +5,9 @@
 
 namespace Hypodermic {
 
-class ComponentContext;
+    class ComponentContext;
 
-typedef std::function<void(ComponentContext&, const std::shared_ptr<void>&)>
-    ActivationHandler;
+    typedef std::function<void(ComponentContext &, const std::shared_ptr<void> &)>
+            ActivationHandler;
 
 }  // namespace Hypodermic

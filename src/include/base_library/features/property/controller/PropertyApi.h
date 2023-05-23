@@ -9,22 +9,22 @@
 #include "base_library/features/property/controller/PropertyDto.h"
 
 class PropertyApi {
- private:
-  std::shared_ptr<Client> m_client;
+private:
+    std::shared_ptr<Client> m_client;
 
- public:
-  explicit PropertyApi(const std::shared_ptr<ClientProvider> &clientProvider);
+public:
+    explicit PropertyApi(const std::shared_ptr<ClientProvider> &clientProvider);
 
-  std::vector<PropertyDto> allOf(const std::string &processName,
-                                 const std::string &className,
-                                 const std::string &instanceName);
+    std::vector<PropertyDto> allOf(const std::string &processName,
+                                   const std::string &className,
+                                   const std::string &instanceName);
 
-  std::optional<PropertyDto> of(const std::string &processName,
-                                const std::string &className,
-                                const std::string &instanceName,
-                                const std::string &propertyName);
+    std::optional<PropertyDto> of(const std::string &processName,
+                                  const std::string &className,
+                                  const std::string &instanceName,
+                                  const std::string &propertyName);
 
-  bool updateOf(const PropertyDto &propertyDto, const std::string &value);
+    bool updateOf(const PropertyDto &propertyDto, const std::string &value);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYAPI_H

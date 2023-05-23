@@ -4,7 +4,7 @@
 
 namespace Hypodermic {
 
-HYPODERMIC_DECLARE_EXCEPTION(RegistrationException);
+    HYPODERMIC_DECLARE_EXCEPTION(RegistrationException);
 
 }  // namespace Hypodermic
 

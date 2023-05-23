@@ -7,22 +7,23 @@
  * interface for providing of virtual groups
  */
 class GroupProvider {
- private:
-  std::vector<Group> m_groups;
+private:
+    std::vector<Group> m_groups;
 
- public:
-  GroupProvider() = default;
+public:
+    GroupProvider() = default;
 
-  void add(const Group& group) {
-    if (!group.isVirtual()) {
-      throw std::runtime_error("Group >" + group.getGroupName() +
-                               "< is not virtual");
+    void add(const Group &group) {
+        if (!group.isVirtual()) {
+            throw std::runtime_error("Group >" + group.getGroupName() +
+                                     "< is not virtual");
+        }
+        m_groups.push_back(group);
     }
-    m_groups.push_back(group);
-  }
 
-  virtual ~GroupProvider() = default;
-  const std::vector<Group>& provide() { return m_groups; }
+    virtual ~GroupProvider() = default;
+
+    const std::vector<Group> &provide() { return m_groups; }
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUPPROVIDER_H

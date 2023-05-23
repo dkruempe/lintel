@@ -7,6 +7,6 @@
 
 namespace Hypodermic {
 
-typedef std::unordered_map<TypeInfo, DependencyFactory> DependencyFactories;
+    typedef std::unordered_map<TypeInfo, DependencyFactory> DependencyFactories;
 
 }  // namespace Hypodermic

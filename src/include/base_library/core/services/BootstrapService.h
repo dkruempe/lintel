@@ -7,14 +7,14 @@
 #include "base_library/core/plugins/BootstrapPlugin.h"
 
 class BootstrapService {
- private:
-  std::vector<std::shared_ptr<BootstrapPlugin>> m_bootstrapPlugins;
+private:
+    std::vector<std::shared_ptr<BootstrapPlugin>> m_bootstrapPlugins;
 
- public:
-  explicit BootstrapService(
-      std::vector<std::shared_ptr<BootstrapPlugin>> bootstrapPlugins);
+public:
+    explicit BootstrapService(
+            std::vector<std::shared_ptr<BootstrapPlugin>> bootstrapPlugins);
 
-  void onStart();
+    void onStart();
 };
 
 #endif  // CPP_BASE_LIBRARY_BOOTSTRAPSERVICE_H

@@ -6,54 +6,57 @@
 #include "base_library/features/cli/models/CommandParser.h"
 
 class SharedMemoryCliComponent : public CommandLineComponent {
- private:
-  static constexpr std::string_view m_name = "SharedMemory";
-  static constexpr std::string_view m_alias = "Shm";
-  static constexpr std::string_view m_description =
-      "The component can be used to manage the Shared Memory Segments and "
-      "Repositories";
-  std::shared_ptr<SharedMemoryApi> m_sharedMemoryApi;
+private:
+    static constexpr std::string_view m_name = "SharedMemory";
+    static constexpr std::string_view m_alias = "Shm";
+    static constexpr std::string_view m_description =
+            "The component can be used to manage the Shared Memory Segments and "
+            "Repositories";
+    std::shared_ptr<SharedMemoryApi> m_sharedMemoryApi;
 
-  // Commands
-  enum Commands {
-    Undefined,
-    ShowSegments,
-    ShowRepositories,
-    ShrinkSegment,
-    GrowSegment,
-    ExportRepository
-  };
+    // Commands
+    enum Commands {
+        Undefined,
+        ShowSegments,
+        ShowRepositories,
+        ShrinkSegment,
+        GrowSegment,
+        ExportRepository
+    };
 
-  // Flags
-  std::optional<std::string> m_segmentName;
-  std::optional<std::string> m_size;
-  std::optional<std::string> m_repositoryName;
-  std::optional<std::string> m_type;
-  std::optional<std::string> m_file;
+    // Flags
+    std::optional<std::string> m_segmentName;
+    std::optional<std::string> m_size;
+    std::optional<std::string> m_repositoryName;
+    std::optional<std::string> m_type;
+    std::optional<std::string> m_file;
 
-  CommandParser<Commands, Undefined> m_commandParser;
-  static void printSegments(
-      const std::vector<SharedMemorySegmentDto> &segments);
-  static void printRepositories(
-      const std::vector<SharedMemoryRepositoryDto> &repositories);
+    CommandParser<Commands, Undefined> m_commandParser;
 
- public:
-  explicit SharedMemoryCliComponent(
-      std::shared_ptr<SharedMemoryApi> sharedMemoryApi);
-  void onCommand(const UserDto &userDto, const std::string &input,
-                 const std::vector<std::string> &parameters) override;
+    static void printSegments(
+            const std::vector<SharedMemorySegmentDto> &segments);
 
-  void onHelp() override;
+    static void printRepositories(
+            const std::vector<SharedMemoryRepositoryDto> &repositories);
 
-  void onShowMenu() override;
+public:
+    explicit SharedMemoryCliComponent(
+            std::shared_ptr<SharedMemoryApi> sharedMemoryApi);
 
-  bool onMenu(const std::string &component) override;
+    void onCommand(const UserDto &userDto, const std::string &input,
+                   const std::vector<std::string> &parameters) override;
 
-  bool onExit() override;
+    void onHelp() override;
 
-  void printCommandList(std::set<std::string> menuAlias) override;
+    void onShowMenu() override;
 
-  std::vector<std::string> allCommandsOf() override;
+    bool onMenu(const std::string &component) override;
+
+    bool onExit() override;
+
+    void printCommandList(std::set<std::string> menuAlias) override;
+
+    std::vector<std::string> allCommandsOf() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYCLICOMPONENT_H

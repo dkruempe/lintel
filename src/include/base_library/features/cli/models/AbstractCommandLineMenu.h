@@ -9,37 +9,37 @@
 #include "base_library/features/cli/models/CommandLineComponent.h"
 
 class AbstractCommandLineMenu {
- private:
-  std::vector<std::shared_ptr<CommandLineComponent>> m_components;
-  std::map<std::string_view, std::shared_ptr<CommandLineComponent>>
-      m_componentMap;
-  std::shared_ptr<CommandLineComponent> m_current = nullptr;
+private:
+    std::vector<std::shared_ptr<CommandLineComponent>> m_components;
+    std::map<std::string_view, std::shared_ptr<CommandLineComponent>>
+            m_componentMap;
+    std::shared_ptr<CommandLineComponent> m_current = nullptr;
 
-  static std::map<std::string_view, std::shared_ptr<CommandLineComponent>>
-  build(const std::vector<std::shared_ptr<CommandLineComponent>> &components);
+    static std::map<std::string_view, std::shared_ptr<CommandLineComponent>>
+    build(const std::vector<std::shared_ptr<CommandLineComponent>> &components);
 
- public:
-  explicit AbstractCommandLineMenu(
-      const std::vector<std::shared_ptr<CommandLineComponent>> &components);
+public:
+    explicit AbstractCommandLineMenu(
+            const std::vector<std::shared_ptr<CommandLineComponent>> &components);
 
-  void onShowMenu();
+    void onShowMenu();
 
-  std::set<std::string> allMenuEntriesOf();
+    std::set<std::string> allMenuEntriesOf();
 
-  bool onMenu(const std::string &command);
+    bool onMenu(const std::string &command);
 
-  bool onExit();
+    bool onExit();
 
-  void printCommandList();
+    void printCommandList();
 
-  void onCommand(const UserDto &userDto, const std::string &command,
-                 const std::vector<std::string> &parameters);
+    void onCommand(const UserDto &userDto, const std::string &command,
+                   const std::vector<std::string> &parameters);
 
-  std::vector<std::string> allCommandsOf();
+    std::vector<std::string> allCommandsOf();
 
-  void onHelp();
+    void onHelp();
 
-  const std::shared_ptr<CommandLineComponent> &currentOf();
+    const std::shared_ptr<CommandLineComponent> &currentOf();
 };
 
 #endif  // CPP_BASE_LIBRARY_ABSTRACTCOMMANDLINEMENU_H

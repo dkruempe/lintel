@@ -22,38 +22,50 @@
  * of course saved as password hash.
  */
 class User {
- public:
-  enum Sex { Male, Female };
+public:
+    enum Sex {
+        Male, Female
+    };
 
- private:
-  std::string m_firstName;
-  std::string m_lastName;
-  Sex m_sex;
-  std::string m_email;
-  std::string m_userName;
-  std::string m_password;
+private:
+    std::string m_firstName;
+    std::string m_lastName;
+    Sex m_sex;
+    std::string m_email;
+    std::string m_userName;
+    std::string m_password;
 
-  date::sys_time<std::chrono::microseconds> m_createdTimestamp;
-  std::vector<Group> m_groups;
-  std::set<Group> m_allGroups{};  // including subgroups
+    date::sys_time<std::chrono::microseconds> m_createdTimestamp;
+    std::vector<Group> m_groups;
+    std::set<Group> m_allGroups{};  // including subgroups
 
- public:
-  User(std::string firstName, std::string lastName, Sex sex, std::string email,
-       std::string userName, std::string password, std::vector<Group> groups,
-       date::sys_time<std::chrono::microseconds> createdTimestamp =
-           std::chrono::time_point_cast<std::chrono::microseconds>(
-               std::chrono::system_clock::now()));
-  [[nodiscard]] const std::string &getFirstName() const;
-  [[nodiscard]] const std::string &getLastName() const;
-  [[nodiscard]] Sex getSex() const;
-  [[nodiscard]] const std::string &getEmail() const;
-  [[nodiscard]] const std::string &getUserName() const;
-  [[nodiscard]] const std::string &getPassword() const;
-  bool has(const Group &group) const;
-  [[nodiscard]] const date::sys_time<std::chrono::microseconds>
-      &getCreatedTimestamp() const;
-  [[nodiscard]] const std::vector<Group> &getGroups() const;
-  friend std::ostream &operator<<(std::ostream &os, const User &user);
+public:
+    User(std::string firstName, std::string lastName, Sex sex, std::string email,
+         std::string userName, std::string password, std::vector<Group> groups,
+         date::sys_time<std::chrono::microseconds> createdTimestamp =
+         std::chrono::time_point_cast<std::chrono::microseconds>(
+                 std::chrono::system_clock::now()));
+
+    [[nodiscard]] const std::string &getFirstName() const;
+
+    [[nodiscard]] const std::string &getLastName() const;
+
+    [[nodiscard]] Sex getSex() const;
+
+    [[nodiscard]] const std::string &getEmail() const;
+
+    [[nodiscard]] const std::string &getUserName() const;
+
+    [[nodiscard]] const std::string &getPassword() const;
+
+    bool has(const Group &group) const;
+
+    [[nodiscard]] const date::sys_time<std::chrono::microseconds>
+    &getCreatedTimestamp() const;
+
+    [[nodiscard]] const std::vector<Group> &getGroups() const;
+
+    friend std::ostream &operator<<(std::ostream &os, const User &user);
 };
 
 #endif  // CPP_BASE_LIBRARY_USER_H

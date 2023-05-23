@@ -4,12 +4,12 @@
 #include <exception>
 
 class HttpUnauthorizedException : public std::exception {
- public:
-  HttpUnauthorizedException() = default;
+public:
+    HttpUnauthorizedException() = default;
 
-  [[nodiscard]] const char *what() const noexcept override {
-    return "Unauthorized Access to called procedure!";
-  }
+    [[nodiscard]] const char *what() const noexcept override {
+        return "Unauthorized Access to called procedure!";
+    }
 };
 
 #endif  // CPP_BASE_LIBRARY_HTTPUNAUTHORIZEDEXCEPTION_H

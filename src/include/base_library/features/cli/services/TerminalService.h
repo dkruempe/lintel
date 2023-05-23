@@ -6,22 +6,29 @@
 #include <string>
 #include <utility>
 
-enum class Symbol { Nothing, Command, Up, Down, Tab, Eof, CtrlC };
+enum class Symbol {
+    Nothing, Command, Up, Down, Tab, Eof, CtrlC
+};
 using SymbolEvent = std::pair<Symbol, std::string>;
 
 class TerminalService {
- private:
-  std::string m_currentLine;
-  std::size_t m_position = 0;  // next writing position in currentLine
-  bool m_hideChars = false;
+private:
+    std::string m_currentLine;
+    std::size_t m_position = 0;  // next writing position in currentLine
+    bool m_hideChars = false;
 
- public:
-  void log(const std::string &text);
-  SymbolEvent onKeyPressed(KeyEvent);
-  void resetCursor();
-  const std::string &getLine();
-  void enableHideChars();
-  void disableHideChars();
+public:
+    void log(const std::string &text);
+
+    SymbolEvent onKeyPressed(KeyEvent);
+
+    void resetCursor();
+
+    const std::string &getLine();
+
+    void enableHideChars();
+
+    void disableHideChars();
 };
 
 #endif  // CPP_BASE_LIBRARY_TERMINALSERVICE_H

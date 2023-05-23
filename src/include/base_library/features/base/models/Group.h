@@ -31,24 +31,33 @@
  * trigger those checks via the cli itself.
  */
 class Group {
- private:
-  std::string m_groupName;
-  std::vector<Group> m_groups;
-  bool m_isVirtual;
+private:
+    std::string m_groupName;
+    std::vector<Group> m_groups;
+    bool m_isVirtual;
 
- public:
-  Group(std::string groupName, std::vector<Group> groups, bool isVirtual);
+public:
+    Group(std::string groupName, std::vector<Group> groups, bool isVirtual);
 
-  [[nodiscard]] const std::string& getGroupName() const;
-  [[nodiscard]] const std::vector<Group>& getGroups() const;
-  [[nodiscard]] bool isVirtual() const;
-  friend std::ostream& operator<<(std::ostream& os, const Group& group);
-  bool operator==(const Group& rhs) const;
-  bool operator!=(const Group& rhs) const;
-  bool operator<(const Group& rhs) const;
-  bool operator>(const Group& rhs) const;
-  bool operator<=(const Group& rhs) const;
-  bool operator>=(const Group& rhs) const;
+    [[nodiscard]] const std::string &getGroupName() const;
+
+    [[nodiscard]] const std::vector<Group> &getGroups() const;
+
+    [[nodiscard]] bool isVirtual() const;
+
+    friend std::ostream &operator<<(std::ostream &os, const Group &group);
+
+    bool operator==(const Group &rhs) const;
+
+    bool operator!=(const Group &rhs) const;
+
+    bool operator<(const Group &rhs) const;
+
+    bool operator>(const Group &rhs) const;
+
+    bool operator<=(const Group &rhs) const;
+
+    bool operator>=(const Group &rhs) const;
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUP_H

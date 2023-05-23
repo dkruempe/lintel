@@ -13,45 +13,52 @@
 #include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace postgresql {
-class Transaction;
-class Statement;
-class PreparedStatement;
-class Notify;
+    class Transaction;
 
-class Connection {
- private:
-  PGconn *m_conn;
-  friend class Transaction;
-  friend class Statement;
-  friend class PreparedStatement;
-  friend class Notify;
+    class Statement;
 
-  [[nodiscard]] std::shared_ptr<Result> execute(
-      const std::string &statement) const;
+    class PreparedStatement;
 
-  [[nodiscard]] std::shared_ptr<Result> executeParameters(
-      const std::string &statement, const db::Parameters &parameters) const;
+    class Notify;
 
-  [[nodiscard]] std::shared_ptr<Result> prepareStatement(
-      const std::string &statementName, const std::string &query,
-      int32_t nParams) const;
+    class Connection {
+    private:
+        PGconn *m_conn;
 
-  [[nodiscard]] std::shared_ptr<Result> executePreparedStatement(
-      const std::string &statementName, const std::string &query,
-      int32_t nParams, const db::Parameters &parameters) const;
+        friend class Transaction;
 
-  [[nodiscard]] std::string getErrorMessage() const;
+        friend class Statement;
 
- public:
-  explicit Connection(const std::string &connectionInfo);
+        friend class PreparedStatement;
 
-  explicit Connection(
-      const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+        friend class Notify;
 
-  Connection(Connection &connection) = delete;
+        [[nodiscard]] std::shared_ptr<Result> execute(
+                const std::string &statement) const;
 
-  ~Connection();
-};
+        [[nodiscard]] std::shared_ptr<Result> executeParameters(
+                const std::string &statement, const db::Parameters &parameters) const;
+
+        [[nodiscard]] std::shared_ptr<Result> prepareStatement(
+                const std::string &statementName, const std::string &query,
+                int32_t nParams) const;
+
+        [[nodiscard]] std::shared_ptr<Result> executePreparedStatement(
+                const std::string &statementName, const std::string &query,
+                int32_t nParams, const db::Parameters &parameters) const;
+
+        [[nodiscard]] std::string getErrorMessage() const;
+
+    public:
+        explicit Connection(const std::string &connectionInfo);
+
+        explicit Connection(
+                const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+
+        Connection(Connection &connection) = delete;
+
+        ~Connection();
+    };
 }  // namespace postgresql
 
 #endif  // CPP_BASE_LIBRARY_POSTGRES_CONNECTION_H

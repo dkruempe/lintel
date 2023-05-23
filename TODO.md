@@ -1,34 +1,35 @@
 # TODOs
+
 - General
-  - [ ] fix general std::size_t serialize solution instead of limiting it to __APPLE__
+    - [ ] fix general std::size_t serialize solution instead of limiting it to __APPLE__
 - Process
-  - [ ] adds better possibility to manages process automatically 
-  - [ ] need to add later Historization support for following operations for processes
+    - [ ] adds better possibility to manages process automatically
+    - [ ] need to add later Historization support for following operations for processes
 - Shared Memory
-  - [x] remove set container (no shm support)
-  - [x] fix automatic increase feature, bc. currently free_memory is always fixed
-  - [ ] backup or archive strategy for shm
-  - [ ] add better usage of semaphores
-  - [ ] better primary key for SharedMemoryRepository
-        => fix BootstrapPlugin
+    - [x] remove set container (no shm support)
+    - [x] fix automatic increase feature, bc. currently free_memory is always fixed
+    - [ ] backup or archive strategy for shm
+    - [ ] add better usage of semaphores
+    - [ ] better primary key for SharedMemoryRepository
+      => fix BootstrapPlugin
 - Property
-  - [x] cleanup entries if default value is same no repository in shadow mode at startup
+    - [x] cleanup entries if default value is same no repository in shadow mode at startup
 - Database
-  - [ ] mySql Support
-  - [ ] Cursor implementation
-  - [ ] adds constexpr implementation for better usage and performance
-- Queue Support 
-  - [ ] implement basic api as feature
-  - [ ] add configuration to bootstrap configuration file
-  - [ ] add command line component for maintenance
+    - [ ] mySql Support
+    - [ ] Cursor implementation
+    - [ ] adds constexpr implementation for better usage and performance
+- Queue Support
+    - [ ] implement basic api as feature
+    - [ ] add configuration to bootstrap configuration file
+    - [ ] add command line component for maintenance
 - Historization
-  - [ ] adds support for an easy historization via Queue or direct call Api Interface
-  - [x] adds HistorizationService
+    - [ ] adds support for an easy historization via Queue or direct call Api Interface
+    - [x] adds HistorizationService
 - Http
-  - [ ] implement better exception handling
-  - [ ] use enums in implementations
-  - [ ] support of paging
+    - [ ] implement better exception handling
+    - [ ] use enums in implementations
+    - [ ] support of paging
 - Docker Support
-  - [ ] add support for testing software via docker
-  - [ ] working docker container for testing linux
-  - [ ] working docker container for testing macOS ?
+    - [ ] add support for testing software via docker
+    - [ ] working docker container for testing linux
+    - [ ] working docker container for testing macOS ?

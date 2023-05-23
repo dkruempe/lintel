@@ -5,20 +5,22 @@
 #include "base_library/features/property/services/PropertyService.h"
 
 class PropertyController : public Controller {
- private:
-  std::shared_ptr<PropertyService> m_propertyService;
-  Group m_adminGroup;
-  Group m_userGroup;
-  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+))", Get,
-                     allPropertiesOf);
-  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Get,
-                     propertyOf);
-  ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Put,
-                     updateProperty);
+private:
+    std::shared_ptr<PropertyService> m_propertyService;
+    Group m_adminGroup;
+    Group m_userGroup;
+    ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+))", Get,
+                       allPropertiesOf);
 
- public:
-  explicit PropertyController(std::shared_ptr<PropertyService> propertyService,
-                              const std::shared_ptr<AuthService> &authService);
+    ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Get,
+                       propertyOf);
+
+    ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+)/([^\/]+))", Put,
+                       updateProperty);
+
+public:
+    explicit PropertyController(std::shared_ptr<PropertyService> propertyService,
+                                const std::shared_ptr<AuthService> &authService);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYCONTROLLER_H

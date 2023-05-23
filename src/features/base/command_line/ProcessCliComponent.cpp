@@ -3,150 +3,159 @@
 #include <base_library/core/utils/TableBuilder.h>
 
 ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
-    : CommandLineComponent(m_name, m_alias),
-      m_processApi(std::move(processApi)) {
-  m_commandParser.addCommand(
-      Command("show_processes", "Show all processes!")
-          .addArgument(
-              {"-process-name", "-p"}, &m_processName,
-              "Process Name of process itself, which is same as the filename."),
-      ShowProcesses);
-  m_commandParser.addCommand(
-      Command("show_groups", "Show all process groups")
-          .addArgument({"--process-group", "-g"}, &m_processGroup,
-                       "Process Group Name"),
-      ShowProcessGroups);
-  m_commandParser.addCommand(
-      Command("start_process", "Start Process")
-          .addArgument({"--process-path", "-p"}, &m_processName,
-                       "Path of Process")
-          .addArgument({"--arguments", "-a"}, &m_arguments,
-                       "Arguments of process")
-          .addArgument({"--restarts", "-r"}, &m_restarts,
-                       "Restarts of process"),
-      StartProcess);
-  m_commandParser.addCommand(
-      Command("stop_process", "Stop Process")
-          .addArgument({"--process-id", "-i"}, &m_processId, "Id of Process"),
-      StopProcess);
-  m_commandParser.addCommand(
-      Command("terminate_process", "Terminate Process")
-          .addArgument({"--process-id", "-i"}, &m_processId, "Id of Process"),
-      TerminateProcess);
+        : CommandLineComponent(m_name, m_alias),
+          m_processApi(std::move(processApi)) {
+    m_commandParser.addCommand(
+            Command("show_processes", "Show all processes!")
+                    .addArgument(
+                            {"-process-name", "-p"}, &m_processName,
+                            "Process Name of process itself, which is same as the filename."),
+            ShowProcesses);
+    m_commandParser.addCommand(
+            Command("show_groups", "Show all process groups")
+                    .addArgument({"--process-group", "-g"}, &m_processGroup,
+                                 "Process Group Name"),
+            ShowProcessGroups);
+    m_commandParser.addCommand(
+            Command("start_process", "Start Process")
+                    .addArgument({"--process-path", "-p"}, &m_processName,
+                                 "Path of Process")
+                    .addArgument({"--arguments", "-a"}, &m_arguments,
+                                 "Arguments of process")
+                    .addArgument({"--restarts", "-r"}, &m_restarts,
+                                 "Restarts of process"),
+            StartProcess);
+    m_commandParser.addCommand(
+            Command("stop_process", "Stop Process")
+                    .addArgument({"--process-id", "-i"}, &m_processId, "Id of Process"),
+            StopProcess);
+    m_commandParser.addCommand(
+            Command("terminate_process", "Terminate Process")
+                    .addArgument({"--process-id", "-i"}, &m_processId, "Id of Process"),
+            TerminateProcess);
 }
+
 void ProcessCliComponent::onCommand(
-    const UserDto & /*userDto*/, const std::string &input,
-    const std::vector<std::string> &parameters) {
-  try {
-    Commands command = m_commandParser.parse(input, parameters);
-    switch (command) {
-      case ShowProcesses: {
-        std::vector<ProcessInfoDto> temp{};
-        if (m_processName.has_value()) {
-          temp = m_processApi->allOf(m_processName.value());
-        } else {
-          temp = m_processApi->allOf(".*");
+        const UserDto & /*userDto*/, const std::string &input,
+        const std::vector<std::string> &parameters) {
+    try {
+        Commands command = m_commandParser.parse(input, parameters);
+        switch (command) {
+            case ShowProcesses: {
+                std::vector<ProcessInfoDto> temp{};
+                if (m_processName.has_value()) {
+                    temp = m_processApi->allOf(m_processName.value());
+                } else {
+                    temp = m_processApi->allOf(".*");
+                }
+                printProcesses(temp);
+                break;
+            }
+            case ShowProcessGroups: {
+                std::vector<ProcessGroupDto> temp{};
+                if (m_processGroup.has_value()) {
+                    temp = m_processApi->allGroupsOf(m_processGroup.value());
+                } else {
+                    temp = m_processApi->allGroupsOf(".*");
+                }
+                printProcessGroups(temp);
+                break;
+            }
+            case StartProcess: {
+                if (!m_processName.has_value()) {
+                    std::cout << "ERROR: please enter path\n";
+                    return;
+                }
+                std::filesystem::path path(m_processName.value());
+                std::shared_ptr<Process> process =
+                        std::make_shared<Process>(path, m_arguments);
+                if (m_restarts.has_value() && m_restarts.value() > 0) {
+                    process->enableAutoStart(m_restarts.value());
+                }
+                m_processApi->startOf(process);
+                m_arguments.clear();
+                break;
+            }
+            case StopProcess: {
+                if (m_processId.empty()) {
+                    std::cout << "ERROR: please enter valid process id\n";
+                    return;
+                }
+                m_processApi->stopOf(m_processId);
+                break;
+            }
+            case TerminateProcess: {
+                if (m_processId.empty()) {
+                    std::cout << "ERROR: pleqase enter valid process id \n";
+                    return;
+                }
+                m_processApi->terminateOf(m_processId);
+                break;
+            }
+            default:
+                break;
         }
-        printProcesses(temp);
-        break;
-      }
-      case ShowProcessGroups: {
-        std::vector<ProcessGroupDto> temp{};
-        if (m_processGroup.has_value()) {
-          temp = m_processApi->allGroupsOf(m_processGroup.value());
-        } else {
-          temp = m_processApi->allGroupsOf(".*");
-        }
-        printProcessGroups(temp);
-        break;
-      }
-      case StartProcess: {
-        if (!m_processName.has_value()) {
-          std::cout << "ERROR: please enter path\n";
-          return;
-        }
-        std::filesystem::path path(m_processName.value());
-        std::shared_ptr<Process> process =
-            std::make_shared<Process>(path, m_arguments);
-        if (m_restarts.has_value() && m_restarts.value() > 0) {
-          process->enableAutoStart(m_restarts.value());
-        }
-        m_processApi->startOf(process);
-        m_arguments.clear();
-        break;
-      }
-      case StopProcess: {
-        if (m_processId.empty()) {
-          std::cout << "ERROR: please enter valid process id\n";
-          return;
-        }
-        m_processApi->stopOf(m_processId);
-        break;
-      }
-      case TerminateProcess: {
-        if (m_processId.empty()) {
-          std::cout << "ERROR: pleqase enter valid process id \n";
-          return;
-        }
-        m_processApi->terminateOf(m_processId);
-        break;
-      }
-      default:
-        break;
+    } catch (std::exception &exception) {
+        std::cerr << "ERROR: " << exception.what() << "\n";
     }
-  } catch (std::exception &exception) {
-    std::cerr << "ERROR: " << exception.what() << "\n";
-  }
 }
+
 void ProcessCliComponent::printProcessGroups(
-    const std::vector<ProcessGroupDto> &processGroup) {
-  TableBuilder<3> builder;
-  builder.add({"No.", "ProcessGroupName", "ProcessGroupId"});
-  std::size_t count = 0;
-  for (const auto &iter : processGroup) {
-    builder.add({std::to_string(++count), iter.getName(), iter.getId()});
-  }
-  std::cout << builder.build() << "\n";
+        const std::vector<ProcessGroupDto> &processGroup) {
+    TableBuilder<3> builder;
+    builder.add({"No.", "ProcessGroupName", "ProcessGroupId"});
+    std::size_t count = 0;
+    for (const auto &iter: processGroup) {
+        builder.add({std::to_string(++count), iter.getName(), iter.getId()});
+    }
+    std::cout << builder.build() << "\n";
 }
+
 void ProcessCliComponent::printProcesses(
-    const std::vector<ProcessInfoDto> &processInfoDto) {
-  TableBuilder<9> builder;
-  builder.add({
-      "No.",
-      "ProcessName",
-      "SystemProcessId",
-      "ProcessId",
-      "AutoRestart",
-      "MaxRestarts",
-      "Restarts",
-      "GroupName",
-      "GroupId",
-  });
-  std::size_t iter = 0;
-  for (const auto &processInfo : processInfoDto) {
-    builder.add(
-        {std::to_string(++iter), processInfo.getPath().filename().string(),
-         std::to_string(processInfo.getProcessId()), processInfo.getId(),
-         processInfo.isAutoRestart() ? "true" : "false",
-         std::to_string(processInfo.getMaxAutoRestarts()),
-         std::to_string(processInfo.getRestarts()), processInfo.getGroupName(),
-         processInfo.getGroupId()});
-  }
-  std::cout << builder.build() << "\n";
+        const std::vector<ProcessInfoDto> &processInfoDto) {
+    TableBuilder<9> builder;
+    builder.add({
+                        "No.",
+                        "ProcessName",
+                        "SystemProcessId",
+                        "ProcessId",
+                        "AutoRestart",
+                        "MaxRestarts",
+                        "Restarts",
+                        "GroupName",
+                        "GroupId",
+                });
+    std::size_t iter = 0;
+    for (const auto &processInfo: processInfoDto) {
+        builder.add(
+                {std::to_string(++iter), processInfo.getPath().filename().string(),
+                 std::to_string(processInfo.getProcessId()), processInfo.getId(),
+                 processInfo.isAutoRestart() ? "true" : "false",
+                 std::to_string(processInfo.getMaxAutoRestarts()),
+                 std::to_string(processInfo.getRestarts()), processInfo.getGroupName(),
+                 processInfo.getGroupId()});
+    }
+    std::cout << builder.build() << "\n";
 }
+
 bool ProcessCliComponent::onExit() { return true; }
+
 void ProcessCliComponent::printCommandList(std::set<std::string> menuAlias) {
-  m_commandParser.printCommandList(menuAlias);
+    m_commandParser.printCommandList(menuAlias);
 }
+
 void ProcessCliComponent::onShowMenu() {
-  std::cout << "No subMenu available\n";
+    std::cout << "No subMenu available\n";
 }
+
 bool ProcessCliComponent::onMenu(const std::string & /*component*/) {
-  return true;
+    return true;
 }
+
 void ProcessCliComponent::onHelp() {
-  m_commandParser.printHelp(getName(), getAlias(), m_description);
+    m_commandParser.printHelp(getName(), getAlias(), m_description);
 }
+
 std::vector<std::string> ProcessCliComponent::allCommandsOf() {
-  return m_commandParser.allCommandsOf();
+    return m_commandParser.allCommandsOf();
 }

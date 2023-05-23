@@ -13,7 +13,7 @@
 
 class PropertyService;
 
-template <class T>
+template<class T>
 class Property;
 
 #define IMPLEMENT_PROPERTY(type, convertToString, convertToValue)              \
@@ -65,47 +65,65 @@ class Property;
     }                                                                          \
     friend class PropertyService;                                              \
   };
+
 IMPLEMENT_PROPERTY(int8_t, StringifyService<int8_t>::serializeToString,
                    StringifyService<int8_t>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(int16_t, StringifyService<int16_t>::serializeToString,
                    StringifyService<int16_t>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(int32_t, StringifyService<int32_t>::serializeToString,
                    StringifyService<int32_t>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(int64_t, StringifyService<int64_t>::serializeToString,
                    StringifyService<int64_t>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(uint8_t, StringifyService<uint8_t>::serializeToString,
                    StringifyService<uint8_t>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(uint16_t, StringifyService<uint16_t>::serializeToString,
                    StringifyService<uint16_t>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(uint32_t, StringifyService<uint32_t>::serializeToString,
                    StringifyService<uint32_t>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(uint64_t, StringifyService<uint64_t>::serializeToString,
                    StringifyService<uint64_t>::deserializeFromString)
+
 #ifdef __APPLE__
+
 IMPLEMENT_PROPERTY(std::size_t,
                    StringifyService<std::size_t>::serializeToString,
                    StringifyService<std::size_t>::deserializeFromString)
+
 #endif
+
 IMPLEMENT_PROPERTY(float, StringifyService<float>::serializeToString,
                    StringifyService<float>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(double, StringifyService<double>::serializeToString,
                    StringifyService<double>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(std::string,
                    StringifyService<std::string>::serializeToString,
                    StringifyService<std::string>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(bool, StringifyService<bool>::serializeToString,
                    StringifyService<bool>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(
-    std::chrono::milliseconds,
-    StringifyService<std::chrono::milliseconds>::serializeToString,
-    StringifyService<std::chrono::milliseconds>::deserializeFromString)
+        std::chrono::milliseconds,
+        StringifyService<std::chrono::milliseconds>::serializeToString,
+        StringifyService<std::chrono::milliseconds>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(
-    std::chrono::seconds,
-    StringifyService<std::chrono::seconds>::serializeToString,
-    StringifyService<std::chrono::seconds>::deserializeFromString)
+        std::chrono::seconds,
+        StringifyService<std::chrono::seconds>::serializeToString,
+        StringifyService<std::chrono::seconds>::deserializeFromString)
+
 IMPLEMENT_PROPERTY(
-    std::chrono::minutes,
-    StringifyService<std::chrono::minutes>::serializeToString,
-    StringifyService<std::chrono::minutes>::deserializeFromString)
+        std::chrono::minutes,
+        StringifyService<std::chrono::minutes>::serializeToString,
+        StringifyService<std::chrono::minutes>::deserializeFromString)
 
 #endif /* PROPERTY_H */

@@ -1,24 +1,26 @@
 #ifndef CPP_BASE_LIBRARY_STATEMENT_H
 #define CPP_BASE_LIBRARY_STATEMENT_H
+
 #include "base_library/core/persistence/Connection.h"
 #include "base_library/core/persistence/ParameterBuilder.h"
 #include "base_library/core/persistence/Result.h"
 #include "base_library/core/persistence/postgresql/Statement.h"
 #include "base_library/core/persistence/sqlite3/Statement.h"
+
 namespace db {
-class Statement {
- private:
-  std::unique_ptr<postgresql::Statement> m_statement = nullptr;
-  std::unique_ptr<sqlite::Statement> m_statementSQLite = nullptr;
-  const Connection &m_connection;
+    class Statement {
+    private:
+        std::unique_ptr<postgresql::Statement> m_statement = nullptr;
+        std::unique_ptr<sqlite::Statement> m_statementSQLite = nullptr;
+        const Connection &m_connection;
 
- public:
-  explicit Statement(const Connection &connection);
+    public:
+        explicit Statement(const Connection &connection);
 
-  Result execute(const std::string &query);
+        Result execute(const std::string &query);
 
-  Result execute(const std::string &query, const db::ParameterBuilder &builder);
-};
+        Result execute(const std::string &query, const db::ParameterBuilder &builder);
+    };
 }  // namespace db
 
 #endif  // CPP_BASE_LIBRARY_STATEMENT_H

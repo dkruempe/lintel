@@ -7,27 +7,27 @@
 #include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 
 class SharedMemorySegmentComponent : public Component {
- private:
-  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
+private:
+    std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
 
-  static struct Shapes {
-    const std::string CONFIG_ROOT = "SharedMemorySegments";
-    const std::string SHM_SEGMENT_ROOT = "SharedMemorySegment";
-    const std::string SHM_SEGMENT_NAME = "name";
-    const std::string SHM_SEGMENT_SIZE = "size";
-    const std::string SHM_SEGMENT_AUTO_EXTEND_SIZE = "auto_extend_size";
-    const std::string SHM_SEGMENT_MAX_SIZE = "max_size";
-    const std::string PATH_ROOT = "Path";
-    const std::string PATH_PATH = "path";
-  } m_shape;
+    static struct Shapes {
+        const std::string CONFIG_ROOT = "SharedMemorySegments";
+        const std::string SHM_SEGMENT_ROOT = "SharedMemorySegment";
+        const std::string SHM_SEGMENT_NAME = "name";
+        const std::string SHM_SEGMENT_SIZE = "size";
+        const std::string SHM_SEGMENT_AUTO_EXTEND_SIZE = "auto_extend_size";
+        const std::string SHM_SEGMENT_MAX_SIZE = "max_size";
+        const std::string PATH_ROOT = "Path";
+        const std::string PATH_PATH = "path";
+    } m_shape;
 
- public:
-  explicit SharedMemorySegmentComponent(
-      std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
+public:
+    explicit SharedMemorySegmentComponent(
+            std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
 
-  std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
-                                            const std::string &fileName,
-                                            int32_t lineOffset) override;
+    std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
+                                              const std::string &fileName,
+                                              int32_t lineOffset) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYSEGMENTCOMPONENT_H

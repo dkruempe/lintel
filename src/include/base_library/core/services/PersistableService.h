@@ -7,14 +7,14 @@
 #include "base_library/core/services/PersistableBean.h"
 
 class PersistableService {
- private:
-  std::vector<std::shared_ptr<PersistableBean>> m_persistableBeans;
+private:
+    std::vector<std::shared_ptr<PersistableBean>> m_persistableBeans;
 
- public:
-  explicit PersistableService(
-      std::vector<std::shared_ptr<PersistableBean>> persistableBeans);
+public:
+    explicit PersistableService(
+            std::vector<std::shared_ptr<PersistableBean>> persistableBeans);
 
-  void awake();
+    void awake();
 };
 
 #endif  // CPP_BASE_LIBRARY_PERSISTABLESERVICE_H

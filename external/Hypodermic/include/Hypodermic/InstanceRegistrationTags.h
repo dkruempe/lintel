@@ -2,14 +2,18 @@
 
 namespace Hypodermic {
 
-namespace Tags {
+    namespace Tags {
 
-struct SelfRegistered {};
-struct NotSelfRegistered {};
+        struct SelfRegistered {
+        };
+        struct NotSelfRegistered {
+        };
 
-struct FallbackRegistration {};
-struct DefaultRegistration {};
+        struct FallbackRegistration {
+        };
+        struct DefaultRegistration {
+        };
 
-}  // namespace Tags
+    }  // namespace Tags
 
 }  // namespace Hypodermic

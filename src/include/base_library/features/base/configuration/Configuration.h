@@ -21,36 +21,36 @@
  * - get easy the configuration of the give components.
  */
 class Configuration {
- private:
-  std::map<std::string, std::shared_ptr<Component>> m_components;
-  std::vector<std::shared_ptr<Entry>> m_configurationEntries;
-  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
-  std::filesystem::path m_configurationFile;
+private:
+    std::map<std::string, std::shared_ptr<Component>> m_components;
+    std::vector<std::shared_ptr<Entry>> m_configurationEntries;
+    std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
+    std::filesystem::path m_configurationFile;
 
-  void loadConfiguration();
+    void loadConfiguration();
 
-  static std::map<std::string, std::shared_ptr<Component>> initialize(
-      const std::vector<std::shared_ptr<Component>> &tempComponents);
+    static std::map<std::string, std::shared_ptr<Component>> initialize(
+            const std::vector<std::shared_ptr<Component>> &tempComponents);
 
- public:
-  explicit Configuration(
-      const std::vector<std::shared_ptr<Component>> &components,
-      std::shared_ptr<EnvironmentConfiguration> EnvironmentConfiguration);
+public:
+    explicit Configuration(
+            const std::vector<std::shared_ptr<Component>> &components,
+            std::shared_ptr<EnvironmentConfiguration> EnvironmentConfiguration);
 
-  // constructor for testing purposes
-  void setEntries(std::vector<std::shared_ptr<Entry>> entries);
+    // constructor for testing purposes
+    void setEntries(std::vector<std::shared_ptr<Entry>> entries);
 
-  template <typename COMPONENT>
-  std::vector<std::shared_ptr<Entry>> configurationOf() {
-    const std::string_view nameOfComponent = type_name<COMPONENT>();
-    std::vector<std::shared_ptr<Entry>> tempEntries;
-    for (auto &entry : m_configurationEntries) {
-      if (entry->getConfigurationParserComponent() == nameOfComponent) {
-        tempEntries.push_back(entry);
-      }
+    template<typename COMPONENT>
+    std::vector<std::shared_ptr<Entry>> configurationOf() {
+        const std::string_view nameOfComponent = type_name<COMPONENT>();
+        std::vector<std::shared_ptr<Entry>> tempEntries;
+        for (auto &entry: m_configurationEntries) {
+            if (entry->getConfigurationParserComponent() == nameOfComponent) {
+                tempEntries.push_back(entry);
+            }
+        }
+        return tempEntries;
     }
-    return tempEntries;
-  }
 };
 
 #endif  // CPP_BASE_LIBRARY_CONFIGURATION_H

@@ -9,35 +9,35 @@
 #include "base_library/features/http/service/Client.h"
 
 class CommandLineComponent {
- private:
-  std::string_view m_name;
-  std::string_view m_alias;
+private:
+    std::string_view m_name;
+    std::string_view m_alias;
 
- public:
-  CommandLineComponent(std::string_view name, std::string_view alias);
+public:
+    CommandLineComponent(std::string_view name, std::string_view alias);
 
-  virtual ~CommandLineComponent() = default;
+    virtual ~CommandLineComponent() = default;
 
-  std::string_view getName();
+    std::string_view getName();
 
-  std::string_view getAlias();
+    std::string_view getAlias();
 
-  virtual void onCommand(const UserDto &userDto, const std::string &command,
-                         const std::vector<std::string> &parameters) = 0;
+    virtual void onCommand(const UserDto &userDto, const std::string &command,
+                           const std::vector<std::string> &parameters) = 0;
 
-  virtual void onHelp() = 0;
+    virtual void onHelp() = 0;
 
-  virtual void onShowMenu() = 0;
+    virtual void onShowMenu() = 0;
 
-  virtual bool onMenu(const std::string &component) = 0;
+    virtual bool onMenu(const std::string &component) = 0;
 
-  virtual bool onExit() = 0;
+    virtual bool onExit() = 0;
 
-  virtual void printCommandList(std::set<std::string> menuAlias) = 0;
+    virtual void printCommandList(std::set<std::string> menuAlias) = 0;
 
-  virtual std::set<std::string> menuEntriesOf() { return {}; }
+    virtual std::set<std::string> menuEntriesOf() { return {}; }
 
-  virtual std::vector<std::string> allCommandsOf() = 0;
+    virtual std::vector<std::string> allCommandsOf() = 0;
 };
 
 #endif  // CPP_BASE_LIBRARY_COMMANDLINECOMPONENT_H

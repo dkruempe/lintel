@@ -6,22 +6,24 @@
 #include "base_library/core/models/JsonSerializable.h"
 
 class PropertyValueDto : public JsonSerializable {
- private:
-  std::string m_value;
+private:
+    std::string m_value;
 
-  static struct Shapes { const std::string VALUE = "value"; } m_shapes;
+    static struct Shapes {
+        const std::string VALUE = "value";
+    } m_shapes;
 
- public:
-  explicit PropertyValueDto(std::string value);
+public:
+    explicit PropertyValueDto(std::string value);
 
-  PropertyValueDto() = default;
+    PropertyValueDto() = default;
 
-  [[nodiscard]] const std::string &getValue() const;
+    [[nodiscard]] const std::string &getValue() const;
 
-  void serialize(
-      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+    void serialize(
+            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
 
-  bool deserialize(const rapidjson::Value &obj) override;
+    bool deserialize(const rapidjson::Value &obj) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYVALUEDTO_H

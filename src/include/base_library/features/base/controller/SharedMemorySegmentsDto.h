@@ -7,19 +7,21 @@
 #include "base_library/features/base/controller/SharedMemorySegmentDto.h"
 
 class SharedMemorySegmentsDto : public JsonSerializable {
- private:
-  std::vector<SharedMemorySegmentDto> m_segments;
+private:
+    std::vector<SharedMemorySegmentDto> m_segments;
 
- public:
-  explicit SharedMemorySegmentsDto(
-      std::vector<SharedMemorySegmentDto> segments);
-  SharedMemorySegmentsDto() = default;
+public:
+    explicit SharedMemorySegmentsDto(
+            std::vector<SharedMemorySegmentDto> segments);
 
-  [[nodiscard]] const std::vector<SharedMemorySegmentDto> &getSegments() const;
+    SharedMemorySegmentsDto() = default;
 
-  void serialize(
-      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
-  void deserialize(const std::string &json) override;
+    [[nodiscard]] const std::vector<SharedMemorySegmentDto> &getSegments() const;
+
+    void serialize(
+            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+
+    void deserialize(const std::string &json) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYSEGMENTSDTO_H

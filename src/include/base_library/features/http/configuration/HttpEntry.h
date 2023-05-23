@@ -9,24 +9,28 @@
 #include "base_library/features/base/configuration/Entry.h"
 
 class HttpEntry : public Entry {
- private:
-  std::shared_ptr<ServerConfiguration> m_serverConfiguration;
-  std::shared_ptr<ClientConfiguration> m_clientConfiguration;
+private:
+    std::shared_ptr<ServerConfiguration> m_serverConfiguration;
+    std::shared_ptr<ClientConfiguration> m_clientConfiguration;
 
- public:
-  HttpEntry(std::string_view component,
-            std::shared_ptr<ServerConfiguration> serverConfiguration);
-  HttpEntry(std::string_view component,
-            std::shared_ptr<ClientConfiguration> clientConfiguration);
+public:
+    HttpEntry(std::string_view component,
+              std::shared_ptr<ServerConfiguration> serverConfiguration);
 
-  [[nodiscard]] const std::shared_ptr<ServerConfiguration>
-      &getServerConfiguration() const;
-  [[nodiscard]] const std::shared_ptr<ClientConfiguration>
-      &getClientConfiguration() const;
-  bool isServer();
-  bool isClient();
+    HttpEntry(std::string_view component,
+              std::shared_ptr<ClientConfiguration> clientConfiguration);
 
-  friend std::ostream &operator<<(std::ostream &os, const HttpEntry &entry);
+    [[nodiscard]] const std::shared_ptr<ServerConfiguration>
+    &getServerConfiguration() const;
+
+    [[nodiscard]] const std::shared_ptr<ClientConfiguration>
+    &getClientConfiguration() const;
+
+    bool isServer();
+
+    bool isClient();
+
+    friend std::ostream &operator<<(std::ostream &os, const HttpEntry &entry);
 };
 
 #endif  // CPP_BASE_LIBRARY_HTTPENTRY_H

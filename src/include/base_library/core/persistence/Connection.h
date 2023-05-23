@@ -9,31 +9,38 @@
 
 namespace db {
 
-class Transaction;
-class Statement;
-class PreparedStatement;
-class Notify;
+    class Transaction;
 
-class Connection {
- private:
-  std::shared_ptr<postgresql::Connection> m_conn = nullptr;
-  std::shared_ptr<sqlite::Connection> m_connSQLite = nullptr;
+    class Statement;
 
-  ConnectionType m_connectionType;
-  friend class Transaction;
-  friend class Statement;
-  friend class PreparedStatement;
-  friend class Notify;
+    class PreparedStatement;
 
- public:
-  explicit Connection(ConnectionType connectionType,
-                      const std::string &connectionInfo);
+    class Notify;
 
-  explicit Connection(
-      const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+    class Connection {
+    private:
+        std::shared_ptr<postgresql::Connection> m_conn = nullptr;
+        std::shared_ptr<sqlite::Connection> m_connSQLite = nullptr;
 
-  explicit Connection(Connection &connection) = delete;
-};
+        ConnectionType m_connectionType;
+
+        friend class Transaction;
+
+        friend class Statement;
+
+        friend class PreparedStatement;
+
+        friend class Notify;
+
+    public:
+        explicit Connection(ConnectionType connectionType,
+                            const std::string &connectionInfo);
+
+        explicit Connection(
+                const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+
+        explicit Connection(Connection &connection) = delete;
+    };
 }  // namespace db
 
 #endif  // CPP_BASE_LIBRARY_CONNECTION_H

@@ -6,6 +6,6 @@
 
 namespace Hypodermic {
 
-typedef std::vector<ActivationHandler> ActivationHandlers;
+    typedef std::vector<ActivationHandler> ActivationHandlers;
 
 }  // namespace Hypodermic

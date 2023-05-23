@@ -10,72 +10,76 @@
 #include "base_library/features/cli/models/CommandParser.h"
 
 class UserManagementCliComponent : public CommandLineComponent {
- private:
-  static constexpr std::string_view m_name = "UserManagement";
-  static constexpr std::string_view m_alias = "UserM";
-  static constexpr std::string_view m_description =
-      "This component is responsible for the total user and group management";
-  std::shared_ptr<UserApi> m_userApi;
+private:
+    static constexpr std::string_view m_name = "UserManagement";
+    static constexpr std::string_view m_alias = "UserM";
+    static constexpr std::string_view m_description =
+            "This component is responsible for the total user and group management";
+    std::shared_ptr<UserApi> m_userApi;
 
-  enum Commands {
-    Undefined,
-    // group operations
-    AllGroups,
-    AddGroup,
-    RemoveGroup,
-    UpdateGroup,
-    // user operations
-    AllUsers,
-    AddUser,
-    RemoveUser,
-    UpdateUser
-  };
+    enum Commands {
+        Undefined,
+        // group operations
+        AllGroups,
+        AddGroup,
+        RemoveGroup,
+        UpdateGroup,
+        // user operations
+        AllUsers,
+        AddUser,
+        RemoveUser,
+        UpdateUser
+    };
 
-  // Flags
-  /*
-   * Command: AllGroups
-   * GroupName for limiting search result of AllGroups Command
-   * - support regex expressions
-   * - empty implies no flag set
-   * IsVirtualGroup:
-   * -
-   */
-  std::optional<std::string> m_groupName;
-  std::optional<bool> m_isVirtualGroup;
-  /*
-   * Command: AllUsers
-   * Command: AddUser
-   */
-  std::optional<std::string> m_userName;
-  std::optional<std::string> m_firstName;
-  std::optional<std::string> m_lastName;
-  std::optional<std::string> m_eMail;
-  std::optional<std::string> m_password;
-  std::optional<std::string> m_groupRemoved;
+    // Flags
+    /*
+     * Command: AllGroups
+     * GroupName for limiting search result of AllGroups Command
+     * - support regex expressions
+     * - empty implies no flag set
+     * IsVirtualGroup:
+     * -
+     */
+    std::optional<std::string> m_groupName;
+    std::optional<bool> m_isVirtualGroup;
+    /*
+     * Command: AllUsers
+     * Command: AddUser
+     */
+    std::optional<std::string> m_userName;
+    std::optional<std::string> m_firstName;
+    std::optional<std::string> m_lastName;
+    std::optional<std::string> m_eMail;
+    std::optional<std::string> m_password;
+    std::optional<std::string> m_groupRemoved;
 
-  CommandParser<Commands, Undefined> m_commandParser;
-  static void printUsers(const std::vector<UserDto> &users);
-  static void printGroups(const std::vector<GroupDto> &groups);
-  static std::string printUserGroups(const std::vector<GroupDto> &groups);
-  static std::string printSubGroups(const GroupDto &group);
+    CommandParser<Commands, Undefined> m_commandParser;
 
- public:
-  explicit UserManagementCliComponent(std::shared_ptr<UserApi> userApi);
+    static void printUsers(const std::vector<UserDto> &users);
 
-  void onCommand(const UserDto &userDto, const std::string &input,
-                 const std::vector<std::string> &parameters) override;
+    static void printGroups(const std::vector<GroupDto> &groups);
 
-  void onHelp() override;
+    static std::string printUserGroups(const std::vector<GroupDto> &groups);
 
-  void onShowMenu() override;
+    static std::string printSubGroups(const GroupDto &group);
 
-  bool onMenu(const std::string &component) override;
+public:
+    explicit UserManagementCliComponent(std::shared_ptr<UserApi> userApi);
 
-  bool onExit() override;
+    void onCommand(const UserDto &userDto, const std::string &input,
+                   const std::vector<std::string> &parameters) override;
 
-  void printCommandList(std::set<std::string> menuAlias) override;
+    void onHelp() override;
 
-  std::vector<std::string> allCommandsOf() override;
+    void onShowMenu() override;
+
+    bool onMenu(const std::string &component) override;
+
+    bool onExit() override;
+
+    void printCommandList(std::set<std::string> menuAlias) override;
+
+    std::vector<std::string> allCommandsOf() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_USERMANAGEMENTCLICOMPONENT_H

@@ -6,27 +6,27 @@
 #include "base_library/core/persistence/sqlite3/Transaction.h"
 
 namespace db {
-class Transaction {
- private:
-  const Connection &m_connection;
-  std::unique_ptr<postgresql::Transaction> m_transaction = nullptr;
-  std::unique_ptr<sqlite::Transaction> m_transactionSQLite = nullptr;
+    class Transaction {
+    private:
+        const Connection &m_connection;
+        std::unique_ptr<postgresql::Transaction> m_transaction = nullptr;
+        std::unique_ptr<sqlite::Transaction> m_transactionSQLite = nullptr;
 
- public:
-  explicit Transaction(const Connection &connection);
+    public:
+        explicit Transaction(const Connection &connection);
 
-  Transaction(Transaction &transaction) = delete;
+        Transaction(Transaction &transaction) = delete;
 
-  void start();
+        void start();
 
-  void commit();
+        void commit();
 
-  void save(const std::string &savepoint) const;
+        void save(const std::string &savepoint) const;
 
-  void rollback();
+        void rollback();
 
-  void rollbackTo(const std::string &savepoint) const;
-};
+        void rollbackTo(const std::string &savepoint) const;
+    };
 }  // namespace db
 
 #endif  // CPP_BASE_LIBRARY_TRANSACTION_H

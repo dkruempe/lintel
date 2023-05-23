@@ -13,16 +13,16 @@
  * service. This has to be done manually.
  */
 class PropertyEntry : public Entry {
- private:
-  std::shared_ptr<PropertyBase> m_property;
+private:
+    std::shared_ptr<PropertyBase> m_property;
 
- public:
-  PropertyEntry(std::string_view component,
-                std::shared_ptr<PropertyBase> property);
+public:
+    PropertyEntry(std::string_view component,
+                  std::shared_ptr<PropertyBase> property);
 
-  std::shared_ptr<PropertyBase> &getProperty();
+    std::shared_ptr<PropertyBase> &getProperty();
 
-  friend std::ostream &operator<<(std::ostream &os, const PropertyEntry &entry);
+    friend std::ostream &operator<<(std::ostream &os, const PropertyEntry &entry);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYENTRY_H

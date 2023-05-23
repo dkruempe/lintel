@@ -7,107 +7,104 @@
 #include "base_library/features/cli/utils/CommandLineUtils.h"
 
 AuthCliService::AuthCliService(
-    std::shared_ptr<UserApi> userApi,
-    std::shared_ptr<CommandLineUtils> commandLineUtils,
-    std::shared_ptr<InputService> inputService,
-    std::shared_ptr<TerminalService> terminalService,
-    std::shared_ptr<AuthArgumentProvider> authArgumentProvider)
-    : m_userApi(std::move(userApi)),
-      m_commandLineUtils(std::move(commandLineUtils)),
-      m_inputService(std::move(inputService)),
-      m_terminalService(std::move(terminalService)),
-      m_authArgumentProvider(std::move(authArgumentProvider)) {}
+        std::shared_ptr<UserApi> userApi,
+        std::shared_ptr<CommandLineUtils> commandLineUtils,
+        std::shared_ptr<InputService> inputService,
+        std::shared_ptr<TerminalService> terminalService,
+        std::shared_ptr<AuthArgumentProvider> authArgumentProvider)
+        : m_userApi(std::move(userApi)),
+          m_commandLineUtils(std::move(commandLineUtils)),
+          m_inputService(std::move(inputService)),
+          m_terminalService(std::move(terminalService)),
+          m_authArgumentProvider(std::move(authArgumentProvider)) {}
 
 std::optional<UserDto> AuthCliService::onLogin() {
-  bool success = false;
-  std::optional<UserDto> optUserDto;
-  std::string userName;
-  std::string password;
-  auto optUserName = m_authArgumentProvider->getUserName();
-  if (optUserName.has_value()) {
-    userName = optUserName.value();
-    LOG_TRACE("set user_name {}", userName);
-  }
+    bool success = false;
+    std::optional<UserDto> optUserDto;
+    std::string userName;
+    std::string password;
+    auto optUserName = m_authArgumentProvider->getUserName();
+    if (optUserName.has_value()) {
+        userName = optUserName.value();
+        LOG_TRACE("set user_name {}", userName);
+    }
 
-  while (!success) {
-    if (!optUserName.has_value()) {
-      userName.clear();
-    }
-    password.clear();
-    if (userName.empty()) {
-      std::cout << "Please enter the username: ";
-      Symbol event = Symbol::Nothing;
-      while (event != Symbol::Command && userName.empty()) {
-        KeyEvent keyPressed = m_inputService->onRead();
-        SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
-        event = symbolEvent.first;
-        switch (event) {
-          case Symbol::CtrlC:
-          case Symbol::Eof:
-          {
-            CommandLineUtils::clear();
-            return std::nullopt;
-          }
-          case Symbol::Command:
-          {
-            userName = symbolEvent.second;
-            break;
-          }
-          default:
-            break;
+    while (!success) {
+        if (!optUserName.has_value()) {
+            userName.clear();
         }
-        if (event == Symbol::Command) {
-          userName = symbolEvent.second;
+        password.clear();
+        if (userName.empty()) {
+            std::cout << "Please enter the username: ";
+            Symbol event = Symbol::Nothing;
+            while (event != Symbol::Command && userName.empty()) {
+                KeyEvent keyPressed = m_inputService->onRead();
+                SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
+                event = symbolEvent.first;
+                switch (event) {
+                    case Symbol::CtrlC:
+                    case Symbol::Eof: {
+                        CommandLineUtils::clear();
+                        return std::nullopt;
+                    }
+                    case Symbol::Command: {
+                        userName = symbolEvent.second;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                if (event == Symbol::Command) {
+                    userName = symbolEvent.second;
+                }
+            }
         }
-      }
-    }
-    if (!userName.empty()) {
-      Symbol event = Symbol::Nothing;
-      std::cout << "Please enter Password : ";
-      m_terminalService->resetCursor();
-      m_terminalService->enableHideChars();
-      while (event != Symbol::Command && password.empty()) {
-        KeyEvent keyPressed = m_inputService->onRead();
-        SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
-        event = symbolEvent.first;
-        switch (event) {
-          case Symbol::CtrlC:
-          case Symbol::Eof:
-          {
+        if (!userName.empty()) {
+            Symbol event = Symbol::Nothing;
+            std::cout << "Please enter Password : ";
+            m_terminalService->resetCursor();
+            m_terminalService->enableHideChars();
+            while (event != Symbol::Command && password.empty()) {
+                KeyEvent keyPressed = m_inputService->onRead();
+                SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
+                event = symbolEvent.first;
+                switch (event) {
+                    case Symbol::CtrlC:
+                    case Symbol::Eof: {
+                        m_terminalService->disableHideChars();
+                        CommandLineUtils::clear();
+                        return std::nullopt;
+                    }
+                    case Symbol::Command: {
+                        password = symbolEvent.second;
+                        break;
+                    }
+                    default:
+                        break;
+                }
+            }
+            if (password.empty()) {
+                continue;
+            }
             m_terminalService->disableHideChars();
-            CommandLineUtils::clear();
-            return std::nullopt;
-          }
-          case Symbol::Command:
-          {
-            password = symbolEvent.second;
-            break;
-          }
-          default:
-            break;
+            UserLoginDto userLoginDto(userName, password);
+            optUserDto = m_userApi->loginOf(userLoginDto);
+            if (optUserDto.has_value()) {
+                success = true;
+            }
         }
-      }
-      if (password.empty()) {
-        continue;
-      }
-      m_terminalService->disableHideChars();
-      UserLoginDto userLoginDto(userName, password);
-      optUserDto = m_userApi->loginOf(userLoginDto);
-      if (optUserDto.has_value()) {
-        success = true;
-      }
+        CommandLineUtils::clear();
     }
-    CommandLineUtils::clear();
-  }
-  return std::make_optional(std::move(optUserDto.value()));
+    return std::make_optional(std::move(optUserDto.value()));
 }
+
 void AuthCliService::onLogout(UserDto &&userDto) {
-  UserTokenDto userTokenDto(userDto.getId());
-  bool success = m_userApi->logoutOf(userTokenDto);
-  if (!success) {
-    std::cout << "ERROR: something went wrong during logout with id >"
-              << userDto.getUserName() << "<\n";
-    return;
-  }
-  std::cout << "INFO: succesfull logout of >" << userDto.getUserName() << "<\n";
+    UserTokenDto userTokenDto(userDto.getId());
+    bool success = m_userApi->logoutOf(userTokenDto);
+    if (!success) {
+        std::cout << "ERROR: something went wrong during logout with id >"
+                  << userDto.getUserName() << "<\n";
+        return;
+    }
+    std::cout << "INFO: succesfull logout of >" << userDto.getUserName() << "<\n";
 }

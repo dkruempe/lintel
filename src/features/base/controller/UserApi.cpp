@@ -6,226 +6,238 @@
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
-UserApi::UserApi(const std::shared_ptr<ClientProvider>& clientProvider)
-    : m_client(clientProvider->provide()) {}
-std::optional<UserDto> UserApi::loginOf(const UserLoginDto& userLoginDto) {
-  m_client->setBasicAuth(userLoginDto.getUserName(),
-                         userLoginDto.getPassword());
-  const httplib::Result& result =
-      m_client->post("/user/login", "", "application/json");
-  if (result->status != HttpStatusCodes::OK) {
-    return std::nullopt;
-  }
-  UserDto userDto;
-  userDto.JsonSerializable::deserialize(result.value().body);
-  m_client->setBasicAuth("", "");
-  m_client->setBearerTokenAuth(userDto.getId());
-  return std::make_optional<UserDto>(std::move(userDto));
+UserApi::UserApi(const std::shared_ptr<ClientProvider> &clientProvider)
+        : m_client(clientProvider->provide()) {}
+
+std::optional<UserDto> UserApi::loginOf(const UserLoginDto &userLoginDto) {
+    m_client->setBasicAuth(userLoginDto.getUserName(),
+                           userLoginDto.getPassword());
+    const httplib::Result &result =
+            m_client->post("/user/login", "", "application/json");
+    if (result->status != HttpStatusCodes::OK) {
+        return std::nullopt;
+    }
+    UserDto userDto;
+    userDto.JsonSerializable::deserialize(result.value().body);
+    m_client->setBasicAuth("", "");
+    m_client->setBearerTokenAuth(userDto.getId());
+    return std::make_optional<UserDto>(std::move(userDto));
 }
-bool UserApi::logoutOf(const UserTokenDto& userTokenDto) {
-  httplib::Result result =
-      m_client->deletes("/user/logout", "", "application/json");
-  return result->status == HttpStatusCodes::OK;
+
+bool UserApi::logoutOf(const UserTokenDto &userTokenDto) {
+    httplib::Result result =
+            m_client->deletes("/user/logout", "", "application/json");
+    return result->status == HttpStatusCodes::OK;
 }
+
 std::vector<GroupDto> UserApi::allOf() {
-  httplib::Headers headers{};
-  headers.insert({"Content-Type", "application/json"});
-  httplib::Result result = m_client->get("/user/groups", headers);
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("failed to show groups {}", status.getCode());
-      break;
-  }
-  GroupsDto groupsDto;
-  try {
-    groupsDto.JsonSerializable::deserialize(result->body);
-  } catch (std::exception& exception) {
-    return {};
-  }
-  return groupsDto.getGroups();
+    httplib::Headers headers{};
+    headers.insert({"Content-Type", "application/json"});
+    httplib::Result result = m_client->get("/user/groups", headers);
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("failed to show groups {}", status.getCode());
+            break;
+    }
+    GroupsDto groupsDto;
+    try {
+        groupsDto.JsonSerializable::deserialize(result->body);
+    } catch (std::exception &exception) {
+        return {};
+    }
+    return groupsDto.getGroups();
 }
+
 std::vector<UserDto> UserApi::allUsersOf() {
-  httplib::Headers headers{};
-  headers.insert({"Content-Type", "application/json"});
-  httplib::Result result = m_client->get("/user/users", headers);
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("failed to show users {}", status.getCode());
-      break;
-  }
-  UsersDto usersDto;
-  try {
-    usersDto.JsonSerializable::deserialize(result->body);
-  } catch (std::exception& exception) {
-    return {};
-  }
-  return usersDto.getUsers();
+    httplib::Headers headers{};
+    headers.insert({"Content-Type", "application/json"});
+    httplib::Result result = m_client->get("/user/users", headers);
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("failed to show users {}", status.getCode());
+            break;
+    }
+    UsersDto usersDto;
+    try {
+        usersDto.JsonSerializable::deserialize(result->body);
+    } catch (std::exception &exception) {
+        return {};
+    }
+    return usersDto.getUsers();
 }
-std::vector<UserDto> UserApi::allUsersOf(const std::string& userName) {
-  httplib::Headers headers{};
-  headers.insert({"Content-Type", "application/json"});
-  httplib::Result result = m_client->get("/user/users/" + userName, headers);
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("failed to show users {}", status.getCode());
-      break;
-  }
-  UsersDto usersDto;
-  try {
-    usersDto.JsonSerializable::deserialize(result->body);
-  } catch (std::exception& exception) {
-    return {};
-  }
-  return usersDto.getUsers();
+
+std::vector<UserDto> UserApi::allUsersOf(const std::string &userName) {
+    httplib::Headers headers{};
+    headers.insert({"Content-Type", "application/json"});
+    httplib::Result result = m_client->get("/user/users/" + userName, headers);
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("failed to show users {}", status.getCode());
+            break;
+    }
+    UsersDto usersDto;
+    try {
+        usersDto.JsonSerializable::deserialize(result->body);
+    } catch (std::exception &exception) {
+        return {};
+    }
+    return usersDto.getUsers();
 }
-std::vector<GroupDto> UserApi::allOf(const std::string& groupName) {
-  httplib::Headers headers{};
-  headers.insert({"Content-Type", "application/json"});
-  httplib::Result result = m_client->get("/user/groups/" + groupName, headers);
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("failed to show groups {}", status.getCode());
-      break;
-  }
-  GroupsDto groupsDto;
-  try {
-    groupsDto.JsonSerializable::deserialize(result->body);
-  } catch (std::exception& exception) {
-    return {};
-  }
-  return groupsDto.getGroups();
+
+std::vector<GroupDto> UserApi::allOf(const std::string &groupName) {
+    httplib::Headers headers{};
+    headers.insert({"Content-Type", "application/json"});
+    httplib::Result result = m_client->get("/user/groups/" + groupName, headers);
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("failed to show groups {}", status.getCode());
+            break;
+    }
+    GroupsDto groupsDto;
+    try {
+        groupsDto.JsonSerializable::deserialize(result->body);
+    } catch (std::exception &exception) {
+        return {};
+    }
+    return groupsDto.getGroups();
 }
-std::vector<GroupDto> UserApi::allOf(const std::string& groupName,
+
+std::vector<GroupDto> UserApi::allOf(const std::string &groupName,
                                      bool isVirtualGroup) {
-  std::string boolStr = isVirtualGroup ? "true" : "false";
-  httplib::Headers headers{};
-  headers.insert({"Content-Type", "application/json"});
-  httplib::Result result =
-      m_client->get("/user/groups/" + groupName + "/" + boolStr, headers);
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("failed to show groups {}", status.getCode());
-      break;
-  }
-  GroupsDto groupsDto;
-  try {
-    groupsDto.JsonSerializable::deserialize(result->body);
-  } catch (std::exception& exception) {
-    return {};
-  }
-  return groupsDto.getGroups();
+    std::string boolStr = isVirtualGroup ? "true" : "false";
+    httplib::Headers headers{};
+    headers.insert({"Content-Type", "application/json"});
+    httplib::Result result =
+            m_client->get("/user/groups/" + groupName + "/" + boolStr, headers);
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("failed to show groups {}", status.getCode());
+            break;
+    }
+    GroupsDto groupsDto;
+    try {
+        groupsDto.JsonSerializable::deserialize(result->body);
+    } catch (std::exception &exception) {
+        return {};
+    }
+    return groupsDto.getGroups();
 }
+
 std::vector<GroupDto> UserApi::allOf(bool isVirtualGroup) {
-  httplib::Headers headers{};
-  headers.insert({"Content-Type", "application/json"});
-  std::string boolStr = isVirtualGroup ? "true" : "false";
-  httplib::Result result = m_client->get("/user/groups/" + boolStr, headers);
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("failed to show groups {}", status.getCode());
-      break;
-  }
-  GroupsDto groupsDto;
-  try {
-    groupsDto.JsonSerializable::deserialize(result->body);
-  } catch (std::exception& exception) {
-    return {};
-  }
-  return groupsDto.getGroups();
+    httplib::Headers headers{};
+    headers.insert({"Content-Type", "application/json"});
+    std::string boolStr = isVirtualGroup ? "true" : "false";
+    httplib::Result result = m_client->get("/user/groups/" + boolStr, headers);
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("failed to show groups {}", status.getCode());
+            break;
+    }
+    GroupsDto groupsDto;
+    try {
+        groupsDto.JsonSerializable::deserialize(result->body);
+    } catch (std::exception &exception) {
+        return {};
+    }
+    return groupsDto.getGroups();
 }
-void UserApi::createOf(const UserDto& userDto) {
-  std::string body;
-  try {
-    body = userDto.JsonSerializable::serialize();
-  } catch (std::exception& exception) {
-    LOG_ERROR("failed to create user {}", userDto.getUserName());
-    return;
-  }
-  httplib::Result result =
-      m_client->post("/user/add", body, "application/json");
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("{} failed to create user {}", userDto.getUserName(),
-                status.getCode());
-      break;
-  }
+
+void UserApi::createOf(const UserDto &userDto) {
+    std::string body;
+    try {
+        body = userDto.JsonSerializable::serialize();
+    } catch (std::exception &exception) {
+        LOG_ERROR("failed to create user {}", userDto.getUserName());
+        return;
+    }
+    httplib::Result result =
+            m_client->post("/user/add", body, "application/json");
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("{} failed to create user {}", userDto.getUserName(),
+                      status.getCode());
+            break;
+    }
 }
-void UserApi::updateOf(const std::string& userName,
-                       const std::set<std::string>& addGroups,
-                       const std::set<std::string>& removeGroups) {
-  UserGroupDto userGroupDto(addGroups, removeGroups, userName);
-  std::string body = userGroupDto.JsonSerializable::serialize();
-  httplib::Result result =
-      m_client->put("/user/update", body, "application/json");
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("{} failed to update user {}", userName, status.getCode());
-      break;
-  }
+
+void UserApi::updateOf(const std::string &userName,
+                       const std::set<std::string> &addGroups,
+                       const std::set<std::string> &removeGroups) {
+    UserGroupDto userGroupDto(addGroups, removeGroups, userName);
+    std::string body = userGroupDto.JsonSerializable::serialize();
+    httplib::Result result =
+            m_client->put("/user/update", body, "application/json");
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("{} failed to update user {}", userName, status.getCode());
+            break;
+    }
 }
+
 bool UserApi::isLoggedIn() {
-  httplib::Headers headers{};
-  headers.insert({"Content-Type", "application/json"});
-  const httplib::Result& result = m_client->get("/user/state", headers);
-  if (result->status != HttpStatusCodes::OK) {
-    return false;
-  }
-  return true;
+    httplib::Headers headers{};
+    headers.insert({"Content-Type", "application/json"});
+    const httplib::Result &result = m_client->get("/user/state", headers);
+    if (result->status != HttpStatusCodes::OK) {
+        return false;
+    }
+    return true;
 }
-void UserApi::deleteOf(const std::vector<std::string>& userNames) {
-  UserNamesDto userNameDto(userNames);
-  std::string body = userNameDto.JsonSerializable::serialize();
-  LOG_TRACE("body={}", body);
-  httplib::Result result =
-      m_client->deletes("/user/delete", body, "application/json");
-  HttpStatusCodes status(result->status);
-  switch (status) {
-    case HttpStatusCodes::Unauthorized:
-      throw HttpUnauthorizedException();
-    case HttpStatusCodes::OK:
-      break;
-    default:
-      LOG_ERROR("failed to delete users {}", status.getCode());
-      break;
-  }
+
+void UserApi::deleteOf(const std::vector<std::string> &userNames) {
+    UserNamesDto userNameDto(userNames);
+    std::string body = userNameDto.JsonSerializable::serialize();
+    LOG_TRACE("body={}", body);
+    httplib::Result result =
+            m_client->deletes("/user/delete", body, "application/json");
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("failed to delete users {}", status.getCode());
+            break;
+    }
 }

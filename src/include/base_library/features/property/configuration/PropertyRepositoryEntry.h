@@ -8,24 +8,24 @@
 #include "base_library/features/property/models/PropertyRepositoryType.h"
 
 class PropertyRepositoryEntry : public Entry {
- private:
-  PropertyRepositoryType m_type;
-  bool m_isMutable;
-  bool m_isShadow;
+private:
+    PropertyRepositoryType m_type;
+    bool m_isMutable;
+    bool m_isShadow;
 
- public:
-  PropertyRepositoryEntry(std::string_view component,
-                          PropertyRepositoryType type, bool isMutable,
-                          bool isShadow);
+public:
+    PropertyRepositoryEntry(std::string_view component,
+                            PropertyRepositoryType type, bool isMutable,
+                            bool isShadow);
 
-  [[nodiscard]] bool isMutable();
+    [[nodiscard]] bool isMutable();
 
-  [[nodiscard]] bool isShadow();
+    [[nodiscard]] bool isShadow();
 
-  [[nodiscard]] PropertyRepositoryType getType();
+    [[nodiscard]] PropertyRepositoryType getType();
 
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const PropertyRepositoryEntry &entry);
+    friend std::ostream &operator<<(std::ostream &os,
+                                    const PropertyRepositoryEntry &entry);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYREPOSITORYENTRY_H

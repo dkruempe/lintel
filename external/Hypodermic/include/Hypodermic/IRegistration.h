@@ -6,26 +6,28 @@
 
 namespace Hypodermic {
 
-class Container;
-class IRegistrationActivator;
-struct TypeInfo;
+    class Container;
 
-class IRegistration {
- public:
-  virtual ~IRegistration() = default;
+    class IRegistrationActivator;
 
-  virtual const TypeInfo& instanceType() const = 0;
+    struct TypeInfo;
 
-  virtual const TypeAliases& typeAliases() const = 0;
+    class IRegistration {
+    public:
+        virtual ~IRegistration() = default;
 
-  virtual DependencyFactory getDependencyFactory(
-      const TypeInfo& dependencyType) const = 0;
+        virtual const TypeInfo &instanceType() const = 0;
 
-  virtual IRegistrationActivator& activator() const = 0;
+        virtual const TypeAliases &typeAliases() const = 0;
 
-  virtual InstanceLifetimes::InstanceLifetime instanceLifetime() const = 0;
+        virtual DependencyFactory getDependencyFactory(
+                const TypeInfo &dependencyType) const = 0;
 
-  virtual bool isFallback() const = 0;
-};
+        virtual IRegistrationActivator &activator() const = 0;
+
+        virtual InstanceLifetimes::InstanceLifetime instanceLifetime() const = 0;
+
+        virtual bool isFallback() const = 0;
+    };
 
 }  // namespace Hypodermic

@@ -8,240 +8,244 @@
 #include "base_library/features/base/controller/SharedMemorySegmentsDto.h"
 
 SharedMemoryController::SharedMemoryController(
-    const std::shared_ptr<AuthService>& authServicie,
-    std::shared_ptr<SharedMemoryService> sharedMemoryService,
-    std::shared_ptr<SharedMemorySegmentManager> sharedMemorySegmentManager,
-    std::vector<std::shared_ptr<SharedMemoryRepository>>
+        const std::shared_ptr<AuthService> &authServicie,
+        std::shared_ptr<SharedMemoryService> sharedMemoryService,
+        std::shared_ptr<SharedMemorySegmentManager> sharedMemorySegmentManager,
+        std::vector<std::shared_ptr<SharedMemoryRepository>>
         sharedMemoryRepositories)
-    : Controller(authServicie),
-      m_sharedMemoryService(std::move(sharedMemoryService)),
-      m_sharedMemorySegmentManager(std::move(sharedMemorySegmentManager)),
-      m_sharedMemoryRepositories(std::move(sharedMemoryRepositories)),
-      m_adminGroup("Admin-Shm", {}, true),
-      m_userGroup("User-Shm", {}, true) {
-  add(m_adminGroup);
-  add(m_userGroup);
+        : Controller(authServicie),
+          m_sharedMemoryService(std::move(sharedMemoryService)),
+          m_sharedMemorySegmentManager(std::move(sharedMemorySegmentManager)),
+          m_sharedMemoryRepositories(std::move(sharedMemoryRepositories)),
+          m_adminGroup("Admin-Shm", {}, true),
+          m_userGroup("User-Shm", {}, true) {
+    add(m_adminGroup);
+    add(m_userGroup);
 }
 
 void SharedMemoryController::exportRepositoryOfGet(
-    const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType, const std::optional<UserToken>& user) {
-  if (!user.has_value()) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  if (!user->m_user.has(m_userGroup) || !user->m_user.has(m_adminGroup)) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  LOG_TRACE("Called export");
-  const std::string respositoryName = request.matches[1];
-  const std::string segmentName = request.matches[2];
-  const std::string type = request.matches[3];
-  SharedMemoryType shmType;
-  //Map, Set, Vector, Array, Object
-  if (type == "Map") {
-    shmType = Map;
-  } else if (type == "Vector") {
-    shmType = Vector;
-  } else if (type == "Array") {
-    shmType = Array;
-  } else if (type == "Object") {
-    shmType = Object;
-  } else {
-    LOG_ERROR("type {} not valid", type);
-    response.status = HttpStatusCodes::Forbidden;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  switch (contentType) {
-    case ContentType::ApplicationJson: {
-      LOG_TRACE("start searching repository {}", respositoryName);
-      for (auto& iter : m_sharedMemoryRepositories) {
-        if (iter->getSharedMemoryRepository() != respositoryName) {
-          LOG_TRACE("{} != {}", iter->getSharedMemoryRepository(),
-                    respositoryName);
-          continue;
-        }
-        if (iter->getSharedMemorySegment()->getName() != segmentName) {
-          LOG_TRACE("{} != {}", iter->getSharedMemorySegment()->getName(), segmentName);
-          continue;
-        }
-        if (iter->getType() != shmType) {
-          LOG_TRACE("{} != {}", iter->getType(), shmType);
-          continue;
-        }
-        LOG_TRACE("found repository");
-        response.set_content(iter->serialize(), contentType.getName().c_str());
-      }
-      break;
+        const httplib::Request &request, httplib::Response &response,
+        const ContentType &contentType, const std::optional<UserToken> &user) {
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName().c_str());
+        return;
     }
-    default: {
-      response.status = HttpStatusCodes::Forbidden;
-      response.set_content("", contentType.getName().c_str());
-      break;
+    if (!user->m_user.has(m_userGroup) || !user->m_user.has(m_adminGroup)) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName().c_str());
+        return;
     }
-  }
+    LOG_TRACE("Called export");
+    const std::string respositoryName = request.matches[1];
+    const std::string segmentName = request.matches[2];
+    const std::string type = request.matches[3];
+    SharedMemoryType shmType;
+    //Map, Set, Vector, Array, Object
+    if (type == "Map") {
+        shmType = Map;
+    } else if (type == "Vector") {
+        shmType = Vector;
+    } else if (type == "Array") {
+        shmType = Array;
+    } else if (type == "Object") {
+        shmType = Object;
+    } else {
+        LOG_ERROR("type {} not valid", type);
+        response.status = HttpStatusCodes::Forbidden;
+        response.set_content("", contentType.getName().c_str());
+        return;
+    }
+    switch (contentType) {
+        case ContentType::ApplicationJson: {
+            LOG_TRACE("start searching repository {}", respositoryName);
+            for (auto &iter: m_sharedMemoryRepositories) {
+                if (iter->getSharedMemoryRepository() != respositoryName) {
+                    LOG_TRACE("{} != {}", iter->getSharedMemoryRepository(),
+                              respositoryName);
+                    continue;
+                }
+                if (iter->getSharedMemorySegment()->getName() != segmentName) {
+                    LOG_TRACE("{} != {}", iter->getSharedMemorySegment()->getName(), segmentName);
+                    continue;
+                }
+                if (iter->getType() != shmType) {
+                    LOG_TRACE("{} != {}", iter->getType(), shmType);
+                    continue;
+                }
+                LOG_TRACE("found repository");
+                response.set_content(iter->serialize(), contentType.getName().c_str());
+            }
+            break;
+        }
+        default: {
+            response.status = HttpStatusCodes::Forbidden;
+            response.set_content("", contentType.getName().c_str());
+            break;
+        }
+    }
 }
+
 void SharedMemoryController::allSegmentsOfGet(
-    const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType, const std::optional<UserToken>& user) {
-  // no user loggedin => Unauthorized
-  if (!user.has_value()) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  const std::string segmentName = request.matches[1];
-  switch (contentType) {
-    case ContentType::ApplicationJson: {
-      auto segments = m_sharedMemorySegmentManager->allOf(segmentName);
-      std::vector<SharedMemorySegmentDto> vec;
-      for (const auto& segment : segments) {
-        SharedMemorySegmentDto dto(m_sharedMemoryService->showStateOf(segment));
-        vec.push_back(dto);
-      }
-      LOG_TRACE("segments {}", segments.size());
-      SharedMemorySegmentsDto segmentsDto(vec);
-      response.set_content(segmentsDto.JsonSerializable::serialize(),
-                           contentType.getName().c_str());
-      break;
+        const httplib::Request &request, httplib::Response &response,
+        const ContentType &contentType, const std::optional<UserToken> &user) {
+    // no user loggedin => Unauthorized
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName().c_str());
+        return;
     }
-    default: {
-      response.status = HttpStatusCodes::Forbidden;
-      response.set_content("", contentType.getName().c_str());
-      break;
+    if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName().c_str());
+        return;
     }
-  }
+    const std::string segmentName = request.matches[1];
+    switch (contentType) {
+        case ContentType::ApplicationJson: {
+            auto segments = m_sharedMemorySegmentManager->allOf(segmentName);
+            std::vector<SharedMemorySegmentDto> vec;
+            for (const auto &segment: segments) {
+                SharedMemorySegmentDto dto(m_sharedMemoryService->showStateOf(segment));
+                vec.push_back(dto);
+            }
+            LOG_TRACE("segments {}", segments.size());
+            SharedMemorySegmentsDto segmentsDto(vec);
+            response.set_content(segmentsDto.JsonSerializable::serialize(),
+                                 contentType.getName().c_str());
+            break;
+        }
+        default: {
+            response.status = HttpStatusCodes::Forbidden;
+            response.set_content("", contentType.getName().c_str());
+            break;
+        }
+    }
 }
+
 void SharedMemoryController::allRepositoriesOfGet(
-    const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType, const std::optional<UserToken>& user) {
-  // no user loggedin => Unauthorized
-  if (!user.has_value()) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  const std::string repositoryName = request.matches[1];
-  const std::string segmentName = request.matches[2];
-  switch (contentType) {
-    case ContentType::ApplicationJson: {
-      std::regex repositoryRegex(repositoryName);
-      std::regex segmentRegex(segmentName);
-      LOG_TRACE("segment {} repository {}", segmentName, repositoryName);
-      std::vector<SharedMemoryRepositoryDto> tmp;
-      for (const auto& iter : m_sharedMemoryRepositories) {
-        if (!std::regex_match(iter->getSharedMemorySegment()->getName(),
-                              segmentRegex)) {
-          continue;
-        }
-        if (!std::regex_match(iter->getSharedMemoryRepository(),
-                              repositoryRegex)) {
-          continue;
-        }
-        LOG_TRACE("repository {}", iter->getSharedMemoryRepository());
-        SharedMemoryRepositoryDto dto(*iter);
-        tmp.push_back(dto);
-      }
-      /*
-       * SharedMemoryRepository:
-       * - Type of SharedMemoryRepository (Map, Array, Vector, Set, Object)
-       * - Name of Repository
-       * - Size of Repository (in map case size of value)
-       * - Current Version of Repository
-       * - Used Segment of Repository
-       */
-      LOG_TRACE("segments {}", tmp.size());
-      SharedMemoryRepositoriesDto repositoriesDto(tmp);
-      response.set_content(repositoriesDto.JsonSerializable::serialize(),
-                           contentType.getName().c_str());
-      break;
+        const httplib::Request &request, httplib::Response &response,
+        const ContentType &contentType, const std::optional<UserToken> &user) {
+    // no user loggedin => Unauthorized
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName().c_str());
+        return;
     }
-    default: {
-      response.status = HttpStatusCodes::Forbidden;
-      response.set_content("", contentType.getName().c_str());
-      break;
+    if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName().c_str());
+        return;
     }
-  }
+    const std::string repositoryName = request.matches[1];
+    const std::string segmentName = request.matches[2];
+    switch (contentType) {
+        case ContentType::ApplicationJson: {
+            std::regex repositoryRegex(repositoryName);
+            std::regex segmentRegex(segmentName);
+            LOG_TRACE("segment {} repository {}", segmentName, repositoryName);
+            std::vector<SharedMemoryRepositoryDto> tmp;
+            for (const auto &iter: m_sharedMemoryRepositories) {
+                if (!std::regex_match(iter->getSharedMemorySegment()->getName(),
+                                      segmentRegex)) {
+                    continue;
+                }
+                if (!std::regex_match(iter->getSharedMemoryRepository(),
+                                      repositoryRegex)) {
+                    continue;
+                }
+                LOG_TRACE("repository {}", iter->getSharedMemoryRepository());
+                SharedMemoryRepositoryDto dto(*iter);
+                tmp.push_back(dto);
+            }
+            /*
+             * SharedMemoryRepository:
+             * - Type of SharedMemoryRepository (Map, Array, Vector, Set, Object)
+             * - Name of Repository
+             * - Size of Repository (in map case size of value)
+             * - Current Version of Repository
+             * - Used Segment of Repository
+             */
+            LOG_TRACE("segments {}", tmp.size());
+            SharedMemoryRepositoriesDto repositoriesDto(tmp);
+            response.set_content(repositoriesDto.JsonSerializable::serialize(),
+                                 contentType.getName().c_str());
+            break;
+        }
+        default: {
+            response.status = HttpStatusCodes::Forbidden;
+            response.set_content("", contentType.getName().c_str());
+            break;
+        }
+    }
 }
+
 void SharedMemoryController::shrinkSegmentOfPut(
-    const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType, const std::optional<UserToken>& user) {
-  // no user loggedin => Unauthorized
-  if (!user.has_value()) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  const std::string segmentName = request.matches[1];
-  switch (contentType) {
-    case ContentType::ApplicationJson: {
-      auto segment = m_sharedMemorySegmentManager->of(segmentName);
-      if (segment == nullptr) {
-        response.status = HttpStatusCodes::Forbidden;
+        const httplib::Request &request, httplib::Response &response,
+        const ContentType &contentType, const std::optional<UserToken> &user) {
+    // no user loggedin => Unauthorized
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
         response.set_content("", contentType.getName().c_str());
         return;
-      }
-      m_sharedMemoryService->shrinkOf(segment);
-      break;
     }
-    default: {
-      response.status = HttpStatusCodes::Forbidden;
-      response.set_content("", contentType.getName().c_str());
-      break;
+    if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName().c_str());
+        return;
     }
-  }
+    const std::string segmentName = request.matches[1];
+    switch (contentType) {
+        case ContentType::ApplicationJson: {
+            auto segment = m_sharedMemorySegmentManager->of(segmentName);
+            if (segment == nullptr) {
+                response.status = HttpStatusCodes::Forbidden;
+                response.set_content("", contentType.getName().c_str());
+                return;
+            }
+            m_sharedMemoryService->shrinkOf(segment);
+            break;
+        }
+        default: {
+            response.status = HttpStatusCodes::Forbidden;
+            response.set_content("", contentType.getName().c_str());
+            break;
+        }
+    }
 }
+
 void SharedMemoryController::growSegmentOfPut(
-    const httplib::Request& request, httplib::Response& response,
-    const ContentType& contentType, const std::optional<UserToken>& user) {
-  // no user loggedin => Unauthorized
-  if (!user.has_value()) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
-    response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
-    return;
-  }
-  const std::string segmentName = request.matches[1];
-  const std::string sizeStr = request.matches[2];
-  switch (contentType) {
-    case ContentType::ApplicationJson: {
-      std::size_t growSize = MemorySize::deserialize(sizeStr);
-      auto segment = m_sharedMemorySegmentManager->of(segmentName);
-      if (segment == nullptr) {
-        response.status = HttpStatusCodes::Forbidden;
+        const httplib::Request &request, httplib::Response &response,
+        const ContentType &contentType, const std::optional<UserToken> &user) {
+    // no user loggedin => Unauthorized
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
         response.set_content("", contentType.getName().c_str());
         return;
-      }
-      m_sharedMemoryService->growOf(segment, growSize);
-      break;
     }
-    default: {
-      response.status = HttpStatusCodes::Forbidden;
-      response.set_content("", contentType.getName().c_str());
-      break;
+    if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName().c_str());
+        return;
     }
-  }
+    const std::string segmentName = request.matches[1];
+    const std::string sizeStr = request.matches[2];
+    switch (contentType) {
+        case ContentType::ApplicationJson: {
+            std::size_t growSize = MemorySize::deserialize(sizeStr);
+            auto segment = m_sharedMemorySegmentManager->of(segmentName);
+            if (segment == nullptr) {
+                response.status = HttpStatusCodes::Forbidden;
+                response.set_content("", contentType.getName().c_str());
+                return;
+            }
+            m_sharedMemoryService->growOf(segment, growSize);
+            break;
+        }
+        default: {
+            response.status = HttpStatusCodes::Forbidden;
+            response.set_content("", contentType.getName().c_str());
+            break;
+        }
+    }
 }

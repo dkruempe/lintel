@@ -6,19 +6,19 @@
 #include "base_library/features/base/models/ProcessGroup.h"
 
 class ProcessEntry : public Entry {
- private:
-  std::shared_ptr<Process> m_process;
-  std::shared_ptr<ProcessGroup> m_processGroup;
+private:
+    std::shared_ptr<Process> m_process;
+    std::shared_ptr<ProcessGroup> m_processGroup;
 
- public:
-  ProcessEntry(std::string_view component, std::shared_ptr<Process> process);
+public:
+    ProcessEntry(std::string_view component, std::shared_ptr<Process> process);
 
-  ProcessEntry(std::string_view component,
-               std::shared_ptr<ProcessGroup> processGroup);
+    ProcessEntry(std::string_view component,
+                 std::shared_ptr<ProcessGroup> processGroup);
 
-  const std::shared_ptr<Process> &getProcess() const;
+    const std::shared_ptr<Process> &getProcess() const;
 
-  const std::shared_ptr<ProcessGroup> &getProcessGroup() const;
+    const std::shared_ptr<ProcessGroup> &getProcessGroup() const;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSENTRY_H

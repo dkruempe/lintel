@@ -2,11 +2,12 @@
 
 namespace Hypodermic {
 
-namespace Tags {
+    namespace Tags {
 
-template <class TDependency>
-struct DependencyFactory {};
+        template<class TDependency>
+        struct DependencyFactory {
+        };
 
-}  // namespace Tags
+    }  // namespace Tags
 
 }  // namespace Hypodermic

@@ -9,22 +9,22 @@
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
 
 class SharedMemorySegmentManager {
- private:
-  std::map<std::string, std::shared_ptr<SharedMemorySegment>>
-      m_sharedMemorySegments;
+private:
+    std::map<std::string, std::shared_ptr<SharedMemorySegment>>
+            m_sharedMemorySegments;
 
-  static std::map<std::string, std::shared_ptr<SharedMemorySegment>> init(
-      const std::vector<std::shared_ptr<Entry>> &entries);
+    static std::map<std::string, std::shared_ptr<SharedMemorySegment>> init(
+            const std::vector<std::shared_ptr<Entry>> &entries);
 
- public:
-  explicit SharedMemorySegmentManager(
-      const std::shared_ptr<Configuration> &configuration);
+public:
+    explicit SharedMemorySegmentManager(
+            const std::shared_ptr<Configuration> &configuration);
 
-  std::shared_ptr<SharedMemorySegment> of(
-      const std::string &sharedMemorySegmentName);
+    std::shared_ptr<SharedMemorySegment> of(
+            const std::string &sharedMemorySegmentName);
 
-  std::vector<std::shared_ptr<SharedMemorySegment>> allOf(
-      const std::string &segmentName = ".*");
+    std::vector<std::shared_ptr<SharedMemorySegment>> allOf(
+            const std::string &segmentName = ".*");
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYSEGMENTMANAGER_H

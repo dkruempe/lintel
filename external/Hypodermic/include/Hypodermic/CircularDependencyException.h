@@ -4,7 +4,7 @@
 
 namespace Hypodermic {
 
-HYPODERMIC_DECLARE_EXCEPTION(CircularDependencyException);
+    HYPODERMIC_DECLARE_EXCEPTION(CircularDependencyException);
 
 }  // namespace Hypodermic
 

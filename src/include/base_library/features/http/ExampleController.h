@@ -4,11 +4,11 @@
 #include "base_library/features/http/service/Controller.h"
 
 class ExampleController : public Controller {
- private:
-  ADD_HANDLER_METHOD("/hello", Get, hello);
+private:
+    ADD_HANDLER_METHOD("/hello", Get, hello);
 
- public:
-  explicit ExampleController(std::shared_ptr<AuthService> authService);
+public:
+    explicit ExampleController(std::shared_ptr<AuthService> authService);
 };
 
 #endif  // CPP_BASE_LIBRARY_EXAMPLECONTROLLER_H

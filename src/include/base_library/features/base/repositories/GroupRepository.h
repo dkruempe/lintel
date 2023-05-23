@@ -10,42 +10,42 @@
 #include "base_library/features/base/models/ProcessName.h"
 
 class GroupRepository : public PersistableBean {
- private:
-  // Variables:
-  // injections
-  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
-  std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
-  // cache of groups
-  std::vector<Group> m_groups;
-  std::map<std::string, Group> m_groupMap;
+private:
+    // Variables:
+    // injections
+    std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+    std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
+    // cache of groups
+    std::vector<Group> m_groups;
+    std::map<std::string, Group> m_groupMap;
 
-  void initGroups();
+    void initGroups();
 
- public:
-  explicit GroupRepository(std::shared_ptr<DatabaseConnectionConfigurations>
-                               connectionConfigurations);
+public:
+    explicit GroupRepository(std::shared_ptr<DatabaseConnectionConfigurations>
+                             connectionConfigurations);
 
-  virtual ~GroupRepository() = default;
+    virtual ~GroupRepository() = default;
 
-  std::optional<Group> of(const std::string &groupName);
+    std::optional<Group> of(const std::string &groupName);
 
-  std::vector<Group> allOf();
+    std::vector<Group> allOf();
 
-  std::vector<Group> allOf(const std::string &groupName);
+    std::vector<Group> allOf(const std::string &groupName);
 
-  std::vector<Group> allOf(bool isVirtualGroup);
+    std::vector<Group> allOf(bool isVirtualGroup);
 
-  std::vector<Group> allOf(const std::string &groupName, bool isVirtualGroup);
+    std::vector<Group> allOf(const std::string &groupName, bool isVirtualGroup);
 
-  void createOf(const Group &group);
+    void createOf(const Group &group);
 
-  void deleteOf(const Group &group);
+    void deleteOf(const Group &group);
 
-  void addGroupOf(const Group &group, const Group &add);
+    void addGroupOf(const Group &group, const Group &add);
 
-  void removeGroupOf(const Group &group, const Group &remove);
+    void removeGroupOf(const Group &group, const Group &remove);
 
-  void onAwake() override;
+    void onAwake() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_GROUPREPOSITORY_H

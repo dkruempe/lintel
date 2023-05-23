@@ -10,45 +10,45 @@
 #include "base_library/features/base/repositories/GroupRepository.h"
 
 class UserRepository {
- private:
-  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
-  std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
-  std::shared_ptr<GroupRepository> m_groupRepository;
+private:
+    std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+    std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
+    std::shared_ptr<GroupRepository> m_groupRepository;
 
- public:
-  UserRepository(std::shared_ptr<DatabaseConnectionConfigurations>
-                     connectionConfigurations,
-                 std::shared_ptr<GroupRepository> groupRepository);
+public:
+    UserRepository(std::shared_ptr<DatabaseConnectionConfigurations>
+                   connectionConfigurations,
+                   std::shared_ptr<GroupRepository> groupRepository);
 
-  std::optional<User> of(const std::string &userName);
+    std::optional<User> of(const std::string &userName);
 
-  std::vector<User> allOf();
+    std::vector<User> allOf();
 
-  std::vector<User> allOf(const std::string &userNameMatches);
+    std::vector<User> allOf(const std::string &userNameMatches);
 
-  void createOf(const User &user);
+    void createOf(const User &user);
 
-  void deleteOf(const User &user);
+    void deleteOf(const User &user);
 
-  void deleteOf(const std::vector<std::string> &userNames);
+    void deleteOf(const std::vector<std::string> &userNames);
 
-  void addGroupsOf(const User &user, const std::set<Group> &groups);
+    void addGroupsOf(const User &user, const std::set<Group> &groups);
 
-  void addGroupOf(const User &user, const Group &group);
+    void addGroupOf(const User &user, const Group &group);
 
-  void removeGroupsOf(const User &user, const std::set<Group> &groups);
+    void removeGroupsOf(const User &user, const std::set<Group> &groups);
 
-  void removeGroupOf(const User &user, const Group &group);
+    void removeGroupOf(const User &user, const Group &group);
 
-  void changeFirstNameOf(const User &user, const std::string &firstName);
+    void changeFirstNameOf(const User &user, const std::string &firstName);
 
-  void changeLastNameOf(const User &user, const std::string &lastName);
+    void changeLastNameOf(const User &user, const std::string &lastName);
 
-  void changeUserNameOf(const User &user, const std::string &userName);
+    void changeUserNameOf(const User &user, const std::string &userName);
 
-  void changePasswordOf(const User &user, const std::string &password);
+    void changePasswordOf(const User &user, const std::string &password);
 
-  void changeEMailOf(const User &user, const std::string &eMail);
+    void changeEMailOf(const User &user, const std::string &eMail);
 };
 
 #endif  // CPP_BASE_LIBRARY_USERREPOSITORY_H

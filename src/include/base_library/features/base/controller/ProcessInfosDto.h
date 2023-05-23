@@ -9,22 +9,23 @@
 #include "base_library/features/base/models/ProcessInfo.h"
 
 class ProcessInfosDto : public JsonSerializable {
- private:
-  std::vector<ProcessInfoDto> m_processInfos;
+private:
+    std::vector<ProcessInfoDto> m_processInfos;
 
-  static std::vector<ProcessInfoDto> build(
-      const std::vector<ProcessInfo> &processInfos);
+    static std::vector<ProcessInfoDto> build(
+            const std::vector<ProcessInfo> &processInfos);
 
- public:
-  explicit ProcessInfosDto(const std::vector<ProcessInfo> &processInfos);
-  ProcessInfosDto() = default;
+public:
+    explicit ProcessInfosDto(const std::vector<ProcessInfo> &processInfos);
 
-  [[nodiscard]] const std::vector<ProcessInfoDto> &getProcessInfos() const;
+    ProcessInfosDto() = default;
 
-  void serialize(
-      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+    [[nodiscard]] const std::vector<ProcessInfoDto> &getProcessInfos() const;
 
-  bool deserialize(const rapidjson::Value& obj) override;
+    void serialize(
+            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+
+    bool deserialize(const rapidjson::Value &obj) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSINFOSDTO_H

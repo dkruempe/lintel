@@ -7,19 +7,21 @@
 #include "base_library/features/base/controller/SharedMemoryRepositoryDto.h"
 
 class SharedMemoryRepositoriesDto : public JsonSerializable {
- private:
-  std::vector<SharedMemoryRepositoryDto> m_repositories;
+private:
+    std::vector<SharedMemoryRepositoryDto> m_repositories;
 
- public:
-  explicit SharedMemoryRepositoriesDto(
-      std::vector<SharedMemoryRepositoryDto> repositories);
-  SharedMemoryRepositoriesDto() = default;
+public:
+    explicit SharedMemoryRepositoriesDto(
+            std::vector<SharedMemoryRepositoryDto> repositories);
 
-  [[nodiscard]] const std::vector<SharedMemoryRepositoryDto> &getRepositories() const;
+    SharedMemoryRepositoriesDto() = default;
 
-  void serialize(
-      rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
-  void deserialize(const std::string &json) override;
+    [[nodiscard]] const std::vector<SharedMemoryRepositoryDto> &getRepositories() const;
+
+    void serialize(
+            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+
+    void deserialize(const std::string &json) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYREPSOITORIESDTO_H

@@ -4,16 +4,16 @@
 #include "base_library/features/base/services/ProcessArgumentService.h"
 
 class AuthArgumentProvider : public ArgumentProvider {
- private:
-  // -u --username
-  std::optional<std::string> m_userName;
+private:
+    // -u --username
+    std::optional<std::string> m_userName;
 
- public:
-  AuthArgumentProvider();
+public:
+    AuthArgumentProvider();
 
-  std::vector<Argument> init();
+    std::vector<Argument> init();
 
-  std::optional<std::string> getUserName();
+    std::optional<std::string> getUserName();
 };
 
 #endif  // CPP_BASE_LIBRARY_AUTHARGUMENTPROVIDER_H

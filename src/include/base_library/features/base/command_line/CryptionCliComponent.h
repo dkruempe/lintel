@@ -9,40 +9,40 @@
 #include "base_library/features/cli/models/CommandLineComponent.h"
 
 class CryptionCliComponent : public CommandLineComponent {
- private:
-  enum Command {
-    CommandEncrypt,
-    CommandDecrypt,
-    CommandUndefined,
-  };
-  std::map<std::string_view, Command> m_commands = {{"encrypt", CommandEncrypt},
-                                                    {"enc", CommandEncrypt},
-                                                    {"decrypt", CommandDecrypt},
-                                                    {"dec", CommandDecrypt}};
-  static constexpr std::string_view m_name = "Cryption";
-  static constexpr std::string_view m_alias = "Crypt";
-  Command m_currentCommand = CommandUndefined;
-  Cryption m_cryption;
-  std::shared_ptr<UserApi> m_userApi;
-  std::string m_loginId;
+private:
+    enum Command {
+        CommandEncrypt,
+        CommandDecrypt,
+        CommandUndefined,
+    };
+    std::map<std::string_view, Command> m_commands = {{"encrypt", CommandEncrypt},
+                                                      {"enc",     CommandEncrypt},
+                                                      {"decrypt", CommandDecrypt},
+                                                      {"dec",     CommandDecrypt}};
+    static constexpr std::string_view m_name = "Cryption";
+    static constexpr std::string_view m_alias = "Crypt";
+    Command m_currentCommand = CommandUndefined;
+    Cryption m_cryption;
+    std::shared_ptr<UserApi> m_userApi;
+    std::string m_loginId;
 
- public:
-  explicit CryptionCliComponent(std::shared_ptr<UserApi> m_userApi);
+public:
+    explicit CryptionCliComponent(std::shared_ptr<UserApi> m_userApi);
 
-  void onCommand(const UserDto &userDto, const std::string &input,
-                 const std::vector<std::string> &parameters) override;
+    void onCommand(const UserDto &userDto, const std::string &input,
+                   const std::vector<std::string> &parameters) override;
 
-  void onHelp() override;
+    void onHelp() override;
 
-  void onShowMenu() override;
+    void onShowMenu() override;
 
-  bool onMenu(const std::string &component) override;
+    bool onMenu(const std::string &component) override;
 
-  bool onExit() override;
+    bool onExit() override;
 
-  void printCommandList(std::set<std::string> menuAlias) override;
+    void printCommandList(std::set<std::string> menuAlias) override;
 
-  std::vector<std::string> allCommandsOf() override;
+    std::vector<std::string> allCommandsOf() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_CRYPTIONCLICOMPONENT_H

@@ -6,28 +6,32 @@
 #include "base_library/features/base/models/HistoryEntry.h"
 
 class HistoryRepository {
- private:
-  // injections
-  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
-  std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
+private:
+    // injections
+    std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+    std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
 
- public:
-  // select methods
-  [[nodiscard]] std::vector<HistoryEntry> allOf() const;
-  [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &label) const;
-  [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &processName,
-                                  const std::string &serviceName) const;
-  [[nodiscard]] std::vector<HistoryEntry> allOfProcess(const std::string &processName) const;
-  [[nodiscard]] std::vector<HistoryEntry> allOfService(const std::string &serviceName) const;
+public:
+    // select methods
+    [[nodiscard]] std::vector<HistoryEntry> allOf() const;
 
-  // insert
-  void insertOf(const std::vector<HistoryEntry> &entries);
+    [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &label) const;
 
-  // delete
-  void cleanAllOlderThan(date::sys_time<std::chrono::microseconds> timestamp);
+    [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &processName,
+                                                  const std::string &serviceName) const;
 
-  explicit HistoryRepository(std::shared_ptr<DatabaseConnectionConfigurations>
-                        databaseConnectionConfigurations);
+    [[nodiscard]] std::vector<HistoryEntry> allOfProcess(const std::string &processName) const;
+
+    [[nodiscard]] std::vector<HistoryEntry> allOfService(const std::string &serviceName) const;
+
+    // insert
+    void insertOf(const std::vector<HistoryEntry> &entries);
+
+    // delete
+    void cleanAllOlderThan(date::sys_time<std::chrono::microseconds> timestamp);
+
+    explicit HistoryRepository(std::shared_ptr<DatabaseConnectionConfigurations>
+                               databaseConnectionConfigurations);
 };
 
 #endif  // CPP_BASE_LIBRARY_HISTORYREPOSITORY_H

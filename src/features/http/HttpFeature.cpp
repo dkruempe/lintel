@@ -6,16 +6,16 @@
 
 HttpFeature::HttpFeature() : Feature(type_name<HttpFeature>()) {}
 
-void HttpFeature::registerTypes(Hypodermic::ContainerBuilder& builder) {
-  builder.registerType<ServerProvider>().singleInstance();
-  builder.registerType<ClientProvider>().singleInstance();
-  builder.registerType<ExampleController>()
-      .as<Controller>()
-      .as<GroupProvider>()
-      .asSelf()
-      .singleInstance();
+void HttpFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
+    builder.registerType<ServerProvider>().singleInstance();
+    builder.registerType<ClientProvider>().singleInstance();
+    builder.registerType<ExampleController>()
+            .as<Controller>()
+            .as<GroupProvider>()
+            .asSelf()
+            .singleInstance();
 }
 
 void HttpFeature::initialize(std::shared_ptr<Hypodermic::Container> container) {
-  m_ServerProvider = container->resolve<ServerProvider>();
+    m_ServerProvider = container->resolve<ServerProvider>();
 }

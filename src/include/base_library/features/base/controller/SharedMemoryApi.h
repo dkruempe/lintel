@@ -8,25 +8,29 @@
 #include "base_library/features/http/provider/ClientProvider.h"
 
 class SharedMemoryApi {
- private:
-  std::shared_ptr<Client> m_client;
+private:
+    std::shared_ptr<Client> m_client;
 
- public:
-  explicit SharedMemoryApi(
-      const std::shared_ptr<ClientProvider> &clientProvider);
+public:
+    explicit SharedMemoryApi(
+            const std::shared_ptr<ClientProvider> &clientProvider);
 
-  // segment
-  std::vector<SharedMemorySegmentDto> allSegmentsOf(
-      const std::string &segmentName = ".*");
-  void shrinkOf(const std::string &segmentName);
-  void growOf(const std::string &segmentName, const std::string &sizeStr);
-  // repositories
-  std::vector<SharedMemoryRepositoryDto> allRepositoriesOf(
-      const std::string &repositoryName = ".*",
-      const std::string &segmentName = ".*");
-  std::string repositoryOf(const std::string &repositoryName,
-                           const std::string &segmentName,
-                           const std::string &type);
+    // segment
+    std::vector<SharedMemorySegmentDto> allSegmentsOf(
+            const std::string &segmentName = ".*");
+
+    void shrinkOf(const std::string &segmentName);
+
+    void growOf(const std::string &segmentName, const std::string &sizeStr);
+
+    // repositories
+    std::vector<SharedMemoryRepositoryDto> allRepositoriesOf(
+            const std::string &repositoryName = ".*",
+            const std::string &segmentName = ".*");
+
+    std::string repositoryOf(const std::string &repositoryName,
+                             const std::string &segmentName,
+                             const std::string &type);
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYAPI_H

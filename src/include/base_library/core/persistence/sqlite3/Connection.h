@@ -12,50 +12,57 @@
 #include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace sqlite {
-class Transaction;
-class Statement;
-class PreparedStatement;
-class Notify;
+    class Transaction;
 
-class Connection {
- private:
-  sqlite3 *m_db;
-  friend class Transaction;
-  friend class Statement;
-  friend class PreparedStatement;
-  friend class Notify;
+    class Statement;
 
-  std::map<std::string, sqlite3_stmt *> m_preparedStatements;
+    class PreparedStatement;
 
- private:
-  [[nodiscard]] std::shared_ptr<Result> execute(
-      const std::string &statement) const;
+    class Notify;
 
-  [[nodiscard]] std::shared_ptr<Result> executeParameters(
-      const std::string &statement, const db::Parameters &parameters);
+    class Connection {
+    private:
+        sqlite3 *m_db;
 
-  std::shared_ptr<Result> prepareStatement(const std::string &queryName,
-                                           const std::string &query);
+        friend class Transaction;
 
-  [[nodiscard]] std::shared_ptr<Result> executePreparedStatement(
-      const std::string &queryName, const db::Parameters &parameters);
+        friend class Statement;
 
-  void finalizePreparedStatement(const std::string &queryName);
+        friend class PreparedStatement;
 
-  static int callBack(void *a_param, int argc, char **argv, char **column);
+        friend class Notify;
 
-  [[nodiscard]] std::string getErrorMessage() const;
+        std::map<std::string, sqlite3_stmt *> m_preparedStatements;
 
- public:
-  explicit Connection(const std::string &connectionInfo);
+    private:
+        [[nodiscard]] std::shared_ptr<Result> execute(
+                const std::string &statement) const;
 
-  explicit Connection(
-      const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+        [[nodiscard]] std::shared_ptr<Result> executeParameters(
+                const std::string &statement, const db::Parameters &parameters);
 
-  Connection(Connection &connection) = delete;
+        std::shared_ptr<Result> prepareStatement(const std::string &queryName,
+                                                 const std::string &query);
 
-  ~Connection();
-};
+        [[nodiscard]] std::shared_ptr<Result> executePreparedStatement(
+                const std::string &queryName, const db::Parameters &parameters);
+
+        void finalizePreparedStatement(const std::string &queryName);
+
+        static int callBack(void *a_param, int argc, char **argv, char **column);
+
+        [[nodiscard]] std::string getErrorMessage() const;
+
+    public:
+        explicit Connection(const std::string &connectionInfo);
+
+        explicit Connection(
+                const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+
+        Connection(Connection &connection) = delete;
+
+        ~Connection();
+    };
 }  // namespace sqlite
 
 #endif  // CPP_BASE_LIBRARY_SQLITE_CONNECTION_H

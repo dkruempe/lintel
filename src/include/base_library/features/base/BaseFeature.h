@@ -4,12 +4,12 @@
 #include "base_library/features/Feature.h"
 
 class BaseFeature : public Feature {
- public:
-  BaseFeature();
+public:
+    BaseFeature();
 
-  void registerTypes(Hypodermic::ContainerBuilder &builder) override;
+    void registerTypes(Hypodermic::ContainerBuilder &builder) override;
 
-  void initialize(std::shared_ptr<Hypodermic::Container> container) override;
+    void initialize(std::shared_ptr<Hypodermic::Container> container) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_BASEFEATURE_H

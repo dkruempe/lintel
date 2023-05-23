@@ -10,89 +10,97 @@
 #include "base_library/core/persistence/sqlite3/Result.h"
 
 namespace db {
-class Result {
- private:
-  std::shared_ptr<postgresql::Result> m_result = nullptr;
-  std::shared_ptr<sqlite::Result> m_resultSQLite = nullptr;
+    class Result {
+    private:
+        std::shared_ptr<postgresql::Result> m_result = nullptr;
+        std::shared_ptr<sqlite::Result> m_resultSQLite = nullptr;
 
- public:
-  class Iterator
-      : public std::iterator<std::random_access_iterator_tag, Arguments,
-                             std::ptrdiff_t, Arguments *, Arguments &> {
-   private:
-    Result &m_result;
-    std::size_t m_pos;
+    public:
+        class Iterator
+                : public std::iterator<std::random_access_iterator_tag, Arguments,
+                        std::ptrdiff_t, Arguments *, Arguments &> {
+        private:
+            Result &m_result;
+            std::size_t m_pos;
 
-   public:
-    explicit Iterator(Result &result, bool end = false)
-        : m_result(result),
-          m_pos(end ? static_cast<std::size_t>(m_result.getSize()) : 0) {}
+        public:
+            explicit Iterator(Result &result, bool end = false)
+                    : m_result(result),
+                      m_pos(end ? static_cast<std::size_t>(m_result.getSize()) : 0) {}
 
-    Iterator &operator++() {
-      ++m_pos;
-      return *this;
-    }
-    Iterator operator++(int) {
-      ++m_pos;
-      return *this;
-    }
-    bool operator==(Iterator other) const { return m_pos == other.m_pos; }
-    bool operator!=(Iterator other) const { return !(*this == other); }
-    reference operator*() { return m_result.of(m_pos); }
-  };
+            Iterator &operator++() {
+                ++m_pos;
+                return *this;
+            }
 
-  class ConstIterator
-      : public std::iterator<std::random_access_iterator_tag, Arguments,
-                             std::ptrdiff_t, const Arguments *,
-                             const Arguments &> {
-   private:
-    const Result &m_result;
-    std::size_t m_pos;
+            Iterator operator++(int) {
+                ++m_pos;
+                return *this;
+            }
 
-   public:
-    explicit ConstIterator(const Result &result, bool end = false)
-        : m_result(result),
-          m_pos(end ? static_cast<std::size_t>(m_result.getSize()) : 0) {}
+            bool operator==(Iterator other) const { return m_pos == other.m_pos; }
 
-    ConstIterator &operator++() {
-      ++m_pos;
-      return *this;
-    }
-    ConstIterator operator++(int) {
-      ++m_pos;
-      return *this;
-    }
-    bool operator==(ConstIterator other) const { return m_pos == other.m_pos; }
-    bool operator!=(ConstIterator other) const { return !(*this == other); }
-    reference operator*() const { return m_result.of(m_pos); }
-  };
+            bool operator!=(Iterator other) const { return !(*this == other); }
 
-  Iterator begin() { return Iterator(*this); }
+            reference operator*() { return m_result.of(m_pos); }
+        };
 
-  Iterator end() { return Iterator(*this, true); }
+        class ConstIterator
+                : public std::iterator<std::random_access_iterator_tag, Arguments,
+                        std::ptrdiff_t, const Arguments *,
+                        const Arguments &> {
+        private:
+            const Result &m_result;
+            std::size_t m_pos;
 
-  ConstIterator begin() const { return ConstIterator(*this); }
+        public:
+            explicit ConstIterator(const Result &result, bool end = false)
+                    : m_result(result),
+                      m_pos(end ? static_cast<std::size_t>(m_result.getSize()) : 0) {}
 
-  ConstIterator end() const { return ConstIterator(*this, true); }
+            ConstIterator &operator++() {
+                ++m_pos;
+                return *this;
+            }
 
-  Result() = default;
+            ConstIterator operator++(int) {
+                ++m_pos;
+                return *this;
+            }
 
-  ~Result();
+            bool operator==(ConstIterator other) const { return m_pos == other.m_pos; }
 
-  explicit Result(std::shared_ptr<postgresql::Result> result);
+            bool operator!=(ConstIterator other) const { return !(*this == other); }
 
-  explicit Result(std::shared_ptr<sqlite::Result> result);
+            reference operator*() const { return m_result.of(m_pos); }
+        };
 
-  [[nodiscard]] std::string getValue(int row, int attribute) const;
+        Iterator begin() { return Iterator(*this); }
 
-  [[nodiscard]] Arguments &of(std::size_t pos);
+        Iterator end() { return Iterator(*this, true); }
 
-  [[nodiscard]] const Arguments &of(std::size_t pos) const;
+        ConstIterator begin() const { return ConstIterator(*this); }
 
-  [[nodiscard]] int getNumOfAttributes() const;
+        ConstIterator end() const { return ConstIterator(*this, true); }
 
-  [[nodiscard]] int getSize() const;
-};
+        Result() = default;
+
+        ~Result();
+
+        explicit Result(std::shared_ptr<postgresql::Result> result);
+
+        explicit Result(std::shared_ptr<sqlite::Result> result);
+
+        [[nodiscard]] std::string getValue(int row, int attribute) const;
+
+        [[nodiscard]] Arguments &of(std::size_t pos);
+
+        [[nodiscard]] const Arguments &of(std::size_t pos) const;
+
+        [[nodiscard]] int getNumOfAttributes() const;
+
+        [[nodiscard]] int getSize() const;
+    };
 }  // namespace db
 
 #endif  // CPP_BASE_LIBRARY_RESULT_H

@@ -41,49 +41,51 @@
  * We'll first init the current version and then execute the data include.
  */
 class DatabaseBootstrapPlugin : public BootstrapPlugin {
- private:
-  struct FileInformation {
-    std::string m_schemaName;
-    int32_t m_version;
-    std::filesystem::path m_filePath;
-    bool m_isInitFile;
-  };
-  std::filesystem::path m_configPath =
-      std::string(CONFIG_DIRECTORY) +
-      std::filesystem::path::preferred_separator + "database";
-  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+private:
+    struct FileInformation {
+        std::string m_schemaName;
+        int32_t m_version;
+        std::filesystem::path m_filePath;
+        bool m_isInitFile;
+    };
+    std::filesystem::path m_configPath =
+            std::string(CONFIG_DIRECTORY) +
+            std::filesystem::path::preferred_separator + "database";
+    std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
 
-  static constexpr std::string_view m_createSchemaVersion =
-      R"(CREATE TABLE schema_version (name TEXT NOT NULL PRIMARY KEY,version BIGINT NOT NULL);)";
+    static constexpr std::string_view m_createSchemaVersion =
+            R"(CREATE TABLE schema_version (name TEXT NOT NULL PRIMARY KEY,version BIGINT NOT NULL);)";
 
-  static std::optional<db::Result> hasSchemaVersionTable(
-      const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry);
+    static std::optional<db::Result> hasSchemaVersionTable(
+            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
-  static void createSchemaVersionTable(
-      const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry);
+    static void createSchemaVersionTable(
+            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
-  static void initDatabase(
-      const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry,
-      const std::map<std::string, std::vector<FileInformation>>& initFiles,
-      const std::map<std::string, int32_t>& schemaVersions);
+    static void initDatabase(
+            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
+            const std::map<std::string, std::vector<FileInformation>> &initFiles,
+            const std::map<std::string, int32_t> &schemaVersions);
 
-  static void updateSchemaVersion(
-      const db::Connection& connection,
-      const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry,
-      const std::string& schemaName, int32_t schemaVersion, bool insert = true);
+    static void updateSchemaVersion(
+            const db::Connection &connection,
+            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
+            const std::string &schemaName, int32_t schemaVersion, bool insert = true);
 
-  static std::string schemaNameOf(const std::string& fileName);
+    static std::string schemaNameOf(const std::string &fileName);
 
-  static int32_t versionOf(const std::string& version);
+    static int32_t versionOf(const std::string &version);
 
-  void handle(const std::shared_ptr<DatabaseConnectionEntry>& connectionEntry);
+    void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
- public:
-  explicit DatabaseBootstrapPlugin(
-      std::shared_ptr<DatabaseConnectionConfigurations>
-          connectionConfigurations);
-  void onStart() override;
-  BootstrapSequence getPriority() override;
+public:
+    explicit DatabaseBootstrapPlugin(
+            std::shared_ptr<DatabaseConnectionConfigurations>
+            connectionConfigurations);
+
+    void onStart() override;
+
+    BootstrapSequence getPriority() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_DATABASEBOOTSTRAPPLUGIN_H

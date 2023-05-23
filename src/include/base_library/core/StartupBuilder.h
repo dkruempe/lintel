@@ -15,45 +15,46 @@
 #include "base_library/features/base/models/ProcessName.h"
 
 class StartupBuilder {
- private:
-  std::vector<std::shared_ptr<Feature>> m_features;
-  std::shared_ptr<Hypodermic::Container> m_container = nullptr;
-  std::shared_ptr<ProcessName> m_name;
-  std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
-  static StartupBuilder *m_startupBuilder;
-  std::condition_variable m_conditionVariable;
-  std::atomic_bool m_stop = false;
-  std::vector<std::string> m_arguments;
-  std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration =
-      nullptr;
-  std::shared_ptr<ConfigurationComponentBuilder>
-      m_configurationComponentBuilder;
-  std::shared_ptr<Configuration> m_configuration = nullptr;
-  bool m_bootStrapServiceActive = true;
+private:
+    std::vector<std::shared_ptr<Feature>> m_features;
+    std::shared_ptr<Hypodermic::Container> m_container = nullptr;
+    std::shared_ptr<ProcessName> m_name;
+    std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
+    static StartupBuilder *m_startupBuilder;
+    std::condition_variable m_conditionVariable;
+    std::atomic_bool m_stop = false;
+    std::vector<std::string> m_arguments;
+    std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration =
+            nullptr;
+    std::shared_ptr<ConfigurationComponentBuilder>
+            m_configurationComponentBuilder;
+    std::shared_ptr<Configuration> m_configuration = nullptr;
+    bool m_bootStrapServiceActive = true;
 
- public:
-  StartupBuilder(ProcessName &&processName,
-                 std::vector<std::string> &&arguments);
-  StartupBuilder() = delete;
+public:
+    StartupBuilder(ProcessName &&processName,
+                   std::vector<std::string> &&arguments);
 
-  static std::shared_ptr<StartupBuilder> with(int argc, char *argv[]);
+    StartupBuilder() = delete;
 
-  void addConfigurationComponent(std::shared_ptr<Component> &&component);
+    static std::shared_ptr<StartupBuilder> with(int argc, char *argv[]);
 
-  template <typename FEATURE>
-  void addFeature() {
-    m_features.push_back(std::make_shared<FEATURE>());
-  }
+    void addConfigurationComponent(std::shared_ptr<Component> &&component);
 
-  void disableBootstrapService();
+    template<typename FEATURE>
+    void addFeature() {
+        m_features.push_back(std::make_shared<FEATURE>());
+    }
 
-  void withOutFeature(std::string_view nameOfFeature);
+    void disableBootstrapService();
 
-  void onShutdown();
+    void withOutFeature(std::string_view nameOfFeature);
 
-  static void receiveSignal(int signal);
+    void onShutdown();
 
-  void start();
+    static void receiveSignal(int signal);
+
+    void start();
 };
 
 #endif  // CPP_BASE_LIBRARY_STARTUPBUILDER_H

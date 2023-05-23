@@ -5,16 +5,16 @@
 #include "base_library/features/http/service/Client.h"
 
 class ClientProvider {
- private:
-  std::shared_ptr<Client> m_client;
+private:
+    std::shared_ptr<Client> m_client;
 
-  static std::shared_ptr<Client> build(
-      const std::shared_ptr<Configuration>& configuration);
+    static std::shared_ptr<Client> build(
+            const std::shared_ptr<Configuration> &configuration);
 
- public:
-  explicit ClientProvider(const std::shared_ptr<Configuration>& configuration);
+public:
+    explicit ClientProvider(const std::shared_ptr<Configuration> &configuration);
 
-  const std::shared_ptr<Client>& provide();
+    const std::shared_ptr<Client> &provide();
 };
 
 #endif  // CPP_BASE_LIBRARY_CLIENTPROVIDER_H
