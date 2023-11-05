@@ -70,7 +70,6 @@ void SharedMemoryController::exportRepositoryOfGet(
                     continue;
                 }
                 if (iter->getType() != shmType) {
-                    LOG_TRACE("{} != {}", iter->getType(), shmType);
                     continue;
                 }
                 LOG_TRACE("found repository");

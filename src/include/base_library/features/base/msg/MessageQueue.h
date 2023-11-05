@@ -21,8 +21,7 @@ private:
     static constexpr int32_t m_msgSize = sizeof(T);
     int32_t m_msgCount;
     boost::interprocess::message_queue m_messageQueue;
-    // properties
-    bool m_removeMessageQueueAfterShutdown;
+    std::shared_ptr<ProcessName> m_realProcessName;
 
 public:
     /**
@@ -32,20 +31,20 @@ public:
         boost::interprocess::message_queue::remove(messageQueueName.c_str());
     }
 
-    const std::string &getProcessName() {
+    const bool isOwner() const {
+        return m_processName == m_realProcessName->getProcessName();
+    }
+
+    [[nodiscard]] const std::string &getProcessName() const {
         return m_processName;
     }
 
-    const std::string &getName() {
+    [[nodiscard]] const std::string &getName() const {
         return m_name;
     }
 
-    int32_t getMsgCount() {
+    [[nodiscard]] int32_t getMsgCount() const {
         return m_msgCount;
-    }
-
-    bool isRemoveMessageQueueAfterShutdown() {
-        return m_removeMessageQueueAfterShutdown;
     }
 
     /**
@@ -55,13 +54,13 @@ public:
      * @param msgCount limit of queue itself
      */
     MessageQueue(std::string processName, std::string name, int32_t msgCount,
-                 bool removeMessageQueueAfterShutdown)
+                 std::shared_ptr<ProcessName> realProcessName)
             : m_processName(std::move(processName)),
               m_name(std::move(name)),
               m_msgCount(msgCount),
               m_messageQueue(boost::interprocess::open_or_create, m_name.c_str(),
                              m_msgCount, m_msgSize),
-              m_removeMessageQueueAfterShutdown(removeMessageQueueAfterShutdown) {}
+              m_realProcessName(std::move(realProcessName)) {}
 
     /**
      * send of message. Message Queue full => blocks until message queue is free
@@ -97,7 +96,7 @@ public:
      * @return optional of received message
      */
     std::optional<T> tryReceiveOf() {
-        T temp;
+        T temp{};
         boost::interprocess::message_queue::size_type recvSize;
         unsigned int priority;
         bool success =
@@ -105,7 +104,7 @@ public:
         if (!success) {
             return std::nullopt;
         }
-        return temp;
+        return std::make_optional(temp);
     }
 
     bool operator<(const MessageQueue &rhs) const {

@@ -1,3 +1,4 @@
+#include "base_library/core/utils/UUID.h"
 #include "base_library/features/base/models/HistoryEntry.h"
 
 HistoryEntry::HistoryEntry(
@@ -8,6 +9,7 @@ HistoryEntry::HistoryEntry(
           m_serviceName(std::move(serviceName)),
           m_label(std::move(label)),
           m_text(std::move(text)),
+          m_uuid(UUID::generate()),
           m_createdTimestamp(createdTimestamp) {}
 
 HistoryEntry::HistoryEntry(const AbstractServiceInterface &service,
@@ -16,6 +18,7 @@ HistoryEntry::HistoryEntry(const AbstractServiceInterface &service,
           m_serviceName(std::string(service.getClassName())),
           m_label(std::move(label)),
           m_text(std::move(text)),
+          m_uuid(UUID::generate()),
           m_createdTimestamp(std::chrono::system_clock::now()) {}
 
 const date::sys_time<std::chrono::microseconds>
@@ -33,12 +36,16 @@ const std::string &HistoryEntry::getServiceName() const {
     return m_serviceName;
 }
 
+const std::string &HistoryEntry::getUuid() const {
+    return m_uuid;
+}
+
 const std::string &HistoryEntry::getText() const { return m_text; }
 
 bool HistoryEntry::operator==(const HistoryEntry &rhs) const {
     return m_processName == rhs.m_processName &&
            m_serviceName == rhs.m_serviceName && m_label == rhs.m_label &&
-           m_text == rhs.m_text && m_createdTimestamp == rhs.m_createdTimestamp;
+           m_text == rhs.m_text && m_createdTimestamp == rhs.m_createdTimestamp && m_uuid == rhs.m_uuid;
 }
 
 bool HistoryEntry::operator!=(const HistoryEntry &rhs) const {

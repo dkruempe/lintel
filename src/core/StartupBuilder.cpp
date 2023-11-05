@@ -9,7 +9,6 @@
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/PersistableService.h"
-#include "base_library/core/services/ProcessService.h"
 #include "base_library/features/base/configuration/Component.h"
 #include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
 #include "base_library/features/base/models/ProcessName.h"
@@ -125,6 +124,11 @@ void StartupBuilder::onShutdown() {
     m_stop.store(true);
     LOG_INFO("{} shutdown", m_name->getProcessName());
     // trigger shutdown
+    std::sort(m_abstractServices.begin(), m_abstractServices.end(),
+              [](const std::shared_ptr<AbstractServiceInterface> &a,
+                 const std::shared_ptr<AbstractServiceInterface> &b) {
+                  return a->shutdownPriorityOf() < b->shutdownPriorityOf();
+              });
     for (const auto &abstractService: m_abstractServices) {
         LOG_TRACE("shutdown of {}", abstractService->getClassName());
         abstractService->onShutdown();

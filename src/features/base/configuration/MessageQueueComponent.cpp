@@ -35,8 +35,6 @@ std::vector<std::shared_ptr<Entry>> MessageQueueComponent::parse(
                 propertyElement->Attribute(shape.MESSAGE_QUEUE_PROCESS_NAME.c_str());
         const char *maxMessagesStr =
                 propertyElement->Attribute(shape.MESSAGE_QUEUE_MAX_MESSAGES.c_str());
-        const char *removeOnShutdownStr = propertyElement->Attribute(
-                shape.MESSAGE_QUEUE_REMOVE_ON_SHUTDOWN.c_str());
 
         int32_t const lineNumber = propertyElement->GetLineNum() + lineOffset - 1;
 
@@ -55,19 +53,11 @@ std::vector<std::shared_ptr<Entry>> MessageQueueComponent::parse(
                                          "please set max_messages for message queue",
                                          lineNumber);
         }
-        if (removeOnShutdownStr == nullptr) {
-            throw ConfigurationException(
-                    getConfigRoot(), "pleas set remove_on_shutdown for message queue",
-                    lineNumber);
-        }
 
         const int32_t maxMessages = std::stoi(maxMessagesStr);
-        const bool removeOnShutdown =
-                std::strcmp(removeOnShutdownStr, "true") == 0 ||
-                std::strcmp(removeOnShutdownStr, "t") == 0;
         entries.push_back(std::make_shared<MessageQueueEntry>(
                 type_name<MessageQueueComponent>(), std::string(processName),
-                std::string(name), maxMessages, removeOnShutdown));
+                std::string(name), maxMessages));
     }
     return entries;
 }

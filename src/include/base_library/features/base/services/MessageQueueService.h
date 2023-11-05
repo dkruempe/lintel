@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_MESSAGEQUEUESERVICE_H
 
 #include <map>
+#include <base_library/features/base/configuration/MessageQueueEntry.h>
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/configuration/Configuration.h"
@@ -11,11 +12,11 @@
 
 class MessageQueueService : public AbstractService<MessageQueueService> {
 private:
-    std::map<std::string, std::shared_ptr<MessageQueue<Message>>> m_messageQueues;
     std::shared_ptr<ProcessName> m_processName;
+    std::map<std::string, std::shared_ptr<MessageQueueEntry>> m_configurationMap;
 
-    static std::map<std::string, std::shared_ptr<MessageQueue<Message>>> init(
-            const std::shared_ptr<Configuration> &configuration);
+    static std::map<std::string, std::shared_ptr<MessageQueueEntry>>
+    init(const std::shared_ptr<Configuration> &configuration);
 
 public:
     /**
@@ -27,30 +28,16 @@ public:
                         std::shared_ptr<ProcessName> processName);
 
     /**
-     * returns message queue to belonging message queue name
-     * @param name of message queue
-     * @param processName name of process
-     * @return message queue itself
-     */
-    std::shared_ptr<MessageQueue<Message>> of(const std::string &name,
-                                              const std::string &processName);
-
-    /**
      * returns self owning message queue, processName is current processName
      * @param name of message queue
      * @return message queue
      */
-    std::shared_ptr<MessageQueue<Message>> of(const std::string &name);
+    std::unique_ptr<MessageQueue<Message>> of(const std::string &name);
 
-    /**
-     * returns all available message queues
-     * @return message queues
-     */
-    std::vector<std::shared_ptr<MessageQueue<Message>>> allOf();
+    void onInitialize() override {}
 
-    void onInitialize() override;
+    void onShutdown() override {}
 
-    void onShutdown() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_MESSAGEQUEUESERVICE_H

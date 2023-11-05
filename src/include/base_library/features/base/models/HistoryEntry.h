@@ -18,6 +18,7 @@ private:
     std::string m_serviceName;
     std::string m_label;
     std::string m_text;
+    std::string m_uuid;
     date::sys_time<std::chrono::microseconds> m_createdTimestamp;
 
 public:
@@ -36,6 +37,8 @@ public:
     [[nodiscard]] const std::string &getLabel() const;
 
     [[nodiscard]] const std::string &getText() const;
+
+    [[nodiscard]] const std::string &getUuid() const;
 
     [[nodiscard]] const date::sys_time<std::chrono::microseconds> &
     getCreatedTimestamp() const;

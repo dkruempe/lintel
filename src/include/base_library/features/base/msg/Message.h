@@ -25,6 +25,11 @@ public:
     Message(const std::string &receiver, const std::string &sender);
 
     /**
+     * default constructor
+     */
+    Message() = default;
+
+    /**
      * @return receiver message queue
      */
     [[nodiscard]] const char *receiverOf() const;

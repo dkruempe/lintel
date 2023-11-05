@@ -4,8 +4,10 @@ CREATE TABLE public.history
     service_name      TEXT                     NOT NULL,
     label             TEXT                     NOT NULL,
     text              TEXT                     NOT NULL,
+    uuid              TEXT                     NOT NULL,
     created_timestamp timestamp with time zone NOT NULL,
-    CONSTRAINT history_PK PRIMARY KEY (process_name, service_name, created_timestamp)
+    inserted_timestamp timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT history_PK PRIMARY KEY (process_name, service_name, uuid)
 );
 CREATE TABLE public.property
 (

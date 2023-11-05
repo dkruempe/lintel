@@ -131,6 +131,14 @@ public:
 
     void detachOf(const ProcessGroup &processGroup);
 
+    bool isLastProcess();
+
+    ShutdownPriority shutdownPriorityOf() const override {
+        return ShutdownPriority::PROCESS_SERVICE;
+    }
+
+    void onInitialize() override;
+
 };
 
 #endif  // CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H

@@ -30,8 +30,8 @@ public:
     // delete
     void cleanAllOlderThan(date::sys_time<std::chrono::microseconds> timestamp);
 
-    explicit HistoryRepository(std::shared_ptr<DatabaseConnectionConfigurations>
-                               databaseConnectionConfigurations);
+    explicit HistoryRepository(const std::shared_ptr<DatabaseConnectionConfigurations>
+                               &databaseConnectionConfigurations);
 };
 
 #endif  // CPP_BASE_LIBRARY_HISTORYREPOSITORY_H

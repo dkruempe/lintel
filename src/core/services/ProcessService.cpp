@@ -27,7 +27,6 @@ ProcessService::ProcessService(
           m_configuration(std::move(configuration)),
           m_historyService(std::move(historyService)) {
     // make sure that all variables are initialized for starting the thread
-    m_monitorThread = std::thread([&] { run(); });
     m_process = std::make_shared<Process>(m_processName->getPath(),
                                           m_processName->getArgs());
     std::vector<std::shared_ptr<Entry>> entries =
@@ -44,6 +43,10 @@ ProcessService::ProcessService(
                 processEntry->getProcessGroup();
         startOf(*processGroup);
     }
+}
+
+void ProcessService::onInitialize() {
+    m_monitorThread = std::thread([&] { run(); });
 }
 
 std::vector<ProcessInfo> ProcessService::allActiveOf() {
@@ -525,6 +528,11 @@ std::vector<ProcessGroupDto> ProcessService::allGroupsOf(
         dtos.push_back(dto);
     }
     return dtos;
+}
+
+bool ProcessService::isLastProcess() {
+    std::lock_guard<std::mutex> locker(m_processesMutex);
+    return m_processes.size() == 1;
 }
 
 std::optional<std::shared_ptr<Process>> ProcessService::of(

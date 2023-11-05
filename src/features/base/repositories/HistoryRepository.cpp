@@ -1,15 +1,16 @@
+#include "base_library/core/persistence/Transaction.h"
 #include "base_library/features/base/repositories/HistoryRepository.h"
 
 #include "base_library/core/persistence/PreparedStatement.h"
 
 HistoryRepository::HistoryRepository(
         const std::shared_ptr<DatabaseConnectionConfigurations>
-        databaseConnectionConfigurations)
+        &databaseConnectionConfigurations)
         : m_connectionConfigurations(databaseConnectionConfigurations),
           m_connectionEntry(m_connectionConfigurations->ofDefault()) {}
 
 std::vector<HistoryEntry> HistoryRepository::allOf() const {
-    db::Connection connection(m_connectionEntry);
+    db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
        select process_name,
@@ -20,7 +21,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf() const {
       from history)",
                                             "history_all_of");
     std::vector<HistoryEntry> entries;
-    db::ParameterBuilder builder(m_connectionEntry);
+    db::ParameterBuilder const builder(m_connectionEntry);
     db::Result result = preparedStatement.execute(builder);
     for (auto &item: result) {
         std::string processName = item.of(0).getValue();
@@ -37,7 +38,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf() const {
 
 std::vector<HistoryEntry> HistoryRepository::allOf(
         const std::string &label) const {
-    db::Connection connection(m_connectionEntry);
+    db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
        select process_name,
@@ -66,7 +67,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
 
 std::vector<HistoryEntry> HistoryRepository::allOf(
         const std::string &processName, const std::string &serviceName) const {
-    db::Connection connection(m_connectionEntry);
+    db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
        select process_name,
@@ -96,7 +97,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
 
 std::vector<HistoryEntry> HistoryRepository::allOfProcess(
         const std::string &processName) const {
-    db::Connection connection(m_connectionEntry);
+    db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
        select process_name,
@@ -125,7 +126,7 @@ std::vector<HistoryEntry> HistoryRepository::allOfProcess(
 
 std::vector<HistoryEntry> HistoryRepository::allOfService(
         const std::string &serviceName) const {
-    db::Connection connection(m_connectionEntry);
+    db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
        select process_name,
@@ -153,32 +154,38 @@ std::vector<HistoryEntry> HistoryRepository::allOfService(
 }
 
 void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) {
-    db::Connection connection(m_connectionEntry);
-    db::PreparedStatement preparedStatement(connection, R"(
+    try {
+        db::Connection const connection(m_connectionEntry);
+        db::Transaction const transaction(connection);
+        db::PreparedStatement preparedStatement(connection, R"(
     insert into history (
     process_name,
     service_name,
     label,
     text,
+    uuid,
     created_timestamp)
-    values (?, ?, ?, ?, ?)
-)",
-                                            "history_insert_of");
-    db::ParameterBuilder builder(m_connectionEntry);
-    for (const auto &entry: entries) {
-        builder.add(entry.getProcessName());
-        builder.add(entry.getServiceName());
-        builder.add(entry.getLabel());
-        builder.add(entry.getText());
-        builder.add(entry.getCreatedTimestamp());
-        preparedStatement.execute(builder);
-        builder.clear();
+    values (?, ?, ?, ?, ?, ?)
+)", "history_insert_of");
+        for (const auto &entry: entries) {
+            db::ParameterBuilder builder(m_connectionEntry);
+            builder.add(entry.getProcessName());
+            builder.add(entry.getServiceName());
+            builder.add(entry.getLabel());
+            builder.add(entry.getText());
+            builder.add(entry.getUuid());
+            builder.add(entry.getCreatedTimestamp());
+            preparedStatement.execute(builder);
+        }
+    } catch (db::SQLException &exception) {
+        LOG_ERROR("insert failed: {}", exception.what());
     }
 }
 
 void HistoryRepository::cleanAllOlderThan(
         date::sys_time<std::chrono::microseconds> timestamp) {
     db::Connection connection(m_connectionEntry);
+    db::Transaction transaction(connection);
     db::PreparedStatement preparedStatement(connection, R"(
     delete from history
     where created_timestamp < ?

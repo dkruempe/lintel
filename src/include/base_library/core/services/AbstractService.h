@@ -5,6 +5,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <base_library/core/models/ShutdownPriority.h>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/TypeName.h"
@@ -17,6 +18,8 @@ public:
     virtual void onInitialize() = 0;
 
     virtual void onShutdown() = 0;
+
+    virtual ShutdownPriority shutdownPriorityOf() const = 0;
 
     virtual std::string_view getClassName() const = 0;
 
@@ -82,6 +85,10 @@ public:
     void onInitialize() override {}
 
     void onShutdown() override {}
+
+    ShutdownPriority shutdownPriorityOf() const override {
+        return ShutdownPriority::DEFAULT;
+    }
 
     [[nodiscard]] const std::string &getProcessName() const override {
         return m_processName;

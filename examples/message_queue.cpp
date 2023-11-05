@@ -2,6 +2,7 @@
 #include <exception>
 #include <iostream>
 #include <optional>
+#include <ctime>
 
 class Message {
 private:
@@ -141,10 +142,12 @@ struct TestObject {
     char name[30];
     int32_t age;
     double rate;
+    std::time_t created_timestamp;
 
     friend std::ostream &operator<<(std::ostream &os, const TestObject &object) {
         os << "msg: " << object.msg << " name: " << object.name
-           << " age: " << object.age << " rate: " << object.rate;
+           << " age: " << object.age << " rate: " << object.rate
+           << " created_timestamp: " << std::ctime(&object.created_timestamp);
         return os;
     }
 };
@@ -158,11 +161,13 @@ int main(int /*argc*/, char ** /*argv[]*/) {
         test.age = 32;
         std::strncpy(test.name, "Example User", sizeof(test.name));
         test.rate = 3.14159265359;
+        test.created_timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
         msg.assign(test);
         MessageQueue<Message> messageQueue("msg_test_queue", 10);
-        messageQueue.sendOf(msg);
-        Message message = messageQueue.receiveOf();
-        auto testObjectRecv = message.as<TestObject>();
+        messageQueue.trySendOf(msg);
+        std::optional<Message> messageOpt = messageQueue.tryReceiveOf();
+        std::cout << "Message >" << messageOpt.has_value() << "<\n";
+        auto testObjectRecv = messageOpt->as<TestObject>();
         std::cout << test << "\n";
         std::cout << testObjectRecv << "\n";
     } catch (std::exception &ex) {
