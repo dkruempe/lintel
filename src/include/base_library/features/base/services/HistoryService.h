@@ -38,6 +38,7 @@ private:
         char label[100];
         char text[300];
         std::time_t createdTimestamp;
+        int64_t createdTimestampMics;
     };
 
 public:

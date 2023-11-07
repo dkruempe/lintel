@@ -2,16 +2,16 @@
 <Configuration>
     <!-- Process Configuration for Application -->
     <Processes>
-        <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"
-                 maxRestarts="-1"/>
-        <ProcessGroup name="test_group">
-            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"
-                     maxRestarts="-1"/>
-            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"
-                     maxRestarts="5"/>
-            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test_process.sh" args=""
-                     autoRestart="true" maxRestarts="2"/>
-        </ProcessGroup>
+<!--        <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"-->
+<!--                 maxRestarts="-1"/>-->
+<!--        <ProcessGroup name="test_group">-->
+<!--            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"-->
+<!--                     maxRestarts="-1"/>-->
+<!--            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"-->
+<!--                     maxRestarts="5"/>-->
+<!--            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test_process.sh" args=""-->
+<!--                     autoRestart="true" maxRestarts="2"/>-->
+<!--        </ProcessGroup>-->
     </Processes>
 
     <!-- Logging Configuration for Application -->
@@ -36,8 +36,8 @@
     <!-- Database Connections Configuration -->
     <DatabaseConnections>
         <DatabaseConnection name="DEFAULT_PSQL" user_name="example_user" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
-                            database_name="temp" type="PostgreSQL"/>
-        <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true"/>
+                            database_name="temp" type="PostgreSQL" default="true"/>
+        <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite"/>
     </DatabaseConnections>
 
     <!-- Shared Memory Segments Configuration -->
