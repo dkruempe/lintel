@@ -1,20 +1,47 @@
 #include <iostream>
 #include <chrono>
 #include <date/date.h>
+#include <magic_enum.hpp>
+
+
+class Features {
+    std::vector<std::string> features{};
+
+public:
+
+    enum Value {
+        Base,
+        Http,
+        Property,
+        Cli
+    };
+
+    template<typename T, std::enable_if_t<std::is_enum_v<T>> * = nullptr>
+    void registerFeature(T x) {
+        features.push_back(std::string(magic_enum::enum_name(x)));
+    };
+
+    Features() {
+        auto names = magic_enum::enum_names<Value>();
+        for (auto &iter: names) {
+            features.emplace_back(iter);
+        }
+    }
+
+    std::vector<std::string> allOf() {
+        return features;
+    }
+};
 
 int main(int argc, char *argv[]) {
-    std::cout << "Hello World\n";
-    const auto tp = std::chrono::system_clock::now();
-    std::cout << date::format("%Y-%m-%d %H:%M:%S%Ez", tp) << "\n";
-    auto ts = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    auto micsDuration = std::chrono::duration_cast<std::chrono::microseconds>(tp - std::chrono::system_clock::from_time_t(ts));
-    std::cout << ts << "\n";
-    auto tpCpy = std::chrono::system_clock::from_time_t(ts);
-    std::cout << date::format("%Y-%m-%d %H:%M:%S%Ez", tpCpy) << "\n";
-    std::cout << micsDuration.count() << "mics\n";
-    auto mics = static_cast<int64_t>(micsDuration.count());
-    const std::chrono::microseconds micsCpy(mics);
-    tpCpy = tpCpy + micsCpy;
-    std::cout << date::format("%Y-%m-%d %H:%M:%S%Ez", tpCpy) << "\n";
+    Features features{};
+    enum NEW_FEATURES {
+        Test
+    };
+    features.registerFeature(Test);
+    auto vec = features.allOf();
+    for (const auto &iter : vec) {
+        std::cout << iter << "\n";
+    }
     return 0;
 }

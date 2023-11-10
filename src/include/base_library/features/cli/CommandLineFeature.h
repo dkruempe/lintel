@@ -4,12 +4,12 @@
 #include "base_library/features/Feature.h"
 #include "base_library/features/cli/services/CommandLineService.h"
 
-class CommandLineFeature : public Feature {
+class CommandLineFeature : public Feature<Features::Value> {
 private:
     std::shared_ptr<CommandLineService> m_commandLineService;
 
 public:
-    CommandLineFeature();
+    CommandLineFeature(std::shared_ptr<Features> features);
 
     void registerTypes(Hypodermic::ContainerBuilder &builder) override;
 

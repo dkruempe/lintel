@@ -13,6 +13,7 @@ endif ()
 find_package(date REQUIRED)
 add_executable(playground playground.cpp)
 target_compile_features(playground PUBLIC cxx_std_17)
+target_include_directories(playground PRIVATE ${magic_enum_INCLUDE_DIRS})
 target_link_libraries(playground PRIVATE date::date kruempelmann::base_library)
 
 # named_pipe_server example

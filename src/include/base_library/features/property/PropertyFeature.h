@@ -4,12 +4,12 @@
 #include "base_library/features/Feature.h"
 #include "base_library/features/property/services/PropertyService.h"
 
-class PropertyFeature : public Feature {
+class PropertyFeature : public Feature<Features::Value> {
 private:
     std::shared_ptr<PropertyService> m_propertyService;
 
 public:
-    PropertyFeature();
+    PropertyFeature(std::shared_ptr<Features> features);
 
     void registerTypes(Hypodermic::ContainerBuilder &builder) override;
 

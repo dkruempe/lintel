@@ -4,7 +4,7 @@
     - [ ] fix general std::size_t serialize solution instead of limiting it to __APPLE__
 - Process
     - [ ] adds better possibility to manages process automatically
-    - [ ] need to add later Historization support for following operations for processes
+    - [x] need to add later Historization support for following operations for processes
 - Shared Memory
     - [x] remove set container (no shm support)
     - [x] fix automatic increase feature, bc. currently free_memory is always fixed
@@ -20,10 +20,10 @@
     - [ ] adds constexpr implementation for better usage and performance
 - Queue Support
     - [ ] implement basic api as feature
-    - [ ] add configuration to bootstrap configuration file
+    - [x] add configuration to bootstrap configuration file
     - [ ] add command line component for maintenance
 - Historization
-    - [ ] adds support for an easy historization via Queue or direct call Api Interface
+    - [x] adds support for an easy historization via Queue or direct call Api Interface
     - [x] adds HistorizationService
 - Http
     - [ ] implement better exception handling

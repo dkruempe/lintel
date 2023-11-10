@@ -4,7 +4,7 @@
 #include "base_library/features/http/provider/ClientProvider.h"
 #include "base_library/features/http/service/Controller.h"
 
-HttpFeature::HttpFeature() : Feature(type_name<HttpFeature>()) {}
+HttpFeature::HttpFeature(std::shared_ptr<Features> features) : Feature(Features::Http, std::move(features)) {}
 
 void HttpFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
     builder.registerType<ServerProvider>().singleInstance();

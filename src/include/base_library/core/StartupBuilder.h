@@ -16,7 +16,7 @@
 
 class StartupBuilder {
 private:
-    std::vector<std::shared_ptr<Feature>> m_features;
+    std::vector<std::shared_ptr<FeatureInterface>> m_featureVec;
     std::shared_ptr<Hypodermic::Container> m_container = nullptr;
     std::shared_ptr<ProcessName> m_name;
     std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
@@ -29,6 +29,7 @@ private:
     std::shared_ptr<ConfigurationComponentBuilder>
             m_configurationComponentBuilder;
     std::shared_ptr<Configuration> m_configuration = nullptr;
+    std::shared_ptr<Features> m_features = std::make_shared<Features>();
     bool m_bootStrapServiceActive = true;
 
 public:
@@ -43,12 +44,14 @@ public:
 
     template<typename FEATURE>
     void addFeature() {
-        m_features.push_back(std::make_shared<FEATURE>());
+        m_featureVec.push_back(std::make_shared<FEATURE>(m_features));
     }
 
     void disableBootstrapService();
 
     void withOutFeature(std::string_view nameOfFeature);
+
+    void overrides(EnvironmentConfiguration::Environment environment, std::string value);
 
     void onShutdown();
 

@@ -32,7 +32,7 @@
 #include "base_library/features/base/services/SchedulerService.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
-BaseFeature::BaseFeature() : Feature(type_name<BaseFeature>()) {}
+BaseFeature::BaseFeature(std::shared_ptr<Features> features) : Feature(Features::Base, std::move(features)) {}
 
 void BaseFeature::initialize(std::shared_ptr<Hypodermic::Container> container) {
 }

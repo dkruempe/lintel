@@ -52,17 +52,21 @@ std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
 }
 
 void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
-    m_features.erase(std::remove_if(m_features.begin(), m_features.end(),
+    m_featureVec.erase(std::remove_if(m_featureVec.begin(), m_featureVec.end(),
                                     [&nameOfFeature](auto &&feature) -> bool {
                                         return feature->getName() == nameOfFeature;
                                     }),
-                     m_features.end());
+                     m_featureVec.end());
+}
+
+void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment, std::string value) {
+    m_environmentConfiguration->overrides(environment, value);
 }
 
 void StartupBuilder::start() {
     // I injection
     Hypodermic::ContainerBuilder builder;
-    for (auto &&feature: m_features) {
+    for (auto &&feature: m_featureVec) {
         feature->registerTypes(builder);
     }
     builder.registerInstance(m_name);
@@ -83,7 +87,7 @@ void StartupBuilder::start() {
     // V set AbstractService for shutdown event
     m_abstractServices = m_container->resolveAll<AbstractServiceInterface>();
     // VI start services
-    for (auto &&feature: m_features) {
+    for (auto &&feature: m_featureVec) {
         feature->initialize(m_container);
     }
     std::shared_ptr<ProcessArgumentService> processArgumentService =

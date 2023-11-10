@@ -3,9 +3,9 @@
 
 #include "base_library/features/Feature.h"
 
-class BaseFeature : public Feature {
+class BaseFeature : public Feature<Features::Value> {
 public:
-    BaseFeature();
+    BaseFeature(std::shared_ptr<Features> features);
 
     void registerTypes(Hypodermic::ContainerBuilder &builder) override;
 

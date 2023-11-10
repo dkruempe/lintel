@@ -311,12 +311,16 @@ public:
     void onMigrate(int32_t currentActiveVersion) override {}
 };
 
-class TestFeature : public Feature {
+enum TestEnum {
+    Test
+};
+
+class TestFeature : public Feature<TestEnum> {
 private:
     std::shared_ptr<ShmVec> m_shmVec;
 
 public:
-    TestFeature() : Feature(type_name<TestFeature>()) {}
+    TestFeature(std::shared_ptr<Features> features) : Feature(TestEnum::Test, std::move(features)) {}
 
     void registerTypes(Hypodermic::ContainerBuilder &builder) override {
         builder.registerType<ShmVec>()

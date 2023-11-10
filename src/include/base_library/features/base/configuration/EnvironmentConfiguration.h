@@ -26,4 +26,6 @@ public:
     std::vector<std::filesystem::path> pathsOf();
 
     std::optional<std::filesystem::path> pathOf(const std::string &fileName);
+
+    void overrides(Environment environment, std::string value);
 };

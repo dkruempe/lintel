@@ -6,8 +6,8 @@
 #include "base_library/features/cli/services/TerminalService.h"
 #include "base_library/features/cli/utils/CommandLineUtils.h"
 
-CommandLineFeature::CommandLineFeature()
-        : Feature(type_name<CommandLineFeature>()) {}
+CommandLineFeature::CommandLineFeature(std::shared_ptr<Features> features)
+        : Feature(Features::Cli, std::move(features)) {}
 
 void CommandLineFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
     builder.registerType<CommandLineService>()

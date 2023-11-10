@@ -41,6 +41,33 @@ EnvironmentConfiguration::EnvironmentConfiguration() {
     }
 }
 
+void EnvironmentConfiguration::overrides(Environment environment, std::string value) {
+    if (environment == Environment::Path) {
+        if (value.empty()) {
+            // ignore empty path
+            return;
+        }
+        auto found = m_environmentConfigurations.find(environment);
+        if (found != m_environmentConfigurations.end()) {
+            found->second = value;
+        } else {
+            m_environmentConfigurations.insert({environment, value});
+        }
+        std::vector<std::string> pathsStr = StringUtils::split(value, ':');
+        m_paths.clear();
+        for (const auto &iter: pathsStr) {
+            m_paths.push_back((std::filesystem::path(iter)));
+        }
+        return;
+    }
+    auto found = m_environmentConfigurations.find(environment);
+    if (found != m_environmentConfigurations.end()) {
+        found->second = value;
+        return;
+    }
+    m_environmentConfigurations.insert({environment, value});
+}
+
 std::vector<std::filesystem::path> EnvironmentConfiguration::pathsOf() {
     return m_paths;
 }

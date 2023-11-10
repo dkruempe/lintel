@@ -14,9 +14,9 @@ Configuration::Configuration(
         std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
         : m_components(initialize(components)),
           m_environmentConfiguration(std::move(environmentConfiguration)),
-          m_configurationFile(std::string(CONFIG_DIRECTORY) +
+          m_configurationFile(m_environmentConfiguration->of(EnvironmentConfiguration::ConfigDirectory) +
                               std::filesystem::path::preferred_separator +
-                              std::string(BOOTSTRAP_CONFIG_NAME) + ".xml") {
+                              m_environmentConfiguration->of(EnvironmentConfiguration::BootstrapConfigName) + ".xml") {
     loadConfiguration();
 }
 

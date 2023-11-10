@@ -4,12 +4,12 @@
 #include "base_library/features/Feature.h"
 #include "base_library/features/http/provider/ServerProvider.h"
 
-class HttpFeature : public Feature {
+class HttpFeature : public Feature<Features::Value> {
 private:
     std::shared_ptr<ServerProvider> m_ServerProvider;
 
 public:
-    HttpFeature();
+    HttpFeature(std::shared_ptr<Features> features);
 
     void registerTypes(Hypodermic::ContainerBuilder &builder) override;
 
