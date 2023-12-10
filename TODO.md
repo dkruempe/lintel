@@ -19,7 +19,7 @@
     - [ ] Cursor implementation
     - [ ] adds constexpr implementation for better usage and performance
 - Queue Support
-    - [ ] implement basic api as feature
+    - [x] implement basic api as feature
     - [x] add configuration to bootstrap configuration file
     - [ ] add command line component for maintenance
 - Historization

@@ -493,7 +493,7 @@ ProcessInfo ProcessService::currentOf() {
 std::vector<ProcessGroupDto> ProcessService::allGroupsOf(
         const std::string &name) {
     std::vector<std::shared_ptr<ProcessGroup>> groups;
-    std::regex nameRegex(name);
+    std::regex const nameRegex(name);
     {
         std::lock_guard<std::mutex> locker(m_processGroupMutex);
         for (const auto &[id, group]: m_processGroups) {
@@ -503,22 +503,20 @@ std::vector<ProcessGroupDto> ProcessService::allGroupsOf(
             groups.push_back(group);
         }
     }
-    std::vector<ProcessGroupDto> dtos;
+    std::vector<ProcessGroupDto> dtos{};
     for (const auto &iter: groups) {
         std::vector<ProcessInfo> processInfos;
         for (const auto &process: iter->getProcesses()) {
             {
                 std::lock_guard<std::mutex> locker(m_processesMutex);
                 auto found = m_processes.find(process.getId());
-                std::shared_ptr<Process> temp =
-                        found != m_processes.end() ? found->second.getProcess() : nullptr;
-                boost::process::pid_t id =
-                        found != m_processes.end() ? found->second.getChild()->id() : -1;
-                bool running =
-                        found != m_processes.end() && found->second.getChild()->running();
-                int exitCode = found != m_processes.end()
-                               ? found->second.getChild()->exit_code()
-                               : -1;
+                if (found == m_processes.end()) {
+                    continue;
+                }
+                std::shared_ptr<Process> temp = found->second.getProcess();
+                boost::process::pid_t id = found->second.getChild()->id();
+                bool running = found->second.getChild()->running();
+                int exitCode = found->second.getChild()->exit_code();
                 ProcessInfo processInfo(temp, id, running, exitCode, iter->getName(),
                                         iter->getId());
                 processInfos.push_back(processInfo);
