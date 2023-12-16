@@ -10,7 +10,6 @@
 #include "base_library/core/services/PersistableService.h"
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/core/services/SharedMemoryService.h"
-#include "base_library/features/base/command_line/CryptionCliComponent.h"
 #include "base_library/features/base/command_line/ProcessCliComponent.h"
 #include "base_library/features/base/command_line/UserManagementCliComponent.h"
 #include "base_library/features/base/controller/ProcessApi.h"
@@ -49,10 +48,6 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
     builder.registerType<InitializeService>().singleInstance();
     builder.registerType<ExecutorService>();
     builder.registerType<DatabaseConnectionConfigurations>().singleInstance();
-    builder.registerType<CryptionCliComponent>()
-            .as<CommandLineComponent>()
-            .asSelf()
-            .singleInstance();
     builder.registerType<UserManagementCliComponent>()
             .as<CommandLineComponent>()
             .asSelf()
