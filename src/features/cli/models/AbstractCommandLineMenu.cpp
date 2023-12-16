@@ -80,9 +80,7 @@ const std::shared_ptr<CommandLineComponent>
 std::vector<std::string> AbstractCommandLineMenu::allCommandsOf() {
     std::set<std::string> tempSet;
     for (const auto &[str, component]: m_componentMap) {
-        tempSet.insert(std::string(component->getAlias()));
         tempSet.insert(std::string(component->getName()));
-        LOG_TRACE("{} -> {}", component->getName(), component->getAlias());
     }
     std::vector<std::string> temp(tempSet.begin(), tempSet.end());
     if (m_current == nullptr) {
@@ -102,7 +100,6 @@ std::set<std::string> AbstractCommandLineMenu::allMenuEntriesOf() {
     }
     std::set<std::string> temp;
     for (const auto &[str, component]: m_componentMap) {
-        temp.insert(std::string(component->getAlias()));
         temp.insert(std::string(component->getName()));
     }
     return temp;
