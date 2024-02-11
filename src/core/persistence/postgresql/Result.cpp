@@ -1,8 +1,6 @@
 
 #include "base_library/core/persistence/postgresql/Result.h"
 
-#include <base_library/core/persistence/sqlite3/Result.h>
-
 namespace postgresql {
     Result::Result(PGresult *res) : m_res(res) {
         int cols = PQntuples(m_res);

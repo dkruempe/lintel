@@ -1,13 +1,24 @@
 #include "base_library/core/persistence/Transaction.h"
 #include "base_library/features/base/repositories/HistoryRepository.h"
+#include "base_library/features/base/models/HistoryEntry.h"
+#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
+#include "base_library/core/persistence/ParameterBuilder.h"
+#include "base_library/core/persistence/Connection.h"
+#include "base_library/core/exceptions/SQLException.h"
+#include "base_library/core/services/LoggerService.h"
 
 #include "base_library/core/persistence/PreparedStatement.h"
 
+#include <chrono>
+#include <memory>
+#include <vector>
+
 HistoryRepository::HistoryRepository(
-        const std::shared_ptr<DatabaseConnectionConfigurations>
-        &databaseConnectionConfigurations)
-        : m_connectionConfigurations(databaseConnectionConfigurations),
-          m_connectionEntry(m_connectionConfigurations->ofDefault()) {}
+    const std::shared_ptr<DatabaseConnectionConfigurations>
+    &databaseConnectionConfigurations)
+    : m_connectionConfigurations(databaseConnectionConfigurations),
+      m_connectionEntry(m_connectionConfigurations->ofDefault()) {
+}
 
 std::vector<HistoryEntry> HistoryRepository::allOf() const {
     db::Connection const connection(m_connectionEntry);
@@ -21,23 +32,23 @@ std::vector<HistoryEntry> HistoryRepository::allOf() const {
       from history)",
                                             "history_all_of");
     std::vector<HistoryEntry> entries;
-    db::ParameterBuilder const builder(m_connectionEntry);
-    db::Result result = preparedStatement.execute(builder);
-    for (auto &item: result) {
-        std::string processName = item.of(0).getValue();
-        std::string serviceName = item.of(1).getValue();
-        std::string label = item.of(2).getValue();
-        std::string text = item.of(3).getValue();
+    const db::ParameterBuilder builder(m_connectionEntry);
+    const auto result = preparedStatement.execute(builder);
+    for (const auto &item: result) {
+        const std::string processName = item.of(0).getValue();
+        const std::string serviceName = item.of(1).getValue();
+        const std::string label = item.of(2).getValue();
+        const std::string text = item.of(3).getValue();
         auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds>>();
-        HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
+                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
     return entries;
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOf(
-        const std::string &label) const {
+    const std::string &label) const {
     db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
@@ -54,19 +65,71 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
     builder.add(label);
     db::Result result = preparedStatement.execute(builder);
     for (auto &item: result) {
-        std::string processName = item.of(0).getValue();
-        std::string serviceName = item.of(1).getValue();
-        std::string text = item.of(3).getValue();
+        const std::string processName = item.of(0).getValue();
+        const std::string serviceName = item.of(1).getValue();
+        const std::string text = item.of(3).getValue();
         auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds>>();
-        HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
+                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
+        entries.push_back(entry);
+    }
+    return entries;
+}
+
+std::vector<HistoryEntry> HistoryRepository::allOf(const std::string &processName, const std::string &serviceName,
+                                                   const std::string &label) const {
+    std::string statement = "";
+    switch (m_connectionEntry->getType()) {
+        case db::ConnectionType::SQLite:
+            statement = R"(
+            select process_name,
+                   service_name,
+                   label,
+                   text,
+                   created_timestamp
+            from history
+            where process_name REGEXP ?
+              and service_name REGEXP ?
+              and label REGEXP ?)";
+            break;
+        case db::ConnectionType::PostgreSQL:
+            statement = R"(
+            select process_name,
+                   service_name,
+                   label,
+                   text,
+                   created_timestamp
+            from history
+            where process_name ~* ?
+              and service_name ~* ?
+              and label ~* ?)";
+            break;
+        default:
+            throw db::SQLException("DatabaseType currently not supported");
+    }
+    db::Connection const connection(m_connectionEntry);
+    db::PreparedStatement preparedStatement(connection, statement, "history_all_process_service_label_of");
+    std::vector<HistoryEntry> entries;
+    db::ParameterBuilder builder(m_connectionEntry);
+    builder.add(processName);
+    builder.add(serviceName);
+    builder.add(label);
+    db::Result result = preparedStatement.execute(builder);
+    for (auto &item: result) {
+        const std::string processNameTemp = item.of(0).getValue();
+        const std::string serviceNameTemp = item.of(1).getValue();
+        const std::string labelTemp = item.of(2).getValue();
+        const std::string text = item.of(3).getValue();
+        auto createdTimestamp =
+                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        const HistoryEntry entry(processNameTemp, serviceNameTemp, labelTemp, text, createdTimestamp);
         entries.push_back(entry);
     }
     return entries;
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOf(
-        const std::string &processName, const std::string &serviceName) const {
+    const std::string &processName, const std::string &serviceName) const {
     db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
@@ -77,7 +140,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
               created_timestamp
       from history
       where process_name = ?
-            service_name = ?)",
+        and service_name = ?)",
                                             "history_all_process_service_of");
     std::vector<HistoryEntry> entries;
     db::ParameterBuilder builder(m_connectionEntry);
@@ -85,18 +148,18 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
     builder.add(serviceName);
     db::Result result = preparedStatement.execute(builder);
     for (auto &item: result) {
-        std::string label = item.of(2).getValue();
-        std::string text = item.of(3).getValue();
+        const std::string label = item.of(2).getValue();
+        const std::string text = item.of(3).getValue();
         auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds>>();
-        HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
+                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
     return entries;
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOfProcess(
-        const std::string &processName) const {
+    const std::string &processName) const {
     db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
@@ -113,19 +176,19 @@ std::vector<HistoryEntry> HistoryRepository::allOfProcess(
     builder.add(processName);
     db::Result result = preparedStatement.execute(builder);
     for (auto &item: result) {
-        std::string serviceName = item.of(1).getValue();
-        std::string label = item.of(2).getValue();
-        std::string text = item.of(3).getValue();
+        const std::string serviceName = item.of(1).getValue();
+        const std::string label = item.of(2).getValue();
+        const std::string text = item.of(3).getValue();
         auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds>>();
-        HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
+                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
     return entries;
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOfService(
-        const std::string &serviceName) const {
+    const std::string &serviceName) const {
     db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
@@ -142,18 +205,18 @@ std::vector<HistoryEntry> HistoryRepository::allOfService(
     builder.add(serviceName);
     db::Result result = preparedStatement.execute(builder);
     for (auto &item: result) {
-        std::string processName = item.of(0).getValue();
-        std::string label = item.of(2).getValue();
-        std::string text = item.of(3).getValue();
+        const std::string processName = item.of(0).getValue();
+        const std::string label = item.of(2).getValue();
+        const std::string text = item.of(3).getValue();
         auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds>>();
-        HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
+                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
     return entries;
 }
 
-void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) {
+void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) const {
     try {
         db::Connection const connection(m_connectionEntry);
         db::Transaction const transaction(connection);
@@ -183,9 +246,9 @@ void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) {
 }
 
 void HistoryRepository::cleanAllOlderThan(
-        date::sys_time<std::chrono::microseconds> timestamp) {
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
+    date::sys_time<std::chrono::microseconds> timestamp) const {
+    const db::Connection connection(m_connectionEntry);
+    const db::Transaction transaction(connection);
     db::PreparedStatement preparedStatement(connection, R"(
     delete from history
     where created_timestamp < ?

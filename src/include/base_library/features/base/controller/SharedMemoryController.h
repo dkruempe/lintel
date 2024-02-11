@@ -4,6 +4,7 @@
 #include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/features/base/repositories/SharedMemoryRepository.h"
 #include "base_library/features/http/service/Controller.h"
+#include "base_library/features/http/service/ContentType.h"
 
 class SharedMemoryController : public Controller {
 private:

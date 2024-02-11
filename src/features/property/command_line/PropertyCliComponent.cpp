@@ -10,7 +10,7 @@ PropertyCliComponent::PropertyCliComponent(
     // Command: show all properties
     m_commandParser.addCommand(
             Command("show_properties", "Shows all available valid properties!")
-                    .addArgument({"--proocess-name", "-p"}, &m_processName,
+                    .addArgument({"--process-name", "-p"}, &m_processName,
                                  "Process Name of property")
                     .addArgument({"--class-name", "-c"}, &m_className,
                                  "Class Name of property")

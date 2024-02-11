@@ -3,10 +3,10 @@
 
 #include <httplib.h>
 
-#include <exception>
 #include <functional>
 #include <map>
 #include <memory>
+#include <exception>
 #include <type_traits>
 
 #include "base_library/core/services/LoggerService.h"
@@ -15,6 +15,7 @@
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/http/service/ContentType.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
+
 
 #define ADD_HANDLER_METHOD(pattern, httpType, name)                           \
   Handler name##httpType##Function =                                          \
@@ -62,41 +63,46 @@ protected:
                                               const httplib::ContentReader &);
     using Handler = std::function<HandlerArgs>;
     using HandlerWithContentReader = std::function<HandlerWithContentReaderArgs>;
+
     enum HttpType {
-        Get, Put, Post, Delete
+        Get,
+        Put,
+        Post,
+        Delete
     };
+
     struct Method {
         const std::string m_pattern;
         std::shared_ptr<Handler> m_handler;
         std::shared_ptr<HandlerWithContentReader> m_handlerWithContentReader;
     };
 
-    std::map<HttpType, std::vector<Method>> m_methods;
+    std::map<HttpType, std::vector<Method> > m_methods;
 
     template<class Type, HttpType httpType>
     Type addMethod(const std::string &pattern, Type handler) {
-        auto found = m_methods.find(httpType);
+        const auto found = m_methods.find(httpType);
         // I check if all limitations of library are checked
         // a) Get / HandlerWithContentReader not supported => abort
         // compilation
         static_assert(
-                httpType != Get || !std::is_same<Type, HandlerWithContentReader>::value,
-                "Get and HandlerWithContentReader is not supported");
+            httpType != Get || !std::is_same_v<Type, HandlerWithContentReader>,
+            "Get and HandlerWithContentReader is not supported");
         // b) type has to be Handler or HandlerWithContentReader
-        static_assert(std::is_same<Type, Handler>::value ||
-                      std::is_same<Type, HandlerWithContentReader>::value,
+        static_assert(std::is_same_v<Type, Handler> ||
+                      std::is_same_v<Type, HandlerWithContentReader>,
                       "Invalid method type! Pleas use Handler or "
                       "HandlerWithContentReader");
         // II create method
-        if constexpr (std::is_same<Type, Handler>::value) {
-            Method method{pattern, std::make_shared<Type>(handler), nullptr};
+        if constexpr (std::is_same_v<Type, Handler>) {
+            const Method method{pattern, std::make_shared<Type>(handler), nullptr};
             if (found != m_methods.end()) {
                 found->second.push_back(method);
             } else {
                 m_methods.insert({httpType, std::vector<Method>{method}});
             }
-        } else if constexpr (std::is_same<Type, HandlerWithContentReader>::value) {
-            Method method{pattern, nullptr, std::make_shared<Type>(handler)};
+        } else if constexpr (std::is_same_v<Type, HandlerWithContentReader>) {
+            const Method method{pattern, nullptr, std::make_shared<Type>(handler)};
             if (found != m_methods.end()) {
                 found->second.push_back(method);
             } else {
@@ -109,7 +115,8 @@ protected:
 public:
     // default constructor / destructor
     explicit Controller(std::shared_ptr<AuthService> authService)
-            : GroupProvider(), m_authService(std::move(authService)) {}
+        : GroupProvider(), m_authService(std::move(authService)) {
+    }
 
     ~Controller() override = default;
 

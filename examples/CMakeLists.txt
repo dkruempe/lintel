@@ -16,6 +16,11 @@ target_compile_features(playground PUBLIC cxx_std_17)
 target_include_directories(playground PRIVATE ${magic_enum_INCLUDE_DIRS})
 target_link_libraries(playground PRIVATE date::date kruempelmann::base_library)
 
+add_executable(db db.cpp)
+target_compile_features(db PUBLIC cxx_std_17)
+target_include_directories(db PRIVATE ${magic_enum_INCLUDE_DIRS} kruempelmann::base_library)
+target_link_libraries(db PRIVATE date::date kruempelmann::base_library)
+
 # named_pipe_server example
 add_executable(named_pipe_server named_pipe_server.cpp)
 target_compile_features(named_pipe_server PUBLIC cxx_std_17)

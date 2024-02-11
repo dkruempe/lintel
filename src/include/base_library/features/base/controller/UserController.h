@@ -4,6 +4,7 @@
 #include "base_library/features/base/repositories/UserRepository.h"
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/http/service/Controller.h"
+#include "base_library/features/http/service/ContentType.h"
 
 class UserController : public Controller {
 private:

@@ -19,16 +19,19 @@ public:
 
     [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &processName,
                                                   const std::string &serviceName) const;
+    [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &processName,
+                                                  const std::string &serviceName,
+                                                  const std::string &label) const;
 
     [[nodiscard]] std::vector<HistoryEntry> allOfProcess(const std::string &processName) const;
 
     [[nodiscard]] std::vector<HistoryEntry> allOfService(const std::string &serviceName) const;
 
     // insert
-    void insertOf(const std::vector<HistoryEntry> &entries);
+    void insertOf(const std::vector<HistoryEntry> &entries) const;
 
     // delete
-    void cleanAllOlderThan(date::sys_time<std::chrono::microseconds> timestamp);
+    void cleanAllOlderThan(date::sys_time<std::chrono::microseconds> timestamp) const;
 
     explicit HistoryRepository(const std::shared_ptr<DatabaseConnectionConfigurations>
                                &databaseConnectionConfigurations);

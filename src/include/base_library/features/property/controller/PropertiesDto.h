@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_PROPERTIESDTO_H
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "base_library/core/models/JsonSerializable.h"

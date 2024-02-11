@@ -46,10 +46,10 @@ namespace db {
     Result PreparedStatement::execute(const ParameterBuilder &builder) {
         switch (m_connection.m_connectionType) {
             case ConnectionType::SQLite:
-                m_preparedStatementSQLite->execute(builder.build());
+                return Result(m_preparedStatementSQLite->execute(builder.build()));
                 break;
             case ConnectionType::PostgreSQL:
-                m_preparedStatement->execute(builder.build());
+                return Result(m_preparedStatement->execute(builder.build()));
                 break;
             case ConnectionType::UNDEFINED:
                 throw db::SQLException("Undefined Database Type");

@@ -10,6 +10,7 @@
 #include "base_library/core/services/PersistableService.h"
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/core/services/SharedMemoryService.h"
+#include "base_library/features/base/command_line/HistoryCliComponent.h"
 #include "base_library/features/base/command_line/ProcessCliComponent.h"
 #include "base_library/features/base/command_line/UserManagementCliComponent.h"
 #include "base_library/features/base/controller/ProcessApi.h"
@@ -25,13 +26,16 @@
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/HistoryService.h"
+#include "base_library/features/base/controller/HistoryController.h"
+#include "base_library/features/base/controller/HistoryApi.h"
 #include "base_library/features/base/services/InitializeService.h"
 #include "base_library/features/base/services/MessageQueueService.h"
 #include "base_library/features/base/services/ProcessArgumentService.h"
 #include "base_library/features/base/services/SchedulerService.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
-BaseFeature::BaseFeature(std::shared_ptr<Features> features) : Feature(Features::Base, std::move(features)) {}
+BaseFeature::BaseFeature(std::shared_ptr<Features> features) : Feature(Features::Base, std::move(features)) {
+}
 
 void BaseFeature::initialize(std::shared_ptr<Hypodermic::Container> container) {
 }
@@ -110,6 +114,16 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
     builder.registerType<HistoryRepository>().singleInstance();
     builder.registerType<HistoryService>()
             .as<AbstractServiceInterface>()
+            .asSelf()
+            .singleInstance();
+    builder.registerType<HistoryCliComponent>()
+            .as<CommandLineComponent>()
+            .asSelf()
+            .singleInstance();
+    builder.registerType<HistoryApi>().singleInstance();
+    builder.registerType<HistoryController>()
+            .as<Controller>()
+            .as<GroupProvider>()
             .asSelf()
             .singleInstance();
     builder.registerType<MessageQueueService>()
