@@ -12,13 +12,18 @@ SharedMemoryType SharedMemoryRepositoryDto::getType() const { return m_type; }
 
 size_t SharedMemoryRepositoryDto::getSize() const { return m_size; }
 
+const std::string &SharedMemoryRepositoryDto::getUuid() const {
+    return m_uuid;
+}
+
 int32_t SharedMemoryRepositoryDto::getCurrentVersion() const {
     return m_currentVersion;
 }
 
 SharedMemoryRepositoryDto::SharedMemoryRepositoryDto(
         const SharedMemoryRepository &repository)
-        : m_name(repository.getSharedMemoryRepository()),
+        : m_uuid(repository.getUuid()),
+          m_name(repository.getSharedMemoryRepository()),
           m_segmentName(repository.getSharedMemorySegment()->getName()),
           m_type(repository.getType()),
           m_size(repository.getSizeOfData()),
@@ -27,6 +32,9 @@ SharedMemoryRepositoryDto::SharedMemoryRepositoryDto(
 void SharedMemoryRepositoryDto::serialize(
         rapidjson::Writer<rapidjson::StringBuffer> *writer) const {
     writer->StartObject();
+    // UUID
+    writer->String(m_shape.UUID.c_str());
+    writer->String(m_uuid.c_str());
     // NAME
     writer->String(m_shape.NAME.c_str());
     writer->String(m_name.c_str());
@@ -47,6 +55,13 @@ void SharedMemoryRepositoryDto::serialize(
 
 bool SharedMemoryRepositoryDto::deserialize(const rapidjson::Value &obj) {
     bool success = true;
+    // UUID
+    if (obj.HasMember(m_shape.UUID.c_str())) {
+        m_uuid = obj[m_shape.UUID.c_str()].GetString();
+    } else {
+        success = false;
+        LOG_ERROR("{} not defined in json serialization", m_shape.UUID);
+    }
     // NAME
     if (obj.HasMember(m_shape.NAME.c_str())) {
         m_name = obj[m_shape.NAME.c_str()].GetString();

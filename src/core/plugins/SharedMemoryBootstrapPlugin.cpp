@@ -1,6 +1,11 @@
 #include "base_library/core/plugins/SharedMemoryBootstrapPlugin.h"
+#include "base_library/core/persistence/ParameterBuilder.h"
+#include "base_library/core/models/BootstrapSequence.h"
 
 #include <tuple>
+#include <map>
+#include <string>
+#include <utility>
 
 #include "base_library/core/persistence/Connection.h"
 #include "base_library/core/persistence/PreparedStatement.h"
@@ -21,46 +26,38 @@ BootstrapSequence SharedMemoryBootstrapPlugin::getPriority() {
 }
 
 void SharedMemoryBootstrapPlugin::onStart() {
-    std::map<std::tuple<std::string, std::string, std::string>,
+    std::map<std::string,
             std::shared_ptr<SharedMemoryRepository>>
             temp;
 
     for (const auto &sharedMemoryRepository: m_sharedMemoryRepositories) {
         temp.insert(
-                {{sharedMemoryRepository->getSharedMemorySegment()->getName(),
-                  sharedMemoryRepository->getTypeName(),
-                  std::string(sharedMemoryRepository->getSharedMemoryRepository())},
+                {sharedMemoryRepository->getUuid(),
                  sharedMemoryRepository});
     }
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
+    db::Connection const connection(m_connectionEntry);
+    db::Transaction const transaction(connection);
     db::Statement statement(connection);
     auto result = statement.execute(R"(
-  select shared_memory_segment,
+  select uuid,
+         shared_memory_segment,
          shared_memory_type,
          shared_memory_repository,
          current_version,
          current_data_size
   from shared_memory_repositories)");
-    std::map<std::tuple<std::string, std::string, std::string>, int32_t> resTemp;
+    std::map<std::string, int32_t> resTemp;
     for (const auto &iter: result) {
-        std::string segmentName = iter.of(0).getValue();
-        std::string type = iter.of(1).getValue();
-        std::string repositoryName = iter.of(2).getValue();
-        resTemp.insert({{segmentName, type, repositoryName}, -1});
+        std::string uuid = iter.of(0).getValue<std::string>();
+        resTemp.insert({uuid, -1});
         try {
-            auto currentVersion = iter.of(3).getValue<int32_t>();
-            auto currentDataSize = iter.of(4).getValue<std::size_t>();
-            const auto &repository = temp.at({segmentName, type, repositoryName});
+            auto currentVersion = iter.of(4).getValue<int32_t>();
+            auto currentDataSize = iter.of(5).getValue<std::size_t>();
+            const auto &repository = temp.at({uuid});
             if (currentVersion != repository->getCodeVersion()) {
                 // ERROR
                 throw std::runtime_error(
-                        segmentName.append("/")
-                                .append(segmentName)
-                                .append("/")
-                                .append(type)
-                                .append("/")
-                                .append(repositoryName)
+                        uuid
                                 .append(": currentVersion(")
                                 .append(std::to_string(currentVersion))
                                 .append(") != ")
@@ -71,12 +68,7 @@ void SharedMemoryBootstrapPlugin::onStart() {
             if (currentDataSize != repository->getSizeOfData()) {
                 // ERROR
                 throw std::runtime_error(
-                        segmentName.append("/")
-                                .append(segmentName)
-                                .append("/")
-                                .append(type)
-                                .append("/")
-                                .append(repositoryName)
+                        uuid
                                 .append(": currentDataSize(")
                                 .append(std::to_string(currentDataSize))
                                 .append(") != ")
@@ -85,27 +77,14 @@ void SharedMemoryBootstrapPlugin::onStart() {
                                 .append(")"));
             }
         } catch (std::out_of_range &exception) {
-            LOG_ERROR("{}/{}/{} found with not SharedMemoryRepository => delete",
-                      segmentName, type, repositoryName);
-            db::ParameterBuilder builder(m_connectionEntry);
-            builder.add(segmentName);
-            builder.add(type);
-            builder.add(repositoryName);
-            statement.execute(R"(
-      delete from shared_memory_repositories
-      where shared_memory_segment = ?
-        and shared_memory_repository = ?
-        and shared_memory_type = ?)",
-                              builder);
-        };
+            LOG_WARN("{} found with not SharedMemoryRepository => delete ?", uuid);
+        }
     }
     for (const auto &sharedMemoryRepository: m_sharedMemoryRepositories) {
-        auto found = resTemp.find(
-                {sharedMemoryRepository->getSharedMemorySegment()->getName(),
-                 sharedMemoryRepository->getTypeName(),
-                 std::string(sharedMemoryRepository->getSharedMemoryRepository())});
+        auto found = resTemp.find(sharedMemoryRepository->getUuid());
         if (found == resTemp.end()) {
             db::ParameterBuilder builder(m_connectionEntry);
+            builder.add<std::string>(sharedMemoryRepository->getUuid());
             builder.add<std::string>(
                     sharedMemoryRepository->getSharedMemorySegment()->getName());
             builder.add<std::string>(sharedMemoryRepository->getTypeName());
@@ -115,12 +94,13 @@ void SharedMemoryBootstrapPlugin::onStart() {
             builder.add<std::size_t>(sharedMemoryRepository->getSizeOfData());
             statement.execute(R"(
       insert into shared_memory_repositories (
+        uuid,
         shared_memory_segment,
         shared_memory_type,
         shared_memory_repository,
         current_version,
         current_data_size)
-      values(?, ?, ?, ?, ?)
+      values(?, ?, ?, ?, ?, ?)
       )",
                               builder);
         }

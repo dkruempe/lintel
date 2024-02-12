@@ -1,14 +1,19 @@
 #ifndef CPP_BASE_LIBRARY_MESSAGEQUEUE_H
 #define CPP_BASE_LIBRARY_MESSAGEQUEUE_H
 
+#include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/ipc/message_queue.hpp>
+#include <cstdint>
 #include <optional>
+#include <string>
+
+#include <utility>
 
 /**
  * MessageQueue wrapper class for boost::interprocess::message
  * - wraps boost::interprocess::message_queue class
  * - send/trySend sends message in blocking (full) or non blocking way
- * - receive/tryReceivie receives message in blocking or non blocking way
+ * - receive/tryReceive receives message in blocking or non blocking way
  * - removeOf removes total message and doesn't reset message queue
  * @tparam T object for receive/send
  */
@@ -31,7 +36,7 @@ public:
         boost::interprocess::message_queue::remove(messageQueueName.c_str());
     }
 
-    const bool isOwner() const {
+    [[nodiscard]] bool isOwner() const {
         return m_processName == m_realProcessName->getProcessName();
     }
 

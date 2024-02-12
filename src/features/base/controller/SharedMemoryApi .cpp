@@ -96,12 +96,11 @@ void SharedMemoryApi::growOf(const std::string &segmentName,
     LOG_TRACE("successfully shrinking segment {}", segmentName);
 }
 
-std::string SharedMemoryApi::repositoryOf(const std::string &repositoryName, const std::string &segmentName,
-                                          const std::string &type) {
+std::string SharedMemoryApi::repositoryOf(const std::string &uuid) {
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     const httplib::Result &result =
-            m_client->get("/shm/repository/" + repositoryName + "/segment/" + segmentName + "/type/" + type, headers);
+            m_client->get("/shm/repository/" + uuid, headers);
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
@@ -112,7 +111,7 @@ std::string SharedMemoryApi::repositoryOf(const std::string &repositoryName, con
             LOG_ERROR("error {}", status.getCode());
             return "";
     }
-    LOG_TRACE("successfully export repository {} -> {}", repositoryName,
+    LOG_TRACE("successfully export repository {} -> {}", uuid,
               result->body);
     return result->body;
 }

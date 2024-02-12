@@ -20,6 +20,7 @@ private:
     std::size_t m_sizeOfData;
     std::string m_sharedMemoryRepository;
     int32_t m_codeVersion;
+    std::string m_uuid;
 
 protected:
     template<typename TYPE>
@@ -33,7 +34,7 @@ public:
     SharedMemoryRepository(
             std::shared_ptr<SharedMemorySegment> sharedMemorySegment,
             std::size_t sizeOfData, std::string_view sharedMemoryRepository,
-            int32_t codeVersion);
+            int32_t codeVersion, std::string uuid);
 
     [[nodiscard]] const std::shared_ptr<SharedMemorySegment>
     &getSharedMemorySegment() const;
@@ -43,6 +44,8 @@ public:
     [[nodiscard]] const std::string &getSharedMemoryRepository() const;
 
     [[nodiscard]] int32_t getCodeVersion() const;
+
+    [[nodiscard]] const std::string &getUuid() const;
 
     [[nodiscard]] virtual SharedMemoryType getType() const = 0;
 
@@ -77,9 +80,9 @@ protected:
 public:
     SharedMemoryArrayRepository(
             const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
-            const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
+            const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
-                                     std::string(type_name<DATA>()), codeVersion),
+                                     std::string(type_name<DATA>()), codeVersion, uuid),
               m_array(sharedMemoryService->constructArray<DATA, MaxSize>(
                       segment, getSharedMemoryRepository())),
               m_sharedMemoryService(sharedMemoryService) {}
@@ -131,9 +134,9 @@ protected:
 public:
     SharedMemoryVectorRepository(
             const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
-            const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
+            const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
-                                     std::string(type_name<DATA>()), codeVersion),
+                                     std::string(type_name<DATA>()), codeVersion, uuid),
               m_vector(sharedMemoryService->constructVector<DATA>(
                       segment, getSharedMemoryRepository())),
               m_sharedMemoryService(sharedMemoryService) {}
@@ -186,10 +189,10 @@ protected:
 public:
     SharedMemoryMapRepository(
             const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
-            const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion,
+            const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid,
             int32_t sizeOfData = sizeof(VALUE))
             : SharedMemoryRepository(segment, sizeOfData,
-                                     std::string(type_name<VALUE>()), codeVersion),
+                                     std::string(type_name<VALUE>()), codeVersion, uuid),
               m_map(sharedMemoryService->constructMap<KEY, VALUE>(
                       segment, getSharedMemoryRepository())),
               m_sharedMemoryService(sharedMemoryService) {
@@ -254,9 +257,9 @@ protected:
 public:
     SharedMemoryObjectRepository(
             const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
-            const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion)
+            const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
-                                     std::string(type_name<DATA>()), codeVersion),
+                                     std::string(type_name<DATA>()), codeVersion, uuid),
               m_data(sharedMemoryService->constructObject<DATA>(
                       segment, getSharedMemoryRepository())),
               m_sharedMemoryService(sharedMemoryService) {}

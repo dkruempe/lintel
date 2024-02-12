@@ -30,6 +30,7 @@ private:
     std::optional<std::string> m_repositoryName;
     std::optional<std::string> m_type;
     std::optional<std::string> m_file;
+    std::optional<std::string> m_uuid;
 
     CommandParser<Commands, Undefined> m_commandParser;
 
