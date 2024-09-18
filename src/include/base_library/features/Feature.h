@@ -26,9 +26,10 @@ protected:
     std::string_view m_name;
 
 public:
-    Feature(T type, std::shared_ptr<Features> features) : m_name(std::string(magic_enum::enum_name(type))), m_features(std::move(features)) {
+    Feature(T type, std::shared_ptr<Features> features) : m_name(std::string(magic_enum::enum_name(type))),
+                                                          m_features(std::move(features)) {
         m_features->registerFeature(type, [&](Hypodermic::ContainerBuilder &builder) { registerTypes(builder); },
-                                   [&](std::shared_ptr<Hypodermic::Container> container) { initialize(container); });
+                                    [&](std::shared_ptr<Hypodermic::Container> container) { initialize(container); });
     }
 
     virtual ~Feature() = default;

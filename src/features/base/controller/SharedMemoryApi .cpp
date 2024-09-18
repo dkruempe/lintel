@@ -30,7 +30,7 @@ std::vector<SharedMemorySegmentDto> SharedMemoryApi::allSegmentsOf(
     SharedMemorySegmentsDto sharedMemorySegmentsDto;
     try {
         sharedMemorySegmentsDto.deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return sharedMemorySegmentsDto.getSegments();
@@ -72,7 +72,7 @@ std::vector<SharedMemoryRepositoryDto> SharedMemoryApi::allRepositoriesOf(
     SharedMemoryRepositoriesDto sharedMemoryRepositoriesDto;
     try {
         sharedMemoryRepositoriesDto.deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return sharedMemoryRepositoriesDto.getRepositories();

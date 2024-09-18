@@ -104,9 +104,9 @@ std::vector<Argument> ProcessArgumentService::initArgs(
     std::vector<Argument> args;
     for (const auto &item: vector) {
         const auto &vec = item->provide();
-        for (const auto &iter: vec) {
-            args.push_back(iter);
-        }
+        std::transform(vec.begin(), vec.end(), std::back_inserter(args), [](const Argument &argument)  {
+          return argument;
+        });
     }
     return args;
 }

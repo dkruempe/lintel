@@ -53,10 +53,10 @@ std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
 
 void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
     m_featureVec.erase(std::remove_if(m_featureVec.begin(), m_featureVec.end(),
-                                    [&nameOfFeature](auto &&feature) -> bool {
-                                        return feature->getName() == nameOfFeature;
-                                    }),
-                     m_featureVec.end());
+                                      [&nameOfFeature](auto &&feature) -> bool {
+                                          return feature->getName() == nameOfFeature;
+                                      }),
+                       m_featureVec.end());
 }
 
 void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment, std::string value) {
@@ -103,7 +103,6 @@ void StartupBuilder::start() {
     initializeService->onInitialize();
     LOG_INFO("{} finished initialization", m_name->getProcessName());
     // IX wait for signal to shutdown
-    std::mutex mutex;
     std::unique_lock<std::mutex> lock(mutex);
     m_conditionVariable.wait(lock, [&]() -> bool { return m_stop; });
 }

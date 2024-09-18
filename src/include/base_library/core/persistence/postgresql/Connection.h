@@ -33,7 +33,7 @@ namespace postgresql {
 
         friend class Notify;
 
-        [[nodiscard]] std::shared_ptr<Result> execute(
+        std::shared_ptr<Result> execute(
                 const std::string &statement) const;
 
         [[nodiscard]] std::shared_ptr<Result> executeParameters(

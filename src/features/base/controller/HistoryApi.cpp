@@ -5,7 +5,7 @@
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
 HistoryApi::HistoryApi(const std::shared_ptr<ClientProvider> &clientProvicer)
-    : m_client(clientProvicer->provide()) {
+        : m_client(clientProvicer->provide()) {
 }
 
 std::vector<HistoryDto> HistoryApi::allOf(const std::string &processName, const std::string &serviceName,
@@ -13,7 +13,7 @@ std::vector<HistoryDto> HistoryApi::allOf(const std::string &processName, const 
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     const auto &result = m_client->get("/history/" + processName + "/" + serviceName + "/" + label, headers);
-         HttpStatusCodes const status(result->status);
+    HttpStatusCodes const status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
             throw HttpUnauthorizedException();

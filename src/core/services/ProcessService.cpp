@@ -266,8 +266,7 @@ bool ProcessService::stopOf(const Process &process) {
                  process.getPath().filename().string(),
                  processExecutes.getChild()->id());
         std::condition_variable cond;
-        std::mutex mutex;
-        std::unique_lock lock(mutex);
+        std::unique_lock lock(m_conditionMutex);
         bool ret = cond.wait_for(
                 lock, m_processStopWaitTime->getValue(),
                 [&]() -> bool { return !processExecutes.getChild()->running(); });

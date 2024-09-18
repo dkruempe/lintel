@@ -1,5 +1,6 @@
 #ifndef HISTORYDTOS_H
 #define HISTORYDTOS_H
+
 #include <vector>
 #include "HistoryDto.h"
 #include "base_library/core/models/JsonSerializable.h"
@@ -19,7 +20,7 @@ public:
 
 
     void serialize(
-        rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
 
     void deserialize(const std::string &json) override;
 };

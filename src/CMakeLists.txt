@@ -57,7 +57,7 @@ target_include_directories(base_library
         SYSTEM PUBLIC
         "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${rapidjson_INCLUDE_DIRS_DEBUG};${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${rapidjson_INCLUDE_DIRS_DEBUG};include>"
-        )
+)
 target_link_libraries(base_library PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
         Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib ${rapidjson_LIBRARIES_DEBUG} date::date spdlog::spdlog_header_only
         kruempelmann::Hypodermic Boost::boost Boost::headers PRIVATE project_warnings)

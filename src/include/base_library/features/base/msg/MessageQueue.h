@@ -52,6 +52,10 @@ public:
         return m_msgCount;
     }
 
+    [[nodiscard]] int32_t numberMessagesOf() const {
+        return m_messageQueue.get_num_msg();
+    }
+
     /**
      * constructor of message queue
      *

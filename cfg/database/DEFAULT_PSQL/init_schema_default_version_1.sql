@@ -61,3 +61,10 @@ CREATE TABLE public.shared_memory_repositories
     current_data_size        INTEGER NOT NULL,
     CONSTRAINT shared_memory_repositories_pk PRIMARY KEY (uuid)
 );
+CREATE TABLE message_queues
+(
+    name          text    NOT NULL,
+    process_name  text    NOT NULL,
+    max_messages  INTEGER NOT NULL,
+    CONSTRAINT message_queues_pk PRIMARY KEY (name)
+);

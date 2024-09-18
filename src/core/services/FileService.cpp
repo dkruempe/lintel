@@ -2,6 +2,7 @@
 
 #include "base_library/core/exceptions/FileServiceFileExists.h"
 #include "base_library/core/exceptions/FileServiceIsNotFileException.h"
+#include <streambuf>
 
 FileService::Stream::Stream(const std::filesystem::path &path)
         : m_file(path.string()) {}
@@ -84,8 +85,11 @@ void FileService::createFile(std::size_t sizeOfFile) {
         throw FileServiceFileExists(m_path);
     }
     std::filebuf fbuf;
-    fbuf.open(m_path, std::ios_base::in | std::ios_base::out |
-                      std::ios_base::trunc | std::ios_base::binary);
+    auto result = fbuf.open(m_path, std::ios_base::in | std::ios_base::out |
+                                    std::ios_base::trunc | std::ios_base::binary);
+    if (result->is_open()) {
+        throw new std::runtime_error("File is not able to be opened");
+    }
     // Set the size
     fbuf.pubseekoff(static_cast<long long>(sizeOfFile - 1), std::ios_base::beg);
     fbuf.sputc(0);

@@ -14,10 +14,10 @@
 #include <vector>
 
 HistoryRepository::HistoryRepository(
-    const std::shared_ptr<DatabaseConnectionConfigurations>
-    &databaseConnectionConfigurations)
-    : m_connectionConfigurations(databaseConnectionConfigurations),
-      m_connectionEntry(m_connectionConfigurations->ofDefault()) {
+        const std::shared_ptr<DatabaseConnectionConfigurations>
+        &databaseConnectionConfigurations)
+        : m_connectionConfigurations(databaseConnectionConfigurations),
+          m_connectionEntry(m_connectionConfigurations->ofDefault()) {
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOf() const {
@@ -48,7 +48,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf() const {
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOf(
-    const std::string &label) const {
+        const std::string &label) const {
     db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
@@ -129,7 +129,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(const std::string &processNam
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOf(
-    const std::string &processName, const std::string &serviceName) const {
+        const std::string &processName, const std::string &serviceName) const {
     db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
@@ -159,7 +159,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOfProcess(
-    const std::string &processName) const {
+        const std::string &processName) const {
     db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
@@ -188,7 +188,7 @@ std::vector<HistoryEntry> HistoryRepository::allOfProcess(
 }
 
 std::vector<HistoryEntry> HistoryRepository::allOfService(
-    const std::string &serviceName) const {
+        const std::string &serviceName) const {
     db::Connection const connection(m_connectionEntry);
     db::PreparedStatement preparedStatement(connection,
                                             R"(
@@ -246,7 +246,7 @@ void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) const
 }
 
 void HistoryRepository::cleanAllOlderThan(
-    date::sys_time<std::chrono::microseconds> timestamp) const {
+        date::sys_time<std::chrono::microseconds> timestamp) const {
     const db::Connection connection(m_connectionEntry);
     const db::Transaction transaction(connection);
     db::PreparedStatement preparedStatement(connection, R"(

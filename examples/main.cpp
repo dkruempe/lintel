@@ -323,7 +323,7 @@ private:
     std::shared_ptr<ShmVec> m_shmVec;
 
 public:
-    TestFeature(std::shared_ptr<Features> features) : Feature(TestEnum::Test, std::move(features)) {}
+    explicit TestFeature(std::shared_ptr<Features> features) : Feature(TestEnum::Test, std::move(features)) {}
 
     void registerTypes(Hypodermic::ContainerBuilder &builder) override {
         builder.registerType<ShmVec>()

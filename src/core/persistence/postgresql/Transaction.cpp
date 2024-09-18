@@ -37,8 +37,7 @@ namespace postgresql {
         if (m_finished) {
             throw db::SQLException("Transaction is finished and not available anymore");
         }
-        std::shared_ptr<Result> result = m_connection.execute(
-                "SAVEPOINT " + savepoint);  // saves current state of transaction
+        m_connection.execute("SAVEPOINT " + savepoint);  // saves current state of transaction
     }
 
     void Transaction::rollback() {
@@ -54,8 +53,7 @@ namespace postgresql {
         if (m_finished) {
             throw db::SQLException("Transaction is finished and not available anymore");
         }
-        std::shared_ptr<Result> result =
-                m_connection.execute("ROLLBACK TO " + savepoint);
+        m_connection.execute("ROLLBACK TO " + savepoint);
     }
 
     Transaction::~Transaction() {

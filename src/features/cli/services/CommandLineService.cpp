@@ -157,9 +157,9 @@ void CommandLineService::run() {
                     } else {
                         commands = m_commandParser.allCommandsOf();
                         auto vec = m_menu.allCommandsOf();
-                        for (const auto &iter: vec) {
-                            commands.push_back(iter);
-                        }
+                        std::transform(vec.begin(), vec.end(), std::back_inserter(commands), [](const std::string &iter) {
+                          return iter;
+                        });
                     }
                     commands.erase(
                             std::remove_if(commands.begin(), commands.end(),

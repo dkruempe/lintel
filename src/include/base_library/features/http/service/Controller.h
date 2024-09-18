@@ -18,6 +18,9 @@
 
 
 #define ADD_HANDLER_METHOD(pattern, httpType, name)                           \
+  void name##httpType(                                                        \
+      const httplib::Request &request, httplib::Response &response,           \
+      const ContentType &contentType, const std::optional<UserToken> &user);  \
   Handler name##httpType##Function =                                          \
       addMethod<std::function<HandlerArgs>, httpType>(                        \
           pattern,                                                            \
@@ -34,10 +37,8 @@
               user = m_authService->onAccessOf(userTokenLogin);               \
             }                                                                 \
             name##httpType(request, response, contentType, user);             \
-          });                                                                 \
-  void name##httpType(                                                        \
-      const httplib::Request &request, httplib::Response &response,           \
-      const ContentType &contentType, const std::optional<UserToken> &user)
+          })
+
 #define ADD_HANDLER_CONTENT_READER_METHOD(pattern, httpType, name)          \
   HandlerWithContentReader name##httpType##Function =                       \
       addMethod<std::function<HandlerWithContentReaderArgs>, httpType>(     \

@@ -65,11 +65,10 @@ public:
      * @return messages
      */
     [[nodiscard]] std::vector<std::string> read(int maxMessages = 100) const {
-        ssize_t numBytes = 1;
         std::vector<std::string> messages;
         while (messages.size() < maxMessages) {
             std::vector<char> sizeVec(17);
-            numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
+            ssize_t numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
             if (numBytes == 0) {
                 continue;
             }
@@ -104,10 +103,9 @@ public:
      * @param onMessage call back function
      */
     void read(std::function<void(std::string)> &&onMessage) const {
-        ssize_t numBytes = 1;
         while (true) {
             std::vector<char> sizeVec(17);
-            numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
+            ssize_t numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
             if (numBytes == 0) {
                 continue;
             }

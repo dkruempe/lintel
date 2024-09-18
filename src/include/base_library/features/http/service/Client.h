@@ -16,7 +16,7 @@ private:
     static std::shared_ptr<httplib::SSLClient> buildSslClient(
             const std::shared_ptr<ClientConfiguration> &clientConfiguration);
 
-    bool isSslClient();
+    bool isSslClient() const;
 
 public:
     explicit Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration);
@@ -24,209 +24,209 @@ public:
     ~Client();
 
     [[maybe_unused]] void setBasicAuth(const std::string &userName,
-                                       const std::string &password);
+                                       const std::string &password) const;
 
     [[maybe_unused]] void setDigestAuth(const std::string &userName,
-                                        const std::string &password);
+                                        const std::string &password) const;
 
-    [[maybe_unused]] void setBearerTokenAuth(const std::string &token);
+    [[maybe_unused]] void setBearerTokenAuth(const std::string &token) const;
 
-    [[maybe_unused]] httplib::Result get(std::string_view path);
-
-    [[maybe_unused]] httplib::Result get(std::string_view path,
-                                         const httplib::Headers &headers);
+    [[maybe_unused]] httplib::Result get(std::string_view path) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
-                                         httplib::Progress progress);
+                                         const httplib::Headers &headers) const;
+
+    [[maybe_unused]] httplib::Result get(std::string_view path,
+                                         httplib::Progress progress) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
                                          const httplib::Headers &headers,
-                                         httplib::Progress progress);
+                                         httplib::Progress progress) const;
 
     [[maybe_unused]] httplib::Result get(
-            std::string_view path, httplib::ContentReceiver contentReceiver);
+            std::string_view path, httplib::ContentReceiver contentReceiver) const;
 
     [[maybe_unused]] httplib::Result get(
             std::string_view path, const httplib::Headers &headers,
-            httplib::ContentReceiver contentReceiver);
+            httplib::ContentReceiver contentReceiver) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
                                          httplib::ContentReceiver contentReceiver,
-                                         httplib::Progress progress);
+                                         httplib::Progress progress) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
                                          const httplib::Headers &headers,
                                          httplib::ContentReceiver contentReceiver,
-                                         httplib::Progress progress);
+                                         httplib::Progress progress) const;
 
     [[maybe_unused]] httplib::Result get(
             std::string_view path, httplib::ResponseHandler responseHandler,
-            httplib::ContentReceiver contentReceiver);
+            httplib::ContentReceiver contentReceiver) const;
 
     [[maybe_unused]] httplib::Result get(
             std::string_view path, const httplib::Headers &headers,
             httplib::ResponseHandler responseHandler,
-            httplib::ContentReceiver contentReceiver);
+            httplib::ContentReceiver contentReceiver) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
                                          httplib::ResponseHandler responseHandler,
                                          httplib::ContentReceiver contentReceiver,
-                                         httplib::Progress progress);
+                                         httplib::Progress progress) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
                                          const httplib::Headers &headers,
                                          httplib::ResponseHandler responseHandler,
                                          httplib::ContentReceiver contentReceiver,
-                                         httplib::Progress progress);
+                                         httplib::Progress progress) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
                                          const httplib::Params &params,
                                          const httplib::Headers &headers,
-                                         httplib::Progress progress = nullptr);
+                                         httplib::Progress progress = nullptr) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
                                          const httplib::Params &params,
                                          const httplib::Headers &headers,
                                          httplib::ContentReceiver contentReceiver,
-                                         httplib::Progress progress = nullptr);
+                                         httplib::Progress progress = nullptr) const;
 
     [[maybe_unused]] httplib::Result get(std::string_view path,
                                          const httplib::Params &params,
                                          const httplib::Headers &headers,
                                          httplib::ResponseHandler responseHandler,
                                          httplib::ContentReceiver contentReceiver,
-                                         httplib::Progress progress = nullptr);
+                                         httplib::Progress progress = nullptr) const;
 
-    [[maybe_unused]] httplib::Result post(std::string_view path);
+    [[maybe_unused]] httplib::Result post(std::string_view path) const;
 
     [[maybe_unused]] httplib::Result post(std::string_view path, const char *body,
                                           size_t contentLength,
-                                          const char *contentType);
+                                          const char *contentType) const;
 
     [[maybe_unused]] httplib::Result post(std::string_view path,
                                           const httplib::Headers &headers,
                                           const char *body, size_t contentLength,
-                                          const char *contentType);
+                                          const char *contentType) const;
 
     [[maybe_unused]] httplib::Result post(std::string_view path,
                                           const std::string &body,
-                                          const char *contentType);
+                                          const char *contentType) const;
 
     [[maybe_unused]] httplib::Result post(std::string_view path,
                                           const httplib::Headers &headers,
                                           const std::string &body,
-                                          const char *contentType);
+                                          const char *contentType) const;
 
     [[maybe_unused]] httplib::Result post(
             std::string_view path, size_t contentLength,
-            httplib::ContentProvider contentProvider, const char *contentType);
+            httplib::ContentProvider contentProvider, const char *contentType) const;
 
     [[maybe_unused]] httplib::Result post(
             std::string_view path,
             httplib::ContentProviderWithoutLength contentProvider,
-            const char *contentType);
+            const char *contentType) const;
 
     [[maybe_unused]] httplib::Result post(
             std::string_view path, const httplib::Headers &headers,
             size_t contentLength, httplib::ContentProvider contentProvider,
-            const char *contentType);
+            const char *contentType) const;
 
     [[maybe_unused]] httplib::Result post(
             std::string_view path, const httplib::Headers &headers,
             httplib::ContentProviderWithoutLength contentProvider,
-            const char *contentType);
+            const char *contentType) const;
 
     [[maybe_unused]] httplib::Result post(std::string_view path,
-                                          const httplib::Params &params);
+                                          const httplib::Params &params) const;
 
     [[maybe_unused]] httplib::Result post(std::string_view path,
                                           const httplib::Headers &headers,
-                                          const httplib::Params &params);
+                                          const httplib::Params &params) const;
 
     [[maybe_unused]] httplib::Result post(
-            std::string_view path, const httplib::MultipartFormDataItems &items);
+            std::string_view path, const httplib::MultipartFormDataItems &items) const;
 
     [[maybe_unused]] httplib::Result post(
             std::string_view path, const httplib::Headers &headers,
-            const httplib::MultipartFormDataItems &items);
+            const httplib::MultipartFormDataItems &items) const;
 
     [[maybe_unused]] httplib::Result post(
             std::string_view path, const httplib::Headers &headers,
             const httplib::MultipartFormDataItems &items,
-            const std::string &boundary);
+            const std::string &boundary) const;
 
-    [[maybe_unused]] httplib::Result put(std::string_view path);
+    [[maybe_unused]] httplib::Result put(std::string_view path) const;
 
     [[maybe_unused]] httplib::Result put(std::string_view path, const char *body,
                                          size_t contentLength,
-                                         const char *contentType);
+                                         const char *contentType) const;
 
     [[maybe_unused]] httplib::Result put(std::string_view path,
                                          const httplib::Headers &headers,
                                          const char *body, size_t contentLength,
-                                         const char *contentType);
+                                         const char *contentType) const;
 
     [[maybe_unused]] httplib::Result put(std::string_view path,
                                          const std::string &body,
-                                         const char *contentType);
+                                         const char *contentType) const;
 
     [[maybe_unused]] httplib::Result put(std::string_view path,
                                          const httplib::Headers &headers,
                                          const std::string &body,
-                                         const char *contentType);
+                                         const char *contentType) const;
 
     [[maybe_unused]] httplib::Result put(std::string_view path,
                                          size_t contentLength,
                                          httplib::ContentProvider contentProvider,
-                                         const char *contentType);
+                                         const char *contentType) const;
 
     [[maybe_unused]] httplib::Result put(
             std::string_view path,
             httplib::ContentProviderWithoutLength contentProvider,
-            const char *contentType);
+            const char *contentType) const;
 
     [[maybe_unused]] httplib::Result put(std::string_view path,
                                          const httplib::Headers &headers,
                                          size_t contentLength,
                                          httplib::ContentProvider contentProvider,
-                                         const char *contentType);
+                                         const char *contentType) const;
 
     [[maybe_unused]] httplib::Result put(
             std::string_view path, const httplib::Headers &headers,
             httplib::ContentProviderWithoutLength contentProvider,
-            const char *contentType);
+            const char *contentType) const;
 
     [[maybe_unused]] httplib::Result put(std::string_view path,
-                                         const httplib::Params &params);
+                                         const httplib::Params &params) const;
 
     [[maybe_unused]] httplib::Result put(std::string_view path,
                                          const httplib::Headers &headers,
-                                         const httplib::Params &params);
+                                         const httplib::Params &params) const;
 
-    [[maybe_unused]] httplib::Result deletes(std::string_view path);
+    [[maybe_unused]] httplib::Result deletes(std::string_view path) const;
 
     [[maybe_unused]] httplib::Result deletes(std::string_view path,
-                                             const httplib::Headers &headers);
+                                             const httplib::Headers &headers) const;
 
     [[maybe_unused]] httplib::Result deletes(std::string_view path,
                                              const char *body,
                                              size_t contentLength,
-                                             const char *contentType);
+                                             const char *contentType) const;
 
     [[maybe_unused]] httplib::Result deletes(std::string_view path,
                                              const httplib::Headers &headers,
                                              const char *body,
                                              size_t contentLength,
-                                             const char *contentType);
+                                             const char *contentType) const;
 
     [[maybe_unused]] httplib::Result deletes(std::string_view path,
                                              const std::string &body,
-                                             const char *contentType);
+                                             const char *contentType) const;
 
     [[maybe_unused]] httplib::Result deletes(std::string_view path,
                                              const httplib::Headers &headers,
                                              const std::string &body,
-                                             const char *contentType);
+                                             const char *contentType) const;
 };
 
 #endif  // HTTP_LIBRARY_CLIENT_H

@@ -17,13 +17,11 @@ public:
         std::memset(m_content, 0, sizeof(char) * std::strlen(m_content));
     }
 
-    Message() = default;
-
     template<typename T>
     void assign(T content) {
         static_assert(sizeof(T) <= sizeof(m_content),
                       "content is bigger than reserved size for content");
-        char *temp = static_cast<char *>(static_cast<void *>(&content));
+        const char *temp = static_cast<char *>(static_cast<void *>(&content));
         /*
          * We'll cast an object to a char array. We have to copy it manually
          * and not with std::strcpy or std::strncpy bc. those function will stop
@@ -125,15 +123,15 @@ public:
      * @return optional of received message
      */
     std::optional<T> tryReceiveOf() {
-        T temp;
+        T *temp;
         boost::interprocess::message_queue::size_type recvSize;
         unsigned int priority;
         bool success =
-                m_messageQueue.try_receive(&temp, m_msgSize, recvSize, priority);
+                m_messageQueue.try_receive(temp, m_msgSize, recvSize, priority);
         if (!success) {
             return std::nullopt;
         }
-        return temp;
+        return *temp;
     }
 };
 

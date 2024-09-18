@@ -3,13 +3,13 @@
 #include "base_library/core/utils/TableBuilder.h"
 
 HistoryCliComponent::HistoryCliComponent(
-    std::shared_ptr<HistoryApi> historyApi) : CommandLineComponent(n_name, m_alias),
-                                              m_historyApi(std::move(historyApi)) {
+        std::shared_ptr<HistoryApi> historyApi) : CommandLineComponent(n_name, m_alias),
+                                                  m_historyApi(std::move(historyApi)) {
     m_commandParser.addCommand(
-        Command("show_histories", "Shows all histories for set parameters").addArgument(
-            {"--process-name", "-p"}, &m_processName, "Process Name of history entries")
-        .addArgument({"--service-name", "-s"}, &m_serviceName, "Service Name of history entries)")
-        .addArgument({"--label", "-l"}, &m_label, "Label Name of history entries"), ShowHistories);
+            Command("show_histories", "Shows all histories for set parameters").addArgument(
+                            {"--process-name", "-p"}, &m_processName, "Process Name of history entries")
+                    .addArgument({"--service-name", "-s"}, &m_serviceName, "Service Name of history entries)")
+                    .addArgument({"--label", "-l"}, &m_label, "Label Name of history entries"), ShowHistories);
 }
 
 void HistoryCliComponent::onCommand(const UserDto &userDto, const std::string &input,
@@ -39,12 +39,13 @@ void HistoryCliComponent::printHistories(const std::vector<HistoryDto> &historie
     std::size_t iter = 0;
     for (const auto &history: histories) {
         builder.add({
-            std::to_string(++iter), history.getProcessName(), history.getServiceName(), history.getLabel(),
-            history.getText(),
-            history.getUuid(),
-            StringifyService<date::sys_time<std::chrono::microseconds> >::serializeToString(
-                history.getCreatedTimestamp())
-        });
+                            std::to_string(++iter), history.getProcessName(), history.getServiceName(),
+                            history.getLabel(),
+                            history.getText(),
+                            history.getUuid(),
+                            StringifyService<date::sys_time<std::chrono::microseconds> >::serializeToString(
+                                    history.getCreatedTimestamp())
+                    });
     }
     std::cout << builder.build() << "\n";
 }

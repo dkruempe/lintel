@@ -25,7 +25,7 @@ class HistoryDto : public JsonSerializable {
     } m_shape;
 
 public:
-    HistoryDto(HistoryEntry historyEntry);
+    HistoryDto(const HistoryEntry &historyEntry);
 
     HistoryDto() = default;
 
