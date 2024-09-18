@@ -2,7 +2,6 @@
 
 #include <base_library/features/base/configuration/ProcessEntry.h>
 
-#include <boost/process/detail/child_decl.hpp>
 #include <boost/process/io.hpp>
 #include <memory>
 #include <mutex>

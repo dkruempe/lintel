@@ -5,33 +5,53 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
-#include <algorithm>
+#include <stdexcept>
+#include <string>
 
 #include "base_library/core/utils/StringUtils.h"
 
 Cryption::Cryption() { ERR_print_errors_fp(stderr); }
 
+
 std::string Cryption::hashOf(const std::string &text) {
-    SHA512_CTX ctx;
-    unsigned char buffer[SHA512_DIGEST_LENGTH + 1];
+  // Create an EVP_MD_CTX context
+  EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+  if (mdctx == nullptr) {
+    throw std::runtime_error("Failed to create EVP_MD_CTX");
+  }
 
-    std::size_t i = 0;
-    for (const auto &token: text) {
-        buffer[i++] = static_cast<unsigned char>(token);
-    }
+  // Initialize the context to use SHA-512
+  if (EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL) != 1) {
+    EVP_MD_CTX_free(mdctx);
+    throw std::runtime_error("Failed to initialize EVP_MD_CTX with SHA-512");
+  }
 
-    SHA512_Init(&ctx);
-    SHA512_Update(&ctx, buffer, text.length());
-    SHA512_Final(buffer, &ctx);
-    buffer[SHA512_DIGEST_LENGTH] = 0;
+  // Update the context with the input data
+  if (EVP_DigestUpdate(mdctx, text.c_str(), text.size()) != 1) {
+    EVP_MD_CTX_free(mdctx);
+    throw std::runtime_error("Failed to update EVP_MD_CTX with data");
+  }
 
-    std::string tokens;
-    for (int j = 0; j < SHA512_DIGEST_LENGTH; j++) {
-        unsigned char token = buffer[j];
-        tokens += fmt::format("{:02x}", static_cast<int>(token));
-    }
-    return tokens;
+  // Finalize the hash and get the result
+  unsigned char buffer[EVP_MAX_MD_SIZE];
+  unsigned int length = 0;
+  if (EVP_DigestFinal_ex(mdctx, buffer, &length) != 1) {
+    EVP_MD_CTX_free(mdctx);
+    throw std::runtime_error("Failed to finalize EVP_MD_CTX");
+  }
+
+  // Clean up the context
+  EVP_MD_CTX_free(mdctx);
+
+  // Convert the hash to a hex string
+  std::string tokens;
+  for (unsigned int i = 0; i < length; i++) {
+    tokens += fmt::format("{:02x}", static_cast<int>(buffer[i]));
+  }
+
+  return tokens;
 }
+
 
 std::string Cryption::decodeBase64(const std::string &in) {
     std::string out;
