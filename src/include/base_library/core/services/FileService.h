@@ -25,6 +25,7 @@ public:
     private:
         std::ifstream m_file;      // stream for operations
         bool m_endOfFile = false;  // marks if end of file is reached
+        std::string m_nextLine = "";
 
     public:
         /**

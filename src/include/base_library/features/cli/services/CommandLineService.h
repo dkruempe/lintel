@@ -1,6 +1,9 @@
 #ifndef CPP_BASE_LIBRARY_COMMANDLINESERVICE_H
 #define CPP_BASE_LIBRARY_COMMANDLINESERVICE_H
 
+#include "CommandLineHistoryService.h"
+
+
 #include <atomic>
 #include <map>
 #include <memory>
@@ -20,57 +23,53 @@
 
 class CommandLineComponent;
 
-class CommandLineService : public AbstractService<CommandLineService> {
+class CommandLineService : public AbstractService<CommandLineService>
+{
 private:
-    enum Commands {
-        CommandHelp,
-        CommandClear,
-        CommandMenu,
-        CommandExit,
-        CommandUndefined
-    };
+  enum Commands { CommandHelp, CommandClear, CommandMenu, CommandHistory, CommandExit, CommandUndefined };
 
-    AbstractCommandLineMenu m_menu;
-    std::thread m_thread;
-    std::atomic<bool> m_running = true;
-    CommandParser<Commands, CommandUndefined> m_commandParser;
-    std::shared_ptr<AuthCliService> m_authCliService;
-    std::shared_ptr<UserApi> m_userApi;
-    std::shared_ptr<CommandLineUtils> m_commandLineUtils;
-    UserDto m_userDto;
-    std::shared_ptr<InputService> m_inputService;
-    std::shared_ptr<TerminalService> m_terminalService;
-    std::optional<std::string> m_helpComponentName;
+  AbstractCommandLineMenu m_menu;
+  std::thread m_thread;
+  std::atomic<bool> m_running = true;
+  CommandParser<Commands, CommandUndefined> m_commandParser;
+  std::shared_ptr<AuthCliService> m_authCliService;
+  std::shared_ptr<UserApi> m_userApi;
+  std::shared_ptr<CommandLineUtils> m_commandLineUtils;
+  UserDto m_userDto;
+  std::shared_ptr<InputService> m_inputService;
+  std::shared_ptr<TerminalService> m_terminalService;
+  std::shared_ptr<CommandLineHistoryService> m_commandLineHistoryService;
+  std::optional<std::string> m_helpComponentName;
 
-    void onComponentCommand(const std::string &input,
-                            const std::vector<std::string> &flags);
+  std::string menuNameOf();
 
-    void onCommand(const std::string &input,
-                   const std::vector<std::string> &flags);
+  void onComponentCommand(const std::string &input, const std::vector<std::string> &flags);
 
-    void onEndOfFile();
+  void onCommand(const std::string &input, const std::vector<std::string> &flags);
 
-    void onStart();
+  void onEndOfFile();
 
-    void onHelp();
+  void onStart();
 
-    void onPrompt();
+  void onHelp();
 
-    void run();
+  void onPrompt();
+
+  void run();
 
 public:
-    explicit CommandLineService(
-            const std::vector<std::shared_ptr<CommandLineComponent>> &components,
-            std::shared_ptr<AuthCliService> authCliService,
-            std::shared_ptr<UserApi> userApi,
-            std::shared_ptr<CommandLineUtils> commandLineUtils,
-            std::shared_ptr<InputService> inputService,
-            std::shared_ptr<TerminalService> terminalService,
-            const std::shared_ptr<ProcessName> &processName);
+  explicit CommandLineService(const std::vector<std::shared_ptr<CommandLineComponent>> &components,
+    std::shared_ptr<AuthCliService> authCliService,
+    std::shared_ptr<UserApi> userApi,
+    std::shared_ptr<CommandLineUtils> commandLineUtils,
+    std::shared_ptr<InputService> inputService,
+    std::shared_ptr<TerminalService> terminalService,
+    const std::shared_ptr<ProcessName> &processName,
+    std::shared_ptr<CommandLineHistoryService> commandLineHistoryService);
 
-    virtual ~CommandLineService();
+  virtual ~CommandLineService();
 
-    void onInitialize() override;
+  void onInitialize() override;
 };
 
-#endif  // CPP_BASE_LIBRARY_COMMANDLINESERVICE_H
+#endif// CPP_BASE_LIBRARY_COMMANDLINESERVICE_H

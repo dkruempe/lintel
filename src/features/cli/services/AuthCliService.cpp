@@ -39,7 +39,7 @@ std::optional<UserDto> AuthCliService::onLogin() {
             Symbol event = Symbol::Nothing;
             while (event != Symbol::Command && userName.empty()) {
                 KeyEvent keyPressed = m_inputService->onRead();
-                SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
+                SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed, "Login");
                 event = symbolEvent.first;
                 switch (event) {
                     case Symbol::CtrlC:
@@ -66,7 +66,7 @@ std::optional<UserDto> AuthCliService::onLogin() {
             m_terminalService->enableHideChars();
             while (event != Symbol::Command && password.empty()) {
                 KeyEvent keyPressed = m_inputService->onRead();
-                SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed);
+                SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed, "Login");
                 event = symbolEvent.first;
                 switch (event) {
                     case Symbol::CtrlC:

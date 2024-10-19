@@ -6,25 +6,21 @@
 #include "base_library/features/cli/services/TerminalService.h"
 #include "base_library/features/cli/utils/CommandLineUtils.h"
 
-CommandLineFeature::CommandLineFeature(std::shared_ptr<Features> features)
-        : Feature(Features::Cli, std::move(features)) {}
+CommandLineFeature::CommandLineFeature(std::shared_ptr<Features> features) : Feature(Features::Cli, std::move(features))
+{}
 
-void CommandLineFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
-    builder.registerType<CommandLineService>()
-            .as<AbstractServiceInterface>()
-            .asSelf()
-            .singleInstance();
-    builder.registerType<AuthCliService>().singleInstance();
-    builder.registerType<CommandLineUtils>().singleInstance();
-    builder.registerType<TerminalService>().singleInstance();
-    builder.registerType<InputService>().singleInstance();
-    builder.registerType<AuthArgumentProvider>()
-            .as<ArgumentProvider>()
-            .asSelf()
-            .singleInstance();
+void CommandLineFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
+{
+  builder.registerType<CommandLineService>().as<AbstractServiceInterface>().asSelf().singleInstance();
+  builder.registerType<CommandLineHistoryService>().as<AbstractServiceInterface>().asSelf().singleInstance();
+  builder.registerType<AuthCliService>().singleInstance();
+  builder.registerType<CommandLineUtils>().singleInstance();
+  builder.registerType<TerminalService>().singleInstance();
+  builder.registerType<InputService>().singleInstance();
+  builder.registerType<AuthArgumentProvider>().as<ArgumentProvider>().asSelf().singleInstance();
 }
 
-void CommandLineFeature::initialize(
-        std::shared_ptr<Hypodermic::Container> container) {
-    m_commandLineService = container->resolve<CommandLineService>();
+void CommandLineFeature::initialize(std::shared_ptr<Hypodermic::Container> container)
+{
+  m_commandLineService = container->resolve<CommandLineService>();
 }
