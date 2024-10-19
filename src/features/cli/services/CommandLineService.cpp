@@ -99,9 +99,7 @@ void CommandLineService::onHelp()
 
 std::string CommandLineService::menuNameOf()
 {
-  if (m_menu.currentOf() == nullptr) {
-    return "Root";
-  }
+  if (m_menu.currentOf() == nullptr) { return "Root"; }
   return m_menu.currentOf()->getName().data();
 }
 
@@ -179,9 +177,7 @@ void CommandLineService::run()
       // found only one matching command => extend command
       if (commands.size() == 1) {
         std::string const missingPart = commands[0].substr(symbolEvent.second.length());
-        for (char const c : missingPart) {
-          m_terminalService->onKeyPressed({ KeyType::Ascii, c }, menuNameOf());
-        }
+        for (char const c : missingPart) { m_terminalService->onKeyPressed({ KeyType::Ascii, c }, menuNameOf()); }
         printPrompt = false;
         tabPressed = false;
         return;
@@ -225,10 +221,8 @@ void CommandLineService::run()
     KeyEvent keyPressed = m_inputService->onRead();
     SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed, menuNameOf());
     if (symbolEvent.first == Symbol::Command && !symbolEvent.second.empty()) {
-      m_commandLineHistoryService->historizeOf(CommandHistoryEntry(symbolEvent.second,
-        m_userDto.getUserName(),
-        std::chrono::system_clock::now(),
-        menuNameOf()));
+      m_commandLineHistoryService->historizeOf(CommandHistoryEntry(
+        symbolEvent.second, m_userDto.getUserName(), std::chrono::system_clock::now(), menuNameOf()));
     }
     switch (symbolEvent.first) {
     case Symbol::CtrlC:
@@ -236,6 +230,12 @@ void CommandLineService::run()
       break;
     case Symbol::CtrlR: {
       auto command = m_commandLineHistoryService->startsWith(m_terminalService->getLine(), menuNameOf());
+      if (!command.has_value()) {
+        CommandLineUtils::beep();
+        printPrompt = false;
+        tabPressed = false;
+        break;
+      }
       std::string const missingPart = command->getCommand().substr(m_terminalService->getLine().length());
       for (char const c : missingPart) { m_terminalService->onKeyPressed({ KeyType::Ascii, c }, menuNameOf()); }
       printPrompt = false;
