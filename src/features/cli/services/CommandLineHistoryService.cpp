@@ -18,28 +18,23 @@ CommandLineHistoryService::CommandLineHistoryService(const std::shared_ptr<Proce
 std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(std::string menu)
 {
   if (m_history.empty()) {
-    LOG_ERROR("history empty");
     return std::nullopt;
   }
   if (m_menu != menu) {
-    LOG_ERROR("RESET");
     m_position = std::nullopt;
   }
   if (!m_position.has_value()) {
     m_position = std::make_optional(0);
-    LOG_ERROR("position empty");
   }
   m_position = std::make_optional(m_position.value() + 1);
   if (m_position.value() >= m_history.size()) {
     return std::nullopt;
   }
-  LOG_TRACE("position {}", m_position.value());
   for (std::size_t i = m_position.value(); i <= m_history.size(); i++) {
     auto iter = m_history[i - 1];
     if (iter.getMenu() != menu) {
       continue;
     }
-    LOG_INFO("next position {}/", m_position.value(), m_history.size());
     m_position = std::make_optional(i);
     m_menu = menu;
     return std::make_optional(iter);
@@ -49,12 +44,18 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(std::string
 
 std::optional<CommandHistoryEntry> CommandLineHistoryService::previousOf(std::string menu)
 {
-  if (m_history.empty()) { return std::nullopt; }
+  if (m_history.empty()) {
+    return std::nullopt;
+  }
   if (m_menu != menu) {
     m_position = std::nullopt;
   }
-  if (!m_position.has_value()) { m_position = m_history.size(); }
-  if (m_position.value() == 0) { return std::nullopt; }
+  if (!m_position.has_value()) {
+    m_position = m_history.size();
+  }
+  if (m_position.value() == 0) {
+    return std::nullopt;
+  }
   m_position = std::make_optional(m_position.value() - 1);
   for (std::size_t i = m_position.value(); i > 0; i--) {
     auto iter = m_history[i - 1];
@@ -92,7 +93,7 @@ void CommandLineHistoryService::historizeOf(CommandHistoryEntry commandHistoryEn
     file << commandHistoryEntry.asCsvEntry() << "\n";
     file.flush();
     m_history.push_back(commandHistoryEntry);
-    m_position = std::make_optional(m_history.size());
+    m_position = std::make_optional(m_history.size() + 1);
     return;
   }
   m_history.erase(m_history.begin());
@@ -101,7 +102,7 @@ void CommandLineHistoryService::historizeOf(CommandHistoryEntry commandHistoryEn
   if (!file.is_open()) { return; }
   for (auto history : m_history) { file << history.asCsvEntry() << "\n"; }
   file.flush();
-  m_position = std::make_optional(m_history.size());
+  m_position = std::make_optional(m_history.size() + 1);
 }
 
 
@@ -120,7 +121,6 @@ std::vector<CommandHistoryEntry> CommandLineHistoryService::internalAllOf()
       std::string userName = entries[1];
       std::string command = entries[2];
       std::string menu = entries[3];
-      LOG_INFO("read {} - {} - {} - {}", entries[0], entries[1], entries[2], entries[3]);
       commandHistoryEntries.push_back(CommandHistoryEntry(command, userName, timestamp, menu));
     }
     return commandHistoryEntries;
@@ -133,7 +133,6 @@ std::vector<CommandHistoryEntry> CommandLineHistoryService::internalAllOf()
 void CommandLineHistoryService::onInitialize()
 {
   m_history = internalAllOf();
-  LOG_INFO("load history of size {}", m_history.size());
 }
 
 

@@ -252,6 +252,8 @@ void CommandLineService::run()
       std::optional<CommandHistoryEntry> commandHistoryEntry = m_commandLineHistoryService->previousOf(menuNameOf());
       if (!commandHistoryEntry.has_value()) {
         CommandLineUtils::beep();
+        printPrompt = false;
+        tabPressed = false;
         break;
       }
       m_terminalService->resetCursor();
@@ -266,6 +268,8 @@ void CommandLineService::run()
       std::optional<CommandHistoryEntry> commandHistoryEntry = m_commandLineHistoryService->nextOf(menuNameOf());
       if (!commandHistoryEntry.has_value()) {
         CommandLineUtils::beep();
+        printPrompt = false;
+        tabPressed = false;
         break;
       }
       m_terminalService->resetCursor();
