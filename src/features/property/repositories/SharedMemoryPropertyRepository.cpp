@@ -22,7 +22,7 @@ SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
         SharedMemoryService::ShmString,
         PropertyDataDao>(
         sharedMemoryService, sharedMemorySegmentManager->of("shm_property"),
-        m_version, PropertyDataDto::getSize()),
+        m_version, std::string{UUID}, PropertyDataDto::getSize()),
           PropertyRepository(PropertyRepositoryType::SHM_REPOSITORY, configuration),
           m_processName(std::move(processName)),
           m_upgradableMutex(boost::interprocess::open_or_create,

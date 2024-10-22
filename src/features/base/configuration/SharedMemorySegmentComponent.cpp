@@ -91,14 +91,12 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
                 throw ConfigurationException(getConfigRoot(), "name contains space",
                                              lineNumber);
             }
-            SegmentTemp segmentTemp;
+            SegmentTemp segmentTemp{};
             segmentTemp.m_name = name;
             segmentTemp.m_size = convertToBytes(sizeStr);
-            if (maxSizeStr != nullptr) {
-                segmentTemp.m_maxSize = convertToBytes(maxSizeStr);
-                segmentTemp.m_autoExtendSize = convertToBytes(autoExtendSizeStr);
-                segmentTemp.m_autoExtend = true;
-            }
+            segmentTemp.m_maxSize = convertToBytes(maxSizeStr);
+            segmentTemp.m_autoExtendSize = convertToBytes(autoExtendSizeStr);
+            segmentTemp.m_autoExtend = true;
             segments.emplace_back(segmentTemp);
         }
     }

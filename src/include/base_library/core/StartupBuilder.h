@@ -31,6 +31,7 @@ private:
     std::shared_ptr<Configuration> m_configuration = nullptr;
     std::shared_ptr<Features> m_features = std::make_shared<Features>();
     bool m_bootStrapServiceActive = true;
+    std::mutex mutex;
 
 public:
     StartupBuilder(ProcessName &&processName,

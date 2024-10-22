@@ -1,4 +1,8 @@
 cmake-*
+*.cmake
+*.sh
+*.txt
+*.json
 build*
 bin*
 .idea

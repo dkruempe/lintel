@@ -47,7 +47,7 @@ std::vector<GroupDto> UserApi::allOf() {
     GroupsDto groupsDto;
     try {
         groupsDto.JsonSerializable::deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return groupsDto.getGroups();
@@ -70,7 +70,7 @@ std::vector<UserDto> UserApi::allUsersOf() {
     UsersDto usersDto;
     try {
         usersDto.JsonSerializable::deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return usersDto.getUsers();
@@ -93,7 +93,7 @@ std::vector<UserDto> UserApi::allUsersOf(const std::string &userName) {
     UsersDto usersDto;
     try {
         usersDto.JsonSerializable::deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return usersDto.getUsers();
@@ -116,7 +116,7 @@ std::vector<GroupDto> UserApi::allOf(const std::string &groupName) {
     GroupsDto groupsDto;
     try {
         groupsDto.JsonSerializable::deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return groupsDto.getGroups();
@@ -142,7 +142,7 @@ std::vector<GroupDto> UserApi::allOf(const std::string &groupName,
     GroupsDto groupsDto;
     try {
         groupsDto.JsonSerializable::deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return groupsDto.getGroups();
@@ -166,7 +166,7 @@ std::vector<GroupDto> UserApi::allOf(bool isVirtualGroup) {
     GroupsDto groupsDto;
     try {
         groupsDto.JsonSerializable::deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return groupsDto.getGroups();

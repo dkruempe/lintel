@@ -34,9 +34,7 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(
             Command("export_repository", "Export Repository to json")
                     .addArgument({"--repository-name", "-r"}, &m_repositoryName,
                                  "Repository name")
-                    .addArgument({"--segment-name", "-s"}, &m_segmentName, "Segment Name")
-                    .addArgument({"--type", "-t"}, &m_type, "Type")
-                    .addArgument({"--file", "-f"}, &m_file, "File"),
+                    .addArgument({"--uuid", "-u"}, &m_uuid, "UUID"),
             ExportRepository);
 }
 
@@ -92,29 +90,13 @@ void SharedMemoryCliComponent::onCommand(
                 break;
             }
             case ExportRepository: {
-                if (!m_repositoryName.has_value()) {
-                    std::cout << "ERROR: please set repository name\n";
-                    m_repositoryName->clear();
-                    m_segmentName->clear();
-                    m_type->clear();
-                    return;
-                }
-                if (!m_segmentName.has_value()) {
-                    std::cout << "ERROR: please set segment name\n";
-                    m_repositoryName->clear();
-                    m_segmentName->clear();
-                    m_type->clear();
-                    return;
-                }
-                if (!m_type.has_value()) {
-                    std::cout << "ERROR: please set type\n";
-                    m_repositoryName->clear();
-                    m_segmentName->clear();
-                    m_type->clear();
+                if (!m_uuid.has_value()) {
+                    std::cout << "ERROR: please set uuid\n";
+                    m_uuid->clear();
                     return;
                 }
                 std::string result = m_sharedMemoryApi->repositoryOf(
-                        m_repositoryName.value(), m_segmentName.value(), m_type.value());
+                        m_uuid.value());
                 if (m_file.has_value()) {
                     std::string file =
                             StringUtils::replaceAll(m_file.value(), "~", getenv("HOME"));
@@ -194,12 +176,12 @@ void SharedMemoryCliComponent::onHelp() {
 
 void SharedMemoryCliComponent::printRepositories(
         const std::vector<SharedMemoryRepositoryDto> &repositories) {
-    TableBuilder<6> builder;
+    TableBuilder<7> builder;
     builder.add(
-            {"No.", "SegmentName", "RepositoryName", "Size", "Type", "Version"});
+            {"No.", "Uuid", "SegmentName", "RepositoryName", "Size", "Type", "Version"});
     std::size_t count = 0;
     for (const auto &iter: repositories) {
-        builder.add({std::to_string(++count), iter.getSegmentName(),
+        builder.add({std::to_string(++count), iter.getUuid(), iter.getSegmentName(),
                      iter.getName(), std::to_string(iter.getSize()),
                      std::string(magic_enum::enum_name<>(iter.getType())),
                      std::to_string(iter.getCurrentVersion())});

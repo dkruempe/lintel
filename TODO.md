@@ -21,7 +21,7 @@
 - Queue Support
     - [x] implement basic api as feature
     - [x] add configuration to bootstrap configuration file
-    - [ ] add command line component for maintenance
+    - [x] add command line component for maintenance
 - Historization
     - [x] adds support for an easy historization via Queue or direct call Api Interface
     - [x] adds HistorizationService
@@ -33,3 +33,7 @@
     - [ ] add support for testing software via docker
     - [ ] working docker container for testing linux
     - [ ] working docker container for testing macOS ?
+- Command Line
+    - [x] add support of saving the history of the x commands per user in the cli
+    - [x] reverse search in history via strg 
+    - [x] arrow keys for last commands (backwards)

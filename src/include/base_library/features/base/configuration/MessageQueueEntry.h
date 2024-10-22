@@ -1,8 +1,10 @@
 #ifndef CPP_BASE_LIBRARY_MESSAGEQUEUEENTRY_H
 #define CPP_BASE_LIBRARY_MESSAGEQUEUEENTRY_H
 
+#include <cstdint>
 #include <ostream>
 #include <string>
+#include <string_view>
 
 #include "base_library/features/base/configuration/Entry.h"
 
@@ -16,11 +18,11 @@ public:
     MessageQueueEntry(const std::string_view &component, std::string processName,
                       std::string messageQueueName, int32_t maxMessages);
 
-    const std::string &get_process_name() const;
+    [[nodiscard]] const std::string &get_process_name() const;
 
-    const std::string &get_message_queue_name() const;
+    [[nodiscard]] const std::string &get_message_queue_name() const;
 
-    int32_t get_max_messages() const;
+    [[nodiscard]] int32_t get_max_messages() const;
 
     friend std::ostream &operator<<(std::ostream &os,
                                     const MessageQueueEntry &entry);

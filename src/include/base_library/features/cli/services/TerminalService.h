@@ -7,7 +7,7 @@
 #include <utility>
 
 enum class Symbol {
-    Nothing, Command, Up, Down, Tab, Eof, CtrlC
+    Nothing, Command, Up, Down, Tab, Eof, CtrlC, CtrlR
 };
 using SymbolEvent = std::pair<Symbol, std::string>;
 
@@ -20,7 +20,7 @@ private:
 public:
     void log(const std::string &text);
 
-    SymbolEvent onKeyPressed(KeyEvent);
+    SymbolEvent onKeyPressed(KeyEvent, std::string menu);
 
     void resetCursor();
 

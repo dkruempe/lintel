@@ -31,7 +31,6 @@ void ProcessController::allProcessOfGet(
         response.set_content("", contentType.getName().c_str());
         return;
     }
-    const std::string processName = request.matches[1];
     switch (contentType) {
         case ContentType::ApplicationJson: {
             ProcessInfosDto processInfosDto(m_processService->allActiveOf());

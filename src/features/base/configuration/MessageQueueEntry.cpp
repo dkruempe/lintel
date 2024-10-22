@@ -7,7 +7,7 @@ MessageQueueEntry::MessageQueueEntry(const std::string_view &component,
         : Entry(component),
           processName(std::move(processName)),
           messageQueueName(std::move(messageQueueName)),
-          maxMessages(maxMessages){}
+          maxMessages(maxMessages) {}
 
 const std::string &MessageQueueEntry::get_process_name() const {
     return processName;

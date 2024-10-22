@@ -12,8 +12,12 @@ private:
     std::shared_ptr<SharedMemorySegmentManager> m_sharedMemorySegmentManager;
     std::vector<std::shared_ptr<SharedMemoryRepository>>
             m_sharedMemoryRepositories;
+    std::map<std::string, std::shared_ptr<SharedMemoryRepository>> m_uuidSharedMemoryRepositories;
     Group m_adminGroup;
     Group m_userGroup;
+
+    static std::map<std::string, std::shared_ptr<SharedMemoryRepository>>
+    build(std::vector<std::shared_ptr<SharedMemoryRepository>> repositories);
 
     // Shared Memory Segment functions
     /**
@@ -38,12 +42,10 @@ private:
      */
     ADD_HANDLER_METHOD(R"(/shm/repositories/([^\/]+)/([^\/]+))", Get,
                        allRepositoriesOf);
-    /*
-     * TODO implement abstract import / export to SharedMemoryRepository
-     * - general import / export to json file
+    /**
+     * Export Shared Memory Repository in Json
      */
-    ADD_HANDLER_METHOD(R"(/shm/repository/([^\/]+)/segment/([^\/]+)/type/([^\/]+))", Get, exportRepositoryOf);
-    // ADD_HANDLER_METHOD(R"(/shm/repository/([^\/]+))", Put, importRepositoryOf);
+    ADD_HANDLER_METHOD(R"(/shm/repository/([^\/]+))", Get, exportRepositoryOf);
 
 public:
     SharedMemoryController(

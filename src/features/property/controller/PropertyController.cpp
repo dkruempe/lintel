@@ -1,5 +1,8 @@
 #include "base_library/features/property/controller/PropertyController.h"
+#include "base_library/core/models/JsonSerializable.h"
+#include <fmt/core.h>
 
+#include <optional>
 #include <utility>
 
 #include "base_library/features/http/service/HttpStatusCodes.h"
@@ -8,9 +11,11 @@
 
 PropertyController::PropertyController(
         std::shared_ptr<PropertyService> propertyService,
-        const std::shared_ptr<AuthService> &authService)
+        const std::shared_ptr<AuthService> &authService,
+        std::shared_ptr<HistoryService> historyService)
         : Controller(authService),
           m_propertyService(std::move(propertyService)),
+          m_historyService(std::move(historyService)),
           m_adminGroup("Admin-Property", {}, true),
           m_userGroup("User-Property", {}, true) {
     add(m_adminGroup);
@@ -23,13 +28,13 @@ void PropertyController::allPropertiesOfGet(
     // no user logged in => Unauthorized
     if (!userToken.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!userToken->m_user.has(m_userGroup) &&
         !userToken->m_user.has(m_adminGroup)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     const std::string processName = request.matches[1];
@@ -40,12 +45,12 @@ void PropertyController::allPropertiesOfGet(
             PropertiesDto propertiesDto(
                     m_propertyService->allOf(processName, className, instanceName));
             response.set_content(propertiesDto.JsonSerializable::serialize(),
-                                 contentType.getName().c_str());
+                                 contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -77,16 +82,16 @@ void PropertyController::propertyOfGet(
                                                        className, processName);
                 PropertyDto propertyDto(property);
                 response.set_content(propertyDto.JsonSerializable::serialize(),
-                                     contentType.getName().c_str());
+                                     contentType.getName());
             } catch (const PropertyNotFoundException &exception) {
                 response.status = HttpStatusCodes::MethodNotAllowed;
-                response.set_content("", contentType.getName().c_str());
+                response.set_content("", contentType.getName());
             }
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -117,26 +122,34 @@ void PropertyController::updatePropertyPut(
                 propertyValueDto.JsonSerializable::deserialize(request.body);
                 auto property = m_propertyService->get(propertyName, instanceName,
                                                        className, processName);
+                std::string oldValue = property->toString();
+                std::string newValue = propertyValueDto.getValue();
                 m_propertyService->changeStringValueOf(property,
                                                        propertyValueDto.getValue());
+                DEFINE_HISTORY_ENTRY2(historyEntry, "PROPERTY",
+                                      fmt::format("User: {}, changed {} -> {}", userToken->m_user.getUserName(),
+                                                  oldValue, newValue),
+                                      m_historyService->getProcessName(),
+                                      "PropertyController");
+                m_historyService->historizeOf({historyEntry});
             } catch (const PropertyNotFoundException &exception) {
                 response.status = HttpStatusCodes::MethodNotAllowed;
                 response.set_content("property not found",
-                                     contentType.getName().c_str());
+                                     contentType.getName());
             } catch (const PropertyNoRuntimeChangeSupported &exception) {
                 response.status = HttpStatusCodes::MethodNotAllowed;
                 response.set_content("no property runtime change supported",
-                                     contentType.getName().c_str());
+                                     contentType.getName());
             } catch (const std::exception &e) {
                 response.status = HttpStatusCodes::MethodNotAllowed;
                 response.set_content("value parameter not found",
-                                     contentType.getName().c_str());
+                                     contentType.getName());
             }
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }

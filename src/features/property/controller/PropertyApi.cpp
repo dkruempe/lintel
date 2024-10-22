@@ -28,7 +28,7 @@ std::vector<PropertyDto> PropertyApi::allOf(const std::string &processName,
     PropertiesDto propertiesDto;
     try {
         propertiesDto.deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return propertiesDto.getProperties();
@@ -58,7 +58,7 @@ std::optional<PropertyDto> PropertyApi::of(const std::string &processName,
     PropertyDto propertyDto;
     try {
         propertyDto.JsonSerializable::deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return std::nullopt;
     }
     return std::make_optional(propertyDto);

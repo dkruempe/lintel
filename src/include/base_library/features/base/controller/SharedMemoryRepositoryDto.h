@@ -6,6 +6,7 @@
 
 class SharedMemoryRepositoryDto : public JsonSerializable {
 private:
+    std::string m_uuid;
     std::string m_name;
     std::string m_segmentName;
     SharedMemoryType m_type;
@@ -13,6 +14,7 @@ private:
     int32_t m_currentVersion;
 
     static struct Shapes {
+        const std::string UUID = "uuid";
         const std::string NAME = "name";
         const std::string SEGMENT_NAME = "segment_name";
         const std::string TYPE = "type";
@@ -24,6 +26,8 @@ public:
     explicit SharedMemoryRepositoryDto(const SharedMemoryRepository &repository);
 
     SharedMemoryRepositoryDto() = default;
+
+    [[nodiscard]] const std::string &getUuid() const;
 
     [[nodiscard]] const std::string &getName() const;
 

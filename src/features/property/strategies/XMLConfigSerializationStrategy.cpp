@@ -19,8 +19,9 @@
 std::string XMLConfigSerializationStrategy::serialize(
         std::vector<std::shared_ptr<PropertyBase>> properties) {
     std::sort(properties.begin(), properties.end(),
-              [](const std::shared_ptr<PropertyBase> &rhs,
-                 std::shared_ptr<PropertyBase> &lhs) { return *rhs < *lhs; });
+              [](const std::shared_ptr<PropertyBase> &rhs, const std::shared_ptr<PropertyBase> &lhs) {
+                  return *rhs < *lhs;
+              });
     tinyxml2::XMLDocument document;
     tinyxml2::XMLPrinter printer;
 

@@ -1,9 +1,8 @@
 #pragma once
 
-#include <boost/process/detail/child_decl.hpp>
-#include <optional>
-
 #include "base_library/features/base/models/Process.h"
+
+#include <boost/process/v1/child.hpp>
 
 class ProcessInfo {
 private:

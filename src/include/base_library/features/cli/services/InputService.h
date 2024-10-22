@@ -6,35 +6,22 @@
 
 #include <utility>
 
-enum class KeyType {
-    Ascii,
-    Up,
-    Down,
-    Left,
-    Right,
-    Backspace,
-    Canc,
-    Home,
-    End,
-    Ret,
-    Eof,
-    CtrlC,
-    Ignored
-};
+enum class KeyType { Ascii, Up, Down, Left, Right, Backspace, Canc, Home, End, Ret, Eof, CtrlC, CtrlR, Ignored };
 
 using KeyEvent = std::pair<KeyType, char>;
 
-class InputService {
+class InputService
+{
 private:
-    termios oldt{};
-    termios newt{};
+  termios oldt{};
+  termios newt{};
 
 public:
-    InputService();
+  InputService();
 
-    ~InputService();
+  ~InputService();
 
-    KeyEvent onRead();
+  KeyEvent onRead();
 };
 
-#endif  // CPP_BASE_LIBRARY_INPUTSERVICE_H
+#endif// CPP_BASE_LIBRARY_INPUTSERVICE_H

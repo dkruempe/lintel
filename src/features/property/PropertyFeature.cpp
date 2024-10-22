@@ -9,7 +9,8 @@
 #include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
 #include "base_library/features/property/strategies/XMLConfigSerializationStrategy.h"
 
-PropertyFeature::PropertyFeature(std::shared_ptr<Features> features) : Feature(Features::Property, std::move(features)) {}
+PropertyFeature::PropertyFeature(std::shared_ptr<Features> features) : Feature(Features::Property,
+                                                                               std::move(features)) {}
 
 void PropertyFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
     builder.registerType<FilePropertyRepository>()

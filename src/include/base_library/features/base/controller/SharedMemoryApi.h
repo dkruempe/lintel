@@ -28,9 +28,7 @@ public:
             const std::string &repositoryName = ".*",
             const std::string &segmentName = ".*");
 
-    std::string repositoryOf(const std::string &repositoryName,
-                             const std::string &segmentName,
-                             const std::string &type);
+    std::string repositoryOf(const std::string &uuid);
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYAPI_H

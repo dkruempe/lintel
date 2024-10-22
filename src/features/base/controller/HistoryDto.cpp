@@ -2,13 +2,14 @@
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/StringifyService.h"
+#include "base_library/features/base/models/HistoryEntry.h"
 
-HistoryDto::HistoryDto(HistoryEntry historyEntry) : m_processName(historyEntry.getProcessName()),
-                                                    m_serviceName(historyEntry.getServiceName()),
-                                                    m_label(historyEntry.getLabel()),
-                                                    m_text(historyEntry.getText()),
-                                                    m_uuid(historyEntry.getUuid()),
-                                                    m_createdTimestamp(historyEntry.getCreatedTimestamp()) {
+HistoryDto::HistoryDto(const HistoryEntry &historyEntry) : m_processName(historyEntry.getProcessName()),
+                                                           m_serviceName(historyEntry.getServiceName()),
+                                                           m_label(historyEntry.getLabel()),
+                                                           m_text(historyEntry.getText()),
+                                                           m_uuid(historyEntry.getUuid()),
+                                                           m_createdTimestamp(historyEntry.getCreatedTimestamp()) {
 }
 
 void HistoryDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const {
@@ -31,7 +32,8 @@ void HistoryDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) c
     // CREATED_TIMESTAMP
     writer->String(m_shape.CREATED_TIMESTAMP.c_str());
     writer->String(
-        StringifyService<date::sys_time<std::chrono::microseconds> >::serializeToString(m_createdTimestamp).c_str());
+        StringifyService<date::sys_time<std::chrono::microseconds> >::serializeToString(
+            m_createdTimestamp).c_str());
     writer->EndObject();
 }
 

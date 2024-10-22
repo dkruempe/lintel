@@ -37,10 +37,10 @@ void HistoryController::historyOfGet(const httplib::Request &request, httplib::R
 HistoryController::HistoryController(const std::shared_ptr<AuthService> &authService,
                                      std::shared_ptr<GroupRepository> groupRepository,
                                      std::shared_ptr<HistoryRepository> historyRepository)
-    : Controller(authService),
-      m_historyRepository(std::move(historyRepository)),
-      m_adminGroup("Admin-History", {}, true),
-      m_userGroup("User-History", {}, true) {
+        : Controller(authService),
+          m_historyRepository(std::move(historyRepository)),
+          m_adminGroup("Admin-History", {}, true),
+          m_userGroup("User-History", {}, true) {
     add(m_adminGroup);
     add(m_userGroup);
 }

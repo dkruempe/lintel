@@ -19,6 +19,7 @@ public:
 
     [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &processName,
                                                   const std::string &serviceName) const;
+
     [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &processName,
                                                   const std::string &serviceName,
                                                   const std::string &label) const;

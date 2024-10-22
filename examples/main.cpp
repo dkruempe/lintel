@@ -234,6 +234,7 @@ ArrayDao::Shapes ArrayDao::m_shape{};
 class ShmObject : public SharedMemoryObjectRepository<ArrayDto, ArrayDao> {
 private:
     static constexpr int32_t m_version = 0;
+    static constexpr std::string_view UUID = "04B33BE5-2AE2-4466-A5AD-3C6B89027DD0";
 
 public:
     ShmObject(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
@@ -241,7 +242,7 @@ public:
               &sharedMemorySegmentManager)
             : SharedMemoryObjectRepository(sharedMemoryService,
                                            sharedMemorySegmentManager->of("shm_test"),
-                                           m_version) {
+                                           m_version, std::string{UUID}) {
         if (getData().m_age == 0) {
             ArrayDto &dto = getData();
             std::strncpy(dto.m_name, "Example User", 100);
@@ -258,6 +259,7 @@ public:
 class ShmArray : public SharedMemoryArrayRepository<ArrayDto, ArrayDao, 100> {
 private:
     static constexpr int32_t m_version = 0;
+    static constexpr std::string_view UUID = "F6DF706E-AB1A-4F7B-A8C7-0D60165E2517";
 
 public:
     ShmArray(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
@@ -265,7 +267,7 @@ public:
              &sharedMemorySegmentManager)
             : SharedMemoryArrayRepository(sharedMemoryService,
                                           sharedMemorySegmentManager->of("shm_test"),
-                                          m_version) {
+                                          m_version, std::string{UUID}) {
         if (getArray()[99].m_age == 0) {
             for (int i = 0; i < 100; i++) {
                 ArrayDto &dto = getArray()[i];
@@ -284,6 +286,7 @@ public:
 class ShmVec : public SharedMemoryVectorRepository<TestDataDto, TestDataDao> {
 private:
     static constexpr int32_t m_version = 0;
+    static constexpr std::string_view UUID = "103F04D3-3000-40E0-AEF3-EA83CFC12942";
 
 public:
     ShmVec(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
@@ -291,7 +294,7 @@ public:
            &sharedMemorySegmentManager)
             : SharedMemoryVectorRepository<TestDataDto, TestDataDao>(
             sharedMemoryService, sharedMemorySegmentManager->of("shm_test"),
-            m_version) {
+            m_version, std::string{UUID}) {
         if (getVector().empty()) {
             for (int i = 0; i < 100; i++) {
                 TestDataDto dto{.m_name = m_sharedMemoryService->constructString(
@@ -320,7 +323,7 @@ private:
     std::shared_ptr<ShmVec> m_shmVec;
 
 public:
-    TestFeature(std::shared_ptr<Features> features) : Feature(TestEnum::Test, std::move(features)) {}
+    explicit TestFeature(std::shared_ptr<Features> features) : Feature(TestEnum::Test, std::move(features)) {}
 
     void registerTypes(Hypodermic::ContainerBuilder &builder) override {
         builder.registerType<ShmVec>()

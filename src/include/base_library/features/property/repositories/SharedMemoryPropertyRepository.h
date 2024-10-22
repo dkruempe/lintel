@@ -129,6 +129,7 @@ private:
     DataStorage m_currentDataStorage =
             DataStorage(PropertyRepositoryType::SHM_REPOSITORY, "");
     boost::interprocess::named_upgradable_mutex m_upgradableMutex;
+    static constexpr std::string_view UUID = "B3F746E1-D4F0-49DB-A0F7-51F72436263A";
 
 public:
     SharedMemoryPropertyRepository(

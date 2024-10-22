@@ -11,8 +11,9 @@ public:
     enum Value {
         Undefined = 0,
         Database = 1,
-        VirtualGroups = 2,
-        SharedMemory = 3
+        MessageQueue = 2,
+        VirtualGroups = 3,
+        SharedMemory = 4
     };
 
     BootstrapSequence() = default;

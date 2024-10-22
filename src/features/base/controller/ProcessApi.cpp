@@ -29,7 +29,7 @@ std::vector<ProcessInfoDto> ProcessApi::allOf(const std::string &processName) {
     ProcessInfosDto processInfosDto;
     try {
         processInfosDto.JsonSerializable::deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return processInfosDto.getProcessInfos();
@@ -56,7 +56,7 @@ std::vector<ProcessGroupDto> ProcessApi::allGroupsOf(
     ProcessGroupsDto processGroupsDto;
     try {
         processGroupsDto.deserialize(result->body);
-    } catch (std::exception &exception) {
+    } catch (const std::exception &exception) {
         return {};
     }
     return processGroupsDto.getProcessGroups();

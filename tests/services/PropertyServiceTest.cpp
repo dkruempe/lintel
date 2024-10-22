@@ -7,18 +7,22 @@ void createExampleProperties(PropertyService &propertyService) {
             propertyService.getOrCreate<int32_t>("intProperty", "instanceName",
                                                  "testClass", "processName", "", true,
                                                  4712);
+    REQUIRE(intProperty->getValue() == 4712);
     std::shared_ptr<Property<std::string>> stringProperty =
             propertyService.getOrCreate<std::string>("stringProperty", "instanceName",
                                                      "testClass", "processName", "",
                                                      true, "Hallo Welt!");
+    REQUIRE(stringProperty->getValue() == "Hallo Welt!");
     std::shared_ptr<Property<double>> doubleProperty =
             propertyService.getOrCreate<double>("doubleProperty", "instanceName",
                                                 "testClass", "processName", "", true,
                                                 3.421);
+    REQUIRE(doubleProperty->getValue() == 3.421);
     std::shared_ptr<Property<std::string>> emptyStringProperty =
             propertyService.getOrCreate<std::string>("emptyStringProperty",
                                                      "instanceName", "testClass",
                                                      "processName", "", true);
+    REQUIRE(emptyStringProperty->getValue() == "");
 }
 
 class PropertyExampleClass : public AbstractService<PropertyExampleClass> {

@@ -1,11 +1,11 @@
 CREATE TABLE public.history
 (
-    process_name      TEXT                     NOT NULL,
-    service_name      TEXT                     NOT NULL,
-    label             TEXT                     NOT NULL,
-    text              TEXT                     NOT NULL,
-    uuid              TEXT                     NOT NULL,
-    created_timestamp timestamp with time zone NOT NULL,
+    process_name       TEXT                     NOT NULL,
+    service_name       TEXT                     NOT NULL,
+    label              TEXT                     NOT NULL,
+    text               TEXT                     NOT NULL,
+    uuid               TEXT                     NOT NULL,
+    created_timestamp  timestamp with time zone NOT NULL,
     inserted_timestamp timestamp with time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT history_PK PRIMARY KEY (process_name, service_name, uuid)
 );
@@ -53,10 +53,18 @@ CREATE TABLE public.group_groups_relation
 );
 CREATE TABLE public.shared_memory_repositories
 (
+    uuid                     text    NOT NULL,
     shared_memory_segment    text    NOT NULL,
     shared_memory_type       text    NOT NULL,
     shared_memory_repository text    NOT NULL,
     current_version          INTEGER NOT NULL,
     current_data_size        INTEGER NOT NULL,
-    CONSTRAINT shared_memory_repositories_pk PRIMARY KEY (shared_memory_segment, shared_memory_type, shared_memory_repository)
+    CONSTRAINT shared_memory_repositories_pk PRIMARY KEY (uuid)
+);
+CREATE TABLE message_queues
+(
+    name          text    NOT NULL,
+    process_name  text    NOT NULL,
+    max_messages  INTEGER NOT NULL,
+    CONSTRAINT message_queues_pk PRIMARY KEY (name)
 );
