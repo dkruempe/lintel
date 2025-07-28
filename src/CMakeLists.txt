@@ -34,7 +34,7 @@ if (NOT TARGET kruempelmann::Hypodermic)
 else ()
     include_directories(../external/Hypodermic/include)
 endif ()
-find_package(Threads REQUIRED)
+
 find_package(fmt REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(PostgreSQL REQUIRED)

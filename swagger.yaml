@@ -1,0 +1,429 @@
+swagger: "2.0"
+info:
+  title: C++ Base Library API
+  version: "1.0.0"
+host: localhost:8080
+schemes:
+  - http
+paths:
+  /hello:
+    get:
+      summary: Greets the user
+      description: |
+        Returns a personalized greeting if a valid Bearer token is provided, otherwise returns a generic "Hello World!".
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: string
+            example: "Hello >user< !"
+  /history/{processName}/{serviceName}/{label}:
+    get:
+      summary: Get history
+      parameters:
+        - name: processName
+          in: path
+          required: true
+          type: string
+        - name: serviceName
+          in: path
+          required: true
+          type: string
+        - name: label
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /messageQueue/{processName}/{messageQueueName}:
+    get:
+      summary: Get message queue
+      parameters:
+        - name: processName
+          in: path
+          required: true
+          type: string
+        - name: messageQueueName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /process/processes/{groupName}:
+    get:
+      summary: Get all processes
+      parameters:
+        - name: groupName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /process/groups/{groupName}:
+    get:
+      summary: Get all process groups
+      parameters:
+        - name: groupName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /process/start:
+    post:
+      summary: Start a process
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /process/stop/{processId}:
+    delete:
+      summary: Stop a process
+      parameters:
+        - name: processId
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "501":
+          description: Not Implemented
+  /process/terminate/{processId}:
+    delete:
+      summary: Terminate a process
+      parameters:
+        - name: processId
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "501":
+          description: Not Implemented
+  /shm/segments/{segmentName}:
+    get:
+      summary: Get all segments
+      parameters:
+        - name: segmentName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /shm/segments/shrink/{segmentName}:
+    put:
+      summary: Shrink a segment
+      parameters:
+        - name: segmentName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /shm/segments/grow/{segmentName}/{size}:
+    put:
+      summary: Grow a segment
+      parameters:
+        - name: segmentName
+          in: path
+          required: true
+          type: string
+        - name: size
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /shm/repositories/{repositoryName}/{segmentName}:
+    get:
+      summary: Get all repositories
+      parameters:
+        - name: repositoryName
+          in: path
+          required: true
+          type: string
+        - name: segmentName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /shm/repository/{uuid}:
+    get:
+      summary: Export a repository
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /user/login:
+    post:
+      summary: User login
+      responses:
+        "200":
+          description: A successful response
+        "403":
+          description: Forbidden
+  /user/logout:
+    delete:
+      summary: User logout
+      responses:
+        "200":
+          description: A successful response
+  /user/state:
+    get:
+      summary: Get user login state
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+  /user/groups:
+    get:
+      summary: Get all groups
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /user/groups/{groupNameOrIsVirtual}:
+    get:
+      summary: Get all groups of group name or is virtual group
+      parameters:
+        - name: groupNameOrIsVirtual
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /user/groups/{groupName}/{isVirtual}:
+    get:
+      summary: Get all groups of group name and is virtual group
+      parameters:
+        - name: groupName
+          in: path
+          required: true
+          type: string
+        - name: isVirtual
+          in: path
+          required: true
+          type: boolean
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /user/users:
+    get:
+      summary: Get all users
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /user/users/{userName}:
+    get:
+      summary: Get all users of user name
+      parameters:
+        - name: userName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /user/add:
+    post:
+      summary: Add a user
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "406":
+          description: Not Acceptable
+  /user/update:
+    put:
+      summary: Update a user
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /user/delete:
+    delete:
+      summary: Delete a user
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /properties/{processName}/{className}/{instanceName}:
+    get:
+      summary: Get all properties
+      parameters:
+        - name: processName
+          in: path
+          required: true
+          type: string
+        - name: className
+          in: path
+          required: true
+          type: string
+        - name: instanceName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+  /properties/{processName}/{className}/{instanceName}/{propertyName}:
+    get:
+      summary: Get a property
+      parameters:
+        - name: processName
+          in: path
+          required: true
+          type: string
+        - name: className
+          in: path
+          required: true
+          type: string
+        - name: instanceName
+          in: path
+          required: true
+          type: string
+        - name: propertyName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "405":
+          description: Method Not Allowed
+    put:
+      summary: Update a property
+      parameters:
+        - name: processName
+          in: path
+          required: true
+          type: string
+        - name: className
+          in: path
+          required: true
+          type: string
+        - name: instanceName
+          in: path
+          required: true
+          type: string
+        - name: propertyName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden
+        "405":
+          description: Method Not Allowed
+securityDefinitions:
+  bearerAuth:
+    type: apiKey
+    name: Authorization
+    in: header
+    description: "Bearer token authentication"

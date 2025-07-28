@@ -1,77 +1,113 @@
-# cpp-base-library
+# C++ Base Library
 
-## 1 Description
+A modular and feature-rich C++ library designed to accelerate the development of modern, high-performance applications.
 
-This library implements some basic libraries for a faster start in cpp project. The following basic functionalities are
-currently provided:
+## Overview
 
-1. Logger/MultiFileLogger
+`cpp-base-library` provides a solid foundation for C++ projects by offering a collection of robust, reusable, and loosely-coupled components. The architecture is split into a powerful `core` engine and a set of optional `features`, allowing you to include only what you need.
 
-   Basic Implementation for fast integration in a working project. In case of the need to log in multiple files a
-   wrapper for this is also available.
+The library is designed with extensibility in mind, featuring a plugin system and service-oriented architecture that makes it easy to add custom functionality.
 
-2. File/Directory operations wrapper
+## Core Features
 
-   This class wrapper wraps the std::filesystem library and some basic io operations. Now a file can easier be
-   created/removed/copied or symlinked.
+The `core` of the library provides the fundamental building blocks for any application. These components are designed to be lightweight, efficient, and highly extensible.
 
-3. SchedulerService/ExecutorService
+- **Service-Oriented Architecture**: A powerful architecture with a `StartupBuilder` for dependency injection and lifecycle management.
+- **Property System**: A central and flexible system for managing application configuration. It serves as the primary interface for services to access their settings. Properties can be loaded from various sources, including files (XML, JSON), databases, or shared memory.
+- **Bootstrap Plugins**: A specialized plugin system focused on the application's startup process. It allows for modular and extensible initialization routines.
+- **Feature Management**: A robust system for managing and enabling optional features within the library.
+- **Logging Framework**: A flexible, high-performance logging abstraction with `spdlog` as the default backend.
+- **Task Scheduling**: Includes a `SchedulerService` and `ExecutorService` for managing asynchronous operations and scheduled tasks.
+- **Abstract Persistence Layer**: Defines a common interface for persistence, allowing for the easy integration of different database backends.
+- **Filesystem & Utilities**: Provides a set of convenient wrappers for filesystem operations and a collection of general-purpose utilities like `StringifyService` and `TypeName`.
 
-   This class implements a basic SchedulerService for schedule tasks to avoid endless loops or polling.
+## Additional Features
 
-4. Property Implementation for easy usage of properties
+These optional modules build upon the core and can be enabled as needed to provide advanced, out-of-the-box functionality.
 
-    * includes a Repository with a FileRepository implementation and for testing an empty implementation
-    * includes a PropertyService to initialize all properties
-    * includes an interface AbstractService and marco to easy initialize the properties
-    * includes a PropertyFactory for easy creating of properties. Needed for service and Repository
-    * Note: Easy extensions for the Repository like for example a database implementation. The database implementation
-      won't be part of this library to keep a high support to all operating systems
-    * The serialization/deserialization of an Property with the current given PropertyRepository can be influenced with
-      the ConfigSerializationStrategy.java. Currently XML is supported. Feel free to TOML, JSON or whatever.
+- **Remote Management via HTTP API**: Provides a comprehensive HTTP-based API (via `cpp-httplib`) for remotely managing and interacting with core library components. This API is the foundation for any frontend.
+- **Interactive CLI**: A feature-rich, interactive command-line interface that serves as a reference client for the HTTP API. It is extensible and supports user management.
+- **Shared Memory (IPC)**: A service for inter-process communication using `boost::interprocess`.
+- **Persistence Backends**:
+  - **PostgreSQL**: A concrete implementation of the persistence layer for PostgreSQL databases.
+  - **SQLite**: A concrete implementation of the persistence layer for SQLite databases.
 
-5. StringifyService
+## HTTP API Reference
 
-   This service easy converts variables of given types to a string and backwards. This interface can be extended with
-   the given marco.
+A detailed description of all available HTTP API endpoints is available in the [swagger.md](swagger.md) file. The formal specification can be found in [swagger.yaml](swagger.yaml).
 
-6. TypeName util
+## Getting Started
 
-   This util returns the real type of an object with given marcos like PRETTY_FUNCTION
-7. CommandLineService
+### Prerequisites
 
-   Interactive command line service, which can be extended by easy components. For all basic functions is a component
-   directly implemented. The service is http based, which implies a remote connection support.
-   Of course a user management is also available, so that you can easily restrict the access to
-   special components.
-8. Shared Memory Service
-   Available basic implementation for shared memory usage itself. All basic objects for shared memory are available
-   for usage itself.
-9. BootstrapService
-   To support a direct boot without any manual interaction is a bootstrap service implemented. This service
-   also is available for the database initialization itself.
+- C++17 (or newer) compatible compiler
+- [CMake](https://cmake.org/) (version 3.16 or newer)
+- [Conan](https://conan.io/) (C/C++ Package Manager)
 
-Note, if you need only the library, you'll just have to use the src directory directly. So, you don't have to execute
-the compilation for other directories "tests, example".
+### Building the Project
 
-## 2 Dependencies
+1.  **Clone the repository:**
+    ```bash
+    git clone <repository-url>
+    cd cpp-base-library
+    ```
 
-1. spdlog library
-2. Fmt library (Will be removed with c++20 if available)
-3. Catch2 UnitTest Framework
-4. tinyxml2 Library
-5. boost interprocess library
-6. magic enum
-7. openssl
-8. rapidjson
-9. tabulate
-10. date
-11. zlib
+2.  **Install dependencies using Conan:**
+    This command will download and set up the required libraries.
+    ```bash
+    conan install . --output-folder=cmake-build-debug --build=missing
+    ```
 
-## 3 Examples
+3.  **Configure the project with CMake:**
+    This command generates the build files, linking the Conan dependencies.
+    ```bash
+    cmake -S . -B cmake-build-debug -DCMAKE_TOOLCHAIN_FILE=cmake-build-debug/conan_toolchain.cmake
+    ```
 
-This directory contains some example how the library can be used.
+4.  **Build the library, examples, and tests:**
+    ```bash
+    cmake --build cmake-build-debug --parallel
+    ```
+    The compiled binaries will be located in the `bin` directory.
 
-## 4 Tests
+## Usage
 
-This directory contains given tests for the library.
+The primary entry point for using the library is the `StartupBuilder`. This class allows you to fluently configure, initialize, and launch your application.
+
+You can use it to:
+- Register custom services and plugins.
+- Enable or disable features (like the CLI or HTTP server).
+- Configure persistence and other core services.
+
+For concrete implementation details, please refer to the `examples` directory, which contains several samples demonstrating how to use the various components of the library.
+
+## Dependencies
+
+This project uses [Conan](https://conan.io/) to manage the following external libraries:
+
+- [Boost](https://www.boost.org/)
+- [Catch2](https://github.com/catchorg/Catch2)
+- [cpp-httplib](https://github.com/yhirose/cpp-httplib)
+- [date](https://github.com/HowardHinnant/date)
+- [fmt](https://fmt.dev/)
+- [libpq](https://www.postgresql.org/docs/current/libpq.html)
+- [magic_enum](https://github.com/Neargye/magic_enum)
+- [OpenSSL](https://www.openssl.org/)
+- [RapidJSON](https://rapidjson.org/)
+- [spdlog](https://github.com/gabime/spdlog)
+- [SQLite3](https://www.sqlite.org/index.html)
+- [tinyxml2](https://github.com/leethomason/tinyxml2)
+- [zlib](https://zlib.net/)
+
+## Testing
+
+The library is tested using the [Catch2](https://github.com/catchorg/Catch2) framework. To run the tests, build the project and then execute `ctest` from the build directory:
+
+```bash
+cd cmake-build-debug
+ctest
+```
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
