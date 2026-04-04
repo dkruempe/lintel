@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <map>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include "Hypodermic/ContainerBuilder.h"
 #include "Hypodermic/Container.h"
 

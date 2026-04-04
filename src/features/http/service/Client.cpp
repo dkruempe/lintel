@@ -65,27 +65,6 @@ Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
     return m_sslClient->Get(pathStr.c_str(), headers);
 }
 
-[[maybe_unused]] httplib::Result Client::get(std::string_view path,
-                                             httplib::Progress progress) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), std::move(progress));
-    }
-    return m_sslClient->Get(pathStr.c_str(), std::move(progress));
-}
-
-[[maybe_unused]] auto Client::get(std::string_view path,
-  const httplib::Headers &headers,
-  httplib::Progress progress) const -> httplib::Result
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), headers, std::move(progress));
-    }
-    return m_sslClient->Get(pathStr.c_str(), headers, std::move(progress));
-}
-
 [[maybe_unused]] httplib::Result Client::get(
         std::string_view path, httplib::ContentReceiver contentReceiver) const
 {
@@ -116,32 +95,6 @@ Client::~Client() {
 }
 
 [[maybe_unused]] httplib::Result Client::get(
-        std::string_view path, httplib::ContentReceiver contentReceiver,
-        httplib::Progress progress) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), std::move(contentReceiver),
-                             std::move(progress));
-    }
-    return m_sslClient->Get(pathStr.c_str(), std::move(contentReceiver),
-                            std::move(progress));
-}
-
-[[maybe_unused]] httplib::Result Client::get(
-        std::string_view path, const httplib::Headers &headers,
-        httplib::ContentReceiver contentReceiver, httplib::Progress progress) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), headers, std::move(contentReceiver),
-                             std::move(progress));
-    }
-    return m_sslClient->Get(pathStr.c_str(), headers, std::move(contentReceiver),
-                            std::move(progress));
-}
-
-[[maybe_unused]] httplib::Result Client::get(
         std::string_view path, httplib::ResponseHandler responseHandler,
         httplib::ContentReceiver contentReceiver) const
 {
@@ -166,76 +119,6 @@ Client::~Client() {
     }
     return m_sslClient->Get(pathStr.c_str(), headers, std::move(responseHandler),
                             std::move(contentReceiver));
-}
-
-[[maybe_unused]] httplib::Result Client::get(
-        std::string_view path, httplib::ResponseHandler responseHandler,
-        httplib::ContentReceiver contentReceiver, httplib::Progress progress) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), std::move(responseHandler),
-                             std::move(contentReceiver), progress);
-    }
-    return m_sslClient->Get(pathStr.c_str(), std::move(responseHandler),
-                            std::move(contentReceiver), std::move(progress));
-}
-
-[[maybe_unused]] httplib::Result Client::get(
-        std::string_view path, const httplib::Headers &headers,
-        httplib::ResponseHandler responseHandler,
-        httplib::ContentReceiver contentReceiver, httplib::Progress progress) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), headers, std::move(responseHandler),
-                             std::move(contentReceiver), std::move(progress));
-    }
-    return m_sslClient->Get(pathStr.c_str(), headers, std::move(responseHandler),
-                            std::move(contentReceiver), progress);
-}
-
-[[maybe_unused]] httplib::Result Client::get(std::string_view path,
-                                             const httplib::Params &params,
-                                             const httplib::Headers &headers,
-                                             httplib::Progress progress) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), params, headers, std::move(progress));
-    }
-    return m_sslClient->Get(pathStr.c_str(), params, headers,
-                            std::move(progress));
-}
-
-[[maybe_unused]] httplib::Result Client::get(
-        std::string_view path, const httplib::Params &params,
-        const httplib::Headers &headers, httplib::ContentReceiver contentReceiver,
-        httplib::Progress progress) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), params, headers,
-                             std::move(contentReceiver), std::move(progress));
-    }
-    return m_sslClient->Get(pathStr.c_str(), params, headers,
-                            std::move(contentReceiver), std::move(progress));
-}
-
-[[maybe_unused]] httplib::Result Client::get(
-        std::string_view path, const httplib::Params &params,
-        const httplib::Headers &headers, httplib::ResponseHandler responseHandler,
-        httplib::ContentReceiver contentReceiver, httplib::Progress progress) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), params, headers,
-                             std::move(responseHandler), std::move(contentReceiver),
-                             std::move(progress));
-    }
-    return m_sslClient->Get(pathStr.c_str(), params, headers,
-                            std::move(responseHandler),
-                            std::move(contentReceiver), std::move(progress));
 }
 
 bool Client::isSslClient() const { return m_sslClient != nullptr; }
@@ -372,38 +255,6 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
         return m_client->Post(pathStr.c_str(), headers, params);
     }
     return m_sslClient->Post(pathStr.c_str(), headers, params);
-}
-
-[[maybe_unused]] httplib::Result Client::post(
-        std::string_view path, const httplib::MultipartFormDataItems &items) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), items);
-    }
-    return m_sslClient->Post(pathStr.c_str(), items);
-}
-
-[[maybe_unused]] httplib::Result Client::post(
-        std::string_view path, const httplib::Headers &headers,
-        const httplib::MultipartFormDataItems &items) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), headers, items);
-    }
-    return m_sslClient->Post(pathStr.c_str(), headers, items);
-}
-
-[[maybe_unused]] httplib::Result Client::post(
-        std::string_view path, const httplib::Headers &headers,
-        const httplib::MultipartFormDataItems &items, const std::string &boundary) const
-{
-    auto pathStr = std::string(path);
-    if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), headers, items, boundary);
-    }
-    return m_sslClient->Post(pathStr.c_str(), headers, items, boundary);
 }
 
 [[maybe_unused]] httplib::Result Client::put(std::string_view path) const

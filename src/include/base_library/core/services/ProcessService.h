@@ -2,7 +2,6 @@
 #define CPP_SYSTEM_LIBRARY_PROCESSSERVICE_H
 
 #include <atomic>
-#include <boost/process.hpp>
 #include <condition_variable>
 #include <filesystem>
 #include <future>
@@ -26,7 +25,7 @@ private:
     private:
         // variables
         std::shared_ptr<Process> m_process = nullptr;
-        std::shared_ptr<boost::process::child> m_child;
+        std::shared_ptr<boost::process::v1::child> m_child;
         std::shared_ptr<std::promise<int>> m_promise = nullptr;
 
     public:
@@ -36,7 +35,7 @@ private:
             m_process = std::move(process);
         }
 
-        void setChild(std::shared_ptr<boost::process::child> child) {
+        void setChild(std::shared_ptr<boost::process::v1::child> child) {
             m_child = std::move(child);
         }
 
@@ -44,7 +43,7 @@ private:
             return m_process;
         }
 
-        [[nodiscard]] std::shared_ptr<boost::process::child> &getChild() {
+        [[nodiscard]] std::shared_ptr<boost::process::v1::child> &getChild() {
             return m_child;
         }
 

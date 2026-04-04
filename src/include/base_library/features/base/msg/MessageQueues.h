@@ -4,7 +4,7 @@
 #include <set>
 #include <map>
 #include <string_view>
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 /**
  * list of all available MessageQueues

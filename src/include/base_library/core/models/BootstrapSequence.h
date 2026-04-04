@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_BOOTSTRAP_H
 #define CPP_BASE_LIBRARY_BOOTSTRAP_H
 
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <set>
 #include <string>
 

@@ -4,6 +4,7 @@
 #include <base_library/core/utils/StringUtils.h>
 #include <base_library/core/utils/TableBuilder.h>
 #include <rapidjson/prettywriter.h>
+#include <fstream>
 
 SharedMemoryCliComponent::SharedMemoryCliComponent(
         std::shared_ptr<SharedMemoryApi> sharedMemoryApi)

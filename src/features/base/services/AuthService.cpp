@@ -24,7 +24,7 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin) {
     }
     // II check via boost ip address
     boost::system::error_code ec{};
-    auto ip = boost::asio::ip::address::from_string(userLogin.m_ipAddress, ec);
+    auto ip = boost::asio::ip::make_address(userLogin.m_ipAddress, ec);
     if (ip.to_string() != userLogin.m_ipAddress) {
         LOG_ERROR("{} invalid ip address of {}", userLogin.m_ipAddress,
                   userLogin.m_userName);

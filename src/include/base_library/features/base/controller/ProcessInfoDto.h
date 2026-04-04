@@ -17,7 +17,7 @@ private:
     int32_t m_restarts;
     int32_t m_maxAutoRestarts;
     // process state
-    boost::process::pid_t m_processId;
+    boost::process::v1::pid_t m_processId;
     bool m_isRunning;
     int32_t m_exitCode;
     // process group

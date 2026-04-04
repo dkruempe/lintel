@@ -1,7 +1,7 @@
 #ifndef PLC_PROPERTYREPOSITORYTYPE_H
 #define PLC_PROPERTYREPOSITORYTYPE_H
 
-#include <magic_enum.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <set>
 #include <string>
 
