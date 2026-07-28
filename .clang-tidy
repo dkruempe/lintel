@@ -23,6 +23,12 @@ Checks: "*,
         -hicpp-vararg,
         -bugprone-easily-swappable-parameters,
         -readability-identifier-length,
+        -cert-err33-c,
+        -cppcoreguidelines-avoid-c-arrays,
+        -hicpp-avoid-c-arrays,
+        -modernize-avoid-c-arrays,
+        -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+        -misc-const-correctness,
 "
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
