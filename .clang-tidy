@@ -14,6 +14,15 @@ Checks: "*,
         -cppcoreguidelines-non-private-member-variables-in-classes,
         -misc-non-private-member-variables-in-classes,
         -misc-include-cleaner,
+        -cppcoreguidelines-special-member-functions,
+        -hicpp-special-member-functions,
+        -cppcoreguidelines-avoid-magic-numbers,
+        -readability-magic-numbers,
+        -cppcoreguidelines-rvalue-reference-param-not-moved,
+        -cppcoreguidelines-pro-type-vararg,
+        -hicpp-vararg,
+        -bugprone-easily-swappable-parameters,
+        -readability-identifier-length,
 "
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
