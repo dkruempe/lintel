@@ -62,6 +62,8 @@ function(set_project_warnings project_name)
             -Wduplicated-branches # warn if if / else branches have duplicated code
             -Wlogical-op # warn about logical operations being used where bitwise were probably wanted
             -Wuseless-cast # warn if you perform a cast to the same type
+            -Wno-null-dereference # GCC false positives with deeply inlined templates (e.g. Hypodermic/STL)
+            -Wno-error=null-dereference # don't promote to error even if re-enabled by -Wall
             )
 
     if (MSVC)

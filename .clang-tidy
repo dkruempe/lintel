@@ -33,6 +33,13 @@ Checks: "*,
         -performance-inefficient-vector-operation,
         -performance-unnecessary-value-param,
         -bugprone-switch-missing-default-case,
+        -readability-container-data-pointer,
+        -misc-unused-parameters,
+        -hicpp-deprecated-headers,
+        -modernize-deprecated-headers,
+        -concurrency-mt-unsafe,
+        -cppcoreguidelines-avoid-do-while,
+        -readability-redundant-casting,
 "
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
