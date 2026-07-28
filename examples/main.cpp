@@ -9,11 +9,11 @@
 #include <utility>
 
 struct ArrayDto {
-    char m_name[100];
-    char m_addr[100];
-    char m_plz[100];
-    char m_location[100];
-    int32_t m_age;
+    char m_name[100]{};
+    char m_addr[100]{};
+    char m_plz[100]{};
+    char m_location[100]{};
+    int32_t m_age = 0;
 
     bool operator<(const ArrayDto &rhs) const {
         if (m_name < rhs.m_name) return true;
@@ -122,7 +122,7 @@ struct TestDataDto {
     SharedMemoryService::ShmString m_addr;
     SharedMemoryService::ShmString m_plz;
     SharedMemoryService::ShmString m_location;
-    int32_t m_age;
+    int32_t m_age = 0;
 
     bool operator==(const TestDataDto &rhs) const {
         return m_name == rhs.m_name && m_addr == rhs.m_addr && m_plz == rhs.m_plz &&

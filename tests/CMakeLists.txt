@@ -28,3 +28,47 @@ ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
 target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
 target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
+
+# Integration Tests
+
+# SQLite Integration Test
+ADD_EXECUTABLE(sqliteIntegrationTest integration/SQLiteIntegrationTest.cpp)
+target_compile_features(sqliteIntegrationTest PUBLIC cxx_std_17)
+target_link_libraries(sqliteIntegrationTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.SQLiteIntegrationTest COMMAND sqliteIntegrationTest)
+
+# Configuration Integration Test
+ADD_EXECUTABLE(configIntegrationTest integration/ConfigIntegrationTest.cpp)
+target_compile_features(configIntegrationTest PUBLIC cxx_std_17)
+target_link_libraries(configIntegrationTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.ConfigIntegrationTest COMMAND configIntegrationTest)
+
+# HTTP Integration Test
+ADD_EXECUTABLE(httpIntegrationTest integration/HttpIntegrationTest.cpp)
+target_compile_features(httpIntegrationTest PUBLIC cxx_std_17)
+target_link_libraries(httpIntegrationTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.HttpIntegrationTest COMMAND httpIntegrationTest)
+
+# Property Serialization Test
+ADD_EXECUTABLE(propertySerializationTest integration/PropertySerializationTest.cpp)
+target_compile_features(propertySerializationTest PUBLIC cxx_std_17)
+target_link_libraries(propertySerializationTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.PropertySerializationTest COMMAND propertySerializationTest)
+
+# Core Utils Test
+ADD_EXECUTABLE(coreUtilsTest core/CoreUtilsTest.cpp)
+target_compile_features(coreUtilsTest PUBLIC cxx_std_17)
+target_link_libraries(coreUtilsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.CoreUtilsTest COMMAND coreUtilsTest)
+
+# Config Components Test
+ADD_EXECUTABLE(configComponentsTest features/ConfigComponentsTest.cpp)
+target_compile_features(configComponentsTest PUBLIC cxx_std_17)
+target_link_libraries(configComponentsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.ConfigComponentsTest COMMAND configComponentsTest)
+
+# CLI Parser Test
+ADD_EXECUTABLE(cliParserTest cli/CliParserTest.cpp)
+target_compile_features(cliParserTest PUBLIC cxx_std_17)
+target_link_libraries(cliParserTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.CliParserTest COMMAND cliParserTest)

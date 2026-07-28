@@ -22,9 +22,9 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
     struct SegmentTemp {
         bool m_autoExtend = false;
         std::string m_name;
-        std::size_t m_size;
-        std::size_t m_maxSize;
-        std::size_t m_autoExtendSize;
+        std::size_t m_size = 0;
+        std::size_t m_maxSize = 0;
+        std::size_t m_autoExtendSize = 0;
     };
     std::vector<SegmentTemp> segments;
     std::filesystem::path path;
@@ -94,8 +94,12 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
             SegmentTemp segmentTemp{};
             segmentTemp.m_name = name;
             segmentTemp.m_size = convertToBytes(sizeStr);
-            segmentTemp.m_maxSize = convertToBytes(maxSizeStr);
-            segmentTemp.m_autoExtendSize = convertToBytes(autoExtendSizeStr);
+            if (maxSizeStr != nullptr) {
+                segmentTemp.m_maxSize = convertToBytes(maxSizeStr);
+            }
+            if (autoExtendSizeStr != nullptr) {
+                segmentTemp.m_autoExtendSize = convertToBytes(autoExtendSizeStr);
+            }
             segmentTemp.m_autoExtend = true;
             segments.emplace_back(segmentTemp);
         }

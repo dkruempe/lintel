@@ -1,0 +1,161 @@
+#include <base_library/features/base/configuration/Component.h>
+#include <base_library/features/base/configuration/Configuration.h>
+#include <base_library/features/base/configuration/ConfigurationComponentBuilder.h>
+#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
+#include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
+#include <base_library/features/http/configuration/HttpComponent.h>
+#include <base_library/features/http/configuration/HttpEntry.h>
+#include <base_library/core/utils/TypeName.h>
+
+#include <catch2/catch_all.hpp>
+
+#include <cstdlib>
+#include <filesystem>
+#include <fstream>
+
+TEST_CASE("Component: getConfigRoot returns configured root name") {
+    class TestComponent : public Component {
+    public:
+        TestComponent() : Component("TestRoot") {}
+        std::vector<std::shared_ptr<Entry>> parse(
+            const std::string &, const std::string &, int32_t) override {
+            return {};
+        }
+    };
+    TestComponent comp;
+    REQUIRE(comp.getConfigRoot() == "TestRoot");
+}
+
+TEST_CASE("Component: convertToBytes parses size strings") {
+    class TestComponent : public Component {
+    public:
+        TestComponent() : Component("Test") {}
+        std::vector<std::shared_ptr<Entry>> parse(
+            const std::string &, const std::string &, int32_t) override {
+            return {};
+        }
+        std::size_t testConvert(const std::string &s) { return convertToBytes(s); }
+    };
+    TestComponent comp;
+    REQUIRE(comp.testConvert("1024") == 1024);
+    REQUIRE(comp.testConvert("1kB") == 1000);
+    REQUIRE(comp.testConvert("1MB") == 1000000);
+    REQUIRE(comp.testConvert("1GB") == 1000000000);
+    REQUIRE(comp.testConvert("2MB") == 2000000);
+}
+
+TEST_CASE("HttpComponent: parse server configuration") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    REQUIRE(entries.size() == 1);
+
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    auto &serverConfig = httpEntry->getServerConfiguration();
+    REQUIRE(serverConfig->getHost() == "0.0.0.0");
+    REQUIRE(serverConfig->getPort() == 8080);
+}
+
+TEST_CASE("HttpComponent: parse client configuration") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Client host="localhost" port="9090" connection_timeout="5000"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    REQUIRE(entries.size() == 1);
+
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    auto &clientConfig = httpEntry->getClientConfiguration();
+    REQUIRE(clientConfig->getHost() == "localhost");
+    REQUIRE(clientConfig->getPort() == 9090);
+}
+
+TEST_CASE("HttpComponent: parse both server and client") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost>
+        <Server host="0.0.0.0" port="8080"/>
+        <Client host="localhost" port="9090"/>
+    </HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    REQUIRE(entries.size() == 2);
+}
+
+TEST_CASE("HttpComponent: parse with timeouts") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost>
+        <Server host="0.0.0.0" port="8080" read_timeout="3000" write_timeout="5000" idle_timeout="60000"/>
+    </HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    auto &config = httpEntry->getServerConfiguration();
+    REQUIRE(config->getReadTimeOut().count() == 3000);
+    REQUIRE(config->getWriteTimeOut().count() == 5000);
+    REQUIRE(config->getIdleInterval().count() == 60000);
+}
+
+TEST_CASE("Configuration: setEntries and query by type") {
+    setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+
+    class TestEntry : public Entry {
+    public:
+        TestEntry(std::string_view component, int value)
+            : Entry(component), m_value(value) {}
+        int getValue() const { return m_value; }
+    private:
+        int m_value;
+    };
+
+    Configuration config({}, std::make_shared<EnvironmentConfiguration>());
+    config.setEntries({
+        std::make_shared<TestEntry>("TestComponent", 42),
+        std::make_shared<TestEntry>("TestComponent", 99),
+        std::make_shared<TestEntry>("OtherComponent", 7),
+    });
+
+    class TestComponent : public Component {
+    public:
+        TestComponent() : Component("Test") {}
+        std::vector<std::shared_ptr<Entry>> parse(
+            const std::string &, const std::string &, int32_t) override {
+            return {};
+        }
+    };
+
+    auto entries = config.configurationOf<TestComponent>();
+    REQUIRE(entries.size() == 2);
+}
+
+TEST_CASE("Configuration: with type_name matching") {
+    setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+
+    class TestComponent : public Component {
+    public:
+        TestComponent() : Component("Test") {}
+        std::vector<std::shared_ptr<Entry>> parse(
+            const std::string &, const std::string &, int32_t) override {
+            return {};
+        }
+    };
+
+    class TestEntry : public Entry {
+    public:
+        TestEntry() : Entry(type_name<TestComponent>()) {}
+    };
+
+    Configuration config({}, std::make_shared<EnvironmentConfiguration>());
+    config.setEntries({std::make_shared<TestEntry>()});
+
+    auto entries = config.configurationOf<TestComponent>();
+    REQUIRE(entries.size() == 1);
+}
+
+TEST_CASE("Entry: getConfigurationParserComponent") {
+    class CustomEntry : public Entry {
+    public:
+        explicit CustomEntry(std::string_view comp) : Entry(comp) {}
+    };
+    CustomEntry entry("MyComponent");
+    REQUIRE(entry.getConfigurationParserComponent() == "MyComponent");
+}
