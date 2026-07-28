@@ -27,7 +27,7 @@ namespace db {
             : m_connectionType(connectionType) {}
 
     Argument::Argument(std::string value, std::string name)
-            : m_value(std::move(value)), m_name(std::move(name)) {}
+            : m_value(std::move(value)), m_name(std::move(name)), m_connectionType(ConnectionType::UNDEFINED) {}
 
     const std::string &Argument::getValue() const { return m_value; }
 
