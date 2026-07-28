@@ -63,7 +63,7 @@ jobs:
         run: cmake --preset conan-release
 
       - name: Build
-        run: cmake --build --preset conan-release --parallel 4
+        run: cmake --build --preset conan-release --parallel 8
 
       - name: Run tests
         run: ctest --preset conan-release --output-on-failure

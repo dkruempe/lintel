@@ -29,6 +29,10 @@ Checks: "*,
         -modernize-avoid-c-arrays,
         -cppcoreguidelines-pro-bounds-pointer-arithmetic,
         -misc-const-correctness,
+        -readability-qualified-auto,
+        -performance-inefficient-vector-operation,
+        -performance-unnecessary-value-param,
+        -bugprone-switch-missing-default-case,
 "
 WarningsAsErrors: ''
 HeaderFilterRegex: ''
