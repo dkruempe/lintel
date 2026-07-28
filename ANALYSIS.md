@@ -26,19 +26,15 @@
 
 3. **Lückenhafte Testabdeckung** – Nur 10 Testdateien. Es fehlen Tests für: PostgreSQL-Backend, HTTP-Interna, CLI-Interaktion, Shared Memory, Message Queues. Kein Mocking-Framework – Tests nutzen reale Datenbankinstanzen.
 
-4. **`GLOB_RECURSE` im CMake** (`src/CMakeLists.txt`) – Erkennt neue Dateien nicht automatisch, gilt als CMake-Antipattern. Nach einem `git pull` mit neuen `.cpp` Dateien muss CMake manuell neu konfiguriert werden.
+4. **Platform-spezifischer Workaround** – `#ifdef __APPLE__` für `std::size_t` Serialisierung (im TODO.md als Fixme vermerkt).
 
-5. **Dateiname mit Leerzeichen** – Die Datei `SharedMemoryApi .cpp` (Leerzeichen vor dem Punkt) wird zu Problemen auf manchen Dateisystemen und mit CMake führen.
+5. **Signal-Handling mit rohem static Pointer** (`StartupBuilder.cpp`) – `std::signal` + static raw pointer statt modernem `sigaction` + `sigwait` in dediziertem Thread. Nicht thread-safety und potentiell problematisch bei Mehrfachinstanzen.
 
-6. **Platform-spezifischer Workaround** – `#ifdef __APPLE__` für `std::size_t` Serialisierung (im TODO.md als Fixme vermerkt).
+6. **Minimale Code-Dokumentation** – Kaum Doxygen-Kommentare. Öffentliche API ohne Header-Dokumentation.
 
-7. **Signal-Handling mit rohem static Pointer** (`StartupBuilder.cpp`) – `std::signal` + static raw pointer statt modernem `sigaction` + `sigwait` in dediziertem Thread. Nicht thread-safety und potentiell problematisch bei Mehrfachinstanzen.
+7. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
 
-8. **Minimale Code-Dokumentation** – Kaum Doxygen-Kommentare. Öffentliche API ohne Header-Dokumentation.
-
-9. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
-
-10. **Kein Binary-Separation** – Core und Features werden in eine einzige Shared Library (`base_library`) kompiliert. Optionalität der Features ist nur zur Compile-Zeit über das Registrieren im StartupBuilder gegeben – nicht auf Binärebene.
+8. **Kein Binary-Separation** – Core und Features werden in eine einzige Shared Library (`base_library`) kompiliert. Optionalität der Features ist nur zur Compile-Zeit über das Registrieren im StartupBuilder gegeben – nicht auf Binärebene.
 
 ---
 
@@ -47,10 +43,8 @@
 | Priorität | Maßnahme | Begründung |
 |-----------|----------|------------|
 | **Hoch** | **CI/CD Pipeline aufsetzen** (GitHub Actions) | Automatisierte Builds + Tests auf macOS/Linux; fängt Regressionen sofort |
-| **Hoch** | **GLOB_RECURSE durch explizite File-Listen ersetzen** | Verlässliche CMake-Konfiguration, saubere Abhängigkeits-Tracking |
 | **Hoch** | **Testabdeckung erweitern** | PostgreSQL-Backend, HTTP-Controller, CLI, Shared Memory – mindestens Integrationstests |
 | **Hoch** | **Fehlende Features abschließen (TODO.md)** | std::size_t Fix, MySQL Support, Cursor, HTTP Exception Handling, Paging |
-| **Mittel** | **Dateiname korrigieren** (`SharedMemoryApi .cpp`) | Vermeidet Plattform-Probleme |
 | **Mittel** | **Signal-Handling modernisieren** | `sigaction` + worker thread statt `std::signal` + static pointer |
 | **Mittel** | **Docker-Compose für Test-Infrastruktur** | PostgreSQL Container für Integrationstests (steht bereits in TODO.md) |
 | **Mittel** | **Benchmark-Suite aufsetzen** | Performance-Messungen für Property-System, Persistenz, Serialisierung |

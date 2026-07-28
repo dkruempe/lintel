@@ -7,10 +7,6 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
-env:
-  BUILD_DIR: build
-  CONAN_DIR: .conan
-
 jobs:
   build-and-test:
     strategy:
@@ -61,20 +57,13 @@ jobs:
             ${{ runner.os }}-conan-
 
       - name: Install dependencies via Conan
-        run: conan install . --output-folder=${{ env.CONAN_DIR }} --build=missing -s build_type=Release
-
-      - name: Locate Conan toolchain
-        id: toolchain
-        run: |
-          TOOLCHAIN=$(find ${{ env.CONAN_DIR }} -name "conan_toolchain.cmake" -print -quit)
-          echo "toolchain=$TOOLCHAIN" >> "$GITHUB_OUTPUT"
-          echo "Found: $TOOLCHAIN"
+        run: conan install . --output-folder=build --build=missing -s build_type=Release
 
       - name: Configure CMake
-        run: cmake -S . -B ${{ env.BUILD_DIR }} -DCMAKE_TOOLCHAIN_FILE="${{ steps.toolchain.outputs.toolchain }}" -DCMAKE_BUILD_TYPE=Release
+        run: cmake --preset conan-release
 
       - name: Build
-        run: cmake --build ${{ env.BUILD_DIR }} --parallel
+        run: cmake --build --preset conan-release --parallel 2
 
       - name: Run tests
-        run: ctest --test-dir ${{ env.BUILD_DIR }} --output-on-failure
+        run: ctest --preset conan-release --output-on-failure
