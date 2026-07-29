@@ -1,23 +1,17 @@
 #include "base_library/features/property/models/Property.h"
 
-#define REGISTER_PROPERTY(type) \
-  bool Property<type>::registered = Property<type>::Registration();
-
-REGISTER_PROPERTY(int8_t)
-REGISTER_PROPERTY(int16_t)
-REGISTER_PROPERTY(int32_t)
-REGISTER_PROPERTY(int64_t)
-REGISTER_PROPERTY(uint8_t)
-REGISTER_PROPERTY(uint16_t)
-REGISTER_PROPERTY(uint32_t)
-REGISTER_PROPERTY(uint64_t)
-#ifdef __APPLE__
-REGISTER_PROPERTY(std::size_t)
-#endif
-REGISTER_PROPERTY(float)
-REGISTER_PROPERTY(double)
-REGISTER_PROPERTY(std::string)
-REGISTER_PROPERTY(bool)
-REGISTER_PROPERTY(std::chrono::milliseconds)
-REGISTER_PROPERTY(std::chrono::seconds)
-REGISTER_PROPERTY(std::chrono::minutes)
+template class Property<int8_t>;
+template class Property<int16_t>;
+template class Property<int32_t>;
+template class Property<int64_t>;
+template class Property<uint8_t>;
+template class Property<uint16_t>;
+template class Property<uint32_t>;
+template class Property<uint64_t>;
+template class Property<float>;
+template class Property<double>;
+template class Property<std::string>;
+template class Property<bool>;
+template class Property<std::chrono::milliseconds>;
+template class Property<std::chrono::seconds>;
+template class Property<std::chrono::minutes>;
