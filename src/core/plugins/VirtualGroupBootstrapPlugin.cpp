@@ -5,12 +5,13 @@
 #include "base_library/core/persistence/Transaction.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/StringUtils.h"
+#include "base_library/features/base/provider/GroupProvider.h"
 
 VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
         const std::shared_ptr<DatabaseConnectionConfigurations>
         &connectionConfigurations,
-        std::vector<std::shared_ptr<GroupProvider>> groupProviders)
-        : m_groupProviders(std::move(groupProviders)),
+        std::shared_ptr<Hypodermic::Container> container)
+        : m_container(std::move(container)),
           m_connectionEntry(connectionConfigurations->ofDefault()) {}
 
 BootstrapSequence VirtualGroupBootstrapPlugin::getPriority() {
@@ -18,8 +19,9 @@ BootstrapSequence VirtualGroupBootstrapPlugin::getPriority() {
 }
 
 void VirtualGroupBootstrapPlugin::onStart() {
+    auto groupProviders = m_container->resolveAll<GroupProvider>();
     std::set<Group> groups;
-    for (const auto &groupProvider: m_groupProviders) {
+    for (const auto &groupProvider: groupProviders) {
         std::vector<Group> temp = groupProvider->provide();
         groups.insert(temp.begin(), temp.end());
     }

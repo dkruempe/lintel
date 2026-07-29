@@ -16,7 +16,6 @@ void DatabaseBootstrapPlugin::onStart() {
         } catch (db::SQLException &exception) {
             LOG_ERROR("{} - failed to handle database bootstrap plugin - {}",
                       connectionEntry->getName(), exception.what());
-            throw std::move(exception);
         } catch (std::exception &exception) {
             LOG_ERROR("{} - failed to handle database bootstrap plugin - {}",
                       connectionEntry->getName(), exception.what());
