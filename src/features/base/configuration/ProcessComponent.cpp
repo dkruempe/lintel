@@ -8,20 +8,20 @@
 #include "base_library/features/base/configuration/ProcessEntry.h"
 #include "base_library/features/base/models/Process.h"
 
-ProcessComponent::Shapes ProcessComponent::m_shapes{};
+const ProcessComponent::Shapes ProcessComponent::m_shapes{};
 
 ProcessComponent::ProcessComponent() : Component(m_shapes.CONFIG_ROOT) {}
 
 std::shared_ptr<Entry> ProcessComponent::parseProcess(
         tinyxml2::XMLElement *processElement, int32_t lineOffset) {
     int32_t lineNumber = lineOffset + processElement->GetLineNum();
-    const char *name = processElement->Attribute(m_shapes.PROCESS_NAME.c_str());
+    const char *name = processElement->Attribute(m_shapes.PROCESS_NAME);
     const char *autoRestartsStr =
-            processElement->Attribute(m_shapes.PROCESS_AUTO_RESTART.c_str());
+            processElement->Attribute(m_shapes.PROCESS_AUTO_RESTART);
     const char *maxRestartsStr =
-            processElement->Attribute(m_shapes.PROCESS_MAX_RESTARTS.c_str());
+            processElement->Attribute(m_shapes.PROCESS_MAX_RESTARTS);
     const char *argsStr =
-            processElement->Attribute(m_shapes.PROCESS_ARGS.c_str());
+            processElement->Attribute(m_shapes.PROCESS_ARGS);
 
     if (name == nullptr) {
         throw ConfigurationException(getConfigRoot(), "process - name is null",
@@ -71,13 +71,11 @@ std::vector<std::shared_ptr<Entry>> ProcessComponent::parse(
     for (tinyxml2::XMLElement *processElement = rootNode->FirstChildElement();
          processElement != nullptr;
          processElement = processElement->NextSiblingElement()) {
-        if (std::strcmp(processElement->Name(), m_shapes.PROCESS_ROOT.c_str()) ==
+        if (std::strcmp(processElement->Name(), m_shapes.PROCESS_ROOT) ==
             0) {
-            processEntries.push_back(parseProcess(processElement, lineOffset));
-            continue;
-        }
-        if (std::strcmp(processElement->Name(),
-                        m_shapes.PROCESS_GROUP_ROOT.c_str()) == 0) {
+            parseProcess(processElement, lineOffset);
+        } else if (std::strcmp(processElement->Name(),
+                               m_shapes.PROCESS_GROUP_ROOT) == 0) {
             processEntries.push_back(parseProcessGroup(processElement, lineOffset));
 
             continue;
@@ -93,7 +91,7 @@ std::shared_ptr<Entry> ProcessComponent::parseProcessGroup(
             processGroupElement->FirstChildElement();
          processElement != nullptr;
          processElement = processElement->NextSiblingElement()) {
-        if (std::strcmp(processElement->Name(), m_shapes.PROCESS_ROOT.c_str()) !=
+        if (std::strcmp(processElement->Name(), m_shapes.PROCESS_ROOT) !=
             0) {
             continue;
         }
@@ -103,7 +101,7 @@ std::shared_ptr<Entry> ProcessComponent::parseProcessGroup(
         entries.push_back(*processEntry->getProcess());
     }
     const char *groupName =
-            processGroupElement->Attribute(m_shapes.PROCESS_GROUP_NAME.c_str());
+            processGroupElement->Attribute(m_shapes.PROCESS_GROUP_NAME);
     if (groupName == nullptr) {
         throw ConfigurationException(
                 m_shapes.CONFIG_ROOT, "process-group - name not found",

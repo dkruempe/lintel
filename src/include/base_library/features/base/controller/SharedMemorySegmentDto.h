@@ -23,17 +23,17 @@ private:
     std::size_t m_amountUniqueObjects;
 
     static struct Shapes {
-        const std::string PATH = "path";
-        const std::string NAME = "name";
-        const std::string SIZE = "size";
-        const std::string AUTO_EXTEND = "auto_extend";
-        const std::string AUTO_EXTEND_SIZE = "auto_extend_size";
-        const std::string MAX_SIZE = "max_size";
-        const std::string SANITY = "sanity";
-        const std::string CURRENT_SIZE = "current_size";
-        const std::string FREE_SIZE = "free_size";
-        const std::string NAMED_OBJECTS = "named_objects";
-        const std::string UNIQUE_OBJECTS = "unique_objects";
+        const char *const PATH = "path";
+        const char *const NAME = "name";
+        const char *const SIZE = "size";
+        const char *const AUTO_EXTEND = "auto_extend";
+        const char *const AUTO_EXTEND_SIZE = "auto_extend_size";
+        const char *const MAX_SIZE = "max_size";
+        const char *const SANITY = "sanity";
+        const char *const CURRENT_SIZE = "current_size";
+        const char *const FREE_SIZE = "free_size";
+        const char *const NAMED_OBJECTS = "named_objects";
+        const char *const UNIQUE_OBJECTS = "unique_objects";
     } m_shape;
 
 public:

@@ -2,8 +2,10 @@
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/msg/MessageQueues.h"
 
+#include <algorithm>
+
 HistoryService::HistoryService(
-        const std::shared_ptr<ProcessName> &processName,
+        std::shared_ptr<ProcessName> processName,
         std::shared_ptr<SchedulerService> schedulerService,
         std::shared_ptr<HistoryRepository> historyRepository,
         std::shared_ptr<MessageQueueService> messageQueueService)
@@ -46,8 +48,8 @@ void HistoryService::run() {
     std::optional<Message> message = m_historyMessageQueue->tryReceiveOf();
     while (message.has_value() && m_running) {
         auto historyMessage = message->as<HistoryMessage>();
-        HistoryEntry const historyEntry(historyMessage.processName, historyMessage.serviceName, historyMessage.label,
-                                        historyMessage.text,
+        HistoryEntry const historyEntry(std::string(&historyMessage.processName[0]), std::string(&historyMessage.serviceName[0]), std::string(&historyMessage.label[0]),
+                                        std::string(&historyMessage.text[0]),
                                         std::chrono::time_point_cast<std::chrono::microseconds>(
                                             std::chrono::system_clock::from_time_t(historyMessage.createdTimestamp) +
                                             std::chrono::microseconds(historyMessage.createdTimestampMics)));
@@ -74,17 +76,23 @@ void HistoryService::historizeOf(std::vector<HistoryEntry> entries) {
     if (!m_historyMessageQueue->isOwner() || m_forceQueue->getValue()) {
         for (const auto &entry: entries) {
             HistoryMessage historyMessage{};
-            std::strncpy(historyMessage.processName, entry.getProcessName().c_str(),
-                         sizeof(historyMessage.processName) - 1);
-            historyMessage.processName[sizeof(historyMessage.processName) - 1] = '\0';
-            std::strncpy(historyMessage.label, entry.getLabel().c_str(), sizeof(historyMessage.label) - 1);
-            historyMessage.label[sizeof(historyMessage.label) - 1] = '\0';
-            std::strncpy(historyMessage.serviceName, entry.getServiceName().c_str(),
-                         sizeof(historyMessage.serviceName) - 1);
-            historyMessage.serviceName[sizeof(historyMessage.serviceName) - 1] = '\0';
+            auto len = std::min(entry.getProcessName().size(), sizeof(historyMessage.processName) - 1);
+            std::copy(entry.getProcessName().begin(), entry.getProcessName().begin() + static_cast<std::ptrdiff_t>(len),
+                      std::begin(historyMessage.processName));
+            *(std::begin(historyMessage.processName) + static_cast<std::ptrdiff_t>(len)) = '\0';
+            len = std::min(entry.getLabel().size(), sizeof(historyMessage.label) - 1);
+            std::copy(entry.getLabel().begin(), entry.getLabel().begin() + static_cast<std::ptrdiff_t>(len),
+                      std::begin(historyMessage.label));
+            *(std::begin(historyMessage.label) + static_cast<std::ptrdiff_t>(len)) = '\0';
+            len = std::min(entry.getServiceName().size(), sizeof(historyMessage.serviceName) - 1);
+            std::copy(entry.getServiceName().begin(), entry.getServiceName().begin() + static_cast<std::ptrdiff_t>(len),
+                      std::begin(historyMessage.serviceName));
+            *(std::begin(historyMessage.serviceName) + static_cast<std::ptrdiff_t>(len)) = '\0';
             historyMessage.createdTimestamp = std::chrono::system_clock::to_time_t(entry.getCreatedTimestamp());
-            std::strncpy(historyMessage.text, entry.getText().c_str(), sizeof(historyMessage.text) - 1);
-            historyMessage.text[sizeof(historyMessage.text) - 1] = '\0';
+            len = std::min(entry.getText().size(), sizeof(historyMessage.text) - 1);
+            std::copy(entry.getText().begin(), entry.getText().begin() + static_cast<std::ptrdiff_t>(len),
+                      std::begin(historyMessage.text));
+            *(std::begin(historyMessage.text) + static_cast<std::ptrdiff_t>(len)) = '\0';
             historyMessage.createdTimestampMics = std::chrono::duration_cast<std::chrono::microseconds>(
                     entry.getCreatedTimestamp() -
                     std::chrono::system_clock::from_time_t(

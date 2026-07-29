@@ -16,12 +16,12 @@ class HistoryDto : public JsonSerializable {
     date::sys_time<std::chrono::microseconds> m_createdTimestamp;
 
     static struct Shapes {
-        const std::string PROCESS_NAME = "process_name";
-        const std::string SERVICE_NAME = "service_name";
-        const std::string LABEL = "label";
-        const std::string TEXT = "text";
-        const std::string UUID = "uuid";
-        const std::string CREATED_TIMESTAMP = "created_timestamp";
+        const char *const PROCESS_NAME = "process_name";
+        const char *const SERVICE_NAME = "service_name";
+        const char *const LABEL = "label";
+        const char *const TEXT = "text";
+        const char *const UUID = "uuid";
+        const char *const CREATED_TIMESTAMP = "created_timestamp";
     } m_shape;
 
 public:

@@ -37,6 +37,10 @@ public:
     [[nodiscard]] const std::string &getShortFlag() const;
 
 private:
+    void resetOptionals();
+
+    void parseOptionalFromStream(const std::string &argument);
+
     Value m_value;
 };
 
@@ -66,6 +70,9 @@ public:
             const std::vector<std::shared_ptr<ArgumentProvider>> &argumentProviders);
 
     void parseArguments(const std::vector<std::string> &arguments);
+
+    void processNewFlag(const std::string &argument, std::string &flag,
+                        std::vector<std::string> &args, Argument *&temp);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROCESSARGUMENTSERVICE_H

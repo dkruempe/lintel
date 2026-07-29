@@ -14,7 +14,7 @@ void UserNameDto::serialize(
 {
   writer->StartObject();
   // USERNAME
-  writer->String(shape.USER_NAME.c_str());
+  writer->String(shape.USER_NAME);
   writer->String(m_userName.c_str());
   writer->EndObject();
 }
@@ -23,9 +23,9 @@ bool UserNameDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // USERNAME
-  if (obj.HasMember(shape.USER_NAME.c_str())) { m_userName = obj[shape.USER_NAME.c_str()].GetString(); } else {
+  if (obj.HasMember(shape.USER_NAME)) { m_userName = obj[shape.USER_NAME].GetString(); } else {
     success = false;
-    LOG_ERROR("{} not defined in json serialization", shape.USER_NAME.c_str());
+    LOG_ERROR("{} not defined in json serialization", shape.USER_NAME);
   }
   return success;
 }

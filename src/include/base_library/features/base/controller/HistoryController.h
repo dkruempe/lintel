@@ -18,7 +18,7 @@ private:
 public:
     explicit HistoryController(const std::shared_ptr<AuthService> &authService,
                                std::shared_ptr<GroupRepository> groupRepository,
-                               std::shared_ptr<HistoryRepository> userRepository);
+                               std::shared_ptr<HistoryRepository> historyRepository);
 };
 
 #endif //CPP_BASE_LIBRARY_HISTORYCONTROLLER_H

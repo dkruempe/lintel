@@ -11,10 +11,10 @@
  */
 class Message {
 private:
-    char m_receiver[MSG_QUEUE_NAME_SIZE];
-    char m_sender[MSG_QUEUE_NAME_SIZE];
-    char m_content[MSG_QUUEUE_CONTENT_SIZE];
-    time_t m_sendTime;
+    char m_receiver[MSG_QUEUE_NAME_SIZE]{};
+    char m_sender[MSG_QUEUE_NAME_SIZE]{};
+    char m_content[MSG_QUUEUE_CONTENT_SIZE]{};
+    time_t m_sendTime{};
 
 public:
     /**

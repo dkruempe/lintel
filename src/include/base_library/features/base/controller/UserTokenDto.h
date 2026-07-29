@@ -8,7 +8,7 @@ private:
     std::string m_id;
 
     static struct Shapes {
-        const std::string ID = "id";
+        const char* const ID = "id";
     } shape;
 
 public:

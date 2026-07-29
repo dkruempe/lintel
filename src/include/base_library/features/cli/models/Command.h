@@ -53,6 +53,11 @@ public:
     void parse(const std::string &command,
                const std::vector<std::string> &flags) const;
 
+    void resetOptionals() const;
+
+    static void parseValueFromStream(const std::string &value,
+                                     const Value &m_value);
+
 private:
     struct Argument {
         std::vector<std::string> m_flags;

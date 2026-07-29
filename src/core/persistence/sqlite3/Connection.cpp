@@ -45,7 +45,7 @@ namespace sqlite {
             throw db::SQLException("SQLite sqlite3_stmt is initialized => abort");
         }
 
-        sqlite3_stmt *stmt;
+        sqlite3_stmt *stmt = nullptr;
         const int rc = sqlite3_prepare_v2(
                 m_db, query.c_str(), static_cast<int>(query.size() + 1), &stmt, nullptr);
 
@@ -91,7 +91,7 @@ namespace sqlite {
             if (step != SQLITE_ROW) {
                 continue;
             }
-            const unsigned char *text;
+            const unsigned char *text = nullptr;
             const int count = sqlite3_column_count(found->second);
             db::Arguments arguments(db::ConnectionType::SQLite);
             for (int i = 0; i < count; i++) {
@@ -111,7 +111,7 @@ namespace sqlite {
     std::shared_ptr<Result> Connection::executeParameters(
             const std::string &statement, const db::Parameters &parameters) {
         std::shared_ptr<Result> result = std::make_shared<Result>();
-        sqlite3_stmt *stmt;
+        sqlite3_stmt *stmt = nullptr;
         const int rc = sqlite3_prepare_v2(m_db, statement.c_str(),
                                           static_cast<int>(statement.size() + 1),
                                           &stmt, nullptr);
@@ -134,7 +134,7 @@ namespace sqlite {
             if (step != SQLITE_ROW) {
                 continue;
             }
-            const unsigned char *text;
+            const unsigned char *text = nullptr;
             const int count = sqlite3_column_count(stmt);
             db::Arguments arguments(db::ConnectionType::SQLite);
             for (int j = 0; j < count; j++) {
@@ -159,7 +159,7 @@ namespace sqlite {
 
     std::shared_ptr<Result> Connection::execute(
             const std::string &statement) const {
-        char *errorMessage;
+        char *errorMessage = nullptr;
         std::shared_ptr<Result> result = std::make_shared<Result>();
         std::function<void(int argc, char **argv, char **column)> func =
                 [&](int argc, char **argv, char **column) {

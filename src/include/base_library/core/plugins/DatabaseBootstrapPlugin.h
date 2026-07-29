@@ -72,9 +72,15 @@ private:
             const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
             const std::string &schemaName, int32_t schemaVersion, bool insert = true);
 
+    static void executeInitFile(
+            db::Connection &connection,
+            const FileInformation &item,
+            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
+            int32_t &currentSchemaVersion);
+
     static std::string schemaNameOf(const std::string &fileName);
 
-    static int32_t versionOf(const std::string &version);
+    static int32_t versionOf(const std::string &fileName);
 
     void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 

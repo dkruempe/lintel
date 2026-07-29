@@ -10,15 +10,15 @@ void UserTokenDto::serialize(
         rapidjson::Writer<rapidjson::StringBuffer> *writer) const {
     writer->StartObject();
     // ID
-    writer->String(shape.ID.c_str());
+    writer->String(shape.ID);
     writer->String(m_id.c_str());
     writer->EndObject();
 }
 
 bool UserTokenDto::deserialize(const rapidjson::Value &obj) {
     bool success = true;
-    if (obj.HasMember(shape.ID.c_str())) {
-        m_id = obj[shape.ID.c_str()].GetString();
+    if (obj.HasMember(shape.ID)) {
+        m_id = obj[shape.ID].GetString();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", shape.ID);

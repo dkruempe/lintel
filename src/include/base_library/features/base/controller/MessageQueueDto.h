@@ -15,10 +15,10 @@ class MessageQueueDto : public JsonSerializable {
     int32_t m_messages{};
 
     static struct Shapes {
-        const std::string NAME = "NAME";
-        const std::string PROCESS = "PROCESS";
-        const std::string MAX_MESSAGES = "MAX_MESSAGES";
-        const std::string MESSAGES = "MESSAGES";
+        const char *const NAME = "NAME";
+        const char *const PROCESS = "PROCESS";
+        const char *const MAX_MESSAGES = "MAX_MESSAGES";
+        const char *const MESSAGES = "MESSAGES";
     } m_shape;
 
 public:

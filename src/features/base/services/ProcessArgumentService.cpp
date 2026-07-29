@@ -5,6 +5,50 @@
 
 #include "base_library/core/services/LoggerService.h"
 
+namespace {
+void flushCurrentArgument(
+        const std::string &flag, const std::vector<std::string> &args,
+        Argument *temp) {
+    if (temp == nullptr) {
+        return;
+    }
+    if (args.size() > 1) {
+        LOG_ERROR(
+                "ignores other parameters bc. only 1 value per flag is currently "
+                "allowed");
+    }
+    if (args.empty()) {
+        temp->parse("");
+        LOG_TRACE("parse flag {} with not argument", flag);
+    } else {
+        temp->parse(args[0]);
+        LOG_TRACE("parse flag {} with argument {}", flag, args[0]);
+    }
+}
+} // namespace
+
+void ProcessArgumentService::processNewFlag(
+        const std::string &argument, std::string &flag,
+        std::vector<std::string> &args, Argument *&temp) {
+    flag = argument;
+    try {
+        temp = &m_flagArgumentMap.at(flag);
+    } catch (const std::exception &exception) {
+        if (flag == "-h" || flag == "--help") {
+            std::cout << "Arguments:\n";
+            for (const auto &arg: m_arguments) {
+                arg.printHelp();
+            }
+            std::cout << "\t --help, -h: list all arguments\n";
+        } else {
+            LOG_ERROR("flag {} not defined", flag);
+            std::cerr << flag << ": not defined => ignore flag \n";
+        }
+        flag.clear();
+        args.clear();
+    }
+}
+
 void ProcessArgumentService::parseArguments(
         const std::vector<std::string> &arguments) {
     std::string flag;
@@ -15,68 +59,19 @@ void ProcessArgumentService::parseArguments(
             continue;
         }
         LOG_TRACE("{}", argument);
-        // is flag ?
-        // save existing flag informations
         if (argument[0] == '-' && !flag.empty()) {
-            if (temp == nullptr) {
-                flag.clear();
-                args.clear();
-            }
-            if (args.size() > 1) {
-                LOG_ERROR(
-                        "ignores other parameters bc. only 1 value per flag is currently "
-                        "allowed");
-            }
-            if (args.empty()) {
-                temp->parse("");
-                LOG_TRACE("parse flag {} with not argument", flag);
-            } else {
-                temp->parse(args[0]);
-                LOG_TRACE("parse flag {} with argument {}", flag, args[0]);
-            }
+            flushCurrentArgument(flag, args, temp);
             flag.clear();
             args.clear();
         }
-        // temp save of new flag
         if (argument[0] == '-') {
-            flag = argument;
-            try {
-                temp = &m_flagArgumentMap.at(flag);
-            } catch (const std::exception &exception) {
-                // extra handling for help function
-                if (flag == "-h" || flag == "--help") {
-                    std::cout << "Arguments:\n";
-                    for (const auto &arg: m_arguments) {
-                        arg.printHelp();
-                    }
-                    std::cout << "\t --help, -h: list all arguments\n";
-                } else {
-                    LOG_ERROR("flag {} not defined", flag);
-                    std::cerr << flag << ": not defined => ignore flag \n";
-                }
-                flag.clear();
-                args.clear();
-            }
+            processNewFlag(argument, flag, args, temp);
             continue;
         }
         args.push_back(argument);
     }
     if (!flag.empty()) {
-        if (args.size() > 1) {
-            LOG_ERROR(
-                    "ignores other parameters bc. only 1 value per flag is currently "
-                    "allowed");
-        }
-        if (temp == nullptr) {
-            return;
-        }
-        if (args.empty()) {
-            temp->parse("");
-            LOG_TRACE("parse flag {} with not argument", flag);
-        } else {
-            temp->parse(args[0]);
-            LOG_TRACE("parse falg {} with argument {}", flag, args[0]);
-        }
+        flushCurrentArgument(flag, args, temp);
     }
 }
 
@@ -129,7 +124,7 @@ void Argument::printHelp(std::ostream &os) const {
     os << "\t" << m_flag << ", " << m_shortFlag << " " << m_description << "\n";
 }
 
-void Argument::parse(const std::string &argument) {
+void Argument::resetOptionals() {
     if (std::holds_alternative<std::optional<std::string> *>(m_value)) {
         *std::get<std::optional<std::string> *>(m_value) = std::nullopt;
     } else if (std::holds_alternative<std::optional<bool> *>(m_value)) {
@@ -143,6 +138,55 @@ void Argument::parse(const std::string &argument) {
     } else if (std::holds_alternative<std::optional<int32_t> *>(m_value)) {
         *std::get<std::optional<int32_t> *>(m_value) = std::nullopt;
     }
+}
+
+void Argument::parseOptionalFromStream(const std::string &argument) {
+    std::visit(
+            [&argument](auto &&arg) {
+                using T = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same<T, std::optional<std::string> *>::value) {
+                    std::string temp;
+                    std::stringstream sstr(argument);
+                    sstr >> temp;
+                    *arg = std::make_optional(temp);
+                } else if constexpr (std::is_same<T, std::optional<bool> *>::value) {
+                    bool temp = false;
+                    std::stringstream sstr(argument);
+                    sstr >> temp;
+                    *arg = std::make_optional(temp);
+                } else if constexpr (std::is_same<T,
+                        std::optional<double> *>::value) {
+                    double temp = 0.0;
+                    std::stringstream sstr(argument);
+                    sstr >> temp;
+                    *arg = std::make_optional(temp);
+                } else if constexpr (std::is_same<T, std::optional<float> *>::value) {
+                    double temp = 0.0;
+                    std::stringstream sstr(argument);
+                    sstr >> temp;
+                    *arg = std::make_optional(temp);
+                } else if constexpr (std::is_same<T,
+                        std::optional<uint32_t> *>::value) {
+                    uint32_t temp = 0;
+                    std::stringstream sstr(argument);
+                    sstr >> temp;
+                    *arg = std::make_optional(temp);
+                } else if constexpr (std::is_same<T,
+                        std::optional<int32_t> *>::value) {
+                    int32_t temp = 0;
+                    std::stringstream sstr(argument);
+                    sstr >> temp;
+                    *arg = std::make_optional(temp);
+                } else {
+                    std::stringstream sstr(argument);
+                    sstr >> *arg;
+                }
+            },
+            m_value);
+}
+
+void Argument::parse(const std::string &argument) {
+    resetOptionals();
     if (std::holds_alternative<bool *>(m_value)) {
         if (!argument.empty() && argument != "true" && argument != "false") {
             return;
@@ -154,64 +198,19 @@ void Argument::parse(const std::string &argument) {
         }
         *std::get<std::optional<bool> *>(m_value) =
                 std::make_optional(argument != "false");
-    }
-        // In all other cases there must be a value.
-    else if (argument.empty()) {
+    } else if (argument.empty()) {
         throw std::runtime_error(
                 "Failed to parse command line arguments: "
                 "Missing value for argument \"" +
                 m_shortFlag + "\"!");
-    }
-        // For a std::string, we take the entire value.
-    else if (std::holds_alternative<std::string *>(m_value)) {
+    } else if (std::holds_alternative<std::string *>(m_value)) {
         *std::get<std::string *>(m_value) = argument;
     } else if (std::holds_alternative<std::optional<std::string> *>(m_value)) {
         *std::get<std::optional<std::string> *>(m_value) =
                 std::make_optional(argument);
         LOG_TRACE("set optional value of argument {}", argument);
     } else {
-        std::visit(
-                [&argument](auto &&arg) {
-                    using T = std::decay_t<decltype(arg)>;
-                    if constexpr (std::is_same<T, std::optional<std::string> *>::value) {
-                        std::string temp;
-                        std::stringstream sstr(argument);
-                        sstr >> temp;
-                        *arg = std::make_optional(temp);
-                    } else if constexpr (std::is_same<T, std::optional<bool> *>::value) {
-                        bool temp;
-                        std::stringstream sstr(argument);
-                        sstr >> temp;
-                        *arg = std::make_optional(temp);
-                    } else if constexpr (std::is_same<T,
-                            std::optional<double> *>::value) {
-                        double temp;
-                        std::stringstream sstr(argument);
-                        sstr >> temp;
-                        *arg = std::make_optional(temp);
-                    } else if constexpr (std::is_same<T, std::optional<float> *>::value) {
-                        double temp;
-                        std::stringstream sstr(argument);
-                        sstr >> temp;
-                        *arg = std::make_optional(temp);
-                    } else if constexpr (std::is_same<T,
-                            std::optional<uint32_t> *>::value) {
-                        uint32_t temp;
-                        std::stringstream sstr(argument);
-                        sstr >> temp;
-                        *arg = std::make_optional(temp);
-                    } else if constexpr (std::is_same<T,
-                            std::optional<int32_t> *>::value) {
-                        int32_t temp;
-                        std::stringstream sstr(argument);
-                        sstr >> temp;
-                        *arg = std::make_optional(temp);
-                    } else {
-                        std::stringstream sstr(argument);
-                        sstr >> *arg;
-                    }
-                },
-                m_value);
+        parseOptionalFromStream(argument);
     }
 }
 

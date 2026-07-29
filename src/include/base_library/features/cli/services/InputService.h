@@ -21,7 +21,7 @@ public:
 
   ~InputService();
 
-  KeyEvent onRead();
+  static KeyEvent onRead();
 };
 
 #endif// CPP_BASE_LIBRARY_INPUTSERVICE_H

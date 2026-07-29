@@ -7,7 +7,7 @@
 #include "base_library/features/base/configuration/LoggerEnrty.h"
 #include "base_library/features/base/configuration/LoggerPathConfiguration.h"
 
-LoggerComponent::Shapes LoggerComponent::shape{};
+const LoggerComponent::Shapes LoggerComponent::shape{};
 
 LoggerComponent::LoggerComponent(
         std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
@@ -28,12 +28,12 @@ std::vector<std::shared_ptr<Entry>> LoggerComponent::parse(
     for (tinyxml2::XMLElement *loggerElement = rootNode->FirstChildElement();
          loggerElement != nullptr;
          loggerElement = loggerElement->NextSiblingElement()) {
-        if (std::strcmp(loggerElement->Name(), shape.LOGGER_ROOT.c_str()) != 0 &&
-            std::strcmp(loggerElement->Name(), shape.PATH_ROOT.c_str()) != 0) {
+        if (std::strcmp(loggerElement->Name(), shape.LOGGER_ROOT) != 0 &&
+            std::strcmp(loggerElement->Name(), shape.PATH_ROOT) != 0) {
             continue;
         }
         bool isLoggerElement =
-                std::strcmp(loggerElement->Name(), shape.LOGGER_ROOT.c_str()) == 0;
+                std::strcmp(loggerElement->Name(), shape.LOGGER_ROOT) == 0;
         int lineNumber = lineOffset + loggerElement->GetLineNum();
         if (isLoggerElement) {
             // parse logger element + sub child's LoggerSink elements
@@ -52,10 +52,10 @@ std::shared_ptr<Entry> LoggerComponent::parseLogger(
         int32_t lineOffset) {
     // get attributes of <Logger>
     const char *processName =
-            loggerElement->Attribute(shape.LOGGER_PROCESS.c_str());
-    const char *pattern = loggerElement->Attribute(shape.LOGGER_PATTERN.c_str());
-    const char *level = loggerElement->Attribute(shape.LOGGER_LEVEL.c_str());
-    const char *async = loggerElement->Attribute(shape.LOGGER_ASYNC.c_str());
+            loggerElement->Attribute(shape.LOGGER_PROCESS);
+    const char *pattern = loggerElement->Attribute(shape.LOGGER_PATTERN);
+    const char *level = loggerElement->Attribute(shape.LOGGER_LEVEL);
+    const char *async = loggerElement->Attribute(shape.LOGGER_ASYNC);
     // validation of logger attributes
     if (processName == nullptr) {
         throw ConfigurationException(getConfigRoot(), "logger process_name is null",
@@ -80,109 +80,11 @@ std::shared_ptr<Entry> LoggerComponent::parseLogger(
          loggerSinkElement = loggerSinkElement->NextSiblingElement()) {
         int32_t lineNo = lineOffset + loggerSinkElement->GetLineNum();
         if (std::strcmp(loggerSinkElement->Name(),
-                        shape.LOGGER_SINK_ROOT.c_str()) != 0) {
+                        shape.LOGGER_SINK_ROOT) != 0) {
             continue;
         }
-        const char *typeStr =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_TYPE.c_str());
-        if (typeStr == nullptr) {
-            throw ConfigurationException(getConfigRoot(), "logger sink type is null",
-                                         lineNo);
-        }
-        LoggerSinkConfiguration::LoggerSinkType type;
-        if (std::strcmp(typeStr, "ConsoleSink") == 0) {
-            type = LoggerSinkConfiguration::ConsoleSink;
-        } else if (std::strcmp(typeStr, "TcpSink") == 0) {
-            type = LoggerSinkConfiguration::TcpSink;
-        } else if (std::strcmp(typeStr, "DailyFileSink") == 0) {
-            type = LoggerSinkConfiguration::DailyFileSink;
-        } else if (std::strcmp(typeStr, "RotatingFileSink") == 0) {
-            type = LoggerSinkConfiguration::RotatingFileSink;
-        } else if (std::strcmp(typeStr, "SysLogSink") == 0) {
-            type = LoggerSinkConfiguration::SysLogSink;
-        } else {
-            throw ConfigurationException(getConfigRoot(), "logger sink unknown type",
-                                         lineNo);
-        }
-        // optional
-        const char *levelSink =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_LEVEL.c_str());
-        const char *patternSink =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_PATTERN.c_str());
-        // depends on logger sink type
-        // DailyFileSink, RotatingFileSink
-        const char *fileName =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_FILE_NAME.c_str());
-        // DailyFileSink
-        const char *time =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_TIME.c_str());
-        // RotatingFileSink
-        const char *size =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_SIZE.c_str());
-        const char *maxFiles =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_MAX_FILES.c_str());
-        // TcpSink
-        const char *connection =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_CONNECTION.c_str());
-        const char *port =
-                loggerSinkElement->Attribute(shape.LOGGER_SINK_PORT.c_str());
-        // SysLogSink
-        const char *id = loggerSinkElement->Attribute(shape.LOGGER_SINK_ID.c_str());
-        // level / pattern
-        std::string loggerSinkLevel = levelSink != nullptr ? levelSink : level;
-        std::string loggerSinkPattern =
-                patternSink != nullptr ? patternSink : pattern;
-        switch (type) {
-            case LoggerSinkConfiguration::ConsoleSink: {
-                loggerSinks.emplace_back(type, loggerSinkLevel, loggerSinkPattern);
-                break;
-            }
-            case LoggerSinkConfiguration::TcpSink: {
-                if (connection == nullptr) {
-                    throw ConfigurationException(
-                            getConfigRoot(), "LoggerSink connection == nullptr", lineNo);
-                }
-                if (port == nullptr) {
-                    throw ConfigurationException(getConfigRoot(),
-                                                 "LoggerSink port == nullptr", lineNo);
-                }
-                loggerSinks.emplace_back(type, loggerSinkLevel, loggerSinkPattern,
-                                         connection, std::stoi(port));
-                break;
-            }
-            case LoggerSinkConfiguration::DailyFileSink: {
-                if (time == nullptr) {
-                    throw ConfigurationException(getConfigRoot(),
-                                                 "LoggerSink time not defined", lineNo);
-                }
-                std::string loggerSinkFileName = fileName == nullptr ? "" : fileName;
-                loggerSinks.emplace_back(type, loggerSinkLevel, loggerSinkPattern,
-                                         loggerSinkFileName, time);
-                break;
-            }
-            case LoggerSinkConfiguration::RotatingFileSink: {
-                std::string loggerSinkFileName = fileName == nullptr ? "" : fileName;
-                if (size == nullptr) {
-                    throw ConfigurationException(getConfigRoot(),
-                                                 "LoggerSinks size nullptr", lineNo);
-                }
-                if (maxFiles == nullptr) {
-                    throw ConfigurationException(getConfigRoot(),
-                                                 "LoggerSinks maxFiles nullptr", lineNo);
-                }
-                loggerSinks.emplace_back(type, loggerSinkLevel, loggerSinkPattern,
-                                         loggerSinkFileName, convertToBytes(size),
-                                         std::stoul(maxFiles));
-                break;
-            }
-            case LoggerSinkConfiguration::SysLogSink:
-                if (id == nullptr) {
-                    throw ConfigurationException(getConfigRoot(),
-                                                 "LoggerSink id == nullptr", lineNo);
-                }
-                loggerSinks.emplace_back(type, loggerSinkLevel, loggerSinkPattern, id);
-                break;
-        }
+        loggerSinks.push_back(
+                parseLoggerSink(loggerSinkElement, lineNo, level, pattern));
     }
     if (loggerSinks.empty()) {
         throw ConfigurationException(getConfigRoot(), "logger sinks not defined",
@@ -198,9 +100,9 @@ std::shared_ptr<Entry> LoggerComponent::parseLogger(
 
 std::shared_ptr<Entry> LoggerComponent::parseLoggerPath(
         tinyxml2::XMLElement *loggerElement, int32_t &lineNumber) {
-    const char *pathStr = loggerElement->Attribute(shape.PATH_PATH.c_str());
+    const char *pathStr = loggerElement->Attribute(shape.PATH_PATH);
     const char *createSubDirectoriesStr =
-            loggerElement->Attribute(shape.PATH_CREATE_PROCESS_SUB_DIR.c_str());
+            loggerElement->Attribute(shape.PATH_CREATE_PROCESS_SUB_DIR);
     if (pathStr == nullptr) {
         throw ConfigurationException(getConfigRoot(), "path is nullptr",
                                      lineNumber);
@@ -234,4 +136,97 @@ std::shared_ptr<Entry> LoggerComponent::parseLoggerPath(
     auto loggerEntry =
             std::make_shared<LoggerEntry>(type_name<LoggerComponent>(), loggerConfig);
     return std::static_pointer_cast<Entry>(loggerEntry);
+}
+
+namespace {
+LoggerSinkConfiguration::LoggerSinkType parseSinkType(
+        const char *typeStr, int32_t lineNo, const std::string &configRoot) {
+    if (std::strcmp(typeStr, "ConsoleSink") == 0) { return LoggerSinkConfiguration::ConsoleSink; }
+    if (std::strcmp(typeStr, "TcpSink") == 0) { return LoggerSinkConfiguration::TcpSink; }
+    if (std::strcmp(typeStr, "DailyFileSink") == 0) { return LoggerSinkConfiguration::DailyFileSink; }
+    if (std::strcmp(typeStr, "RotatingFileSink") == 0) { return LoggerSinkConfiguration::RotatingFileSink; }
+    if (std::strcmp(typeStr, "SysLogSink") == 0) { return LoggerSinkConfiguration::SysLogSink; }
+    throw ConfigurationException(configRoot, "logger sink unknown type", lineNo);
+}
+}
+
+LoggerSinkConfiguration LoggerComponent::parseLoggerSink(
+        tinyxml2::XMLElement *loggerSinkElement, int32_t lineNo,
+        const char *level, const char *pattern) {
+    const char *typeStr =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_TYPE);
+    if (typeStr == nullptr) {
+        throw ConfigurationException(getConfigRoot(), "logger sink type is null",
+                                     lineNo);
+    }
+    auto type = parseSinkType(typeStr, lineNo, getConfigRoot());
+    const char *levelSink =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_LEVEL);
+    const char *patternSink =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_PATTERN);
+    const char *fileName =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_FILE_NAME);
+    const char *time =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_TIME);
+    const char *size =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_SIZE);
+    const char *maxFiles =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_MAX_FILES);
+    const char *connection =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_CONNECTION);
+    const char *port =
+            loggerSinkElement->Attribute(shape.LOGGER_SINK_PORT);
+    const char *id = loggerSinkElement->Attribute(shape.LOGGER_SINK_ID);
+    std::string loggerSinkLevel = levelSink != nullptr ? levelSink : level;
+    std::string loggerSinkPattern =
+            patternSink != nullptr ? patternSink : pattern;
+    switch (type) {
+        case LoggerSinkConfiguration::ConsoleSink: {
+            return {type, loggerSinkLevel, loggerSinkPattern};
+        }
+        case LoggerSinkConfiguration::TcpSink: {
+            if (connection == nullptr) {
+                throw ConfigurationException(
+                        getConfigRoot(), "LoggerSink connection == nullptr", lineNo);
+            }
+            if (port == nullptr) {
+                throw ConfigurationException(getConfigRoot(),
+                                             "LoggerSink port == nullptr", lineNo);
+            }
+            return {type, loggerSinkLevel, loggerSinkPattern,
+                    connection, std::stoi(port)};
+        }
+        case LoggerSinkConfiguration::DailyFileSink: {
+            if (time == nullptr) {
+                throw ConfigurationException(getConfigRoot(),
+                                             "LoggerSink time not defined", lineNo);
+            }
+            std::string loggerSinkFileName = fileName == nullptr ? "" : fileName;
+            return {type, loggerSinkLevel, loggerSinkPattern,
+                    loggerSinkFileName, time};
+        }
+        case LoggerSinkConfiguration::RotatingFileSink: {
+            std::string loggerSinkFileName = fileName == nullptr ? "" : fileName;
+            if (size == nullptr) {
+                throw ConfigurationException(getConfigRoot(),
+                                             "LoggerSinks size nullptr", lineNo);
+            }
+            if (maxFiles == nullptr) {
+                throw ConfigurationException(getConfigRoot(),
+                                             "LoggerSinks maxFiles nullptr", lineNo);
+            }
+            return {type, loggerSinkLevel, loggerSinkPattern,
+                    loggerSinkFileName, convertToBytes(size),
+                    std::stoul(maxFiles)};
+        }
+        case LoggerSinkConfiguration::SysLogSink: {
+            if (id == nullptr) {
+                throw ConfigurationException(getConfigRoot(),
+                                             "LoggerSink id == nullptr", lineNo);
+            }
+            return {type, loggerSinkLevel, loggerSinkPattern, id};
+        }
+    }
+    throw ConfigurationException(getConfigRoot(), "logger sink unknown type",
+                                 lineNo);
 }

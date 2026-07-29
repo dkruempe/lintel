@@ -193,24 +193,28 @@ void ProcessService::monitorProcess()
 
 ProcessService::~ProcessService()
 {
-  m_running.store(false);
-  m_condition.notify_all();
-  if (m_monitorThread.joinable()) { m_monitorThread.join(); }
-  std::vector<ProcessExecutes> runningProcesses;
-  {
-    std::lock_guard<std::mutex> locker(m_processesMutex);
-    for (auto &[id, process] : m_processes) {
-      if (!process.getChild()->running()) { continue; }
-      runningProcesses.push_back(process);
+  try {
+    m_running.store(false);
+    m_condition.notify_all();
+    if (m_monitorThread.joinable()) { m_monitorThread.join(); }
+    std::vector<ProcessExecutes> runningProcesses;
+    {
+      std::lock_guard<std::mutex> locker(m_processesMutex);
+      for (auto &[id, process] : m_processes) {
+        if (!process.getChild()->running()) { continue; }
+        runningProcesses.push_back(process);
+      }
     }
-  }
-  for (auto &item : runningProcesses) {
-    if (!item.getChild()->running()) { continue; }
-    stopOf(*item.getProcess());
-  }
-  for (auto &item : runningProcesses) {
-    if (!item.getChild()->running()) { continue; }
-    terminateOf(*item.getProcess());
+    for (auto &item : runningProcesses) {
+      if (!item.getChild()->running()) { continue; }
+      stopOf(*item.getProcess());
+    }
+    for (auto &item : runningProcesses) {
+      if (!item.getChild()->running()) { continue; }
+      terminateOf(*item.getProcess());
+    }
+  } catch (const std::exception &e) {
+    static_cast<void>(e);
   }
 }
 

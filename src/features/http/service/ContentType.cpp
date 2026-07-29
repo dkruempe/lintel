@@ -1,5 +1,6 @@
 #include "base_library/features/http/service/ContentType.h"
 
+// NOLINTNEXTLINE(cert-err58-cpp)
 std::map<ContentType::Value, std::string> ContentType::m_valueToName = {
         {ContentType::UNDEFINED,
                                                 "text/plain"},  // in case of error send message back as text/plain
@@ -42,6 +43,7 @@ std::map<ContentType::Value, std::string> ContentType::m_valueToName = {
         {ContentType::ApplicationGzip,          "application/gzip"},
         {ContentType::ApplicationZip,           "application/zip"},
         {ContentType::ApplicationWasm,          "application/wasm"}};
+// NOLINTNEXTLINE(cert-err58-cpp)
 std::map<std::string_view, ContentType::Value> ContentType::m_nameToValue = {
         {"text/css",                    ContentType::TextCss},
         {"text/csv",                    ContentType::TextCsv},
@@ -94,9 +96,7 @@ ContentType::Value ContentType::build(const std::string &contentType) {
     return found->second;
 }
 
-ContentType::ContentType(const std::string &contentType) : m_value(UNDEFINED) {
-    m_value = build(contentType);
-}
+ContentType::ContentType(const std::string &contentType) : m_value(build(contentType)) {}
 
 ContentType::ContentType(ContentType::Value value) : m_value(value) {}
 

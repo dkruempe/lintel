@@ -33,22 +33,22 @@ void SharedMemoryRepositoryDto::serialize(
         rapidjson::Writer<rapidjson::StringBuffer> *writer) const {
     writer->StartObject();
     // UUID
-    writer->String(m_shape.UUID.c_str());
+    writer->String(m_shape.UUID);
     writer->String(m_uuid.c_str());
     // NAME
-    writer->String(m_shape.NAME.c_str());
+    writer->String(m_shape.NAME);
     writer->String(m_name.c_str());
     // SEGMENT_NAME
-    writer->String(m_shape.SEGMENT_NAME.c_str());
+    writer->String(m_shape.SEGMENT_NAME);
     writer->String(m_segmentName.c_str());
     // TYPE
-    writer->String(m_shape.TYPE.c_str());
+    writer->String(m_shape.TYPE);
     writer->String(std::string(magic_enum::enum_name<>(m_type)).c_str());
     // SIZE
-    writer->String(m_shape.SIZE.c_str());
+    writer->String(m_shape.SIZE);
     writer->String(std::to_string(m_size).c_str());
     // VERSION
-    writer->String(m_shape.VERSION.c_str());
+    writer->String(m_shape.VERSION);
     writer->Int(m_currentVersion);
     writer->EndObject();
 }
@@ -56,45 +56,48 @@ void SharedMemoryRepositoryDto::serialize(
 bool SharedMemoryRepositoryDto::deserialize(const rapidjson::Value &obj) {
     bool success = true;
     // UUID
-    if (obj.HasMember(m_shape.UUID.c_str())) {
-        m_uuid = obj[m_shape.UUID.c_str()].GetString();
+    if (obj.HasMember(m_shape.UUID)) {
+        m_uuid = obj[m_shape.UUID].GetString();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.UUID);
     }
     // NAME
-    if (obj.HasMember(m_shape.NAME.c_str())) {
-        m_name = obj[m_shape.NAME.c_str()].GetString();
+    if (obj.HasMember(m_shape.NAME)) {
+        m_name = obj[m_shape.NAME].GetString();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.NAME);
     }
     // SEGMENT_NAME
-    if (obj.HasMember(m_shape.SEGMENT_NAME.c_str())) {
-        m_segmentName = obj[m_shape.SEGMENT_NAME.c_str()].GetString();
+    if (obj.HasMember(m_shape.SEGMENT_NAME)) {
+        m_segmentName = obj[m_shape.SEGMENT_NAME].GetString();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.SEGMENT_NAME);
     }
     // TYPE
-    if (obj.HasMember(m_shape.TYPE.c_str())) {
-        std::string_view enumName = obj[m_shape.TYPE.c_str()].GetString();
+    if (obj.HasMember(m_shape.TYPE)) {
+        std::string_view enumName = obj[m_shape.TYPE].GetString();
 
-        m_type = magic_enum::enum_cast<SharedMemoryType>(enumName).value();
+        auto enumValue = magic_enum::enum_cast<SharedMemoryType>(enumName);
+        if (enumValue.has_value()) {
+            m_type = enumValue.value();
+        }
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.TYPE);
     }
     // SIZE
-    if (obj.HasMember(m_shape.SIZE.c_str())) {
-        m_size = std::stoul(obj[m_shape.SIZE.c_str()].GetString());
+    if (obj.HasMember(m_shape.SIZE)) {
+        m_size = std::stoul(obj[m_shape.SIZE].GetString());
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.SIZE);
     }
     // VERSION
-    if (obj.HasMember(m_shape.VERSION.c_str())) {
-        m_currentVersion = obj[m_shape.VERSION.c_str()].GetInt();
+    if (obj.HasMember(m_shape.VERSION)) {
+        m_currentVersion = obj[m_shape.VERSION].GetInt();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.VERSION);

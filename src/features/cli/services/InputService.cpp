@@ -58,7 +58,7 @@ KeyEvent InputService::onRead()
   return std::make_pair(KeyType::Ignored, ' ');
 }
 
-InputService::InputService()
+InputService::InputService() : newt()
 {
   // activate manuel mode
   constexpr tcflag_t ICANON_FLAG = ICANON;
@@ -66,6 +66,7 @@ InputService::InputService()
   constexpr tcflag_t ISIG_FALG = ISIG;
 
   tcgetattr(STDIN_FILENO, &oldt);
+  // NOLINTNEXTLINE(cppcoreguidelines-prefer-member-initializer)
   newt = oldt;
   newt.c_lflag &= ~(ICANON_FLAG | ECHO_FLAG | ISIG_FALG);
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);

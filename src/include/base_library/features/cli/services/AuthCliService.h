@@ -28,6 +28,11 @@ public:
     std::optional<UserDto> onLogin();
 
     void onLogout(UserDto &&userDto);
+
+private:
+    std::string readUserName();
+
+    std::string readPassword();
 };
 
 #endif  // CPP_BASE_LIBRARY_AUTHCLISERVICE_H

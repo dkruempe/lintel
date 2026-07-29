@@ -53,13 +53,13 @@ void SharedMemoryController::exportRepositoryOfGet(
             LOG_TRACE("start searching repository {}", uuid);
             auto found = m_uuidSharedMemoryRepositories.find(uuid);
             if (found != m_uuidSharedMemoryRepositories.end()) {
-                response.set_content(found->second->serialize(), contentType.getName().c_str());
+                response.set_content(found->second->serialize(), contentType.getName());
             }
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -223,7 +223,7 @@ void SharedMemoryController::growSegmentOfPut(
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }

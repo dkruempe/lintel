@@ -15,13 +15,13 @@ void ProcessGroupDto::serialize(
         rapidjson::Writer<rapidjson::StringBuffer> *writer) const {
     writer->StartObject();
     // ID
-    writer->String(m_shape.ID.c_str());
+    writer->String(m_shape.ID);
     writer->String(m_id.c_str());
     // NAME
-    writer->String(m_shape.NAME.c_str());
+    writer->String(m_shape.NAME);
     writer->String(m_name.c_str());
     // PROCESSES
-    writer->String(m_shape.PROCESSES.c_str());
+    writer->String(m_shape.PROCESSES);
     m_processInfosDto.serialize(writer);
     writer->EndObject();
 }
@@ -29,28 +29,28 @@ void ProcessGroupDto::serialize(
 bool ProcessGroupDto::deserialize(const rapidjson::Value &obj) {
     bool success = true;
     // ID
-    if (obj.HasMember(m_shape.ID.c_str())) {
-        m_id = obj[m_shape.ID.c_str()].GetString();
+    if (obj.HasMember(m_shape.ID)) {
+        m_id = obj[m_shape.ID].GetString();
     } else {
         success = false;
-        LOG_ERROR("{} not defined in json serialization", m_shape.ID.c_str());
+        LOG_ERROR("{} not defined in json serialization", m_shape.ID);
     }
     // NAME
-    if (obj.HasMember(m_shape.NAME.c_str())) {
-        m_name = obj[m_shape.NAME.c_str()].GetString();
+    if (obj.HasMember(m_shape.NAME)) {
+        m_name = obj[m_shape.NAME].GetString();
     } else {
         success = false;
-        LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
+        LOG_ERROR("{} not defined in json serialization", m_shape.NAME);
     }
     // PROCESSES
-    if (obj.HasMember(m_shape.PROCESSES.c_str())) {
+    if (obj.HasMember(m_shape.PROCESSES)) {
         ProcessInfosDto processInfosDto;
-        processInfosDto.deserialize(obj[m_shape.PROCESSES.c_str()]);
+        processInfosDto.deserialize(obj[m_shape.PROCESSES]);
         m_processInfosDto = processInfosDto;
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization",
-                  m_shape.PROCESSES.c_str());
+                  m_shape.PROCESSES);
     }
     return success;
 }

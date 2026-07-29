@@ -218,10 +218,7 @@ bool UserApi::isLoggedIn() {
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     const httplib::Result &result = m_client->get("/user/state", headers);
-    if (result->status != HttpStatusCodes::OK) {
-        return false;
-    }
-    return true;
+    return result->status == HttpStatusCodes::OK;
 }
 
 void UserApi::deleteOf(const std::vector<std::string> &userNames) {

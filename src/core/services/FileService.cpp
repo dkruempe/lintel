@@ -50,7 +50,7 @@ void FileService::writeToFile(const std::string &content, bool overwrite /* defa
 
 void FileService::createSymlinkTo(const std::filesystem::path &to)
 {
-  return std::filesystem::create_symlink(m_path, to);
+  std::filesystem::create_symlink(m_path, to);
 }
 
 std::vector<std::string> FileService::matches(const std::regex &regex)
@@ -84,7 +84,7 @@ void FileService::createFile(std::size_t sizeOfFile)
   std::filebuf fbuf;
   auto result =
     fbuf.open(m_path, std::ios_base::in | std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
-  if (result->is_open()) { throw new std::runtime_error("File is not able to be opened"); }
+  if (result == nullptr || !result->is_open()) { throw std::runtime_error("File is not able to be opened"); }
   // Set the size
   fbuf.pubseekoff(static_cast<long long>(sizeOfFile - 1), std::ios_base::beg);
   fbuf.sputc(0);

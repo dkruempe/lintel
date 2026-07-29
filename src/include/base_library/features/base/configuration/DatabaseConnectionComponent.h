@@ -5,21 +5,31 @@
 
 #include "Component.h"
 
+namespace tinyxml2 {
+class XMLElement;
+}
+
 class DatabaseConnectionComponent : public Component {
 private:
     std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
-    static struct Shapes {
-        const std::string CONFIG_ROOT = "DatabaseConnections";
-        const std::string DATABASE_ROOT = "DatabaseConnection";
-        const std::string CONNECTION_NAME = "name";
-        const std::string CONNECTION_TYPE = "type";
-        const std::string CONNECTION_USER_NAME = "user_name";
-        const std::string CONNECTION_PASSWORD = "password";
-        const std::string CONNECTION_CONNECTION = "connection";
-        const std::string CONNECTION_DATBASE_NAME = "database_name";
-        const std::string CONNECTION_PORT = "port";
-        const std::string CONNECTION_DEFAULT = "default";
+    static const struct Shapes {
+        const char *const CONFIG_ROOT = "DatabaseConnections";
+        const char *const DATABASE_ROOT = "DatabaseConnection";
+        const char *const CONNECTION_NAME = "name";
+        const char *const CONNECTION_TYPE = "type";
+        const char *const CONNECTION_USER_NAME = "user_name";
+        const char *const CONNECTION_PASSWORD = "password";
+        const char *const CONNECTION_CONNECTION = "connection";
+        const char *const CONNECTION_DATBASE_NAME = "database_name";
+        const char *const CONNECTION_PORT = "port";
+        const char *const CONNECTION_DEFAULT = "default";
     } shape;
+
+    static std::shared_ptr<Entry> parseDatabaseEntry(
+            tinyxml2::XMLElement *propertyElement, int32_t lineOffset,
+            const std::string &configRoot,
+            const std::shared_ptr<EnvironmentConfiguration> &envConfig,
+            bool &foundConnectionWithDefault);
 
 public:
     DatabaseConnectionComponent(

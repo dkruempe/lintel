@@ -90,47 +90,57 @@ void SharedMemoryCliComponent::onCommand(
                 m_segmentName->clear();
                 break;
             }
-            case ExportRepository: {
-                if (!m_uuid.has_value()) {
-                    std::cout << "ERROR: please set uuid\n";
-                    m_uuid->clear();
-                    return;
-                }
-                std::string result = m_sharedMemoryApi->repositoryOf(
-                        m_uuid.value());
-                if (m_file.has_value()) {
-                    std::string file =
-                            StringUtils::replaceAll(m_file.value(), "~", getenv("HOME"));
-                    std::filesystem::path path(file);
-                    bool parentPathExits = std::filesystem::exists(path.parent_path());
-                    if (!parentPathExits) {
-                        std::filesystem::create_directories(path.parent_path());
-                    }
-                    std::ofstream out =
-                            std::ofstream(path, std::ofstream::trunc | std::ofstream::out);
-                    out << result;
-                    std::cout << "Exported SharedMemory to >" << path.filename() << "<\n";
-                } else {
-                    rapidjson::Document document;
-                    document.Parse(result.c_str());
-                    rapidjson::StringBuffer stringBuffer;
-                    rapidjson::PrettyWriter writer(stringBuffer);
-                    document.Accept(writer);
-                    std::cout << stringBuffer.GetString() << "\n";
-                }
-                m_file->clear();
-                m_repositoryName->clear();
-                m_segmentName->clear();
-                m_type->clear();
+            case ExportRepository:
+                handleExportRepository();
                 break;
-            }
             default:
-                break;
             case Undefined:
                 break;
         }
     } catch (std::exception &exception) {
         std::cerr << "ERROR: " << exception.what() << "\n";
+    }
+}
+
+void SharedMemoryCliComponent::handleExportRepository() {
+    if (!m_uuid.has_value()) {
+        std::cout << "ERROR: please set uuid\n";
+        return;
+    }
+    std::string result = m_sharedMemoryApi->repositoryOf(
+            m_uuid.value());
+    if (m_file.has_value()) {
+        const char *home = getenv("HOME");
+        std::string file =
+                StringUtils::replaceAll(m_file.value(), "~", home != nullptr ? home : "");
+        std::filesystem::path path(file);
+        bool parentPathExits = std::filesystem::exists(path.parent_path());
+        if (!parentPathExits) {
+            std::filesystem::create_directories(path.parent_path());
+        }
+        std::ofstream out =
+                std::ofstream(path, std::ofstream::trunc | std::ofstream::out);
+        out << result;
+        std::cout << "Exported SharedMemory to >" << path.filename() << "<\n";
+    } else {
+        rapidjson::Document document;
+        document.Parse(result.c_str());
+        rapidjson::StringBuffer stringBuffer;
+        rapidjson::PrettyWriter writer(stringBuffer);
+        document.Accept(writer);
+        std::cout << stringBuffer.GetString() << "\n";
+    }
+    if (m_file.has_value()) {
+        m_file->clear();
+    }
+    if (m_repositoryName.has_value()) {
+        m_repositoryName->clear();
+    }
+    if (m_segmentName.has_value()) {
+        m_segmentName->clear();
+    }
+    if (m_type.has_value()) {
+        m_type->clear();
     }
 }
 

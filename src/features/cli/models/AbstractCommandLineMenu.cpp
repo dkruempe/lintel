@@ -11,10 +11,10 @@ AbstractCommandLineMenu::AbstractCommandLineMenu(
 
 std::map<std::string_view, std::shared_ptr<CommandLineComponent> >
   AbstractCommandLineMenu::build(
-    const std::vector<std::shared_ptr<CommandLineComponent> > &menuEntries)
+    const std::vector<std::shared_ptr<CommandLineComponent> > &components)
 {
   std::map<std::string_view, std::shared_ptr<CommandLineComponent> > map;
-  for (const auto &menuEntry : menuEntries) {
+  for (const auto &menuEntry : components) {
     map.insert({ menuEntry->getName(), menuEntry });
     map.insert({ menuEntry->getAlias(), menuEntry });
   }

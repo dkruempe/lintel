@@ -48,7 +48,7 @@ void SharedMemoryBootstrapPlugin::onStart() {
   from shared_memory_repositories)");
     std::map<std::string, int32_t> resTemp;
     for (const auto &iter: result) {
-        std::string uuid = iter.of(0).getValue<std::string>();
+        auto uuid = iter.of(0).getValue<std::string>();
         resTemp.insert({uuid, -1});
         try {
             auto currentVersion = iter.of(4).getValue<int32_t>();

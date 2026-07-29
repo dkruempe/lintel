@@ -2,7 +2,7 @@
 
 #include "base_library/core/services/LoggerService.h"
 
-GroupDto::Shapes GroupDto::shape{};
+const GroupDto::Shapes GroupDto::shape{};
 
 GroupDto::GroupDto(const Group &group)
   : m_groupName(group.getGroupName()),
@@ -14,16 +14,16 @@ void GroupDto::serialize(
 {
   writer->StartObject();
   // GROUP_NAME
-  writer->String(shape.GROUP_NAME.c_str());
+  writer->String(shape.GROUP_NAME);
   writer->String(m_groupName.c_str());
   if (m_groups.empty()) {
     // GROUPS
-    writer->String(shape.GROUPS.c_str());
+    writer->String(shape.GROUPS);
     GroupsDto dto(m_groups);
     dto.serialize(writer);
   }
   // VIRTUAL
-  writer->String(shape.VIRTUAL.c_str());
+  writer->String(shape.VIRTUAL);
   writer->Bool(m_isVirtual);
   writer->EndObject();
 }
@@ -31,17 +31,17 @@ void GroupDto::serialize(
 bool GroupDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(shape.GROUP_NAME.c_str())) { m_groupName = obj[shape.GROUP_NAME.c_str()].GetString(); } else {
+  if (obj.HasMember(shape.GROUP_NAME)) { m_groupName = obj[shape.GROUP_NAME].GetString(); } else {
     success = false;
     LOG_ERROR("deserialization of {} failed", shape.GROUP_NAME);
   }
-  if (obj.HasMember(shape.VIRTUAL.c_str())) { m_isVirtual = obj[shape.VIRTUAL.c_str()].GetBool(); } else {
+  if (obj.HasMember(shape.VIRTUAL)) { m_isVirtual = obj[shape.VIRTUAL].GetBool(); } else {
     success = false;
     LOG_ERROR("deserialization of {} failed", shape.VIRTUAL);
   }
-  if (obj.HasMember(shape.GROUPS.c_str())) {
+  if (obj.HasMember(shape.GROUPS)) {
     GroupsDto dto;
-    dto.deserialize(obj[shape.GROUPS.c_str()]);
+    dto.deserialize(obj[shape.GROUPS]);
     m_groups = dto.getGroups();
   }
   return success;

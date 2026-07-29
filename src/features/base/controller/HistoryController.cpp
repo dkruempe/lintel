@@ -8,12 +8,12 @@ void HistoryController::historyOfGet(const httplib::Request &request, httplib::R
                                      const ContentType &contentType, const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     const std::string processName = request.matches[1];
@@ -23,12 +23,12 @@ void HistoryController::historyOfGet(const httplib::Request &request, httplib::R
         case ContentType::ApplicationJson: {
             const auto history = m_historyRepository->allOf(processName, serviceName, label);
             const HistoryDtos historyDtos(history);
-            response.set_content(historyDtos.JsonSerializable::serialize(), contentType.getName().c_str());
+            response.set_content(historyDtos.JsonSerializable::serialize(), contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }

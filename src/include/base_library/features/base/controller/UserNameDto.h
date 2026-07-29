@@ -9,7 +9,7 @@ private:
     std::string m_userName;
 
     static struct Shapes {
-        const std::string USER_NAME = "user_name";
+        const char* const USER_NAME = "user_name";
     } shape;
 
 public:
@@ -38,7 +38,7 @@ private:
 public:
     explicit UserNamesDto(const std::vector<User> &users);
 
-    explicit UserNamesDto(const std::vector<std::string> &users);
+    explicit UserNamesDto(const std::vector<std::string> &userNames);
 
     UserNamesDto() = default;
 

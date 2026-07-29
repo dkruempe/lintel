@@ -12,9 +12,9 @@ private:
     ProcessInfosDto m_processInfosDto;
 
     static struct Shapes {
-        const std::string ID = "id";
-        const std::string NAME = "name";
-        const std::string PROCESSES = "processes";
+        const char *const ID = "id";
+        const char *const NAME = "name";
+        const char *const PROCESSES = "processes";
     } m_shape;
 
 public:

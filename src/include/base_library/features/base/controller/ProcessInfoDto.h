@@ -25,18 +25,18 @@ private:
     std::string m_groupId;
 
     static struct Shapes {
-        const std::string ID = "id";
-        const std::string PATH = "path";
-        const std::string ARG = "arg";
-        const std::string ARGS = "args";
-        const std::string AUTO_RESTART = "auto_restart";
-        const std::string RESTARTS = "restarts";
-        const std::string MAX_RESTARTS = "max_restarts";
-        const std::string PROCESS_ID = "process_id";
-        const std::string RUNS = "runs";
-        const std::string EXIT_CODE = "exit_code";
-        const std::string GROUP_NAME = "group_name";
-        const std::string GROUP_ID = "group_id";
+        const char *const ID = "id";
+        const char *const PATH = "path";
+        const char *const ARG = "arg";
+        const char *const ARGS = "args";
+        const char *const AUTO_RESTART = "auto_restart";
+        const char *const RESTARTS = "restarts";
+        const char *const MAX_RESTARTS = "max_restarts";
+        const char *const PROCESS_ID = "process_id";
+        const char *const RUNS = "runs";
+        const char *const EXIT_CODE = "exit_code";
+        const char *const GROUP_NAME = "group_name";
+        const char *const GROUP_ID = "group_id";
     } m_shape;
 
 public:

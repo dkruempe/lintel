@@ -10,8 +10,8 @@ private:
     std::string m_password;
 
     static struct Shapes {
-        const std::string USER_NAME = "user_name";
-        const std::string PASSWORD = "password";
+        const char* const USER_NAME = "user_name";
+        const char* const PASSWORD = "password";
     } shape;
 
 public:

@@ -14,12 +14,12 @@ private:
     int32_t m_currentVersion;
 
     static struct Shapes {
-        const std::string UUID = "uuid";
-        const std::string NAME = "name";
-        const std::string SEGMENT_NAME = "segment_name";
-        const std::string TYPE = "type";
-        const std::string SIZE = "size";
-        const std::string VERSION = "version";
+        const char *const UUID = "uuid";
+        const char *const NAME = "name";
+        const char *const SEGMENT_NAME = "segment_name";
+        const char *const TYPE = "type";
+        const char *const SIZE = "size";
+        const char *const VERSION = "version";
     } m_shape;
 
 public:

@@ -13,9 +13,9 @@ private:
     std::string m_userName;
 
     static struct Shapes {
-        const std::string USER_NAME = "user_name";
-        const std::string GROUPS_ADD = "groups_add";
-        const std::string GROUPS_REMOVE = "groups_remove";
+        const char* const USER_NAME = "user_name";
+        const char* const GROUPS_ADD = "groups_add";
+        const char* const GROUPS_REMOVE = "groups_remove";
     } shape;
 
 public:

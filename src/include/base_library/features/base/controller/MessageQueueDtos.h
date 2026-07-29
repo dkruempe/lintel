@@ -12,7 +12,7 @@ private:
 public:
     MessageQueueDtos() = default;
 
-    std::vector<MessageQueueDto> build(const std::vector<std::pair<MessageQueueEntry, int32_t> > &pairs);
+    static std::vector<MessageQueueDto> build(const std::vector<std::pair<MessageQueueEntry, int32_t> > &pairs);
 
     MessageQueueDtos(const std::vector<std::pair<MessageQueueEntry, int32_t> > &messageQueueDtos);
 

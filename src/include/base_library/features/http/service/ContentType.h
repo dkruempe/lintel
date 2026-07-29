@@ -62,7 +62,7 @@ public:
     [[nodiscard]] const std::string &getName() const;
 
 private:
-    Value build(const std::string &contentType);
+    static Value build(const std::string &contentType);
 
     Value m_value;
     static std::map<std::string_view, Value> m_nameToValue;

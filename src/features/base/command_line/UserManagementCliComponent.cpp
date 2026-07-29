@@ -83,6 +83,7 @@ void UserManagementCliComponent::onCommand(
                     !m_password.has_value()) {
                     std::cerr << "ERROR: please make sure that all arguments are "
                                  "correctly filled\n";
+                    break;
                 }
                 User user(m_firstName.value(), m_lastName.value(), User::Sex::Male,
                           m_eMail.value(), m_userName.value(), m_password.value(), {});
@@ -92,6 +93,10 @@ void UserManagementCliComponent::onCommand(
                 break;
             }
             case UpdateUser: {
+                if (!m_userName.has_value()) {
+                    std::cerr << "ERROR: please set username\n";
+                    break;
+                }
                 std::set<std::string> groupAdds;
                 std::set<std::string> groupRemoves;
                 if (m_groupName.has_value()) {
@@ -150,7 +155,7 @@ std::string UserManagementCliComponent::printSubGroups(const GroupDto &group) {
     std::string printString;
     std::vector<GroupDto> subGroups = group.getSubGroups();
     for (std::size_t i = 0; i < subGroups.size(); i++) {
-        GroupDto subGroup = subGroups[i];
+        const auto &subGroup = subGroups[i];
         printString += subGroup.getGroupName();
         if (i < subGroups.size() - 1) {
             printString += ";";
@@ -176,7 +181,7 @@ std::string UserManagementCliComponent::printUserGroups(
         const std::vector<GroupDto> &groups) {
     std::string printString;
     for (std::size_t i = 0; i < groups.size(); i++) {
-        GroupDto group = groups[i];
+        const auto &group = groups[i];
         printString += group.getGroupName();
         if (i < groups.size() - 1) {
             printString += ";";

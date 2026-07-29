@@ -42,7 +42,7 @@ private:
     };
 
 public:
-    HistoryService(const std::shared_ptr<ProcessName> &processName,
+    HistoryService(std::shared_ptr<ProcessName> processName,
                    std::shared_ptr<SchedulerService> schedulerService,
                    std::shared_ptr<HistoryRepository> historyRepository,
                    std::shared_ptr<MessageQueueService> messageQueueService);

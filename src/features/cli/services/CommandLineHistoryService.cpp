@@ -12,7 +12,7 @@
 #include <string>
 
 CommandLineHistoryService::CommandLineHistoryService(const std::shared_ptr<ProcessName> &processName)
-  : AbstractService(processName->getProcessName()), m_position(std::nullopt), m_menu("")
+  : AbstractService(processName->getProcessName()), m_position(std::nullopt)
 {}
 
 std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(std::string menu)
@@ -100,7 +100,7 @@ void CommandLineHistoryService::historizeOf(CommandHistoryEntry commandHistoryEn
   m_history.push_back(commandHistoryEntry);
   std::ofstream file(path.string());
   if (!file.is_open()) { return; }
-  for (auto history : m_history) { file << history.asCsvEntry() << "\n"; }
+  for (const auto &history : m_history) { file << history.asCsvEntry() << "\n"; }
   file.flush();
   m_position = std::make_optional(m_history.size() + 1);
 }
@@ -121,7 +121,7 @@ std::vector<CommandHistoryEntry> CommandLineHistoryService::internalAllOf()
       std::string userName = entries[1];
       std::string command = entries[2];
       std::string menu = entries[3];
-      commandHistoryEntries.push_back(CommandHistoryEntry(command, userName, timestamp, menu));
+      commandHistoryEntries.emplace_back(command, userName, timestamp, menu);
     }
     return commandHistoryEntries;
   } catch (const FileServiceIsNotFileException &exception) {

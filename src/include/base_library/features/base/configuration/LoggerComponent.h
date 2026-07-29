@@ -7,35 +7,33 @@
 #include <memory>
 
 #include "base_library/features/base/configuration/Component.h"
+#include "base_library/features/base/configuration/LoggerSinkConfiguration.h"
 
 class LoggerComponent : public Component {
 private:
     std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
 
-    static struct Shapes {
-        const std::string CONFIG_ROOT = "Loggers";
-        // LOGGER
-        const std::string LOGGER_ROOT = "Logger";
-        const std::string LOGGER_PATTERN = "pattern";
-        const std::string LOGGER_LEVEL = "level";
-        const std::string LOGGER_ASYNC = "async";
-        const std::string LOGGER_PROCESS = "process_name";
-        const std::string LOGGER_SINK_ROOT = "LoggerSink";
-        const std::string LOGGER_SINK_TYPE = "type";
-        const std::string LOGGER_SINK_LEVEL = "level";
-        const std::string LOGGER_SINK_PATTERN = "pattern";
-        const std::string LOGGER_SINK_CONNECTION = "connection";
-        const std::string LOGGER_SINK_PORT = "port";
-        const std::string LOGGER_SINK_TIME = "time";
-        const std::string LOGGER_SINK_FILE_NAME = "file_name";
-        const std::string LOGGER_SINK_SIZE = "size";
-        const std::string LOGGER_SINK_MAX_FILES = "max_files";
-        const std::string LOGGER_SINK_ID = "id";
-        // PATH
-        const std::string PATH_ROOT = "Path";
-        const std::string PATH_PATH = "path";
-        const std::string PATH_CREATE_PROCESS_SUB_DIR = "create_sub_dirs";
-
+    static const struct Shapes {
+        const char *const CONFIG_ROOT = "Loggers";
+        const char *const LOGGER_ROOT = "Logger";
+        const char *const LOGGER_PATTERN = "pattern";
+        const char *const LOGGER_LEVEL = "level";
+        const char *const LOGGER_ASYNC = "async";
+        const char *const LOGGER_PROCESS = "process_name";
+        const char *const LOGGER_SINK_ROOT = "LoggerSink";
+        const char *const LOGGER_SINK_TYPE = "type";
+        const char *const LOGGER_SINK_LEVEL = "level";
+        const char *const LOGGER_SINK_PATTERN = "pattern";
+        const char *const LOGGER_SINK_CONNECTION = "connection";
+        const char *const LOGGER_SINK_PORT = "port";
+        const char *const LOGGER_SINK_TIME = "time";
+        const char *const LOGGER_SINK_FILE_NAME = "file_name";
+        const char *const LOGGER_SINK_SIZE = "size";
+        const char *const LOGGER_SINK_MAX_FILES = "max_files";
+        const char *const LOGGER_SINK_ID = "id";
+        const char *const PATH_ROOT = "Path";
+        const char *const PATH_PATH = "path";
+        const char *const PATH_CREATE_PROCESS_SUB_DIR = "create_sub_dirs";
     } shape;
 
     std::shared_ptr<Entry> parseLoggerPath(tinyxml2::XMLElement *loggerElement,
@@ -43,6 +41,10 @@ private:
 
     std::shared_ptr<Entry> parseLogger(tinyxml2::XMLElement *loggerElement,
                                        int32_t &lineNumber, int32_t lineOffset);
+
+    LoggerSinkConfiguration parseLoggerSink(
+            tinyxml2::XMLElement *loggerSinkElement, int32_t lineNo,
+            const char *level, const char *pattern);
 
 public:
     LoggerComponent(

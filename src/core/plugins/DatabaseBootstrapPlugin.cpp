@@ -123,6 +123,32 @@ void DatabaseBootstrapPlugin::createSchemaVersionTable(
     statement.execute(std::string(m_createSchemaVersion));
 }
 
+void DatabaseBootstrapPlugin::executeInitFile(
+        db::Connection &connection,
+        const FileInformation &item,
+        const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
+        int32_t &currentSchemaVersion) {
+    if (item.m_isInitFile) {
+        currentSchemaVersion = item.m_version;
+    }
+    db::Transaction transaction(connection);
+    FileService fileService(item.m_filePath);
+    std::string content = fileService.readFile();
+    content.erase(std::remove_if(content.begin(), content.end(),
+                                 [](const char c) { return c == '\n'; }),
+                  content.end());
+    if (content.empty()) {
+        LOG_ERROR("{} - initialization failed bc. of empty file",
+                  connectionEntry->getName());
+        return;
+    }
+    std::vector<std::string> tokens = StringUtils::split(content, ';');
+    for (const auto &token: tokens) {
+        db::Statement statement(connection);
+        statement.execute(token);
+    }
+}
+
 void DatabaseBootstrapPlugin::initDatabase(
         const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
         const std::map<std::string, std::vector<FileInformation>> &initFiles,
@@ -163,25 +189,7 @@ void DatabaseBootstrapPlugin::initDatabase(
                         connectionEntry->getName());
                 return;
             }
-            if (item.m_isInitFile) {
-                currentSchemaVersion = item.m_version;
-            }
-            db::Transaction transaction(connection);
-            FileService fileService(item.m_filePath);
-            std::string content = fileService.readFile();
-            content.erase(std::remove_if(content.begin(), content.end(),
-                                         [](const char c) { return c == '\n'; }),
-                          content.end());
-            if (content.empty()) {
-                LOG_ERROR("{} - initialization failed bc. of empty file",
-                          connectionEntry->getName());
-                return;
-            }
-            std::vector<std::string> tokens = StringUtils::split(content, ';');
-            for (const auto &token: tokens) {
-                db::Statement statement(connection);
-                statement.execute(token);
-            }
+            executeInitFile(connection, item, connectionEntry, currentSchemaVersion);
         }
         updateSchemaVersion(connection, connectionEntry, schemaName,
                             currentSchemaVersion, schemaVersionStart == 0);

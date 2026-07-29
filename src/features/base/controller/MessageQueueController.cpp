@@ -20,12 +20,12 @@ void MessageQueueController::messageQueueOfGet(const httplib::Request &request,
   const std::optional<UserToken> &user) {
   if (!user.has_value()) {
     response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
+    response.set_content("", contentType.getName());
     return;
   }
   if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
     response.status = HttpStatusCodes::Unauthorized;
-    response.set_content("", contentType.getName().c_str());
+    response.set_content("", contentType.getName());
     return;
   }
   const std::string processName = request.matches[1];
@@ -34,14 +34,14 @@ void MessageQueueController::messageQueueOfGet(const httplib::Request &request,
     case ContentType::ApplicationJson: {
       std::vector<MessageQueueEntry> entries = m_messageQueueRepository->allOf(processName, messageQueueName);
       std::vector<std::pair<MessageQueueEntry, int32_t> > messageQueueInformation;
-      for (auto entry : entries) { messageQueueInformation.push_back(m_messageQueueService->numberMessagesOf(entry)); }
+      for (const auto &entry : entries) { messageQueueInformation.push_back(m_messageQueueService->numberMessagesOf(entry)); }
       MessageQueueDtos messageQueueDtos(messageQueueInformation);
-      response.set_content(messageQueueDtos.JsonSerializable::serialize(), contentType.getName().c_str());
+      response.set_content(messageQueueDtos.JsonSerializable::serialize(), contentType.getName());
       break;
     }
     default: {
       response.status = HttpStatusCodes::Forbidden;
-      response.set_content("", contentType.getName().c_str());
+      response.set_content("", contentType.getName());
       break;
     }
   }

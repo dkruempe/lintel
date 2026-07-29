@@ -21,7 +21,7 @@ std::string Cryption::hashOf(const std::string &text) {
   }
 
   // Initialize the context to use SHA-512
-  if (EVP_DigestInit_ex(mdctx, EVP_sha512(), NULL) != 1) {
+  if (EVP_DigestInit_ex(mdctx, EVP_sha512(), nullptr) != 1) {
     EVP_MD_CTX_free(mdctx);
     throw std::runtime_error("Failed to initialize EVP_MD_CTX with SHA-512");
   }
@@ -35,7 +35,7 @@ std::string Cryption::hashOf(const std::string &text) {
   // Finalize the hash and get the result
   unsigned char buffer[EVP_MAX_MD_SIZE];
   unsigned int length = 0;
-  if (EVP_DigestFinal_ex(mdctx, buffer, &length) != 1) {
+  if (EVP_DigestFinal_ex(mdctx, static_cast<unsigned char *>(buffer), &length) != 1) {
     EVP_MD_CTX_free(mdctx);
     throw std::runtime_error("Failed to finalize EVP_MD_CTX");
   }
@@ -45,8 +45,9 @@ std::string Cryption::hashOf(const std::string &text) {
 
   // Convert the hash to a hex string
   std::string tokens;
+  auto *bufferPtr = static_cast<unsigned char *>(buffer);
   for (unsigned int i = 0; i < length; i++) {
-    tokens += fmt::format("{:02x}", static_cast<int>(buffer[i]));
+    tokens += fmt::format("{:02x}", static_cast<int>(bufferPtr[i]));
   }
 
   return tokens;
@@ -68,11 +69,13 @@ std::string Cryption::decodeBase64(const std::string &in) {
     int val = 0;
     int valb = -8;
     for (auto c: in) {
-        if (t[static_cast<std::size_t>(c)] == -1) break;
-        val = (val << 6) + t[static_cast<std::size_t>(c)];
+        if (t[static_cast<std::size_t>(c)] == -1) { break; }
+        auto uval = static_cast<unsigned>(val);
+        uval = (uval << 6U) + static_cast<unsigned>(t[static_cast<std::size_t>(c)]);
+        val = static_cast<int>(uval);
         valb += 6;
         if (valb >= 0) {
-            out.push_back(static_cast<char>((val >> valb) & 0xFF));
+            out.push_back(static_cast<char>((static_cast<unsigned>(val) >> static_cast<unsigned>(valb)) & 0xFFU));
             valb -= 8;
         }
     }
@@ -90,19 +93,21 @@ std::string Cryption::encodeBase64(const std::string &in) {
     int valb = -6;
 
     for (auto c: in) {
-        val = (val << 8) + static_cast<uint8_t>(c);
+        auto uval = static_cast<unsigned>(val);
+        uval = (uval << 8U) + static_cast<uint8_t>(c);
+        val = static_cast<int>(uval);
         valb += 8;
         while (valb >= 0) {
-            out.push_back(m_lookup[(val >> valb) & 0x3F]);
+            out.push_back(m_lookup[(static_cast<unsigned>(val) >> static_cast<unsigned>(valb)) & 0x3FU]);
             valb -= 6;
         }
     }
 
     if (valb > -6) {
-        out.push_back(m_lookup[((val << 8) >> (valb + 8)) & 0x3F]);
+        out.push_back(m_lookup[((static_cast<unsigned>(val) << 8U) >> static_cast<unsigned>(valb + 8)) & 0x3FU]);
     }
 
-    while (out.size() % 4) {
+    while (out.size() % 4 != 0) {
         out.push_back('=');
     }
 

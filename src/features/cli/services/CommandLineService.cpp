@@ -62,7 +62,7 @@ void CommandLineService::onComponentCommand(const std::string &input, const std:
   case CommandHistory: {
     std::vector<CommandHistoryEntry> entries = m_commandLineHistoryService->allOf();
     int32_t counter = 0;
-    for (auto entry : entries) {
+    for (const auto &entry : entries) {
       std::cout << ++counter << ": " << entry.getUserName() << "-"
                 << StringifyService<date::sys_time<std::chrono::microseconds>>::serializeToString(
                      entry.getExecutedTimestamp())
@@ -115,109 +115,101 @@ void CommandLineService::onPrompt()
   if (!m_terminalService->getLine().empty()) { std::cout << m_terminalService->getLine(); }
 }
 
-void CommandLineService::run()
-{
-  onStart();
-  bool printPrompt = true;
-  bool tabPressed = true;
-  std::function<void(const SymbolEvent &symbolEvent)> handleCommand = [&](const SymbolEvent &symbolEvent) {
-    tabPressed = false;
-    printPrompt = true;
-    std::string temp = symbolEvent.second;
-    bool isLoggedIn = m_userApi->isLoggedIn();
-    if (!isLoggedIn) {
-      std::cout << "WARNING: timeout of login server wise => shutdown cli\n";
-      SignalService::raiseSignal(SIGINT);
-      m_running.store(false);
-      return;
-    }
-    // III handle EOF signal
-    if (std::cin.eof()) {
-      onEndOfFile();
-      return;
-    }
-    // IV try to execute command
-    LOG_TRACE("received input >{}<", temp);
-    std::vector<std::string> flags = StringUtils::split(temp, ' ');
-    std::string input;
-    if (!flags.empty()) {
-      input = flags[0];
-      flags.erase(flags.begin());
-    }
+void CommandLineService::handleCommandInput(
+    const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt) {
+  tabPressed = false;
+  printPrompt = true;
+  std::string temp = symbolEvent.second;
+  bool isLoggedIn = m_userApi->isLoggedIn();
+  if (!isLoggedIn) {
+    std::cout << "WARNING: timeout of login server wise => shutdown cli\n";
+    SignalService::raiseSignal(SIGINT);
+    m_running.store(false);
+    return;
+  }
+  if (std::cin.eof()) {
+    onEndOfFile();
+    return;
+  }
+  LOG_TRACE("received input >{}<", temp);
+  std::vector<std::string> flags = StringUtils::split(temp, ' ');
+  std::string input;
+  if (!flags.empty()) {
+    input = flags[0];
+    flags.erase(flags.begin());
+  }
+  if (m_menu.currentOf() != nullptr) {
+    onComponentCommand(input, flags);
+    return;
+  }
+  onCommand(input, flags);
+}
+
+void CommandLineService::handleTabInput(
+    const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt) {
+  if (symbolEvent.second.empty() && !tabPressed) {
+    CommandLineUtils::beep();
+    tabPressed = true;
+    printPrompt = false;
+    return;
+  }
+  if (!symbolEvent.second.empty()) {
+    std::vector<std::string> commands;
     if (m_menu.currentOf() != nullptr) {
-      onComponentCommand(input, flags);
+      commands = m_menu.allCommandsOf();
+    } else {
+      commands = m_commandParser.allCommandsOf();
+      auto vec = m_menu.allCommandsOf();
+      std::transform(
+        vec.begin(), vec.end(), std::back_inserter(commands), [](const std::string &iter) { return iter; });
+    }
+    commands.erase(
+      std::remove_if(commands.begin(),
+        commands.end(),
+        [&symbolEvent](const std::string &command) { return !StringUtils::startsWith(command, symbolEvent.second); }),
+      commands.end());
+    if (commands.size() == 1) {
+      std::string const missingPart = commands[0].substr(symbolEvent.second.length());
+      for (char const c : missingPart) { m_terminalService->onKeyPressed({ KeyType::Ascii, c }, menuNameOf()); }
+      printPrompt = false;
+      tabPressed = false;
       return;
     }
-    onCommand(input, flags);
-  };
-  std::function<void(const SymbolEvent &symbolEvent)> handleTab = [&](const SymbolEvent &symbolEvent) {
-    // Tab pressed but nothing entered => Beep for missing symbol
-    if (symbolEvent.second.empty() && !tabPressed) {
+    if (commands.empty()) {
       CommandLineUtils::beep();
       tabPressed = true;
       printPrompt = false;
       return;
     }
-    // tab pressed with entered symbols
-    if (!symbolEvent.second.empty()) {
-      std::vector<std::string> commands;
-      if (m_menu.currentOf() != nullptr) {
-        commands = m_menu.allCommandsOf();
-      } else {
-        commands = m_commandParser.allCommandsOf();
-        auto vec = m_menu.allCommandsOf();
-        std::transform(
-          vec.begin(), vec.end(), std::back_inserter(commands), [](const std::string &iter) { return iter; });
-      }
-      commands.erase(
-        std::remove_if(commands.begin(),
-          commands.end(),
-          [&symbolEvent](const std::string &command) { return !StringUtils::startsWith(command, symbolEvent.second); }),
-        commands.end());
-      // found only one matching command => extend command
-      if (commands.size() == 1) {
-        std::string const missingPart = commands[0].substr(symbolEvent.second.length());
-        for (char const c : missingPart) { m_terminalService->onKeyPressed({ KeyType::Ascii, c }, menuNameOf()); }
-        printPrompt = false;
-        tabPressed = false;
-        return;
-      }
-      // found no command for entered symbols => beep as error information
-      if (commands.empty()) {
-        CommandLineUtils::beep();
-        tabPressed = true;
-        printPrompt = false;
-        return;
-      }
-      // found multiple commands which matches => print all matching commands
-      // extend as much as possible
-      std::cout << "\n\t";
-      int32_t i = 0;
-      for (const auto &item : commands) {
-        i++;
-        if (i % 10 == 0) { std::cout << "\n"; }
-        std::cout << item;
-        if (i % 10 > 0) { std::cout << "\t"; }
-      }
-      std::cout << "\n";
-      printPrompt = true;
-      tabPressed = false;
-      return;
+    std::cout << "\n\t";
+    int32_t i = 0;
+    for (const auto &item : commands) {
+      i++;
+      if (i % 10 == 0) { std::cout << "\n"; }
+      std::cout << item;
+      if (i % 10 > 0) { std::cout << "\t"; }
     }
-    // Tab pressed twice with nothing entered => show helpful information
+    std::cout << "\n";
     printPrompt = true;
     tabPressed = false;
-    if (m_menu.currentOf() != nullptr) {
-      m_menu.printCommandList();
-      return;
-    }
-    m_commandParser.printCommandList(m_menu.allMenuEntriesOf());
     return;
-  };
+  }
+  printPrompt = true;
+  tabPressed = false;
+  if (m_menu.currentOf() != nullptr) {
+    m_menu.printCommandList();
+    return;
+  }
+  m_commandParser.printCommandList(m_menu.allMenuEntriesOf());
+}
+
+void CommandLineService::run()
+{
+  onStart();
+  bool printPrompt = true;
+  bool tabPressed = true;
   while (m_running) {
-    // I prompt
     if (printPrompt) { onPrompt(); }
-    // II read input
     KeyEvent keyPressed = m_inputService->onRead();
     SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed, menuNameOf());
     if (symbolEvent.first == Symbol::Command && !symbolEvent.second.empty()) {
@@ -243,29 +235,16 @@ void CommandLineService::run()
       break;
     }
     case Symbol::Tab:
-      handleTab(symbolEvent);
+      handleTabInput(symbolEvent, tabPressed, printPrompt);
       break;
     case Symbol::Command:
-      handleCommand(symbolEvent);
+      handleCommandInput(symbolEvent, tabPressed, printPrompt);
       break;
-    case Symbol::Up: {
-      std::optional<CommandHistoryEntry> commandHistoryEntry = m_commandLineHistoryService->previousOf(menuNameOf());
-      if (!commandHistoryEntry.has_value()) {
-        CommandLineUtils::beep();
-        printPrompt = false;
-        tabPressed = false;
-        break;
-      }
-      m_terminalService->resetCursor();
-      printPrompt = false;
-      tabPressed = false;
-      for (char c : commandHistoryEntry->getCommand()) {
-        m_terminalService->onKeyPressed(KeyEvent(KeyType::Ascii, c), menuNameOf());
-      }
-      break;
-    }
+    case Symbol::Up:
     case Symbol::Down: {
-      std::optional<CommandHistoryEntry> commandHistoryEntry = m_commandLineHistoryService->nextOf(menuNameOf());
+      auto commandHistoryEntry = symbolEvent.first == Symbol::Up
+        ? m_commandLineHistoryService->previousOf(menuNameOf())
+        : m_commandLineHistoryService->nextOf(menuNameOf());
       if (!commandHistoryEntry.has_value()) {
         CommandLineUtils::beep();
         printPrompt = false;

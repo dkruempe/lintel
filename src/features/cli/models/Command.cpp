@@ -50,7 +50,7 @@ void Command::printHelp(std::ostream &os) const
   for (auto const &argument : m_arguments) {
     uint32_t flagLength = std::accumulate(argument.m_flags.begin(),
       argument.m_flags.end(),
-      0u,
+      0U,
       [](uint32_t sum, const std::string &flag) {
         // Plus comma and space.
         return sum + static_cast<uint32_t>(flag.size()) + 2;
@@ -80,7 +80,7 @@ void Command::printHelp(std::ostream &os) const
       spacePos = nextspacePos;
 
       if (lineWidth > 60) {
-        os << m_tab << sstr.str() << std::endl;
+        os << m_tab << sstr.str() << '\n';
         sstr = std::stringstream();
         sstr << std::left << std::setw(static_cast<int>(maxFlagLength - 1))
           << " ";
@@ -90,9 +90,7 @@ void Command::printHelp(std::ostream &os) const
   }
 }
 
-void Command::parse(const std::string &command,
-  const std::vector<std::string> &flags) const
-{
+void Command::resetOptionals() const {
   for (auto &argument : m_arguments) {
     if (std::holds_alternative<std::optional<std::string> *>(argument.m_value)) {
       *std::get<std::optional<std::string> *>(argument.m_value) = std::nullopt;
@@ -107,6 +105,59 @@ void Command::parse(const std::string &command,
       std::holds_alternative<std::optional<int32_t> *>(
         argument.m_value)) { *std::get<std::optional<int32_t> *>(argument.m_value) = std::nullopt; }
   }
+}
+
+void Command::parseValueFromStream(const std::string &value,
+                                   const Value &m_value) {
+  std::visit(
+    [&value](auto &&arg) {
+      using T = std::decay_t<decltype(arg)>;
+      if constexpr (std::is_same_v<T, std::optional<std::string> *>) {
+        std::string temp;
+        std::stringstream sstr(value);
+        sstr >> temp;
+        *arg = std::make_optional(temp);
+      } else if constexpr (std::is_same_v<T, std::optional<bool> *>) {
+        bool temp = false;
+        std::stringstream sstr(value);
+        sstr >> temp;
+        *arg = std::make_optional(temp);
+      } else if constexpr (std::is_same_v<T, std::optional<double> *>) {
+        double temp = 0.0;
+        std::stringstream sstr(value);
+        sstr >> temp;
+        *arg = std::make_optional(temp);
+      } else if constexpr (std::is_same_v<T, std::optional<float> *>) {
+        double temp = 0.0;
+        std::stringstream sstr(value);
+        sstr >> temp;
+        *arg = std::make_optional(temp);
+      } else if constexpr (std::is_same_v<T, std::optional<uint32_t> *>) {
+        uint32_t temp = 0;
+        std::stringstream sstr(value);
+        sstr >> temp;
+        *arg = std::make_optional(temp);
+      } else if constexpr (std::is_same_v<T, std::optional<int32_t> *>) {
+        int32_t temp = 0;
+        std::stringstream sstr(value);
+        sstr >> temp;
+        *arg = std::make_optional(temp);
+      } else if constexpr (std::is_same_v<T, std::vector<std::string> *>) {
+        std::vector<std::string> temp;
+        temp = StringUtils::split(value, ',');
+        *arg = temp;
+      } else {
+        std::stringstream sstr(value);
+        sstr >> *arg;
+      }
+    },
+    m_value);
+}
+
+void Command::parse(const std::string &command,
+  const std::vector<std::string> &flags) const
+{
+  resetOptionals();
   std::vector<Argument> argumentsVec;
   // Skip the first argument (name of the program).
   for (std::size_t i = 0; i < flags.size(); i++) {
@@ -132,7 +183,7 @@ void Command::parse(const std::string &command,
     auto found = m_argumentsMap.find(flag);
     if (found == m_argumentsMap.end()) {
       std::cerr << "Ignoring unknown command line argument \"" << flag << "\"."
-        << std::endl;
+        << '\n';
       continue;
     }
     const Argument &argument = found->second;
@@ -162,54 +213,7 @@ void Command::parse(const std::string &command,
       *std::get<std::optional<std::string> *>(argument.m_value) =
         std::make_optional(value);
     } else {
-      std::visit(
-        [&value](auto &&arg) {
-          using T = std::decay_t<decltype(arg)>;
-          if constexpr (std::is_same<T, std::optional<std::string> *>::value) {
-            std::string temp;
-            std::stringstream sstr(value);
-            sstr >> temp;
-            *arg = std::make_optional(temp);
-          } else if constexpr (std::is_same<T, std::optional<bool> *>::value) {
-            bool temp;
-            std::stringstream sstr(value);
-            sstr >> temp;
-            *arg = std::make_optional(temp);
-          } else if constexpr (std::is_same<T,
-            std::optional<double> *>::value) {
-            double temp;
-            std::stringstream sstr(value);
-            sstr >> temp;
-            *arg = std::make_optional(temp);
-          } else if constexpr (std::is_same<T,
-            std::optional<float> *>::value) {
-            double temp;
-            std::stringstream sstr(value);
-            sstr >> temp;
-            *arg = std::make_optional(temp);
-          } else if constexpr (std::is_same<
-            T, std::optional<uint32_t> *>::value) {
-            uint32_t temp;
-            std::stringstream sstr(value);
-            sstr >> temp;
-            *arg = std::make_optional(temp);
-          } else if constexpr (std::is_same<T,
-            std::optional<int32_t> *>::value) {
-            int32_t temp;
-            std::stringstream sstr(value);
-            sstr >> temp;
-            *arg = std::make_optional(temp);
-          } else if constexpr (std::is_same<
-            T, std::vector<std::string> *>::value) {
-            std::vector<std::string> temp;
-            temp = StringUtils::split(value, ',');
-            *arg = temp;
-          } else {
-            std::stringstream sstr(value);
-            sstr >> *arg;
-          }
-        },
-        argument.m_value);
+      parseValueFromStream(value, argument.m_value);
     }
 
     argumentsVec.push_back(argument);

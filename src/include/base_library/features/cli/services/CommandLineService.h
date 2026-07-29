@@ -55,6 +55,10 @@ private:
 
   void onPrompt();
 
+  void handleCommandInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt);
+
+  void handleTabInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt);
+
   void run();
 
 public:

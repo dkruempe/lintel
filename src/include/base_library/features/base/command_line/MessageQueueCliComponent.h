@@ -25,7 +25,7 @@ private:
 
   CommandParser<Commands, Undefined> m_commandParser;
 
-  void printMessageQueues(const std::vector<MessageQueueDto> &messageQueueDtos);
+    static void printMessageQueues(const std::vector<MessageQueueDto> &messageQueueDtos);
 
 public:
   explicit MessageQueueCliComponent(std::shared_ptr<MesssageQueueApi> messsageQueueApi);

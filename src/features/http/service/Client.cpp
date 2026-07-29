@@ -9,15 +9,15 @@ std::shared_ptr<httplib::SSLClient> Client::buildSslClient(
         return nullptr;
     }
     return std::make_shared<httplib::SSLClient>(
-            clientConfiguration->getHost().c_str(), clientConfiguration->getPort(),
-            clientConfiguration->getCertFile().c_str(),
-            clientConfiguration->getKeyFile().c_str());
+            clientConfiguration->getHost(), clientConfiguration->getPort(),
+            clientConfiguration->getCertFile(),
+            clientConfiguration->getKeyFile());
 }
 
 Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
         : m_sslClient(buildSslClient(clientConfiguration)),
           m_client(std::make_shared<httplib::Client>(
-                  clientConfiguration->getHost().c_str(),
+                  clientConfiguration->getHost(),
                   clientConfiguration->getPort())) {
     if (clientConfiguration->getReadTimeOut().count() != 0) {
         if (isSslClient()) {
@@ -50,9 +50,9 @@ Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str());
+        return m_client->Get(pathStr);
     }
-    return m_sslClient->Get(pathStr.c_str());
+    return m_sslClient->Get(pathStr);
 }
 
 [[maybe_unused]] httplib::Result Client::get(std::string_view path,
@@ -60,9 +60,9 @@ Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), headers);
+        return m_client->Get(pathStr, headers);
     }
-    return m_sslClient->Get(pathStr.c_str(), headers);
+    return m_sslClient->Get(pathStr, headers);
 }
 
 [[maybe_unused]] httplib::Result Client::get(
@@ -70,9 +70,9 @@ Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), std::move(contentReceiver));
+        return m_client->Get(pathStr, std::move(contentReceiver));
     }
-    return m_sslClient->Get(pathStr.c_str(), std::move(contentReceiver));
+    return m_sslClient->Get(pathStr, std::move(contentReceiver));
 }
 
 [[maybe_unused]] httplib::Result Client::get(
@@ -81,9 +81,9 @@ Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), headers, std::move(contentReceiver));
+        return m_client->Get(pathStr, headers, std::move(contentReceiver));
     }
-    return m_sslClient->Get(pathStr.c_str(), headers, std::move(contentReceiver));
+    return m_sslClient->Get(pathStr, headers, std::move(contentReceiver));
 }
 
 Client::~Client() {
@@ -100,10 +100,10 @@ Client::~Client() {
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), std::move(responseHandler),
+        return m_client->Get(pathStr, std::move(responseHandler),
                              std::move(contentReceiver));
     }
-    return m_sslClient->Get(pathStr.c_str(), std::move(responseHandler),
+    return m_sslClient->Get(pathStr, std::move(responseHandler),
                             std::move(contentReceiver));
 }
 
@@ -114,10 +114,10 @@ Client::~Client() {
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Get(pathStr.c_str(), headers, std::move(responseHandler),
+        return m_client->Get(pathStr, headers, std::move(responseHandler),
                              std::move(contentReceiver));
     }
-    return m_sslClient->Get(pathStr.c_str(), headers, std::move(responseHandler),
+    return m_sslClient->Get(pathStr, headers, std::move(responseHandler),
                             std::move(contentReceiver));
 }
 
@@ -127,9 +127,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str());
+        return m_client->Post(pathStr);
     }
-    return m_sslClient->Post(pathStr.c_str());
+    return m_sslClient->Post(pathStr);
 }
 
 [[maybe_unused]] httplib::Result Client::post(std::string_view path,
@@ -139,9 +139,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), body, contentLength, contentType);
+        return m_client->Post(pathStr, body, contentLength, contentType);
     }
-    return m_sslClient->Post(pathStr.c_str(), body, contentLength, contentType);
+    return m_sslClient->Post(pathStr, body, contentLength, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::post(std::string_view path,
@@ -152,10 +152,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), headers, body, contentLength,
+        return m_client->Post(pathStr, headers, body, contentLength,
                               contentType);
     }
-    return m_sslClient->Post(pathStr.c_str(), headers, body, contentLength,
+    return m_sslClient->Post(pathStr, headers, body, contentLength,
                              contentType);
 }
 
@@ -165,9 +165,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), body, contentType);
+        return m_client->Post(pathStr, body, contentType);
     }
-    return m_sslClient->Post(pathStr.c_str(), body, contentType);
+    return m_sslClient->Post(pathStr, body, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::post(std::string_view path,
@@ -177,9 +177,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), headers, body, contentType);
+        return m_client->Post(pathStr, headers, body, contentType);
     }
-    return m_sslClient->Post(pathStr.c_str(), headers, body, contentType);
+    return m_sslClient->Post(pathStr, headers, body, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::post(
@@ -188,10 +188,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), contentLength,
+        return m_client->Post(pathStr, contentLength,
                               std::move(contentProvider), contentType);
     }
-    return m_sslClient->Post(pathStr.c_str(), contentLength,
+    return m_sslClient->Post(pathStr, contentLength,
                              std::move(contentProvider), contentType);
 }
 
@@ -202,10 +202,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), std::move(contentProvider),
+        return m_client->Post(pathStr, std::move(contentProvider),
                               contentType);
     }
-    return m_sslClient->Post(pathStr.c_str(), contentType, contentType);
+    return m_sslClient->Post(pathStr, contentType, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::post(
@@ -215,10 +215,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), headers, contentLength,
+        return m_client->Post(pathStr, headers, contentLength,
                               std::move(contentProvider), contentType);
     }
-    return m_sslClient->Post(pathStr.c_str(), headers, contentLength,
+    return m_sslClient->Post(pathStr, headers, contentLength,
                              std::move(contentProvider), contentType);
 }
 
@@ -229,10 +229,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), headers, std::move(contentProvider),
+        return m_client->Post(pathStr, headers, std::move(contentProvider),
                               contentType);
     }
-    return m_sslClient->Post(pathStr.c_str(), headers, std::move(contentProvider),
+    return m_sslClient->Post(pathStr, headers, std::move(contentProvider),
                              contentType);
 }
 
@@ -241,9 +241,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), params);
+        return m_client->Post(pathStr, params);
     }
-    return m_sslClient->Post(pathStr.c_str(), params);
+    return m_sslClient->Post(pathStr, params);
 }
 
 [[maybe_unused]] httplib::Result Client::post(std::string_view path,
@@ -252,18 +252,18 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Post(pathStr.c_str(), headers, params);
+        return m_client->Post(pathStr, headers, params);
     }
-    return m_sslClient->Post(pathStr.c_str(), headers, params);
+    return m_sslClient->Post(pathStr, headers, params);
 }
 
 [[maybe_unused]] httplib::Result Client::put(std::string_view path) const
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str());
+        return m_client->Put(pathStr);
     }
-    return m_sslClient->Put(pathStr.c_str());
+    return m_sslClient->Put(pathStr);
 }
 
 [[maybe_unused]] httplib::Result Client::put(std::string_view path,
@@ -273,9 +273,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), body, contentLength, contentType);
+        return m_client->Put(pathStr, body, contentLength, contentType);
     }
-    return m_sslClient->Put(pathStr.c_str(), body, contentLength, contentType);
+    return m_sslClient->Put(pathStr, body, contentLength, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::put(std::string_view path,
@@ -284,9 +284,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), headers, params);
+        return m_client->Put(pathStr, headers, params);
     }
-    return m_sslClient->Put(pathStr.c_str(), headers, params);
+    return m_sslClient->Put(pathStr, headers, params);
 }
 
 [[maybe_unused]] httplib::Result Client::put(std::string_view path,
@@ -297,10 +297,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), headers, body, contentLength,
+        return m_client->Put(pathStr, headers, body, contentLength,
                              contentType);
     }
-    return m_sslClient->Put(pathStr.c_str(), headers, body, contentLength,
+    return m_sslClient->Put(pathStr, headers, body, contentLength,
                             contentType);
 }
 
@@ -310,9 +310,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), body, contentType);
+        return m_client->Put(pathStr, body, contentType);
     }
-    return m_sslClient->Put(pathStr.c_str(), body, contentType);
+    return m_sslClient->Put(pathStr, body, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::put(std::string_view path,
@@ -322,9 +322,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), headers, body, contentType);
+        return m_client->Put(pathStr, headers, body, contentType);
     }
-    return m_sslClient->Put(pathStr.c_str(), headers, body, contentType);
+    return m_sslClient->Put(pathStr, headers, body, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::put(
@@ -333,10 +333,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), contentLength,
+        return m_client->Put(pathStr, contentLength,
                              std::move(contentProvider), contentType);
     }
-    return m_sslClient->Put(pathStr.c_str(), contentLength,
+    return m_sslClient->Put(pathStr, contentLength,
                             std::move(contentProvider), contentType);
 }
 
@@ -347,10 +347,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), std::move(contentProvider),
+        return m_client->Put(pathStr, std::move(contentProvider),
                              contentType);
     }
-    return m_sslClient->Put(pathStr.c_str(), std::move(contentProvider),
+    return m_sslClient->Put(pathStr, std::move(contentProvider),
                             contentType);
 }
 
@@ -361,10 +361,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), headers, contentLength,
+        return m_client->Put(pathStr, headers, contentLength,
                              std::move(contentProvider), contentType);
     }
-    return m_sslClient->Put(pathStr.c_str(), headers, contentLength,
+    return m_sslClient->Put(pathStr, headers, contentLength,
                             std::move(contentProvider), contentType);
 }
 
@@ -375,10 +375,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), headers, std::move(contentProvider),
+        return m_client->Put(pathStr, headers, std::move(contentProvider),
                              contentType);
     }
-    return m_sslClient->Put(pathStr.c_str(), headers, std::move(contentProvider),
+    return m_sslClient->Put(pathStr, headers, std::move(contentProvider),
                             contentType);
 }
 
@@ -387,18 +387,18 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Put(pathStr.c_str(), params);
+        return m_client->Put(pathStr, params);
     }
-    return m_sslClient->Put(pathStr.c_str(), params);
+    return m_sslClient->Put(pathStr, params);
 }
 
 [[maybe_unused]] httplib::Result Client::deletes(std::string_view path) const
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Delete(pathStr.c_str());
+        return m_client->Delete(pathStr);
     }
-    return m_sslClient->Delete(pathStr.c_str());
+    return m_sslClient->Delete(pathStr);
 }
 
 [[maybe_unused]] httplib::Result Client::deletes(
@@ -406,9 +406,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Delete(pathStr.c_str(), headers);
+        return m_client->Delete(pathStr, headers);
     }
-    return m_sslClient->Delete(pathStr.c_str(), headers);
+    return m_sslClient->Delete(pathStr, headers);
 }
 
 [[maybe_unused]] httplib::Result Client::deletes(std::string_view path,
@@ -418,9 +418,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Delete(pathStr.c_str(), body, contentLength, contentType);
+        return m_client->Delete(pathStr, body, contentLength, contentType);
     }
-    return m_sslClient->Delete(pathStr.c_str(), body, contentLength, contentType);
+    return m_sslClient->Delete(pathStr, body, contentLength, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::deletes(
@@ -429,10 +429,10 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Delete(pathStr.c_str(), headers, body, contentLength,
+        return m_client->Delete(pathStr, headers, body, contentLength,
                                 contentType);
     }
-    return m_sslClient->Delete(pathStr.c_str(), headers, body, contentLength,
+    return m_sslClient->Delete(pathStr, headers, body, contentLength,
                                contentType);
 }
 
@@ -442,9 +442,9 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Delete(pathStr.c_str(), body, contentType);
+        return m_client->Delete(pathStr, body, contentType);
     }
-    return m_sslClient->Delete(pathStr.c_str(), body, contentType);
+    return m_sslClient->Delete(pathStr, body, contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::deletes(
@@ -453,20 +453,20 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
 {
     auto pathStr = std::string(path);
     if (m_client != nullptr) {
-        return m_client->Delete(pathStr.c_str(), headers, body, contentType);
+        return m_client->Delete(pathStr, headers, body, contentType);
     }
-    return m_sslClient->Delete(pathStr.c_str(), headers, body, contentType);
+    return m_sslClient->Delete(pathStr, headers, body, contentType);
 }
 
 void Client::setBasicAuth(const std::string &userName,
                           const std::string &password) const
 {
     if (m_client != nullptr) {
-        m_client->set_basic_auth(userName.c_str(), password.c_str());
+        m_client->set_basic_auth(userName, password);
         return;
     }
     if (m_sslClient != nullptr) {
-        m_sslClient->set_basic_auth(userName.c_str(), password.c_str());
+        m_sslClient->set_basic_auth(userName, password);
     }
 }
 
@@ -474,21 +474,21 @@ void Client::setDigestAuth(const std::string &userName,
                            const std::string &password) const
 {
     if (m_client != nullptr) {
-        m_client->set_digest_auth(userName.c_str(), password.c_str());
+        m_client->set_digest_auth(userName, password);
         return;
     }
     if (m_sslClient != nullptr) {
-        m_sslClient->set_digest_auth(userName.c_str(), password.c_str());
+        m_sslClient->set_digest_auth(userName, password);
     }
 }
 
 void Client::setBearerTokenAuth(const std::string &token) const
 {
     if (m_client != nullptr) {
-        m_client->set_bearer_token_auth(token.c_str());
+        m_client->set_bearer_token_auth(token);
         return;
     }
     if (m_sslClient != nullptr) {
-        m_sslClient->set_bearer_token_auth(token.c_str());
+        m_sslClient->set_bearer_token_auth(token);
     }
 }

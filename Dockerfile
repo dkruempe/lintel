@@ -1,7 +1,8 @@
-FROM ubuntu:24.04 AS builder
+FROM ubuntu:24.04 AS base
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
+    clang-tidy-18 \
     cmake \
     make \
     pkg-config \
@@ -11,19 +12,26 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libpq-dev \
     libsqlite3-dev \
     libssl-dev \
+    && ln -s /usr/bin/clang-tidy-18 /usr/bin/clang-tidy \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip3 install conan --break-system-packages --no-cache-dir
 
 WORKDIR /workspace
-COPY . .
 
+FROM base AS deps
+
+COPY conanfile.txt .
 RUN conan profile detect --force
 RUN conan install . --output-folder=build --build=missing -s build_type=Release
+
+FROM deps AS builder
+
+COPY . .
 RUN cmake -S . -B build/build/Release \
     -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
-    -DCMAKE_BUILD_TYPE=Release
-RUN cmake --build build/build/Release --parallel $(nproc)
+    -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build/build/Release --parallel $(nproc)
 
 FROM builder AS test
 WORKDIR /workspace/build/build/Release

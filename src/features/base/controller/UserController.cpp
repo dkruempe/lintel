@@ -20,7 +20,7 @@ void UserController::loginOfPost(const httplib::Request &request,
         LOG_ERROR("{}-{}: login with logged in user", request.remote_addr,
                   user->m_id);
         response.status = HttpStatusCodes::Forbidden;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     try {
@@ -31,7 +31,7 @@ void UserController::loginOfPost(const httplib::Request &request,
         auto found = result.find(':', 0);
         if (found == std::string::npos) {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             return;
         }
         std::string userName = result.substr(0, found);
@@ -41,7 +41,7 @@ void UserController::loginOfPost(const httplib::Request &request,
         std::optional<UserToken> userToken = m_authService->onLoginOf(userLogin);
         if (!userToken.has_value()) {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             return;
         }
         LOG_INFO("{}-{}: successfull login", userToken.value().m_ipAddress,
@@ -52,7 +52,7 @@ void UserController::loginOfPost(const httplib::Request &request,
     } catch (const std::exception &exception) {
         LOG_ERROR("login failed {} for {}", exception.what(), request.body);
         response.status = HttpStatusCodes::Forbidden;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
     }
 }
 
@@ -73,6 +73,11 @@ void UserController::logoutOfDelete(const httplib::Request &request,
                                     httplib::Response &response,
                                     const ContentType &contentType,
                                     const std::optional<UserToken> &user) {
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName());
+        return;
+    }
     UserTokenLogin userTokenLogin{request.remote_addr, user->m_id};
     m_authService->onLogoutOf(userTokenLogin);
 }
@@ -83,24 +88,24 @@ void UserController::allGroupsOfGet(const httplib::Request &request,
                                     const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
         case ContentType::ApplicationJson: {
             GroupsDto groupsDto(m_groupRepository->allOf());
             response.set_content(groupsDto.JsonSerializable::serialize(),
-                                 contentType.getName().c_str());
+                                 contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -111,12 +116,12 @@ void UserController::allGroupsOfGroupNameOrIsVirtualGroupGet(
         const ContentType &contentType, const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
@@ -129,12 +134,12 @@ void UserController::allGroupsOfGroupNameOrIsVirtualGroupGet(
                 groupsDto = GroupsDto(m_groupRepository->allOf(temp));
             }
             response.set_content(groupsDto.JsonSerializable::serialize(),
-                                 contentType.getName().c_str());
+                                 contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -145,12 +150,12 @@ void UserController::allGroupsOfGroupNameAndIsVirtualGroupGet(
         const ContentType &contentType, const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
@@ -159,12 +164,12 @@ void UserController::allGroupsOfGroupNameAndIsVirtualGroupGet(
             bool isVirtual = request.matches[2] == "true";
             GroupsDto groupsDto(m_groupRepository->allOf(groupName, isVirtual));
             response.set_content(groupsDto.JsonSerializable::serialize(),
-                                 contentType.getName().c_str());
+                                 contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -176,24 +181,24 @@ void UserController::allUsersOfGet(const httplib::Request &request,
                                    const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
         case ContentType::ApplicationJson: {
             UsersDto usersDto(m_userRepository->allOf());
             response.set_content(usersDto.JsonSerializable::serialize(),
-                                 contentType.getName().c_str());
+                                 contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -204,12 +209,12 @@ void UserController::allUsersOfUserNameGet(
         const ContentType &contentType, const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
@@ -217,12 +222,12 @@ void UserController::allUsersOfUserNameGet(
             std::string userName = request.matches[1];
             UsersDto usersDto(m_userRepository->allOf(userName));
             response.set_content(usersDto.JsonSerializable::serialize(),
-                                 contentType.getName().c_str());
+                                 contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -235,12 +240,12 @@ void UserController::deleteUserDelete(const httplib::Request &request,
     LOG_TRACE("received user delete");
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
@@ -264,7 +269,7 @@ void UserController::deleteUserDelete(const httplib::Request &request,
                         "{} abort delete user bc. current user wanted to delete himself",
                         user->m_user.getUserName());
                 response.status = HttpStatusCodes::Forbidden;
-                response.set_content("", contentType.getName().c_str());
+                response.set_content("", contentType.getName());
                 break;
             }
             m_userRepository->deleteOf(userNamesString);
@@ -272,7 +277,7 @@ void UserController::deleteUserDelete(const httplib::Request &request,
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -284,12 +289,12 @@ void UserController::addUserPost(const httplib::Request &request,
                                  const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
@@ -297,13 +302,14 @@ void UserController::addUserPost(const httplib::Request &request,
             UserDto userDto;
             userDto.JsonSerializable::deserialize(request.body);
             // check if password is set
-            if (!userDto.getPassword().has_value()) {
+            auto userPassword = userDto.getPassword();
+            if (!userPassword.has_value()) {
                 response.status = HttpStatusCodes::NotAcceptable;
-                response.set_content("", contentType.getName().c_str());
+                response.set_content("", contentType.getName());
                 return;
             }
             std::string password = Cryption::hashOf(
-                    Cryption::decodeBase64(userDto.getPassword().value()));
+                    Cryption::decodeBase64(userPassword.value()));
             User userNew(userDto.getFirstName(), userDto.getLastName(),
                          User::Sex::Male, userDto.getEMail(), userDto.getUserName(),
                          password, {});
@@ -315,7 +321,7 @@ void UserController::addUserPost(const httplib::Request &request,
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -327,12 +333,12 @@ void UserController::updateUserPut(const httplib::Request &request,
                                    const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
@@ -344,7 +350,7 @@ void UserController::updateUserPut(const httplib::Request &request,
                     m_userRepository->of(userGroupDto.getUserName());
             if (!userTemp.has_value()) {
                 response.status = HttpStatusCodes::Forbidden;
-                response.set_content("", contentType.getName().c_str());
+                response.set_content("", contentType.getName());
                 return;
             }
             // transform to group
@@ -373,7 +379,7 @@ void UserController::updateUserPut(const httplib::Request &request,
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -385,14 +391,14 @@ void UserController::loginStateOfGet(const httplib::Request &request,
                                      const std::optional<UserToken> &user) {
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     response.status = HttpStatusCodes::OK;
-    response.set_content("", contentType.getName().c_str());
+    response.set_content("", contentType.getName());
 }

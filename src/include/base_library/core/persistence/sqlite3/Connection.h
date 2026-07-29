@@ -49,7 +49,7 @@ namespace sqlite {
 
         void finalizePreparedStatement(const std::string &queryName);
 
-        static int callBack(void *a_param, int argc, char **argv, char **column);
+        static int callBack(void *funcPtr, int argc, char **argv, char **column);
 
         [[nodiscard]] std::string getErrorMessage() const;
 

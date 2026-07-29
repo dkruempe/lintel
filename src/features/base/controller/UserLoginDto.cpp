@@ -16,10 +16,10 @@ void UserLoginDto::serialize(
         rapidjson::Writer<rapidjson::StringBuffer> *writer) const {
     writer->StartObject();
     // USERNAME
-    writer->String(shape.USER_NAME.c_str());
+    writer->String(shape.USER_NAME);
     writer->String(m_userName.c_str());
     // PASSWORD
-    writer->String(shape.PASSWORD.c_str());
+    writer->String(shape.PASSWORD);
     writer->String(m_password.c_str());
     writer->EndObject();
 }
@@ -27,18 +27,18 @@ void UserLoginDto::serialize(
 bool UserLoginDto::deserialize(const rapidjson::Value &obj) {
     bool success = true;
     // USERNAME
-    if (obj.HasMember(shape.USER_NAME.c_str())) {
-        m_userName = obj[shape.USER_NAME.c_str()].GetString();
+    if (obj.HasMember(shape.USER_NAME)) {
+        m_userName = obj[shape.USER_NAME].GetString();
     } else {
         success = false;
-        LOG_ERROR("{} not defined in json serialization", shape.USER_NAME.c_str());
+        LOG_ERROR("{} not defined in json serialization", shape.USER_NAME);
     }
     // PASSWORD
-    if (obj.HasMember(shape.PASSWORD.c_str())) {
-        m_password = obj[shape.PASSWORD.c_str()].GetString();
+    if (obj.HasMember(shape.PASSWORD)) {
+        m_password = obj[shape.PASSWORD].GetString();
     } else {
         success = false;
-        LOG_ERROR("{} not defined in json serialization", shape.PASSWORD.c_str());
+        LOG_ERROR("{} not defined in json serialization", shape.PASSWORD);
     }
     return success;
 }

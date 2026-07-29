@@ -8,7 +8,7 @@ SharedMemoryRepository::SharedMemoryRepository(
           m_sizeOfData(sizeOfData),
           m_sharedMemoryRepository(sharedMemoryRepository),
           m_codeVersion(codeVersion),
-          m_uuid(uuid) {}
+          m_uuid(std::move(uuid)) {}
 
 const std::shared_ptr<SharedMemorySegment> &
 SharedMemoryRepository::getSharedMemorySegment() const {

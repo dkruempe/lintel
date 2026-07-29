@@ -15,13 +15,25 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  builder:
+  dev:
     build:
       context: .
-      target: builder
-    image: cpp-base-library:latest
+      target: base
+    image: cpp-base-library:dev
     profiles:
-      - build
+      - dev
+    volumes:
+      - .:/workspace
+      - conan_cache:/root/.conan2
+      - build_cache:/workspace/build
+    working_dir: /workspace
+    command: >
+      bash -c "conan profile detect --force &&
+      conan install . --output-folder=build --build=missing -s build_type=Release &&
+      cmake -S . -B build/build/Release
+      -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake
+      -DCMAKE_BUILD_TYPE=Release &&
+      cmake --build build/build/Release --parallel $(nproc)"
 
   test:
     build:
@@ -51,3 +63,5 @@ services:
 
 volumes:
   postgres_data:
+  conan_cache:
+  build_cache:

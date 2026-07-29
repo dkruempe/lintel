@@ -36,42 +36,42 @@ int32_t MessageQueueDto::getMessages() const {
 void MessageQueueDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const {
     writer->StartObject();
     // NAME
-    writer->String(m_shape.NAME.c_str());
+    writer->String(m_shape.NAME);
     writer->String(m_name.c_str());
     // PROCESS_NAME
-    writer->String(m_shape.PROCESS.c_str());
+    writer->String(m_shape.PROCESS);
     writer->String(m_process.c_str());
     // MAX_MESSAGES
-    writer->String(m_shape.MAX_MESSAGES.c_str());
+    writer->String(m_shape.MAX_MESSAGES);
     writer->Int(m_maxMessages);
     // MESSAGES
-    writer->String(m_shape.MESSAGES.c_str());
+    writer->String(m_shape.MESSAGES);
     writer->Int(m_messages);
     writer->EndObject();
 }
 
 bool MessageQueueDto::deserialize(const rapidjson::Value &obj) {
     bool success = true;
-    if (obj.HasMember(m_shape.NAME.c_str())) {
-        m_name = obj[m_shape.NAME.c_str()].GetString();
+    if (obj.HasMember(m_shape.NAME)) {
+        m_name = obj[m_shape.NAME].GetString();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.NAME);
     }
-    if (obj.HasMember(m_shape.PROCESS.c_str())) {
-        m_process = obj[m_shape.PROCESS.c_str()].GetString();
+    if (obj.HasMember(m_shape.PROCESS)) {
+        m_process = obj[m_shape.PROCESS].GetString();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.PROCESS);
     }
-    if (obj.HasMember(m_shape.MAX_MESSAGES.c_str())) {
-        m_maxMessages = obj[m_shape.MAX_MESSAGES.c_str()].GetInt();
+    if (obj.HasMember(m_shape.MAX_MESSAGES)) {
+        m_maxMessages = obj[m_shape.MAX_MESSAGES].GetInt();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.MAX_MESSAGES);
     }
-    if (obj.HasMember(m_shape.MESSAGES.c_str())) {
-        m_messages = obj[m_shape.MESSAGES.c_str()].GetInt();
+    if (obj.HasMember(m_shape.MESSAGES)) {
+        m_messages = obj[m_shape.MESSAGES].GetInt();
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.MESSAGES);

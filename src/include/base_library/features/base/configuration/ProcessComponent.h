@@ -8,15 +8,15 @@
 
 class ProcessComponent : public Component {
 private:
-    static struct Shapes {
-        const std::string CONFIG_ROOT = "Processes";
-        const std::string PROCESS_ROOT = "Process";
-        const std::string PROCESS_NAME = "name";
-        const std::string PROCESS_AUTO_RESTART = "autoRestart";
-        const std::string PROCESS_ARGS = "args";
-        const std::string PROCESS_MAX_RESTARTS = "maxRestarts";
-        const std::string PROCESS_GROUP_ROOT = "ProcessGroup";
-        const std::string PROCESS_GROUP_NAME = "name";
+    static const struct Shapes {
+        const char *const CONFIG_ROOT = "Processes";
+        const char *const PROCESS_ROOT = "Process";
+        const char *const PROCESS_NAME = "name";
+        const char *const PROCESS_AUTO_RESTART = "autoRestart";
+        const char *const PROCESS_ARGS = "args";
+        const char *const PROCESS_MAX_RESTARTS = "maxRestarts";
+        const char *const PROCESS_GROUP_ROOT = "ProcessGroup";
+        const char *const PROCESS_GROUP_NAME = "name";
     } m_shapes;
 
     std::shared_ptr<Entry> parseProcess(tinyxml2::XMLElement *processElement,

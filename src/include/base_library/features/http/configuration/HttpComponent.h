@@ -8,17 +8,17 @@
 class HttpComponent : public Component {
 private:
     static struct Shapes {
-        const std::string CONFIG_ROOT = "HttpHost";
-        const std::string SERVER_ROOT = "Server";
-        const std::string CLIENT_ROOT = "Client";
-        const std::string HOST = "host";
-        const std::string PORT = "port";
-        const std::string READ_TIMEOUT = "read_timeout";
-        const std::string WRITE_TIMEOUT = "write_timeout";
-        const std::string IDLE_TIMEOUT = "idle_timeout";
-        const std::string CONNECTION_TIMEOUT = "connection_timeout";
-        const std::string CERT_PATH = "cert_path";
-        const std::string KEY_PATH = "key_path";
+        const char* const CONFIG_ROOT = "HttpHost";
+        const char* const SERVER_ROOT = "Server";
+        const char* const CLIENT_ROOT = "Client";
+        const char* const HOST = "host";
+        const char* const PORT = "port";
+        const char* const READ_TIMEOUT = "read_timeout";
+        const char* const WRITE_TIMEOUT = "write_timeout";
+        const char* const IDLE_TIMEOUT = "idle_timeout";
+        const char* const CONNECTION_TIMEOUT = "connection_timeout";
+        const char* const CERT_PATH = "cert_path";
+        const char* const KEY_PATH = "key_path";
     } shape;
 
 public:

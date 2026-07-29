@@ -60,7 +60,6 @@ namespace postgresql {
         if (m_finished) {
             return;
         }
-        std::shared_ptr<Result> result = m_connection.execute("END");
-        checkState(result);
+        static_cast<void>(m_connection.execute("END"));
     }
 }  // namespace postgresql

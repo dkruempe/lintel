@@ -12,11 +12,11 @@ HistoryCliComponent::HistoryCliComponent(
                     .addArgument({"--label", "-l"}, &m_label, "Label Name of history entries"), ShowHistories);
 }
 
-void HistoryCliComponent::onCommand(const UserDto &userDto, const std::string &input,
+void HistoryCliComponent::onCommand(const UserDto &userDto, const std::string &command,
                                     const std::vector<std::string> &parameters) {
     try {
-        Commands command = m_commandParser.parse(input, parameters);
-        switch (command) {
+        Commands cmd = m_commandParser.parse(command, parameters);
+        switch (cmd) {
             case ShowHistories: {
                 const std::string processNameTemp = m_processName.has_value() ? m_processName.value() : ".*";
                 const std::string serviceNameTemmp = m_serviceName.has_value() ? m_serviceName.value() : ".*";

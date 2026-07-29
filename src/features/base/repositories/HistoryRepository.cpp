@@ -78,7 +78,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
 
 std::vector<HistoryEntry> HistoryRepository::allOf(const std::string &processName, const std::string &serviceName,
                                                    const std::string &label) const {
-    std::string statement = "";
+    std::string statement;
     switch (m_connectionEntry->getType()) {
         case db::ConnectionType::SQLite:
             statement = R"(

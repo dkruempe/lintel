@@ -5,7 +5,7 @@
 #include <base_library/features/base/configuration/MessageQueueEntry.h>
 #include <tinyxml2.h>
 
-MessageQueueComponent::Shapes MessageQueueComponent::shape{};
+const MessageQueueComponent::Shapes MessageQueueComponent::shape{};
 
 MessageQueueComponent::MessageQueueComponent() : Component(shape.CONFIG_ROOT) {}
 
@@ -26,15 +26,15 @@ std::vector<std::shared_ptr<Entry>> MessageQueueComponent::parse(
          propertyElement != nullptr;
          propertyElement = propertyElement->NextSiblingElement()) {
         if (std::strcmp(propertyElement->Name(),
-                        shape.MESSAGE_QUEUE_ROOT.c_str()) != 0) {
+                        shape.MESSAGE_QUEUE_ROOT) != 0) {
             continue;
         }
         const char *name =
-                propertyElement->Attribute(shape.MESSAGE_QUEUE_NAME.c_str());
+                propertyElement->Attribute(shape.MESSAGE_QUEUE_NAME);
         const char *processName =
-                propertyElement->Attribute(shape.MESSAGE_QUEUE_PROCESS_NAME.c_str());
+                propertyElement->Attribute(shape.MESSAGE_QUEUE_PROCESS_NAME);
         const char *maxMessagesStr =
-                propertyElement->Attribute(shape.MESSAGE_QUEUE_MAX_MESSAGES.c_str());
+                propertyElement->Attribute(shape.MESSAGE_QUEUE_MAX_MESSAGES);
 
         int32_t const lineNumber = propertyElement->GetLineNum() + lineOffset - 1;
 

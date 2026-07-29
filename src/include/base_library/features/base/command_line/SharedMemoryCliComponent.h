@@ -40,6 +40,8 @@ private:
     static void printRepositories(
             const std::vector<SharedMemoryRepositoryDto> &repositories);
 
+    void handleExportRepository();
+
 public:
     explicit SharedMemoryCliComponent(
             std::shared_ptr<SharedMemoryApi> sharedMemoryApi);

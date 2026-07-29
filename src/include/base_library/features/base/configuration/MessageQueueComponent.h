@@ -9,13 +9,13 @@
 
 class MessageQueueComponent : public Component {
 private:
-    static struct Shapes {
-        const std::string CONFIG_ROOT = "MessageQueues";
-        const std::string MESSAGE_QUEUE_ROOT = "MessageQueue";
-        const std::string MESSAGE_QUEUE_NAME = "name";
-        const std::string MESSAGE_QUEUE_PROCESS_NAME = "process_name";
-        const std::string MESSAGE_QUEUE_MAX_MESSAGES = "max_messages";
-        const std::string MESSAGE_QUEUE_REMOVE_ON_SHUTDOWN = "remove_on_shutdown";
+    static const struct Shapes {
+        const char *const CONFIG_ROOT = "MessageQueues";
+        const char *const MESSAGE_QUEUE_ROOT = "MessageQueue";
+        const char *const MESSAGE_QUEUE_NAME = "name";
+        const char *const MESSAGE_QUEUE_PROCESS_NAME = "process_name";
+        const char *const MESSAGE_QUEUE_MAX_MESSAGES = "max_messages";
+        const char *const MESSAGE_QUEUE_REMOVE_ON_SHUTDOWN = "remove_on_shutdown";
     } shape;
 
 public:

@@ -20,14 +20,14 @@ private:
     std::shared_ptr<GroupsDto> m_groups;
 
     static struct Shapes {
-        const std::string FIRST_NAME = "first_name";
-        const std::string LAST_NAME = "last_name";
-        const std::string EMAIL = "email";
-        const std::string USER_NAME = "user_name";
-        const std::string CREATED_TIMESTAMP = "created_timestamp";
-        const std::string GROUPS = "groups";
-        const std::string ID = "id";
-        const std::string PASSWORD = "password";
+        const char *const FIRST_NAME = "first_name";
+        const char *const LAST_NAME = "last_name";
+        const char *const EMAIL = "email";
+        const char *const USER_NAME = "user_name";
+        const char *const CREATED_TIMESTAMP = "created_timestamp";
+        const char *const GROUPS = "groups";
+        const char *const ID = "id";
+        const char *const PASSWORD = "password";
     } shape;
 
 public:

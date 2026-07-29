@@ -22,7 +22,7 @@ public:
     // basic user functions for login / logout
     std::optional<UserDto> loginOf(const UserLoginDto &userLoginDto);
 
-    bool logoutOf(const UserTokenDto &userLoginTokenDto);
+    bool logoutOf(const UserTokenDto &userTokenDto);
 
     bool isLoggedIn();
 

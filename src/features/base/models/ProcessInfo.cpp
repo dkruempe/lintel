@@ -4,7 +4,7 @@ ProcessInfo::ProcessInfo(std::shared_ptr<Process> process,
                          boost::process::v1::pid_t id, bool isRunning, int exitCode,
                          std::string groupName, std::string groupId)
         : m_process(std::move(process)),
-          m_id(std::move(id)),
+          m_id(id),
           m_isRunning(isRunning),
           m_exitCode(exitCode),
           m_groupName(std::move(groupName)),

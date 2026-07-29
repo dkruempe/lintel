@@ -32,6 +32,142 @@ LoggerService::LoggerService(std::shared_ptr<ProcessName> processName,
           m_configuration(std::move(configuration)),
           m_logger(init()) {}
 
+namespace {
+void setSinkLevelPattern(const LoggerSinkConfiguration &config,
+                          const spdlog::sink_ptr &sinkPtr) {
+    const std::string &level = config.getLevel();
+    if (level == "critical") {
+        sinkPtr->set_level(spdlog::level::critical);
+    } else if (level == "warn") {
+        sinkPtr->set_level(spdlog::level::warn);
+    } else if (level == "err") {
+        sinkPtr->set_level(spdlog::level::err);
+    } else if (level == "info") {
+        sinkPtr->set_level(spdlog::level::info);
+    } else if (level == "debug") {
+        sinkPtr->set_level(spdlog::level::debug);
+    } else if (level == "trace") {
+        sinkPtr->set_level(spdlog::level::trace);
+    } else if (level == "off") {
+        sinkPtr->set_level(spdlog::level::off);
+    }
+    const std::string &pattern = config.getPattern();
+    if (!pattern.empty()) {
+        sinkPtr->set_pattern(config.getPattern());
+    }
+}
+
+std::filesystem::path resolveSinkPath(
+        const std::shared_ptr<LoggerPathConfiguration> &pathConfig,
+        const std::string &processName) {
+    auto path = pathConfig->getPath();
+    if (pathConfig->isCreateSubDirectories()) {
+        path = path.concat(std::filesystem::path::preferred_separator + processName);
+    }
+    if (is_regular_file(path)) {
+        throw std::runtime_error("path is file and not directory");
+    }
+    if (!exists(path)) {
+        create_directories(path);
+    }
+    return path;
+}
+
+std::filesystem::path resolveFilePath(
+        const std::filesystem::path &basePath,
+        const LoggerSinkConfiguration &config,
+        const std::string &processName) {
+    auto path = basePath;
+    if (config.getFileName().empty()) {
+        return path.concat(std::filesystem::path::preferred_separator +
+                           processName + ".log");
+    }
+    return path.concat(std::filesystem::path::preferred_separator +
+                       config.getFileName() + ".log");
+}
+
+void collectSinks(std::vector<spdlog::sink_ptr> &sinks,
+                   const std::shared_ptr<LoggerConfiguration> &logConfig,
+                   const std::shared_ptr<LoggerEntry> &loggerPathEntry,
+                   const std::string &processName) {
+    for (const auto &logSinkConfig: logConfig->getLoggerSinks()) {
+        switch (logSinkConfig.getType()) {
+            case LoggerSinkConfiguration::SysLogSink:
+                break;
+            case LoggerSinkConfiguration::ConsoleSink: {
+                auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+                setSinkLevelPattern(logSinkConfig, consoleSink);
+                sinks.push_back(consoleSink);
+                break;
+            }
+            case LoggerSinkConfiguration::RotatingFileSink: {
+                auto basePath = resolveSinkPath(
+                        loggerPathEntry->getLoggerPathConfiguration(), processName);
+                auto filePath = resolveFilePath(basePath, logSinkConfig, processName);
+                auto rotatingFileSink =
+                        std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
+                                filePath, logSinkConfig.getFileSize(),
+                                logSinkConfig.getMaxFiles());
+                setSinkLevelPattern(logSinkConfig, rotatingFileSink);
+                sinks.push_back(rotatingFileSink);
+                break;
+            }
+            case LoggerSinkConfiguration::DailyFileSink: {
+                const std::string &time = logSinkConfig.getTime();
+                if (time.length() != 5) {
+                    throw std::runtime_error("wrong configuration of time");
+                }
+                int32_t hour = std::stoi(time.substr(0, 2));
+                int32_t minute = std::stoi(time.substr(3, 2));
+                auto basePath = resolveSinkPath(
+                        loggerPathEntry->getLoggerPathConfiguration(), processName);
+                auto filePath = resolveFilePath(basePath, logSinkConfig, processName);
+                auto dailyFileSink =
+                        std::make_shared<spdlog::sinks::daily_file_sink_mt>(
+                                filePath, hour, minute);
+                setSinkLevelPattern(logSinkConfig, dailyFileSink);
+                sinks.push_back(dailyFileSink);
+                break;
+            }
+            case LoggerSinkConfiguration::TcpSink: {
+                spdlog::sinks::tcp_sink_config tcpSinkConfig(
+                        logSinkConfig.getConnection(), logSinkConfig.getPort());
+                auto tcpSink = std::make_shared<spdlog::sinks::tcp_sink_mt>(tcpSinkConfig);
+                setSinkLevelPattern(logSinkConfig, tcpSink);
+                sinks.push_back(tcpSink);
+                break;
+            }
+        }
+    }
+}
+
+void applyLoggerLevel(const std::shared_ptr<spdlog::logger> &logger,
+                       const std::string &loggerLevel) {
+    if (loggerLevel == "critical") {
+        logger->set_level(spdlog::level::critical);
+        logger->flush_on(spdlog::level::critical);
+    } else if (loggerLevel == "warn") {
+        logger->set_level(spdlog::level::warn);
+        logger->flush_on(spdlog::level::warn);
+    } else if (loggerLevel == "err") {
+        logger->set_level(spdlog::level::err);
+        logger->flush_on(spdlog::level::err);
+    } else if (loggerLevel == "info") {
+        logger->set_level(spdlog::level::info);
+        logger->flush_on(spdlog::level::info);
+    } else if (loggerLevel == "debug") {
+        logger->set_level(spdlog::level::debug);
+        logger->flush_on(spdlog::level::debug);
+    } else if (loggerLevel == "trace") {
+        logger->set_level(spdlog::level::trace);
+        logger->flush_on(spdlog::level::trace);
+    } else if (loggerLevel == "off") {
+        logger->set_level(spdlog::level::off);
+        logger->flush_on(spdlog::level::off);
+    }
+}
+}  // namespace
+
 std::shared_ptr<spdlog::logger> LoggerService::init() {
     std::vector<spdlog::sink_ptr> sinks;
     auto entries = m_configuration->configurationOf<LoggerComponent>();
@@ -66,151 +202,12 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
             std::static_pointer_cast<LoggerEntry>(*loggerConfiguration);
     std::shared_ptr<LoggerConfiguration> logConfig =
             loggerConfigEntry->getLoggerConfiguration();
-    std::function<void(const LoggerSinkConfiguration &, spdlog::sink_ptr &)>
-            setLevelPattern =
-            [&](const LoggerSinkConfiguration &loggerSinkConfiguration,
-                spdlog::sink_ptr &sinkPtr) {
-                // log level
-                const std::string &level = loggerSinkConfiguration.getLevel();
-                if (level == "critical") {
-                    sinkPtr->set_level(spdlog::level::critical);
-                } else if (level == "warn") {
-                    sinkPtr->set_level(spdlog::level::warn);
-                } else if (level == "err") {
-                    sinkPtr->set_level(spdlog::level::err);
-                } else if (level == "info") {
-                    sinkPtr->set_level(spdlog::level::info);
-                } else if (level == "debug") {
-                    sinkPtr->set_level(spdlog::level::debug);
-                } else if (level == "trace") {
-                    sinkPtr->set_level(spdlog::level::trace);
-                } else if (level == "off") {
-                    sinkPtr->set_level(spdlog::level::off);
-                }
-                const std::string &pattern = loggerSinkConfiguration.getPattern();
-                if (!pattern.empty()) {
-                    // pattern
-                    sinkPtr->set_pattern(loggerSinkConfiguration.getPattern());
-                }
-            };
-    for (const auto &logSinkConfig: logConfig->getLoggerSinks()) {
-        switch (logSinkConfig.getType()) {
-            case LoggerSinkConfiguration::SysLogSink: {
-                break;
-            }
-            case LoggerSinkConfiguration::ConsoleSink: {
-                std::shared_ptr<spdlog::sinks::sink> consoleSink =
-                        std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
-                setLevelPattern(logSinkConfig, consoleSink);
-                sinks.push_back(consoleSink);
-                break;
-            }
-            case LoggerSinkConfiguration::RotatingFileSink: {
-                auto path = loggerPathEntry->getLoggerPathConfiguration()->getPath();
-                if (is_regular_file(path)) {
-                    throw std::runtime_error("path is file and not directory");
-                }
-                bool isCreateSubDirectories =
-                        loggerPathEntry->getLoggerPathConfiguration()
-                                ->isCreateSubDirectories();
-                if (isCreateSubDirectories) {
-                    path = path.concat(std::filesystem::path::preferred_separator +
-                                       m_processName->getProcessName());
-                }
-                if (!exists(path)) {
-                    create_directories(path);
-                }
-                std::filesystem::path filePath;
-                if (logSinkConfig.getFileName().empty()) {
-                    filePath = path.concat(std::filesystem::path::preferred_separator +
-                                           m_processName->getProcessName() + ".log");
-                } else {
-                    filePath = path.concat(std::filesystem::path::preferred_separator +
-                                           logSinkConfig.getFileName() + ".log");
-                }
-                std::shared_ptr<spdlog::sinks::sink> rotatingFileSink =
-                        std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-                                filePath, logSinkConfig.getFileSize(),
-                                logSinkConfig.getMaxFiles());
-                setLevelPattern(logSinkConfig, rotatingFileSink);
-                sinks.push_back(rotatingFileSink);
-                break;
-            }
-            case LoggerSinkConfiguration::DailyFileSink: {
-                const std::string &time = logSinkConfig.getTime();
-                if (time.length() != 5) {
-                    throw std::runtime_error("wrong configuration of time");
-                }
-                int32_t hour = std::stoi(time.substr(0, 2));
-                int32_t minute = std::stoi(time.substr(3, 2));
-                auto path = loggerPathEntry->getLoggerPathConfiguration()->getPath();
-                bool isCreateSubDirectories =
-                        loggerPathEntry->getLoggerPathConfiguration()
-                                ->isCreateSubDirectories();
-                if (isCreateSubDirectories) {
-                    path = path.concat(std::filesystem::path::preferred_separator +
-                                       m_processName->getProcessName());
-                }
-                if (is_regular_file(path)) {
-                    throw std::runtime_error("path is file and not directory");
-                }
-                if (!exists(path)) {
-                    create_directories(path);
-                }
-                std::filesystem::path filePath;
-                if (logSinkConfig.getFileName().empty()) {
-                    filePath = path.concat(std::filesystem::path::preferred_separator +
-                                           m_processName->getProcessName() + ".log");
-                } else {
-                    filePath = path.concat(std::filesystem::path::preferred_separator +
-                                           logSinkConfig.getFileName() + ".log");
-                }
-                std::shared_ptr<spdlog::sinks::sink> dailyFileSink =
-                        std::make_shared<spdlog::sinks::daily_file_sink_mt>(filePath, hour,
-                                                                            minute);
-                setLevelPattern(logSinkConfig, dailyFileSink);
-                sinks.push_back(dailyFileSink);
-                break;
-            }
-            case LoggerSinkConfiguration::TcpSink: {
-                spdlog::sinks::tcp_sink_config tcpSinkConfig(
-                        logSinkConfig.getConnection(), logSinkConfig.getPort());
-                std::shared_ptr<spdlog::sinks::sink> tcpSink =
-                        std::make_shared<spdlog::sinks::tcp_sink_mt>(tcpSinkConfig);
-                setLevelPattern(logSinkConfig, tcpSink);
-                sinks.push_back(tcpSink);
-                break;
-            }
-        }
-    }
+    collectSinks(sinks, logConfig, loggerPathEntry, m_processName->getProcessName());
     auto logger = std::make_shared<spdlog::logger>(
             m_processName->getProcessName(), sinks.begin(), sinks.end());
     std::string loggerLevel =
             loggerConfigEntry->getLoggerConfiguration()->getLevel();
-    {
-        if (loggerLevel == "critical") {
-            logger->set_level(spdlog::level::critical);
-            logger->flush_on(spdlog::level::critical);
-        } else if (loggerLevel == "warn") {
-            logger->set_level(spdlog::level::warn);
-            logger->flush_on(spdlog::level::warn);
-        } else if (loggerLevel == "err") {
-            logger->set_level(spdlog::level::err);
-            logger->flush_on(spdlog::level::err);
-        } else if (loggerLevel == "info") {
-            logger->set_level(spdlog::level::info);
-            logger->flush_on(spdlog::level::info);
-        } else if (loggerLevel == "debug") {
-            logger->set_level(spdlog::level::debug);
-            logger->flush_on(spdlog::level::debug);
-        } else if (loggerLevel == "trace") {
-            logger->set_level(spdlog::level::trace);
-            logger->flush_on(spdlog::level::trace);
-        } else if (loggerLevel == "off") {
-            logger->set_level(spdlog::level::off);
-            logger->flush_on(spdlog::level::off);
-        }
-    }
+    applyLoggerLevel(logger, loggerLevel);
     m_logger->flush_on(spdlog::level::trace);
     m_logger->set_level(spdlog::level::trace);
     return logger;

@@ -16,12 +16,12 @@ MessageQueueCliComponent::MessageQueueCliComponent(std::shared_ptr<MesssageQueue
 
 
 void MessageQueueCliComponent::onCommand(const UserDto &userDto,
-  const std::string &input,
+  const std::string &command,
   const std::vector<std::string> &parameters)
 {
   try {
-    Commands command = m_commandParser.parse(input, parameters);
-    switch (command) {
+    Commands cmd = m_commandParser.parse(command, parameters);
+    switch (cmd) {
     case ShowMessageQueues: {
       const std::string processNameTemp = m_processName.has_value() ? m_processName.value() : ".*";
       const std::string messageQueueNameTemp = m_messageQueueName.has_value() ? m_messageQueueName.value() : ".*";

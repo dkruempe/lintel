@@ -24,7 +24,7 @@ class HistoryCliComponent : public CommandLineComponent {
 
     CommandParser<Commands, Undefined> m_commandParser;
 
-    void printHistories(const std::vector<HistoryDto> &vector);
+    static void printHistories(const std::vector<HistoryDto> &histories);
 
 public:
     explicit HistoryCliComponent(std::shared_ptr<HistoryApi> historyApi);

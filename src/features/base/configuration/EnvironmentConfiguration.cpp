@@ -36,7 +36,7 @@ EnvironmentConfiguration::EnvironmentConfiguration() {
         m_environmentConfigurations.insert({Path, path});
         std::vector<std::string> pathsStr = StringUtils::split(path, ':');
         for (const auto &iter: pathsStr) {
-            m_paths.push_back(std::filesystem::path(iter));
+            m_paths.emplace_back(iter);
         }
     }
 }

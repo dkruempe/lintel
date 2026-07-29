@@ -40,11 +40,11 @@ bool Group::operator==(const Group &rhs) const {
 bool Group::operator!=(const Group &rhs) const { return !(rhs == *this); }
 
 bool Group::operator<(const Group &rhs) const {
-    if (m_groupName < rhs.m_groupName) return true;
-    if (rhs.m_groupName < m_groupName) return false;
-    if (m_groups < rhs.m_groups) return true;
-    if (rhs.m_groups < m_groups) return false;
-    return m_isVirtual < rhs.m_isVirtual;
+    if (m_groupName < rhs.m_groupName) { return true; }
+    if (rhs.m_groupName < m_groupName) { return false; }
+    if (m_groups < rhs.m_groups) { return true; }
+    if (rhs.m_groups < m_groups) { return false; }
+    return static_cast<int>(m_isVirtual) < static_cast<int>(rhs.m_isVirtual);
 }
 
 bool Group::operator>(const Group &rhs) const { return rhs < *this; }

@@ -22,25 +22,25 @@ void ProcessController::allProcessOfGet(
     // no user logged in => Unauthorized
     if (!userToken.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!userToken->m_user.has(m_userGroup) &&
         !userToken->m_user.has(m_adminGroup)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
         case ContentType::ApplicationJson: {
             ProcessInfosDto processInfosDto(m_processService->allActiveOf());
             std::string content = processInfosDto.JsonSerializable::serialize();
-            response.set_content(content, contentType.getName().c_str());
+            response.set_content(content, contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -52,12 +52,12 @@ void ProcessController::allProcessGroupsOfGet(
     // no user logged in => Unauthorized
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     const std::string groupName = request.matches[1];
@@ -66,12 +66,12 @@ void ProcessController::allProcessGroupsOfGet(
             auto temp = m_processService->allGroupsOf(groupName);
             ProcessGroupsDto dtos(temp);
             std::string content = dtos.JsonSerializable::serialize();
-            response.set_content(content, contentType.getName().c_str());
+            response.set_content(content, contentType.getName());
             break;
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -84,12 +84,12 @@ void ProcessController::startProcessPost(const httplib::Request &request,
     // no user logged in => Unauthorized
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminGroup)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     ProcessInfoDto processInfoDto;
@@ -107,7 +107,7 @@ void ProcessController::startProcessPost(const httplib::Request &request,
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -119,12 +119,12 @@ void ProcessController::stopProcessDelete(
     // no user logged in => Unauthorized
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminGroup)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
@@ -133,7 +133,7 @@ void ProcessController::stopProcessDelete(
             auto process = m_processService->of(processId);
             if (!process.has_value()) {
                 response.status = HttpStatusCodes::NotImplemented;
-                response.set_content("", contentType.getName().c_str());
+                response.set_content("", contentType.getName());
                 break;
             }
             m_processService->stopOf(*process.value());
@@ -141,7 +141,7 @@ void ProcessController::stopProcessDelete(
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }
@@ -153,12 +153,12 @@ void ProcessController::terminateProcessDelete(
     // no user logged in => Unauthorized
     if (!user.has_value()) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     if (!user->m_user.has(m_adminGroup)) {
         response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName().c_str());
+        response.set_content("", contentType.getName());
         return;
     }
     switch (contentType) {
@@ -167,7 +167,7 @@ void ProcessController::terminateProcessDelete(
             auto process = m_processService->of(processId);
             if (!process.has_value()) {
                 response.status = HttpStatusCodes::NotImplemented;
-                response.set_content("", contentType.getName().c_str());
+                response.set_content("", contentType.getName());
                 break;
             }
             LOG_INFO("terminate of {}", processId);
@@ -176,7 +176,7 @@ void ProcessController::terminateProcessDelete(
         }
         default: {
             response.status = HttpStatusCodes::Forbidden;
-            response.set_content("", contentType.getName().c_str());
+            response.set_content("", contentType.getName());
             break;
         }
     }

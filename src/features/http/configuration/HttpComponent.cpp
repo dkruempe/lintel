@@ -9,6 +9,86 @@ HttpComponent::Shapes HttpComponent::shape{};
 
 HttpComponent::HttpComponent() : Component(shape.CONFIG_ROOT) {}
 
+namespace {
+
+std::shared_ptr<Entry> createClientEntry(
+        const char *host, const char *port,
+        const char *readTimeOut, const char *writeTimeOut,
+        const char *connectionTimeOut, const char *certPath,
+        const char *keyPath) {
+    auto clientConfiguration = std::make_shared<ClientConfiguration>(
+            host, std::stoi(port),
+            readTimeOut != nullptr
+            ? std::chrono::milliseconds(std::stoi(readTimeOut))
+            : std::chrono::milliseconds(0),
+            writeTimeOut != nullptr
+            ? std::chrono::milliseconds(std::stoi(writeTimeOut))
+            : std::chrono::milliseconds(0),
+            connectionTimeOut != nullptr
+            ? std::chrono::milliseconds(std::stoi(connectionTimeOut))
+            : std::chrono::milliseconds(0),
+            certPath != nullptr ? certPath : "",
+            keyPath != nullptr ? keyPath : "");
+    return std::make_shared<HttpEntry>(
+            type_name<HttpComponent>(), clientConfiguration);
+}
+
+std::shared_ptr<Entry> createServerEntry(
+        const char *host, const char *port,
+        const char *readTimeOut, const char *writeTimeOut,
+        const char *idleTimeout, const char *certPath,
+        const char *keyPath) {
+    auto serverConfiguration = std::make_shared<ServerConfiguration>(
+            host, std::stoi(port),
+            readTimeOut != nullptr
+            ? std::chrono::milliseconds(std::stoi(readTimeOut))
+            : std::chrono::milliseconds(0),
+            writeTimeOut != nullptr
+            ? std::chrono::milliseconds(std::stoi(writeTimeOut))
+            : std::chrono::milliseconds(0),
+            idleTimeout != nullptr
+            ? std::chrono::milliseconds(std::stoi(idleTimeout))
+            : std::chrono::milliseconds(0),
+            certPath != nullptr ? certPath : "",
+            keyPath != nullptr ? keyPath : "");
+    return std::make_shared<HttpEntry>(
+            type_name<HttpComponent>(), serverConfiguration);
+}
+
+void validateHttpElement(bool isClient, const char *host, const char *port,
+                         const char *idleTimeout,
+                         const char *connectionTimeOut,
+                         bool readClientConfiguration,
+                         bool readServerConfiguration,
+                         const std::string &configRoot, int32_t lineNumber) {
+    if (host == nullptr) {
+        throw ConfigurationException(configRoot, "host is null", lineNumber);
+    }
+    if (port == nullptr) {
+        throw ConfigurationException(configRoot, "port is null", lineNumber);
+    }
+    if (isClient && idleTimeout != nullptr) {
+        throw ConfigurationException(
+                configRoot, "idle timeout for client defined which is unused",
+                lineNumber);
+    }
+    if (!isClient && connectionTimeOut != nullptr) {
+        throw ConfigurationException(
+                configRoot,
+                "connection timeout for server defined which is unused", lineNumber);
+    }
+    if (readClientConfiguration && isClient) {
+        throw ConfigurationException(
+                configRoot, "no double configuration for client", lineNumber);
+    }
+    if (readServerConfiguration && !isClient) {
+        throw ConfigurationException(
+                configRoot, "no double configuration for server", lineNumber);
+    }
+}
+
+} // namespace
+
 std::vector<std::shared_ptr<Entry>> HttpComponent::parse(
         const std::string &content, const std::string &fileName,
         const int32_t lineOffset) {
@@ -27,100 +107,43 @@ std::vector<std::shared_ptr<Entry>> HttpComponent::parse(
     for (tinyxml2::XMLElement *httpElement = rootNode->FirstChildElement();
          httpElement != nullptr;
          httpElement = httpElement->NextSiblingElement()) {
-        if (std::strcmp(httpElement->Name(), shape.SERVER_ROOT.c_str()) != 0 &&
-            std::strcmp(httpElement->Name(), shape.CLIENT_ROOT.c_str()) != 0) {
+        if (std::strcmp(httpElement->Name(), shape.SERVER_ROOT) != 0 &&
+            std::strcmp(httpElement->Name(), shape.CLIENT_ROOT) != 0) {
             continue;
         }
 
         bool isClient =
-                std::strcmp(httpElement->Name(), shape.CLIENT_ROOT.c_str()) == 0;
-        const char *host = httpElement->Attribute(shape.HOST.c_str());
-        const char *port = httpElement->Attribute(shape.PORT.c_str());
-        const char *certPath = httpElement->Attribute(shape.CERT_PATH.c_str());
-        const char *keyPath = httpElement->Attribute(shape.KEY_PATH.c_str());
+                std::strcmp(httpElement->Name(), shape.CLIENT_ROOT) == 0;
+        const char *host = httpElement->Attribute(shape.HOST);
+        const char *port = httpElement->Attribute(shape.PORT);
+        const char *certPath = httpElement->Attribute(shape.CERT_PATH);
+        const char *keyPath = httpElement->Attribute(shape.KEY_PATH);
         const char *readTimeOut =
-                httpElement->Attribute(shape.READ_TIMEOUT.c_str());
+                httpElement->Attribute(shape.READ_TIMEOUT);
         const char *writeTimeOut =
-                httpElement->Attribute(shape.WRITE_TIMEOUT.c_str());
+                httpElement->Attribute(shape.WRITE_TIMEOUT);
         const char *connectionTimeOut =
-                httpElement->Attribute(shape.CONNECTION_TIMEOUT.c_str());
+                httpElement->Attribute(shape.CONNECTION_TIMEOUT);
         const char *idleTimeout =
-                httpElement->Attribute(shape.IDLE_TIMEOUT.c_str());
+                httpElement->Attribute(shape.IDLE_TIMEOUT);
 
         int32_t lineNumber = httpElement->GetLineNum() + lineOffset - 1;
 
-        if (host == nullptr) {
-            throw ConfigurationException(getConfigRoot(), "host is null", lineNumber);
-        }
-
-        if (port == nullptr) {
-            throw ConfigurationException(getConfigRoot(), "port is null", lineNumber);
-        }
-
-        if (isClient && idleTimeout != nullptr) {
-            throw ConfigurationException(
-                    getConfigRoot(), "idle timeout for client defined which is unused",
-                    lineNumber);
-        }
-
-        if (!isClient && connectionTimeOut != nullptr) {
-            throw ConfigurationException(
-                    getConfigRoot(),
-                    "connection tiemout for server defined which is unused", lineNumber);
-        }
-
-        if (readClientConfiguration && isClient) {
-            throw ConfigurationException(
-                    getConfigRoot(), "no double configuration for client", lineNumber);
-        }
-
-        if (readServerConfiguration && !isClient) {
-            throw ConfigurationException(
-                    getConfigRoot(), "no double configuration for server", lineNumber);
-        }
+        validateHttpElement(isClient, host, port, idleTimeout,
+                            connectionTimeOut, readClientConfiguration,
+                            readServerConfiguration, getConfigRoot(),
+                            lineNumber);
 
         if (isClient) {
             readClientConfiguration = true;
+            httpEntries.push_back(createClientEntry(
+                    host, port, readTimeOut, writeTimeOut,
+                    connectionTimeOut, certPath, keyPath));
         } else {
             readServerConfiguration = true;
-        }
-
-        if (isClient) {
-            std::shared_ptr<ClientConfiguration> clientConfiguration =
-                    std::make_shared<ClientConfiguration>(
-                            host, std::stoi(port),
-                            readTimeOut != nullptr
-                            ? std::chrono::milliseconds(std::stoi(readTimeOut))
-                            : std::chrono::milliseconds(0),
-                            writeTimeOut != nullptr
-                            ? std::chrono::milliseconds(std::stoi(writeTimeOut))
-                            : std::chrono::milliseconds(0),
-                            connectionTimeOut != nullptr
-                            ? std::chrono::milliseconds(std::stoi(connectionTimeOut))
-                            : std::chrono::milliseconds(0),
-                            certPath != nullptr ? certPath : "",
-                            keyPath != nullptr ? keyPath : "");
-            std::shared_ptr<HttpEntry> httpEntry = std::make_shared<HttpEntry>(
-                    type_name<HttpComponent>(), clientConfiguration);
-            httpEntries.push_back(httpEntry);
-        } else {
-            std::shared_ptr<ServerConfiguration> serverConfiguration =
-                    std::make_shared<ServerConfiguration>(
-                            host, std::stoi(port),
-                            readTimeOut != nullptr
-                            ? std::chrono::milliseconds(std::stoi(readTimeOut))
-                            : std::chrono::milliseconds(0),
-                            writeTimeOut != nullptr
-                            ? std::chrono::milliseconds(std::stoi(writeTimeOut))
-                            : std::chrono::milliseconds(0),
-                            idleTimeout != nullptr
-                            ? std::chrono::milliseconds(std::stoi(idleTimeout))
-                            : std::chrono::milliseconds(0),
-                            certPath != nullptr ? certPath : "",
-                            keyPath != nullptr ? keyPath : "");
-            std::shared_ptr<HttpEntry> httpEntry = std::make_shared<HttpEntry>(
-                    type_name<HttpComponent>(), serverConfiguration);
-            httpEntries.push_back(httpEntry);
+            httpEntries.push_back(createServerEntry(
+                    host, port, readTimeOut, writeTimeOut,
+                    idleTimeout, certPath, keyPath));
         }
     }
     return httpEntries;

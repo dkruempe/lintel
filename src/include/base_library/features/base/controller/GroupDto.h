@@ -14,10 +14,10 @@ private:
     std::vector<GroupDto> m_groups;
     bool m_isVirtual;
 
-    static struct Shapes {
-        const std::string GROUP_NAME = "group_name";
-        const std::string GROUPS = "groups";
-        const std::string VIRTUAL = "virtual";
+    static const struct Shapes {
+        const char *const GROUP_NAME = "group_name";
+        const char *const GROUPS = "groups";
+        const char *const VIRTUAL = "virtual";
     } shape;
 
 public:

@@ -8,24 +8,111 @@
 
 #include <filesystem>
 
-SharedMemorySegmentComponent::Shapes SharedMemorySegmentComponent::m_shape{};
+const SharedMemorySegmentComponent::Shapes SharedMemorySegmentComponent::m_shape{};
 
 SharedMemorySegmentComponent::SharedMemorySegmentComponent(
         std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
         : Component(m_shape.CONFIG_ROOT),
           m_environmentConfiguration(std::move(environmentConfiguration)) {}
 
+void SharedMemorySegmentComponent::processPathElement(
+        tinyxml2::XMLElement *shmElement, int32_t lineNumber,
+        std::filesystem::path &path) {
+    const char *pathStr = shmElement->Attribute(m_shape.PATH_PATH);
+    if (pathStr == nullptr) {
+        throw ConfigurationException(getConfigRoot(), "path value is nullptr",
+                                     lineNumber);
+    }
+    std::string tmpPath = pathStr;
+    if (tmpPath[0] == '~') {
+        std::string rest(tmpPath.begin() + 1, tmpPath.end());
+        tmpPath = m_environmentConfiguration->of(EnvironmentConfiguration::Home);
+        tmpPath += '/';
+        tmpPath += rest;
+    }
+    path = std::filesystem::path(tmpPath);
+    if (path.empty() || (!is_directory(path) && exists(path))) {
+        throw ConfigurationException(getConfigRoot(), "wrong configured path",
+                                     lineNumber);
+    }
+}
+
+void SharedMemorySegmentComponent::processSegmentElement(
+        tinyxml2::XMLElement *shmElement, int32_t lineNumber,
+        std::vector<SegmentTemp> &segments) {
+    const char *name = shmElement->Attribute(m_shape.SHM_SEGMENT_NAME);
+    const char *sizeStr = shmElement->Attribute(m_shape.SHM_SEGMENT_SIZE);
+    const char *maxSizeStr =
+            shmElement->Attribute(m_shape.SHM_SEGMENT_MAX_SIZE);
+    const char *autoExtendSizeStr =
+            shmElement->Attribute(m_shape.SHM_SEGMENT_AUTO_EXTEND_SIZE);
+    if (name == nullptr || sizeStr == nullptr) {
+        throw ConfigurationException(getConfigRoot(), "name or size is nullptr",
+                                     lineNumber);
+    }
+    if ((maxSizeStr != nullptr && autoExtendSizeStr == nullptr) ||
+        (autoExtendSizeStr != nullptr && maxSizeStr == nullptr)) {
+        throw ConfigurationException(getConfigRoot(),
+                                     "max_size or auto_extend_size is nullptr",
+                                     lineNumber);
+    }
+    if (std::string(name).find(' ') != std::string::npos) {
+        throw ConfigurationException(getConfigRoot(), "name contains space",
+                                     lineNumber);
+    }
+    SegmentTemp segmentTemp{};
+    segmentTemp.m_name = name;
+    segmentTemp.m_size = convertToBytes(sizeStr);
+    if (maxSizeStr != nullptr) {
+        segmentTemp.m_maxSize = convertToBytes(maxSizeStr);
+    }
+    if (autoExtendSizeStr != nullptr) {
+        segmentTemp.m_autoExtendSize = convertToBytes(autoExtendSizeStr);
+    }
+    segmentTemp.m_autoExtend = true;
+    segments.emplace_back(segmentTemp);
+}
+
+void SharedMemorySegmentComponent::validateAndCreatePath(
+        const std::filesystem::path &path, int32_t lineOffset) {
+    if (path.empty()) {
+        throw ConfigurationException(
+                getConfigRoot(), "Path definition is completely missing",
+                lineOffset);
+    }
+    if (!exists(path)) {
+        create_directories(path);
+    }
+}
+
+std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::buildEntries(
+        const std::filesystem::path &path,
+        const std::vector<SegmentTemp> &segments) {
+    std::vector<std::shared_ptr<Entry>> entries;
+    entries.push_back(std::make_shared<SharedMemorySegmentEntry>(
+            type_name<SharedMemorySegmentComponent>(),
+            std::make_shared<std::filesystem::path>(path)));
+    for (const auto &segmentTemp: segments) {
+        auto filePath = path.string() + std::filesystem::path::preferred_separator +
+                        segmentTemp.m_name + ".bin";
+        std::shared_ptr<SharedMemorySegment> sharedMemorySegment = nullptr;
+        if (!segmentTemp.m_autoExtend) {
+            sharedMemorySegment = std::make_shared<SharedMemorySegment>(
+                    filePath, segmentTemp.m_name, segmentTemp.m_size);
+        } else {
+            sharedMemorySegment = std::make_shared<SharedMemorySegment>(
+                    filePath, segmentTemp.m_name, segmentTemp.m_size,
+                    segmentTemp.m_autoExtendSize, segmentTemp.m_maxSize);
+        }
+        entries.push_back(std::make_shared<SharedMemorySegmentEntry>(
+                type_name<SharedMemorySegmentComponent>(), sharedMemorySegment));
+    }
+    return entries;
+}
+
 std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
         const std::string &content, const std::string &fileName,
         int32_t lineOffset) {
-    // cache for later construction of SharedMemorySegmentEntry
-    struct SegmentTemp {
-        bool m_autoExtend = false;
-        std::string m_name;
-        std::size_t m_size = 0;
-        std::size_t m_maxSize = 0;
-        std::size_t m_autoExtendSize = 0;
-    };
     std::vector<SegmentTemp> segments;
     std::filesystem::path path;
 
@@ -41,96 +128,20 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::parse(
     for (tinyxml2::XMLElement *shmElement = rootNode->FirstChildElement();
          shmElement != nullptr; shmElement = shmElement->NextSiblingElement()) {
         lineNumber++;
-        bool isPath = std::strcmp(shmElement->Name(), m_shape.PATH_ROOT.c_str()) == 0;
+        bool isPath = std::strcmp(shmElement->Name(), m_shape.PATH_ROOT) == 0;
         bool isSegment =
-                std::strcmp(shmElement->Name(), m_shape.SHM_SEGMENT_ROOT.c_str()) == 0;
+                std::strcmp(shmElement->Name(), m_shape.SHM_SEGMENT_ROOT) == 0;
         if (!isPath && !isSegment) {
             throw ConfigurationException(getConfigRoot(),
                                          "Root is not PATH_ROOT or SHM_SEGMENT_ROOT",
                                          lineNumber);
         }
-        const char *name = shmElement->Attribute(m_shape.SHM_SEGMENT_NAME.c_str());
-        const char *sizeStr = shmElement->Attribute(m_shape.SHM_SEGMENT_SIZE.c_str());
-        const char *pathStr = shmElement->Attribute(m_shape.PATH_PATH.c_str());
-        const char *maxSizeStr =
-                shmElement->Attribute(m_shape.SHM_SEGMENT_MAX_SIZE.c_str());
-        const char *autoExtendSizeStr =
-                shmElement->Attribute(m_shape.SHM_SEGMENT_AUTO_EXTEND_SIZE.c_str());
         if (isPath) {
-            if (pathStr == nullptr) {
-                throw ConfigurationException(getConfigRoot(), "path value is nullptr",
-                                             lineNumber);
-            }
-            std::string tmpPath = pathStr;
-            // is home directory ? => replace with home extension
-            if (tmpPath[0] == '~') {
-                // skip first char bc. of home variable
-                std::string rest(tmpPath.begin() + 1, tmpPath.end());
-                tmpPath =
-                        m_environmentConfiguration->of(EnvironmentConfiguration::Home);
-                tmpPath += '/';
-                tmpPath += rest;
-            }
-            path = std::filesystem::path(tmpPath);
-            if (path.empty() || (!is_directory(path) && exists(path))) {
-                throw ConfigurationException(getConfigRoot(), "wrong configured path",
-                                             lineNumber);
-            }
+            processPathElement(shmElement, lineNumber, path);
         } else {
-            if (name == nullptr || sizeStr == nullptr) {
-                throw ConfigurationException(getConfigRoot(), "name or size is nullptr",
-                                             lineNumber);
-            }
-            if ((maxSizeStr != nullptr && autoExtendSizeStr == nullptr) ||
-                (autoExtendSizeStr != nullptr && maxSizeStr == nullptr)) {
-                throw ConfigurationException(getConfigRoot(),
-                                             "max_size or auto_extend_size is nullptr",
-                                             lineNumber);
-            }
-            if (std::string(name).find(' ') != std::string::npos) {
-                throw ConfigurationException(getConfigRoot(), "name contains space",
-                                             lineNumber);
-            }
-            SegmentTemp segmentTemp{};
-            segmentTemp.m_name = name;
-            segmentTemp.m_size = convertToBytes(sizeStr);
-            if (maxSizeStr != nullptr) {
-                segmentTemp.m_maxSize = convertToBytes(maxSizeStr);
-            }
-            if (autoExtendSizeStr != nullptr) {
-                segmentTemp.m_autoExtendSize = convertToBytes(autoExtendSizeStr);
-            }
-            segmentTemp.m_autoExtend = true;
-            segments.emplace_back(segmentTemp);
+            processSegmentElement(shmElement, lineNumber, segments);
         }
     }
-    if (path.empty()) {
-        throw ConfigurationException(
-                getConfigRoot(), "Path definition is completely missing", lineOffset);
-    }
-    if (!exists(path)) {
-        create_directories(path);
-    }
-    std::vector<std::shared_ptr<Entry>> entries;
-    entries.push_back(std::make_shared<SharedMemorySegmentEntry>(
-            type_name<SharedMemorySegmentComponent>(),
-            std::make_shared<std::filesystem::path>(path)));
-    for (const auto &segmentTemp: segments) {
-        std::shared_ptr<SharedMemorySegment> sharedMemorySegment = nullptr;
-        if (!segmentTemp.m_autoExtend) {
-            sharedMemorySegment = std::make_shared<SharedMemorySegment>(
-                    path.string() + std::filesystem::path::preferred_separator +
-                    segmentTemp.m_name + ".bin",
-                    segmentTemp.m_name, segmentTemp.m_size);
-        } else {
-            sharedMemorySegment = std::make_shared<SharedMemorySegment>(
-                    path.string() + std::filesystem::path::preferred_separator +
-                    segmentTemp.m_name + ".bin",
-                    segmentTemp.m_name, segmentTemp.m_size, segmentTemp.m_autoExtendSize,
-                    segmentTemp.m_maxSize);
-        }
-        entries.push_back(std::make_shared<SharedMemorySegmentEntry>(
-                type_name<SharedMemorySegmentComponent>(), sharedMemorySegment));
-    }
-    return entries;
+    validateAndCreatePath(path, lineOffset);
+    return buildEntries(path, segments);
 }

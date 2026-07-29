@@ -25,7 +25,7 @@ private:
 public:
   LoggerService();
 
-  LoggerService(std::shared_ptr<ProcessName> processNmae, std::shared_ptr<Configuration> configuration);
+  LoggerService(std::shared_ptr<ProcessName> processName, std::shared_ptr<Configuration> configuration);
 
   ~LoggerService();
 
