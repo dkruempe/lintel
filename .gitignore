@@ -12,3 +12,4 @@ tags
 log
 include/config.h
 CMakeUserPresets.json
+cfg/.history
