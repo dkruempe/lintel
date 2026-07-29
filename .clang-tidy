@@ -43,7 +43,7 @@ Checks: "*,
         -readability-redundant-casting,
 "
 WarningsAsErrors: ''
-HeaderFilterRegex: ''
+HeaderFilterRegex: '.*base_library/.*'
 FormatStyle:     none
 
 CheckOptions:

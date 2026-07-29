@@ -1,4 +1,5 @@
 #include "base_library/features/property/controller/PropertiesDto.h"
+#include <algorithm>
 #include <rapidjson/document.h>
 
 const std::vector<PropertyDto> &PropertiesDto::getProperties() const { return m_properties; }

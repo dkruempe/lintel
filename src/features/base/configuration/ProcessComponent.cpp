@@ -72,13 +72,11 @@ std::vector<std::shared_ptr<Entry>> ProcessComponent::parse(
          processElement != nullptr;
          processElement = processElement->NextSiblingElement()) {
         if (std::strcmp(processElement->Name(), m_shapes.PROCESS_ROOT) ==
-            0) {
-            parseProcess(processElement, lineOffset);
+             0) {
+            processEntries.push_back(parseProcess(processElement, lineOffset));
         } else if (std::strcmp(processElement->Name(),
                                m_shapes.PROCESS_GROUP_ROOT) == 0) {
             processEntries.push_back(parseProcessGroup(processElement, lineOffset));
-
-            continue;
         }
     }
     return processEntries;

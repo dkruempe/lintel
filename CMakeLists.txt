@@ -13,7 +13,8 @@ include(cmake/CompilerWarnings.cmake)
 set_project_warnings(project_warnings)
 SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
-#
+# static analyzers
+option(MYPROJECT_ENABLE_CLANG_TIDY "Enable clang-tidy during build (slow)" OFF)
 include(cmake/StaticAnalyzers.cmake)
 myproject_enable_clang_tidy(myproject_options ${myproject_WARNINGS_AS_ERRORS})
 myproject_enable_cppcheck(${myproject_WARNINGS_AS_ERRORS} "" # override cppcheck options
