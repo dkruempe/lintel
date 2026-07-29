@@ -2,9 +2,40 @@
 
 #include <cstring>
 #include <functional>
+#include <regex>
 
 #include "base_library/core/exceptions/SQLException.h"
 #include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+
+namespace {
+
+void regexpFunc(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
+    if (argc != 2) {
+        sqlite3_result_error(ctx, "REGEXP requires exactly 2 arguments", -1);
+        return;
+    }
+    const char *pattern =
+            reinterpret_cast<const char *>(sqlite3_value_text(argv[0]));
+    const char *text =
+            reinterpret_cast<const char *>(sqlite3_value_text(argv[1]));
+    if (pattern == nullptr || text == nullptr) {
+        sqlite3_result_int(ctx, 0);
+        return;
+    }
+    try {
+        std::regex re(pattern, std::regex::ECMAScript | std::regex::icase);
+        sqlite3_result_int(ctx, std::regex_match(text, re) ? 1 : 0);
+    } catch (const std::regex_error &) {
+        sqlite3_result_error(ctx, "invalid REGEXP pattern", -1);
+    }
+}
+
+void registerRegexp(sqlite3 *db) {
+    sqlite3_create_function(db, "REGEXP", 2, SQLITE_UTF8, nullptr, regexpFunc,
+                            nullptr, nullptr);
+}
+
+}  // namespace
 
 namespace sqlite {
     Connection::Connection(const std::string &connectionInfo) : m_db(nullptr) {
@@ -12,6 +43,7 @@ namespace sqlite {
         if (rc != SQLITE_OK) {
             throw db::SQLException("Can't open database: " + getErrorMessage());
         }
+        registerRegexp(m_db);
     }
 
     Connection::Connection(
@@ -21,6 +53,7 @@ namespace sqlite {
         if (rc != SQLITE_OK) {
             throw db::SQLException("Can't open database: " + getErrorMessage());
         }
+        registerRegexp(m_db);
     }
 
     std::string Connection::getErrorMessage() const { return sqlite3_errmsg(m_db); }

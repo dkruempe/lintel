@@ -1,129 +1,76 @@
 #ifndef PROPERTY_H
 #define PROPERTY_H
 
+#include <chrono>
 #include <memory>
-#include <mutex>
 #include <shared_mutex>
 #include <string>
+#include <type_traits>
 
 #include "base_library/core/services/StringifyService.h"
 #include "base_library/core/utils/TypeName.h"
-#include "base_library/features/property/factories/PropertyFactory.h"
 #include "base_library/features/property/models/PropertyBase.h"
 
 class PropertyService;
 
 template<class T>
-class Property;
+class Property : public PropertyBase {
+private:
+    T m_value;
+    std::shared_mutex m_mutex;
 
-#define IMPLEMENT_PROPERTY(type, convertToString, convertToValue)              \
-  template <>                                                                  \
-  class Property<type> : public PropertyBase {                                 \
-   private:                                                                    \
-    type m_value;                                                              \
-    std::shared_mutex m_mutex;                                                 \
-    static bool Registration() {                                               \
-      PropertyFactory::TCreateMethod func =                                    \
-          [&](const std::string &name, const std::string &instanceName,        \
-              const std::string &className, const std::string &processName,    \
-              const std::string &value, const std::string &description,        \
-              bool runtime) -> std::shared_ptr<PropertyBase> {                 \
-        return std::make_shared<Property<type>>(                               \
-            name, instanceName, className, processName,                        \
-            StringifyService<type>::deserializeFromString(value), description, \
-            runtime);                                                          \
-      };                                                                       \
-      return PropertyFactory::Register(#type, func);                           \
-    }                                                                          \
-    static bool registered;                                                    \
-                                                                               \
-    void setValue(const type &value) {                                         \
-      std::lock_guard<std::shared_mutex> lock(m_mutex);                       \
-      m_value = value;                                                         \
-    }                                                                          \
-                                                                               \
-    void setValueString(const std::string &value) override {                   \
-      std::lock_guard<std::shared_mutex> lock(m_mutex);                       \
-      m_value = convertToValue(value);                                         \
-    }                                                                          \
-                                                                               \
-   public:                                                                     \
-    Property(const std::string &name, const std::string &instanceName,         \
-             const std::string &className, const std::string &processName,     \
-             type value, const std::string &description, bool runtimeChange)   \
-        : PropertyBase(name, instanceName, className, processName,             \
-                       description, runtimeChange),                            \
-          m_value(std::move(value)) {}                                         \
-    [[nodiscard]] std::string getType() const override { return #type; }       \
-    type getValue() {                                                          \
-      std::shared_lock<std::shared_mutex> lock(m_mutex);                       \
-      return m_value;                                                          \
-    }                                                                          \
-    std::string toString() override {                                          \
-      std::shared_lock<std::shared_mutex> lock(m_mutex);                       \
-      return convertToString(m_value);                                         \
-    }                                                                          \
-    friend class PropertyService;                                              \
-  };
+    static std::string_view getTypeName() {
+        if constexpr (std::is_same_v<T, int8_t>) return "int8_t";
+        else if constexpr (std::is_same_v<T, int16_t>) return "int16_t";
+        else if constexpr (std::is_same_v<T, int32_t>) return "int32_t";
+        else if constexpr (std::is_same_v<T, int64_t>) return "int64_t";
+        else if constexpr (std::is_same_v<T, uint8_t>) return "uint8_t";
+        else if constexpr (std::is_same_v<T, uint16_t>) return "uint16_t";
+        else if constexpr (std::is_same_v<T, uint32_t>) return "uint32_t";
+        else if constexpr (std::is_same_v<T, uint64_t>) return "uint64_t";
+        else if constexpr (std::is_same_v<T, std::string>) return "std::string";
+        else if constexpr (std::is_same_v<T, std::chrono::milliseconds>) return "std::chrono::milliseconds";
+        else if constexpr (std::is_same_v<T, std::chrono::seconds>) return "std::chrono::seconds";
+        else if constexpr (std::is_same_v<T, std::chrono::minutes>) return "std::chrono::minutes";
+        else return type_name<T>();
+    }
 
-IMPLEMENT_PROPERTY(int8_t, StringifyService<int8_t>::serializeToString,
-                   StringifyService<int8_t>::deserializeFromString)
+public:
+    Property(const std::string &name, const std::string &instanceName,
+             const std::string &className, const std::string &processName,
+             T value, const std::string &description, bool runtimeChange)
+        : PropertyBase(name, instanceName, className, processName,
+                       description, runtimeChange),
+          m_value(std::move(value)) {}
 
-IMPLEMENT_PROPERTY(int16_t, StringifyService<int16_t>::serializeToString,
-                   StringifyService<int16_t>::deserializeFromString)
+    Property()
+        : PropertyBase("", "", "", "", "", false), m_value{} {}
 
-IMPLEMENT_PROPERTY(int32_t, StringifyService<int32_t>::serializeToString,
-                   StringifyService<int32_t>::deserializeFromString)
+    [[nodiscard]] std::string getType() const override {
+        return std::string(getTypeName());
+    }
 
-IMPLEMENT_PROPERTY(int64_t, StringifyService<int64_t>::serializeToString,
-                   StringifyService<int64_t>::deserializeFromString)
+    T getValue() {
+        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        return m_value;
+    }
 
-IMPLEMENT_PROPERTY(uint8_t, StringifyService<uint8_t>::serializeToString,
-                   StringifyService<uint8_t>::deserializeFromString)
+    std::string toString() override {
+        std::shared_lock<std::shared_mutex> lock(m_mutex);
+        return StringifyService<T>::serializeToString(m_value);
+    }
 
-IMPLEMENT_PROPERTY(uint16_t, StringifyService<uint16_t>::serializeToString,
-                   StringifyService<uint16_t>::deserializeFromString)
+    void setValue(const T &value) {
+        std::lock_guard<std::shared_mutex> lock(m_mutex);
+        m_value = value;
+    }
 
-IMPLEMENT_PROPERTY(uint32_t, StringifyService<uint32_t>::serializeToString,
-                   StringifyService<uint32_t>::deserializeFromString)
+    void setValueString(const std::string &value) override {
+        std::lock_guard<std::shared_mutex> lock(m_mutex);
+        m_value = StringifyService<T>::deserializeFromString(value);
+    }
 
-IMPLEMENT_PROPERTY(uint64_t, StringifyService<uint64_t>::serializeToString,
-                   StringifyService<uint64_t>::deserializeFromString)
+    friend class PropertyService;
+};
 
-#ifdef __APPLE__
-
-IMPLEMENT_PROPERTY(std::size_t,
-                   StringifyService<std::size_t>::serializeToString,
-                   StringifyService<std::size_t>::deserializeFromString)
-
-#endif
-
-IMPLEMENT_PROPERTY(float, StringifyService<float>::serializeToString,
-                   StringifyService<float>::deserializeFromString)
-
-IMPLEMENT_PROPERTY(double, StringifyService<double>::serializeToString,
-                   StringifyService<double>::deserializeFromString)
-
-IMPLEMENT_PROPERTY(std::string,
-                   StringifyService<std::string>::serializeToString,
-                   StringifyService<std::string>::deserializeFromString)
-
-IMPLEMENT_PROPERTY(bool, StringifyService<bool>::serializeToString,
-                   StringifyService<bool>::deserializeFromString)
-
-IMPLEMENT_PROPERTY(
-        std::chrono::milliseconds,
-        StringifyService<std::chrono::milliseconds>::serializeToString,
-        StringifyService<std::chrono::milliseconds>::deserializeFromString)
-
-IMPLEMENT_PROPERTY(
-        std::chrono::seconds,
-        StringifyService<std::chrono::seconds>::serializeToString,
-        StringifyService<std::chrono::seconds>::deserializeFromString)
-
-IMPLEMENT_PROPERTY(
-        std::chrono::minutes,
-        StringifyService<std::chrono::minutes>::serializeToString,
-        StringifyService<std::chrono::minutes>::deserializeFromString)
-
-#endif /* PROPERTY_H */
+#endif  // PROPERTY_H

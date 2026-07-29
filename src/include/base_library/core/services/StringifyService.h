@@ -3,98 +3,56 @@
 
 #include <date/tz.h>
 
+#include <chrono>
+#include <sstream>
 #include <string>
+#include <type_traits>
 
 template<class T>
-class StringifyService;
+class StringifyService {
+public:
+    static std::string serializeToString(const T &value) {
+        if constexpr (std::is_same_v<T, std::string>) {
+            return value;
+        } else if constexpr (std::is_same_v<T, bool>) {
+            return value ? "true" : "false";
+        } else if constexpr (std::is_arithmetic_v<T>) {
+            return std::to_string(value);
+        } else if constexpr (std::is_same_v<T, date::sys_time<std::chrono::microseconds>>) {
+            return date::format("%Y-%m-%d %H:%M:%S%Ez", value);
+        } else if constexpr (std::is_same_v<T, std::chrono::milliseconds>
+                          || std::is_same_v<T, std::chrono::seconds>
+                          || std::is_same_v<T, std::chrono::minutes>) {
+            return std::to_string(value.count());
+        }
+    }
 
-#define IMPLEMENT_STRINGIFY_SERVICE_FOR(type, convertToString, convertToValue) \
-  template <>                                                                  \
-  class StringifyService<type> {                                               \
-   public:                                                                     \
-    static std::string serializeToString(const type &value) {                  \
-      return convertToString(value);                                           \
-    }                                                                          \
-    static type deserializeFromString(const std::string &string) {             \
-      return convertToValue(string);                                           \
-    }                                                                          \
-  };
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(int8_t, std::to_string, std::stoi)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(int16_t, std::to_string, std::stoi)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(int32_t, std::to_string, std::stoi)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(int64_t, std::to_string, std::stol)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(uint8_t, std::to_string, std::stoul)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(uint16_t, std::to_string, std::stoul)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(uint32_t, std::to_string, std::stoul)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(uint64_t, std::to_string, std::stoul)
-
-#ifdef __APPLE__
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(std::size_t, std::to_string, std::stoul)
-
-#endif
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(float, std::to_string, std::stof)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(double, std::to_string, std::stod)
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(
-        std::string,
-        [](const std::string &string) -> std::string { return string; },
-        [](const std::string &string) -> std::string { return string; })
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(
-        bool, [](bool value) -> std::string { return value ? "true" : "false"; },
-        [](const std::string &string) -> bool {
-            return string == "true" ? true : false;
-        })
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(
-        date::sys_time<std::chrono::microseconds>,
-        [](const date::sys_time<std::chrono::microseconds> &time) -> std::string {
-            return date::format("%Y-%m-%d %H:%M:%S%Ez", time);
-        },
-        [](const std::string &timeString)
-                -> date::sys_time<std::chrono::microseconds> {
-            std::stringstream ss(timeString);
+    static T deserializeFromString(const std::string &string) {
+        if constexpr (std::is_same_v<T, std::string>) {
+            return string;
+        } else if constexpr (std::is_same_v<T, bool>) {
+            return string == "true";
+        } else if constexpr (std::is_integral_v<T> && std::is_signed_v<T>) {
+            return static_cast<T>(std::stoll(string));
+        } else if constexpr (std::is_integral_v<T> && std::is_unsigned_v<T>) {
+            return static_cast<T>(std::stoull(string));
+        } else if constexpr (std::is_same_v<T, float>) {
+            return std::stof(string);
+        } else if constexpr (std::is_same_v<T, double>) {
+            return std::stod(string);
+        } else if constexpr (std::is_same_v<T, date::sys_time<std::chrono::microseconds>>) {
+            std::stringstream ss(string);
             date::sys_time<std::chrono::microseconds> lt;
             ss >> date::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
             return lt;
-        })
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(
-        std::chrono::milliseconds,
-        [](const std::chrono::milliseconds &duration) -> std::string {
-            return std::to_string(duration.count());
-        },
-        [](const std::string &duration) -> std::chrono::milliseconds {
-            return std::chrono::milliseconds(std::stoull(duration));
-        })
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(
-        std::chrono::seconds,
-        [](const std::chrono::seconds &duration) -> std::string {
-            return std::to_string(duration.count());
-        },
-        [](const std::string &duration) -> std::chrono::seconds {
-            return std::chrono::seconds(std::stoull(duration));
-        })
-
-IMPLEMENT_STRINGIFY_SERVICE_FOR(
-        std::chrono::minutes,
-        [](const std::chrono::minutes &duration) -> std::string {
-            return std::to_string(duration.count());
-        },
-        [](const std::string &duration) -> std::chrono::minutes {
-            return std::chrono::minutes(std::stoull(duration));
-        })
+        } else if constexpr (std::is_same_v<T, std::chrono::milliseconds>) {
+            return std::chrono::milliseconds(std::stoull(string));
+        } else if constexpr (std::is_same_v<T, std::chrono::seconds>) {
+            return std::chrono::seconds(std::stoull(string));
+        } else if constexpr (std::is_same_v<T, std::chrono::minutes>) {
+            return std::chrono::minutes(std::stoull(string));
+        }
+    }
+};
 
 #endif  // LOGGING_STRINGIFYSERVICE_H

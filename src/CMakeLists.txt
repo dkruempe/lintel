@@ -444,7 +444,7 @@ set(sources
     features/property/strategies/XMLConfigSerializationStrategy.cpp
 )
 
-add_library(base_library SHARED ${headers} ${sources})
+add_library(base_library ${headers} ${sources})
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library
         SYSTEM PUBLIC
@@ -454,8 +454,29 @@ target_include_directories(base_library
 target_link_libraries(base_library PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
         Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib ${rapidjson_LIBRARIES_DEBUG} date::date spdlog::spdlog_header_only
         kruempelmann::Hypodermic Boost::boost Boost::headers Boost::filesystem PRIVATE project_warnings)
+
+option(ENABLE_PCH "Enable precompiled headers" ON)
+if(ENABLE_PCH)
+    target_precompile_headers(base_library PRIVATE
+        <algorithm>
+        <chrono>
+        <cstring>
+        <filesystem>
+        <functional>
+        <fstream>
+        <map>
+        <memory>
+        <mutex>
+        <shared_mutex>
+        <sstream>
+        <string>
+        <thread>
+        <vector>
+    )
+endif()
+
 add_library(kruempelmann::base_library ALIAS base_library)
-INSTALL(TARGETS base_library
+INSTALL(TARGETS base_library project_warnings
         EXPORT base_library_targets
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib

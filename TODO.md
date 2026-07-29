@@ -1,13 +1,16 @@
 # TODOs
 
 - General
-    - [ ] fix general std::size_t serialize solution instead of limiting it to __APPLE__
+    - [x] fix general std::size_t serialize solution instead of limiting it to __APPLE__
 - Process
     - [ ] adds better possibility to manages process automatically
 - Shared Memory
     - [ ] backup or archive strategy for shm
     - [ ] add better usage of semaphores
 - Database
+    - [x] fix SQLite REGEXP support – Conan SQLite hat kein REGEXP; runtime registration via `sqlite3_create_function` hinzugefügt
+    - [x] fix DatabaseBootstrapPlugin – `db::SQLException` wurde weitergere throwed → abgebrochene Bootstrap-Schleife; jetzt nur noch loggen und loop fortsetzen
+    - [x] fix Bootstrap-Order – `VirtualGroupBootstrapPlugin` hat GroupProvider eager im Konstruktor resolved (vor DB-Bootstrap); jetzt lazy in `onStart()` via Container-Injection
     - [ ] mySql Support
     - [ ] Cursor implementation
     - [ ] adds constexpr implementation for better usage and performance
