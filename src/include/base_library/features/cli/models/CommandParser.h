@@ -1,6 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_COMMANDPARSER_H
 #define CPP_BASE_LIBRARY_COMMANDPARSER_H
 
+#include <algorithm>
+#include <cstdint>
 #include <map>
 #include <set>
 #include <optional>

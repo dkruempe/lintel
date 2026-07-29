@@ -5,6 +5,9 @@
 
 #include <memory>
 
+#include <boost/container/map.hpp>
+#include <boost/container/vector.hpp>
+
 #include "base_library/core/models/SharedMemorySegment.h"
 #include "base_library/core/services/PersistableBean.h"
 #include "base_library/core/services/SharedMemoryService.h"
@@ -120,7 +123,7 @@ public:
 template<typename DATA, typename DAO>
 class SharedMemoryVectorRepository : public SharedMemoryRepository {
 private:
-    using Vector = boost::interprocess::vector<
+    using Vector = boost::container::vector<
             DATA,
             boost::interprocess::allocator<
                     DATA, boost::interprocess::managed_mapped_file::segment_manager>>;
@@ -174,7 +177,7 @@ public:
 template<typename KEY, typename VALUE, typename KeyDao, typename ValueDao>
 class SharedMemoryMapRepository : public SharedMemoryRepository {
 private:
-    using Map = boost::interprocess::map<
+    using Map = boost::container::map<
             KEY, VALUE, std::less<KEY>,
             boost::interprocess::allocator<
                     std::pair<const KEY, VALUE>,

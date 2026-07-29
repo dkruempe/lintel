@@ -1,8 +1,10 @@
 #ifndef CPP_BASE_LIBRARY_COMMAND_H
 #define CPP_BASE_LIBRARY_COMMAND_H
 
+#include <cstdint>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>

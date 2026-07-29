@@ -1,13 +1,13 @@
 #include "base_library/features/base/configuration/MessageQueueEntry.h"
 
 MessageQueueEntry::MessageQueueEntry(const std::string_view &component,
-                                     std::string processName,
-                                     std::string messageQueueName,
-                                     int32_t maxMessages)
+                                     std::string _processName,
+                                     std::string _messageQueueName,
+                                     int32_t _maxMessages)
         : Entry(component),
-          processName(std::move(processName)),
-          messageQueueName(std::move(messageQueueName)),
-          maxMessages(maxMessages) {}
+          processName(std::move(_processName)),
+          messageQueueName(std::move(_messageQueueName)),
+          maxMessages(_maxMessages) {}
 
 const std::string &MessageQueueEntry::get_process_name() const {
     return processName;

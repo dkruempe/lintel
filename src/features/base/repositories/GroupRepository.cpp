@@ -52,7 +52,7 @@ void GroupRepository::initGroups() {
   )",
                                builder1);
     std::string lastGroupName;
-    bool lastIsVirtual;
+    bool lastIsVirtual = false;
     std::vector<std::string> groupNames;
     for (const auto &iter: result) {
         std::string groupName = iter.of(0).getValue();
@@ -65,8 +65,8 @@ void GroupRepository::initGroups() {
             std::vector<Group> groups;
             std::transform(groupNames.begin(), groupNames.end(),
                            std::back_inserter(groups),
-                           [&](const std::string &groupName) -> Group {
-                               return m_groupMap.at(groupName);
+                           [&](const std::string &group) -> Group {
+                                return m_groupMap.at(group);
                            });
             Group group(lastGroupName, groups, lastIsVirtual);
             m_groupMap.insert({group.getGroupName(), group});

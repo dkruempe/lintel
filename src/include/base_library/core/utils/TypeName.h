@@ -22,5 +22,9 @@ constexpr std::string_view type_name() {
 #endif
     name.remove_prefix(prefix.size());
     name.remove_suffix(suffix.size());
+    auto pos = name.rfind("::");
+    if (pos != std::string_view::npos) {
+        name.remove_prefix(pos + 2);
+    }
     return name;
 }

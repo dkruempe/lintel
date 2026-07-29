@@ -16,6 +16,6 @@
     - [ ] use enums in implementations
     - [ ] support of paging
 - Docker Support
-    - [ ] add support for testing software via docker
-    - [ ] working docker container for testing linux
+    - [x] add support for testing software via docker
+    - [x] working docker container for testing linux
     - [ ] working docker container for testing macOS ?

@@ -48,13 +48,13 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
             std::find_if(entries.begin(), entries.end(), [&](auto entry) {
                 std::shared_ptr<LoggerEntry> loggerEntry =
                         std::static_pointer_cast<LoggerEntry>(entry);
-                std::shared_ptr<LoggerConfiguration> loggerConfiguration =
+                std::shared_ptr<LoggerConfiguration> loggerCfg =
                         loggerEntry->getLoggerConfiguration();
-                if (loggerConfiguration == nullptr) {
+                if (loggerCfg == nullptr) {
                     return false;
                 }
-                std::regex regex(loggerConfiguration->getProcessName());
-                return loggerConfiguration->getProcessName() ==
+                std::regex regex(loggerCfg->getProcessName());
+                return loggerCfg->getProcessName() ==
                        m_processName->getProcessName() ||
                        std::regex_match(m_processName->getProcessName(), regex);
             });

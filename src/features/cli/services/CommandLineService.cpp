@@ -222,7 +222,7 @@ void CommandLineService::run()
     SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed, menuNameOf());
     if (symbolEvent.first == Symbol::Command && !symbolEvent.second.empty()) {
       m_commandLineHistoryService->historizeOf(CommandHistoryEntry(
-        symbolEvent.second, m_userDto.getUserName(), std::chrono::system_clock::now(), menuNameOf()));
+        symbolEvent.second, m_userDto.getUserName(), std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()), menuNameOf()));
     }
     switch (symbolEvent.first) {
     case Symbol::CtrlC:

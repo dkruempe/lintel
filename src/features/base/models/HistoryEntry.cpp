@@ -19,7 +19,7 @@ HistoryEntry::HistoryEntry(const AbstractServiceInterface &service,
           m_label(std::move(label)),
           m_text(std::move(text)),
           m_uuid(UUID::generate()),
-          m_createdTimestamp(std::chrono::system_clock::now()) {}
+          m_createdTimestamp(std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now())) {}
 
 const date::sys_time<std::chrono::microseconds>
 &HistoryEntry::getCreatedTimestamp() const {

@@ -1,6 +1,7 @@
 #include "base_library/features/cli/utils/CommandLineUtils.h"
 
 #include <iostream>
+#include <tuple>
 
 void CommandLineUtils::disableOfInputEcho() {
 #if defined(__APPLE__) || defined(__linux__) || defined(__unix__)
@@ -10,7 +11,7 @@ void CommandLineUtils::disableOfInputEcho() {
     termios tty{};
     tcgetattr(STDIN_FILENO, &tty);
     /* we want to disable echo */
-    tty.c_lflag &= static_cast<unsigned long>(~ECHO);
+    tty.c_lflag &= static_cast<tcflag_t>(~ECHO);
     tcsetattr(STDIN_FILENO, TCSANOW, &tty);
     m_isEchoDisabled = true;
 #else
@@ -33,7 +34,7 @@ void CommandLineUtils::enableOfInputEcho() {
 
 void CommandLineUtils::clear() {
 #if defined(__APPLE__) || defined(__linux__) || defined(__unix__)
-    write(STDOUT_FILENO, "\x1b[H\x1b[2J", 7);
+    std::ignore = write(STDOUT_FILENO, "\x1b[H\x1b[2J", 7);
 #else
     std::cout << "\033[2J\033[1;1H";
 #endif
@@ -46,7 +47,7 @@ void CommandLineUtils::disableOfCanonicalMode() {
     }
     termios tty{};
     tcgetattr(STDIN_FILENO, &tty);
-    tty.c_lflag &= (static_cast<unsigned long>(~ICANON));
+    tty.c_lflag &= static_cast<tcflag_t>(~ICANON);
     tty.c_cc[VTIME] = 0;
     tty.c_cc[VMIN] = 1;
     tcsetattr(STDIN_FILENO, TCSANOW, &tty);

@@ -1,0 +1,15 @@
+.git
+.gitignore
+.gitattributes
+.cache
+.idea
+.vscode
+.cmake
+cmake-*
+cmake-build-*
+build
+build2
+bin
+*.md
+*.yaml
+swagger.*

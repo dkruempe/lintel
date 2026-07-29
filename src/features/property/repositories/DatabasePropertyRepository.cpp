@@ -50,6 +50,7 @@ void DatabasePropertyRepository::save(
                    ON CONFLICT ON CONSTRAINT property_pk
                    DO UPDATE SET value = ?
         )";
+                break;
             case db::ConnectionType::SQLite:
                 query = R"(insert or replace into property
                   (name, 

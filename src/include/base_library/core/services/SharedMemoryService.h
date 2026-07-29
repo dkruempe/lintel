@@ -2,10 +2,9 @@
 #define CPP_BASE_LIBRARY_SHAREDMEMORYSERVICE_H
 
 #include <array>
-#include <boost/interprocess/containers/map.hpp>
-#include <boost/interprocess/containers/set.hpp>
-#include <boost/interprocess/containers/string.hpp>
-#include <boost/interprocess/containers/vector.hpp>
+#include <boost/container/map.hpp>
+#include <boost/container/string.hpp>
+#include <boost/container/vector.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <filesystem>
 #include <map>
@@ -50,7 +49,7 @@ public:
     using charAllocator = boost::interprocess::allocator<
             char, boost::interprocess::managed_mapped_file::segment_manager>;
     using ShmString =
-            boost::interprocess::basic_string<char, std::char_traits<char>,
+            boost::container::basic_string<char, std::char_traits<char>,
                     charAllocator>;
 
     SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager>
@@ -99,7 +98,7 @@ public:
     }
 
     template<class Key, class Value>
-    boost::interprocess::map<
+    boost::container::map<
             Key, Value, std::less<Key>,
             boost::interprocess::allocator<
                     std::pair<const Key, Value>,
@@ -113,13 +112,13 @@ public:
             auto &segmentCopy = m_segments.at(segment->getName());
             persistentMapAllocator allocator(
                     segmentCopy.m_managedMappedFile->get_segment_manager());
-            boost::interprocess::map<
+            boost::container::map<
                     Key, Value, std::less<Key>,
                     boost::interprocess::allocator<
                             std::pair<const Key, Value>,
                             boost::interprocess::managed_mapped_file::segment_manager>> *map =
                     segmentCopy.m_managedMappedFile
-                            ->find_or_construct<boost::interprocess::map<
+                            ->find_or_construct<boost::container::map<
                                     Key, Value, std::less<Key>, persistentMapAllocator>>(
                                     name.c_str())(std::less<Key>(), allocator);
             LOG_TRACE("map {}", map->size());
@@ -130,7 +129,7 @@ public:
     }
 
     template<class Object>
-    boost::interprocess::vector<
+    boost::container::vector<
             Object,
             boost::interprocess::allocator<
                     Object, boost::interprocess::managed_mapped_file::segment_manager>>
@@ -143,7 +142,7 @@ public:
             persistentVectorAllocator allocator(
                     segmentCopy.m_managedMappedFile->get_segment_manager());
             return *(segmentCopy.m_managedMappedFile->find_or_construct<
-                    boost::interprocess::vector<Object, persistentVectorAllocator>>(
+                    boost::container::vector<Object, persistentVectorAllocator>>(
                     name.c_str())(allocator));
         } catch (std::out_of_range &exception) {
             throw ShmSegmentNotFound(segment->getName());

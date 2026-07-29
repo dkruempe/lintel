@@ -48,8 +48,9 @@ void HistoryService::run() {
         auto historyMessage = message->as<HistoryMessage>();
         HistoryEntry const historyEntry(historyMessage.processName, historyMessage.serviceName, historyMessage.label,
                                         historyMessage.text,
-                                        std::chrono::system_clock::from_time_t(historyMessage.createdTimestamp) +
-                                        std::chrono::microseconds(historyMessage.createdTimestampMics));
+                                        std::chrono::time_point_cast<std::chrono::microseconds>(
+                                            std::chrono::system_clock::from_time_t(historyMessage.createdTimestamp) +
+                                            std::chrono::microseconds(historyMessage.createdTimestampMics)));
         temp.push_back(historyEntry);
         message = m_historyMessageQueue->tryReceiveOf();
         if (!message.has_value() || !m_running || temp.size() >= m_commitRate->getValue()) {
@@ -74,16 +75,20 @@ void HistoryService::historizeOf(std::vector<HistoryEntry> entries) {
         for (const auto &entry: entries) {
             HistoryMessage historyMessage{};
             std::strncpy(historyMessage.processName, entry.getProcessName().c_str(),
-                         sizeof(historyMessage.processName));
-            std::strncpy(historyMessage.label, entry.getLabel().c_str(), sizeof(historyMessage.label));
+                         sizeof(historyMessage.processName) - 1);
+            historyMessage.processName[sizeof(historyMessage.processName) - 1] = '\0';
+            std::strncpy(historyMessage.label, entry.getLabel().c_str(), sizeof(historyMessage.label) - 1);
+            historyMessage.label[sizeof(historyMessage.label) - 1] = '\0';
             std::strncpy(historyMessage.serviceName, entry.getServiceName().c_str(),
-                         sizeof(historyMessage.serviceName));
+                         sizeof(historyMessage.serviceName) - 1);
+            historyMessage.serviceName[sizeof(historyMessage.serviceName) - 1] = '\0';
             historyMessage.createdTimestamp = std::chrono::system_clock::to_time_t(entry.getCreatedTimestamp());
-            std::strncpy(historyMessage.text, entry.getText().c_str(), sizeof(historyMessage.text));
-            historyMessage.createdTimestampMics = static_cast<int64_t>(std::chrono::duration_cast<std::chrono::microseconds>(
+            std::strncpy(historyMessage.text, entry.getText().c_str(), sizeof(historyMessage.text) - 1);
+            historyMessage.text[sizeof(historyMessage.text) - 1] = '\0';
+            historyMessage.createdTimestampMics = std::chrono::duration_cast<std::chrono::microseconds>(
                     entry.getCreatedTimestamp() -
                     std::chrono::system_clock::from_time_t(
-                            historyMessage.createdTimestamp)).count());
+                            historyMessage.createdTimestamp)).count();
             Message message = Message(m_historyMessageQueue->getName(), m_processName->getProcessName());
             message.assign(historyMessage);
             m_historyMessageQueue->sendOf(message);
