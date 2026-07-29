@@ -19,7 +19,7 @@
   };
 
 namespace postgresql {
-    template<typename T>
+    template<typename T, typename Enable = void>
     class Serialization {
     };
 
@@ -38,11 +38,6 @@ namespace postgresql {
     IMPLEMENT_SERIALIZE(uint32_t, std::to_string, std::stoul)
 
     IMPLEMENT_SERIALIZE(uint64_t, std::to_string, std::stoul)
-
-#ifdef __APPLE__
-
-    IMPLEMENT_SERIALIZE(std::size_t, std::to_string, std::stoul);
-#endif
 
     IMPLEMENT_SERIALIZE(float, std::to_string, std::stof)
 
@@ -72,7 +67,20 @@ namespace postgresql {
                 date::sys_time<std::chrono::microseconds> lt;
                 ss >> date::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
                 return lt;
-            })
+             })
+
+    // Only activated when std::size_t is distinct from all fixed-width integer types
+    // (full specializations above take precedence over this partial specialization)
+    template<typename T>
+    class Serialization<T, std::enable_if_t<std::is_same_v<T, std::size_t>>> {
+    public:
+        static std::string serialize(const T& value) {
+            return std::to_string(value);
+        }
+        static T deserialize(const std::string& value) {
+            return static_cast<T>(std::stoul(value));
+        }
+    };
 }  // namespace postgresql
 
 #endif  // CPP_BASE_LIBRARY_POSTGRES_SERIALIZATION_H

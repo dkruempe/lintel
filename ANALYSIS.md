@@ -20,21 +20,29 @@
 
 ## Schwächen
 
-1. **Kein CI/CD Pipeline** – Es gibt keine GitHub Actions, GitLab CI, Jenkins oder vergleichbares. Das ist das kritischste Defizit. Tests werden nur lokal ausgeführt.
+1. **Fehlendes Mocking-Framework** – Tests nutzen reale Datenbankinstanzen statt Mocks. Dadurch kann die Business-Logik von HTTP-Controllern, CLI-Kommandos, Shared Memory und Message Queues nicht isoliert getestet werden. Nur 10 Testdateien, überwiegend SQLite-Integrationstests.
 
-2. **Kein Docker-Support** – Im TODO.md bereits als offener Punkt vermerkt.
+2. **Services greifen im Konstruktor auf die Datenbank zu** – `MessageQueueService` führt DB-Query im Konstruktor aus (`m_messageQueueRepository->allOf(".*", ".*")`). Setzt voraus, dass DB bereits bootstrapt ist – implizite Abhängigkeit, nicht durch Typsystem abgesichert. DB-Zugriffe sollten in einer `initialize()`-Methode nach dem Bootstrap erfolgen, nicht im Konstruktor.
 
-3. **Lückenhafte Testabdeckung** – Nur 10 Testdateien. Es fehlen Tests für: PostgreSQL-Backend, HTTP-Interna, CLI-Interaktion, Shared Memory, Message Queues. Kein Mocking-Framework – Tests nutzen reale Datenbankinstanzen.
+3. **Signal-Handling mit rohem static Pointer** (`StartupBuilder.cpp`) – `std::signal` + static raw pointer statt modernem `sigaction` + `sigwait` in dediziertem Thread. Nicht thread-safety und potentiell problematisch bei Mehrfachinstanzen.
 
-4. **Platform-spezifischer Workaround** – `#ifdef __APPLE__` für `std::size_t` Serialisierung (im TODO.md als Fixme vermerkt).
+4. **Minimale Code-Dokumentation** – Kaum Doxygen-Kommentare. Öffentliche API ohne Header-Dokumentation.
 
-5. **Signal-Handling mit rohem static Pointer** (`StartupBuilder.cpp`) – `std::signal` + static raw pointer statt modernem `sigaction` + `sigwait` in dediziertem Thread. Nicht thread-safety und potentiell problematisch bei Mehrfachinstanzen.
+5. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
 
-6. **Minimale Code-Dokumentation** – Kaum Doxygen-Kommentare. Öffentliche API ohne Header-Dokumentation.
+6. **Kein Binary-Separation** – Core und Features werden in eine einzige Shared Library (`base_library`) kompiliert. Optionalität der Features ist nur zur Compile-Zeit über das Registrieren im StartupBuilder gegeben – nicht auf Binärebene.
 
-7. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
+---
 
-8. **Kein Binary-Separation** – Core und Features werden in eine einzige Shared Library (`base_library`) kompiliert. Optionalität der Features ist nur zur Compile-Zeit über das Registrieren im StartupBuilder gegeben – nicht auf Binärebene.
+## Kürzlich behobene Bugs
+
+1. **SQLite REGEXP fehlt** – Conans SQLite-Bibliothek hat `REGEXP` nicht aktiviert. Runtime-Register via `sqlite3_create_function` im `sqlite::Connection`-Konstruktor gelöst (`src/core/persistence/sqlite3/Connection.cpp:46`).
+
+2. **DatabaseBootstrapPlugin bricht Loop ab** – Bei `db::SQLException` (z. B. PostgreSQL nicht erreichbar) wurde der Fehler weitergereicht, sodass nachfolgende Verbindungen (z. B. SQLite) nie bootstrapt wurden. Fix: `throw` im `catch (db::SQLException)` entfernt, nur noch loggen (`src/core/plugins/DatabaseBootstrapPlugin.cpp:16`).
+
+3. **Bootstrap-Reihenfolge kaputt** – `VirtualGroupBootstrapPlugin` resolved `std::vector<std::shared_ptr<GroupProvider>>` bereits im Konstruktor. Hypodermic konstruiert alle BootstrapPlugins beim `resolve<BootstrapService>()` – also *vor* dem DB-Bootstrap. GroupProvider umfassen u. a. `MessageQueueController`, das `MessageQueueService` injiziert bekommt, das im Konstruktor die (noch nicht bootstrapte) Datenbank abfragt. Fix: `GroupProvider`-Resolution in `onStart()` verschoben, Container wird per Hypodermic auto-injiziert (`src/core/plugins/VirtualGroupBootstrapPlugin.cpp:26`).
+
+4. **`std::size_t` Serialisierung platform-spezifisch** – `#ifdef __APPLE__` in `postgresql/Serialization.h` und `sqlite3/Serialization.h`. Fix: Durch generische SFINAE-Partialspezialisierung ersetzt – erkennt automatisch, ob `std::size_t` bereits durch `uint64_t` abgedeckt ist. (`src/include/base_library/core/persistence/postgresql/Serialization.h:22`, `src/include/base_library/core/persistence/sqlite3/Serialization.h:25`).
 
 ---
 
@@ -42,11 +50,10 @@
 
 | Priorität | Maßnahme | Begründung |
 |-----------|----------|------------|
-| **Hoch** | **CI/CD Pipeline aufsetzen** (GitHub Actions) | Automatisierte Builds + Tests auf macOS/Linux; fängt Regressionen sofort |
-| **Hoch** | **Testabdeckung erweitern** | PostgreSQL-Backend, HTTP-Controller, CLI, Shared Memory – mindestens Integrationstests |
-| **Hoch** | **Fehlende Features abschließen (TODO.md)** | std::size_t Fix, MySQL Support, Cursor, HTTP Exception Handling, Paging |
+| **Hoch** | **Mocking-Framework einführen** | Ermöglicht isolierte Unit-Tests für HTTP-Controller, CLI, Shared Memory, Message Queues ohne reale Infrastruktur |
+| **Hoch** | **Fehlende Features abschließen (TODO.md)** | MySQL Support, Cursor, HTTP Exception Handling, Paging |
 | **Mittel** | **Signal-Handling modernisieren** | `sigaction` + worker thread statt `std::signal` + static pointer |
-| **Mittel** | **Docker-Compose für Test-Infrastruktur** | PostgreSQL Container für Integrationstests (steht bereits in TODO.md) |
+
 | **Mittel** | **Benchmark-Suite aufsetzen** | Performance-Messungen für Property-System, Persistenz, Serialisierung |
 | **Niedrig** | **Doxygen-Dokumentation für public API ergänzen** | Erleichtert Nutzung der Bibliothek durch Dritte |
 | **Niedrig** | **CMake modernisieren** (`include_directories` → `target_include_directories`) | Saubereres Target-Modell |
