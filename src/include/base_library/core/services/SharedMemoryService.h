@@ -15,6 +15,7 @@
 
 #include "base_library/core/exceptions/ShmSegmentNotFound.h"
 #include "base_library/core/models/SharedMemorySegment.h"
+#include "base_library/core/services/ISharedMemoryService.h"
 #include "base_library/core/services/PropertyRegistration.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/models/SharedMemorySegmentInfo.h"
@@ -22,7 +23,8 @@
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
 /** Service for managing shared memory segments and constructing data structures within them. */
-class SharedMemoryService : public PropertyRegistration<SharedMemoryService> {
+class SharedMemoryService : public PropertyRegistration<SharedMemoryService>,
+                            public ISharedMemoryService {
 private:
     struct MappedFile {
         std::shared_ptr<boost::interprocess::managed_mapped_file>
@@ -41,7 +43,7 @@ private:
     static std::map<std::string, MappedFile> create(
             const std::vector<std::shared_ptr<SharedMemorySegment>> &set);
 
-    void onCheck() const;
+    void onCheck();
 
 public:
     using charAllocator = boost::interprocess::allocator<
@@ -64,19 +66,12 @@ public:
     /** Initialize all shared memory segments by opening or creating them. */
     void onInitialize() override;
 
-    /**
-     * grows the size of the mentioned shared memory block
-     * @param sharedMemoryName
-     * @param grow size to be added to shared memory itself
-     */
-    static void growOf(const std::shared_ptr<SharedMemorySegment> &segment,
-                       std::size_t grow);
+    /** grows the size of the mentioned shared memory block */
+    void growOf(const std::shared_ptr<SharedMemorySegment> &segment,
+                std::size_t grow) override;
 
-    /**
-     * shrinks the shared memory size to the minimum
-     * @param sharedMemoryName
-     */
-    static void shrinkOf(const std::shared_ptr<SharedMemorySegment> &segment);
+    /** shrinks the shared memory size to the minimum */
+    void shrinkOf(const std::shared_ptr<SharedMemorySegment> &segment) override;
 
     /**
      * shows state of the mentioned shared memory segment
@@ -84,7 +79,7 @@ public:
      * @return string with the printed information
      */
     [[nodiscard]] SharedMemorySegmentInfo showStateOf(
-            const std::shared_ptr<SharedMemorySegment> &segment) const;
+            const std::shared_ptr<SharedMemorySegment> &segment) const override;
 
     /** Find or construct a fixed-size array in the given shared memory segment.
      * @tparam Object the element type

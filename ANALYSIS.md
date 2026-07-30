@@ -20,9 +20,7 @@
 
 ## Schwächen
 
-1. **Shared Memory Tests fehlen** – SharedMemoryRepository und SharedMemorySegmentManager sind aufgrund tiefer Boost.Interprocess-Kopplung in `SharedMemorySegment`/`SharedMemorySegmentInfo` (shm-Konstruktor, managed_shared_memory) nicht isoliert testbar. **Status: weiterhin offen.**
-
-2. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
+1. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
 
 ---
 
@@ -62,4 +60,3 @@
 | **Mittel** | **Benchmark-Suite aufsetzen** | Performance-Messungen für Property-System, Persistenz, Serialisierung |
 | **Niedrig** | **CMake modernisieren** (`include_directories` → `target_include_directories`) | Saubereres Target-Modell |
 | **Niedrig** | **Hypodermic durch Boost.DI ersetzen** | Aktiver maintained, standardkonformer |
-| **Niedrig** | **Makro-basiertes Property-System überarbeiten** | `IMPLEMENT_PROPERTY` könnte durch C++17 `if constexpr` oder C++20 Concepts abgelöst werden |

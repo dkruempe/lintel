@@ -9,8 +9,8 @@
 
 SharedMemoryController::SharedMemoryController(
         const std::shared_ptr<IAuthService> &authServicie,
-        std::shared_ptr<SharedMemoryService> sharedMemoryService,
-        std::shared_ptr<SharedMemorySegmentManager> sharedMemorySegmentManager,
+        std::shared_ptr<ISharedMemoryService> sharedMemoryService,
+        std::shared_ptr<ISharedMemorySegmentManager> sharedMemorySegmentManager,
         std::vector<std::shared_ptr<SharedMemoryRepository>>
         sharedMemoryRepositories)
         : Controller(authServicie),

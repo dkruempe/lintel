@@ -95,7 +95,7 @@ void SharedMemoryService::onInitialize() {
                                                [&]() { onCheck(); });
 }
 
-void SharedMemoryService::onCheck() const {
+void SharedMemoryService::onCheck() {
     // check all segments if max size is reached
     for (const auto &[name, mappedFile]: m_segments) {
         const std::shared_ptr<SharedMemorySegment> &sharedMemorySegment =

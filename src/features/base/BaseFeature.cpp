@@ -7,6 +7,7 @@
 #include "base_library/core/plugins/VirtualGroupBootstrapPlugin.h"
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/PersistableService.h"
+#include "base_library/core/services/ISharedMemoryService.h"
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/features/base/provider/GroupProvider.h"
@@ -23,6 +24,7 @@
 #include "base_library/features/base/services/MessageQueueService.h"
 #include "base_library/features/base/services/ProcessArgumentService.h"
 #include "base_library/features/base/services/SchedulerService.h"
+#include "base_library/features/base/services/ISharedMemorySegmentManager.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
 BaseFeature::BaseFeature(std::shared_ptr<Features> features)
@@ -72,9 +74,13 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
     .singleInstance();
   builder.registerType<UserRepository>().singleInstance();
   builder.registerType<ProcessArgumentService>().singleInstance();
-  builder.registerType<SharedMemorySegmentManager>().singleInstance();
+  builder.registerType<SharedMemorySegmentManager>()
+    .as<ISharedMemorySegmentManager>()
+    .asSelf()
+    .singleInstance();
   builder.registerType<SharedMemoryService>()
     .as<AbstractServiceInterface>()
+    .as<ISharedMemoryService>()
     .asSelf()
     .singleInstance();
   builder.registerType<ProcessService>()

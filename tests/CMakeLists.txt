@@ -111,3 +111,9 @@ ADD_EXECUTABLE(userManagementCliComponentMockTest cli/UserManagementCliComponent
 target_compile_features(userManagementCliComponentMockTest PUBLIC cxx_std_17)
 target_link_libraries(userManagementCliComponentMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
 ADD_TEST(NAME BaseLibrary.UserManagementCliComponentMockTest COMMAND userManagementCliComponentMockTest)
+
+# SharedMemoryController Mock Test
+ADD_EXECUTABLE(sharedMemoryControllerMockTest http/SharedMemoryControllerMockTest.cpp)
+target_compile_features(sharedMemoryControllerMockTest PUBLIC cxx_std_17)
+target_link_libraries(sharedMemoryControllerMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
+ADD_TEST(NAME BaseLibrary.SharedMemoryControllerMockTest COMMAND sharedMemoryControllerMockTest)
