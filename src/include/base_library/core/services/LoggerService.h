@@ -3,8 +3,12 @@
 
 /**
  * LoggerService class for easier logging in process itself
+ *
+ * Uses <spdlog/logger.h> instead of <spdlog/spdlog.h> to reduce
+ * transitive includes (avoids registry, synchronous_factory).
+ * With PCH enabled, all of spdlog is parsed only once.
  */
-#include <spdlog/spdlog.h>
+#include <spdlog/logger.h>
 
 class Configuration;
 #include "base_library/features/base/models/ProcessName.h"

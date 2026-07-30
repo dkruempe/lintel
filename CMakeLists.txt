@@ -3,6 +3,26 @@ project(cpp-base-library)
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# CCache - compiler cache for faster rebuilds
+find_program(CCACHE_PROGRAM ccache)
+if(CCACHE_PROGRAM)
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_PROGRAM}")
+    message(STATUS "ccache found: ${CCACHE_PROGRAM}")
+endif()
+
+# Unity/Jumbo builds - combine small translation units
+option(ENABLE_UNITY_BUILD "Enable unity/jumbo builds" ON)
+if(ENABLE_UNITY_BUILD)
+    set(CMAKE_UNITY_BUILD ON)
+    set(CMAKE_UNITY_BUILD_BATCH_SIZE 16)
+endif()
+
+# LTO/IPO - interprocedural optimization (off by default, can increase link time)
+option(ENABLE_LTO "Enable Link Time Optimization" OFF)
+if(ENABLE_LTO)
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+endif()
+
 # Link this 'library' to use the warnings specified in CompilerWarnings.cmake
 add_library(project_warnings INTERFACE)
 add_library(myproject_options INTERFACE)

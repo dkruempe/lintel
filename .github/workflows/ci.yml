@@ -19,6 +19,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y \
             cmake \
+            ninja-build \
+            ccache \
             make \
             python3-pip \
             python3-venv \
@@ -43,14 +45,24 @@ jobs:
             ${{ runner.os }}-conan-${{ hashFiles('conanfile.txt') }}
             ${{ runner.os }}-conan-
 
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-ccache-
+
       - name: Install dependencies via Conan
-        run: conan install . --output-folder=build --build=missing -s build_type=Release
+        run: conan install . --output-folder=build --build=missing -s build_type=Release -c tools.cmake.cmaketoolchain:generator=Ninja
 
       - name: Configure CMake
         run: cmake --preset conan-release -DMYPROJECT_ENABLE_CLANG_TIDY=OFF
 
       - name: Build
         run: cmake --build --preset conan-release --parallel 8
+        env:
+          CCACHE_DIR: ~/.ccache
 
       - name: Run tests
         run: ctest --preset conan-release --output-on-failure

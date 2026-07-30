@@ -4,6 +4,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
     clang-tidy-18 \
     cmake \
+    ninja-build \
+    ccache \
     make \
     pkg-config \
     python3 \
@@ -23,7 +25,7 @@ FROM base AS deps
 
 COPY conanfile.txt .
 RUN conan profile detect --force
-RUN conan install . --output-folder=build --build=missing -s build_type=Release
+RUN conan install . --output-folder=build --build=missing -s build_type=Release -c tools.cmake.cmaketoolchain:generator=Ninja
 
 FROM deps AS builder
 
@@ -31,6 +33,7 @@ COPY . .
 RUN cmake -S . -B build/build/Release \
     -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
     -DCMAKE_BUILD_TYPE=Release \
+    -G Ninja \
     && cmake --build build/build/Release --parallel $(nproc)
 
 FROM builder AS test

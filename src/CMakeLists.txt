@@ -472,6 +472,12 @@ if(ENABLE_PCH)
         <string>
         <thread>
         <vector>
+        <spdlog/common.h>
+        <spdlog/fwd.h>
+        <base_library/core/services/LoggerService.h>
+        <base_library/features/base/configuration/Configuration.h>
+        <base_library/core/utils/StringUtils.h>
+        <base_library/core/utils/TypeName.h>
     )
 endif()
 
