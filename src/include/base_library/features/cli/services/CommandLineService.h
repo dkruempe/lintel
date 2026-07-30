@@ -74,6 +74,8 @@ public:
   virtual ~CommandLineService();
 
   void onInitialize() override;
+
+  void onShutdown() override;
 };
 
 #endif// CPP_BASE_LIBRARY_COMMANDLINESERVICE_H

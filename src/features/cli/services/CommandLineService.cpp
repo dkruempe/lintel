@@ -4,6 +4,7 @@
 #include <date/tz.h>
 
 #include <chrono>
+#include <csignal>
 #include <string>
 
 #include "base_library/core/services/LoggerService.h"
@@ -36,10 +37,22 @@ CommandLineService::CommandLineService(const std::vector<std::shared_ptr<Command
 
 CommandLineService::~CommandLineService()
 {
-  m_running.store(false);
   LOG_TRACE("finish command line service");
-  if (m_thread.joinable()) { m_thread.join(); }
+  if (m_thread.joinable()) {
+    m_running.store(false);
+    pthread_kill(m_thread.native_handle(), SIGUSR1);
+    m_thread.join();
+  }
   LOG_INFO("stopped command line service");
+}
+
+void CommandLineService::onShutdown()
+{
+  m_running.store(false);
+  if (m_thread.joinable()) {
+    pthread_kill(m_thread.native_handle(), SIGUSR1);
+    m_thread.join();
+  }
 }
 
 void CommandLineService::onComponentCommand(const std::string &input, const std::vector<std::string> &flags)
