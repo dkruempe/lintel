@@ -6,6 +6,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+/** Reads raw terminal input by configuring the terminal to non-canonical mode */
 class InputService : public IInputService
 {
 private:

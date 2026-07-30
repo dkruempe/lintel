@@ -12,7 +12,8 @@ private:
 
 public:
     /**
-     * Constructor
+     * Construct a DirectoryService for the given path.
+     * @param path the directory path
      */
     explicit DirectoryService(std::filesystem::path path);
 
@@ -23,13 +24,14 @@ public:
     bool exists();
 
     /**
-     * returns name of directory
+     * Returns the directory name.
+     * @return the directory name
      */
     std::string getName();
 
     /**
-     * returns path of directory
-     * @return true if successfull
+     * Returns the full path of the directory.
+     * @return the directory path
      */
     std::filesystem::path getPath();
 

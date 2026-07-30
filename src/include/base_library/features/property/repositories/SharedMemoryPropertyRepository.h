@@ -7,6 +7,7 @@
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
+/** DTO for property data stored in shared memory */
 struct PropertyDataDto {
     SharedMemoryService::ShmString m_processName;
     SharedMemoryService::ShmString m_className;
@@ -32,6 +33,7 @@ struct PropertyDataDto {
     bool operator!=(const PropertyDataDto &rhs) const;
 };
 
+/** DAO for serializing PropertyDataDto to/from JSON */
 class PropertyDataDao : public JsonSerializable {
 private:
     static struct Shapes {
@@ -51,7 +53,6 @@ public:
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
         writer->StartObject();
-        // PROCESS NAME
         writer->String(m_shape.PROCESS_NAME.c_str());
         writer->String(m_dto.m_processName.c_str());
         writer->String(m_shape.CLASS_NAME.c_str());
@@ -69,47 +70,35 @@ public:
 
     bool deserialize(const rapidjson::Value &obj) override {
         bool success = true;
-        // PROCESS_NAME
         if (obj.HasMember(m_shape.PROCESS_NAME.c_str())) {
-            // m_processName = obj[m_shape.PROCESS_NAME.c_str()].GetString();
         } else {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
                       m_shape.PROCESS_NAME.c_str());
         }
-        // CLASS_NAME
         if (obj.HasMember(m_shape.CLASS_NAME.c_str())) {
-            // m_className = obj[m_shape.CLASS_NAME.c_str()].GetString();
         } else {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
                       m_shape.CLASS_NAME.c_str());
         }
-        // INSTANCE_NAME
         if (obj.HasMember(m_shape.INSTANCE_NAME.c_str())) {
-            // m_instanceName = obj[m_shape.INSTANCE_NAME.c_str()].GetString();
         } else {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
                       m_shape.INSTANCE_NAME.c_str());
         }
-        // NAME
         if (obj.HasMember(m_shape.NAME.c_str())) {
-            // m_name = obj[m_shape.NAME.c_str()].GetString();
         } else {
             success = false;
             LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
         }
-        // VALUE
         if (obj.HasMember(m_shape.VALUE.c_str())) {
-            // m_value = obj[m_shape.VALUE.c_str()].GetString();
         } else {
             success = false;
             LOG_ERROR("{} not defined in json serialization", m_shape.VALUE.c_str());
         }
-        // TYPE
         if (obj.HasMember(m_shape.TYPE.c_str())) {
-            // m_type = obj[m_shape.TYPE.c_str()].GetString();
         } else {
             success = false;
             LOG_ERROR("{} not defined in json serialization", m_shape.TYPE.c_str());
@@ -118,6 +107,7 @@ public:
     }
 };
 
+/** Property repository backed by shared memory */
 class SharedMemoryPropertyRepository
         : public SharedMemoryMapRepository<
                 SharedMemoryService::ShmString, PropertyDataDto,

@@ -85,12 +85,16 @@ private:
     void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
 public:
+    /** Construct a DatabaseBootstrapPlugin with the given database connection configurations.
+     * @param connectionConfigurations the database connection configurations */
     explicit DatabaseBootstrapPlugin(
             std::shared_ptr<DatabaseConnectionConfigurations>
             connectionConfigurations);
 
+    /** Execute database schema initialization and data loading. */
     void onStart() override;
 
+    /** Returns the priority for ordering this plugin in the bootstrap sequence. */
     BootstrapSequence getPriority() override;
 };
 

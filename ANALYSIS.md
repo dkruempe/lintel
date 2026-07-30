@@ -20,9 +20,7 @@
 
 ## Schwächen
 
-1. **Ungenügende Testabdeckung trotz Mock-Framework** – Ein Mock-Framework (trompeloeil) mit 6 Mock-Klassen und 4 Unit-Tests wurde implementiert. Dennoch fehlen isolierte Tests für Shared Memory, Property-Controller, und weitere HTTP-/CLI-Komponenten. **Verbesserung: 3 neue Interfaces (`IInputService`, `ITerminalService`, `IUserApi`) extrahiert, 2 neue Mocks (`MockInputService`, `MockTerminalService`), 5 neue Unit-Tests für `AuthCliService` (Login-Flow mit CtrlC/Eof/Erfolg/leeres Passwort/Wiederholung) – 15 statt 11 Tests, 9 statt 6 Mock-Klassen.** Die Testabdeckung bleibt ausbaufähig, insbesondere für Shared Memory und weitere CLI-Komponenten.
-
-2. **Minimale Code-Dokumentation** – Kaum Doxygen-Kommentare. Öffentliche API ohne Header-Dokumentation.
+1. **Shared Memory Tests fehlen** – SharedMemoryRepository und SharedMemorySegmentManager sind aufgrund tiefer Boost.Interprocess-Kopplung in `SharedMemorySegment`/`SharedMemorySegmentInfo` (shm-Konstruktor, managed_shared_memory) nicht isoliert testbar. **Status: weiterhin offen.**
 
 3. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
 
@@ -52,6 +50,10 @@
 
 10. **Fehlende Unit-Tests für AuthCliService** – Der Login-Flow (`readUserName`, `readPassword`, `onLogin`) war ungetestet. Fix: 5 neue Unit-Tests in `tests/cli/AuthCliServiceMockTest.cpp` mit `StubInputService`/`StubTerminalService` (queue-basierte Test-Doubles) und `MockUserApi`. Getestet: CtrlC → nullopt, Eof → nullopt, erfolgreicher Login, leeres Passwort → Wiederholung, fehlgeschlagener Login → Wiederholung. (`tests/cli/AuthCliServiceMockTest.cpp`, `tests/mocks/MockUserApi.h`, `tests/CMakeLists.txt`).
 
+11. **UserApi nicht vollständig mockbar** – Nur 3 von 11 Methoden waren virtual (`loginOf`, `logoutOf`, `isLoggedIn`); die von `UserManagementCliComponent` genutzten Management-Methoden (`allOf` in 4 Varianten, `allUsersOf` in 2 Varianten, `createOf`, `updateOf`, `deleteOf`) waren nicht überschreibbar. Fix: Alle 11 Methoden in `UserApi` auf `virtual` gesetzt, `MockUserApi` um alle fehlenden Methoden erweitert. (`src/include/base_library/features/http/controllers/UserApi.h`, `tests/mocks/MockUserApi.h`).
+
+12. **Fehlende Unit-Tests für UserManagementCliComponent** – Die 5 CLI-Commands (`show_groups`, `show_users`, `user_add`, `user_update`, `user_delete`) waren ungetestet. Fix: 10 Unit-Tests mit vollständigem `MockUserApi`. Getestet: alle 4 `allOf`-Varianten, `allUsersOf` (mit/ohne Name), `deleteOf` (mit/ohne Flag), Fehlerbehandlung bei fehlenden Pflichtflags (`user_add`, `user_update`, `user_delete`). (`tests/cli/UserManagementCliComponentMockTest.cpp`, `tests/mocks/MockUserApi.h`, `tests/CMakeLists.txt`).
+
 ---
 
 ## Optimierungsmöglichkeiten (priorisiert)
@@ -60,7 +62,6 @@
 |-----------|----------|------------|
 | **Hoch** | **Fehlende Features abschließen (TODO.md)** | MySQL Support, Cursor, HTTP Exception Handling, Paging |
 | **Mittel** | **Benchmark-Suite aufsetzen** | Performance-Messungen für Property-System, Persistenz, Serialisierung |
-| **Niedrig** | **Doxygen-Dokumentation für public API ergänzen** | Erleichtert Nutzung der Bibliothek durch Dritte |
 | **Niedrig** | **CMake modernisieren** (`include_directories` → `target_include_directories`) | Saubereres Target-Modell |
 | **Niedrig** | **Hypodermic durch Boost.DI ersetzen** | Aktiver maintained, standardkonformer |
 | **Niedrig** | **Makro-basiertes Property-System überarbeiten** | `IMPLEMENT_PROPERTY` könnte durch C++17 `if constexpr` oder C++20 Concepts abgelöst werden |

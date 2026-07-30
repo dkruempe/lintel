@@ -13,6 +13,11 @@ private:
 public:
     GroupProvider() = default;
 
+    /**
+     * Add a virtual group to this provider.
+     * @param group the group (must be virtual)
+     * @throws std::runtime_error if the group is not virtual
+     */
     void add(const Group &group) {
         if (!group.isVirtual()) {
             throw std::runtime_error("Group >" + group.getGroupName() +
@@ -23,6 +28,7 @@ public:
 
     virtual ~GroupProvider() = default;
 
+    /** @return all provided virtual groups */
     const std::vector<Group> &provide() { return m_groups; }
 };
 

@@ -7,6 +7,7 @@
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/http/service/ContentType.h"
 
+/** HTTP controller for user authentication and management */
 class UserController : public Controller {
 private:
     std::shared_ptr<GroupRepository> m_groupRepository;

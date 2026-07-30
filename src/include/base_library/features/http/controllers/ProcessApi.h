@@ -5,6 +5,7 @@
 #include "base_library/features/base/controller/ProcessInfoDto.h"
 #include "base_library/features/http/provider/ClientProvider.h"
 
+/** API client for process management via HTTP */
 class ProcessApi {
 private:
     std::shared_ptr<Client> m_client;
@@ -12,14 +13,19 @@ private:
 public:
     explicit ProcessApi(const std::shared_ptr<ClientProvider> &clientProvicer);
 
+    /** @param processName name filter; return all matching processes */
     std::vector<ProcessInfoDto> allOf(const std::string &processName);
 
+    /** @param groupName name filter; return all matching process groups */
     std::vector<ProcessGroupDto> allGroupsOf(const std::string &groupName);
 
+    /** Start a process */
     void startOf(const std::shared_ptr<Process> &process);
 
+    /** Stop a process by ID */
     void stopOf(const std::string &id);
 
+    /** Terminate a process by ID */
     void terminateOf(const std::string &id);
 };
 

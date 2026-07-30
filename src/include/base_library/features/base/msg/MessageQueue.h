@@ -36,22 +36,29 @@ public:
         boost::interprocess::message_queue::remove(messageQueueName.c_str());
     }
 
+    /**
+     * @return true if the current process owns this message queue
+     */
     [[nodiscard]] bool isOwner() const {
         return m_processName == m_realProcessName->getProcessName();
     }
 
+    /** @return process name associated with this queue */
     [[nodiscard]] const std::string &getProcessName() const {
         return m_processName;
     }
 
+    /** @return queue name */
     [[nodiscard]] const std::string &getName() const {
         return m_name;
     }
 
+    /** @return maximum number of messages the queue can hold */
     [[nodiscard]] int32_t getMsgCount() const {
         return m_msgCount;
     }
 
+    /** @return current number of messages in the queue */
     [[nodiscard]] int32_t numberMessagesOf() const {
         return m_messageQueue.get_num_msg();
     }
@@ -116,22 +123,28 @@ public:
         return std::make_optional(temp);
     }
 
+    /** @return true if this queue is less than rhs */
     bool operator<(const MessageQueue &rhs) const {
         if (m_processName < rhs.m_processName) return true;
         if (rhs.m_processName < m_processName) return false;
         return m_name < rhs.m_name;
     }
 
+    /** @return true if this queue is greater than rhs */
     bool operator>(const MessageQueue &rhs) const { return rhs < *this; }
 
+    /** @return true if this queue is less than or equal to rhs */
     bool operator<=(const MessageQueue &rhs) const { return !(rhs < *this); }
 
+    /** @return true if this queue is greater than or equal to rhs */
     bool operator>=(const MessageQueue &rhs) const { return !(*this < rhs); }
 
+    /** @return true if queues are equal */
     bool operator==(const MessageQueue &rhs) const {
         return m_processName == rhs.m_processName && m_name == rhs.m_name;
     }
 
+    /** @return true if queues are not equal */
     bool operator!=(const MessageQueue &rhs) const { return !(rhs == *this); }
 };
 

@@ -11,13 +11,14 @@
 
 #include "base_library/features/cli/models/Command.h"
 
+/**
+ * Generic command parser that maps string commands to enum values
+ * @tparam ENUM enum type for command identifiers
+ * @tparam undefined enum value returned for unknown commands
+ */
 template<typename ENUM, ENUM undefined>
 class CommandParser {
 private:
-    /*
-     * List of valid commands with needed parameters
-     * std::map<Command, Parameters>
-     */
     std::map<std::string, Command> m_commands;
     std::map<std::string, ENUM> m_enumCommand;
     static constexpr int32_t m_maxCommandPerLine = 10;
@@ -25,16 +26,24 @@ private:
 public:
     CommandParser() = default;
 
+    /** Register a command with its enum value */
     void addCommand(const Command &command, ENUM value) {
         m_commands.insert({command.getCommand(), command});
         m_enumCommand.insert({command.getCommand(), value});
     }
 
+    /** @overload */
     void addCommand(Command &&command, ENUM value) {
         m_commands.insert({command.getCommand(), command});
         m_enumCommand.insert({command.getCommand(), value});
     }
 
+    /**
+     * Parse a command string and its flags
+     * @param command the command name
+     * @param flags the flag arguments
+     * @return the matching enum value, or undefined if not found
+     */
     ENUM parse(const std::string &command,
                const std::vector<std::string> &flags) {
         auto foundEnum = m_enumCommand.find(command);
@@ -46,6 +55,7 @@ public:
         return foundEnum->second;
     }
 
+    /** Print help for a specific command */
     void printHelp(const std::string &command, std::ostream &os = std::cout) {
         auto found = m_commands.find(command);
         if (found == m_commands.end()) {
@@ -56,17 +66,18 @@ public:
         os << "\n";
     }
 
+    /** Print full help page for all commands in this component */
     void printHelp(std::string_view componentName, const std::string_view alias,
                    std::string_view description, std::ostream &os = std::cout) {
         os << "Help Menu of " << componentName << " [" << alias << "]:\n\n";
         os << description << "\n\n";
         for (const auto &item: m_commands) {
             item.second.printHelp(os);
-            // make break between all kind of commands for an easier separation
             os << "\n";
         }
     }
 
+    /** Print a compact list of all commands and aliases */
     void printCommandList(std::set<std::string> menuAlias, std::ostream &os = std::cout) {
         os << "\n\t";
         int32_t i = 0;
@@ -93,6 +104,7 @@ public:
         os << "\n";
     }
 
+    /** @return vector of all registered command name strings */
     std::vector<std::string> allCommandsOf() {
         std::vector<std::string> temp;
         std::transform(

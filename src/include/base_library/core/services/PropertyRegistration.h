@@ -8,9 +8,19 @@
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/property/models/Property.h"
 
+/** CRTP base class that adds property registration capabilities to services. */
 template<class T>
 class PropertyRegistration : public AbstractService<T> {
 protected:
+    /** Register a property with the given configuration.
+     * @tparam type        the property value type
+     * @param name         the property name
+     * @param defaultValue the default value
+     * @param description  a human-readable description
+     * @param runtime      whether the property can be changed at runtime
+     * @param fileName     the source file name for data storage
+     * @param position     the position within the file for data storage
+     * @return a shared pointer to the registered property */
     template<class type>
     std::shared_ptr<Property<type>> registerProperty(
             std::string name, type defaultValue, std::string description,

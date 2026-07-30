@@ -9,6 +9,7 @@
 #include "base_library/features/cli/models/CommandParser.h"
 #include "base_library/features/property/controller/PropertyApi.h"
 
+/** CLI component for viewing and manipulating properties */
 class PropertyCliComponent : public CommandLineComponent {
 private:
     static constexpr std::string_view m_name = "Property";
@@ -32,11 +33,14 @@ private:
 
     CommandParser<Commands, Undefined> m_commandParser;
 
+    /** Print formatted property list to console */
     static void printProperties(const std::vector<PropertyDto> &properties);
 
+    /** Print a single property to console */
     static void printProperty(const std::optional<PropertyDto> &optionalProperty);
 
 public:
+    /** @param propertyApi API for property operations */
     explicit PropertyCliComponent(std::shared_ptr<PropertyApi> propertyApi);
 
     void onCommand(const UserDto &userDto, const std::string &input,

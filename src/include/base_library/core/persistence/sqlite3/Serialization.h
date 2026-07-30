@@ -9,6 +9,13 @@
 #include "base_library/core/persistence/sqlite3/Serialization.h"
 #include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
+/**
+ * Macro that generates a full specialization of Serialization for a given type
+ * with the provided serialization and deserialization lambdas or functions.
+ * @param type the type to specialize for
+ * @param convertToString expression/lambda to convert the type to std::string
+ * @param convertToValue expression/lambda to convert std::string to the type
+ */
 #define IMPLEMENT_SERIALIZE(type, convertToString, convertToValue) \
   template <>                                                      \
   class Serialization<type> {                                      \
@@ -22,6 +29,12 @@
   };
 
 namespace sqlite {
+    /**
+     * Primary template for SQLite serialization.
+     * Full specializations are provided for all supported types.
+     * @tparam T the type to serialize/deserialize
+     * @tparam Enable SFINAE parameter for partial specializations
+     */
     template<typename T, typename Enable = void>
     class Serialization {
     };

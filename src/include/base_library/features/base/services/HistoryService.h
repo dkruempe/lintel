@@ -9,6 +9,10 @@
 #ifndef CPP_BASE_LIBRARY_HISTORYSERVICE_H
 #define CPP_BASE_LIBRARY_HISTORYSERVICE_H
 
+/**
+ * Service for recording, queuing, and querying history entries.
+ * Uses a message queue for inter-process history submission.
+ */
 class HistoryService : public PropertyRegistration<HistoryService> {
 private:
     // properties
@@ -28,8 +32,10 @@ private:
     std::unique_ptr<MessageQueue<Message>> m_historyMessageQueue;
     std::unique_ptr<MessageQueue<Message>> m_historyMessageQueueReceive;
 
+    /** Background worker that processes queued history entries. */
     void run();
 
+    /** Message struct for transferring history entries via message queue. */
     struct HistoryMessage {
         char processName[100];
         char serviceName[100];
@@ -40,6 +46,13 @@ private:
     };
 
 public:
+    /**
+     * Constructor.
+     * @param processName current process name
+     * @param schedulerService scheduler for periodic commits
+     * @param historyRepository persistence repository
+     * @param messageQueueService message queue for inter-process communication
+     */
     HistoryService(std::shared_ptr<ProcessName> processName,
                    std::shared_ptr<SchedulerService> schedulerService,
                    std::shared_ptr<HistoryRepository> historyRepository,
@@ -51,18 +64,40 @@ public:
 
     void onShutdown() override;
 
+    /**
+     * Record history entries (may be queued for batch insert).
+     * @param entries entries to record
+     */
     void historizeOf(std::vector<HistoryEntry> entries);
 
+    /** @return all history entries */
     [[nodiscard]] std::vector<HistoryEntry> allOf() const;
 
+    /**
+     * @param label filter by label
+     * @return matching entries
+     */
     [[nodiscard]] std::vector<HistoryEntry> allOf(const std::string &label) const;
 
+    /**
+     * @param processName filter by process name
+     * @param serviceName filter by service name
+     * @return matching entries
+     */
     [[nodiscard]] std::vector<HistoryEntry> allOf(
             const std::string &processName, const std::string &serviceName) const;
 
+    /**
+     * @param processName filter by process name
+     * @return matching entries
+     */
     [[nodiscard]] std::vector<HistoryEntry> allOfProcess(
             const std::string &processName) const;
 
+    /**
+     * @param serviceName filter by service name
+     * @return matching entries
+     */
     [[nodiscard]] std::vector<HistoryEntry> allOfService(
             const std::string &serviceName) const;
 };

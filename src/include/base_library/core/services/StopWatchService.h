@@ -31,13 +31,12 @@ public:
     void stop();
 
     /**
-     * @brief return elapsed ms of timer
-     *
-     * @return      Example User
-     * @date        2019-01-30
+     * @brief Returns the elapsed time of the timer.
+     * @return elapsed time as nanoseconds
      */
     [[nodiscard]] std::chrono::nanoseconds elapsed() const;
 
+    /** Print the elapsed time to an output stream. */
     friend std::ostream &operator<<(std::ostream &os,
                                     const StopWatchService &service);
 

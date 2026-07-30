@@ -5,6 +5,7 @@
 #include <set>
 #include <string>
 
+/** Enum wrapper for property repository types with string conversion */
 class PropertyRepositoryType {
 public:
     // value is defining priority of property repository type
@@ -20,6 +21,7 @@ public:
 
     constexpr PropertyRepositoryType(Value value) : m_value(value) {}
 
+    /** @param enumName string matching an enum name */
     constexpr explicit PropertyRepositoryType(std::string_view enumName)
             : m_value(magic_enum::enum_cast<Value>(enumName).value_or(UNDEFINED)) {}
 
@@ -27,11 +29,13 @@ public:
 
     explicit operator bool() = delete;
 
+    /** @return all possible enum values */
     static std::set<Value> values() {
         auto values = magic_enum::enum_values<Value>();
         return std::set<Value>(values.begin(), values.end());
     }
 
+    /** @return string representation of the enum value */
     std::string toString() const {
         return std::string(magic_enum::enum_name<>(m_value));
     }

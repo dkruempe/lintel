@@ -11,22 +11,37 @@
 
 #include "base_library/core/services/PropertyRegistration.h"
 
+/**
+ * Service for scheduling and executing tasks at specified times or at fixed rates.
+ */
 class SchedulerService : public PropertyRegistration<SchedulerService>
 {
 private:
+    /** A scheduled task with optional periodic re-execution. */
     struct Task
     {
+        /**
+         * Constructor for one-shot tasks.
+         * @param time execution time
+         * @param func task function
+         */
         Task(std::chrono::steady_clock::time_point time, std::function<void()> func)
             : time(time), func(std::move(func)), period(std::chrono::seconds(0)) {}
 
+        /**
+         * Constructor for periodic tasks.
+         * @param time initial execution time
+         * @param func task function
+         * @param period re-execution interval
+         */
         Task(std::chrono::steady_clock::time_point time,
              std::function<void()> func,
              std::chrono::steady_clock::duration period)
             : time(time), func(std::move(func)), period(period) {}
 
-        std::chrono::steady_clock::time_point time;
-        std::function<void()> func;
-        std::chrono::steady_clock::duration period;
+        std::chrono::steady_clock::time_point time;   /**< Scheduled execution time */
+        std::function<void()> func;                   /**< Task function */
+        std::chrono::steady_clock::duration period;   /**< Re-execution period (zero for one-shot) */
     };
 
     struct TaskComperator
@@ -48,25 +63,65 @@ private:
     std::shared_ptr<Property<int>> numberOfThreads;
 
 public:
+    /**
+     * Schedule a task for immediate execution.
+     * @tparam F callable type
+     * @tparam Args argument types
+     * @param f callable to execute
+     * @param args arguments to pass
+     * @return future for the result
+     */
     template<class F, class... Args>
     auto schedule(F&& f, Args&&... args)
         -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>;
 
+    /**
+     * Schedule a task for execution after a delay.
+     * @tparam F callable type
+     * @tparam Args argument types
+     * @param d delay duration
+     * @param f callable to execute
+     * @param args arguments to pass
+     * @return future for the result
+     */
     template<class F, class... Args>
     auto schedule_after(const std::chrono::steady_clock::duration& d, F&& f, Args&&... args)
         -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>;
 
+    /**
+     * Schedule a task for execution at a specific time point.
+     * @tparam F callable type
+     * @tparam Args argument types
+     * @param t absolute time point for execution
+     * @param f callable to execute
+     * @param args arguments to pass
+     * @return future for the result
+     */
     template<class F, class... Args>
     auto schedule_at(const std::chrono::steady_clock::time_point& t, F&& f, Args&&... args)
         -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>;
 
+    /**
+     * Schedule a task for repeated execution at a fixed rate.
+     * @tparam F callable type
+     * @tparam Args argument types
+     * @param d initial delay
+     * @param period interval between executions
+     * @param f callable to execute
+     * @param args arguments to pass
+     */
     template<class F, class... Args>
     void schedule_at_fixed_rate(const std::chrono::steady_clock::duration& d,
                                 const std::chrono::steady_clock::duration& period,
                                 F&& f, Args&&... args);
 
+    /** Remove all scheduled tasks. */
     void clear();
 
+    /**
+     * Constructor.
+     * @param processName current process name
+     */
     explicit SchedulerService(const std::shared_ptr<ProcessName>& processName);
     void onInitialize() override;
     virtual ~SchedulerService();

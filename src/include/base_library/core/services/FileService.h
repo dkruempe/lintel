@@ -54,18 +54,20 @@ public:
     explicit FileService(std::filesystem::path path);
 
     /**
-     * checks if for the given path is a file
-     * @return
+     * Checks if the given path is a regular file.
+     * @return true if the path is a regular file
      */
     bool isFile();
 
     /**
-     * checks if for the given path something exists and is a file
+     * Checks if the given path exists and is a regular file.
+     * @return true if the path exists and is a file
      */
     bool exists();
 
     /**
-     * returns size of file
+     * Returns the size of the file in bytes.
+     * @return the file size in bytes
      */
     std::size_t getSize();
 
@@ -99,7 +101,8 @@ public:
     void writeToFile(const std::string &content, bool overwrite = false);
 
     /**
-     * creates empty with give file size
+     * Creates an empty file with the given size.
+     * @param sizeOfFile the size to allocate for the new file
      */
     void createFile(std::size_t sizeOfFile);
 

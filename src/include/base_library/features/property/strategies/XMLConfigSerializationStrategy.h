@@ -3,6 +3,7 @@
 
 #include "ConfigSerializationStrategy.h"
 
+/** Strategy for serializing/deserializing properties to/from XML format */
 class XMLConfigSerializationStrategy : public ConfigSerializationStrategy {
 public:
     std::string serialize(

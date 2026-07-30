@@ -5,6 +5,7 @@
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/models/CommandParser.h"
 
+/** CLI component for managing shared memory segments and repositories */
 class SharedMemoryCliComponent : public CommandLineComponent {
 private:
     static constexpr std::string_view m_name = "SharedMemory";
@@ -34,15 +35,19 @@ private:
 
     CommandParser<Commands, Undefined> m_commandParser;
 
+    /** Print formatted segment DTOs to console */
     static void printSegments(
             const std::vector<SharedMemorySegmentDto> &segments);
 
+    /** Print formatted repository DTOs to console */
     static void printRepositories(
             const std::vector<SharedMemoryRepositoryDto> &repositories);
 
+    /** Handle the export repository command */
     void handleExportRepository();
 
 public:
+    /** @param sharedMemoryApi API for shared memory operations */
     explicit SharedMemoryCliComponent(
             std::shared_ptr<SharedMemoryApi> sharedMemoryApi);
 

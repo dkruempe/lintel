@@ -13,10 +13,14 @@
 #include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/core/utils/TypeName.h"
 
+/** Types of shared memory data structures. */
 enum SharedMemoryType {
     Map, Vector, Array, Object
 };
 
+/**
+ * Base class for shared-memory-backed repositories with JSON serialization.
+ */
 class SharedMemoryRepository : public JsonSerializable {
 private:
     std::shared_ptr<SharedMemorySegment> m_sharedMemorySegment;
@@ -34,22 +38,36 @@ protected:
     }
 
 public:
+    /**
+     * Constructor.
+     * @param sharedMemorySegment the underlying shared memory segment
+     * @param sizeOfData size of each data element in bytes
+     * @param sharedMemoryRepository name/path of this repository
+     * @param codeVersion version of the code that created this repository
+     * @param uuid unique identifier for this repository instance
+     */
     SharedMemoryRepository(
             std::shared_ptr<SharedMemorySegment> sharedMemorySegment,
             std::size_t sizeOfData, std::string_view sharedMemoryRepository,
             int32_t codeVersion, std::string uuid);
 
+    /** @return the underlying shared memory segment */
     [[nodiscard]] const std::shared_ptr<SharedMemorySegment>
     &getSharedMemorySegment() const;
 
+    /** @return size of each data element in bytes */
     [[nodiscard]] std::size_t getSizeOfData() const;
 
+    /** @return name/path of this repository */
     [[nodiscard]] const std::string &getSharedMemoryRepository() const;
 
+    /** @return code version */
     [[nodiscard]] int32_t getCodeVersion() const;
 
+    /** @return unique identifier */
     [[nodiscard]] const std::string &getUuid() const;
 
+    /** @return the shared memory data structure type */
     [[nodiscard]] virtual SharedMemoryType getType() const = 0;
 
     [[nodiscard]] std::string getTypeName() const {
@@ -71,6 +89,12 @@ public:
 };
 
 template<typename DATA, typename DAO, std::size_t MaxSize>
+/**
+ * Shared memory repository backed by a fixed-size array.
+ * @tparam DATA element type
+ * @tparam DAO serializable DAO wrapper for DATA
+ * @tparam MaxSize maximum array size
+ */
 class SharedMemoryArrayRepository : public SharedMemoryRepository {
 private:
     std::array<DATA, MaxSize> &m_array;
@@ -78,6 +102,7 @@ private:
 protected:
     std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
 
+    /** @return reference to the underlying array */
     std::array<DATA, MaxSize> &getArray() const { return m_array; }
 
 public:
@@ -121,6 +146,11 @@ public:
 };
 
 template<typename DATA, typename DAO>
+/**
+ * Shared memory repository backed by a dynamic vector.
+ * @tparam DATA element type
+ * @tparam DAO serializable DAO wrapper for DATA
+ */
 class SharedMemoryVectorRepository : public SharedMemoryRepository {
 private:
     using Vector = boost::container::vector<
@@ -175,6 +205,13 @@ public:
 };
 
 template<typename KEY, typename VALUE, typename KeyDao, typename ValueDao>
+/**
+ * Shared memory repository backed by an associative map.
+ * @tparam KEY key type
+ * @tparam VALUE mapped value type
+ * @tparam KeyDao serializable DAO wrapper for KEY
+ * @tparam ValueDao serializable DAO wrapper for VALUE
+ */
 class SharedMemoryMapRepository : public SharedMemoryRepository {
 private:
     using Map = boost::container::map<
@@ -248,6 +285,11 @@ public:
 };
 
 template<typename DATA, typename DAO>
+/**
+ * Shared memory repository backed by a single object.
+ * @tparam DATA object type
+ * @tparam DAO serializable DAO wrapper for DATA
+ */
 class SharedMemoryObjectRepository : public SharedMemoryRepository {
 private:
     DATA &m_data;

@@ -13,6 +13,9 @@
 #include "base_library/features/base/msg/Message.h"
 #include "base_library/features/base/msg/MessageQueue.h"
 
+/**
+ * Service that manages creation, retrieval, and lifecycle of MessageQueue instances.
+ */
 class MessageQueueService : public AbstractService<MessageQueueService>
 {
 private:
@@ -39,8 +42,18 @@ public:
    * @param name of message queue
    * @return message queue
    */
+  /**
+   * Returns a self-owned message queue (processName matches current process).
+   * @param name queue name
+   * @return message queue instance
+   */
   std::unique_ptr<MessageQueue<Message> > of(const std::string &name);
 
+  /**
+   * Get the number of messages for a given queue entry.
+   * @param entry queue entry
+   * @return pair of entry and message count
+   */
   std::pair<MessageQueueEntry, int32_t> numberMessagesOf(const MessageQueueEntry &entry);
 
   void onInitialize() override;

@@ -3,6 +3,7 @@
 
 #include <string>
 
+/** Utility for converting memory sizes between human-readable strings and byte counts. */
 class MemorySize {
 private:
     static std::string toString(double value);

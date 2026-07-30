@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 
+/** Standard HTTP status codes with int-to-enum conversion */
 class HttpStatusCodes {
 public:
     enum Value : int {
@@ -77,16 +78,20 @@ public:
         NetworkAuthenticationRequired = 511
     };
 
+    /** @param value the status code enum value */
     HttpStatusCodes(Value value);
 
+    /** @param statusCode numeric HTTP status code */
     explicit HttpStatusCodes(int statusCode);
 
     operator Value() const { return m_value; }
 
     explicit operator bool() = delete;
 
+    /** @return the underlying enum value */
     Value getValue();
 
+    /** @return the numeric status code */
     [[nodiscard]] int getCode() const;
 
 private:

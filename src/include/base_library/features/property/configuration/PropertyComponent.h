@@ -5,6 +5,7 @@
 
 #include "base_library/features/base/configuration/Component.h"
 
+/** Parses property definitions from XML configuration */
 class PropertyComponent : public Component {
 private:
     static struct Shapes {
@@ -21,9 +22,16 @@ private:
 public:
     PropertyComponent();
 
+    /**
+     * Parse XML content into property configuration entries
+     * @param content XML content
+     * @param fileName source file name
+     * @param lineOffset line offset for error reporting
+     * @return list of parsed entries
+     */
     std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
-                                              const std::string &fileName,
-                                              const int32_t lineOffset) override;
+                                               const std::string &fileName,
+                                               const int32_t lineOffset) override;
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYCOMPONENT_H

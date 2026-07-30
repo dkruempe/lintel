@@ -5,6 +5,7 @@
 #include "base_library/features/cli/models/CommandParser.h"
 #include "base_library/features/http/service/Controller.h"
 
+/** CLI component that displays message queue statistics */
 class MessageQueueCliComponent : public CommandLineComponent
 {
 private:
@@ -25,9 +26,11 @@ private:
 
   CommandParser<Commands, Undefined> m_commandParser;
 
+    /** Print formatted message queue DTOs to console */
     static void printMessageQueues(const std::vector<MessageQueueDto> &messageQueueDtos);
 
 public:
+  /** @param messsageQueueApi API for retrieving message queue data */
   explicit MessageQueueCliComponent(std::shared_ptr<MesssageQueueApi> messsageQueueApi);
 
   void onHelp() override;

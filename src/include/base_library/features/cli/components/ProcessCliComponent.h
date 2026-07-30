@@ -5,6 +5,7 @@
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/models/CommandParser.h"
 
+/** CLI component for process management (list, start, stop, terminate processes) */
 class ProcessCliComponent : public CommandLineComponent {
 private:
     static constexpr std::string_view m_name = "Process";
@@ -32,12 +33,15 @@ private:
 
     CommandParser<Commands, Undefined> m_commandParser;
 
+    /** Print formatted process info to console */
     static void printProcesses(const std::vector<ProcessInfoDto> &processInfo);
 
+    /** Print formatted process groups to console */
     static void printProcessGroups(
             const std::vector<ProcessGroupDto> &processGroup);
 
 public:
+    /** @param processApi API for process operations */
     explicit ProcessCliComponent(std::shared_ptr<ProcessApi> processApi);
 
     void onCommand(const UserDto &userDto, const std::string &input,

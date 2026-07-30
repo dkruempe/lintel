@@ -21,17 +21,24 @@ namespace sqlite {
 
     public:
         /**
-         *
-         * @param connection
-         * @param statement
+         * Prepares a statement on the given connection.
+         * @param connection the SQLite connection
+         * @param statement the SQL statement template with '?' placeholders
+         * @param statementName the name for the prepared statement
          */
         PreparedStatement(Connection &connection, const std::string &statement,
                           const std::string &statementName);
 
         ~PreparedStatement();
 
+        /**
+         * Executes the prepared statement with the given parameters.
+         * @param params the parameter values as strings
+         * @return shared pointer to the result
+         */
         std::shared_ptr<Result> execute(const std::vector<std::string> &params);
 
+        /** Closes the prepared statement. */
         void close();
     };
 }  // namespace sqlite

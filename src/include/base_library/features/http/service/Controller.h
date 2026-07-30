@@ -67,6 +67,7 @@
                       const httplib::ContentReader &contentReader,          \
                       const ContentType &contentType)
 
+/** Base class for HTTP controllers with automatic method registration and auth */
 class Controller : public GroupProvider {
 protected:
     std::shared_ptr<IAuthService> m_authService;
@@ -92,21 +93,17 @@ protected:
 
     std::map<HttpType, std::vector<Method> > m_methods;
 
+    /** Register a handler for a given HTTP method and URL pattern */
     template<class Type, HttpType httpType>
     Type addMethod(const std::string &pattern, Type handler) {
         const auto found = m_methods.find(httpType);
-        // I check if all limitations of library are checked
-        // a) Get / HandlerWithContentReader not supported => abort
-        // compilation
         static_assert(
             httpType != Get || !std::is_same_v<Type, HandlerWithContentReader>,
             "Get and HandlerWithContentReader is not supported");
-        // b) type has to be Handler or HandlerWithContentReader
         static_assert(std::is_same_v<Type, Handler> ||
                       std::is_same_v<Type, HandlerWithContentReader>,
                       "Invalid method type! Pleas use Handler or "
                       "HandlerWithContentReader");
-        // II create method
         if constexpr (std::is_same_v<Type, Handler>) {
             const Method method{pattern, std::make_shared<Type>(handler), nullptr};
             if (found != m_methods.end()) {
@@ -126,14 +123,14 @@ protected:
     }
 
 public:
-    // default constructor / destructor
+    /** @param authService authentication service for access control */
     explicit Controller(std::shared_ptr<IAuthService> authService)
         : GroupProvider(), m_authService(std::move(authService)) {
     }
 
     ~Controller() override = default;
 
-    // register methods for http functions
+    /** Register all collected handler methods with the HTTP server */
     void registerMethods(std::shared_ptr<httplib::Server> &server);
 };
 

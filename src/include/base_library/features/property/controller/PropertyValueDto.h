@@ -5,6 +5,7 @@
 
 #include "base_library/core/models/JsonSerializable.h"
 
+/** DTO representing a property value update request */
 class PropertyValueDto : public JsonSerializable {
 private:
     std::string m_value;
@@ -14,10 +15,12 @@ private:
     } m_shapes;
 
 public:
+    /** @param value the new property value */
     explicit PropertyValueDto(std::string value);
 
     PropertyValueDto() = default;
 
+    /** @return the value string */
     [[nodiscard]] const std::string &getValue() const;
 
     void serialize(

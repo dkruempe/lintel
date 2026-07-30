@@ -8,6 +8,7 @@
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
+/** Property repository that persists properties to a database */
 class DatabasePropertyRepository : public PropertyRepository {
 private:
     std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;

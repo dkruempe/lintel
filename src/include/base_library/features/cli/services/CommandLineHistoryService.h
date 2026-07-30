@@ -28,19 +28,13 @@ private:
 
 public:
   CommandLineHistoryService(const std::shared_ptr<ProcessName> &processName);
-  /**
-   * returns all available historized commands
-   */
+  /** returns all available historized commands */
   std::vector<CommandHistoryEntry> allOf();
 
-  /**
-   * @return next of history element
-   */
+  /** @return next of history element */
   std::optional<CommandHistoryEntry> nextOf(std::string menu);
 
-  /**
-   * @return previous of history element
-   */
+  /** @return previous of history element */
   std::optional<CommandHistoryEntry> previousOf(std::string menu);
 
   /**

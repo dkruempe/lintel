@@ -8,6 +8,9 @@
 #include "base_library/core/persistence/sqlite3/PreparedStatement.h"
 
 namespace db {
+    /**
+     * Unified prepared statement wrapping PostgreSQL or SQLite prepared statements.
+     */
     class PreparedStatement {
     private:
         const Connection &m_connection;
@@ -16,14 +19,25 @@ namespace db {
                 nullptr;
 
     public:
+        /**
+         * Counts the number of parameter placeholders in a statement template.
+         * @param tempStatement the statement template with '?' placeholders
+         * @return the number of parameters
+         */
         static int32_t initNParams(const std::string &tempStatement);
 
+        /**
+         * Converts a statement template with '?' placeholders to the native format.
+         * @param tempStatement the statement template
+         * @return the converted statement string
+         */
         static std::string initStatement(const std::string &tempStatement);
 
         /**
-         *
-         * @param connection
-         * @param statement
+         * Prepares a statement on the given connection.
+         * @param connection the database connection
+         * @param statement the SQL statement template
+         * @param statementName the name for the prepared statement
          */
         explicit PreparedStatement(const Connection &connection,
                                    const std::string &statement,
@@ -31,8 +45,14 @@ namespace db {
 
         ~PreparedStatement() = default;
 
+        /**
+         * Executes the prepared statement with the given parameters.
+         * @param builder the parameter builder containing parameter values
+         * @return the query result
+         */
         Result execute(const ParameterBuilder &builder);
 
+        /** Closes the prepared statement and frees associated resources. */
         void close();
     };
 }  // namespace db

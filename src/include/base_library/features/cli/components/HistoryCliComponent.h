@@ -5,6 +5,7 @@
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/models/CommandParser.h"
 
+/** CLI component that displays command history */
 class HistoryCliComponent : public CommandLineComponent {
     static constexpr std::string_view n_name = "History";
     static constexpr std::string_view m_alias = "Hist";
@@ -24,9 +25,11 @@ class HistoryCliComponent : public CommandLineComponent {
 
     CommandParser<Commands, Undefined> m_commandParser;
 
+    /** Print formatted history entries to console */
     static void printHistories(const std::vector<HistoryDto> &histories);
 
 public:
+    /** @param historyApi API for retrieving history data */
     explicit HistoryCliComponent(std::shared_ptr<HistoryApi> historyApi);
 
     void onHelp() override;

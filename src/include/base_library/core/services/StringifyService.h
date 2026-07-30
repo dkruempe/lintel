@@ -8,9 +8,14 @@
 #include <string>
 #include <type_traits>
 
+/** Utility for serializing values to strings and deserializing strings back to values. */
 template<class T>
 class StringifyService {
 public:
+    /** Serialize a value to its string representation.
+     * @tparam T the value type
+     * @param value the value to serialize
+     * @return the string representation */
     static std::string serializeToString(const T &value) {
         if constexpr (std::is_same_v<T, std::string>) {
             return value;
@@ -27,6 +32,10 @@ public:
         }
     }
 
+    /** Deserialize a value from its string representation.
+     * @tparam T the value type
+     * @param string the string to deserialize
+     * @return the deserialized value */
     static T deserializeFromString(const std::string &string) {
         if constexpr (std::is_same_v<T, std::string>) {
             return string;

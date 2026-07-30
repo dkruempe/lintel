@@ -7,6 +7,7 @@
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/http/service/ContentType.h"
 
+/** HTTP controller for shared memory segment and repository management */
 class SharedMemoryController : public Controller {
 private:
     std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -17,6 +18,7 @@ private:
     Group m_adminGroup;
     Group m_userGroup;
 
+    /** Build UUID-to-repository map from repository vector */
     static std::map<std::string, std::shared_ptr<SharedMemoryRepository>>
     build(std::vector<std::shared_ptr<SharedMemoryRepository>> repositories);
 

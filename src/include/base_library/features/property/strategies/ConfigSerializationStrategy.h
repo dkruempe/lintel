@@ -32,6 +32,7 @@ public:
     virtual std::vector<std::shared_ptr<PropertyBase>> deserialize(
             const std::string &fileName, const std::string &content) = 0;
 
+    /** Deserialize properties from a file path */
     virtual std::vector<std::shared_ptr<PropertyBase>> deserialize(
             const std::filesystem::path &path) = 0;
 };

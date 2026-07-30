@@ -12,11 +12,13 @@
 
 class PropertyBase;
 
+/** Abstract base class for property repositories */
 class PropertyRepository {
 private:
     PropertyRepositoryType m_type;
     std::shared_ptr<PropertyRepositoryEntry> m_propertyRepositoryEntry;
 
+    /** Initialize the repository entry from configuration */
     std::shared_ptr<PropertyRepositoryEntry> init(
             const std::vector<std::shared_ptr<Entry>> &entries) {
         std::shared_ptr<PropertyRepositoryEntry> propertyRepositoryEntry;
@@ -32,6 +34,8 @@ private:
     }
 
 public:
+    /** @param type repository type
+     *  @param configuration configuration source */
     PropertyRepository(PropertyRepositoryType type,
                        const std::shared_ptr<Configuration> &configuration)
             : m_type(std::move(type)),
@@ -45,6 +49,7 @@ public:
      */
     PropertyRepositoryType getType() const { return m_type; }
 
+    /** @return true if this is a shadow repository */
     bool isShadow() const {
         if (m_propertyRepositoryEntry == nullptr) {
             return false;
@@ -52,8 +57,10 @@ public:
         return m_propertyRepositoryEntry->isShadow();
     }
 
+    /** @return true if this repository is enabled in configuration */
     bool isEnabled() const { return m_propertyRepositoryEntry != nullptr; }
 
+    /** @return data storage info */
     virtual DataStorage getDataStorage() = 0;
 
     /**
@@ -88,6 +95,13 @@ public:
      */
     virtual std::vector<std::shared_ptr<PropertyBase>> awake() = 0;
 
+    /**
+     * Query properties with optional filters
+     * @param processName regex for process name
+     * @param className regex for class name
+     * @param instanceName regex for instance name
+     * @param name regex for property name
+     */
     virtual std::vector<std::shared_ptr<PropertyBase>> allOf(
             const std::string &processName = ".*",
             const std::string &className = ".*",

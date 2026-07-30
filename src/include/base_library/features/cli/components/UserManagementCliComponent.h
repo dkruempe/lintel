@@ -9,6 +9,7 @@
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/models/CommandParser.h"
 
+/** CLI component for user and group management */
 class UserManagementCliComponent : public CommandLineComponent {
 private:
     static constexpr std::string_view m_name = "UserManagement";
@@ -55,15 +56,20 @@ private:
 
     CommandParser<Commands, Undefined> m_commandParser;
 
+    /** Print formatted users to console */
     static void printUsers(const std::vector<UserDto> &users);
 
+    /** Print formatted groups to console */
     static void printGroups(const std::vector<GroupDto> &groups);
 
+    /** Print user group memberships as a string */
     static std::string printUserGroups(const std::vector<GroupDto> &groups);
 
+    /** Print subgroups of a group as a string */
     static std::string printSubGroups(const GroupDto &group);
 
 public:
+    /** @param userApi API for user and group operations */
     explicit UserManagementCliComponent(std::shared_ptr<UserApi> userApi);
 
     void onCommand(const UserDto &userDto, const std::string &input,

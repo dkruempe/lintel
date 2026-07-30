@@ -2,6 +2,9 @@
 
 #include <string_view>
 
+/** Return a human-readable name for the given type at compile time.
+ * @tparam T the type to name
+ * @return the type name as a string view */
 template<typename T>
 constexpr std::string_view type_name() {
     std::string_view name, prefix, suffix;

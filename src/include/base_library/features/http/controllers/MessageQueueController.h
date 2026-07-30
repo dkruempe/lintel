@@ -5,6 +5,7 @@
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 
+/** HTTP controller that serves message queue information */
 class MessageQueueController : public Controller
 {
 private:

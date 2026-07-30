@@ -11,6 +11,9 @@
 #include "Connection.h"
 
 namespace postgresql {
+    /**
+     * Listens for PostgreSQL NOTIFY events on a dedicated thread.
+     */
     class Notify {
     private:
         const int32_t m_timeoutSeconds = 1;
@@ -24,14 +27,23 @@ namespace postgresql {
                 m_timeoutSeconds, 0
         };
 
+        /** Main loop that polls for notifications. */
         void run();
 
+        /** Issues the LISTEN command for the configured table. */
         void listen();
 
     public:
+        /**
+         * Constructs a notify listener.
+         * @param connection the PostgreSQL connection
+         * @param tableName the table/channel to listen on
+         * @param callBack the callback to invoke on notification
+         */
         explicit Notify(Connection &connection, std::string tableName,
                         std::function<void()> &callBack);
 
+        /** Destructor, signals shutdown and joins the listener thread. */
         ~Notify();
     };
 }  // namespace postgresql

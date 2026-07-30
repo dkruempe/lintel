@@ -9,6 +9,7 @@
 #include <variant>
 #include <vector>
 
+/** Represents a CLI command with named arguments and automatic parsing */
 class Command {
 public:
     // These are the possible variables the options may point to. Bool and
@@ -23,38 +24,50 @@ public:
                     std::optional<double> *, std::optional<float> *,
                     std::optional<bool> *, std::optional<std::string> *>;
 
-    // The description is printed as part of the help message.
+    /** @param command the command name
+     *  @param description description printed in help */
     Command(std::string command, std::string description);
 
-    // Adds a possible option. A typical call would be like this:
-    // bool printHelp = false;
-    // cmd.addArgument({"--help", "-h"}, &printHelp, "Print this help message");
-    // Then, after parse() has been called, printHelp will be true if the user
-    // provided the flag.
+    /**
+     * Adds a possible option. A typical call would be like this:
+     * bool printHelp = false;
+     * cmd.addArgument({"--help", "-h"}, &printHelp, "Print this help message");
+     * Then, after parse() has been called, printHelp will be true if the user
+     * provided the flag.
+     * @param flags list of flag aliases (e.g. {"--help", "-h"})
+     * @param defaultValue pointer to the target variable
+     * @param help help text for this argument
+     * @param optional whether the argument is optional
+     */
     Command &addArgument(const std::vector<std::string> &flags,
                          Value defaultValue, const std::string &help,
                          bool optional = false);
 
+    /** @overload */
     Command &addArgument(const std::vector<std::string> &&flags,
                          Value defaultValue, std::string help,
                          bool optional = false);
 
-    // Prints the description given to the constructor and the help
-    // for each option.
+    /** Print the command description and help for each option */
     void printHelp(std::ostream &os = std::cout) const;
 
+    /** @return the command name */
     [[nodiscard]] std::string getCommand() const;
 
-    // The command line arguments are traversed from start to end. That means,
-    // if an option is set multiple times, the last will be the one which is
-    // finally used. This call will throw a std::runtime_error if a value is
-    // missing for a given option. Unknown flags will cause a warning on
-    // std::cerr.
+    /**
+     * Parse command-line arguments. Arguments are traversed from start to end;
+     * if an option is set multiple times, the last one wins.
+     * @param command the command string
+     * @param flags the flag values to parse
+     * @throws std::runtime_error if a value is missing for a given option
+     */
     void parse(const std::string &command,
                const std::vector<std::string> &flags) const;
 
+    /** Reset all optional values to their defaults */
     void resetOptionals() const;
 
+    /** Parse a single value from string into the variant target */
     static void parseValueFromStream(const std::string &value,
                                      const Value &m_value);
 

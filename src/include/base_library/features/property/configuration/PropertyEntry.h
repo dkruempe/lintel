@@ -17,9 +17,12 @@ private:
     std::shared_ptr<PropertyBase> m_property;
 
 public:
+    /** @param component component name
+     *  @param property the property to store */
     PropertyEntry(std::string_view component,
                   std::shared_ptr<PropertyBase> property);
 
+    /** @return the stored property */
     std::shared_ptr<PropertyBase> &getProperty();
 
     friend std::ostream &operator<<(std::ostream &os, const PropertyEntry &entry);

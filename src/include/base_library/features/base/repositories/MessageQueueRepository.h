@@ -8,6 +8,9 @@
 #include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
 #include <base_library/features/base/repositories/IMessageQueueRepository.h>
 
+/**
+ * Database-backed implementation of IMessageQueueRepository.
+ */
 class MessageQueueRepository : public IMessageQueueRepository
 {
 private:
@@ -15,16 +18,41 @@ private:
   std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
 
 public:
+  /**
+   * @param name message queue name
+   * @return the matching MessageQueueEntry
+   */
   MessageQueueEntry allMessageQueueNameOf(const std::string &name);
 
+  /**
+   * @param processName process name filter
+   * @param messageQueueName queue name filter
+   * @return matching entries
+   */
   std::vector<MessageQueueEntry> allOf(const std::string &processName, const std::string &messageQueueName);
 
+  /**
+   * @param processName filter by process name
+   * @return all entries for the given process
+   */
   std::vector<MessageQueueEntry> allProcessNameOf(const std::string &processName);
 
+  /**
+   * Insert entries.
+   * @param entries entries to insert
+   */
   void insertOf(const std::vector<MessageQueueEntry> &entries);
 
+  /**
+   * Delete entries.
+   * @param entries entries to delete
+   */
   void deleteOf(const std::vector<MessageQueueEntry> &entries);
 
+  /**
+   * Constructor.
+   * @param connectionConfigurations database connection configuration
+   */
   MessageQueueRepository(const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations);
 };
 

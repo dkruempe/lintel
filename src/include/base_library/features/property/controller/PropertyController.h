@@ -6,6 +6,7 @@
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/property/services/PropertyService.h"
 
+/** HTTP controller for property query and update operations */
 class PropertyController : public Controller {
 private:
     std::shared_ptr<PropertyService> m_propertyService;

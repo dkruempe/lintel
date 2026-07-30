@@ -7,6 +7,7 @@
 #include "base_library/features/base/repositories/HistoryRepository.h"
 #include "base_library/features/http/service/ContentType.h"
 
+/** HTTP controller that serves history data for a given process/service/label */
 class HistoryController : public Controller {
 private:
     std::shared_ptr<HistoryRepository> m_historyRepository;

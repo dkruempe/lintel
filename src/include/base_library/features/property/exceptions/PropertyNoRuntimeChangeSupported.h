@@ -8,6 +8,7 @@
 
 #include "base_library/features/property/models/PropertyBase.h"
 
+/** Exception thrown when a runtime change is attempted on a non-runtime-changeable property */
 class PropertyNoRuntimeChangeSupported : public std::exception {
 private:
     std::shared_ptr<PropertyBase> m_property;
@@ -16,6 +17,7 @@ private:
 public:
     PropertyNoRuntimeChangeSupported() = delete;
 
+    /** @param tempProperty the property that does not support runtime changes */
     explicit PropertyNoRuntimeChangeSupported(
             std::shared_ptr<PropertyBase> tempProperty)
             : m_property(std::move(tempProperty)),
@@ -26,6 +28,7 @@ public:
         return m_message.c_str();
     }
 
+    /** @return the property that caused the exception */
     [[nodiscard]] const std::shared_ptr<PropertyBase> &getProperty() {
         return m_property;
     }

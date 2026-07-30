@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 
+/** Represents an HTTP Content-Type with string-to-enum mapping */
 class ContentType {
 public:
     enum Value {
@@ -49,19 +50,24 @@ public:
         ApplicationWasm            // application/wasm
     };
 
+    /** @param value the content type enum value */
     ContentType(Value value);
 
+    /** @param contentType string representation (e.g. "application/json") */
     explicit ContentType(const std::string &contentType);
 
     operator Value() const { return m_value; }
 
     explicit operator bool() = delete;
 
+    /** @return the underlying enum value */
     Value getValue() { return m_value; }
 
+    /** @return the MIME type string */
     [[nodiscard]] const std::string &getName() const;
 
 private:
+    /** Build enum value from content type string */
     static Value build(const std::string &contentType);
 
     Value m_value;

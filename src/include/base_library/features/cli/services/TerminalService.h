@@ -5,6 +5,7 @@
 
 #include <string>
 
+/** Implementation of ITerminalService for line editing and display */
 class TerminalService : public ITerminalService {
 private:
     std::string m_currentLine;

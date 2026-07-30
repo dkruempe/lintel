@@ -7,6 +7,7 @@
 
 #include "base_library/features/property/models/DataStorage.h"
 
+/** Abstract base class for all property types */
 class PropertyBase {
 private:
     std::string m_name;
@@ -19,6 +20,12 @@ private:
     DataStorage m_dataStorage;
 
 protected:
+    /** @param name property name
+     *  @param instanceName instance name
+     *  @param className class name
+     *  @param processName process name
+     *  @param description property description
+     *  @param runtimeChange whether runtime changes are supported */
     PropertyBase(std::string name, std::string instanceName,
                  std::string className, std::string processName,
                  std::string description, bool runtimeChange)
@@ -36,40 +43,52 @@ public:
 
     virtual ~PropertyBase() = default;
 
+    /** @return string representation of the property value */
     [[nodiscard]] virtual std::string toString() = 0;
 
+    /** @return type name of the property */
     [[nodiscard]] virtual std::string getType() const = 0;
 
+    /** @return property name */
     [[nodiscard]] const std::string &getName() const { return m_name; }
 
+    /** @return instance name */
     [[nodiscard]] const std::string &getInstanceName() const {
         return m_instanceName;
     }
 
+    /** @return data storage information */
     [[nodiscard]] const DataStorage &getDataStorage() const {
         return m_dataStorage;
     }
 
+    /** Set the data storage information */
     void setDataStorage(const DataStorage &newDataStorage) {
         PropertyBase::m_dataStorage = newDataStorage;
     }
 
+    /** @return class name */
     [[nodiscard]] const std::string &getClassName() const { return m_className; }
 
+    /** @return process name */
     [[nodiscard]] const std::string &getProcessName() const {
         return m_processName;
     }
 
+    /** @return true if runtime changes are supported */
     [[nodiscard]] bool isRuntimeChange() const { return m_runtimeChange; }
 
+    /** @return property description */
     [[nodiscard]] const std::string &getDescription() const {
         return m_description;
     }
 
+    /** @return unique identifier: name_instanceName_className_processName */
     [[nodiscard]] const std::string &getIdentifier() const {
         return m_identifier;
     }
 
+    /** Set the value from a string representation */
     virtual void setValueString(const std::string &value) = 0;
 
     friend std::ostream &operator<<(std::ostream &os, PropertyBase &base) {

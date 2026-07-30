@@ -7,6 +7,7 @@
 #include "base_library/features/property/models/PropertyBase.h"
 #include "base_library/features/property/models/PropertyRepositoryType.h"
 
+/** DTO representing a single property, JSON-serializable */
 class PropertyDto : public JsonSerializable {
 private:
     std::string m_name;
@@ -34,28 +35,39 @@ private:
     } m_shape;
 
 public:
+    /** @param property the property base to convert */
     explicit PropertyDto(const std::shared_ptr<PropertyBase> &property);
 
     PropertyDto() = default;
 
+    /** @return property name */
     [[nodiscard]] const std::string &getName() const;
 
+    /** @return instance name */
     [[nodiscard]] const std::string &getInstanceName() const;
 
+    /** @return class name */
     [[nodiscard]] const std::string &getClassName() const;
 
+    /** @return process name */
     [[nodiscard]] const std::string &getProcessName() const;
 
+    /** @return true if runtime changes are supported */
     [[nodiscard]] bool isRuntimeChange() const;
 
+    /** @return property description */
     [[nodiscard]] const std::string &getDescription() const;
 
+    /** @return repository type */
     [[nodiscard]] const PropertyRepositoryType &getRepositoryType() const;
 
+    /** @return extra information string */
     [[nodiscard]] const std::string &getExtraInformation() const;
 
+    /** @return current value as string */
     [[nodiscard]] const std::string &getValue() const;
 
+    /** @return type string */
     [[nodiscard]] const std::string &getType() const;
 
     void serialize(

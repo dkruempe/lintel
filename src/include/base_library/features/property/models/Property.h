@@ -13,12 +13,14 @@
 
 class PropertyService;
 
+/** Typed property with thread-safe read/write access */
 template<class T>
 class Property : public PropertyBase {
 private:
     T m_value;
     std::shared_mutex m_mutex;
 
+    /** @return the type name string for this property's template type */
     static std::string_view getTypeName() {
         if constexpr (std::is_same_v<T, int8_t>) return "int8_t";
         else if constexpr (std::is_same_v<T, int16_t>) return "int16_t";
@@ -36,6 +38,13 @@ private:
     }
 
 public:
+    /** @param name property name
+     *  @param instanceName instance name
+     *  @param className class name
+     *  @param processName process name
+     *  @param value initial value
+     *  @param description property description
+     *  @param runtimeChange whether runtime changes are supported */
     Property(const std::string &name, const std::string &instanceName,
              const std::string &className, const std::string &processName,
              T value, const std::string &description, bool runtimeChange)
@@ -50,21 +59,25 @@ public:
         return std::string(getTypeName());
     }
 
+    /** @return the current value (thread-safe read) */
     T getValue() {
         std::shared_lock<std::shared_mutex> lock(m_mutex);
         return m_value;
     }
 
+    /** @return string representation of the current value */
     std::string toString() override {
         std::shared_lock<std::shared_mutex> lock(m_mutex);
         return StringifyService<T>::serializeToString(m_value);
     }
 
+    /** Set the value (thread-safe write) */
     void setValue(const T &value) {
         std::lock_guard<std::shared_mutex> lock(m_mutex);
         m_value = value;
     }
 
+    /** Set the value from a string representation */
     void setValueString(const std::string &value) override {
         std::lock_guard<std::shared_mutex> lock(m_mutex);
         m_value = StringifyService<T>::deserializeFromString(value);

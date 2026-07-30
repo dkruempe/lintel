@@ -7,8 +7,10 @@
 #include "base_library/features/base/configuration/Entry.h"
 #include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 
+/** Component for parsing message queue configurations from XML */
 class MessageQueueComponent : public Component {
 private:
+    /** XML element name constants for message queue parsing */
     static const struct Shapes {
         const char *const CONFIG_ROOT = "MessageQueues";
         const char *const MESSAGE_QUEUE_ROOT = "MessageQueue";
@@ -19,8 +21,14 @@ private:
     } shape;
 
 public:
+    /** Construct a MessageQueueComponent */
     MessageQueueComponent();
 
+    /** Parse message queue configuration XML
+     * @param content XML content to parse
+     * @param fileName Source file name for error reporting
+     * @param lineOffset Line offset for error reporting
+     * @return Vector of parsed message queue entries */
     std::vector<std::shared_ptr<Entry>> parse(const std::string &content,
                                               const std::string &fileName,
                                               int32_t lineOffset) override;

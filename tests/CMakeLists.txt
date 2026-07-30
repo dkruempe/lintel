@@ -105,3 +105,9 @@ ADD_EXECUTABLE(authCliServiceMockTest cli/AuthCliServiceMockTest.cpp)
 target_compile_features(authCliServiceMockTest PUBLIC cxx_std_17)
 target_link_libraries(authCliServiceMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
 ADD_TEST(NAME BaseLibrary.AuthCliServiceMockTest COMMAND authCliServiceMockTest)
+
+# UserManagementCliComponent Mock Test
+ADD_EXECUTABLE(userManagementCliComponentMockTest cli/UserManagementCliComponentMockTest.cpp)
+target_compile_features(userManagementCliComponentMockTest PUBLIC cxx_std_17)
+target_link_libraries(userManagementCliComponentMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
+ADD_TEST(NAME BaseLibrary.UserManagementCliComponentMockTest COMMAND userManagementCliComponentMockTest)

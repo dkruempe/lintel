@@ -4,6 +4,7 @@
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/http/service/ContentType.h"
 
+/** Example controller demonstrating the HTTP handler registration pattern */
 class ExampleController : public Controller {
 private:
     ADD_HANDLER_METHOD("/hello", Get, hello);

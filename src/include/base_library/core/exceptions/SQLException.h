@@ -5,6 +5,7 @@
 #include <string>
 
 namespace db {
+    /** Exception thrown on SQL/database errors */
     class SQLException : public std::exception {
     private:
         std::string m_message;
@@ -12,6 +13,7 @@ namespace db {
     public:
         SQLException() = delete;
 
+        /** @param message description of the SQL error */
         explicit SQLException(std::string message) : m_message(std::move(message)) {}
 
         [[nodiscard]] const char *what() const noexcept override {

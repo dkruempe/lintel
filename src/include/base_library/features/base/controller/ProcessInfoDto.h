@@ -7,23 +7,33 @@
 #include "base_library/core/models/JsonSerializable.h"
 #include "base_library/features/base/models/ProcessInfo.h"
 
+/** DTO representing detailed process information */
 class ProcessInfoDto : public JsonSerializable {
 private:
-    // process
+    /** Process ID */
     std::string m_id;
+    /** Path to the process executable */
     std::filesystem::path m_path;
+    /** Command line arguments */
     std::vector<std::string> m_args;
+    /** Whether auto-restart is enabled */
     bool m_autoRestart;
+    /** Current restart count */
     int32_t m_restarts;
+    /** Maximum allowed restarts */
     int32_t m_maxAutoRestarts;
-    // process state
+    /** Operating system process ID */
     boost::process::v1::pid_t m_processId;
+    /** Whether the process is currently running */
     bool m_isRunning;
+    /** The exit code of the process */
     int32_t m_exitCode;
-    // process group
+    /** The group name this process belongs to */
     std::string m_groupName;
+    /** The group ID this process belongs to */
     std::string m_groupId;
 
+    /** JSON field name constants */
     static struct Shapes {
         const char *const ID = "id";
         const char *const PATH = "path";
@@ -40,35 +50,65 @@ private:
     } m_shape;
 
 public:
+    /** Construct from a ProcessInfo model
+     * @param processInfo The source process info */
     explicit ProcessInfoDto(const ProcessInfo &processInfo);
 
+    /** Default constructor */
     ProcessInfoDto() = default;
 
+    /** Get the process ID
+     * @return The ID */
     [[nodiscard]] const std::string &getId() const;
 
+    /** Get the executable path
+     * @return The filesystem path */
     [[nodiscard]] const std::filesystem::path &getPath() const;
 
+    /** Get the command line arguments
+     * @return Vector of argument strings */
     [[nodiscard]] const std::vector<std::string> &getArgs() const;
 
+    /** Check if auto-restart is enabled
+     * @return True if auto-restart is enabled */
     [[nodiscard]] bool isAutoRestart() const;
 
+    /** Get the current restart count
+     * @return The number of restarts */
     [[nodiscard]] int32_t getRestarts() const;
 
+    /** Get the maximum allowed auto-restarts
+     * @return The max restarts */
     [[nodiscard]] int32_t getMaxAutoRestarts() const;
 
+    /** Get the OS process ID
+     * @return The process ID */
     [[nodiscard]] pid_t getProcessId() const;
 
+    /** Check if the process is running
+     * @return True if running */
     [[nodiscard]] bool isRunning() const;
 
+    /** Get the exit code
+     * @return The exit code */
     [[nodiscard]] int32_t getExitCode() const;
 
+    /** Get the group name
+     * @return The group name */
     [[nodiscard]] const std::string &getGroupName() const;
 
+    /** Get the group ID
+     * @return The group ID */
     [[nodiscard]] const std::string &getGroupId() const;
 
+    /** Serialize to JSON
+     * @param writer The rapidjson writer */
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
 
+    /** Deserialize from JSON
+     * @param obj The JSON value
+     * @return True on success */
     bool deserialize(const rapidjson::Value &obj) override;
 };
 

@@ -5,6 +5,7 @@
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 
+/** HTTP controller for process lifecycle management */
 class ProcessController : public Controller {
 private:
     std::shared_ptr<ProcessService> m_processService;

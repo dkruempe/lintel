@@ -3,6 +3,7 @@
 
 #include <exception>
 
+/** Exception thrown when a user is not authorized to access a resource */
 class HttpUnauthorizedException : public std::exception {
 public:
     HttpUnauthorizedException() = default;

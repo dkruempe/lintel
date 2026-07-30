@@ -23,6 +23,7 @@
 
 class CommandLineComponent;
 
+/** Main service that drives the interactive command-line interface */
 class CommandLineService : public AbstractService<CommandLineService>
 {
 private:
@@ -41,24 +42,34 @@ private:
   std::shared_ptr<CommandLineHistoryService> m_commandLineHistoryService;
   std::optional<std::string> m_helpComponentName;
 
+  /** @return name of the current menu */
   std::string menuNameOf();
 
+  /** Route a command to the active component */
   void onComponentCommand(const std::string &input, const std::vector<std::string> &flags);
 
+  /** Handle a top-level command */
   void onCommand(const std::string &input, const std::vector<std::string> &flags);
 
+  /** Handle end-of-file signal */
   void onEndOfFile();
 
+  /** Called when the service starts */
   void onStart();
 
+  /** Show the help screen */
   void onHelp();
 
+  /** Display the input prompt */
   void onPrompt();
 
+  /** Handle a regular command input symbol */
   void handleCommandInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt);
 
+  /** Handle tab key input for autocomplete */
   void handleTabInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt);
 
+  /** Main CLI loop running in a background thread */
   void run();
 
 public:

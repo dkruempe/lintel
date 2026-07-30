@@ -21,6 +21,7 @@
 #include "base_library/features/base/services/SchedulerService.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
+/** Service for managing shared memory segments and constructing data structures within them. */
 class SharedMemoryService : public PropertyRegistration<SharedMemoryService> {
 private:
     struct MappedFile {
@@ -49,6 +50,10 @@ public:
             boost::container::basic_string<char, std::char_traits<char>,
                     charAllocator>;
 
+    /** Construct a SharedMemoryService.
+     * @param sharedMemorySegmentManager the segment manager providing segment definitions
+     * @param schedulerService           the scheduler for periodic maintenance tasks
+     * @param processName                the process name */
     SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager>
                         &sharedMemorySegmentManager,
                         std::shared_ptr<SchedulerService> schedulerService,
@@ -56,6 +61,7 @@ public:
 
     ~SharedMemoryService() override = default;
 
+    /** Initialize all shared memory segments by opening or creating them. */
     void onInitialize() override;
 
     /**
@@ -80,6 +86,13 @@ public:
     [[nodiscard]] SharedMemorySegmentInfo showStateOf(
             const std::shared_ptr<SharedMemorySegment> &segment) const;
 
+    /** Find or construct a fixed-size array in the given shared memory segment.
+     * @tparam Object the element type
+     * @tparam Size   the array size
+     * @param segment the shared memory segment
+     * @param name    the name of the array object
+     * @return reference to the constructed or found array
+     * @throws ShmSegmentNotFound if the segment does not exist */
     template<class Object, std::size_t Size>
     std::array<Object, Size> &constructArray(
             const std::shared_ptr<SharedMemorySegment> &segment,
@@ -94,6 +107,13 @@ public:
         }
     }
 
+    /** Find or construct a map in the given shared memory segment.
+     * @tparam Key   the map key type
+     * @tparam Value the map value type
+     * @param segment the shared memory segment
+     * @param name    the name of the map object
+     * @return reference to the constructed or found map
+     * @throws ShmSegmentNotFound if the segment does not exist */
     template<class Key, class Value>
     boost::container::map<
             Key, Value, std::less<Key>,
@@ -125,6 +145,12 @@ public:
         }
     }
 
+    /** Find or construct a vector in the given shared memory segment.
+     * @tparam Object the element type
+     * @param segment the shared memory segment
+     * @param name    the name of the vector object
+     * @return reference to the constructed or found vector
+     * @throws ShmSegmentNotFound if the segment does not exist */
     template<class Object>
     boost::container::vector<
             Object,
@@ -146,6 +172,12 @@ public:
         }
     }
 
+    /** Find or construct a single object in the given shared memory segment.
+     * @tparam Object the object type
+     * @param segment the shared memory segment
+     * @param name    the name of the object
+     * @return reference to the constructed or found object
+     * @throws ShmSegmentNotFound if the segment does not exist */
     template<class Object>
     Object &constructObject(const std::shared_ptr<SharedMemorySegment> &segment,
                             const std::string &name) {
@@ -158,6 +190,10 @@ public:
         }
     }
 
+    /** Find or construct a string in the given shared memory segment.
+     * @param segment the shared memory segment
+     * @param name    the name of the string object
+     * @return the constructed or found shared-memory string */
     ShmString constructString(const std::shared_ptr<SharedMemorySegment> &segment,
                               const std::string &name);
 };

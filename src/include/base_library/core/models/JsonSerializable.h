@@ -12,8 +12,10 @@
  */
 class JsonSerializable {
 public:
+    /** Default constructor */
     JsonSerializable() = default;
 
+    /** Virtual destructor */
     virtual ~JsonSerializable() = default;
 
     /**
@@ -42,6 +44,10 @@ public:
         return std::string(stringBuffer.GetString());
     }
 
+    /**
+     * Deserializes the object from a JSON string.
+     * @param json JSON string to deserialize
+     */
     virtual void deserialize(const std::string &json) {
         rapidjson::Document document;
         document.Parse(json.c_str());

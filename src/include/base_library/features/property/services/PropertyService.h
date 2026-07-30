@@ -25,6 +25,7 @@
     propertyService->getOrCreate(m_properties); \
   }
 
+/** Central service for managing, querying and persisting properties */
 class PropertyService : public PersistableBean {
 private:
     std::vector<std::shared_ptr<PropertyRepository>> m_propertyRepositories;
@@ -39,37 +40,45 @@ private:
             m_typeRepositoryMap;
 
     // functions
+    /** Build a unique identifier string from property coordinates */
     static std::string createIdentifier(const std::string &name,
                                         const std::string &instanceName,
                                         const std::string &className,
                                         const std::string &processName);
 
+    /** Initialize the property map from repository data */
     static std::map<std::string, std::shared_ptr<PropertyBase>> init(
             const std::vector<std::shared_ptr<PropertyRepository>> &repoProperties,
             std::map<PropertyRepositoryType,
                     std::vector<std::shared_ptr<PropertyBase>>> &propertiesMap);
 
+    /** Filter to only enabled repositories */
     static std::vector<std::shared_ptr<PropertyRepository>>
     filterEnabledRepositories(
             const std::vector<std::shared_ptr<PropertyRepository>>
             &propertyRepositories);
 
+    /** Filter to only mutable repositories */
     static std::vector<std::shared_ptr<PropertyRepository>>
     filterMutableRepositories(
             const std::vector<std::shared_ptr<PropertyRepository>>
             &propertyRepository);
 
+    /** Filter to only shadow repositories */
     static std::vector<std::shared_ptr<PropertyRepository>>
     filterShadowRepositories(
             const std::vector<std::shared_ptr<PropertyRepository>>
             &propertyRepository);
 
+    /** Match properties from vector against existing map */
     void getOrCreate(
             const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec,
             std::map<PropertyRepositoryType,
                     std::vector<std::shared_ptr<PropertyBase>>> &map);
 
 public:
+    /** @param propertyRepositories list of all property repositories
+     *  @param abstractServices list of services to notify on property changes */
     PropertyService(
             const std::vector<std::shared_ptr<PropertyRepository>>
             &propertyRepositories,
@@ -79,6 +88,7 @@ public:
 
     void onAwake() override;
 
+    /** Match properties from vector against existing map */
     void getOrCreate(
             const std::vector<std::shared_ptr<PropertyBase>> &propertiesVec) {
         std::map<PropertyRepositoryType, std::vector<std::shared_ptr<PropertyBase>>>
@@ -86,6 +96,18 @@ public:
         return getOrCreate(propertiesVec, map);
     }
 
+    /**
+     * Get or create a typed property
+     * @tparam T property value type
+     * @param name property name
+     * @param instanceName instance name
+     * @param className class name
+     * @param processName process name
+     * @param description property description
+     * @param runtimeChange whether runtime changes are supported
+     * @param defaultValue default value if property does not exist
+     * @return the property
+     */
     template<class T>
     std::shared_ptr<Property<T>> getOrCreate(const std::string &name,
                                              const std::string &instanceName,
@@ -95,30 +117,44 @@ public:
                                              bool runtimeChange,
                                              const T &defaultValue = T());
 
+    /**
+     * Get a property by its coordinates
+     * @throws PropertyNotFoundException if not found
+     */
     std::shared_ptr<PropertyBase> &get(const std::string &name,
                                        const std::string &instanceName,
                                        const std::string &className,
                                        const std::string &processName);
 
+    /** @return all properties */
     std::vector<std::shared_ptr<PropertyBase>> allOf();
 
+    /** @return properties matching the given process name */
     std::vector<std::shared_ptr<PropertyBase>> allOf(
             const std::string &processName);
 
+    /** @return properties matching process name and class name */
     std::vector<std::shared_ptr<PropertyBase>> allOf(
             const std::string &processName, const std::string &className);
 
+    /** @return properties matching process, class, and instance name */
     std::vector<std::shared_ptr<PropertyBase>> allOf(
             const std::string &processName, const std::string &className,
             const std::string &instanceName);
 
+    /**
+     * Change the value of a property at runtime
+     * @throws PropertyNoRuntimeChangeSupported if property does not allow it
+     */
     template<class T>
     void changeValueOf(const std::shared_ptr<PropertyBase> &property,
                        const T &value);
 
+    /** Change the value of a property from string representation */
     void changeStringValueOf(const std::shared_ptr<PropertyBase> &property,
                              const std::string &value);
 
+    /** Build repository type-to-instance map */
     std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>>
     buildMap(const std::vector<std::shared_ptr<PropertyRepository>> &vector);
 };
@@ -136,12 +172,11 @@ std::shared_ptr<Property<T>> PropertyService::getOrCreate(
         return std::static_pointer_cast<Property<T>>(propertyBase);
     } catch (PropertyNotFoundException &exception) {
         auto property = std::make_shared<Property<T>>(name, instanceName, className,
-                                                      processName, defaultValue,
-                                                      description, runtimeChange);
+                                                       processName, defaultValue,
+                                                       description, runtimeChange);
         m_properties.insert({property->getIdentifier(), property});
         if (m_mutablePropertyRepositories.empty()) {
             LOG_ERROR("no mutable property repositories available");
-            // no save of property but return property bc. its updated in cache
             return property;
         }
         for (const auto &item: m_mutablePropertyRepositories) {

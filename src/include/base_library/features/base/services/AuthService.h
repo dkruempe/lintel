@@ -9,6 +9,9 @@
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/base/services/SchedulerService.h"
 
+/**
+ * Authentication service managing user login, access tokens, and session timeouts.
+ */
 class AuthService : public IAuthService, public PropertyRegistration<AuthService> {
 private:
     // properties
@@ -20,19 +23,40 @@ private:
     std::shared_ptr<SchedulerService> m_scheduler;
     std::atomic_bool m_running = true;
 
+    /** Periodically check for expired tokens. */
     void onCheck();
 
 public:
+    /**
+     * Constructor.
+     * @param processName current process name
+     * @param userRepository user repository
+     * @param schedulerService scheduler for periodic token checks
+     */
     AuthService(const std::shared_ptr<ProcessName> &processName,
                 std::shared_ptr<UserRepository> userRepository,
                 std::shared_ptr<SchedulerService> schedulerService);
 
     virtual ~AuthService() = default;
 
+    /**
+     * Authenticate a user with username and password.
+     * @param userLogin login credentials
+     * @return a user token if authentication succeeds
+     */
     std::optional<UserToken> onLoginOf(const UserLogin &userLogin);
 
+    /**
+     * Validate an existing user token for access.
+     * @param userTokenLogin token to validate
+     * @return the user token if valid
+     */
     std::optional<UserToken> onAccessOf(const UserTokenLogin &userTokenLogin);
 
+    /**
+     * Log out and invalidate a user token.
+     * @param userToken token to invalidate
+     */
     void onLogoutOf(const UserTokenLogin &userToken);
 
     void onInitialize() override;

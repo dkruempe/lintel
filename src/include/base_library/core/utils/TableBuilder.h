@@ -7,16 +7,21 @@
 #include <string>
 #include <vector>
 
+/** Represents a single column in the table, holding its row values. */
 struct Column {
+    /** The row values of this column. */
     std::vector<std::string> m_rows;
 };
 
+/** Builds a formatted text table with a fixed number of columns. */
 template<std::size_t N>
 class TableBuilder {
 private:
     std::array<Column, N> m_columns;
 
 public:
+    /** Add a row of data to the table.
+     * @param line an array of strings, one per column */
     void add(std::array<std::string, N> line) {
         std::size_t i = 0;
         for (const auto &iter: line) {
@@ -25,6 +30,8 @@ public:
         }
     }
 
+    /** Build the formatted table string with separators and aligned columns.
+     * @return the formatted table as a string */
     std::string build() {
         // 1. calc max length
         std::array<std::size_t, N> maxLengthPerCol;

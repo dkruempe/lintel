@@ -6,10 +6,23 @@
 
 #include "base_library/features/property/models/PropertyBase.h"
 
+/** Factory for creating PropertyBase instances from string-typed values */
 class PropertyFactory {
 public:
     PropertyFactory() = delete;
 
+    /**
+     * Create a property from its string representation
+     * @param name property name
+     * @param instanceName instance name
+     * @param className class name
+     * @param processName process name
+     * @param type the property type string
+     * @param value the value as string
+     * @param description property description
+     * @param runtime whether runtime changes are supported
+     * @return the created property
+     */
     static std::shared_ptr<PropertyBase> Create(
             const std::string &name, const std::string &instanceName,
             const std::string &className, const std::string &processName,
