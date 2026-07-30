@@ -4,7 +4,7 @@
 #include <memory>
 #include <optional>
 
-#include "base_library/features/base/controller/UserApi.h"
+#include "base_library/features/http/controllers/UserApi.h"
 #include "base_library/features/cli/providers/AuthArgumentProvider.h"
 #include "base_library/features/cli/services/InputService.h"
 #include "base_library/features/cli/services/TerminalService.h"

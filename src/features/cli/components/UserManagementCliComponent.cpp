@@ -1,4 +1,4 @@
-#include "base_library/features/base/command_line/UserManagementCliComponent.h"
+#include "base_library/features/cli/components/UserManagementCliComponent.h"
 
 #include <base_library/core/utils/TableBuilder.h>
 

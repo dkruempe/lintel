@@ -1,7 +1,7 @@
 #ifndef HISTORYCLICOMPONENT_H
 #define HISTORYCLICOMPONENT_H
 
-#include "base_library/features/base/controller/HistoryApi.h"
+#include "base_library/features/http/controllers/HistoryApi.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/models/CommandParser.h"
 

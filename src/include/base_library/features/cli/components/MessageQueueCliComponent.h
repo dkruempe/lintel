@@ -1,6 +1,6 @@
 #ifndef MESSAGEQUEUECLICOMPONENT_H
 #define MESSAGEQUEUECLICOMPONENT_H
-#include "base_library/features/base/controller/MessageQueueApi.h"
+#include "base_library/features/http/controllers/MessageQueueApi.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/models/CommandParser.h"
 #include "base_library/features/http/service/Controller.h"

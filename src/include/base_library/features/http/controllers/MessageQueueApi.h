@@ -1,6 +1,6 @@
 #ifndef CPP_BASE_LIBRARY_MESSAGEQUEUEAPI_H
 #define CPP_BASE_LIBRARY_MESSAGEQUEUEAPI_H
-#include "MessageQueueDto.h"
+#include "base_library/features/base/controller/MessageQueueDto.h"
 #include "base_library/features/http/provider/ClientProvider.h"
 
 class MesssageQueueApi

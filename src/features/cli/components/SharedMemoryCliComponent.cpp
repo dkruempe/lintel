@@ -1,4 +1,4 @@
-#include "base_library/features/base/command_line/SharedMemoryCliComponent.h"
+#include "base_library/features/cli/components/SharedMemoryCliComponent.h"
 
 #include <base_library/core/utils/MemorySize.h>
 #include <base_library/core/utils/StringUtils.h>

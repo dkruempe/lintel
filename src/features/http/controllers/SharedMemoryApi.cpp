@@ -1,5 +1,5 @@
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/controller/SharedMemoryApi.h"
+#include "base_library/features/http/controllers/SharedMemoryApi.h"
 #include "base_library/features/base/controller/SharedMemoryRepsoitoriesDto.h"
 #include "base_library/features/base/controller/SharedMemorySegmentsDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"

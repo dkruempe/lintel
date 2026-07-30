@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/HistoryController.h"
+#include "base_library/features/http/controllers/HistoryController.h"
 
 #include "base_library/features/base/controller/HistoryDto.h"
 #include "base_library/features/base/controller/HistoryDtos.h"

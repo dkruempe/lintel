@@ -5,17 +5,21 @@
 #include <condition_variable>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
-#include "base_library/core/services/AbstractService.h"
-#include "base_library/features/Feature.h"
-#include "base_library/features/base/configuration/Component.h"
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
 #include "base_library/features/base/configuration/EnvironmentConfiguration.h"
-#include "base_library/features/base/models/Process.h"
-#include "base_library/features/base/models/ProcessName.h"
+
+class AbstractServiceInterface;
+class Component;
+class Configuration;
+class ConfigurationComponentBuilder;
+class FeatureInterface;
+class Features;
+class ProcessName;
+
+namespace Hypodermic { class Container; }
 
 class StartupBuilder {
 private:

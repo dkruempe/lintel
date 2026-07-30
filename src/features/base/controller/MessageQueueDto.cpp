@@ -3,7 +3,7 @@
 #include "base_library/features/base/configuration/MessageQueueEntry.h"
 
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/controller/MessageQueueApi.h"
+#include "base_library/features/http/controllers/MessageQueueApi.h"
 
 #include <rapidjson/stringbuffer.h>
 

@@ -1,7 +1,5 @@
 #include "base_library/features/base/BaseFeature.h"
 
-#include <base_library/features/base/command_line/SharedMemoryCliComponent.h>
-
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/core/plugins/DatabaseBootstrapPlugin.h"
 #include "base_library/core/plugins/MessageQueueBootstrapPlugin.h"
@@ -11,16 +9,6 @@
 #include "base_library/core/services/PersistableService.h"
 #include "base_library/core/services/ProcessService.h"
 #include "base_library/core/services/SharedMemoryService.h"
-#include "base_library/features/base/command_line/HistoryCliComponent.h"
-#include "base_library/features/base/command_line/MessageQueueCliComponent.h"
-#include "base_library/features/base/command_line/ProcessCliComponent.h"
-#include "base_library/features/base/command_line/UserManagementCliComponent.h"
-#include "base_library/features/base/controller/ProcessApi.h"
-#include "base_library/features/base/controller/ProcessController.h"
-#include "base_library/features/base/controller/SharedMemoryApi.h"
-#include "base_library/features/base/controller/SharedMemoryController.h"
-#include "base_library/features/base/controller/UserApi.h"
-#include "base_library/features/base/controller/UserController.h"
 #include "base_library/features/base/provider/GroupProvider.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
 #include "base_library/features/base/repositories/HistoryRepository.h"
@@ -31,10 +19,6 @@
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/HistoryService.h"
-#include "base_library/features/base/controller/HistoryController.h"
-#include "base_library/features/base/controller/HistoryApi.h"
-#include "base_library/features/base/controller/MessageQueueApi.h"
-#include "base_library/features/base/controller/MessageQueueController.h"
 #include "base_library/features/base/services/InitializeService.h"
 #include "base_library/features/base/services/MessageQueueService.h"
 #include "base_library/features/base/services/ProcessArgumentService.h"
@@ -60,10 +44,6 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
   builder.registerType<InitializeService>().singleInstance();
   builder.registerType<ExecutorService>();
   builder.registerType<DatabaseConnectionConfigurations>().singleInstance();
-  builder.registerType<UserManagementCliComponent>()
-    .as<CommandLineComponent>()
-    .asSelf()
-    .singleInstance();
   builder.registerType<BootstrapService>().singleInstance();
   builder.registerType<DatabaseBootstrapPlugin>()
     .as<BootstrapPlugin>()
@@ -82,12 +62,6 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
     .asSelf()
     .singleInstance();
   builder.registerType<PersistableService>().singleInstance();
-  builder.registerType<UserApi>().singleInstance();
-  builder.registerType<UserController>()
-    .as<Controller>()
-    .as<GroupProvider>()
-    .asSelf()
-    .singleInstance();
   builder.registerType<GroupRepository>()
     .as<PersistableBean>()
     .asSelf()
@@ -107,26 +81,6 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
     .as<AbstractServiceInterface>()
     .asSelf()
     .singleInstance();
-  builder.registerType<ProcessCliComponent>()
-    .as<CommandLineComponent>()
-    .asSelf()
-    .singleInstance();
-  builder.registerType<ProcessApi>().singleInstance();
-  builder.registerType<ProcessController>()
-    .as<Controller>()
-    .as<GroupProvider>()
-    .asSelf()
-    .singleInstance();
-  builder.registerType<SharedMemoryController>()
-    .as<Controller>()
-    .as<GroupProvider>()
-    .asSelf()
-    .singleInstance();
-  builder.registerType<SharedMemoryApi>().singleInstance();
-  builder.registerType<SharedMemoryCliComponent>()
-    .as<CommandLineComponent>()
-    .asSelf()
-    .singleInstance();
   builder.registerType<HistoryRepository>().singleInstance();
   builder.registerType<HistoryService>()
     .as<AbstractServiceInterface>()
@@ -136,24 +90,4 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
   .as<AbstractServiceInterface>()
   .asSelf()
   .singleInstance();
-  builder.registerType<MessageQueueCliComponent>()
-    .as<CommandLineComponent>()
-    .asSelf()
-    .singleInstance();
-  builder.registerType<HistoryCliComponent>()
-    .as<CommandLineComponent>()
-    .asSelf()
-    .singleInstance();
-  builder.registerType<MesssageQueueApi>().singleInstance();
-  builder.registerType<MessageQueueController>()
-  .as<Controller>()
-  .as<GroupProvider>()
-  .asSelf()
-  .singleInstance();
-  builder.registerType<HistoryApi>().singleInstance();
-  builder.registerType<HistoryController>()
-    .as<Controller>()
-    .as<GroupProvider>()
-    .asSelf()
-    .singleInstance();
 }

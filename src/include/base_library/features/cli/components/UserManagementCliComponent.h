@@ -5,7 +5,7 @@
 #include <optional>
 #include <string>
 
-#include "base_library/features/base/controller/UserApi.h"
+#include "base_library/features/http/controllers/UserApi.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/models/CommandParser.h"
 

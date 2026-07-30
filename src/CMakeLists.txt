@@ -121,12 +121,6 @@ set(headers
     include/base_library/core/utils/UUID.h
     # features - base
     include/base_library/features/base/BaseFeature.h
-    # features - base - command_line
-    include/base_library/features/base/command_line/HistoryCliComponent.h
-    include/base_library/features/base/command_line/MessageQueueCliComponent.h
-    include/base_library/features/base/command_line/ProcessCliComponent.h
-    include/base_library/features/base/command_line/SharedMemoryCliComponent.h
-    include/base_library/features/base/command_line/UserManagementCliComponent.h
     # features - base - configuration
     include/base_library/features/base/configuration/Component.h
     include/base_library/features/base/configuration/Configuration.h
@@ -149,28 +143,18 @@ set(headers
     include/base_library/features/base/configuration/SharedMemorySegmentEntry.h
     # features - base - controller
     include/base_library/features/base/controller/GroupDto.h
-    include/base_library/features/base/controller/HistoryApi.h
-    include/base_library/features/base/controller/HistoryController.h
     include/base_library/features/base/controller/HistoryDto.h
     include/base_library/features/base/controller/HistoryDtos.h
-    include/base_library/features/base/controller/MessageQueueApi.h
-    include/base_library/features/base/controller/MessageQueueController.h
     include/base_library/features/base/controller/MessageQueueDto.h
     include/base_library/features/base/controller/MessageQueueDtos.h
-    include/base_library/features/base/controller/ProcessApi.h
-    include/base_library/features/base/controller/ProcessController.h
     include/base_library/features/base/controller/ProcessGroupDto.h
     include/base_library/features/base/controller/ProcessGroupsDto.h
     include/base_library/features/base/controller/ProcessInfoDto.h
     include/base_library/features/base/controller/ProcessInfosDto.h
-    include/base_library/features/base/controller/SharedMemoryApi.h
-    include/base_library/features/base/controller/SharedMemoryController.h
     include/base_library/features/base/controller/SharedMemoryRepositoryDto.h
     include/base_library/features/base/controller/SharedMemoryRepsoitoriesDto.h
     include/base_library/features/base/controller/SharedMemorySegmentDto.h
     include/base_library/features/base/controller/SharedMemorySegmentsDto.h
-    include/base_library/features/base/controller/UserApi.h
-    include/base_library/features/base/controller/UserController.h
     include/base_library/features/base/controller/UserDto.h
     include/base_library/features/base/controller/UserGroupDto.h
     include/base_library/features/base/controller/UserLoginDto.h
@@ -220,6 +204,11 @@ set(headers
     include/base_library/features/cli/services/InputService.h
     include/base_library/features/cli/services/TerminalService.h
     include/base_library/features/cli/utils/CommandLineUtils.h
+    include/base_library/features/cli/components/HistoryCliComponent.h
+    include/base_library/features/cli/components/MessageQueueCliComponent.h
+    include/base_library/features/cli/components/ProcessCliComponent.h
+    include/base_library/features/cli/components/SharedMemoryCliComponent.h
+    include/base_library/features/cli/components/UserManagementCliComponent.h
     # features - common
     include/base_library/features/Feature.h
     include/base_library/features/Features.h
@@ -238,6 +227,16 @@ set(headers
     include/base_library/features/http/service/HttpStatusCodes.h
     include/base_library/features/http/service/HttpUnauthorizedException.h
     include/base_library/features/http/service/Server.h
+    include/base_library/features/http/controllers/HistoryApi.h
+    include/base_library/features/http/controllers/HistoryController.h
+    include/base_library/features/http/controllers/MessageQueueApi.h
+    include/base_library/features/http/controllers/MessageQueueController.h
+    include/base_library/features/http/controllers/ProcessApi.h
+    include/base_library/features/http/controllers/ProcessController.h
+    include/base_library/features/http/controllers/SharedMemoryApi.h
+    include/base_library/features/http/controllers/SharedMemoryController.h
+    include/base_library/features/http/controllers/UserApi.h
+    include/base_library/features/http/controllers/UserController.h
     # features - property
     include/base_library/features/property/PropertyFeature.h
     include/base_library/features/property/command_line/PropertyCliComponent.h
@@ -317,12 +316,6 @@ set(sources
     core/utils/UUID.cpp
     # features - base
     features/base/BaseFeature.cpp
-    # features - base - command_line
-    features/base/command_line/HistoryCliComponent.cpp
-    features/base/command_line/MessageQueueCliComponent.cpp
-    features/base/command_line/ProcessCliComponent.cpp
-    features/base/command_line/SharedMemoryCliComponent.cpp
-    features/base/command_line/UserManagementCliComponent.cpp
     # features - base - configuration
     features/base/configuration/Component.cpp
     features/base/configuration/Configuration.cpp
@@ -344,28 +337,18 @@ set(sources
     features/base/configuration/SharedMemorySegmentEntry.cpp
     # features - base - controller
     features/base/controller/GroupDto.cpp
-    features/base/controller/HistoryApi.cpp
-    features/base/controller/HistoryController.cpp
     features/base/controller/HistoryDto.cpp
     features/base/controller/HistoryDtos.cpp
-    features/base/controller/MessageQueueApi.cpp
-    features/base/controller/MessageQueueController.cpp
     features/base/controller/MessageQueueDto.cpp
     features/base/controller/MessageQueueDtos.cpp
-    features/base/controller/ProcessApi.cpp
-    features/base/controller/ProcessController.cpp
     features/base/controller/ProcessGroupDto.cpp
     features/base/controller/ProcessGroupsDto.cpp
     features/base/controller/ProcessInfoDto.cpp
     features/base/controller/ProcessInfosDto.cpp
-    features/base/controller/SharedMemoryApi.cpp
-    features/base/controller/SharedMemoryController.cpp
     features/base/controller/SharedMemoryRepositoriesDto.cpp
     features/base/controller/SharedMemoryRepositoryDto.cpp
     features/base/controller/SharedMemorySegmentDto.cpp
     features/base/controller/SharedMemorySegmentsDto.cpp
-    features/base/controller/UserApi.cpp
-    features/base/controller/UserController.cpp
     features/base/controller/UserDto.cpp
     features/base/controller/UserGroupDto.cpp
     features/base/controller/UserLoginDto.cpp
@@ -409,6 +392,11 @@ set(sources
     features/cli/services/InputService.cpp
     features/cli/services/TerminalService.cpp
     features/cli/utils/CommandLineUtils.cpp
+    features/cli/components/HistoryCliComponent.cpp
+    features/cli/components/MessageQueueCliComponent.cpp
+    features/cli/components/ProcessCliComponent.cpp
+    features/cli/components/SharedMemoryCliComponent.cpp
+    features/cli/components/UserManagementCliComponent.cpp
     # features - http
     features/http/HttpFeature.cpp
     features/http/ExampleController.cpp
@@ -423,6 +411,16 @@ set(sources
     features/http/service/Controller.cpp
     features/http/service/HttpStatusCode.cpp
     features/http/service/Server.cpp
+    features/http/controllers/HistoryApi.cpp
+    features/http/controllers/HistoryController.cpp
+    features/http/controllers/MessageQueueApi.cpp
+    features/http/controllers/MessageQueueController.cpp
+    features/http/controllers/ProcessApi.cpp
+    features/http/controllers/ProcessController.cpp
+    features/http/controllers/SharedMemoryApi.cpp
+    features/http/controllers/SharedMemoryController.cpp
+    features/http/controllers/UserApi.cpp
+    features/http/controllers/UserController.cpp
     # features - property
     features/property/PropertyFeature.cpp
     features/property/command_line/PropertyCliComponent.cpp

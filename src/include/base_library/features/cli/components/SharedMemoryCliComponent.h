@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_SHAREDMEMORYCLICOMPONENT_H
 #define CPP_BASE_LIBRARY_SHAREDMEMORYCLICOMPONENT_H
 
-#include "base_library/features/base/controller/SharedMemoryApi.h"
+#include "base_library/features/http/controllers/SharedMemoryApi.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/models/CommandParser.h"
 

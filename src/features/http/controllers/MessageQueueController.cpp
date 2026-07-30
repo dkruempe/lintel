@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/MessageQueueController.h"
+#include "base_library/features/http/controllers/MessageQueueController.h"
 
 #include "base_library/features/base/controller/MessageQueueDtos.h"
 

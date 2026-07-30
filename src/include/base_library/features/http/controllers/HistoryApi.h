@@ -1,7 +1,7 @@
 #ifndef HISTORYAPI_H
 #define HISTORYAPI_H
 
-#include "HistoryDto.h"
+#include "base_library/features/base/controller/HistoryDto.h"
 #include "base_library/features/http/provider/ClientProvider.h"
 
 class HistoryApi

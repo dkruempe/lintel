@@ -7,10 +7,13 @@
 #include <memory>
 #include <thread>
 
+#include "base_library/features/Feature.h"
+
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/PersistableService.h"
 #include "base_library/features/base/configuration/Component.h"
+#include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/InitializeService.h"
