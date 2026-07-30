@@ -1,16 +1,12 @@
 #ifndef CPP_BASE_LIBRARY_INPUTSERVICE_H
 #define CPP_BASE_LIBRARY_INPUTSERVICE_H
 
+#include "base_library/features/cli/services/IInputService.h"
+
 #include <termios.h>
 #include <unistd.h>
 
-#include <utility>
-
-enum class KeyType { Ascii, Up, Down, Left, Right, Backspace, Canc, Home, End, Ret, Eof, CtrlC, CtrlR, Ignored };
-
-using KeyEvent = std::pair<KeyType, char>;
-
-class InputService
+class InputService : public IInputService
 {
 private:
   termios newt{};
@@ -18,9 +14,9 @@ private:
 public:
   InputService();
 
-  ~InputService();
+  ~InputService() override;
 
-  static KeyEvent onRead();
+  KeyEvent onRead() override;
 };
 
 #endif// CPP_BASE_LIBRARY_INPUTSERVICE_H

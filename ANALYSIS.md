@@ -20,7 +20,7 @@
 
 ## Schwächen
 
-1. **Ungenügende Testabdeckung trotz Mock-Framework** – Ein Mock-Framework (trompeloeil) mit 6 Mock-Klassen und 4 Unit-Tests wurde implementiert. Dennoch fehlen isolierte Tests für Shared Memory, Property-Controller, und weitere HTTP-/CLI-Komponenten. Die Testabdeckung ist weiterhin ausbaufähig.
+1. **Ungenügende Testabdeckung trotz Mock-Framework** – Ein Mock-Framework (trompeloeil) mit 6 Mock-Klassen und 4 Unit-Tests wurde implementiert. Dennoch fehlen isolierte Tests für Shared Memory, Property-Controller, und weitere HTTP-/CLI-Komponenten. **Verbesserung: 3 neue Interfaces (`IInputService`, `ITerminalService`, `IUserApi`) extrahiert, 2 neue Mocks (`MockInputService`, `MockTerminalService`), 5 neue Unit-Tests für `AuthCliService` (Login-Flow mit CtrlC/Eof/Erfolg/leeres Passwort/Wiederholung) – 15 statt 11 Tests, 9 statt 6 Mock-Klassen.** Die Testabdeckung bleibt ausbaufähig, insbesondere für Shared Memory und weitere CLI-Komponenten.
 
 2. **Minimale Code-Dokumentation** – Kaum Doxygen-Kommentare. Öffentliche API ohne Header-Dokumentation.
 
@@ -45,6 +45,12 @@
 6. **Signal-Handling modernisiert** – `std::signal()` + static raw pointer durch dedizierten Signal-Thread mit `sigwait()` ersetzt. Signale werden für alle Threads geblockt (`pthread_sigmask`); nur der Signal-Thread verarbeitet SIGINT/SIGTERM/SIGCHLD via `sigwait`. `SignalService` aufgeräumt (Dead Code entfernt). (`src/core/StartupBuilder.cpp:74-81,115-139`, `src/include/base_library/core/services/SignalService.h`).
 
 7. **MessageQueueService DB-Zugriff aus Konstruktor entfernt** – `m_messageQueueRepository->allOf(".*", ".*")` wurde im Konstruktor aufgerufen (vor DB-Bootstrap). Jetzt in `onInitialize()` – die `InitializeService`-Pipeline ruft dies nach dem Bootstrap auf. (`src/features/base/services/MessageQueueService.cpp:39-47`, `src/include/base_library/features/base/services/MessageQueueService.h:46`).
+
+8. **CLI InputService: std::getchar → ::read bricht Prompt-Flush** – Der Wechsel von `std::getchar()` zu `::read(STDIN_FILENO, ...)` in `InputService::onRead()` unterbrach die implizite Flush-Kette: `std::getchar()` triggert über den C-Standard (C11 §7.21.3/7) einen Flush aller line-buffered Output-Streams; `::read()` als reiner Syscall tut dies nicht. Dadurch blieben Login-Prompts im `std::cout`-Puffer unsichtbar, der Benutzer drückte Enter, der leere Username führte zum sofortigen Exit. Fix: `std::cout.flush()` vor `::read()` in `onRead()`. (`src/features/cli/services/InputService.cpp:29`).
+
+9. **CLI-Services nicht mockbar (fehlende Interfaces)** – `InputService`, `TerminalService` und `UserApi` hatten keine virtuellen Methoden/Interfaces, was isolierte Unit-Tests für CLI-Komponenten unmöglich machte. Fix: Interfaces `IInputService`, `ITerminalService` extrahiert (`src/include/base_library/features/cli/services/IInputService.h`, `src/include/base_library/features/cli/services/ITerminalService.h`), gemeinsame Typen (`KeyType`, `Symbol`) in `CliTypes.h` ausgelagert (`src/include/base_library/features/cli/CliTypes.h`). `UserApi`-Methoden (`loginOf`, `logoutOf`, `isLoggedIn`) auf virtual geändert, protected Default-Konstruktor für Mocking ergänzt (`src/include/base_library/features/http/controllers/UserApi.h`). Dependency Injection in `CommandLineFeature.cpp` registriert die Typen nun auch als Interfaces (`as<IInputService>`, `as<ITerminalService>`).
+
+10. **Fehlende Unit-Tests für AuthCliService** – Der Login-Flow (`readUserName`, `readPassword`, `onLogin`) war ungetestet. Fix: 5 neue Unit-Tests in `tests/cli/AuthCliServiceMockTest.cpp` mit `StubInputService`/`StubTerminalService` (queue-basierte Test-Doubles) und `MockUserApi`. Getestet: CtrlC → nullopt, Eof → nullopt, erfolgreicher Login, leeres Passwort → Wiederholung, fehlgeschlagener Login → Wiederholung. (`tests/cli/AuthCliServiceMockTest.cpp`, `tests/mocks/MockUserApi.h`, `tests/CMakeLists.txt`).
 
 ---
 

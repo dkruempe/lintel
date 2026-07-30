@@ -9,8 +9,8 @@
 AuthCliService::AuthCliService(
         std::shared_ptr<UserApi> userApi,
         std::shared_ptr<CommandLineUtils> commandLineUtils,
-        std::shared_ptr<InputService> inputService,
-        std::shared_ptr<TerminalService> terminalService,
+        std::shared_ptr<IInputService> inputService,
+        std::shared_ptr<ITerminalService> terminalService,
         std::shared_ptr<AuthArgumentProvider> authArgumentProvider)
         : m_userApi(std::move(userApi)),
           m_commandLineUtils(std::move(commandLineUtils)),

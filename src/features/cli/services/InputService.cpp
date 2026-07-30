@@ -1,5 +1,7 @@
 #include "base_library/features/cli/services/InputService.h"
 
+#include "base_library/features/cli/CliTypes.h"
+
 #include <csignal>
 #include <cstdlib>
 #include <mutex>

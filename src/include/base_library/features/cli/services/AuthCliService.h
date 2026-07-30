@@ -6,23 +6,23 @@
 
 #include "base_library/features/http/controllers/UserApi.h"
 #include "base_library/features/cli/providers/AuthArgumentProvider.h"
-#include "base_library/features/cli/services/InputService.h"
-#include "base_library/features/cli/services/TerminalService.h"
+#include "base_library/features/cli/services/IInputService.h"
+#include "base_library/features/cli/services/ITerminalService.h"
 #include "base_library/features/cli/utils/CommandLineUtils.h"
 
 class AuthCliService {
 private:
     std::shared_ptr<UserApi> m_userApi;
     std::shared_ptr<CommandLineUtils> m_commandLineUtils;
-    std::shared_ptr<InputService> m_inputService;
-    std::shared_ptr<TerminalService> m_terminalService;
+    std::shared_ptr<IInputService> m_inputService;
+    std::shared_ptr<ITerminalService> m_terminalService;
     std::shared_ptr<AuthArgumentProvider> m_authArgumentProvider;
 
 public:
     AuthCliService(std::shared_ptr<UserApi> userApi,
                    std::shared_ptr<CommandLineUtils> commandLineUtils,
-                   std::shared_ptr<InputService> inputService,
-                   std::shared_ptr<TerminalService> terminalService,
+                   std::shared_ptr<IInputService> inputService,
+                   std::shared_ptr<ITerminalService> terminalService,
                    std::shared_ptr<AuthArgumentProvider> argumentProvider);
 
     std::optional<UserDto> onLogin();

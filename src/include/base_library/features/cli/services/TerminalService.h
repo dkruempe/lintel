@@ -1,34 +1,28 @@
 #ifndef CPP_BASE_LIBRARY_TERMINALSERVICE_H
 #define CPP_BASE_LIBRARY_TERMINALSERVICE_H
 
-#include <base_library/features/cli/services/InputService.h>
+#include "base_library/features/cli/services/ITerminalService.h"
 
 #include <string>
-#include <utility>
 
-enum class Symbol {
-    Nothing, Command, Up, Down, Tab, Eof, CtrlC, CtrlR
-};
-using SymbolEvent = std::pair<Symbol, std::string>;
-
-class TerminalService {
+class TerminalService : public ITerminalService {
 private:
     std::string m_currentLine;
     std::size_t m_position = 0;  // next writing position in currentLine
     bool m_hideChars = false;
 
 public:
-    void log(const std::string &text);
+    void log(const std::string &text) override;
 
-    SymbolEvent onKeyPressed(KeyEvent, std::string menu);
+    SymbolEvent onKeyPressed(KeyEvent key, std::string menu) override;
 
-    void resetCursor();
+    void resetCursor() override;
 
-    const std::string &getLine();
+    const std::string &getLine() override;
 
-    void enableHideChars();
+    void enableHideChars() override;
 
-    void disableHideChars();
+    void disableHideChars() override;
 };
 
 #endif  // CPP_BASE_LIBRARY_TERMINALSERVICE_H

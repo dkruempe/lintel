@@ -20,8 +20,8 @@ void CommandLineFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
   builder.registerType<CommandLineHistoryService>().as<AbstractServiceInterface>().asSelf().singleInstance();
   builder.registerType<AuthCliService>().singleInstance();
   builder.registerType<CommandLineUtils>().singleInstance();
-  builder.registerType<TerminalService>().singleInstance();
-  builder.registerType<InputService>().singleInstance();
+  builder.registerType<TerminalService>().as<ITerminalService>().asSelf().singleInstance();
+  builder.registerType<InputService>().as<IInputService>().asSelf().singleInstance();
   builder.registerType<AuthArgumentProvider>().as<ArgumentProvider>().asSelf().singleInstance();
   builder.registerType<UserManagementCliComponent>()
     .as<CommandLineComponent>()

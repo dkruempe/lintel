@@ -16,8 +16,8 @@
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
 #include "base_library/features/cli/models/CommandParser.h"
 #include "base_library/features/cli/services/AuthCliService.h"
-#include "base_library/features/cli/services/InputService.h"
-#include "base_library/features/cli/services/TerminalService.h"
+#include "base_library/features/cli/services/IInputService.h"
+#include "base_library/features/cli/services/ITerminalService.h"
 #include "base_library/features/cli/utils/CommandLineUtils.h"
 #include "base_library/features/http/provider/ClientProvider.h"
 
@@ -36,8 +36,8 @@ private:
   std::shared_ptr<UserApi> m_userApi;
   std::shared_ptr<CommandLineUtils> m_commandLineUtils;
   UserDto m_userDto;
-  std::shared_ptr<InputService> m_inputService;
-  std::shared_ptr<TerminalService> m_terminalService;
+  std::shared_ptr<IInputService> m_inputService;
+  std::shared_ptr<ITerminalService> m_terminalService;
   std::shared_ptr<CommandLineHistoryService> m_commandLineHistoryService;
   std::optional<std::string> m_helpComponentName;
 
@@ -66,8 +66,8 @@ public:
     std::shared_ptr<AuthCliService> authCliService,
     std::shared_ptr<UserApi> userApi,
     std::shared_ptr<CommandLineUtils> commandLineUtils,
-    std::shared_ptr<InputService> inputService,
-    std::shared_ptr<TerminalService> terminalService,
+    std::shared_ptr<IInputService> inputService,
+    std::shared_ptr<ITerminalService> terminalService,
     const std::shared_ptr<ProcessName> &processName,
     std::shared_ptr<CommandLineHistoryService> commandLineHistoryService);
 

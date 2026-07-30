@@ -16,15 +16,18 @@ class UserApi {
 private:
     std::shared_ptr<Client> m_client;
 
+protected:
+    UserApi() = default;
+
 public:
     explicit UserApi(const std::shared_ptr<ClientProvider> &clientProvider);
 
     // basic user functions for login / logout
-    std::optional<UserDto> loginOf(const UserLoginDto &userLoginDto);
+    virtual std::optional<UserDto> loginOf(const UserLoginDto &userLoginDto);
 
-    bool logoutOf(const UserTokenDto &userTokenDto);
+    virtual bool logoutOf(const UserTokenDto &userTokenDto);
 
-    bool isLoggedIn();
+    virtual bool isLoggedIn();
 
     // user management functions
     std::vector<GroupDto> allOf();
