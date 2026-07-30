@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_PROPERTYCONTROLLER_H
 
 #include "base_library/features/base/services/HistoryService.h"
+#include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/property/services/PropertyService.h"
 
@@ -22,7 +23,7 @@ private:
 
 public:
     explicit PropertyController(std::shared_ptr<PropertyService> propertyService,
-                                const std::shared_ptr<AuthService> &authService,
+                                const std::shared_ptr<IAuthService> &authService,
                                 std::shared_ptr<HistoryService> historyService);
 };
 

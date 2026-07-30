@@ -15,7 +15,7 @@
 
 MessageQueueBootstrapPlugin::MessageQueueBootstrapPlugin(
         const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
-        std::shared_ptr<Configuration> configuration, std::shared_ptr<MessageQueueRepository> messageQueueRepository,
+        std::shared_ptr<Configuration> configuration, std::shared_ptr<IMessageQueueRepository> messageQueueRepository,
         std::shared_ptr<ProcessName> processName) :
         m_messageQueueRepository(std::move(messageQueueRepository)),
         m_configuration(std::move(configuration)),

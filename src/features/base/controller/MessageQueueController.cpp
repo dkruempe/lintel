@@ -2,8 +2,8 @@
 
 #include "base_library/features/base/controller/MessageQueueDtos.h"
 
-MessageQueueController::MessageQueueController(const std::shared_ptr<AuthService> &authService,
-  std::shared_ptr<MessageQueueRepository> messageQueueRepository,
+MessageQueueController::MessageQueueController(const std::shared_ptr<IAuthService> &authService,
+  std::shared_ptr<IMessageQueueRepository> messageQueueRepository,
   std::shared_ptr<MessageQueueService> messageQueueService)
   : Controller(authService),
     m_messageQueueRepository(std::move(messageQueueRepository)),

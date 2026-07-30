@@ -2,13 +2,13 @@
 #define CPP_BASE_LIBRARY_USERCONTROLLER_H
 
 #include "base_library/features/base/repositories/UserRepository.h"
-#include "base_library/features/base/services/AuthService.h"
+#include "base_library/features/base/repositories/GroupRepository.h"
+#include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/http/service/ContentType.h"
 
 class UserController : public Controller {
 private:
-    std::shared_ptr<AuthService> m_authService;
     std::shared_ptr<GroupRepository> m_groupRepository;
     std::shared_ptr<UserRepository> m_userRepository;
     Group m_adminUser;
@@ -39,7 +39,7 @@ private:
     ADD_HANDLER_METHOD("/user/delete", Delete, deleteUser);
 
 public:
-    explicit UserController(const std::shared_ptr<AuthService> &authService,
+    explicit UserController(const std::shared_ptr<IAuthService> &authService,
                             std::shared_ptr<GroupRepository> groupRepository,
                             std::shared_ptr<UserRepository> userRepository);
 };

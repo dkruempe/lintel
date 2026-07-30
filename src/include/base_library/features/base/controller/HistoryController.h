@@ -1,7 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_HISTORYCONTROLLER_H
 #define CPP_BASE_LIBRARY_HISTORYCONTROLLER_H
 
-#include "base_library/features/base/services/AuthService.h"
+#include "base_library/features/base/repositories/GroupRepository.h"
+#include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/base/repositories/HistoryRepository.h"
 #include "base_library/features/http/service/ContentType.h"
@@ -16,7 +17,7 @@ private:
                        historyOf);
 
 public:
-    explicit HistoryController(const std::shared_ptr<AuthService> &authService,
+    explicit HistoryController(const std::shared_ptr<IAuthService> &authService,
                                std::shared_ptr<GroupRepository> groupRepository,
                                std::shared_ptr<HistoryRepository> historyRepository);
 };

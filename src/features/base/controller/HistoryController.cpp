@@ -34,7 +34,7 @@ void HistoryController::historyOfGet(const httplib::Request &request, httplib::R
     }
 }
 
-HistoryController::HistoryController(const std::shared_ptr<AuthService> &authService,
+HistoryController::HistoryController(const std::shared_ptr<IAuthService> &authService,
                                      std::shared_ptr<GroupRepository> groupRepository,
                                      std::shared_ptr<HistoryRepository> historyRepository)
         : Controller(authService),

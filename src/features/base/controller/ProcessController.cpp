@@ -6,7 +6,7 @@
 #include "base_library/features/base/models/Process.h"
 
 ProcessController::ProcessController(
-        const std::shared_ptr<AuthService> &authService,
+        const std::shared_ptr<IAuthService> &authService,
         std::shared_ptr<ProcessService> processService)
         : Controller(authService),
           m_processService(std::move(processService)),

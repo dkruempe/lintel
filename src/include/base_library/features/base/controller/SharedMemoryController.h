@@ -3,6 +3,7 @@
 
 #include "base_library/core/services/SharedMemoryService.h"
 #include "base_library/features/base/repositories/SharedMemoryRepository.h"
+#include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/http/service/ContentType.h"
 
@@ -49,7 +50,7 @@ private:
 
 public:
     SharedMemoryController(
-            const std::shared_ptr<AuthService> &authServicie,
+            const std::shared_ptr<IAuthService> &authServicie,
             std::shared_ptr<SharedMemoryService> sharedMemoryService,
             std::shared_ptr<SharedMemorySegmentManager> sharedMemorySegmentManager,
             std::vector<std::shared_ptr<SharedMemoryRepository>> sharedMemoryRepositories);

@@ -10,6 +10,7 @@ if (NOT TARGET kruempelmann::base_library)
     include_directories(${base_library_INCLUDE_DIRS})
 endif ()
 find_package(Catch2 REQUIRED)
+find_package(trompeloeil REQUIRED)
 
 # property Test
 ADD_EXECUTABLE(propertyTest models/PropertyTest.cpp)
@@ -72,3 +73,29 @@ ADD_EXECUTABLE(cliParserTest cli/CliParserTest.cpp)
 target_compile_features(cliParserTest PUBLIC cxx_std_17)
 target_link_libraries(cliParserTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.CliParserTest COMMAND cliParserTest)
+
+# Mock-based Unit Tests
+
+# Bootstrap Service Mock Test
+ADD_EXECUTABLE(bootstrapServiceMockTest services/BootstrapServiceMockTest.cpp)
+target_compile_features(bootstrapServiceMockTest PUBLIC cxx_std_17)
+target_link_libraries(bootstrapServiceMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
+ADD_TEST(NAME BaseLibrary.BootstrapServiceMockTest COMMAND bootstrapServiceMockTest)
+
+# CLI CommandLineComponent Mock Test
+ADD_EXECUTABLE(commandLineComponentMockTest cli/CommandLineComponentMockTest.cpp)
+target_compile_features(commandLineComponentMockTest PUBLIC cxx_std_17)
+target_link_libraries(commandLineComponentMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
+ADD_TEST(NAME BaseLibrary.CommandLineComponentMockTest COMMAND commandLineComponentMockTest)
+
+# HTTP Controller Mock Test
+ADD_EXECUTABLE(controllerMockTest http/ControllerMockTest.cpp)
+target_compile_features(controllerMockTest PUBLIC cxx_std_17)
+target_link_libraries(controllerMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
+ADD_TEST(NAME BaseLibrary.ControllerMockTest COMMAND controllerMockTest)
+
+# MessageQueue Service Mock Test
+ADD_EXECUTABLE(messageQueueServiceMockTest services/MessageQueueServiceMockTest.cpp)
+target_compile_features(messageQueueServiceMockTest PUBLIC cxx_std_17)
+target_link_libraries(messageQueueServiceMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
+ADD_TEST(NAME BaseLibrary.MessageQueueServiceMockTest COMMAND messageQueueServiceMockTest)

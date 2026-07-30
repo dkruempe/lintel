@@ -14,7 +14,7 @@
 MessageQueueService::MessageQueueService(
   const std::shared_ptr<Configuration> &configuration,
   std::shared_ptr<ProcessName> processName,
-  std::shared_ptr<MessageQueueRepository> messageQueueRepository)
+  std::shared_ptr<IMessageQueueRepository> messageQueueRepository)
   : AbstractService<MessageQueueService>(processName->getProcessName()),
     m_processName(std::move(processName)),
     m_messageQueueRepository(std::move(messageQueueRepository)),

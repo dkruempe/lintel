@@ -25,8 +25,10 @@
 #include "base_library/features/base/repositories/GroupRepository.h"
 #include "base_library/features/base/repositories/HistoryRepository.h"
 #include "base_library/features/base/repositories/MessageQueueRepository.h"
+#include "base_library/features/base/repositories/IMessageQueueRepository.h"
 #include "base_library/features/base/repositories/UserRepository.h"
 #include "base_library/features/base/services/AuthService.h"
+#include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/HistoryService.h"
 #include "base_library/features/base/controller/HistoryController.h"
@@ -48,6 +50,7 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
 {
   builder.registerType<AuthService>()
     .as<AbstractServiceInterface>()
+    .as<IAuthService>()
     .asSelf()
     .singleInstance();
   builder.registerType<SchedulerService>()
@@ -90,6 +93,8 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
     .asSelf()
     .singleInstance();
   builder.registerType<MessageQueueRepository>()
+    .as<IMessageQueueRepository>()
+    .asSelf()
     .singleInstance();
   builder.registerType<UserRepository>().singleInstance();
   builder.registerType<ProcessArgumentService>().singleInstance();

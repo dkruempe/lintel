@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_PROCESSCONTROLLER_H
 
 #include "base_library/core/services/ProcessService.h"
+#include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 
 class ProcessController : public Controller {
@@ -21,7 +22,7 @@ private:
     ADD_HANDLER_METHOD(R"(/process/terminate/([^\/]+))", Delete, terminateProcess);
 
 public:
-    ProcessController(const std::shared_ptr<AuthService> &authService,
+    ProcessController(const std::shared_ptr<IAuthService> &authService,
                       std::shared_ptr<ProcessService> processService);
 };
 

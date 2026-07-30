@@ -2,7 +2,7 @@
 
 #include <utility>
 
-ExampleController::ExampleController(std::shared_ptr<AuthService> authService)
+ExampleController::ExampleController(std::shared_ptr<IAuthService> authService)
         : Controller(std::move(authService)) {}
 
 void ExampleController::helloGet(const httplib::Request &request,

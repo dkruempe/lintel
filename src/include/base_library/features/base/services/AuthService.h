@@ -1,35 +1,15 @@
 #ifndef CPP_BASE_LIBRARY_AUTHSERVICE_H
 #define CPP_BASE_LIBRARY_AUTHSERVICE_H
 
-#include <date/tz.h>
-
 #include <atomic>
-#include <chrono>
-#include <optional>
+#include <map>
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/repositories/UserRepository.h"
+#include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/base/services/SchedulerService.h"
 
-struct UserLogin {
-    std::string m_ipAddress;
-    std::string m_userName;
-    std::string m_password;
-};
-
-struct UserTokenLogin {
-    std::string m_ipAddress;
-    std::string m_id;
-};
-
-struct UserToken {
-    std::string m_ipAddress;
-    std::string m_id;
-    date::sys_time<std::chrono::microseconds> m_lastAccessTimestamps;
-    User m_user;
-};
-
-class AuthService : public AbstractService<AuthService> {
+class AuthService : public IAuthService, public AbstractService<AuthService> {
 private:
     // properties
     DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),

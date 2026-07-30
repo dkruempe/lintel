@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 #include "base_library/features/base/configuration/MessageQueueEntry.h"
-#include "base_library/features/base/repositories/MessageQueueRepository.h"
+#include "base_library/features/base/repositories/IMessageQueueRepository.h"
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/features/base/configuration/Configuration.h"
@@ -17,7 +17,7 @@ class MessageQueueService : public AbstractService<MessageQueueService>
 {
 private:
   std::shared_ptr<ProcessName> m_processName;
-  std::shared_ptr<MessageQueueRepository> m_messageQueueRepository;
+  std::shared_ptr<IMessageQueueRepository> m_messageQueueRepository;
   std::map<std::string, std::shared_ptr<MessageQueueEntry> > m_configurationMap;
   std::map<std::string, std::shared_ptr<MessageQueue<Message> > > m_messageQueues{};
 
@@ -32,7 +32,7 @@ public:
    */
   MessageQueueService(const std::shared_ptr<Configuration> &configuration,
     std::shared_ptr<ProcessName> processName,
-    std::shared_ptr<MessageQueueRepository> messageQueueRepository);
+    std::shared_ptr<IMessageQueueRepository> messageQueueRepository);
 
   /**
    * returns self owning message queue, processName is current processName

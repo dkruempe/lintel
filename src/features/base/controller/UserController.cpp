@@ -56,11 +56,10 @@ void UserController::loginOfPost(const httplib::Request &request,
     }
 }
 
-UserController::UserController(const std::shared_ptr<AuthService> &authService,
+UserController::UserController(const std::shared_ptr<IAuthService> &authService,
                                std::shared_ptr<GroupRepository> groupRepository,
                                std::shared_ptr<UserRepository> userRepository)
         : Controller(authService),
-          m_authService(authService),
           m_groupRepository(std::move(groupRepository)),
           m_userRepository(std::move(userRepository)),
           m_adminUser("Admin-User", {}, true),

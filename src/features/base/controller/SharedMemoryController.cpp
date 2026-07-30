@@ -8,7 +8,7 @@
 #include "base_library/features/base/controller/SharedMemorySegmentsDto.h"
 
 SharedMemoryController::SharedMemoryController(
-        const std::shared_ptr<AuthService> &authServicie,
+        const std::shared_ptr<IAuthService> &authServicie,
         std::shared_ptr<SharedMemoryService> sharedMemoryService,
         std::shared_ptr<SharedMemorySegmentManager> sharedMemorySegmentManager,
         std::vector<std::shared_ptr<SharedMemoryRepository>>

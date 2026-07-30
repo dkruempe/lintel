@@ -6,8 +6,9 @@
 #include <base_library/features/base/configuration/MessageQueueEntry.h>
 #include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
 #include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
+#include <base_library/features/base/repositories/IMessageQueueRepository.h>
 
-class MessageQueueRepository
+class MessageQueueRepository : public IMessageQueueRepository
 {
 private:
   std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;

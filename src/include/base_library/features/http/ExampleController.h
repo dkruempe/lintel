@@ -9,7 +9,7 @@ private:
     ADD_HANDLER_METHOD("/hello", Get, hello);
 
 public:
-    explicit ExampleController(std::shared_ptr<AuthService> authService);
+    explicit ExampleController(std::shared_ptr<IAuthService> authService);
 };
 
 #endif  // CPP_BASE_LIBRARY_EXAMPLECONTROLLER_H

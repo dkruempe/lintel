@@ -12,7 +12,7 @@
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/base/provider/GroupProvider.h"
-#include "base_library/features/base/services/AuthService.h"
+#include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/ContentType.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 
@@ -57,7 +57,7 @@
 
 class Controller : public GroupProvider {
 protected:
-    std::shared_ptr<AuthService> m_authService;
+    std::shared_ptr<IAuthService> m_authService;
     using HandlerArgs = void(const httplib::Request &, httplib::Response &);
     using HandlerWithContentReaderArgs = void(const httplib::Request &,
                                               httplib::Response &,
@@ -115,7 +115,7 @@ protected:
 
 public:
     // default constructor / destructor
-    explicit Controller(std::shared_ptr<AuthService> authService)
+    explicit Controller(std::shared_ptr<IAuthService> authService)
         : GroupProvider(), m_authService(std::move(authService)) {
     }
 
