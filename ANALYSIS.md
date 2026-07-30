@@ -22,9 +22,7 @@
 
 1. **Shared Memory Tests fehlen** – SharedMemoryRepository und SharedMemorySegmentManager sind aufgrund tiefer Boost.Interprocess-Kopplung in `SharedMemorySegment`/`SharedMemorySegmentInfo` (shm-Konstruktor, managed_shared_memory) nicht isoliert testbar. **Status: weiterhin offen.**
 
-3. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
-
-4. **Kein Binary-Separation** – Core und Features werden in eine einzige Shared Library (`base_library`) kompiliert. Optionalität der Features ist nur zur Compile-Zeit über das Registrieren im StartupBuilder gegeben – nicht auf Binärebene.
+2. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
 
 ---
 
