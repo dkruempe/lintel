@@ -9,7 +9,8 @@
 #include <mutex>
 #include <thread>
 
-#include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/PropertyRegistration.h"
+#include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 #include "base_library/features/base/controller/ProcessGroupDto.h"
 #include "base_library/features/base/models/Process.h"
@@ -17,9 +18,8 @@
 #include "base_library/features/base/models/ProcessInfo.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/HistoryService.h"
-#include "base_library/features/property/services/PropertyService.h"
 
-class ProcessService : public AbstractService<ProcessService> {
+class ProcessService : public PropertyRegistration<ProcessService> {
 private:
     class ProcessExecutes {
     private:
@@ -78,12 +78,8 @@ private:
     std::condition_variable m_condition;
     std::mutex m_mutex;
     // properties
-    DEFINE_PROPERTY(m_monitorWaitTime, std::chrono::seconds,
-                    std::chrono::seconds(1), "Wait time after monitor cycle",
-                    true);
-    DEFINE_PROPERTY(m_processStopWaitTime, std::chrono::milliseconds,
-                    std::chrono::milliseconds(200),
-                    "Wait time for stopping a process", true);
+    std::shared_ptr<Property<std::chrono::seconds>> m_monitorWaitTime;
+    std::shared_ptr<Property<std::chrono::milliseconds>> m_processStopWaitTime;
 
     void run();
 

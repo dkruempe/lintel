@@ -48,7 +48,7 @@ void UserController::loginOfPost(const httplib::Request &request,
                  userToken.value().m_id);
         UserDto userDto(userToken.value().m_user, userToken.value().m_id);
         const std::string responseBody = userDto.JsonSerializable::serialize();
-        response.set_content(responseBody, "application/json");
+        response.set_content(responseBody, contentType.getName());
     } catch (const std::exception &exception) {
         LOG_ERROR("login failed {} for {}", exception.what(), request.body);
         response.status = HttpStatusCodes::Forbidden;

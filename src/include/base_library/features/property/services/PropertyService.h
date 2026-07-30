@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/PersistableBean.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/property/exceptions/PropertyNoRuntimeChangeSupported.h"

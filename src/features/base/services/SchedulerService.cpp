@@ -58,8 +58,12 @@ void SchedulerService::onInitialize() {
 
 SchedulerService::SchedulerService(
         const std::shared_ptr<ProcessName> &processName)
-        : AbstractService<SchedulerService>(processName->getProcessName()),
-          m_exit(false) {}
+        : PropertyRegistration(processName->getProcessName()),
+          m_exit(false) {
+    numberOfThreads = registerProperty<int>(
+            "numberOfThreads", 40, "Number of Scheduler Threads", false,
+            __FILE__, __LINE__);
+}
 
 SchedulerService::~SchedulerService() {
     {

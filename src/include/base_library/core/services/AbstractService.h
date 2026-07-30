@@ -7,9 +7,8 @@
 #include <vector>
 #include <base_library/core/models/ShutdownPriority.h>
 
-#include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/TypeName.h"
-#include "base_library/features/property/models/Property.h"
+class PropertyBase;
 
 class PropertyService;
 
@@ -53,24 +52,6 @@ private:
 
 protected:
     std::vector<std::shared_ptr<PropertyBase>> m_properties;
-
-    template<class type>
-    std::shared_ptr<Property<type>> registerProperty(
-            std::string name, type defaultValue, std::string description,
-            bool runtime, const std::string &fileName, int32_t position) {
-        std::shared_ptr<Property<type>> property = std::make_shared<Property<type>>(
-                name, getInstanceName(), std::string(getClassName()), getProcessName(),
-                defaultValue, description, runtime);
-        LOG_INFO("Property<{}> {} = {}", type_name<type>(), name,
-                 property->toString());
-        const std::filesystem::path &path(fileName);
-
-        property->setDataStorage(DataStorage(
-                PropertyRepositoryType::DEFAULT,
-                path.filename().generic_string() + ":" + std::to_string(position)));
-        m_properties.push_back(property);
-        return property;
-    }
 
 public:
     AbstractService() = delete;

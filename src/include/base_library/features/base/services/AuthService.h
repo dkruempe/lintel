@@ -4,18 +4,16 @@
 #include <atomic>
 #include <map>
 
-#include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/PropertyRegistration.h"
 #include "base_library/features/base/repositories/UserRepository.h"
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/base/services/SchedulerService.h"
 
-class AuthService : public IAuthService, public AbstractService<AuthService> {
+class AuthService : public IAuthService, public PropertyRegistration<AuthService> {
 private:
     // properties
-    DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),
-                    "schedule rate of user tokens checks in seconds", true);
-    DEFINE_PROPERTY(m_timeoutLogin, std::chrono::minutes, std::chrono::minutes(5),
-                    "timeout of user login in minutes", true);
+    std::shared_ptr<Property<std::chrono::seconds>> m_scheduleRate;
+    std::shared_ptr<Property<std::chrono::minutes>> m_timeoutLogin;
     // variables
     std::map<std::string, UserToken> m_userTokens;
     std::shared_ptr<UserRepository> m_userRepository;

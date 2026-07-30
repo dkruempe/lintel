@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/controller/HistoryApi.h"
 
 #include "base_library/features/base/controller/HistoryDtos.h"

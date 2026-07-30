@@ -36,7 +36,13 @@
               UserTokenLogin userTokenLogin{request.remote_addr, id};         \
               user = m_authService->onAccessOf(userTokenLogin);               \
             }                                                                 \
-            name##httpType(request, response, contentType, user);             \
+            try {                                                             \
+              name##httpType(request, response, contentType, user);           \
+            } catch (const std::exception &e) {                               \
+              LOG_ERROR("{}: {}", #name, e.what());                           \
+              response.status = HttpStatusCodes::InternalServerError;         \
+              response.set_content(e.what(), "text/plain");                   \
+            }                                                                 \
           })
 
 #define ADD_HANDLER_CONTENT_READER_METHOD(pattern, httpType, name)          \
@@ -48,7 +54,13 @@
             const std::string contentTypeString =                           \
                 request.get_header_value("Content-Type");                   \
             ContentType contentType(contentTypeString);                     \
-            name##httpType(request, response, contentReader, contentType);  \
+            try {                                                             \
+              name##httpType(request, response, contentReader, contentType);  \
+            } catch (const std::exception &e) {                               \
+              LOG_ERROR("{}: {}", #name, e.what());                           \
+              response.status = HttpStatusCodes::InternalServerError;         \
+              response.set_content(e.what(), "text/plain");                   \
+            }                                                                 \
           });                                                               \
   void name##httpType(const httplib::Request &request,                      \
                       httplib::Response &response,                          \

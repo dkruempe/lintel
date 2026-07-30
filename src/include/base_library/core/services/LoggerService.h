@@ -6,7 +6,7 @@
  */
 #include <spdlog/spdlog.h>
 
-#include "base_library/features/base/configuration/Configuration.h"
+class Configuration;
 #include "base_library/features/base/models/ProcessName.h"
 
 class LoggerService

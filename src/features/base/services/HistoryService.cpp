@@ -9,13 +9,25 @@ HistoryService::HistoryService(
         std::shared_ptr<SchedulerService> schedulerService,
         std::shared_ptr<HistoryRepository> historyRepository,
         std::shared_ptr<MessageQueueService> messageQueueService)
-        : AbstractService<HistoryService>(processName->getProcessName()),
+        : PropertyRegistration(processName->getProcessName()),
           m_schedulerService(std::move(schedulerService)),
           m_historyRepository(std::move(historyRepository)), m_messageQueueSerivice(std::move(messageQueueService)),
           m_processName(std::move(processName)), m_historyMessageQueue(
                 m_messageQueueSerivice->of(static_cast<MessageQueues>(MessageQueues::HISTORY).getMessageQueueName())),
           m_historyMessageQueueReceive(m_messageQueueSerivice->of(
                   static_cast<MessageQueues>(MessageQueues::HISTORY).getMessageQueueName())) {
+    m_duration = registerProperty<std::chrono::seconds>(
+            "m_duration", std::chrono::seconds(1),
+            "Duration of scheduling", true, __FILE__, __LINE__);
+    m_period = registerProperty<std::chrono::seconds>(
+            "m_period", std::chrono::seconds(1),
+            "Period of scheduling", true, __FILE__, __LINE__);
+    m_forceQueue = registerProperty<bool>(
+            "m_forceQueue", false,
+            "Force usage of queue", true, __FILE__, __LINE__);
+    m_commitRate = registerProperty<std::size_t>(
+            "m_commitRate", static_cast<std::size_t>(100),
+            "Commit Rate", true, __FILE__, __LINE__);
 }
 
 void HistoryService::onInitialize() {

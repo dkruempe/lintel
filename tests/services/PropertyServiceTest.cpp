@@ -1,3 +1,4 @@
+#include <base_library/core/services/PropertyRegistration.h>
 #include <base_library/features/property/services/PropertyService.h>
 
 #include <catch2/catch_all.hpp>
@@ -25,11 +26,11 @@ void createExampleProperties(PropertyService &propertyService) {
     REQUIRE(emptyStringProperty->getValue() == "");
 }
 
-class PropertyExampleClass : public AbstractService<PropertyExampleClass> {
+class PropertyExampleClass : public PropertyRegistration<PropertyExampleClass> {
 public:
     explicit PropertyExampleClass(
             const std::shared_ptr<PropertyService> &propertyService)
-            : AbstractService("testProcess", "testInstance") {
+            : PropertyRegistration("testProcess", "testInstance") {
         LOAD_PROPERTIES();
     }
 

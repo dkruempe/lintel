@@ -9,10 +9,9 @@
 #include <type_traits>     // wichtig für decay_t und invoke_result_t
 #include <vector>
 
-#include "base_library/core/services/AbstractService.h"
-#include "base_library/features/property/services/PropertyService.h"
+#include "base_library/core/services/PropertyRegistration.h"
 
-class SchedulerService : public AbstractService<SchedulerService>
+class SchedulerService : public PropertyRegistration<SchedulerService>
 {
 private:
     struct Task
@@ -46,7 +45,7 @@ private:
 
     void run();
 
-    DEFINE_PROPERTY(numberOfThreads, int, 40, "Number of Scheduler Threads", false);
+    std::shared_ptr<Property<int>> numberOfThreads;
 
 public:
     template<class F, class... Args>

@@ -11,8 +11,8 @@ void ExampleController::helloGet(const httplib::Request &request,
                                  const std::optional<UserToken> &user) {
     if (user.has_value()) {
         response.set_content("Hello >" + user->m_user.getUserName() + "< !",
-                             "text/plain");
+                             contentType.getName());
     } else {
-        response.set_content("Hello World!", "text/plain");
+        response.set_content("Hello World!", contentType.getName());
     }
 }

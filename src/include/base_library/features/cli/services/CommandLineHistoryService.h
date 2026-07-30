@@ -1,6 +1,6 @@
 #ifndef COMMANDLINEHISTORYSERVICE_H
 #define COMMANDLINEHISTORYSERVICE_H
-#include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/PropertyRegistration.h"
 #include "base_library/core/services/FileService.h"
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/cli/models/CommandHistoryEntry.h"
@@ -14,15 +14,11 @@
  * data structure:
  * - file will be saved as CSV (TS, USER_NAME, Command)
  */
-class CommandLineHistoryService : public AbstractService<CommandLineHistoryService>
+class CommandLineHistoryService : public PropertyRegistration<CommandLineHistoryService>
 {
 private:
-  DEFINE_PROPERTY(m_maxCommandHistoryEntries,
-    std::size_t,
-    1000,
-    "Maximal count of history command entries per local save file",
-    true);
-  DEFINE_PROPERTY(m_historyFileName, std::string, ".history", "Filename of local history file", false);
+  std::shared_ptr<Property<std::size_t>> m_maxCommandHistoryEntries;
+  std::shared_ptr<Property<std::string>> m_historyFileName;
 
   // runtime parameters
   std::vector<CommandHistoryEntry> m_history;

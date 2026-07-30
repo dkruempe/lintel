@@ -12,8 +12,17 @@
 #include <string>
 
 CommandLineHistoryService::CommandLineHistoryService(const std::shared_ptr<ProcessName> &processName)
-  : AbstractService(processName->getProcessName()), m_position(std::nullopt)
-{}
+  : PropertyRegistration(processName->getProcessName()), m_position(std::nullopt)
+{
+  m_maxCommandHistoryEntries = registerProperty<std::size_t>(
+          "m_maxCommandHistoryEntries", static_cast<std::size_t>(1000),
+          "Maximal count of history command entries per local save file", true,
+          __FILE__, __LINE__);
+  m_historyFileName = registerProperty<std::string>(
+          "m_historyFileName", std::string(".history"),
+          "Filename of local history file", false,
+          __FILE__, __LINE__);
+}
 
 std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(std::string menu)
 {

@@ -2,7 +2,9 @@
 #define CPP_BASE_LIBRARY_STARTUPBUILDER_H
 
 #include <atomic>
+#include <condition_variable>
 #include <memory>
+#include <mutex>
 #include <thread>
 #include <vector>
 

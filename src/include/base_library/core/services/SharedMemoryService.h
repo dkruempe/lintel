@@ -15,14 +15,13 @@
 
 #include "base_library/core/exceptions/ShmSegmentNotFound.h"
 #include "base_library/core/models/SharedMemorySegment.h"
-#include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/PropertyRegistration.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/models/SharedMemorySegmentInfo.h"
 #include "base_library/features/base/services/SchedulerService.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
-#include "base_library/features/property/models/Property.h"
 
-class SharedMemoryService : public AbstractService<SharedMemoryService> {
+class SharedMemoryService : public PropertyRegistration<SharedMemoryService> {
 private:
     struct MappedFile {
         std::shared_ptr<boost::interprocess::managed_mapped_file>
@@ -33,11 +32,9 @@ private:
     std::map<std::string, MappedFile> m_segments;
     std::shared_ptr<SchedulerService> m_schedulerService;
     // properties
-    DEFINE_PROPERTY(m_scheduleRate, std::chrono::seconds, std::chrono::seconds(2),
-                    "schedule rate of user tokens checks in seconds", true);
-    DEFINE_PROPERTY(m_autoExtend, bool, true, "auto extend shared memory", true);
-    DEFINE_PROPERTY(m_autoExtendEpsilon, std::size_t, 1000,
-                    "epsilon when auto extend gets triggered", true);
+    std::shared_ptr<Property<std::chrono::seconds>> m_scheduleRate;
+    std::shared_ptr<Property<bool>> m_autoExtend;
+    std::shared_ptr<Property<std::size_t>> m_autoExtendEpsilon;
 
     // initializer function
     static std::map<std::string, MappedFile> create(

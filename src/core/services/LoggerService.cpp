@@ -1,6 +1,7 @@
 #include "base_library/core/services/LoggerService.h"
 
 #include <spdlog/sinks/daily_file_sink.h>
+#include "base_library/features/base/configuration/Configuration.h"
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/tcp_sink.h>

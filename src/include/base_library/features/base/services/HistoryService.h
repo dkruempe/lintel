@@ -1,4 +1,4 @@
-#include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/PropertyRegistration.h"
 #include "base_library/features/base/models/HistoryEntry.h"
 #include "base_library/features/base/repositories/HistoryRepository.h"
 #include "base_library/features/base/services/SchedulerService.h"
@@ -9,15 +9,13 @@
 #ifndef CPP_BASE_LIBRARY_HISTORYSERVICE_H
 #define CPP_BASE_LIBRARY_HISTORYSERVICE_H
 
-class HistoryService : public AbstractService<HistoryService> {
+class HistoryService : public PropertyRegistration<HistoryService> {
 private:
     // properties
-    DEFINE_PROPERTY(m_duration, std::chrono::seconds, std::chrono::seconds(1),
-                    "Duration of scheduling", true);
-    DEFINE_PROPERTY(m_period, std::chrono::seconds, std::chrono::seconds(1),
-                    "Period of scheduling", true);
-    DEFINE_PROPERTY(m_forceQueue, bool, false, "Force usage of queue", true);
-    DEFINE_PROPERTY(m_commitRate, std::size_t, 100, "Commit Rate", true);
+    std::shared_ptr<Property<std::chrono::seconds>> m_duration;
+    std::shared_ptr<Property<std::chrono::seconds>> m_period;
+    std::shared_ptr<Property<bool>> m_forceQueue;
+    std::shared_ptr<Property<std::size_t>> m_commitRate;
     // injections
     std::shared_ptr<SchedulerService> m_schedulerService;
     std::shared_ptr<HistoryRepository> m_historyRepository;

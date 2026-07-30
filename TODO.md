@@ -22,8 +22,8 @@
     - [ ] Cursor implementation
     - [ ] adds constexpr implementation for better usage and performance
 - Http
-    - [ ] implement better exception handling
-    - [ ] use enums in implementations
+    - [x] implement better exception handling – try-catch in Controller.h-Macros, logs + 500 on unhandled exceptions
+    - [x] use enums in implementations – ContentType::getName() statt Literale in ExampleController + UserController
     - [ ] support of paging
 - Docker Support
     - [x] add support for testing software via docker

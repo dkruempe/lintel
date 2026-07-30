@@ -12,9 +12,18 @@
 AuthService::AuthService(const std::shared_ptr<ProcessName> &processName,
                          std::shared_ptr<UserRepository> userRepository,
                          std::shared_ptr<SchedulerService> schedulerService)
-        : AbstractService<AuthService>(processName->getProcessName()),
+        : PropertyRegistration(processName->getProcessName()),
           m_userRepository(std::move(userRepository)),
-          m_scheduler(std::move(schedulerService)) {}
+          m_scheduler(std::move(schedulerService)) {
+    m_scheduleRate = registerProperty<std::chrono::seconds>(
+            "m_scheduleRate", std::chrono::seconds(2),
+            "schedule rate of user tokens checks in seconds", true,
+            __FILE__, __LINE__);
+    m_timeoutLogin = registerProperty<std::chrono::minutes>(
+            "m_timeoutLogin", std::chrono::minutes(5),
+            "timeout of user login in minutes", true,
+            __FILE__, __LINE__);
+}
 
 std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin) {
     // I first easy check of ipaddress
