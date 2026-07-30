@@ -2,6 +2,13 @@
 
 - General
     - [x] fix general std::size_t serialize solution instead of limiting it to __APPLE__
+    - [x] implement mock framework (trompeloeil) for isolated unit tests
+    - [x] modernize signal handling: std::signal + static pointer → sigwait in dedicated thread
+    - [x] MessageQueueService: DB-Zugriff aus Konstruktor in onInitialize() verschoben
+- Tests / Mocks
+    - [x] interface extraction for testability (IAuthService, IMessageQueueRepository)
+    - [x] mock classes: AuthService, BootstrapPlugin, CommandLineComponent, MessageQueueRepository, PropertyRepository
+    - [x] mock-based unit tests: BootstrapService, CLI, HTTP-Controller, MessageQueueService
 - Process
     - [ ] adds better possibility to manages process automatically
 - Shared Memory

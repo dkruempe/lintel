@@ -43,7 +43,7 @@ public:
 
   std::pair<MessageQueueEntry, int32_t> numberMessagesOf(const MessageQueueEntry &entry);
 
-  void onInitialize() override {}
+  void onInitialize() override;
 
   void onShutdown() override {}
 

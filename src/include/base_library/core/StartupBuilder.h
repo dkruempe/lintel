@@ -3,6 +3,7 @@
 
 #include <atomic>
 #include <memory>
+#include <thread>
 #include <vector>
 
 #include "base_library/core/services/AbstractService.h"
@@ -20,7 +21,7 @@ private:
     std::shared_ptr<Hypodermic::Container> m_container = nullptr;
     std::shared_ptr<ProcessName> m_name;
     std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
-    static StartupBuilder *m_startupBuilder;
+    std::thread m_signalThread;
     std::condition_variable m_conditionVariable;
     std::atomic_bool m_stop = false;
     std::vector<std::string> m_arguments;
@@ -56,7 +57,7 @@ public:
 
     void onShutdown();
 
-    static void receiveSignal(int signal);
+    void signalThreadLoop();
 
     void start();
 };

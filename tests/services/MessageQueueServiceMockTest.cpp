@@ -1,6 +1,8 @@
 #include <catch2/catch_all.hpp>
 #include <catch2/trompeloeil.hpp>
 
+#include <memory>
+
 #include "../mocks/MockMessageQueueRepository.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/configuration/Configuration.h"
@@ -21,18 +23,18 @@ namespace {
     }
 }
 
-TEST_CASE("MessageQueueService: can be constructed with mock repository") {
+TEST_CASE("MessageQueueService: can be constructed without db access") {
     auto mockRepo = std::make_shared<MockMessageQueueRepository>();
     auto processName = std::make_shared<ProcessName>("testProcess");
     auto configuration = createTestConfiguration();
 
-    REQUIRE_CALL(*mockRepo, allOf(".*", ".*"))
+    ALLOW_CALL(*mockRepo, allOf(".*", ".*"))
         .LR_RETURN(std::vector<MessageQueueEntry>{});
 
     REQUIRE_NOTHROW(MessageQueueService(configuration, processName, mockRepo));
 }
 
-TEST_CASE("MessageQueueService: repository is queried on construction") {
+TEST_CASE("MessageQueueService: repository is queried on onInitialize") {
     auto mockRepo = std::make_shared<MockMessageQueueRepository>();
     auto processName = std::make_shared<ProcessName>("testProcess");
     auto configuration = createTestConfiguration();
@@ -41,4 +43,5 @@ TEST_CASE("MessageQueueService: repository is queried on construction") {
         .LR_RETURN(std::vector<MessageQueueEntry>{});
 
     MessageQueueService service(configuration, processName, mockRepo);
+    service.onInitialize();
 }

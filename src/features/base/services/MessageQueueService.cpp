@@ -20,17 +20,6 @@ MessageQueueService::MessageQueueService(
     m_messageQueueRepository(std::move(messageQueueRepository)),
     m_configurationMap(init(configuration))
 {
-  for (const auto &iter : m_messageQueueRepository->allOf(".*", ".*")) {
-    m_messageQueues.insert({ iter.get_message_queue_name(),
-                             std::make_shared<MessageQueue<Message> >(iter.get_process_name(),
-                               iter.get_message_queue_name(),
-                               iter.get_max_messages(),
-                               m_processName) });
-  }
-  // I Validation checks
-  // 1. for given m_processName exists an entry in the Process definition ?!
-  //    -> no exception abort startup
-  // 2. size change => how to detect current size in case of still existing queue
 }
 
 std::map<std::string, std::shared_ptr<MessageQueueEntry> >
@@ -45,6 +34,16 @@ std::map<std::string, std::shared_ptr<MessageQueueEntry> >
     LOG_INFO("found message queue {}", messageQueueConf->get_message_queue_name());
   }
   return map;
+}
+
+void MessageQueueService::onInitialize() {
+  for (const auto &iter : m_messageQueueRepository->allOf(".*", ".*")) {
+    m_messageQueues.insert({ iter.get_message_queue_name(),
+                             std::make_shared<MessageQueue<Message> >(iter.get_process_name(),
+                               iter.get_message_queue_name(),
+                               iter.get_max_messages(),
+                               m_processName) });
+  }
 }
 
 std::pair<MessageQueueEntry, int32_t> MessageQueueService::numberMessagesOf(const MessageQueueEntry &entry)

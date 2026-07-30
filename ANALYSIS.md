@@ -20,17 +20,13 @@
 
 ## Schwächen
 
-1. **Fehlendes Mocking-Framework** – Tests nutzen reale Datenbankinstanzen statt Mocks. Dadurch kann die Business-Logik von HTTP-Controllern, CLI-Kommandos, Shared Memory und Message Queues nicht isoliert getestet werden. Nur 10 Testdateien, überwiegend SQLite-Integrationstests.
+1. **Ungenügende Testabdeckung trotz Mock-Framework** – Ein Mock-Framework (trompeloeil) mit 6 Mock-Klassen und 4 Unit-Tests wurde implementiert. Dennoch fehlen isolierte Tests für Shared Memory, Property-Controller, und weitere HTTP-/CLI-Komponenten. Die Testabdeckung ist weiterhin ausbaufähig.
 
-2. **Services greifen im Konstruktor auf die Datenbank zu** – `MessageQueueService` führt DB-Query im Konstruktor aus (`m_messageQueueRepository->allOf(".*", ".*")`). Setzt voraus, dass DB bereits bootstrapt ist – implizite Abhängigkeit, nicht durch Typsystem abgesichert. DB-Zugriffe sollten in einer `initialize()`-Methode nach dem Bootstrap erfolgen, nicht im Konstruktor.
+2. **Minimale Code-Dokumentation** – Kaum Doxygen-Kommentare. Öffentliche API ohne Header-Dokumentation.
 
-3. **Signal-Handling mit rohem static Pointer** (`StartupBuilder.cpp`) – `std::signal` + static raw pointer statt modernem `sigaction` + `sigwait` in dediziertem Thread. Nicht thread-safety und potentiell problematisch bei Mehrfachinstanzen.
+3. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
 
-4. **Minimale Code-Dokumentation** – Kaum Doxygen-Kommentare. Öffentliche API ohne Header-Dokumentation.
-
-5. **Vendored DI Container** – Hypodermic liegt als Copy in `external/` und ist seit 2017 nicht mehr aktiv maintained (letzter Commit). Moderne Alternativen wie Boost.DI wären wartbarer.
-
-6. **Kein Binary-Separation** – Core und Features werden in eine einzige Shared Library (`base_library`) kompiliert. Optionalität der Features ist nur zur Compile-Zeit über das Registrieren im StartupBuilder gegeben – nicht auf Binärebene.
+4. **Kein Binary-Separation** – Core und Features werden in eine einzige Shared Library (`base_library`) kompiliert. Optionalität der Features ist nur zur Compile-Zeit über das Registrieren im StartupBuilder gegeben – nicht auf Binärebene.
 
 ---
 
@@ -44,16 +40,19 @@
 
 4. **`std::size_t` Serialisierung platform-spezifisch** – `#ifdef __APPLE__` in `postgresql/Serialization.h` und `sqlite3/Serialization.h`. Fix: Durch generische SFINAE-Partialspezialisierung ersetzt – erkennt automatisch, ob `std::size_t` bereits durch `uint64_t` abgedeckt ist. (`src/include/base_library/core/persistence/postgresql/Serialization.h:22`, `src/include/base_library/core/persistence/sqlite3/Serialization.h:25`).
 
+5. **Mock-Framework implementiert** – Fehlende Isolierung in Unit-Tests durch Einführung von trompeloeil + Catch2 als Mocking-Framework. Dafür wurden Interfaces extrahiert (`IAuthService`, `IMessageQueueRepository`) und 6 Mock-Klassen erstellt. 4 neue Unit-Tests decken BootstrapService, CLI-CommandLineComponent, HTTP-Controller und MessageQueueService isoliert ab. (`tests/mocks/`, `tests/cli/`, `tests/http/`, `tests/services/`, `tests/CMakeLists.txt`).
+
+6. **Signal-Handling modernisiert** – `std::signal()` + static raw pointer durch dedizierten Signal-Thread mit `sigwait()` ersetzt. Signale werden für alle Threads geblockt (`pthread_sigmask`); nur der Signal-Thread verarbeitet SIGINT/SIGTERM/SIGCHLD via `sigwait`. `SignalService` aufgeräumt (Dead Code entfernt). (`src/core/StartupBuilder.cpp:74-81,115-139`, `src/include/base_library/core/services/SignalService.h`).
+
+7. **MessageQueueService DB-Zugriff aus Konstruktor entfernt** – `m_messageQueueRepository->allOf(".*", ".*")` wurde im Konstruktor aufgerufen (vor DB-Bootstrap). Jetzt in `onInitialize()` – die `InitializeService`-Pipeline ruft dies nach dem Bootstrap auf. (`src/features/base/services/MessageQueueService.cpp:39-47`, `src/include/base_library/features/base/services/MessageQueueService.h:46`).
+
 ---
 
 ## Optimierungsmöglichkeiten (priorisiert)
 
 | Priorität | Maßnahme | Begründung |
 |-----------|----------|------------|
-| **Hoch** | **Mocking-Framework einführen** | Ermöglicht isolierte Unit-Tests für HTTP-Controller, CLI, Shared Memory, Message Queues ohne reale Infrastruktur |
 | **Hoch** | **Fehlende Features abschließen (TODO.md)** | MySQL Support, Cursor, HTTP Exception Handling, Paging |
-| **Mittel** | **Signal-Handling modernisieren** | `sigaction` + worker thread statt `std::signal` + static pointer |
-
 | **Mittel** | **Benchmark-Suite aufsetzen** | Performance-Messungen für Property-System, Persistenz, Serialisierung |
 | **Niedrig** | **Doxygen-Dokumentation für public API ergänzen** | Erleichtert Nutzung der Bibliothek durch Dritte |
 | **Niedrig** | **CMake modernisieren** (`include_directories` → `target_include_directories`) | Saubereres Target-Modell |

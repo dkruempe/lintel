@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <csignal>
 #include <memory>
+#include <thread>
 
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/LoggerService.h"
@@ -15,8 +16,6 @@
 #include "base_library/features/base/services/InitializeService.h"
 #include "base_library/features/base/services/ProcessArgumentService.h"
 
-StartupBuilder *StartupBuilder::m_startupBuilder = nullptr;
-
 StartupBuilder::StartupBuilder(ProcessName &&name,
                                std::vector<std::string> &&arguments)
         : m_name(std::make_shared<ProcessName>(std::move(name))),
@@ -25,9 +24,6 @@ StartupBuilder::StartupBuilder(ProcessName &&name,
           m_configurationComponentBuilder(
                   std::make_shared<ConfigurationComponentBuilder>(
                           m_environmentConfiguration)) {
-    signal(SIGINT, StartupBuilder::receiveSignal);
-    signal(SIGCHLD, StartupBuilder::receiveSignal);
-    signal(SIGTERM, StartupBuilder::receiveSignal);
 }
 
 void StartupBuilder::addConfigurationComponent(
@@ -47,7 +43,6 @@ std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
     // IV instantiate startupbuilder
     std::shared_ptr<StartupBuilder> builder =
             std::make_shared<StartupBuilder>(std::move(name), std::move(arguments));
-    m_startupBuilder = builder.get();
     return builder;
 }
 
@@ -76,7 +71,15 @@ void StartupBuilder::start() {
     builder.registerInstance(m_configuration);
     // II logger
     DECLARE_LOGGER(m_name, m_configuration);
-    // III start IOC Container build
+    // III dedicated signal handling thread (sigwait instead of std::signal)
+    sigset_t signalSet;
+    sigemptyset(&signalSet);
+    sigaddset(&signalSet, SIGINT);
+    sigaddset(&signalSet, SIGCHLD);
+    sigaddset(&signalSet, SIGTERM);
+    pthread_sigmask(SIG_BLOCK, &signalSet, nullptr);
+    m_signalThread = std::thread(&StartupBuilder::signalThreadLoop, this);
+    // IV start IOC Container build
     m_container = builder.build();
     // IV boostrap plugins trigger initialization
     if (m_bootStrapServiceActive) {
@@ -105,21 +108,33 @@ void StartupBuilder::start() {
     // IX wait for signal to shutdown
     std::unique_lock<std::mutex> lock(mutex);
     m_conditionVariable.wait(lock, [&]() -> bool { return m_stop; });
+    if (m_signalThread.joinable())
+        m_signalThread.join();
 }
 
-void StartupBuilder::receiveSignal(int signal) {
-    LOG_TRACE("receive signal {}", signal);
-    switch (signal) {
-        case SIGCHLD:
-            // ignore signal bc. informs about shutdown of childs
-            break;
-        case SIGINT:
-        case SIGTERM:
-            m_startupBuilder->onShutdown();
-            break;
-        default:
-            LOG_ERROR("{} undefined signal", signal);
-            break;
+void StartupBuilder::signalThreadLoop() {
+    sigset_t signalSet;
+    sigemptyset(&signalSet);
+    sigaddset(&signalSet, SIGINT);
+    sigaddset(&signalSet, SIGCHLD);
+    sigaddset(&signalSet, SIGTERM);
+
+    int sig = 0;
+    while (true) {
+        int result = sigwait(&signalSet, &sig);
+        if (result != 0)
+            continue;
+
+        switch (sig) {
+            case SIGCHLD:
+                break;
+            case SIGINT:
+            case SIGTERM:
+                onShutdown();
+                return;
+            default:
+                break;
+        }
     }
 }
 
