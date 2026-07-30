@@ -5,8 +5,9 @@
 #include <string>
 #include <vector>
 
-#include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/http/service/Client.h"
+
+class UserDto;
 
 class CommandLineComponent {
 private:

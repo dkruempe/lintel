@@ -119,6 +119,7 @@ set(headers
     include/base_library/core/utils/TableBuilder.h
     include/base_library/core/utils/TypeName.h
     include/base_library/core/utils/UUID.h
+    include/base_library/core/utils/Argument.h
     # features - base
     include/base_library/features/base/BaseFeature.h
     # features - base - configuration
@@ -314,6 +315,7 @@ set(sources
     core/utils/MemorySize.cpp
     core/utils/StringUtils.cpp
     core/utils/UUID.cpp
+    core/utils/Argument.cpp
     # features - base
     features/base/BaseFeature.cpp
     # features - base - configuration

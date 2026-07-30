@@ -12,7 +12,7 @@
 #include <vector>
 
 #include "base_library/core/services/AbstractService.h"
-#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
 #include "base_library/features/cli/models/CommandParser.h"
 #include "base_library/features/cli/services/AuthCliService.h"

@@ -2,7 +2,6 @@
 #define COMMANDLINEHISTORYSERVICE_H
 #include "base_library/core/services/PropertyRegistration.h"
 #include "base_library/core/services/FileService.h"
-#include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/cli/models/CommandHistoryEntry.h"
 #include <optional>
 

@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_AUTHARGUMENTPROVIDER_H
 #define CPP_BASE_LIBRARY_AUTHARGUMENTPROVIDER_H
 
-#include "base_library/features/base/services/ProcessArgumentService.h"
+#include "base_library/core/utils/Argument.h"
 
 class AuthArgumentProvider : public ArgumentProvider {
 private:

@@ -3,6 +3,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
+#include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 
 class MockCommandLineComponent : public CommandLineComponent {
