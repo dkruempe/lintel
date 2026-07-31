@@ -20,7 +20,7 @@ std::ostream &operator<<(std::ostream &os,
                          const DatabaseConnectionEntry &entry) {
     os << static_cast<const Entry &>(entry)
        << " connection: " << entry.m_connection
-       << " userName: " << entry.m_userName << " password: " << entry.m_password
+       << " userName: " << entry.m_userName << " password: [redacted]"
        << " type: " << entry.m_type << " name: " << entry.m_name
        << " databaseName: " << entry.m_databaseName << " port: " << entry.m_port;
     return os;

@@ -8,6 +8,8 @@
 
 #include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"
+#include "base_library/features/base/controller/UserPasswordChangeDto.h"
+#include "base_library/features/base/controller/UserSessionDto.h"
 #include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/base/services/AuthService.h"
 #include "base_library/features/http/provider/ClientProvider.h"
@@ -29,6 +31,19 @@ public:
 
     /** @param userTokenDto token to invalidate; return true on success */
     virtual bool logoutOf(const UserTokenDto &userTokenDto);
+
+    /**
+     * Change a user's password.
+     * @param passwordChangeDto target user, old (self-service) and new password
+     * @return true on success
+     */
+    virtual bool changePasswordOf(const UserPasswordChangeDto &passwordChangeDto);
+
+    /** @return all active sessions of the current user */
+    virtual std::vector<UserSessionDto> sessionsOf();
+
+    /** @param sessionId id of the session to revoke; return true on success */
+    virtual bool revokeSessionOf(const std::string &sessionId);
 
     /** @return true if a user is currently logged in */
     virtual bool isLoggedIn();

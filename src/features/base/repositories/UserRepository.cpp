@@ -192,20 +192,42 @@ std::vector<User> UserRepository::allOf(const std::string &userNameMatches) {
         db::Statement statement(connection);
         db::ParameterBuilder builder(m_connectionEntry);
         builder.add(userNameMatches);
-        db::Result result = statement.execute(R"(
-    select ru.group_name,
-           u.first_name,
-           u.last_name,
-           u.e_mail,
-           u.password,
-           u.created_timestamp,
-           u.user_name
-    from users u
-    left join user_groups_relation ru
-      on u.user_name = ru.user_name
-    where u.user_name ~ ?
-    order by u.user_name asc)",
-                                              builder);
+        std::string statementString;
+        switch (m_connectionEntry->getType()) {
+            case db::ConnectionType::SQLite:
+                statementString = R"(
+            select ru.group_name,
+                   u.first_name,
+                   u.last_name,
+                   u.e_mail,
+                   u.password,
+                   u.created_timestamp,
+                   u.user_name
+            from users u
+            left join user_groups_relation ru
+              on u.user_name = ru.user_name
+            where u.user_name REGEXP ?
+            order by u.user_name asc)";
+                break;
+            case db::ConnectionType::PostgreSQL:
+                statementString = R"(
+            select ru.group_name,
+                   u.first_name,
+                   u.last_name,
+                   u.e_mail,
+                   u.password,
+                   u.created_timestamp,
+                   u.user_name
+            from users u
+            left join user_groups_relation ru
+              on u.user_name = ru.user_name
+            where u.user_name ~* ?
+            order by u.user_name asc)";
+                break;
+            default:
+                throw db::SQLException("DatabaseType currently not supported");
+        }
+        db::Result result = statement.execute(statementString, builder);
         std::string lastUserName;
         std::string lastFirstName;
         std::string lastLastName;

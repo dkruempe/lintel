@@ -9,6 +9,9 @@
 #include "base_library/features/base/controller/UserGroupDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"
 #include "base_library/features/base/controller/UserNameDto.h"
+#include "base_library/features/base/controller/UserPasswordChangeDto.h"
+#include "base_library/features/base/controller/UserSessionDto.h"
+#include "base_library/features/base/controller/UserSessionsDto.h"
 #include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 
@@ -17,7 +20,7 @@ void UserController::loginOfPost(const httplib::Request &request,
                                  const ContentType &contentType,
                                  const std::optional<UserToken> &user) {
     if (user.has_value()) {
-        LOG_ERROR("{}-{}: login with logged in user", request.remote_addr,
+        LOG_ERROR("{}-{}: login with logged in user", clientIpOf(request),
                   user->m_id);
         response.status = HttpStatusCodes::Forbidden;
         response.set_content("", contentType.getName());
@@ -36,8 +39,8 @@ void UserController::loginOfPost(const httplib::Request &request,
         }
         std::string userName = result.substr(0, found);
         std::string password = result.substr(found + 1);
-        UserLogin userLogin{request.remote_addr, userName, password};
-        LOG_INFO("login {} {} {}", userName, password, request.remote_addr);
+        UserLogin userLogin{clientIpOf(request), userName, password};
+        LOG_INFO("login {} from {}", userName, clientIpOf(request));
         std::optional<UserToken> userToken = m_authService->onLoginOf(userLogin);
         if (!userToken.has_value()) {
             response.status = HttpStatusCodes::Forbidden;
@@ -50,7 +53,7 @@ void UserController::loginOfPost(const httplib::Request &request,
         const std::string responseBody = userDto.JsonSerializable::serialize();
         response.set_content(responseBody, contentType.getName());
     } catch (const std::exception &exception) {
-        LOG_ERROR("login failed {} for {}", exception.what(), request.body);
+        LOG_ERROR("login failed: {}", exception.what());
         response.status = HttpStatusCodes::Forbidden;
         response.set_content("", contentType.getName());
     }
@@ -77,7 +80,7 @@ void UserController::logoutOfDelete(const httplib::Request &request,
         response.set_content("", contentType.getName());
         return;
     }
-    UserTokenLogin userTokenLogin{request.remote_addr, user->m_id};
+    UserTokenLogin userTokenLogin{clientIpOf(request), user->m_id};
     m_authService->onLogoutOf(userTokenLogin);
 }
 
@@ -382,6 +385,135 @@ void UserController::updateUserPut(const httplib::Request &request,
             break;
         }
     }
+}
+
+void UserController::changePasswordOfPut(const httplib::Request &request,
+                                         httplib::Response &response,
+                                         const ContentType &contentType,
+                                         const std::optional<UserToken> &user) {
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName());
+        return;
+    }
+    switch (contentType) {
+        case ContentType::ApplicationJson: {
+            UserPasswordChangeDto passwordChangeDto;
+            passwordChangeDto.JsonSerializable::deserialize(request.body);
+            const std::string &userName = passwordChangeDto.getUserName();
+            if (userName.empty()) {
+                response.status = HttpStatusCodes::Forbidden;
+                response.set_content("", contentType.getName());
+                return;
+            }
+            std::optional<User> userTemp = m_userRepository->of(userName);
+            if (!userTemp.has_value()) {
+                response.status = HttpStatusCodes::Forbidden;
+                response.set_content("", contentType.getName());
+                return;
+            }
+            const bool isAdmin = user->m_user.has(m_adminUser);
+            const bool isSelfService = userName == user->m_user.getUserName();
+            if (!isAdmin && !isSelfService) {
+                LOG_WARN("{} tried to change password of {}", user->m_user.getUserName(),
+                         userName);
+                response.status = HttpStatusCodes::Unauthorized;
+                response.set_content("", contentType.getName());
+                return;
+            }
+            const std::string newPassword =
+                    Cryption::decodeBase64(passwordChangeDto.getNewPassword());
+            if (newPassword.empty()) {
+                response.status = HttpStatusCodes::NotAcceptable;
+                response.set_content("", contentType.getName());
+                return;
+            }
+            if (isSelfService &&
+                !Cryption::verifyOf(Cryption::decodeBase64(passwordChangeDto.getOldPassword()),
+                                    userTemp->getPassword())) {
+                LOG_WARN("{} failed to change password of {} bc. of wrong old password",
+                         user->m_user.getUserName(), userName);
+                response.status = HttpStatusCodes::Forbidden;
+                response.set_content("", contentType.getName());
+                return;
+            }
+            m_userRepository->changePasswordOf(userTemp.value(),
+                                               Cryption::hashOf(newPassword));
+            response.status = HttpStatusCodes::OK;
+            response.set_content("", contentType.getName());
+            break;
+        }
+        default: {
+            response.status = HttpStatusCodes::Forbidden;
+            response.set_content("", contentType.getName());
+            break;
+        }
+    }
+}
+
+void UserController::allSessionsOfGet(const httplib::Request &request,
+                                      httplib::Response &response,
+                                      const ContentType &contentType,
+                                      const std::optional<UserToken> &user) {
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName());
+        return;
+    }
+    if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName());
+        return;
+    }
+    switch (contentType) {
+        case ContentType::ApplicationJson: {
+            UserSessionsDto sessionsDto(
+                    UserSessionDto::listOf(m_authService->allTokensOf(
+                            user->m_user.getUserName())));
+            response.set_content(sessionsDto.JsonSerializable::serialize(),
+                                 contentType.getName());
+            break;
+        }
+        default: {
+            response.status = HttpStatusCodes::Forbidden;
+            response.set_content("", contentType.getName());
+            break;
+        }
+    }
+}
+
+void UserController::revokeSessionOfDelete(const httplib::Request &request,
+                                           httplib::Response &response,
+                                           const ContentType &contentType,
+                                           const std::optional<UserToken> &user) {
+    if (!user.has_value()) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName());
+        return;
+    }
+    if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName());
+        return;
+    }
+    const std::string id = request.matches[1];
+    const std::vector<UserToken> ownTokens =
+            m_authService->allTokensOf(user->m_user.getUserName());
+    const bool isOwnSession =
+            std::any_of(ownTokens.begin(), ownTokens.end(),
+                        [&id](const UserToken &token) {
+                            return token.m_id == id;
+                        });
+    if (!isOwnSession && !user->m_user.has(m_adminUser)) {
+        LOG_WARN("{} tried to revoke foreign session {}",
+                 user->m_user.getUserName(), id);
+        response.status = HttpStatusCodes::Unauthorized;
+        response.set_content("", contentType.getName());
+        return;
+    }
+    m_authService->revokeTokenOf(id);
+    response.status = HttpStatusCodes::OK;
+    response.set_content("", contentType.getName());
 }
 
 void UserController::loginStateOfGet(const httplib::Request &request,

@@ -9,34 +9,40 @@
     - [x] interface extraction for testability (IAuthService, IMessageQueueRepository)
     - [x] mock classes: AuthService, BootstrapPlugin, CommandLineComponent, MessageQueueRepository, PropertyRepository
     - [x] mock-based unit tests: BootstrapService, CLI, HTTP-Controller, MessageQueueService
-    - [ ] unit tests for AuthService (login/token/timeout/logout, thread-safety)
+    - [x] unit tests for AuthService (login/token/timeout/logout, thread-safety) – tests/services/AuthServiceTest.cpp (Session-Listing/-Revoke, Rate-Limiting)
     - [ ] unit tests for ProcessService (start/stop/terminate/restart, monitor-loop, allGroupsOf)
     - [ ] unit tests for UserRepository / GroupRepository (CRUD, allOf-Regex, Gruppen-Relationen)
-    - [ ] unit tests for Cryption (hashOf, encode/decodeBase64 inkl. OOB-Fallback für Bytes ≥ 0x80)
+    - [x] unit tests for Cryption (hashOf→salted PBKDF2, verifyOf inkl. Legacy-SHA-512-Fallback, base64 inkl. OOB-Bytes ≥ 0x80)
 - Security (dringend)
-    - [ ] fix plaintext password logging in UserController::loginOfPost (UserController.cpp:40)
-    - [ ] fix Bearer-token parsing crash – `auth.substr(7)` außerhalb try/catch → Server-DoS (Controller.h:35)
-    - [ ] fix logout – AuthService::onLogoutOf erased nach IP statt Token-ID; Token bleibt gültig (AuthService.cpp:91)
-    - [ ] fix out-of-bounds read in Cryption::decodeBase64 (Cryption.cpp:72) – signed char → size_t
-    - [ ] replace unsalted SHA-512 password hashing with iterated KDF + per-user salt (bcrypt/argon2/scrypt/PBKDF2)
-    - [ ] enforce/encourage HTTPS – TLS nur optional, Default-Config bindet 0.0.0.0:8080 ohne TLS; Basic-Auth über Klartext-HTTP
-    - [ ] add mutex for `m_userTokens` in AuthService (HTTP-Threads vs. Scheduler-Thread onCheck)
-    - [ ] check IP in AuthService::onAccessOf (Token aktuell von jeder IP nutzbar)
-    - [ ] remove hardcoded default admin credentials from seed data (cfg/database/DEFAULT_SQLITE/data_schema_default_version_1.sql)
-    - [ ] don't log database password – DatabaseConnectionEntry::operator<< (DatabaseConnectionEntry.cpp:23)
-    - [ ] fix inconsistent authorization in SharedMemoryController – export/shrink/grow verlangen beide Gruppen (`||`), Rest nur eine (`&&`)
-    - [ ] add brute-force protection / rate limiting for /user/login
-    - [ ] return generic 500 instead of e.what() in Controller.h catch-block
-    - [ ] constant-time password comparison (Timing-Angriff)
-    - [ ] guard PostgreSQL `&params[0]` for empty parameter vector (UB)
-    - [ ] set explicit `payload_max_length` on httplib server
-    - [ ] initial admin bootstrap – erste Admin-User anlegen ohne Seed-Credentials (CLI/API/Setup-Script)
-    - [ ] password change/reset endpoint (UserRepository::changePasswordOf existiert, kein HTTP-/CLI-Endpoint)
-    - [ ] session management – aktive Sessions auflisten, gezielter Session-Revoke
+    - [x] fix plaintext password logging in UserController::loginOfPost (UserController.cpp:40)
+    - [x] fix Bearer-token parsing crash – `auth.substr(7)` außerhalb try/catch → Server-DoS (Controller.h:35)
+    - [x] fix logout – AuthService::onLogoutOf erased nach IP statt Token-ID; Token bleibt gültig (AuthService.cpp:91)
+    - [x] fix out-of-bounds read in Cryption::decodeBase64 (Cryption.cpp:72) – signed char → size_t
+    - [x] replace unsalted SHA-512 password hashing with iterated KDF + per-user salt (PBKDF2-HMAC-SHA512, 120k Iterationen; Legacy-Hashes werden bei Login automatisch migriert)
+    - [x] enforce/encourage HTTPS – TLS-Erzwingung über Config-Flag `require_tls` (Server verweigert Start ohne TLS-Konfiguration); Default-Config bindet weiterhin ohne TLS, Warnung beim Start bereits implementiert
+    - [x] add mutex for `m_userTokens` in AuthService (HTTP-Threads vs. Scheduler-Thread onCheck)
+    - [x] check IP in AuthService::onAccessOf (Token aktuell von jeder IP nutzbar)
+    - [ ] remove hardcoded default admin credentials from seed data (cfg/database/DEFAULT_SQLITE/data_schema_default_version_1.sql) – bewusst beibehalten für lokale Tests; Hash wird bei Login automatisch migriert
+    - [x] don't log database password – DatabaseConnectionEntry::operator<< (DatabaseConnectionEntry.cpp:23) → `[redacted]`
+    - [x] fix inconsistent authorization in SharedMemoryController – export/shrink/grow verlangen beide Gruppen (`||`), Rest nur eine (`&&`)
+    - [x] add brute-force protection / rate limiting for /user/login (Lockout pro IP, `m_maxLoginFailures`/`m_loginLockout` via PropertyRegistration)
+    - [x] return generic 500 instead of e.what() in Controller.h catch-block
+    - [x] constant-time password comparison (CRYPTO_memcmp in Cryption::verifyOf)
+    - [x] guard PostgreSQL `&params[0]` for empty parameter vector (UB)
+    - [x] set explicit `payload_max_length` on httplib server (8 MB)
+    - [x] initial admin bootstrap – `AdminUserBootstrapPlugin` (BootstrapSequence `AdminUser=5`), Env-Variablen `ADMIN_USERNAME`/`ADMIN_PASSWORD`, kein Default-Passwort
+    - [x] password change/reset endpoint – `PUT /user/password` (Admin kann fremde ändern, sonst self-service mit altem Passwort)
+    - [x] session management – `GET /user/sessions` (eigene Sessions) + `DELETE /user/sessions/{id}` (Admin: beliebige; sonst nur eigene)
+    - [x] UserApi-Client für Passwort-Änderung + Session-Management – `changePasswordOf`/`sessionsOf`/`revokeSessionOf` (UserApi.h/.cpp, Base64-Passwörter via Cryption, 401 → HttpUnauthorizedException)
+    - [x] Swagger-Dokumentation – `/user/password`, `/user/sessions`, `/user/sessions/{sessionId}` inkl. Definitions (`UserPasswordChangeDto`, `UserSessionDto`) in swagger.yaml + swagger.md (Passwortfelder als Base64-Strings dokumentiert)
+    - [x] CLI-Kommandos – `user_change_password` (`-u -o -n`), `user_sessions`, `user_session_revoke` (`-s`) in UserManagementCliComponent + MockUserApi-Erweiterung + 5 neue CLI-Tests
     - [ ] health/readiness endpoint + Swagger-UI
+- CLI
+    - [x] fix arrow-key history navigation crash – `nextOf()` ließ `m_position` über das Historie-Ende hinauswachsen, `previousOf()` las danach OOB → `bad_alloc`; Position wird jetzt geklemmt, `startsWith()`-off-by-one behoben; Regressionstests in tests/cli/CommandLineHistoryServiceTest.cpp (7 Testfälle)
+    - [x] ReDoS-Härtung user-gesteuerter Regex-Pattern – `RegexUtils::validatePattern` (Längenlimit, Quantifier-/Wildcard-Checks) in GroupRepository, SharedMemorySegmentManager, SharedMemoryController, ProcessService, SQLite-REGEXP
 - Process
     - [ ] adds better possibility to manages process automatically
-    - [ ] fix allGroupsOf regex filter – `std::regex_match(name, nameRegex)` matcht Abfrage gegen sich selbst statt Gruppenname (ProcessService.cpp:447)
+    - [x] fix allGroupsOf regex filter – `std::regex_match(name, nameRegex)` matchte Abfrage gegen sich selbst statt Gruppenname; jetzt `regex_match(group->getName(), nameRegex)` + RegexUtils-Validierung (ProcessService.cpp:445)
     - [ ] fix data race on `m_processes` in terminateOf/detachOf – erase ohne Mutex (ProcessService.cpp:312,340)
     - [ ] fix stopOf condition variable – lokale cv wird nie notifiziert → wartet immer auf Timeout (ProcessService.cpp:250)
     - [ ] fix terminateOf – exit_code() direkt nach terminate() ist undefiniert
@@ -45,9 +51,10 @@
     - [ ] add better usage of semaphores
 - Database
     - [x] fix SQLite REGEXP support – Conan SQLite hat kein REGEXP; runtime registration via `sqlite3_create_function` hinzugefügt
+    - [x] fix SQLite-String-Bindung – leere Strings wurden als NULL gebunden (`strlen==0`-Check) → NOT-NULL-Constraints (z.B. AdminBootstrap `e_mail`) schlugen still fehl; jetzt konsistent zu PostgreSQL als `''` gebunden (Connection.cpp executeParameters/executePreparedStatement)
     - [x] fix DatabaseBootstrapPlugin – `db::SQLException` wurde weitergere throwed → abgebrochene Bootstrap-Schleife; jetzt nur noch loggen und loop fortsetzen
     - [x] fix Bootstrap-Order – `VirtualGroupBootstrapPlugin` hat GroupProvider eager im Konstruktor resolved (vor DB-Bootstrap); jetzt lazy in `onStart()` via Container-Injection
-    - [ ] align SQLite/PostgreSQL REGEXP case-sensitivity – SQLite nutzt icase, PostgreSQL `~` ist case-sensitiv (UserRepository::allOf)
+    - [x] align SQLite/PostgreSQL REGEXP case-sensitivity – SQLite REGEXP nutzt icase, PostgreSQL jetzt `~*` (case-insensitiv, UserRepository::allOf)
     - [ ] fix OOB in DatabaseConnectionComponent – `tmpPath[0]` bei leerem SQLite connection (DatabaseConnectionComponent.cpp:72)
     - [ ] mySql Support
     - [ ] Cursor implementation

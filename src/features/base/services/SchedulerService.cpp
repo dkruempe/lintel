@@ -56,6 +56,15 @@ void SchedulerService::onInitialize() {
     }
 }
 
+void SchedulerService::onShutdown() {
+    LOG_INFO("stop Scheduler");
+    clear();
+    {
+        m_exit = true;
+    }
+    m_conditionVariable.notify_all();
+}
+
 SchedulerService::SchedulerService(
         const std::shared_ptr<ProcessName> &processName)
         : PropertyRegistration(processName->getProcessName()),

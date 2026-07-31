@@ -2,6 +2,7 @@
 
 #include <base_library/core/utils/TableBuilder.h>
 
+#include "base_library/core/services/StringifyService.h"
 #include "base_library/core/utils/Cryption.h"
 
 UserManagementCliComponent::UserManagementCliComponent(
@@ -49,6 +50,26 @@ UserManagementCliComponent::UserManagementCliComponent(
                     .addArgument({"--user-name", "-u"}, &m_userName,
                                  "Username which should be deleted!", false),
             RemoveUser);
+    m_commandParser.addCommand(
+            Command("user_change_password", "Changes the password of a user!")
+                    .addArgument({"--username", "-u"}, &m_userName,
+                                 "Username of the user", false)
+                    .addArgument({"--old-password", "-o"}, &m_oldPassword,
+                                 "Current password of the user (required for "
+                                 "self-service, not for admin)", true)
+                    .addArgument({"--new-password", "-n"}, &m_newPassword,
+                                 "New password of the user", false),
+            ChangePassword);
+    m_commandParser.addCommand(
+            Command("user_sessions",
+                    "Shows all active sessions of the current user!"),
+            ShowSessions);
+    m_commandParser.addCommand(
+            Command("user_session_revoke", "Revokes an active session!")
+                    .addArgument({"--session-id", "-s"}, &m_sessionId,
+                                 "Id of the session which should be revoked",
+                                 false),
+            RevokeSession);
 }
 
 void UserManagementCliComponent::onCommand(
@@ -116,6 +137,33 @@ void UserManagementCliComponent::onCommand(
                 std::vector<std::string> userRemoves;
                 userRemoves.push_back(m_userName.value());
                 m_userApi->deleteOf(userRemoves);
+                break;
+            }
+            case ChangePassword: {
+                if (!m_userName.has_value() || !m_newPassword.has_value()) {
+                    std::cerr << "ERROR: please set username and new password\n";
+                    break;
+                }
+                UserPasswordChangeDto passwordChangeDto(
+                        m_userName.value(),
+                        Cryption::encodeBase64(m_oldPassword.value_or("")),
+                        Cryption::encodeBase64(m_newPassword.value()));
+                if (!m_userApi->changePasswordOf(passwordChangeDto)) {
+                    std::cerr << "ERROR: failed to change password\n";
+                }
+                break;
+            }
+            case ShowSessions:
+                printSessions(m_userApi->sessionsOf());
+                break;
+            case RevokeSession: {
+                if (!m_sessionId.has_value()) {
+                    std::cerr << "ERROR: please set the session id\n";
+                    break;
+                }
+                if (!m_userApi->revokeSessionOf(m_sessionId.value())) {
+                    std::cerr << "ERROR: failed to revoke session\n";
+                }
                 break;
             }
             default:
@@ -188,6 +236,22 @@ std::string UserManagementCliComponent::printUserGroups(
         }
     }
     return printString;
+}
+
+void UserManagementCliComponent::printSessions(
+        const std::vector<UserSessionDto> &sessions) {
+    TableBuilder<4> builder;
+    builder.add({"No.", "Id", "IP Address", "Last Access"});
+    std::size_t iter = 0;
+    for (const auto &session: sessions) {
+        builder.add({std::to_string(++iter), session.getId(),
+                     session.getIpAddress(),
+                     StringifyService<date::sys_time<
+                             std::chrono::microseconds>>::
+                             serializeToString(
+                                     session.getLastAccessTimestamps())});
+    }
+    std::cout << builder.build() << "\n";
 }
 
 void UserManagementCliComponent::printCommandList(std::set<std::string> menuAlias) {

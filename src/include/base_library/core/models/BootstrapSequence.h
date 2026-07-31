@@ -16,7 +16,8 @@ public:
         Database = 1,
         MessageQueue = 2,
         VirtualGroups = 3,
-        SharedMemory = 4
+        SharedMemory = 4,
+        AdminUser = 5
     };
 
     /** Default constructor, initializes to Undefined. */

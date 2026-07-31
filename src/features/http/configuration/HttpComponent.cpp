@@ -11,6 +11,16 @@ HttpComponent::HttpComponent() : Component(shape.CONFIG_ROOT) {}
 
 namespace {
 
+bool parseBool(const char *value) {
+    if (value == nullptr) {
+        return false;
+    }
+    std::string normalized(value);
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+                   [](unsigned char c) { return static_cast<char>(::tolower(c)); });
+    return normalized == "true" || normalized == "1" || normalized == "yes";
+}
+
 std::shared_ptr<Entry> createClientEntry(
         const char *host, const char *port,
         const char *readTimeOut, const char *writeTimeOut,
@@ -37,7 +47,7 @@ std::shared_ptr<Entry> createServerEntry(
         const char *host, const char *port,
         const char *readTimeOut, const char *writeTimeOut,
         const char *idleTimeout, const char *certPath,
-        const char *keyPath) {
+        const char *keyPath, bool requireTls) {
     auto serverConfiguration = std::make_shared<ServerConfiguration>(
             host, std::stoi(port),
             readTimeOut != nullptr
@@ -50,7 +60,8 @@ std::shared_ptr<Entry> createServerEntry(
             ? std::chrono::milliseconds(std::stoi(idleTimeout))
             : std::chrono::milliseconds(0),
             certPath != nullptr ? certPath : "",
-            keyPath != nullptr ? keyPath : "");
+            keyPath != nullptr ? keyPath : "",
+            requireTls);
     return std::make_shared<HttpEntry>(
             type_name<HttpComponent>(), serverConfiguration);
 }
@@ -127,6 +138,8 @@ std::vector<std::shared_ptr<Entry>> HttpComponent::parse(
         const char *idleTimeout =
                 httpElement->Attribute(shape.IDLE_TIMEOUT);
 
+        bool requireTls = parseBool(httpElement->Attribute(shape.REQUIRE_TLS));
+
         int32_t lineNumber = httpElement->GetLineNum() + lineOffset - 1;
 
         validateHttpElement(isClient, host, port, idleTimeout,
@@ -143,7 +156,7 @@ std::vector<std::shared_ptr<Entry>> HttpComponent::parse(
             readServerConfiguration = true;
             httpEntries.push_back(createServerEntry(
                     host, port, readTimeOut, writeTimeOut,
-                    idleTimeout, certPath, keyPath));
+                    idleTimeout, certPath, keyPath, requireTls));
         }
     }
     return httpEntries;

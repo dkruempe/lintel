@@ -1,6 +1,7 @@
 #include "base_library/features/base/BaseFeature.h"
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
+#include "base_library/core/plugins/AdminUserBootstrapPlugin.h"
 #include "base_library/core/plugins/DatabaseBootstrapPlugin.h"
 #include "base_library/core/plugins/MessageQueueBootstrapPlugin.h"
 #include "base_library/core/plugins/SharedMemoryBootstrapPlugin.h"
@@ -56,6 +57,10 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
     .asSelf()
     .singleInstance();
   builder.registerType<VirtualGroupBootstrapPlugin>()
+    .as<BootstrapPlugin>()
+    .asSelf()
+    .singleInstance();
+  builder.registerType<AdminUserBootstrapPlugin>()
     .as<BootstrapPlugin>()
     .asSelf()
     .singleInstance();

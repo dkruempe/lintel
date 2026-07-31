@@ -470,6 +470,65 @@ Delete a user
 | 401 | Unauthorized |
 | 403 | Forbidden |
 
+### /user/password
+
+#### PUT
+##### Summary
+
+Change the password of a user
+
+##### Description
+
+Self-service requires the current (old) password, an admin may omit it. Passwords are transmitted Base64-encoded.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| body | body |  | Yes | [UserPasswordChangeDto](#userpasswordchangedto) |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | A successful response |
+| 401 | Unauthorized |
+| 403 | Forbidden |
+
+### /user/sessions
+
+#### GET
+##### Summary
+
+Get all active sessions of the current user
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | A successful response |
+| 401 | Unauthorized |
+
+### /user/sessions/{sessionId}
+
+#### DELETE
+##### Summary
+
+Revoke an active session
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| sessionId | path |  | Yes | string |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | A successful response |
+| 401 | Unauthorized |
+
 ### /properties/{processName}/{className}/{instanceName}
 
 #### GET
@@ -540,3 +599,22 @@ Update a property
 | 401 | Unauthorized |
 | 403 | Forbidden |
 | 405 | Method Not Allowed |
+
+## Models
+
+### UserPasswordChangeDto
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| user_name | string |  | Yes |
+| old_password | string | Current password, Base64-encoded | No |
+| new_password | string | New password, Base64-encoded | Yes |
+
+### UserSessionDto
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| id | string | Session id | No |
+| ip_address | string |  | No |
+| user_name | string |  | No |
+| last_access | string |  | No |

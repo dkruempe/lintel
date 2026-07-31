@@ -5,6 +5,7 @@
 #include "base_library/features/base/services/MessageQueueService.h"
 
 #include <ctime>
+#include <memory>
 
 #ifndef CPP_BASE_LIBRARY_HISTORYSERVICE_H
 #define CPP_BASE_LIBRARY_HISTORYSERVICE_H
@@ -13,7 +14,8 @@
  * Service for recording, queuing, and querying history entries.
  * Uses a message queue for inter-process history submission.
  */
-class HistoryService : public PropertyRegistration<HistoryService> {
+class HistoryService : public PropertyRegistration<HistoryService>,
+                       public std::enable_shared_from_this<HistoryService> {
 private:
     // properties
     std::shared_ptr<Property<std::chrono::seconds>> m_duration;

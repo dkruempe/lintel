@@ -93,6 +93,7 @@ set(headers
     include/base_library/core/persistence/sqlite3/Statement.h
     include/base_library/core/persistence/sqlite3/Transaction.h
     # core - plugins
+    include/base_library/core/plugins/AdminUserBootstrapPlugin.h
     include/base_library/core/plugins/BootstrapPlugin.h
     include/base_library/core/plugins/DatabaseBootstrapPlugin.h
     include/base_library/core/plugins/MessageQueueBootstrapPlugin.h
@@ -115,6 +116,7 @@ set(headers
     # core - utils
     include/base_library/core/utils/Cryption.h
     include/base_library/core/utils/MemorySize.h
+    include/base_library/core/utils/RegexUtils.h
     include/base_library/core/utils/StringUtils.h
     include/base_library/core/utils/TableBuilder.h
     include/base_library/core/utils/TypeName.h
@@ -160,6 +162,9 @@ set(headers
     include/base_library/features/base/controller/UserGroupDto.h
     include/base_library/features/base/controller/UserLoginDto.h
     include/base_library/features/base/controller/UserNameDto.h
+    include/base_library/features/base/controller/UserPasswordChangeDto.h
+    include/base_library/features/base/controller/UserSessionDto.h
+    include/base_library/features/base/controller/UserSessionsDto.h
     include/base_library/features/base/controller/UserTokenDto.h
     # features - base - models
     include/base_library/features/base/models/Group.h
@@ -297,6 +302,7 @@ set(sources
     core/persistence/sqlite3/Statement.cpp
     core/persistence/sqlite3/Transaction.cpp
     # core - plugins
+    core/plugins/AdminUserBootstrapPlugin.cpp
     core/plugins/DatabaseBootstrapPlugin.cpp
     core/plugins/MessageQueueBootstrapPlugin.cpp
     core/plugins/SharedMemoryBootstrapPlugin.cpp
@@ -313,6 +319,7 @@ set(sources
     # core - utils
     core/utils/Cryption.cpp
     core/utils/MemorySize.cpp
+    core/utils/RegexUtils.cpp
     core/utils/StringUtils.cpp
     core/utils/UUID.cpp
     core/utils/Argument.cpp
@@ -355,6 +362,9 @@ set(sources
     features/base/controller/UserGroupDto.cpp
     features/base/controller/UserLoginDto.cpp
     features/base/controller/UserNameDto.cpp
+    features/base/controller/UserPasswordChangeDto.cpp
+    features/base/controller/UserSessionDto.cpp
+    features/base/controller/UserSessionsDto.cpp
     features/base/controller/UserTokenDto.cpp
     # features - base - models
     features/base/models/Group.cpp

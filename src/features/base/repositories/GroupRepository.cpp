@@ -8,6 +8,7 @@
 #include "base_library/core/persistence/Result.h"
 #include "base_library/core/persistence/Statement.h"
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/RegexUtils.h"
 
 GroupRepository::GroupRepository(
         std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
@@ -116,8 +117,13 @@ std::vector<Group> GroupRepository::allOf(bool isVirtualGroup) {
 }
 
 std::vector<Group> GroupRepository::allOf(const std::string &groupName) {
-    std::regex match(groupName);
     std::vector<Group> temp(m_groups);
+    std::string errorMessage;
+    if (!RegexUtils::validatePattern(groupName, errorMessage)) {
+        LOG_WARN("allOf: {}", errorMessage);
+        return {};
+    }
+    const std::regex match(groupName, std::regex::ECMAScript);
     temp.erase(std::remove_if(temp.begin(), temp.end(),
                               [&match](const Group &group) -> bool {
                                   return !std::regex_match(group.getGroupName(),
@@ -133,7 +139,12 @@ std::vector<Group> GroupRepository::allOf(const std::string &groupName,
     if (temp.empty()) {
         return temp;
     }
-    std::regex match(groupName);
+    std::string errorMessage;
+    if (!RegexUtils::validatePattern(groupName, errorMessage)) {
+        LOG_WARN("allOf: {}", errorMessage);
+        return {};
+    }
+    const std::regex match(groupName, std::regex::ECMAScript);
     temp.erase(std::remove_if(temp.begin(), temp.end(),
                               [&match](const Group &group) -> bool {
                                   return !std::regex_match(group.getGroupName(),

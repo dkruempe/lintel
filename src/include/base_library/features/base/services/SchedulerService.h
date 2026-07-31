@@ -124,6 +124,7 @@ public:
      */
     explicit SchedulerService(const std::shared_ptr<ProcessName>& processName);
     void onInitialize() override;
+    void onShutdown() override;
     virtual ~SchedulerService();
 };
 

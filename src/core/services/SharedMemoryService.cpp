@@ -90,9 +90,14 @@ SharedMemoryService::ShmString SharedMemoryService::constructString(
 }
 
 void SharedMemoryService::onInitialize() {
+    std::weak_ptr<SharedMemoryService> weakSelf = shared_from_this();
     m_schedulerService->schedule_at_fixed_rate(m_scheduleRate->getValue(),
                                                m_scheduleRate->getValue(),
-                                               [&]() { onCheck(); });
+                                               [weakSelf]() {
+                                                   if (auto self = weakSelf.lock()) {
+                                                       self->onCheck();
+                                                   }
+                                               });
 }
 
 void SharedMemoryService::onCheck() {

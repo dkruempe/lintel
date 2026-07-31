@@ -3,6 +3,7 @@
 #include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/base/controller/UserGroupDto.h"
 #include "base_library/features/base/controller/UserNameDto.h"
+#include "base_library/features/base/controller/UserSessionsDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
@@ -28,6 +29,70 @@ bool UserApi::logoutOf(const UserTokenDto &userTokenDto) {
     httplib::Result result =
             m_client->deletes("/user/logout", "", "application/json");
     return result->status == HttpStatusCodes::OK;
+}
+
+bool UserApi::changePasswordOf(
+        const UserPasswordChangeDto &passwordChangeDto) {
+    std::string body;
+    try {
+        body = passwordChangeDto.JsonSerializable::serialize();
+    } catch (const std::exception &exception) {
+        LOG_ERROR("failed to change password of {}",
+                  passwordChangeDto.getUserName());
+        return false;
+    }
+    httplib::Result result =
+            m_client->put("/user/password", body, "application/json");
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            return true;
+        default:
+            LOG_ERROR("failed to change password of {} ({})",
+                      passwordChangeDto.getUserName(), status.getCode());
+            return false;
+    }
+}
+
+std::vector<UserSessionDto> UserApi::sessionsOf() {
+    httplib::Headers headers{};
+    headers.insert({"Content-Type", "application/json"});
+    httplib::Result result = m_client->get("/user/sessions", headers);
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            break;
+        default:
+            LOG_ERROR("failed to show sessions {}", status.getCode());
+            return {};
+    }
+    UserSessionsDto sessionsDto;
+    try {
+        sessionsDto.JsonSerializable::deserialize(result->body);
+    } catch (const std::exception &exception) {
+        return {};
+    }
+    return sessionsDto.getSessions();
+}
+
+bool UserApi::revokeSessionOf(const std::string &sessionId) {
+    httplib::Result result =
+            m_client->deletes("/user/sessions/" + sessionId, "", "application/json");
+    HttpStatusCodes status(result->status);
+    switch (status) {
+        case HttpStatusCodes::Unauthorized:
+            throw HttpUnauthorizedException();
+        case HttpStatusCodes::OK:
+            return true;
+        default:
+            LOG_ERROR("failed to revoke session {} ({})", sessionId,
+                      status.getCode());
+            return false;
+    }
 }
 
 std::vector<GroupDto> UserApi::allOf() {

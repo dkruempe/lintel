@@ -35,10 +35,11 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(std::string
   if (!m_position.has_value()) {
     m_position = std::make_optional(0);
   }
-  m_position = std::make_optional(m_position.value() + 1);
   if (m_position.value() >= m_history.size()) {
+    m_position = std::make_optional(m_history.size() + 1);
     return std::nullopt;
   }
+  m_position = std::make_optional(m_position.value() + 1);
   for (std::size_t i = m_position.value(); i <= m_history.size(); i++) {
     auto iter = m_history[i - 1];
     if (iter.getMenu() != menu) {
@@ -60,10 +61,13 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::previousOf(std::st
     m_position = std::nullopt;
   }
   if (!m_position.has_value()) {
-    m_position = m_history.size();
+    m_position = m_history.size() + 1;
   }
   if (m_position.value() == 0) {
     return std::nullopt;
+  }
+  if (m_position.value() > m_history.size() + 1) {
+    m_position = m_history.size() + 1;
   }
   m_position = std::make_optional(m_position.value() - 1);
   for (std::size_t i = m_position.value(); i > 0; i--) {
@@ -81,8 +85,8 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::previousOf(std::st
 std::optional<CommandHistoryEntry> CommandLineHistoryService::startsWith(std::string command, std::string menu)
 {
   if (m_history.empty()) { return std::nullopt; }
-  for (std::size_t i = m_history.size() - 1; i > 0; i--) {
-    CommandHistoryEntry iter = m_history[i];
+  for (std::size_t i = m_history.size(); i > 0; i--) {
+    CommandHistoryEntry iter = m_history[i - 1];
     if (iter.getMenu() != menu) {
       continue;
     }

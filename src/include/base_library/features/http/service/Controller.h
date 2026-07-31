@@ -29,19 +29,19 @@
             const std::string contentTypeString =                             \
                 request.get_header_value("Content-Type");                     \
             ContentType contentType(contentTypeString);                       \
-            bool isBearerToken = StringUtils::startsWith(auth, "Bearer");     \
             std::optional<UserToken> user = std::nullopt;                     \
-            if (isBearerToken) {                                              \
-              std::string id = auth.substr(7);                                \
-              UserTokenLogin userTokenLogin{request.remote_addr, id};         \
-              user = m_authService->onAccessOf(userTokenLogin);               \
-            }                                                                 \
             try {                                                             \
+              if (StringUtils::startsWith(auth, "Bearer ") &&                   \
+                  auth.size() > 7) {                                            \
+                std::string id = auth.substr(7);                                \
+                UserTokenLogin userTokenLogin{clientIpOf(request), id};         \
+                user = m_authService->onAccessOf(userTokenLogin);               \
+              }                                                                 \
               name##httpType(request, response, contentType, user);           \
             } catch (const std::exception &e) {                               \
               LOG_ERROR("{}: {}", #name, e.what());                           \
               response.status = HttpStatusCodes::InternalServerError;         \
-              response.set_content(e.what(), "text/plain");                   \
+              response.set_content("internal server error", "text/plain");    \
             }                                                                 \
           })
 
@@ -59,7 +59,7 @@
             } catch (const std::exception &e) {                               \
               LOG_ERROR("{}: {}", #name, e.what());                           \
               response.status = HttpStatusCodes::InternalServerError;         \
-              response.set_content(e.what(), "text/plain");                   \
+              response.set_content("internal server error", "text/plain");    \
             }                                                                 \
           });                                                               \
   void name##httpType(const httplib::Request &request,                      \
@@ -71,6 +71,15 @@
 class Controller : public GroupProvider {
 protected:
     std::shared_ptr<IAuthService> m_authService;
+
+    /**
+     * Determine the client IP address of a request, honoring the
+     * X-Forwarded-For header (leftmost entry) when set.
+     * @param request the HTTP request
+     * @return the client IP address
+     */
+    static std::string clientIpOf(const httplib::Request &request);
+
     using HandlerArgs = void(const httplib::Request &, httplib::Response &);
     using HandlerWithContentReaderArgs = void(const httplib::Request &,
                                               httplib::Response &,

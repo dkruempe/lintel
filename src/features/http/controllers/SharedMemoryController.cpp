@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "base_library/core/utils/MemorySize.h"
+#include "base_library/core/utils/RegexUtils.h"
 #include "base_library/features/base/controller/SharedMemoryRepsoitoriesDto.h"
 #include "base_library/features/base/controller/SharedMemorySegmentDto.h"
 #include "base_library/features/base/controller/SharedMemorySegmentsDto.h"
@@ -41,7 +42,7 @@ void SharedMemoryController::exportRepositoryOfGet(
         response.set_content("", contentType.getName());
         return;
     }
-    if (!user->m_user.has(m_userGroup) || !user->m_user.has(m_adminGroup)) {
+    if (!user->m_user.has(m_userGroup) && !user->m_user.has(m_adminGroup)) {
         response.status = HttpStatusCodes::Unauthorized;
         response.set_content("", contentType.getName());
         return;
@@ -120,8 +121,16 @@ void SharedMemoryController::allRepositoriesOfGet(
     const std::string segmentName = request.matches[2];
     switch (contentType) {
         case ContentType::ApplicationJson: {
-            std::regex repositoryRegex(repositoryName);
-            std::regex segmentRegex(segmentName);
+            std::string errorMessage;
+            if (!RegexUtils::validatePattern(repositoryName, errorMessage) ||
+                !RegexUtils::validatePattern(segmentName, errorMessage)) {
+                LOG_WARN("allRepositoriesOfGet: {}", errorMessage);
+                response.status = HttpStatusCodes::BadRequest;
+                response.set_content("", contentType.getName());
+                return;
+            }
+            const std::regex repositoryRegex(repositoryName);
+            const std::regex segmentRegex(segmentName);
             LOG_TRACE("segment {} repository {}", segmentName, repositoryName);
             std::vector<SharedMemoryRepositoryDto> tmp;
             for (const auto &iter: m_sharedMemoryRepositories) {

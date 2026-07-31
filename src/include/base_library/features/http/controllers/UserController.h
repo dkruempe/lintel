@@ -37,6 +37,12 @@ private:
 
     ADD_HANDLER_METHOD("/user/update", Put, updateUser);
 
+    ADD_HANDLER_METHOD("/user/password", Put, changePasswordOf);
+
+    ADD_HANDLER_METHOD(R"(/user/sessions)", Get, allSessionsOf);
+
+    ADD_HANDLER_METHOD(R"(/user/sessions/([^\/]+))", Delete, revokeSessionOf);
+
     ADD_HANDLER_METHOD("/user/delete", Delete, deleteUser);
 
 public:

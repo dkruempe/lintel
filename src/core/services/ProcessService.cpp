@@ -12,6 +12,7 @@
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
+#include "base_library/core/utils/RegexUtils.h"
 #include "base_library/features/base/configuration/ProcessComponent.h"
 #include "base_library/features/base/controller/ProcessGroupDto.h"
 #include "base_library/features/base/models/ProcessGroup.h"
@@ -440,11 +441,16 @@ ProcessInfo ProcessService::currentOf()
 std::vector<ProcessGroupDto> ProcessService::allGroupsOf(const std::string &name)
 {
   std::vector<std::shared_ptr<ProcessGroup>> groups;
-  std::regex const nameRegex(name);
+  std::string errorMessage;
+  if (!RegexUtils::validatePattern(name, errorMessage)) {
+    LOG_WARN("allGroupsOf: {}", errorMessage);
+    return {};
+  }
+  const std::regex nameRegex(name);
   {
     std::lock_guard<std::mutex> locker(m_processGroupMutex);
     for (const auto &[id, group] : m_processGroups) {
-      if (!std::regex_match(name, nameRegex)) { continue; }
+      if (!std::regex_match(group->getName(), nameRegex)) { continue; }
       groups.push_back(group);
     }
   }

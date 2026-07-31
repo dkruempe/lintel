@@ -62,6 +62,12 @@ target_compile_features(coreUtilsTest PUBLIC cxx_std_17)
 target_link_libraries(coreUtilsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.CoreUtilsTest COMMAND coreUtilsTest)
 
+# Regex Utils Test
+ADD_EXECUTABLE(regexUtilsTest core/RegexUtilsTest.cpp)
+target_compile_features(regexUtilsTest PUBLIC cxx_std_17)
+target_link_libraries(regexUtilsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.RegexUtilsTest COMMAND regexUtilsTest)
+
 # Config Components Test
 ADD_EXECUTABLE(configComponentsTest features/ConfigComponentsTest.cpp)
 target_compile_features(configComponentsTest PUBLIC cxx_std_17)
@@ -82,11 +88,23 @@ target_compile_features(bootstrapServiceMockTest PUBLIC cxx_std_17)
 target_link_libraries(bootstrapServiceMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
 ADD_TEST(NAME BaseLibrary.BootstrapServiceMockTest COMMAND bootstrapServiceMockTest)
 
+# Auth Service Test
+ADD_EXECUTABLE(authServiceTest services/AuthServiceTest.cpp)
+target_compile_features(authServiceTest PUBLIC cxx_std_17)
+target_link_libraries(authServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.AuthServiceTest COMMAND authServiceTest)
+
 # CLI CommandLineComponent Mock Test
 ADD_EXECUTABLE(commandLineComponentMockTest cli/CommandLineComponentMockTest.cpp)
 target_compile_features(commandLineComponentMockTest PUBLIC cxx_std_17)
 target_link_libraries(commandLineComponentMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
 ADD_TEST(NAME BaseLibrary.CommandLineComponentMockTest COMMAND commandLineComponentMockTest)
+
+# CLI CommandLineHistoryService Test
+ADD_EXECUTABLE(commandLineHistoryServiceTest cli/CommandLineHistoryServiceTest.cpp)
+target_compile_features(commandLineHistoryServiceTest PUBLIC cxx_std_17)
+target_link_libraries(commandLineHistoryServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.CommandLineHistoryServiceTest COMMAND commandLineHistoryServiceTest)
 
 # HTTP Controller Mock Test
 ADD_EXECUTABLE(controllerMockTest http/ControllerMockTest.cpp)

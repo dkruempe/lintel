@@ -29,7 +29,10 @@ private:
         AllUsers,
         AddUser,
         RemoveUser,
-        UpdateUser
+        UpdateUser,
+        ChangePassword,
+        ShowSessions,
+        RevokeSession
     };
 
     // Flags
@@ -52,12 +55,18 @@ private:
     std::optional<std::string> m_lastName;
     std::optional<std::string> m_eMail;
     std::optional<std::string> m_password;
+    std::optional<std::string> m_oldPassword;
+    std::optional<std::string> m_newPassword;
+    std::optional<std::string> m_sessionId;
     std::optional<std::string> m_groupRemoved;
 
     CommandParser<Commands, Undefined> m_commandParser;
 
     /** Print formatted users to console */
     static void printUsers(const std::vector<UserDto> &users);
+
+    /** Print formatted sessions to console */
+    static void printSessions(const std::vector<UserSessionDto> &sessions);
 
     /** Print formatted groups to console */
     static void printGroups(const std::vector<GroupDto> &groups);

@@ -10,9 +10,12 @@ namespace postgresql {
             const std::string &statement, const db::Parameters &parameters) const {
         const std::vector<const char *> &params = parameters.getParameters();
         const std::vector<int32_t> &paramLengths = parameters.getParametersLengths();
+        const char *const *paramValues = params.empty() ? nullptr : params.data();
+        const int *paramValueLengths =
+                paramLengths.empty() ? nullptr : paramLengths.data();
         return std::make_shared<Result>(
                 PQexecParams(m_conn, statement.c_str(), static_cast<int>(params.size()),
-                             nullptr, &params[0], &paramLengths[0], nullptr, 0));
+                             nullptr, paramValues, paramValueLengths, nullptr, 0));
     }
 
     [[nodiscard]] std::shared_ptr<Result> Connection::prepareStatement(
@@ -27,9 +30,12 @@ namespace postgresql {
             const db::Parameters &parameters) const {
         const std::vector<const char *> &params = parameters.getParameters();
         const std::vector<int32_t> &paramLengths = parameters.getParametersLengths();
+        const char *const *paramValues = params.empty() ? nullptr : params.data();
+        const int *paramValueLengths =
+                paramLengths.empty() ? nullptr : paramLengths.data();
         return std::make_shared<Result>(PQexecPrepared(m_conn, statementName.c_str(),
-                                                       nParams, &params[0],
-                                                       &paramLengths[0], nullptr, 0));
+                                                       nParams, paramValues,
+                                                       paramValueLengths, nullptr, 0));
     }
 
     [[nodiscard]] std::string Connection::getErrorMessage() const {

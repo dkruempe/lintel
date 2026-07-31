@@ -24,7 +24,8 @@
 
 /** Service for managing shared memory segments and constructing data structures within them. */
 class SharedMemoryService : public PropertyRegistration<SharedMemoryService>,
-                            public ISharedMemoryService {
+                            public ISharedMemoryService,
+                            public std::enable_shared_from_this<SharedMemoryService> {
 private:
     struct MappedFile {
         std::shared_ptr<boost::interprocess::managed_mapped_file>

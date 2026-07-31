@@ -203,3 +203,86 @@ TEST_CASE("UserManagementCliComponent: user_update with -u -g calls updateOf wit
     UserDto userDto;
     component.onCommand(userDto, "user_update", {"-u", "jdoe", "-g", "admin"});
 }
+
+TEST_CASE("UserManagementCliComponent: user_change_password with -u -n calls changePasswordOf")
+{
+    auto mockUserApi = std::make_shared<MockUserApi>();
+    UserManagementCliComponent component(mockUserApi);
+
+    REQUIRE_CALL(*mockUserApi, changePasswordOf(ANY(UserPasswordChangeDto)))
+        .WITH(_1.getUserName() == "jdoe" && _1.getNewPassword() == "bmV3cGFzcw==" &&
+              _1.getOldPassword().empty())
+        .TIMES(1)
+        .LR_RETURN(true);
+
+    UserDto userDto;
+    component.onCommand(userDto, "user_change_password",
+                        {"-u", "jdoe", "-n", "newpass"});
+}
+
+TEST_CASE("UserManagementCliComponent: user_change_password without -n prints error")
+{
+    auto mockUserApi = std::make_shared<MockUserApi>();
+    UserManagementCliComponent component(mockUserApi);
+
+    FORBID_CALL(*mockUserApi, changePasswordOf(ANY(UserPasswordChangeDto)));
+
+    UserDto userDto;
+    std::ostringstream oss;
+    auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+    component.onCommand(userDto, "user_change_password", {"-u", "jdoe"});
+
+    std::cerr.rdbuf(oldBuf);
+    REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: user_sessions calls sessionsOf and prints")
+{
+    auto mockUserApi = std::make_shared<MockUserApi>();
+    UserManagementCliComponent component(mockUserApi);
+
+    UserSessionDto session;
+    REQUIRE_CALL(*mockUserApi, sessionsOf())
+        .TIMES(1)
+        .LR_RETURN(std::vector<UserSessionDto>{session});
+
+    UserDto userDto;
+    std::ostringstream oss;
+    auto oldBuf = std::cout.rdbuf(oss.rdbuf());
+
+    component.onCommand(userDto, "user_sessions", {});
+
+    std::cout.rdbuf(oldBuf);
+    REQUIRE(oss.str().find("Last Access") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: user_session_revoke calls revokeSessionOf")
+{
+    auto mockUserApi = std::make_shared<MockUserApi>();
+    UserManagementCliComponent component(mockUserApi);
+
+    REQUIRE_CALL(*mockUserApi, revokeSessionOf(std::string{"abc123"}))
+        .TIMES(1)
+        .LR_RETURN(true);
+
+    UserDto userDto;
+    component.onCommand(userDto, "user_session_revoke", {"-s", "abc123"});
+}
+
+TEST_CASE("UserManagementCliComponent: user_session_revoke without -s prints error")
+{
+    auto mockUserApi = std::make_shared<MockUserApi>();
+    UserManagementCliComponent component(mockUserApi);
+
+    FORBID_CALL(*mockUserApi, revokeSessionOf(ANY(std::string)));
+
+    UserDto userDto;
+    std::ostringstream oss;
+    auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+    component.onCommand(userDto, "user_session_revoke", {});
+
+    std::cerr.rdbuf(oldBuf);
+    REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}

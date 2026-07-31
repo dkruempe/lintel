@@ -1,10 +1,10 @@
 #include "base_library/core/persistence/sqlite3/Connection.h"
 
-#include <cstring>
 #include <functional>
 #include <regex>
 
 #include "base_library/core/exceptions/SQLException.h"
+#include "base_library/core/utils/RegexUtils.h"
 #include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace {
@@ -23,6 +23,11 @@ void regexpFunc(sqlite3_context *ctx, int argc, sqlite3_value **argv) {
         return;
     }
     try {
+        std::string errorMessage;
+        if (!RegexUtils::validatePattern(pattern, errorMessage)) {
+            sqlite3_result_error(ctx, errorMessage.c_str(), -1);
+            return;
+        }
         std::regex re(pattern, std::regex::ECMAScript | std::regex::icase);
         sqlite3_result_int(ctx, std::regex_match(text, re) ? 1 : 0);
     } catch (const std::regex_error &) {
@@ -111,11 +116,7 @@ namespace sqlite {
 
         int counter = 0;
         for (const auto &param: parameters.getParameters()) {
-            if (std::strlen(param) > 0) {
-                sqlite3_bind_text(found->second, ++counter, param, -1, SQLITE_TRANSIENT);
-            } else {
-                sqlite3_bind_null(found->second, ++counter);
-            }
+            sqlite3_bind_text(found->second, ++counter, param, -1, SQLITE_TRANSIENT);
         }
         std::shared_ptr<Result> result = std::make_shared<Result>();
         int step = -1;
@@ -154,11 +155,7 @@ namespace sqlite {
 
         int i = 0;
         for (auto param: parameters.getParameters()) {
-            if (std::strlen(param) > 0) {
-                sqlite3_bind_text(stmt, ++i, param, -1, SQLITE_TRANSIENT);
-            } else {
-                sqlite3_bind_null(stmt, ++i);
-            }
+            sqlite3_bind_text(stmt, ++i, param, -1, SQLITE_TRANSIENT);
         }
 
         int step = -1;

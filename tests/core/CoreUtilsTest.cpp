@@ -206,21 +206,33 @@ TEST_CASE("Cryption: base64 roundtrip empty string") {
     REQUIRE(decoded == original);
 }
 
-TEST_CASE("Cryption: hashOf produces SHA-512 hex string") {
+TEST_CASE("Cryption: hashOf produces salted PBKDF2 hash") {
     std::string hash = Cryption::hashOf("test");
-    REQUIRE(hash.size() == 128);
-    std::regex hexRegex("^[0-9a-f]{128}$");
-    REQUIRE(std::regex_match(hash, hexRegex));
+    REQUIRE(Cryption::isModernHash(hash));
+    REQUIRE(Cryption::verifyOf("test", hash));
+    REQUIRE_FALSE(Cryption::verifyOf("wrong", hash));
 }
 
-TEST_CASE("Cryption: hashOf is deterministic") {
+TEST_CASE("Cryption: hashOf is salted (not deterministic)") {
     std::string h1 = Cryption::hashOf("hello");
     std::string h2 = Cryption::hashOf("hello");
-    REQUIRE(h1 == h2);
+    REQUIRE(h1 != h2);
+    REQUIRE(Cryption::verifyOf("hello", h1));
+    REQUIRE(Cryption::verifyOf("hello", h2));
 }
 
 TEST_CASE("Cryption: hashOf different inputs produce different hashes") {
     std::string h1 = Cryption::hashOf("abc");
     std::string h2 = Cryption::hashOf("xyz");
     REQUIRE(h1 != h2);
+    REQUIRE(Cryption::verifyOf("abc", h1));
+    REQUIRE(Cryption::verifyOf("xyz", h2));
+}
+
+TEST_CASE("Cryption: verifyOf supports legacy SHA-512 hash") {
+    std::string legacy = Cryption::hashOfSha512("test");
+    REQUIRE(legacy.size() == 128);
+    REQUIRE_FALSE(Cryption::isModernHash(legacy));
+    REQUIRE(Cryption::verifyOf("test", legacy));
+    REQUIRE_FALSE(Cryption::verifyOf("wrong", legacy));
 }

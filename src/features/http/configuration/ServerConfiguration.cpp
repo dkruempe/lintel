@@ -5,14 +5,16 @@ ServerConfiguration::ServerConfiguration(
         const std::chrono::milliseconds &readTimeOut,
         const std::chrono::milliseconds &writeTimeOut,
         const std::chrono::milliseconds &idleInterval,
-        std::filesystem::path certFile, std::filesystem::path keyFile)
+        std::filesystem::path certFile, std::filesystem::path keyFile,
+        bool requireTls)
         : m_host(std::move(host)),
           m_port(port),
           m_readTimeOut(readTimeOut),
           m_writeTimeOut(writeTimeOut),
           m_idleInterval(idleInterval),
           m_certFile(std::move(certFile)),
-          m_keyFile(std::move(keyFile)) {}
+          m_keyFile(std::move(keyFile)),
+          m_requireTls(requireTls) {}
 
 const std::string &ServerConfiguration::getHost() const { return m_host; }
 
@@ -38,6 +40,8 @@ const std::filesystem::path &ServerConfiguration::getKeyFile() const {
     return m_keyFile;
 }
 
+bool ServerConfiguration::isTlsRequired() const { return m_requireTls; }
+
 std::ostream &operator<<(std::ostream &os,
                          const ServerConfiguration &configuration) {
     os << "m_host: " << configuration.m_host
@@ -46,6 +50,7 @@ std::ostream &operator<<(std::ostream &os,
        << " m_writeTimeOut: " << configuration.m_writeTimeOut.count()
        << " m_idleInterval: " << configuration.m_idleInterval.count()
        << " m_certFile: " << configuration.m_certFile
-       << " m_keyFile: " << configuration.m_keyFile;
+       << " m_keyFile: " << configuration.m_keyFile
+       << " m_requireTls: " << configuration.m_requireTls;
     return os;
 }

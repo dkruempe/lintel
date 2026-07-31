@@ -3,6 +3,7 @@
 #include <regex>
 
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/utils/RegexUtils.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
 
@@ -42,8 +43,13 @@ SharedMemorySegmentManager::init(
 
 std::vector<std::shared_ptr<SharedMemorySegment>>
 SharedMemorySegmentManager::allOf(const std::string &segmentName) {
-    std::regex segmentRegex(segmentName);
     std::vector<std::shared_ptr<SharedMemorySegment>> segments;
+    std::string errorMessage;
+    if (!RegexUtils::validatePattern(segmentName, errorMessage)) {
+        LOG_WARN("allOf: {}", errorMessage);
+        return segments;
+    }
+    const std::regex segmentRegex(segmentName, std::regex::ECMAScript);
     for (const auto &[name, segment]: m_sharedMemorySegments) {
         if (!std::regex_match(segment->getName(), segmentRegex)) {
             continue;

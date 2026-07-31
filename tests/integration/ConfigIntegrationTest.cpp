@@ -95,6 +95,42 @@ TEST_CASE("HttpComponent: parse with timeouts") {
     REQUIRE(config->getIdleInterval().count() == 60000);
 }
 
+TEST_CASE("HttpComponent: require_tls defaults to false") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    REQUIRE_FALSE(httpEntry->getServerConfiguration()->isTlsRequired());
+}
+
+TEST_CASE("HttpComponent: require_tls true is parsed") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080" require_tls="true"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    REQUIRE(httpEntry->getServerConfiguration()->isTlsRequired());
+}
+
+TEST_CASE("HttpComponent: require_tls case-insensitive value") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080" require_tls="TRUE"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    REQUIRE(httpEntry->getServerConfiguration()->isTlsRequired());
+}
+
+TEST_CASE("HttpComponent: require_tls 1 is parsed as true") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080" require_tls="1"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    REQUIRE(httpEntry->getServerConfiguration()->isTlsRequired());
+}
+
 TEST_CASE("Configuration: setEntries and query by type") {
     setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
 

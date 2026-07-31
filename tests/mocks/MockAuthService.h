@@ -10,6 +10,8 @@ public:
     MAKE_MOCK1(onLoginOf, std::optional<UserToken>(const UserLogin &), override);
     MAKE_MOCK1(onAccessOf, std::optional<UserToken>(const UserTokenLogin &), override);
     MAKE_MOCK1(onLogoutOf, void(const UserTokenLogin &), override);
+    MAKE_MOCK1(allTokensOf, std::vector<UserToken>(const std::string &), override);
+    MAKE_MOCK1(revokeTokenOf, void(const std::string &), override);
 };
 
 #endif  // CPP_BASE_LIBRARY_MOCKAUTHSERVICE_H

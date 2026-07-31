@@ -20,6 +20,7 @@ private:
         const char* const CONNECTION_TIMEOUT = "connection_timeout";
         const char* const CERT_PATH = "cert_path";
         const char* const KEY_PATH = "key_path";
+        const char* const REQUIRE_TLS = "require_tls";
     } shape;
 
 public:

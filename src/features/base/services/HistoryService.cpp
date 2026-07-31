@@ -31,7 +31,13 @@ HistoryService::HistoryService(
 }
 
 void HistoryService::onInitialize() {
-    m_schedulerService->schedule_after(m_period->getValue(), [&]() { run(); });
+    std::weak_ptr<HistoryService> weakSelf = shared_from_this();
+    m_schedulerService->schedule_after(m_period->getValue(),
+                                       [weakSelf]() {
+                                           if (auto self = weakSelf.lock()) {
+                                               self->run();
+                                           }
+                                       });
 }
 
 void HistoryService::onShutdown() {
@@ -76,7 +82,13 @@ void HistoryService::run() {
         m_historyRepository->insertOf(temp);
     }
     if (m_running) {
-        m_schedulerService->schedule_after(m_period->getValue(), [&]() { run(); });
+        std::weak_ptr<HistoryService> weakSelf = shared_from_this();
+        m_schedulerService->schedule_after(m_period->getValue(),
+                                           [weakSelf]() {
+                                               if (auto self = weakSelf.lock()) {
+                                                   self->run();
+                                               }
+                                           });
     }
 }
 
