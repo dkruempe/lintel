@@ -2,6 +2,7 @@
 
 #include <base_library/features/http/service/ContentType.h>
 #include <base_library/features/http/service/HttpStatusCodes.h>
+#include <base_library/features/http/service/Server.h>
 #include <base_library/features/http/configuration/ServerConfiguration.h>
 #include <base_library/features/http/configuration/ClientConfiguration.h>
 
@@ -9,7 +10,9 @@
 
 #include <atomic>
 #include <chrono>
+#include <stdexcept>
 #include <thread>
+#include <vector>
 
 TEST_CASE("ContentType: parse from string") {
     ContentType ct("application/json");
@@ -83,6 +86,29 @@ TEST_CASE("ServerConfiguration: with cert and key") {
     REQUIRE(config.getKeyFile() == "/path/to/key.pem");
 }
 
+TEST_CASE("ServerConfiguration: with trusted proxies") {
+    ServerConfiguration config("0.0.0.0", 8080,
+                               std::chrono::milliseconds(0),
+                               std::chrono::milliseconds(0),
+                               std::chrono::milliseconds(0),
+                               "", "", false,
+                               {"10.0.0.0/8", "192.168.1.5"});
+    auto &proxies = config.getTrustedProxies();
+    REQUIRE(proxies.size() == 2);
+    REQUIRE(proxies[0] == "10.0.0.0/8");
+    REQUIRE(proxies[1] == "192.168.1.5");
+}
+
+TEST_CASE("Server: refuses to start without TLS when require_tls is set") {
+    ServerConfiguration config("0.0.0.0", 8080,
+                               std::chrono::milliseconds(0),
+                               std::chrono::milliseconds(0),
+                               std::chrono::milliseconds(0),
+                               "", "", true);
+    REQUIRE_THROWS_AS(Server(config, std::vector<std::shared_ptr<Controller>>{}),
+                      std::runtime_error);
+}
+
 TEST_CASE("ClientConfiguration: default values") {
     ClientConfiguration config("localhost", 8080,
                                std::chrono::milliseconds(0),
@@ -105,8 +131,9 @@ TEST_CASE("httplib: server handles GET request") {
 
     int port = 18989;
     std::thread serverThread([&]() { server.listen("127.0.0.1", port); });
-    serverThread.detach();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    for (int i = 0; i < 50 && !server.is_running(); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 
     httplib::Client client("127.0.0.1", port);
     client.set_connection_timeout(std::chrono::seconds(2));
@@ -122,6 +149,7 @@ TEST_CASE("httplib: server handles GET request") {
     }
 
     server.stop();
+    serverThread.join();
 }
 
 TEST_CASE("httplib: server handles POST with body") {
@@ -135,8 +163,9 @@ TEST_CASE("httplib: server handles POST with body") {
 
     int port = 18990;
     std::thread serverThread([&]() { server.listen("127.0.0.1", port); });
-    serverThread.detach();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    for (int i = 0; i < 50 && !server.is_running(); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 
     httplib::Client client("127.0.0.1", port);
     client.set_connection_timeout(std::chrono::seconds(2));
@@ -152,6 +181,7 @@ TEST_CASE("httplib: server handles POST with body") {
     }
 
     server.stop();
+    serverThread.join();
 }
 
 TEST_CASE("httplib: server returns 404 for unknown route") {
@@ -163,8 +193,9 @@ TEST_CASE("httplib: server returns 404 for unknown route") {
 
     int port = 18991;
     std::thread serverThread([&]() { server.listen("127.0.0.1", port); });
-    serverThread.detach();
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    for (int i = 0; i < 50 && !server.is_running(); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
 
     httplib::Client client("127.0.0.1", port);
     client.set_connection_timeout(std::chrono::seconds(2));
@@ -178,4 +209,5 @@ TEST_CASE("httplib: server returns 404 for unknown route") {
     }
 
     server.stop();
+    serverThread.join();
 }

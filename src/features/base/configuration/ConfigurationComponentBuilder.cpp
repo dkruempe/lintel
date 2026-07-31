@@ -15,7 +15,8 @@ ConfigurationComponentBuilder::ConfigurationComponentBuilder(
         const std::shared_ptr<EnvironmentConfiguration> &environmentConfiguration) {
     m_components.push_back(
             std::make_shared<DatabaseConnectionComponent>(environmentConfiguration));
-    m_components.push_back(std::make_shared<HttpComponent>());
+    m_components.push_back(
+            std::make_shared<HttpComponent>(environmentConfiguration));
     m_components.push_back(std::make_shared<PropertyComponent>());
     m_components.push_back(
             std::make_shared<LoggerComponent>(environmentConfiguration));

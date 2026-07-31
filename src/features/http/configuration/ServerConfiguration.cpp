@@ -6,7 +6,7 @@ ServerConfiguration::ServerConfiguration(
         const std::chrono::milliseconds &writeTimeOut,
         const std::chrono::milliseconds &idleInterval,
         std::filesystem::path certFile, std::filesystem::path keyFile,
-        bool requireTls)
+        bool requireTls, std::vector<std::string> trustedProxies)
         : m_host(std::move(host)),
           m_port(port),
           m_readTimeOut(readTimeOut),
@@ -14,7 +14,8 @@ ServerConfiguration::ServerConfiguration(
           m_idleInterval(idleInterval),
           m_certFile(std::move(certFile)),
           m_keyFile(std::move(keyFile)),
-          m_requireTls(requireTls) {}
+          m_requireTls(requireTls),
+          m_trustedProxies(std::move(trustedProxies)) {}
 
 const std::string &ServerConfiguration::getHost() const { return m_host; }
 
@@ -42,6 +43,10 @@ const std::filesystem::path &ServerConfiguration::getKeyFile() const {
 
 bool ServerConfiguration::isTlsRequired() const { return m_requireTls; }
 
+const std::vector<std::string> &ServerConfiguration::getTrustedProxies() const {
+    return m_trustedProxies;
+}
+
 std::ostream &operator<<(std::ostream &os,
                          const ServerConfiguration &configuration) {
     os << "m_host: " << configuration.m_host
@@ -51,6 +56,13 @@ std::ostream &operator<<(std::ostream &os,
        << " m_idleInterval: " << configuration.m_idleInterval.count()
        << " m_certFile: " << configuration.m_certFile
        << " m_keyFile: " << configuration.m_keyFile
-       << " m_requireTls: " << configuration.m_requireTls;
+       << " m_requireTls: " << configuration.m_requireTls
+       << " m_trustedProxies: ";
+    for (std::size_t i = 0; i < configuration.m_trustedProxies.size(); ++i) {
+        if (i > 0) {
+            os << ",";
+        }
+        os << configuration.m_trustedProxies[i];
+    }
     return os;
 }

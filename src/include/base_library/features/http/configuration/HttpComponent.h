@@ -1,13 +1,19 @@
 #ifndef CPP_BASE_LIBRARY_HTTPCOMPONENT_H
 #define CPP_BASE_LIBRARY_HTTPCOMPONENT_H
 
+#include <memory>
 #include <tinyxml2.h>
 
 #include "base_library/features/base/configuration/Component.h"
+#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 
 /** Parses HTTP host configuration (server/client) from XML */
 class HttpComponent : public Component {
 private:
+    /** Environment configuration used to resolve relative cert/key paths
+     *  against the configuration directory */
+    std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
+
     static struct Shapes {
         const char* const CONFIG_ROOT = "HttpHost";
         const char* const SERVER_ROOT = "Server";
@@ -21,10 +27,19 @@ private:
         const char* const CERT_PATH = "cert_path";
         const char* const KEY_PATH = "key_path";
         const char* const REQUIRE_TLS = "require_tls";
+        const char* const TRUSTED_PROXIES = "trusted_proxies";
     } shape;
 
 public:
+    /** Construct without an environment configuration; relative cert/key
+     *  paths are then not resolved */
     HttpComponent();
+
+    /** Construct with an environment configuration so that relative
+     *  cert/key paths are resolved against the configuration directory
+     *  @param environmentConfiguration The environment configuration */
+    explicit HttpComponent(
+            std::shared_ptr<EnvironmentConfiguration> environmentConfiguration);
 
     /**
      * Parse XML content into HTTP configuration entries

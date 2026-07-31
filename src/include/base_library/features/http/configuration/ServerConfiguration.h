@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <ostream>
 #include <string>
+#include <vector>
 
 /** Configuration for an HTTP server (host, port, timeouts, TLS) */
 class ServerConfiguration {
@@ -17,6 +18,7 @@ private:
     std::filesystem::path m_certFile;
     std::filesystem::path m_keyFile;
     bool m_requireTls;
+    std::vector<std::string> m_trustedProxies;
 
 public:
     /** @param host bind address
@@ -26,7 +28,8 @@ public:
      *  @param idleInterval idle connection timeout
      *  @param certFile TLS certificate file path
      *  @param keyFile TLS key file path
-     *  @param requireTls refuse to start if TLS is not configured */
+     *  @param requireTls refuse to start if TLS is not configured
+     *  @param trustedProxies IPs/CIDRs allowed to forward X-Forwarded-For */
     ServerConfiguration(std::string host, int32_t port,
                         const std::chrono::milliseconds &readTimeOut =
                         std::chrono::milliseconds(0),
@@ -36,7 +39,8 @@ public:
                         std::chrono::milliseconds(0),
                         std::filesystem::path certFile = "",
                         std::filesystem::path keyFile = "",
-                        bool requireTls = false);
+                        bool requireTls = false,
+                        std::vector<std::string> trustedProxies = {});
 
     /** @return the bind host */
     [[nodiscard]] const std::string &getHost() const;
@@ -61,6 +65,9 @@ public:
 
     /** @return true if the server must not start without TLS */
     [[nodiscard]] bool isTlsRequired() const;
+
+    /** @return IPs/CIDRs trusted to forward X-Forwarded-For */
+    [[nodiscard]] const std::vector<std::string> &getTrustedProxies() const;
 
     /** Print configuration to stream */
     friend std::ostream &operator<<(std::ostream &os,

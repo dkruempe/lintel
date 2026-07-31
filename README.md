@@ -36,6 +36,25 @@ These optional modules build upon the core and can be enabled as needed to provi
 
 A detailed description of all available HTTP API endpoints is available in the [swagger.md](swagger.md) file. The formal specification can be found in [swagger.yaml](swagger.yaml).
 
+### HTTP Server Configuration
+
+The HTTP server is configured via the `<HttpHost>` section in the bootstrap XML (see `cfg/bootstrap.xml`):
+
+```xml
+<HttpHost>
+    <Server host="0.0.0.0" port="8080"
+            cert_path="certs/server.crt" key_path="certs/server.key"
+            require_tls="true"
+            trusted_proxies="10.0.0.0/8, 192.168.1.5"/>
+    <Client host="localhost" port="8080" cert_path="certs/server.crt"
+            key_path="certs/server.key"/>
+</HttpHost>
+```
+
+- `cert_path` / `key_path` – PEM certificate/key for HTTPS. When set, the server uses TLS. Relative paths are resolved against the configuration directory (e.g. `cfg/`); the same attributes on `<Client>` enable HTTPS on the client. Self-signed test certificates are committed under `cfg/certs/` for local development.
+- `require_tls` – refuse to start the server without a configured TLS certificate/key (`true`/`false`). Defaults to `false`; use it in production to avoid serving credentials in clear text.
+- `trusted_proxies` – comma-separated list of IPs or CIDR ranges (e.g. `10.0.0.0/8`) whose `X-Forwarded-For` header is trusted for client-IP detection. By default the header is ignored, so clients behind a proxy must be listed here for correct IP binding, rate limiting and lockout.
+
 ## Getting Started
 
 ### Prerequisites

@@ -112,6 +112,12 @@ target_compile_features(controllerMockTest PUBLIC cxx_std_17)
 target_link_libraries(controllerMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
 ADD_TEST(NAME BaseLibrary.ControllerMockTest COMMAND controllerMockTest)
 
+# Client IP Resolver Test
+ADD_EXECUTABLE(clientIpResolverTest http/ClientIpResolverTest.cpp)
+target_compile_features(clientIpResolverTest PUBLIC cxx_std_17)
+target_link_libraries(clientIpResolverTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.ClientIpResolverTest COMMAND clientIpResolverTest)
+
 # MessageQueue Service Mock Test
 ADD_EXECUTABLE(messageQueueServiceMockTest services/MessageQueueServiceMockTest.cpp)
 target_compile_features(messageQueueServiceMockTest PUBLIC cxx_std_17)

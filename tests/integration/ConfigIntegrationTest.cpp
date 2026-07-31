@@ -131,6 +131,81 @@ TEST_CASE("HttpComponent: require_tls 1 is parsed as true") {
     REQUIRE(httpEntry->getServerConfiguration()->isTlsRequired());
 }
 
+TEST_CASE("HttpComponent: trusted_proxies defaults to empty") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    REQUIRE(httpEntry->getServerConfiguration()->getTrustedProxies().empty());
+}
+
+TEST_CASE("HttpComponent: trusted_proxies parsed with trimming") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080" trusted_proxies="10.0.0.1, 192.168.0.0/16,2001:db8::/32"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    auto &proxies = httpEntry->getServerConfiguration()->getTrustedProxies();
+    REQUIRE(proxies.size() == 3);
+    REQUIRE(proxies[0] == "10.0.0.1");
+    REQUIRE(proxies[1] == "192.168.0.0/16");
+    REQUIRE(proxies[2] == "2001:db8::/32");
+}
+
+TEST_CASE("HttpComponent: relative cert/key paths resolved against config dir") {
+    auto envConfig = std::make_shared<EnvironmentConfiguration>();
+    envConfig->overrides(EnvironmentConfiguration::Environment::ConfigDirectory,
+                         "/tmp/example_cfg");
+    HttpComponent httpComp(envConfig);
+    std::string xml = R"(<HttpHost>
+        <Server host="0.0.0.0" port="8080" cert_path="certs/server.crt" key_path="certs/server.key"/>
+        <Client host="localhost" port="8080" cert_path="certs/client.crt" key_path="certs/client.key"/>
+    </HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    REQUIRE(entries.size() == 2);
+
+    auto serverEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    REQUIRE(serverEntry->getServerConfiguration()->getCertFile() ==
+            "/tmp/example_cfg/certs/server.crt");
+    REQUIRE(serverEntry->getServerConfiguration()->getKeyFile() ==
+            "/tmp/example_cfg/certs/server.key");
+
+    auto clientEntry = std::static_pointer_cast<HttpEntry>(entries[1]);
+    REQUIRE(clientEntry->getClientConfiguration()->getCertFile() ==
+            "/tmp/example_cfg/certs/client.crt");
+    REQUIRE(clientEntry->getClientConfiguration()->getKeyFile() ==
+            "/tmp/example_cfg/certs/client.key");
+}
+
+TEST_CASE("HttpComponent: absolute cert/key paths kept unchanged") {
+    auto envConfig = std::make_shared<EnvironmentConfiguration>();
+    envConfig->overrides(EnvironmentConfiguration::Environment::ConfigDirectory,
+                         "/tmp/example_cfg");
+    HttpComponent httpComp(envConfig);
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="443" cert_path="/etc/ssl/server.pem" key_path="/etc/ssl/private/server.key"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    REQUIRE(httpEntry->getServerConfiguration()->getCertFile() ==
+            "/etc/ssl/server.pem");
+    REQUIRE(httpEntry->getServerConfiguration()->getKeyFile() ==
+            "/etc/ssl/private/server.key");
+}
+
+TEST_CASE("HttpComponent: without env config relative cert/key paths kept") {
+    HttpComponent httpComp;
+    std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="443" cert_path="certs/server.crt" key_path="certs/server.key"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    REQUIRE(httpEntry->getServerConfiguration()->getCertFile() ==
+            "certs/server.crt");
+    REQUIRE(httpEntry->getServerConfiguration()->getKeyFile() ==
+            "certs/server.key");
+}
+
 TEST_CASE("Configuration: setEntries and query by type") {
     setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
 

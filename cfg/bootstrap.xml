@@ -49,8 +49,20 @@
 
     <!-- Http Server / Client Configuration -->
     <HttpHost>
-        <Server host="0.0.0.0" port="8080"/>
-        <Client host="localhost" port="8080" connection_timeout="1000"/>
+        <!--
+        TLS: relative cert_path/key_path are resolved against the config
+        directory (cfg/). Self-signed test certificates live in cfg/certs/.
+        <Server host="0.0.0.0" port="8080"
+                cert_path="certs/server.crt" key_path="certs/server.key"
+                require_tls="true"
+                trusted_proxies="10.0.0.0/8, 192.168.1.5"/>
+        require_tls: refuse to start without TLS cert/key (production)
+        trusted_proxies: IPs/CIDRs whose X-Forwarded-For header is honored
+        -->
+        <Server host="0.0.0.0" port="8080" cert_path="certs/server.crt"
+                key_path="certs/server.key" require_tls="true"/>
+        <Client host="localhost" port="8080" cert_path="certs/server.crt"
+                key_path="certs/server.key" connection_timeout="1000"/>
     </HttpHost>
 
     <!-- Property Configurations -->

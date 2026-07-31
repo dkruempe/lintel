@@ -17,6 +17,9 @@ std::shared_ptr<httplib::Server> Server::initServer(
         const std::vector<std::shared_ptr<Controller>> &controllers,
         const ServerConfiguration &serverConfiguration,
         const std::shared_ptr<httplib::SSLServer> &sslServer) {
+    for (const auto &controller: controllers) {
+        controller->setTrustedProxies(serverConfiguration.getTrustedProxies());
+    }
     if (sslServer != nullptr) {
         return std::static_pointer_cast<httplib::Server>(sslServer);
     }

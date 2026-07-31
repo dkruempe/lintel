@@ -228,6 +228,7 @@ set(headers
     include/base_library/features/http/provider/ClientProvider.h
     include/base_library/features/http/provider/ServerProvider.h
     include/base_library/features/http/service/Client.h
+    include/base_library/features/http/service/ClientIpResolver.h
     include/base_library/features/http/service/ContentType.h
     include/base_library/features/http/service/Controller.h
     include/base_library/features/http/service/HttpStatusCodes.h
@@ -419,6 +420,7 @@ set(sources
     features/http/provider/ClientProvider.cpp
     features/http/provider/ServerProvider.cpp
     features/http/service/Client.cpp
+    features/http/service/ClientIpResolver.cpp
     features/http/service/ContentType.cpp
     features/http/service/Controller.cpp
     features/http/service/HttpStatusCode.cpp

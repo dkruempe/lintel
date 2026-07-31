@@ -8,11 +8,13 @@
 #include <memory>
 #include <exception>
 #include <type_traits>
+#include <vector>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/base/provider/GroupProvider.h"
 #include "base_library/features/base/services/IAuthService.h"
+#include "base_library/features/http/service/ClientIpResolver.h"
 #include "base_library/features/http/service/ContentType.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 
@@ -74,11 +76,14 @@ protected:
 
     /**
      * Determine the client IP address of a request, honoring the
-     * X-Forwarded-For header (leftmost entry) when set.
+     * X-Forwarded-For header (leftmost entry) only when the direct peer
+     * is a configured trusted proxy.
      * @param request the HTTP request
      * @return the client IP address
      */
-    static std::string clientIpOf(const httplib::Request &request);
+    std::string clientIpOf(const httplib::Request &request);
+
+    ClientIpResolver m_ipResolver;
 
     using HandlerArgs = void(const httplib::Request &, httplib::Response &);
     using HandlerWithContentReaderArgs = void(const httplib::Request &,
@@ -138,6 +143,10 @@ public:
     }
 
     ~Controller() override = default;
+
+    /** Configure the trusted proxies allowed to forward X-Forwarded-For.
+     *  @param trustedProxies IPs or CIDR ranges (e.g. "10.0.0.0/8") */
+    void setTrustedProxies(std::vector<std::string> trustedProxies);
 
     /** Register all collected handler methods with the HTTP server */
     void registerMethods(std::shared_ptr<httplib::Server> &server);
