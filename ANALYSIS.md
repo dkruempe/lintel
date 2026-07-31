@@ -52,11 +52,91 @@
 
 ---
 
+## Sicherheitsanalyse (Stand: Juli 2026)
+
+### Kritisch (sofort beheben)
+
+1. **Passwort wird im Klartext geloggt** – `UserController::loginOfPost` schreibt Benutzername **und Passwort** in das Log: `LOG_INFO("login {} {} {}", userName, password, request.remote_addr)` (`src/features/http/controllers/UserController.cpp:40`). Passwörter dürfen niemals in Logs erscheinen.
+
+2. **HTTP-Bearer-Parsing außerhalb des try/catch → Server-Crash (DoS)** – Im `ADD_HANDLER_METHOD`-Makro wird `auth.substr(7)` **vor** dem try-Block ausgeführt (`src/include/base_library/features/http/service/Controller.h:35`). Sendet ein Client exakt `Authorization: Bearer` (ohne Leerzeichen/Token), wirft `substr(7)` ein unbehandeltes `std::out_of_range`, das aus dem httplib-Handler austritt → `std::terminate` im Worker-Thread. Eine einzige HTTP-Request kann so den kompletten Server zum Absturz bringen.
+
+3. **Logout löscht nach IP statt Token-ID** – `AuthService::onLogoutOf` führt `m_userTokens.erase(userToken.m_ipAddress)` aus (`src/features/base/services/AuthService.cpp:91`). Die Map ist aber nach `m_id` (Token) keyed. Konsequenzen: (a) Das eigentliche Token bleibt nach Logout gültig – Logout ist wirkungslos; (b) bei mehreren Sessions hinter derselben IP werden **alle** Sessions beendet; (c) bei zwei Nutzern hinter einem NAT/NAT-PAT wird die Session des jeweils anderen beendet. Fix: `erase(userToken.m_id)`.
+
+4. **Out-of-Bounds-Read in `Cryption::decodeBase64`** – `t[static_cast<std::size_t>(c)]` (`src/core/utils/Cryption.cpp:72`) indiziert mit einem signed `char`. Für Eingabebytes ≥ 0x80 wird `c` negativ, `static_cast<std::size_t>` erzeugt einen riesigen Wert → OOB-Zugriff auf den 256er-Vector `t` (Crash / mögliche Speicher-Disclosure). Fix: `static_cast<std::size_t>(static_cast<unsigned char>(c))`.
+
+### Hoch
+
+5. **Unsalted SHA-512 als Passwort-Hash** – `Cryption::hashOf` verwendet SHA-512 ohne Salt/Iterationen (`src/core/utils/Cryption.cpp:16`). Anfällig für Rainbow-Table-/Dictionary-Angriffe. Erforderlich: iterierte KDF mit per-User-Salt (bcrypt/argon2/scrypt/PBKDF2).
+
+6. **Basic Auth über unverschlüsseltes HTTP** – Credentials werden nur Base64-kodiert (kein Verschlüsselungsschutz) übertragen. TLS ist rein optional (`ServerConfiguration`), die Default-Config bindet `0.0.0.0:8080` ohne Zertifikat. Zusätzlich wird `m_ipAddress` aus `request.remote_addr` übernommen – bei Proxys unzuverlässig.
+
+7. **Keine Synchronisation von `m_userTokens`** – `AuthService` greift aus HTTP-Handler-Threads (`onLoginOf`/`onAccessOf`/`onLogoutOf`) **und** aus dem Scheduler-Thread (`onCheck`) ohne Mutex auf `std::unordered_map m_userTokens` zu → Data Race, potenzielle Abstürze.
+
+8. **`onAccessOf` prüft die IP nicht** – Ein gestohlenes/geleaktes Token kann von **jeder** IP-Adresse verwendet werden. `onLoginOf` validiert die IP, `onAccessOf` nicht (`src/features/base/services/AuthService.cpp:66`).
+
+9. **Hardcodierte Default-Credentials im Seed-Script** – `cfg/database/DEFAULT_SQLITE/data_schema_default_version_1.sql` legt den Admin-User `dominik` mit festem SHA-512-Hash an (vermutlich bekanntes Passwort). Auslieferung mit Default-Credentials ist ein Sicherheitsrisiko.
+
+10. **DB-Passwort wird ausgegeben** – `DatabaseConnectionEntry::operator<<` schreibt `m_password` in den Stream (`src/features/base/configuration/DatabaseConnectionEntry.cpp:23`). Jede Log-Ausgabe eines Connection-Entry leakt das Datenbank-Passwort.
+
+11. **Inkonsistente Autorisierung im `SharedMemoryController`** – `exportRepositoryOfGet`, `shrinkSegmentOfPut` und `growSegmentOfPut` verwenden `!has(User-Shm) || !has(Admin-Shm)` (`src/features/http/controllers/SharedMemoryController.cpp:44,171,205`), verlangen also **beide** Gruppen. Alle anderen Endpoints nutzen `&&` (mind. eine Gruppe). Die betroffenen Endpoints sind für Einzelgruppen-Nutzer unerreichbar bzw. verhalten sich abweichend vom Rest der API.
+
+### Mittel
+
+12. **Kein Brute-Force-/Rate-Limiting-Schutz** – `/user/login` erlaubt beliebig viele Versuche; Fehlversuche werden nur geloggt. Es fehlen Lockout, Verzögerung und Ratenbegrenzung (auch pro IP).
+
+13. **Exception-Meldungen gehen an Clients** – Der Catch-Block im Controller-Makro liefert `e.what()` als Response-Body (`Controller.h:44`) → interne Detail-Disclosure. Auf 500 mit generischer Meldung reduzieren.
+
+14. **Timing-Angriff bei Passwort-Vergleich** – `user.getPassword() != Cryption::hashOf(...)` (`AuthService.cpp:50`) ist nicht konstant-zeitig. Konstantzeiten-Vergleich (z. B. `CRYPTO_memcmp`/OpenSSL-Hash-Vergleich) verwenden.
+
+15. **PostgreSQL-Parameter-Array bei leerem Vector (UB)** – `&params[0]` in `postgresql::Connection::executeParameters`/`executePreparedStatement` auf leerem `std::vector` ist undefiniert, falls je eine parameterlose Query über diesen Pfad läuft.
+
+### Zu beachten
+
+16. **`/hello`-Endpoint (ExampleController)** und Swagger-Datei liegen ungeschützt im Repo; die Swagger-Spezifikation sollte an den tatsächlichen Auth-/Status-Codes-Stand angepasst werden (dokumentiert derzeit teilweise 200 ohne Auth-Anforderung).
+17. **Docker-Compose** exponiert PostgreSQL (`test/test`) auf `5432` und die App auf `8080` ohne TLS – für Produktiv-Setups nicht geeignet.
+18. **Kein `payload_max_length`** explizit für den httplib-Server gesetzt (Default 8 MB) – bei File-Upload-Endpoints explizit begrenzen.
+
+---
+
+## Offene Bugs / bekannte Fehler
+
+1. **`Client::post` (SSL-Pfad) übergibt falsches Argument** – `m_sslClient->Post(pathStr, contentType, contentType)` (`src/features/http/service/Client.cpp:208`) sollte `std::move(contentProvider)` als Provider übergeben (Copy-Paste-Fehler). Kompiliert nur, weil der OpenSSL-Pfad aktuell nicht gebaut wird; bricht den SSL-Build.
+
+2. **`ProcessService::allGroupsOf` – Regex-Filter wirkungslos** – `std::regex_match(name, nameRegex)` (`src/core/services/ProcessService.cpp:447`) vergleicht die **Abfrage-String mit ihrem eigenen Regex** statt `group->getName()` mit dem Regex. Ergebnis: Es werden entweder alle Gruppen oder keine zurückgegeben, je nachdem ob die Abfrage-String sich selbst matcht. Fix: `std::regex_match(group->getName(), nameRegex)`.
+
+3. **Data Race auf `m_processes` in `ProcessService`** – `terminateOf` (`ProcessService.cpp:312`) und `detachOf` (`ProcessService.cpp:340`) rufen `m_processes.erase(...)` **ohne** `m_processesMutex` auf, während der Monitor-Thread die Map durchläuft.
+
+4. **`ProcessService::stopOf` – Condition-Variable ohne Notifier** – Eine lokale `std::condition_variable cond` wird mit `m_conditionMutex` kombiniert, niemand notifiziert sie; `wait_for` läuft damit immer bis zum Timeout (`ProcessService.cpp:250-253`). Funktional träge, aber ineffektiv.
+
+5. **`ProcessService::terminateOf` – `exit_code()` direkt nach `terminate()`** – Der Exit-Code wird unmittelbar nach dem Absetzen von SIGKILL gelesen; das Kind kann noch nicht beendet sein → undefinierter Wert.
+
+6. **`MessageQueueService::numberMessagesOf` – falsches Konstruktorargument** – Wird die Queue in `m_messageQueues` nicht gefunden, wird `MessageQueue<Message>` mit `entry.get_process_name()` als **Queue-Name** erzeugt statt `get_message_queue_name()` (`src/features/base/services/MessageQueueService.cpp:53-54`).
+
+7. **SQLite vs. PostgreSQL Regex-Verhalten inkonsistent** – Das registrierte SQLite-`REGEXP` nutzt `std::regex::ECMAScript | std::regex::icase` (`src/core/persistence/sqlite3/Connection.cpp:26`), PostgreSQL `~` ist case-sensitiv. `UserRepository::allOf(userNameMatches)` liefert je nach Backend unterschiedliche Ergebnisse. Zusätzlich ist ein user-gesteuerter Regex ohne Begrenzung ein ReDoS-Risiko.
+
+8. **`DatabaseConnectionComponent` – OOB bei leerem SQLite-Pfad** – `std::string tmpPath = connection; if (tmpPath[0] == '~')` (`DatabaseConnectionComponent.cpp:72`): Bei leerem `connection`-Attribut ist `tmpPath[0]` ein OOB-Zugriff (UB).
+
+9. **`Cryption`-Konstruktor gibt OpenSSL-Fehlerqueue auf `stderr` aus** – `ERR_print_errors_fp(stderr)` (`Cryption.cpp:13`) läuft bei jeder Instanziierung bedingungslos, auch ohne Fehler.
+
+10. **Scheduler-Lambdas mit `[&]`-Capture (`this`)** – `AuthService::onCheck`/`SharedMemoryService::onCheck` registrieren `[&]() { onCheck(); }` (`AuthService.cpp:112,117`, `SharedMemoryService.cpp:93-95`). Läuft ein getakteter Task nach Zerstörung des Service (Shutdown-Reihenfolge), droht Use-after-Free.
+
+11. **`startProcessPost` deserialisiert Body vor Content-Type-Prüfung** – `ProcessController::startProcessPost` ruft `deserialize(request.body)` vor dem `switch (contentType)` auf (`ProcessController.cpp:96`); bei ungültigem Content-Type wird trotzdem geparst.
+
+12. **`AuthService::onLoginOf` – IP-Normalisierung** – Der Check `ip.to_string() != userLogin.m_ipAddress` lehnt legitime Darstellungen (z. B. IPv4-mapped IPv6) ab bzw. ist von `remote_addr`-Format abhängig; bei IPv6-Zonen/Portformaten fragil.
+
+13. **`Group::operator<<` inkonsistent** – In der Schleife wird `i != memberGroup.m_groups.size() - 1` geprüft (Member statt äußerer Liste) (`Group.cpp:25`); die Komma-Separation ist bei verschachtelten Gruppen falsch.
+
+---
+
 ## Optimierungsmöglichkeiten (priorisiert)
 
 | Priorität | Maßnahme | Begründung |
 |-----------|----------|------------|
+| **Kritisch** | **Sicherheitsfindings 1–4 beheben (ANALYSIS.md → „Sicherheitsanalyse")** | Passwort-Logging, Bearer-Crash (DoS), Logout-Bug, base64-OOB |
 | **Hoch** | **Fehlende Features abschließen (TODO.md)** | MySQL Support, Cursor, HTTP Exception Handling, Paging |
+| **Hoch** | **AuthService absichern** | Mutex für `m_userTokens`, IP-Check in `onAccessOf`, salted KDF, Rate-Limiting |
+| **Mittel** | **Unit-Tests für AuthService, ProcessService, UserRepository, Cryption ergänzen** | Kern-Login-/Token-Logik und Process-Management sind ungetestet; security-relevante Cryption-Funktionen ebenfalls |
 | **Mittel** | **Benchmark-Suite aufsetzen** | Performance-Messungen für Property-System, Persistenz, Serialisierung |
+| **Mittel** | **Swagger-Dokumentation an tatsächliche Auth-/Status-Codes angleichen** | Doku spiegelt Auth-Modell nicht korrekt wider |
 | **Niedrig** | **CMake modernisieren** (`include_directories` → `target_include_directories`) | Saubereres Target-Modell |
 | **Niedrig** | **Hypodermic durch Boost.DI ersetzen** | Aktiver maintained, standardkonformer |
