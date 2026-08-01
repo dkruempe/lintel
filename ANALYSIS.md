@@ -42,25 +42,27 @@
 
 ## Offene Bugs / bekannte Fehler
 
-1. **`Client::post` (SSL-Pfad) übergibt falsches Argument** – `m_sslClient->Post(pathStr, contentType, contentType)` (`src/features/http/service/Client.cpp:208`) sollte `std::move(contentProvider)` als Provider übergeben (Copy-Paste-Fehler). Kompiliert nur, weil der OpenSSL-Pfad aktuell nicht gebaut wird; bricht den SSL-Build.
+> Stand: 01.08.2026 – Alle nachfolgend gelisteten Punkte wurden behoben und über einen vollständigen Build (`-Werror`) sowie `ctest` (21/21 grün) verifiziert.
 
-2. **Data Race auf `m_processes` in `ProcessService`** – `terminateOf` (`ProcessService.cpp:312`) und `detachOf` (`ProcessService.cpp:340`) rufen `m_processes.erase(...)` **ohne** `m_processesMutex` auf, während der Monitor-Thread die Map durchläuft.
+1. **`Client::post` (SSL-Pfad) übergibt falsches Argument** – **FIXED (01.08.2026)**: `m_sslClient->Post(pathStr, contentType, contentType)` wurde auf `m_sslClient->Post(pathStr, std::move(contentProvider), contentType)` korrigiert (`Client.cpp:227`).
 
-3. **`ProcessService::stopOf` – Condition-Variable ohne Notifier** – Eine lokale `std::condition_variable cond` wird mit `m_conditionMutex` kombiniert, niemand notifiziert sie; `wait_for` läuft damit immer bis zum Timeout (`ProcessService.cpp:250-253`). Funktional träge, aber ineffektiv.
+2. **Data Race auf `m_processes` in `ProcessService`** – **FIXED (01.08.2026)**: `terminateOf` und `detachOf` führen Promise-Set und `erase` jetzt unter `m_processesMutex` aus; `monitorProcess` kann die Map nicht mehr nebenläufig modifizieren. Zusätzlich wird geprüft, ob der Eintrag nach dem Warten noch existiert (doppeltes `set_value` vermieden).
 
-4. **`ProcessService::terminateOf` – `exit_code()` direkt nach `terminate()`** – Der Exit-Code wird unmittelbar nach dem Absetzen von SIGKILL gelesen; das Kind kann noch nicht beendet sein → undefinierter Wert.
+3. **`ProcessService::stopOf` – Condition-Variable ohne Notifier** – **FIXED (01.08.2026)**: Die nie notifizierte lokale Condition-Variable wurde durch ein Polling auf `child::running()` bis `m_processStopWaitTime` ersetzt (`ProcessService.cpp:253-258`). (Das deprecated/unzuverlässige `child::wait_for` wurde dabei bewusst nicht verwendet.)
 
-5. **`MessageQueueService::numberMessagesOf` – falsches Konstruktorargument** – Wird die Queue in `m_messageQueues` nicht gefunden, wird `MessageQueue<Message>` mit `entry.get_process_name()` als **Queue-Name** erzeugt statt `get_message_queue_name()` (`src/features/base/services/MessageQueueService.cpp:53-54`).
+4. **`ProcessService::terminateOf` – `exit_code()` direkt nach `terminate()`** – **FIXED (01.08.2026)**: Nach `terminate()` wird mit `child::wait()` auf das tatsächliche Prozessende gewartet, bevor `exit_code()` gelesen wird (`ProcessService.cpp:314-315`).
 
-6. **`DatabaseConnectionComponent` – OOB bei leerem SQLite-Pfad** – `std::string tmpPath = connection; if (tmpPath[0] == '~')` (`DatabaseConnectionComponent.cpp:72`): Bei leerem `connection`-Attribut ist `tmpPath[0]` ein OOB-Zugriff (UB).
+5. **`MessageQueueService::numberMessagesOf` – falsches Konstruktorargument** – **FIXED (01.08.2026)**: Als Queue-Name wird nun `entry.get_message_queue_name()` statt `get_process_name()` übergeben (`MessageQueueService.cpp:54`).
 
-7. **Scheduler-Lambdas mit `[&]`-Capture (`this`)** – `AuthService::onCheck`/`SharedMemoryService::onCheck` registrieren `[&]() { onCheck(); }` (`AuthService.cpp:112,117`, `SharedMemoryService.cpp:93-95`). Läuft ein getakteter Task nach Zerstörung des Service (Shutdown-Reihenfolge), droht Use-after-Free.
+6. **`DatabaseConnectionComponent` – OOB bei leerem SQLite-Pfad** – **FIXED (01.08.2026)**: Zugriff auf `tmpPath[0]` ist durch `!tmpPath.empty() &&` abgesichert (`DatabaseConnectionComponent.cpp:72`).
 
-8. **`startProcessPost` deserialisiert Body vor Content-Type-Prüfung** – `ProcessController::startProcessPost` ruft `deserialize(request.body)` vor dem `switch (contentType)` auf (`ProcessController.cpp:96`); bei ungültigem Content-Type wird trotzdem geparst.
+7. **Scheduler-Lambdas mit `[&]`-Capture (`this`)** – **Bereits FIXED (31.07.2026)**: `AuthService` und `SharedMemoryService` nutzen bereits das `shared_from_this()`/`weak_ptr`-Muster; kein `[&]`-Capture auf `this` mehr.
 
-9. **`AuthService::onLoginOf` – IP-Normalisierung** – Der Check `ip.to_string() != userLogin.m_ipAddress` lehnt legitime Darstellungen (z. B. IPv4-mapped IPv6) ab bzw. ist von `remote_addr`-Format abhängig; bei IPv6-Zonen/Portformaten fragil.
+8. **`startProcessPost` deserialisiert Body vor Content-Type-Prüfung** – **FIXED (01.08.2026)**: `deserialize(request.body)` wurde in den `ApplicationJson`-Zweig verschoben (`ProcessController.cpp:95-96`); bei ungültigem Content-Type wird nicht mehr geparst.
 
-10. **`Group::operator<<` inkonsistent** – In der Schleife wird `i != memberGroup.m_groups.size() - 1` geprüft (Member statt äußerer Liste) (`Group.cpp:25`); die Komma-Separation ist bei verschachtelten Gruppen falsch.
+9. **`AuthService::onLoginOf` – IP-Normalisierung** – **FIXED (01.08.2026)**: Validierung erfolgt über `error_code` statt String-Vergleich; die normalisierte Darstellung (`ip.to_string()`) wird einheitlich für Lockout, Rate-Limit und Token-Speicherung verwendet. `onAccessOf` normalisiert den eingehenden IP-Vergleich entsprechend.
+
+10. **`Group::operator<<` inkonsistent** – **FIXED (01.08.2026)**: Der Komma-Check nutzt die äußere Liste (`group.m_groups.size() - 1`) statt `memberGroup.m_groups.size() - 1`; Elemente werden per `const Group &` ausgegeben (`Group.cpp:22-28`).
 
 ---
 

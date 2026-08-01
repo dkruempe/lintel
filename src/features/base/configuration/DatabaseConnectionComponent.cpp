@@ -69,7 +69,7 @@ std::shared_ptr<Entry> DatabaseConnectionComponent::parseDatabaseEntry(
     }
     if (type == db::ConnectionType::SQLite) {
         std::string tmpPath = connection;
-        if (tmpPath[0] == '~') {
+        if (!tmpPath.empty() && tmpPath[0] == '~') {
             std::string restPath(tmpPath.begin() + 1, tmpPath.end());
             tmpPath =
                     envConfig->of(EnvironmentConfiguration::Home);

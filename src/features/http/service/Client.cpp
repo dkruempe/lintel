@@ -224,7 +224,7 @@ bool Client::isSslClient() const { return m_sslClient != nullptr; }
         return m_client->Post(pathStr, std::move(contentProvider),
                               contentType);
     }
-    return m_sslClient->Post(pathStr, contentType, contentType);
+    return m_sslClient->Post(pathStr, std::move(contentProvider), contentType);
 }
 
 [[maybe_unused]] httplib::Result Client::post(

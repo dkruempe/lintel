@@ -51,7 +51,7 @@ std::pair<MessageQueueEntry, int32_t> MessageQueueService::numberMessagesOf(cons
   auto found = m_messageQueues.find(entry.get_message_queue_name());
   if (found != m_messageQueues.end()) { return { entry, found->second->numberMessagesOf() }; }
   auto result = std::make_unique<MessageQueue<Message> >(entry.get_process_name(),
-    entry.get_process_name(),
+    entry.get_message_queue_name(),
     entry.get_max_messages(),
     m_processName);
   return { entry, result->numberMessagesOf() };

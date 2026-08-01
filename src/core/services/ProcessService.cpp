@@ -5,10 +5,12 @@
 #include <boost/process/v1.hpp>
 #include <boost/process/v1/environment.hpp>
 #include <boost/process/v1/io.hpp>
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <regex>
 #include <stdexcept>
+#include <thread>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
@@ -248,20 +250,25 @@ bool ProcessService::stopOf(const Process &process)
       process.getId(),
       process.getPath().filename().string(),
       processExecutes.getChild()->id());
-    std::condition_variable cond;
-    std::unique_lock lock(m_conditionMutex);
-    bool ret = cond.wait_for(
-      lock, m_processStopWaitTime->getValue(), [&]() -> bool { return !processExecutes.getChild()->running(); });
-    LOG_INFO(
-      "{}/{} -> process shutdown {}", process.getId(), process.getPath().filename().string(), ret ? "true" : "false");
+    const auto deadline = std::chrono::steady_clock::now() + m_processStopWaitTime->getValue();
+    bool stopped = false;
+    do {
+      std::this_thread::sleep_for(std::chrono::milliseconds(10));
+      stopped = !processExecutes.getChild()->running();
+    } while (!stopped && std::chrono::steady_clock::now() < deadline);
+    LOG_INFO("{}/{} -> process shutdown {}", process.getId(),
+      process.getPath().filename().string(), stopped ? "true" : "false");
   }
-  if (!processExecutes.getChild()->running()) {
-    processExecutes.setPromiseValue(processExecutes.getChild()->exit_code());
-    processExecutes.getProcess()->onStop();
-  }
-  if (success) {
+  {
     std::lock_guard<std::mutex> locker(m_processesMutex);
-    m_processes.erase(processExecutes.getProcess()->getId());
+    // monitorProcess may have already detected the stop and fulfilled the promise
+    auto found = m_processes.find(process.getId());
+    if (found == m_processes.end()) { return success; }
+    if (!processExecutes.getChild()->running()) {
+      found->second.setPromiseValue(processExecutes.getChild()->exit_code());
+      found->second.getProcess()->onStop();
+    }
+    m_processes.erase(found);
   }
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
@@ -304,13 +311,21 @@ void ProcessService::terminateOf(const Process &process)
   }
   bool running = processExecutes.getChild()->running();
   if (running) { processExecutes.getChild()->terminate(); }
-  processExecutes.setPromiseValue(processExecutes.getChild()->exit_code());
+  if (processExecutes.getChild()->running()) { processExecutes.getChild()->wait(); }
+  int exitCode = processExecutes.getChild()->exit_code();
+  {
+    std::lock_guard<std::mutex> locker(m_processesMutex);
+    // monitorProcess may have already detected the stop and fulfilled the promise
+    auto found = m_processes.find(process.getId());
+    if (found == m_processes.end()) { return; }
+    found->second.setPromiseValue(exitCode);
+    m_processes.erase(found);
+  }
   processExecutes.getProcess()->onTerminate();
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
     fmt::format("{}/{} process terminated", process.getId(), process.getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
-  m_processes.erase(processExecutes.getProcess()->getId());
 }
 
 void ProcessService::detachOf(const Process &process)
@@ -327,18 +342,21 @@ void ProcessService::detachOf(const Process &process)
     processExecutes = found->second;
   }
 
-  // detach process => erase process from list bc. of separate running process
-  // with no further monitoring
-  processExecutes.getChild()->detach();
+  {
+    std::lock_guard<std::mutex> locker(m_processesMutex);
+    // detach process => erase process from list bc. of separate running process
+    // with no further monitoring
+    processExecutes.getChild()->detach();
+    // inform about success exit bc. no further monitoring
+    processExecutes.setPromiseValue(EXIT_SUCCESS);
+    m_processes.erase(processExecutes.getProcess()->getId());
+  }
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
     fmt::format("{}/{} process detached",
       processExecutes.getProcess()->getId(),
       processExecutes.getProcess()->getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
-  // inform about success exit bc. no further monitoring
-  processExecutes.setPromiseValue(EXIT_SUCCESS);
-  m_processes.erase(processExecutes.getProcess()->getId());
 }
 
 void ProcessService::startOf(const ProcessGroup &processGroup)

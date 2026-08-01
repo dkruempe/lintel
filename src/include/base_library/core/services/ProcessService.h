@@ -85,7 +85,6 @@ private:
     std::shared_ptr<HistoryService> m_historyService;
     // variables
     std::mutex m_processesMutex;
-    std::mutex m_conditionMutex;
     std::map<std::string, ProcessExecutes> m_processes;
     std::mutex m_processGroupMutex;
     std::map<std::string, std::shared_ptr<ProcessGroup>> m_processGroups;

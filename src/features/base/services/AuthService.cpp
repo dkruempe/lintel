@@ -48,63 +48,61 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin) {
         LOG_ERROR("ip address of {} empty", userLogin.m_userName);
         return std::nullopt;
     }
-    // II check via boost ip address
+    // II check via boost ip address and normalize the representation
     boost::system::error_code ec{};
     auto ip = boost::asio::ip::make_address(userLogin.m_ipAddress, ec);
-    if (ip.to_string() != userLogin.m_ipAddress) {
+    if (ec) {
         LOG_ERROR("{} invalid ip address of {}", userLogin.m_ipAddress,
                   userLogin.m_userName);
         return std::nullopt;
     }
+    const std::string ipAddress = ip.to_string();
     // IIb brute-force protection: reject locked-out IPs
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (isLockedOut(userLogin.m_ipAddress)) {
+        if (isLockedOut(ipAddress)) {
             LOG_WARN("{}: login attempts for {} blocked (lockout)",
-                     userLogin.m_ipAddress, userLogin.m_userName);
+                     ipAddress, userLogin.m_userName);
             return std::nullopt;
         }
     }
     // IIc sliding-window rate limiting per IP
     {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (!allowLoginAttempt(userLogin.m_ipAddress)) {
+        if (!allowLoginAttempt(ipAddress)) {
             LOG_WARN("{}: login attempts for {} rate limited",
-                     userLogin.m_ipAddress, userLogin.m_userName);
+                     ipAddress, userLogin.m_userName);
             return std::nullopt;
         }
     }
     // III check if user is logged in
     auto userOpt = m_userRepository->of(userLogin.m_userName);
     if (!userOpt.has_value()) {
-        LOG_INFO("{}: {} does not exists", userLogin.m_ipAddress,
-                 userLogin.m_userName);
-        recordFailedLogin(userLogin.m_ipAddress);
+        LOG_INFO("{}: {} does not exists", ipAddress, userLogin.m_userName);
+        recordFailedLogin(ipAddress);
         return std::nullopt;
     }
     const User &user = userOpt.value();
     if (!Cryption::verifyOf(userLogin.m_password, user.getPassword())) {
-        LOG_INFO("{}: {} password invalid", userLogin.m_ipAddress,
-                 userLogin.m_userName);
-        recordFailedLogin(userLogin.m_ipAddress);
+        LOG_INFO("{}: {} password invalid", ipAddress, userLogin.m_userName);
+        recordFailedLogin(ipAddress);
         return std::nullopt;
     }
-    clearFailedLogins(userLogin.m_ipAddress);
+    clearFailedLogins(ipAddress);
     // IIIb transparent upgrade of legacy (unsalted SHA-512) hashes
     if (!Cryption::isModernHash(user.getPassword())) {
         try {
             m_userRepository->changePasswordOf(
                     user, Cryption::hashOf(userLogin.m_password));
             LOG_INFO("{}: {} password hash upgraded to salted format",
-                     userLogin.m_ipAddress, userLogin.m_userName);
+                     ipAddress, userLogin.m_userName);
         } catch (const std::exception &exception) {
             LOG_ERROR("{}: cannot upgrade password hash of {}: {}",
-                      userLogin.m_ipAddress, userLogin.m_userName,
-                      exception.what());
+                      ipAddress, userLogin.m_userName, exception.what());
         }
     }
     std::string id = UUID::generate();
-    UserToken userToken{userLogin.m_ipAddress, id,
+    UserToken userToken{ipAddress, id,
                         std::chrono::time_point_cast<std::chrono::microseconds>(
                                 std::chrono::system_clock::now()),
                         user};
@@ -112,7 +110,7 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin) {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_userTokens.insert({userToken.m_id, userToken});
     }
-    LOG_INFO("{}: {} {} success full login", userLogin.m_ipAddress,
+    LOG_INFO("{}: {} {} success full login", ipAddress,
              userLogin.m_userName, id);
     return userToken;
 }
@@ -126,8 +124,10 @@ std::optional<UserToken> AuthService::onAccessOf(
                   userTokenLogin.m_id);
         return std::nullopt;
     }
-    if (userTokenLogin.m_ipAddress.empty() ||
-        found->second.m_ipAddress != userTokenLogin.m_ipAddress) {
+    boost::system::error_code ec{};
+    const auto ip = boost::asio::ip::make_address(userTokenLogin.m_ipAddress, ec);
+    const std::string ipAddress = ec ? userTokenLogin.m_ipAddress : ip.to_string();
+    if (ipAddress.empty() || found->second.m_ipAddress != ipAddress) {
         LOG_WARN("{}: {} ip address mismatch (expected {})",
                  userTokenLogin.m_ipAddress, userTokenLogin.m_id,
                  found->second.m_ipAddress);

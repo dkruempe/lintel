@@ -92,10 +92,10 @@ void ProcessController::startProcessPost(const httplib::Request &request,
         response.set_content("", contentType.getName());
         return;
     }
-    ProcessInfoDto processInfoDto;
-    processInfoDto.JsonSerializable::deserialize(request.body);
     switch (contentType) {
         case ContentType::ApplicationJson: {
+            ProcessInfoDto processInfoDto;
+            processInfoDto.JsonSerializable::deserialize(request.body);
             Process process(processInfoDto.getPath(), processInfoDto.getArgs());
             if (processInfoDto.isAutoRestart()) {
                 process.enableAutoStart(processInfoDto.getMaxAutoRestarts());
