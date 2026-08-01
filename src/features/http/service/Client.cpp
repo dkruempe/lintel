@@ -8,17 +8,26 @@ std::shared_ptr<httplib::SSLClient> Client::buildSslClient(
     if (clientConfiguration->getCertFile().empty()) {
         return nullptr;
     }
-    return std::make_shared<httplib::SSLClient>(
-            clientConfiguration->getHost(), clientConfiguration->getPort(),
-            clientConfiguration->getCertFile(),
-            clientConfiguration->getKeyFile());
+    std::shared_ptr<httplib::SSLClient> sslClient =
+            std::make_shared<httplib::SSLClient>(
+                    clientConfiguration->getHost(),
+                    clientConfiguration->getPort(),
+                    clientConfiguration->getCertFile(),
+                    clientConfiguration->getKeyFile());
+    if (!clientConfiguration->getCaCertFile().empty()) {
+        sslClient->set_ca_cert_path(
+                clientConfiguration->getCaCertFile().string());
+    }
+    return sslClient;
 }
 
 Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
         : m_sslClient(buildSslClient(clientConfiguration)),
-          m_client(std::make_shared<httplib::Client>(
-                  clientConfiguration->getHost(),
-                  clientConfiguration->getPort())) {
+          m_client(m_sslClient == nullptr
+                   ? std::make_shared<httplib::Client>(
+                           clientConfiguration->getHost(),
+                           clientConfiguration->getPort())
+                   : nullptr) {
     if (clientConfiguration->getReadTimeOut().count() != 0) {
         if (isSslClient()) {
             m_sslClient->set_read_timeout(clientConfiguration->getReadTimeOut());
@@ -43,6 +52,16 @@ Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
             m_client->set_connection_timeout(
                     clientConfiguration->getConnectionTimeout());
         }
+    }
+
+    auto errorLogger = [](const httplib::Error &error,
+                          const httplib::Request *) {
+        LOG_ERROR("httplib client error: {}", httplib::to_string(error));
+    };
+    if (isSslClient()) {
+        m_sslClient->set_error_logger(errorLogger);
+    } else {
+        m_client->set_error_logger(errorLogger);
     }
 }
 

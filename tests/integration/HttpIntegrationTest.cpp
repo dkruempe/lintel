@@ -1,5 +1,7 @@
 #include <httplib.h>
 
+#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
+#include <base_library/features/http/service/Client.h>
 #include <base_library/features/http/service/ContentType.h>
 #include <base_library/features/http/service/HttpStatusCodes.h>
 #include <base_library/features/http/service/Server.h>
@@ -10,6 +12,8 @@
 
 #include <atomic>
 #include <chrono>
+#include <filesystem>
+#include <memory>
 #include <stdexcept>
 #include <thread>
 #include <vector>
@@ -207,6 +211,41 @@ TEST_CASE("httplib: server returns 404 for unknown route") {
     } else {
         WARN("HTTP request failed - server may not be ready");
     }
+
+    server.stop();
+    serverThread.join();
+}
+
+TEST_CASE("Client: uses SSL when TLS is configured") {
+    EnvironmentConfiguration envConfig;
+    std::filesystem::path configDir =
+            envConfig.of(EnvironmentConfiguration::ConfigDirectory);
+    std::filesystem::path certPath = configDir / "certs/server.crt";
+    std::filesystem::path keyPath = configDir / "certs/server.key";
+    REQUIRE(std::filesystem::exists(certPath));
+    REQUIRE(std::filesystem::exists(keyPath));
+
+    httplib::SSLServer server(certPath.string().c_str(),
+                              keyPath.string().c_str());
+    REQUIRE(server.is_valid());
+    server.Post("/login", [](const httplib::Request &, httplib::Response &res) {
+        res.set_content("{}", "application/json");
+    });
+
+    int port = 18992;
+    std::thread serverThread([&]() { server.listen("127.0.0.1", port); });
+    for (int i = 0; i < 50 && !server.is_running(); ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+    auto clientConfiguration = std::make_shared<ClientConfiguration>(
+            "127.0.0.1", port, std::chrono::milliseconds(0),
+            std::chrono::milliseconds(0), std::chrono::seconds(2),
+            certPath, keyPath, certPath);
+    Client client(clientConfiguration);
+    httplib::Result result = client.post("/login", "", "application/json");
+    REQUIRE(result != nullptr);
+    REQUIRE(result->status == 200);
 
     server.stop();
     serverThread.join();

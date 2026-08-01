@@ -31,12 +31,22 @@ std::shared_ptr<httplib::Server> Server::initServer(
     LOG_WARN("HTTP server is running without TLS; credentials are transmitted "
              "in clear text. Configure cert/key files for production use.");
     std::shared_ptr<httplib::Server> server = std::make_shared<httplib::Server>();
+    server->set_error_logger([](const httplib::Error &error,
+                                const httplib::Request *) {
+        LOG_ERROR("httplib server error: {}", httplib::to_string(error));
+    });
     for (const auto &iter: controllers) {
         iter->registerMethods(server);
     }
-    server->set_write_timeout(serverConfiguration.getWriteTimeOut());
-    server->set_read_timeout(serverConfiguration.getReadTimeOut());
-    server->set_idle_interval(serverConfiguration.getIdleInterval());
+    if (serverConfiguration.getWriteTimeOut().count() != 0) {
+        server->set_write_timeout(serverConfiguration.getWriteTimeOut());
+    }
+    if (serverConfiguration.getReadTimeOut().count() != 0) {
+        server->set_read_timeout(serverConfiguration.getReadTimeOut());
+    }
+    if (serverConfiguration.getIdleInterval().count() != 0) {
+        server->set_idle_interval(serverConfiguration.getIdleInterval());
+    }
     server->set_payload_max_length(8ULL * 1024ULL * 1024ULL);
     return server;
 }
@@ -52,10 +62,20 @@ std::shared_ptr<httplib::SSLServer> Server::initSslServer(
             std::make_shared<httplib::SSLServer>(
                     serverConfiguration.getCertFile().c_str(),
                     serverConfiguration.getKeyFile().c_str());
-    sslServer->set_write_timeout(serverConfiguration.getWriteTimeOut());
-    sslServer->set_read_timeout(serverConfiguration.getReadTimeOut());
-    sslServer->set_idle_interval(serverConfiguration.getIdleInterval());
+    if (serverConfiguration.getWriteTimeOut().count() != 0) {
+        sslServer->set_write_timeout(serverConfiguration.getWriteTimeOut());
+    }
+    if (serverConfiguration.getReadTimeOut().count() != 0) {
+        sslServer->set_read_timeout(serverConfiguration.getReadTimeOut());
+    }
+    if (serverConfiguration.getIdleInterval().count() != 0) {
+        sslServer->set_idle_interval(serverConfiguration.getIdleInterval());
+    }
     sslServer->set_payload_max_length(8ULL * 1024ULL * 1024ULL);
+    sslServer->set_error_logger([](const httplib::Error &error,
+                                   const httplib::Request *) {
+        LOG_ERROR("httplib ssl server error: {}", httplib::to_string(error));
+    });
     std::shared_ptr<httplib::Server> server =
             std::static_pointer_cast<httplib::Server>(sslServer);
     for (const auto &iter: controllers) {

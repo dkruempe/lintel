@@ -74,7 +74,7 @@ std::shared_ptr<Entry> createClientEntry(
         const char *host, const char *port,
         const char *readTimeOut, const char *writeTimeOut,
         const char *connectionTimeOut, const std::string &certPath,
-        const std::string &keyPath) {
+        const std::string &keyPath, const std::string &caCertPath) {
     auto clientConfiguration = std::make_shared<ClientConfiguration>(
             host, std::stoi(port),
             readTimeOut != nullptr
@@ -87,7 +87,8 @@ std::shared_ptr<Entry> createClientEntry(
             ? std::chrono::milliseconds(std::stoi(connectionTimeOut))
             : std::chrono::milliseconds(0),
             certPath,
-            keyPath);
+            keyPath,
+            caCertPath);
     return std::make_shared<HttpEntry>(
             type_name<HttpComponent>(), clientConfiguration);
 }
@@ -180,6 +181,7 @@ std::vector<std::shared_ptr<Entry>> HttpComponent::parse(
         const char *port = httpElement->Attribute(shape.PORT);
         const char *certPath = httpElement->Attribute(shape.CERT_PATH);
         const char *keyPath = httpElement->Attribute(shape.KEY_PATH);
+        const char *caCertPath = httpElement->Attribute(shape.CA_CERT_PATH);
         const char *readTimeOut =
                 httpElement->Attribute(shape.READ_TIMEOUT);
         const char *writeTimeOut =
@@ -206,6 +208,8 @@ std::vector<std::shared_ptr<Entry>> HttpComponent::parse(
                     resolveRelativePath(certPath != nullptr ? certPath : "",
                                         m_environmentConfiguration),
                     resolveRelativePath(keyPath != nullptr ? keyPath : "",
+                                        m_environmentConfiguration),
+                    resolveRelativePath(caCertPath != nullptr ? caCertPath : "",
                                         m_environmentConfiguration)));
         } else {
             readServerConfiguration = true;

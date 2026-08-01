@@ -16,6 +16,7 @@ private:
     std::chrono::milliseconds m_connectionTimeout;
     std::filesystem::path m_certFile;
     std::filesystem::path m_keyFile;
+    std::filesystem::path m_caCertFile;
 
 public:
     /** @param host remote host
@@ -24,13 +25,16 @@ public:
      *  @param writeTimeOut write timeout
      *  @param connectionTimeout connection timeout
      *  @param certFile optional TLS certificate file
-     *  @param keyFile optional TLS key file */
+     *  @param keyFile optional TLS key file
+     *  @param caCertFile optional TLS CA certificate file used to verify
+     *         the server certificate */
     ClientConfiguration(std::string host, int32_t port,
                         std::chrono::milliseconds readTimeOut,
                         std::chrono::milliseconds writeTimeOut,
                         std::chrono::milliseconds connectionTimeout,
                         std::filesystem::path certFile = "",
-                        std::filesystem::path keyFile = "");
+                        std::filesystem::path keyFile = "",
+                        std::filesystem::path caCertFile = "");
 
     /** @return the host address */
     [[nodiscard]] const std::string &getHost() const;
@@ -52,6 +56,9 @@ public:
 
     /** @return the TLS key file path */
     [[nodiscard]] const std::filesystem::path &getKeyFile() const;
+
+    /** @return the TLS CA certificate file path */
+    [[nodiscard]] const std::filesystem::path &getCaCertFile() const;
 
     /** Print configuration to stream */
     friend std::ostream &operator<<(std::ostream &os,

@@ -47,11 +47,20 @@ The HTTP server is configured via the `<HttpHost>` section in the bootstrap XML 
             require_tls="true"
             trusted_proxies="10.0.0.0/8, 192.168.1.5"/>
     <Client host="localhost" port="8080" cert_path="certs/server.crt"
-            key_path="certs/server.key"/>
+            key_path="certs/server.key" ca_cert_path="certs/server.crt"/>
 </HttpHost>
 ```
 
 - `cert_path` / `key_path` – PEM certificate/key for HTTPS. When set, the server uses TLS. Relative paths are resolved against the configuration directory (e.g. `cfg/`); the same attributes on `<Client>` enable HTTPS on the client. Self-signed test certificates are committed under `cfg/certs/` for local development.
+- `ca_cert_path` (client) – PEM CA certificate used to verify the server certificate (e.g. the self-signed `certs/server.crt`). Without it, the HTTPS client rejects self-signed certificates.
+
+To (re)generate self-signed test certificates during initial setup, run:
+
+```bash
+./cfg/certs/generate_certs.sh
+```
+
+This writes `cfg/certs/server.crt` and `cfg/certs/server.key` (SAN: `localhost`, `127.0.0.1`), which are referenced by the default `cfg/bootstrap.xml`. Replace them with real certificates for production.
 - `require_tls` – refuse to start the server without a configured TLS certificate/key (`true`/`false`). Defaults to `false`; use it in production to avoid serving credentials in clear text.
 - `trusted_proxies` – comma-separated list of IPs or CIDR ranges (e.g. `10.0.0.0/8`) whose `X-Forwarded-For` header is trusted for client-IP detection. By default the header is ignored, so clients behind a proxy must be listed here for correct IP binding, rate limiting and lockout.
 

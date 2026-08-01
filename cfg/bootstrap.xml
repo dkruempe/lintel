@@ -62,7 +62,8 @@
         <Server host="0.0.0.0" port="8080" cert_path="certs/server.crt"
                 key_path="certs/server.key" require_tls="true"/>
         <Client host="localhost" port="8080" cert_path="certs/server.crt"
-                key_path="certs/server.key" connection_timeout="1000"/>
+                key_path="certs/server.key" ca_cert_path="certs/server.crt"
+                connection_timeout="1000"/>
     </HttpHost>
 
     <!-- Property Configurations -->

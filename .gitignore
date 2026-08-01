@@ -1,6 +1,7 @@
 cmake-*
 *.cmake
 *.sh
+!cfg/certs/*.sh
 *.txt
 *.json
 build*

@@ -206,6 +206,22 @@ TEST_CASE("HttpComponent: without env config relative cert/key paths kept") {
             "certs/server.key");
 }
 
+TEST_CASE("HttpComponent: client ca_cert_path resolved against config dir") {
+    auto envConfig = std::make_shared<EnvironmentConfiguration>();
+    envConfig->overrides(EnvironmentConfiguration::Environment::ConfigDirectory,
+                         "/tmp/example_cfg");
+    HttpComponent httpComp(envConfig);
+    std::string xml = R"(<HttpHost><Client host="localhost" port="8080" cert_path="certs/client.crt" key_path="certs/client.key" ca_cert_path="certs/server.crt"/></HttpHost>)";
+
+    auto entries = httpComp.parse(xml, "test.xml", 0);
+    auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
+    auto &clientConfig = httpEntry->getClientConfiguration();
+    REQUIRE(clientConfig->getCertFile() == "/tmp/example_cfg/certs/client.crt");
+    REQUIRE(clientConfig->getKeyFile() == "/tmp/example_cfg/certs/client.key");
+    REQUIRE(clientConfig->getCaCertFile() ==
+            "/tmp/example_cfg/certs/server.crt");
+}
+
 TEST_CASE("Configuration: setEntries and query by type") {
     setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
 
