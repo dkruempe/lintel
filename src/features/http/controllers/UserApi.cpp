@@ -4,20 +4,9 @@
 #include "base_library/features/base/controller/UserGroupDto.h"
 #include "base_library/features/base/controller/UserNameDto.h"
 #include "base_library/features/base/controller/UserSessionsDto.h"
+#include "base_library/features/http/service/HttpClientHelper.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
-
-namespace {
-
-bool hasResponse(const httplib::Result &result) {
-    if (result == nullptr) {
-        LOG_ERROR("HTTP request failed - no response received");
-        return false;
-    }
-    return true;
-}
-
-}  // namespace
 
 UserApi::UserApi(const std::shared_ptr<ClientProvider> &clientProvider)
         : m_client(clientProvider->provide()) {}
@@ -27,7 +16,7 @@ std::optional<UserDto> UserApi::loginOf(const UserLoginDto &userLoginDto) {
                            userLoginDto.getPassword());
     httplib::Result result =
             m_client->post("/user/login", "", "application/json");
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return std::nullopt;
     }
     if (result->status != HttpStatusCodes::OK) {
@@ -43,7 +32,7 @@ std::optional<UserDto> UserApi::loginOf(const UserLoginDto &userLoginDto) {
 bool UserApi::logoutOf(const UserTokenDto &userTokenDto) {
     httplib::Result result =
             m_client->deletes("/user/logout", "", "application/json");
-    return hasResponse(result) && result->status == HttpStatusCodes::OK;
+    return HttpClientHelper::hasResponse(result) && result->status == HttpStatusCodes::OK;
 }
 
 bool UserApi::changePasswordOf(
@@ -58,7 +47,7 @@ bool UserApi::changePasswordOf(
     }
     httplib::Result result =
             m_client->put("/user/password", body, "application/json");
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return false;
     }
     HttpStatusCodes status(result->status);
@@ -78,7 +67,7 @@ std::vector<UserSessionDto> UserApi::sessionsOf() {
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     httplib::Result result = m_client->get("/user/sessions", headers);
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return {};
     }
     HttpStatusCodes status(result->status);
@@ -103,7 +92,7 @@ std::vector<UserSessionDto> UserApi::sessionsOf() {
 bool UserApi::revokeSessionOf(const std::string &sessionId) {
     httplib::Result result =
             m_client->deletes("/user/sessions/" + sessionId, "", "application/json");
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return false;
     }
     HttpStatusCodes status(result->status);
@@ -123,7 +112,7 @@ std::vector<GroupDto> UserApi::allOf() {
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     httplib::Result result = m_client->get("/user/groups", headers);
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return {};
     }
     HttpStatusCodes status(result->status);
@@ -149,7 +138,7 @@ std::vector<UserDto> UserApi::allUsersOf() {
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     httplib::Result result = m_client->get("/user/users", headers);
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return {};
     }
     HttpStatusCodes status(result->status);
@@ -175,7 +164,7 @@ std::vector<UserDto> UserApi::allUsersOf(const std::string &userName) {
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     httplib::Result result = m_client->get("/user/users/" + userName, headers);
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return {};
     }
     HttpStatusCodes status(result->status);
@@ -201,7 +190,7 @@ std::vector<GroupDto> UserApi::allOf(const std::string &groupName) {
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     httplib::Result result = m_client->get("/user/groups/" + groupName, headers);
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return {};
     }
     HttpStatusCodes status(result->status);
@@ -230,7 +219,7 @@ std::vector<GroupDto> UserApi::allOf(const std::string &groupName,
     headers.insert({"Content-Type", "application/json"});
     httplib::Result result =
             m_client->get("/user/groups/" + groupName, headers);
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return {};
     }
     HttpStatusCodes status(result->status);
@@ -257,7 +246,7 @@ std::vector<GroupDto> UserApi::allOf(bool isVirtualGroup) {
     headers.insert({"Content-Type", "application/json"});
     std::string boolStr = isVirtualGroup ? "true" : "false";
     httplib::Result result = m_client->get("/user/groups/" + boolStr, headers);
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return {};
     }
     HttpStatusCodes status(result->status);
@@ -289,7 +278,7 @@ void UserApi::createOf(const UserDto &userDto) {
     }
     httplib::Result result =
             m_client->post("/user/add", body, "application/json");
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return;
     }
     HttpStatusCodes status(result->status);
@@ -312,7 +301,7 @@ void UserApi::updateOf(const std::string &userName,
     std::string body = userGroupDto.JsonSerializable::serialize();
     httplib::Result result =
             m_client->put("/user/update", body, "application/json");
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return;
     }
     HttpStatusCodes status(result->status);
@@ -331,7 +320,7 @@ bool UserApi::isLoggedIn() {
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     httplib::Result result = m_client->get("/user/state", headers);
-    return hasResponse(result) && result->status == HttpStatusCodes::OK;
+    return HttpClientHelper::hasResponse(result) && result->status == HttpStatusCodes::OK;
 }
 
 void UserApi::deleteOf(const std::vector<std::string> &userNames) {
@@ -340,7 +329,7 @@ void UserApi::deleteOf(const std::vector<std::string> &userNames) {
     LOG_TRACE("body={}", body);
     httplib::Result result =
             m_client->deletes("/user/delete", body, "application/json");
-    if (!hasResponse(result)) {
+    if (!HttpClientHelper::hasResponse(result)) {
         return;
     }
     HttpStatusCodes status(result->status);

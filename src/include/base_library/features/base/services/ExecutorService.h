@@ -1,6 +1,7 @@
 #ifndef LOGGING_EXECUTORSERVICE_H
 #define LOGGING_EXECUTORSERVICE_H
 
+#include <atomic>
 #include <functional>
 #include <future>
 #include <mutex>
@@ -12,12 +13,12 @@
  */
 class ExecutorService {
 private:
-    volatile bool m_exit = false;
+    std::atomic<bool> m_exit = false;
     std::mutex m_mutex;
     std::condition_variable m_conditionVariable;
-    std::thread m_runnable;
     typedef std::function<void()> TASK;
     std::queue<TASK> m_tasks;
+    std::thread m_runnable;
 
     /** Main loop that processes queued tasks. */
     void run();
@@ -29,6 +30,7 @@ public:
     /** Destructor; signals exit and joins the worker thread. */
     ~ExecutorService() {
         m_exit = true;
+        m_conditionVariable.notify_all();
         m_runnable.join();
     }
 

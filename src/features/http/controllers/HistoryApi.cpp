@@ -2,6 +2,7 @@
 #include "base_library/features/http/controllers/HistoryApi.h"
 
 #include "base_library/features/base/controller/HistoryDtos.h"
+#include "base_library/features/http/service/HttpClientHelper.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
@@ -14,6 +15,9 @@ std::vector<HistoryDto> HistoryApi::allOf(const std::string &processName, const 
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     const auto &result = m_client->get("/history/" + processName + "/" + serviceName + "/" + label, headers);
+    if (!HttpClientHelper::hasResponse(result)) {
+        return {};
+    }
     HttpStatusCodes const status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:

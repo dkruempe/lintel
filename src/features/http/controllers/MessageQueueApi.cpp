@@ -2,6 +2,7 @@
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/controller/MessageQueueDtos.h"
+#include "base_library/features/http/service/HttpClientHelper.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
@@ -14,6 +15,9 @@ std::vector<MessageQueueDto> MesssageQueueApi::allOf(const std::string &processN
   httplib::Headers headers{};
   headers.insert({ "Content-Type", "application/json" });
   const auto &result = m_client->get("/messageQueue/" + processName + "/" + messageQueueName, headers);
+  if (!HttpClientHelper::hasResponse(result)) {
+    return {};
+  }
   HttpStatusCodes const status(result->status);
   switch (status) {
   case HttpStatusCodes::Unauthorized:

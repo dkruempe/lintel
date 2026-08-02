@@ -362,7 +362,7 @@ void PropertyService::changeStringValueOf(
     LOG_INFO("{} change to {}", ss.str(), value);
     propertyBase->setValueString(value);
     if (m_mutablePropertyRepositories.empty()) {
-        LOG_ERROR("{} not mutable property repository");
+        LOG_ERROR("{}: not mutable property repository", propertyBase->getIdentifier());
         return;
     }
     // PropertyRepository with highest priority wins => DataStorage of the highest

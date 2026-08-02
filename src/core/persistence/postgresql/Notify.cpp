@@ -8,20 +8,19 @@ namespace postgresql {
     Notify::Notify(Connection &connection, std::string tableName,
                    std::function<void()> &callBack)
             : m_connection(connection),
-              m_thread([&]() { run(); }),
               m_tableName(std::move(tableName)),
-              m_callBack(callBack) {}
+              m_callBack(callBack) {
+        // start the thread only after all members are initialized
+        m_thread = std::thread([this]() { run(); });
+    }
 
     void Notify::listen() {
         if (m_shutdown) {
             return;
         }
 
-        auto result = m_connection.execute("LISTEN " + m_tableName);
-        if (!result->isState(ExecStatusType::PGRES_COMMAND_OK)) {
-            throw db::SQLException("LISTEN command failed: " +
-                                   m_connection.getErrorMessage());
-        }
+        // select() modifies the timeout, so reset it before each call
+        m_timeout = {m_timeoutSeconds, 0};
         int sock = PQsocket(m_connection.m_conn);
 
         if (sock < 0) {
@@ -57,13 +56,26 @@ namespace postgresql {
     }
 
     void Notify::run() {
-        while (!m_shutdown) {
-            listen();
+        try {
+            auto result = m_connection.execute("LISTEN " + m_tableName);
+            if (!result->isState(ExecStatusType::PGRES_COMMAND_OK)) {
+                throw db::SQLException("LISTEN command failed: " +
+                                       m_connection.getErrorMessage());
+            }
+            while (!m_shutdown) {
+                listen();
+            }
+        } catch (const std::exception &exception) {
+            std::cerr << "Notify listener stopped: " << exception.what()
+                      << std::endl;
+            m_shutdown.store(true);
         }
     }
 
     Notify::~Notify() {
         m_shutdown.store(true);
-        m_thread.join();
+        if (m_thread.joinable()) {
+            m_thread.join();
+        }
     }
 }  // namespace postgresql

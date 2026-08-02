@@ -233,6 +233,7 @@ set(headers
     include/base_library/features/http/service/Controller.h
     include/base_library/features/http/service/HttpStatusCodes.h
     include/base_library/features/http/service/HttpUnauthorizedException.h
+    include/base_library/features/http/service/HttpClientHelper.h
     include/base_library/features/http/service/Server.h
     include/base_library/features/http/controllers/HistoryApi.h
     include/base_library/features/http/controllers/HistoryController.h

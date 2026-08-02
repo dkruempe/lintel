@@ -81,10 +81,10 @@ void SharedMemorySegmentDto::serialize(
     writer->String(m_shape.CURRENT_SIZE);
     writer->String(std::to_string(m_currentSize).c_str());
     // FREE_SIZE
-    writer->String(m_shape.NAMED_OBJECTS);
+    writer->String(m_shape.FREE_SIZE);
     writer->String(std::to_string(m_freeSize).c_str());
     // NAMED_OBJECTS
-    writer->String(m_shape.FREE_SIZE);
+    writer->String(m_shape.NAMED_OBJECTS);
     writer->String(std::to_string(m_amountNamedObjects).c_str());
     // UNIQUE_OBJECTS
     writer->String(m_shape.UNIQUE_OBJECTS);

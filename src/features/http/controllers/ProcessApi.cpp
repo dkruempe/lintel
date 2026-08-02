@@ -3,6 +3,7 @@
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/controller/ProcessGroupsDto.h"
 #include "base_library/features/base/controller/ProcessInfosDto.h"
+#include "base_library/features/http/service/HttpClientHelper.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
@@ -14,6 +15,9 @@ std::vector<ProcessInfoDto> ProcessApi::allOf(const std::string &processName) {
     headers.insert({"Content-Type", "application/json"});
     const httplib::Result &result =
             m_client->get("/process/processes/" + processName, headers);
+    if (!HttpClientHelper::hasResponse(result)) {
+        return {};
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
@@ -41,6 +45,9 @@ std::vector<ProcessGroupDto> ProcessApi::allGroupsOf(
     headers.insert({"Content-Type", "application/json"});
     const httplib::Result &result =
             m_client->get("/process/groups/" + groupName, headers);
+    if (!HttpClientHelper::hasResponse(result)) {
+        return {};
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:

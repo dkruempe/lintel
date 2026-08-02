@@ -2,6 +2,7 @@
 #include "base_library/features/http/controllers/SharedMemoryApi.h"
 #include "base_library/features/base/controller/SharedMemoryRepsoitoriesDto.h"
 #include "base_library/features/base/controller/SharedMemorySegmentsDto.h"
+#include "base_library/features/http/service/HttpClientHelper.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 
@@ -15,6 +16,9 @@ std::vector<SharedMemorySegmentDto> SharedMemoryApi::allSegmentsOf(
     headers.insert({"Content-Type", "application/json"});
     const httplib::Result &result =
             m_client->get("/shm/segments/" + segmentName, headers);
+    if (!HttpClientHelper::hasResponse(result)) {
+        return {};
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
@@ -39,6 +43,9 @@ std::vector<SharedMemorySegmentDto> SharedMemoryApi::allSegmentsOf(
 void SharedMemoryApi::shrinkOf(const std::string &segmentName) {
     auto result = m_client->put("/shm/segments/shrink/" + segmentName, "",
                                 "application/json");
+    if (!HttpClientHelper::hasResponse(result)) {
+        return;
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
@@ -58,6 +65,9 @@ std::vector<SharedMemoryRepositoryDto> SharedMemoryApi::allRepositoriesOf(
     headers.insert({"Content-Type", "application/json"});
     const httplib::Result &result = m_client->get(
             "/shm/repositories/" + repositoryName + "/" + segmentName, headers);
+    if (!HttpClientHelper::hasResponse(result)) {
+        return {};
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
@@ -83,6 +93,9 @@ void SharedMemoryApi::growOf(const std::string &segmentName,
     auto result =
             m_client->put("/shm/segments/grow/" + segmentName + "/" + sizeStr, "",
                           "application/json");
+    if (!HttpClientHelper::hasResponse(result)) {
+        return;
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
@@ -101,6 +114,9 @@ std::string SharedMemoryApi::repositoryOf(const std::string &uuid) {
     headers.insert({"Content-Type", "application/json"});
     const httplib::Result &result =
             m_client->get("/shm/repository/" + uuid, headers);
+    if (!HttpClientHelper::hasResponse(result)) {
+        return "";
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:

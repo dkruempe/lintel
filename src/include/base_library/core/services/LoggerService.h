@@ -88,7 +88,7 @@ public:
     spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::err, message, ##__VA_ARGS__)
 #define LOG_FATAL(message, ...) \
   LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::critical, message, ##_VA_ARGS__)
+    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::critical, message, ##__VA_ARGS__)
 #define LOG_WARN(message, ...) \
   LoggerService::get().log(    \
     spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::warn, message, ##__VA_ARGS__)

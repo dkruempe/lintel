@@ -243,15 +243,14 @@ bool ProcessService::stopOf(const Process &process)
     process.getPath().filename().string(),
     processExecutes.getChild()->id());
   SignalService::kill(processExecutes.getChild()->id(), SIGINT);
-  bool success = true;
+  bool stopped = !processExecutes.getChild()->running();
   // only wait if process is still running
-  if (processExecutes.getChild()->running()) {
+  if (!stopped) {
     LOG_INFO("{}/{} -> process is still running with  {}",
       process.getId(),
       process.getPath().filename().string(),
       processExecutes.getChild()->id());
     const auto deadline = std::chrono::steady_clock::now() + m_processStopWaitTime->getValue();
-    bool stopped = false;
     do {
       std::this_thread::sleep_for(std::chrono::milliseconds(10));
       stopped = !processExecutes.getChild()->running();
@@ -259,15 +258,18 @@ bool ProcessService::stopOf(const Process &process)
     LOG_INFO("{}/{} -> process shutdown {}", process.getId(),
       process.getPath().filename().string(), stopped ? "true" : "false");
   }
+  if (!stopped) {
+    // process still running => keep entry so that terminateOf can force-kill it
+    // and the promise can still be fulfilled by monitorProcess
+    return false;
+  }
   {
     std::lock_guard<std::mutex> locker(m_processesMutex);
     // monitorProcess may have already detected the stop and fulfilled the promise
     auto found = m_processes.find(process.getId());
-    if (found == m_processes.end()) { return success; }
-    if (!processExecutes.getChild()->running()) {
-      found->second.setPromiseValue(processExecutes.getChild()->exit_code());
-      found->second.getProcess()->onStop();
-    }
+    if (found == m_processes.end()) { return true; }
+    found->second.setPromiseValue(processExecutes.getChild()->exit_code());
+    found->second.getProcess()->onStop();
     m_processes.erase(found);
   }
   DEFINE_HISTORY_ENTRY(historyEntry,
@@ -276,7 +278,7 @@ bool ProcessService::stopOf(const Process &process)
       processExecutes.getProcess()->getId(),
       processExecutes.getProcess()->getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
-  return success;
+  return true;
 }
 
 void ProcessService::restartOf(const Process &process)
@@ -296,7 +298,7 @@ void ProcessService::restartOf(const Process &process)
   }
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
-    fmt::format("PROCESS", "{}/{} restarted", process.getId(), process.getPath().filename().string()));
+    fmt::format("{}/{} restarted", process.getId(), process.getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
 }
 
@@ -430,7 +432,7 @@ void ProcessService::terminateOf(const ProcessGroup &processGroup)
   for (const auto &process : processGroup.getProcesses()) { terminateOf(process); }
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
-    fmt::format("PROCESS", "{}/{} processGroup terminated", processGroup.getId(), processGroup.getName()));
+    fmt::format("{}/{} processGroup terminated", processGroup.getId(), processGroup.getName()));
   m_historyService->historizeOf({ historyEntry });
   m_processGroups.erase(processGroup.getId());
 }
@@ -441,7 +443,7 @@ void ProcessService::detachOf(const ProcessGroup &processGroup)
     std::lock_guard<std::mutex> locker(m_processGroupMutex);
     auto found = m_processGroups.find(processGroup.getId());
     if (found == m_processGroups.end()) {
-      LOG_ERROR("{}/{} processGrouop doesn't exists => no detach available");
+      LOG_ERROR("{}/{} processGroup doesn't exists => no detach available", processGroup.getId(), processGroup.getName());
       return;
     }
   }

@@ -209,8 +209,6 @@ std::shared_ptr<spdlog::logger> LoggerService::init() {
     std::string loggerLevel =
             loggerConfigEntry->getLoggerConfiguration()->getLevel();
     applyLoggerLevel(logger, loggerLevel);
-    m_logger->flush_on(spdlog::level::trace);
-    m_logger->set_level(spdlog::level::trace);
     return logger;
 }
 

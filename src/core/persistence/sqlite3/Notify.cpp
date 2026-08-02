@@ -17,6 +17,9 @@ namespace sqlite {
     void Notify::callBack(void *arg, int operation, const char *thread,
                           const char *tableName, sqlite3_int64 changes) {
         auto *notify = static_cast<Notify *>(arg);
-        notify->notify();
+        // only invoke the callback for the configured table
+        if (tableName != nullptr && tableName == notify->m_tableName) {
+            notify->notify();
+        }
     }
 }  // namespace sqlite
