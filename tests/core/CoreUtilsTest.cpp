@@ -108,18 +108,18 @@ TEST_CASE("MemorySize: serialize bytes") {
 
 TEST_CASE("MemorySize: serialize KB") {
     std::string result = MemorySize::serialize(1500);
-    REQUIRE(result.find("KB") != std::string::npos);
-    REQUIRE(result.find("1.5") != std::string::npos);
+    REQUIRE(result.contains("KB"));
+    REQUIRE(result.contains("1.5"));
 }
 
 TEST_CASE("MemorySize: serialize MB") {
     std::string result = MemorySize::serialize(5000000);
-    REQUIRE(result.find("5MB") != std::string::npos);
+    REQUIRE(result.contains("5MB"));
 }
 
 TEST_CASE("MemorySize: serialize GB") {
     std::string result = MemorySize::serialize(2000000000);
-    REQUIRE(result.find("2GB") != std::string::npos);
+    REQUIRE(result.contains("2GB"));
 }
 
 TEST_CASE("MemorySize: roundtrip serialize deserialize integer value") {

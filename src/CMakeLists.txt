@@ -459,7 +459,7 @@ set(sources
 )
 
 add_library(base_library ${headers} ${sources})
-target_compile_features(base_library PUBLIC cxx_std_17)
+target_compile_features(base_library PUBLIC cxx_std_23)
 target_include_directories(base_library
         SYSTEM PUBLIC
         "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${CMAKE_CURRENT_SOURCE_DIR}/include>"

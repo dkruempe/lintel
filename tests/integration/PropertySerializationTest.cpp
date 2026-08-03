@@ -20,13 +20,13 @@ TEST_CASE("XMLConfigSerializationStrategy: serialize properties to XML") {
     std::vector<std::shared_ptr<PropertyBase>> properties = {prop1, prop2, prop3};
     std::string xml = strategy.serialize(properties);
 
-    REQUIRE(xml.find("threads") != std::string::npos);
-    REQUIRE(xml.find("SchedulerService") != std::string::npos);
-    REQUIRE(xml.find("4") != std::string::npos);
-    REQUIRE(xml.find("name") != std::string::npos);
-    REQUIRE(xml.find("MyApp") != std::string::npos);
-    REQUIRE(xml.find("enabled") != std::string::npos);
-    REQUIRE(xml.find("true") != std::string::npos);
+    REQUIRE(xml.contains("threads"));
+    REQUIRE(xml.contains("SchedulerService"));
+    REQUIRE(xml.contains("4"));
+    REQUIRE(xml.contains("name"));
+    REQUIRE(xml.contains("MyApp"));
+    REQUIRE(xml.contains("enabled"));
+    REQUIRE(xml.contains("true"));
 }
 
 TEST_CASE("XMLConfigSerializationStrategy: deserialize from XML string") {

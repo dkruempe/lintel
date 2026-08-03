@@ -143,7 +143,7 @@ TEST_CASE("UserManagementCliComponent: user_delete without -u prints error")
     component.onCommand(userDto, "user_delete", {});
 
     std::cout.rdbuf(oldBuf);
-    REQUIRE(oss.str().find("ERROR") != std::string::npos);
+    REQUIRE(oss.str().contains("ERROR"));
 }
 
 TEST_CASE("UserManagementCliComponent: user_add with missing args prints error")
@@ -160,7 +160,7 @@ TEST_CASE("UserManagementCliComponent: user_add with missing args prints error")
     component.onCommand(userDto, "user_add", {"-u", "jdoe"});
 
     std::cerr.rdbuf(oldBuf);
-    REQUIRE(oss.str().find("ERROR") != std::string::npos);
+    REQUIRE(oss.str().contains("ERROR"));
 }
 
 TEST_CASE("UserManagementCliComponent: user_update with missing -u prints error")
@@ -177,7 +177,7 @@ TEST_CASE("UserManagementCliComponent: user_update with missing -u prints error"
     component.onCommand(userDto, "user_update", {});
 
     std::cerr.rdbuf(oldBuf);
-    REQUIRE(oss.str().find("ERROR") != std::string::npos);
+    REQUIRE(oss.str().contains("ERROR"));
 }
 
 TEST_CASE("UserManagementCliComponent: user_update with -u calls updateOf")
@@ -234,7 +234,7 @@ TEST_CASE("UserManagementCliComponent: user_change_password without -n prints er
     component.onCommand(userDto, "user_change_password", {"-u", "jdoe"});
 
     std::cerr.rdbuf(oldBuf);
-    REQUIRE(oss.str().find("ERROR") != std::string::npos);
+    REQUIRE(oss.str().contains("ERROR"));
 }
 
 TEST_CASE("UserManagementCliComponent: user_sessions calls sessionsOf and prints")
@@ -254,7 +254,7 @@ TEST_CASE("UserManagementCliComponent: user_sessions calls sessionsOf and prints
     component.onCommand(userDto, "user_sessions", {});
 
     std::cout.rdbuf(oldBuf);
-    REQUIRE(oss.str().find("Last Access") != std::string::npos);
+    REQUIRE(oss.str().contains("Last Access"));
 }
 
 TEST_CASE("UserManagementCliComponent: user_session_revoke calls revokeSessionOf")
@@ -284,5 +284,5 @@ TEST_CASE("UserManagementCliComponent: user_session_revoke without -s prints err
     component.onCommand(userDto, "user_session_revoke", {});
 
     std::cerr.rdbuf(oldBuf);
-    REQUIRE(oss.str().find("ERROR") != std::string::npos);
+    REQUIRE(oss.str().contains("ERROR"));
 }

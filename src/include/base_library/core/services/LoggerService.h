@@ -66,12 +66,12 @@ public:
    * @tparam Args the argument types
    * @param source  the source location (file, line, function)
    * @param lvl     the log level
-   * @param message the format string
+   * @param message the format string (compile-time checked)
    * @param args    the format arguments */
   template<typename... Args>
-  void log(spdlog::source_loc source, spdlog::level::level_enum lvl, spdlog::string_view_t message, Args &&...args)
+  void log(spdlog::source_loc source, spdlog::level::level_enum lvl, spdlog::format_string_t<Args...> message, Args &&...args)
   {
-    m_logger->log(source, lvl, message, args...);
+    m_logger->log(source, lvl, message, std::forward<Args>(args)...);
   }
 };
 

@@ -2,6 +2,40 @@
 
 > Stand: 02.08.2026 – Systematische Fehleranalyse (Build + ctest 21/21 grün). Alle Punkte unten wurden am Quellcode verifiziert; Datei:Zeile bezieht sich auf den aktuellen Stand.
 
+## C++17 → C++23 Bump + C++20-Modules (aktiver Arbeitspunkt)
+
+> Stand: 03.08.2026 – Bearbeitung auf Branch `feature/cpp23-bump-and-modules` (Basis: master `55b6236`, Build 0 Warnings, ctest 21/21 grün). `master` bleibt unberührt. Ziel: Standard auf C++23 heben, gezielte Feature-Refactors, danach C++20-Modules als Build-Umstellung.
+
+### Phase 1 – C++17 → C++23 Bump (diese Session)
+- [x] **Breaking-Fixes** (C++20 entfernt `std::result_of`/`std::iterator`):
+  - [x] `std::result_of<...>::type` → `std::invoke_result_t<F, Args...>` in `src/include/base_library/features/base/services/ExecutorService.h:46,52,56` (Deklaration + Definition); `#include <type_traits>` ergänzen.
+  - [x] `: public std::iterator<...>` → 5 manuelle Iterator-Typedefs (`iterator_category`, `value_type`, `difference_type`, `pointer`, `reference`) in `core/persistence/Arguments.h:80,118` und `core/persistence/Result.h:27,65`; `#include <iterator>` in `Arguments.h` ergänzen (fehlt aktuell, kam nur transitiv).
+- [x] **Standard-Bump** `cxx_std_17` → `cxx_std_23` (28 Stellen): `src/CMakeLists.txt:462` (PUBLIC), `tests/CMakeLists.txt` (21×), `examples/CMakeLists.txt` (6×). `external/Hypodermic` (cxx_std_11) und Conan-Profil (`gnu17`) bleiben → keine Dep-Rebuilds. Lokal: CMake 3.31.6 + GCC 14.2, Toolchain setzt `CMAKE_CXX_STANDARD 17`, Target-Feature gewinnt → `-std=gnu++23`.
+- [x] **Feature-Refactors** (low-risk):
+  - [x] `StringUtils::startsWith/endsWith` (`src/core/utils/StringUtils.cpp`) delegieren an `std::string::starts_with/ends_with` (C++20); entfernt `rfind`-Trick + `boost::algorithm::ends_with`-Abhängigkeit. API/Signatur unverändert.
+  - [x] `contains()`-Adoption (C++23) bei position-unabhängigen Checks: `src/features/base/configuration/SharedMemorySegmentComponent.cpp:59` (`find(' ') != npos` → `contains(' ')`) + Test-Assertions `find(...) != npos` → `contains(...)` (PropertySerializationTest 7×, CoreUtilsTest 4×, CliParserTest 6×, UserManagementCliComponentMockTest 6×).
+- [x] **Zusätzliche C++23-Breaks beim Build entdeckt & gefixt**:
+  - [x] **fmt 12 `consteval fstring` mit Laufzeit-Format-String** – `LoggerService::log` (`LoggerService.h:72-75`) nahm `spdlog::string_view_t message` und reichte sie an fmt's consteval-Konstruktor weiter → Compile-Error unter C++20/23. Fix: Parameter auf checked `spdlog::format_string_t<Args...>` (alle LOG_\*-Aufrufer nutzen Literale → compile-time-validiert, wie spdlog selbst).
+  - [x] **`date`-Library `from_stream`-Ambiguität in C++20** – `date::parse` kollidiert per ADL mit `std::chrono::from_stream` (bekanntes date-Problem). Fix: nur die 3 `date::parse`-Aufrufe (`StringifyService.h:55`, `postgresql/Serialization.h:81`, `sqlite3/Serialization.h:84`) → `std::chrono::parse` (Format-Zeichen identisch); `date::format` (nicht betroffen) und `date::sys_time`-Alias (~50× genutzt, harmlos) bleiben.
+  - [x] **`format`-Ambiguität** – `CommandLineService.cpp:127`: `using namespace std;` + `using namespace date;` macht `format(...)` unter C++23 zwischen `std::format` und `date::format` mehrdeutig. Fix: `date::format(...)` qualifizieren.
+- [x] **Verifikation**: `make -j2` in `build/Release` (RAM-sicher) → 0 Warnings; `ctest --test-dir build/Release` → 21/21 grün (3,55 s).
+- [ ] **Apple-Verifikation durch Nutzer** (Xcode 26 / Apple clang 17, libc++): Gate vor Merge (kein macOS-CI-Job, bewusst offen gelassen).
+- [ ] **Bewusst NICHT in Phase 1** (Begründung): Ranges (Index-Loops, kein Win), `optional`-Monaden (ändert Kontrollfluss), `to_underlying` (keine Enum-Kandidaten), `std::span` (API-Änderung), `std::format` (fmt/spdlog vorhanden), `flat_map` (auf beiden Toolchains nicht verfügbar: GCC 14 < 15, libc++ 19 < 20).
+
+### Phase 2 – C++20-Modules (Build-Umstellung, eigene Session/Meilensteine)
+Verifizierte Ausgangslage (cppreference, 03.08.2026):
+- CMake-Modul-Support (P1689) nur für **Ninja/VS-Generator** – der bisherige Memory-schonende Makefile-Tree `build/Release` kann keine Module bauen → Generator-Wechsel nötig (Memory-schonend mit `-j2`, NICHT `--parallel 8`).
+- Module sind **inkompatibel mit `ENABLE_UNITY_BUILD`** (batch 16) → Unity-Build abschalten, Ersatz: PCH + ccache.
+- `import std;` (P2465R3) ist **nicht verfügbar**: GCC 15\* nötig (lokal GCC 14.2), libc++ nur partial auf Apple clang 17 → STL bleibt im Global-Module-Fragment; Header-Deps (boost, spdlog, fmt, magic_enum, Hypodermic, …) sind nicht modularisierbar (kommen als Header).
+- Public-API ist header-basiert (`src/include/base_library`) → Modul-Umstellung = Distributionsmodell-Wechsel (großer Refactor, bottom-up).
+- Macro-lastig (`LOG_*` via spdlog) → Macros überleben keine Modulgrenzen → Global-Module-Fragment pro TU.
+
+Staged (je Meilenstein einzeln committbar, nach Möglichkeit auf Ninja-Tree `-j2`):
+- [ ] Stage A: frischer Ninja-Configure + Build (`-j2`) + ctest 21/21 → Generator-Wechsel validiert.
+- [ ] Stage B: Feasibility-Spike – kleines Modul (`export module` + `import`) via CMake 3.31/GCC 14 bauen; P1689-Scanning + Header-Unit-Import im Ninja-Tree verifizieren.
+- [ ] Stage C: Modul-Umstellung bottom-up (Blatt → Wurzel); Public-Header schrittweise als Modul-Interface; `#include`-Interop über Global-Module-Fragment/Header-Units.
+- [ ] Stage D: `import std;` erst wenn Toolchains voll unterstützen (GCC ≥15, libc++ voll) – bis dahin verschoben.
+
 ## Kritische Bugs (Hoch)
 
 ### Process

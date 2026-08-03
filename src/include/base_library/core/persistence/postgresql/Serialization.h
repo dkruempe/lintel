@@ -78,7 +78,7 @@ namespace postgresql {
                     -> date::sys_time<std::chrono::microseconds> {
                 std::stringstream ss(timeString);
                 date::sys_time<std::chrono::microseconds> lt;
-                ss >> date::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
+                ss >> std::chrono::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
                 return lt;
              })
 

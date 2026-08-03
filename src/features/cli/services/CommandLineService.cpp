@@ -124,7 +124,7 @@ void CommandLineService::onPrompt()
   using namespace std;
   using namespace std::chrono;
   using namespace date;
-  std::cout << format("%FT%TZ", floor<seconds>(system_clock::now())) << " " << currentMenu << " % ";
+  std::cout << date::format("%FT%TZ", floor<seconds>(system_clock::now())) << " " << currentMenu << " % ";
   if (!m_terminalService->getLine().empty()) { std::cout << m_terminalService->getLine(); }
 }
 

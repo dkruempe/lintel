@@ -58,7 +58,7 @@ TEST_CASE("CommandParser: printHelp for known command") {
 
     std::ostringstream oss;
     parser.printHelp("help", oss);
-    REQUIRE(oss.str().find("Shows help") != std::string::npos);
+    REQUIRE(oss.str().contains("Shows help"));
 }
 
 TEST_CASE("CommandParser: printHelp for unknown command prints error") {
@@ -66,7 +66,7 @@ TEST_CASE("CommandParser: printHelp for unknown command prints error") {
 
     std::ostringstream oss;
     parser.printHelp("nonexistent", oss);
-    REQUIRE(oss.str().find("ERROR") != std::string::npos);
+    REQUIRE(oss.str().contains("ERROR"));
 }
 
 TEST_CASE("CommandParser: printCommandList") {
@@ -79,8 +79,8 @@ TEST_CASE("CommandParser: printCommandList") {
     std::set<std::string> aliases;
     parser.printCommandList(aliases, oss);
     std::string output = oss.str();
-    REQUIRE(output.find("help") != std::string::npos);
-    REQUIRE(output.find("exit") != std::string::npos);
+    REQUIRE(output.contains("help"));
+    REQUIRE(output.contains("exit"));
 }
 
 TEST_CASE("CommandParser: addCommand with rvalue reference") {
@@ -163,8 +163,8 @@ TEST_CASE("Command: printHelp contains command and description") {
     std::ostringstream oss;
     cmd.printHelp(oss);
     std::string output = oss.str();
-    REQUIRE(output.find("mycommand") != std::string::npos);
-    REQUIRE(output.find("My test command") != std::string::npos);
+    REQUIRE(output.contains("mycommand"));
+    REQUIRE(output.contains("My test command"));
 }
 
 TEST_CASE("Command: parse with optional flag missing") {

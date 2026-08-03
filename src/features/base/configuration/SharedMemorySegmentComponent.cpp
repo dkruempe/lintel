@@ -56,7 +56,7 @@ void SharedMemorySegmentComponent::processSegmentElement(
                                      "max_size or auto_extend_size is nullptr",
                                      lineNumber);
     }
-    if (std::string(name).find(' ') != std::string::npos) {
+    if (std::string(name).contains(' ')) {
         throw ConfigurationException(getConfigRoot(), "name contains space",
                                      lineNumber);
     }

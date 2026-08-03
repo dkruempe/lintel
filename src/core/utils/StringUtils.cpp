@@ -1,6 +1,5 @@
 #include "base_library/core/utils/StringUtils.h"
 
-#include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/replace.hpp>
 #include <sstream>
 
@@ -16,11 +15,11 @@ std::vector<std::string> StringUtils::split(const std::string &s,
 }
 
 bool StringUtils::startsWith(const std::string &s, const std::string &start) {
-    return s.rfind(start, 0) == 0;
+    return s.starts_with(start);
 }
 
 bool StringUtils::endsWith(const std::string &s, const std::string &end) {
-    return boost::algorithm::ends_with(s, end);
+    return s.ends_with(end);
 }
 
 std::string StringUtils::replaceAll(const std::string &s, std::string &&replace,

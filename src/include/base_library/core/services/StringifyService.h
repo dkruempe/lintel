@@ -52,7 +52,7 @@ public:
         } else if constexpr (std::is_same_v<T, date::sys_time<std::chrono::microseconds>>) {
             std::stringstream ss(string);
             date::sys_time<std::chrono::microseconds> lt;
-            ss >> date::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
+            ss >> std::chrono::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
             return lt;
         } else if constexpr (std::is_same_v<T, std::chrono::milliseconds>) {
             return std::chrono::milliseconds(std::stoull(string));

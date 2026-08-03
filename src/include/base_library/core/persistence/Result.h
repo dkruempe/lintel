@@ -23,14 +23,18 @@ namespace db {
         /**
          * Mutable random-access iterator over result rows.
          */
-        class Iterator
-                : public std::iterator<std::random_access_iterator_tag, Arguments,
-                        std::ptrdiff_t, Arguments *, Arguments &> {
+        class Iterator {
         private:
             Result &m_result;
             std::size_t m_pos;
 
         public:
+            using iterator_category = std::random_access_iterator_tag;
+            using value_type = Arguments;
+            using difference_type = std::ptrdiff_t;
+            using pointer = Arguments *;
+            using reference = Arguments &;
+
             /**
              * Constructs an iterator for the given Result.
              * @param result the result to iterate over
@@ -61,15 +65,18 @@ namespace db {
         /**
          * Const random-access iterator over result rows.
          */
-        class ConstIterator
-                : public std::iterator<std::random_access_iterator_tag, Arguments,
-                        std::ptrdiff_t, const Arguments *,
-                        const Arguments &> {
+        class ConstIterator {
         private:
             const Result &m_result;
             std::size_t m_pos;
 
         public:
+            using iterator_category = std::random_access_iterator_tag;
+            using value_type = Arguments;
+            using difference_type = std::ptrdiff_t;
+            using pointer = const Arguments *;
+            using reference = const Arguments &;
+
             /**
              * Constructs a const iterator for the given Result.
              * @param result the result to iterate over
