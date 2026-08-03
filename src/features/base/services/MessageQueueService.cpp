@@ -11,6 +11,12 @@
 #include <memory>
 #include <utility>
 
+namespace {
+std::string messageQueueKey(const MessageQueueEntry &entry) {
+    return entry.get_process_name() + "/" + entry.get_message_queue_name();
+}
+}  // namespace
+
 MessageQueueService::MessageQueueService(
   const std::shared_ptr<Configuration> &configuration,
   std::shared_ptr<ProcessName> processName,
@@ -38,7 +44,7 @@ std::map<std::string, std::shared_ptr<MessageQueueEntry> >
 
 void MessageQueueService::onInitialize() {
   for (const auto &iter : m_messageQueueRepository->allOf(".*", ".*")) {
-    m_messageQueues.insert({ iter.get_message_queue_name(),
+    m_messageQueues.insert({ messageQueueKey(iter),
                              std::make_shared<MessageQueue<Message> >(iter.get_process_name(),
                                iter.get_message_queue_name(),
                                iter.get_max_messages(),
@@ -48,13 +54,18 @@ void MessageQueueService::onInitialize() {
 
 std::pair<MessageQueueEntry, int32_t> MessageQueueService::numberMessagesOf(const MessageQueueEntry &entry)
 {
-  auto found = m_messageQueues.find(entry.get_message_queue_name());
+  auto found = m_messageQueues.find(messageQueueKey(entry));
   if (found != m_messageQueues.end()) { return { entry, found->second->numberMessagesOf() }; }
-  auto result = std::make_unique<MessageQueue<Message> >(entry.get_process_name(),
-    entry.get_message_queue_name(),
-    entry.get_max_messages(),
-    m_processName);
-  return { entry, result->numberMessagesOf() };
+  // open the queue without creating it; the previous open_or_create created
+  // a queue as a side effect just to read the number of messages
+  try {
+    boost::interprocess::message_queue queue(
+        boost::interprocess::open_only, entry.get_message_queue_name().c_str());
+    return { entry, static_cast<int32_t>(queue.get_num_msg()) };
+  } catch (const boost::interprocess::interprocess_exception &) {
+    // queue does not exist yet => no messages
+    return { entry, 0 };
+  }
 }
 
 std::unique_ptr<MessageQueue<Message> > MessageQueueService::of(

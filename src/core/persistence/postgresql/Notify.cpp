@@ -4,12 +4,26 @@
 
 #include <iostream>
 
+#include "base_library/core/persistence/Identifier.h"
+
 namespace postgresql {
     Notify::Notify(Connection &connection, std::string tableName,
                    std::function<void()> &callBack)
             : m_connection(connection),
               m_tableName(std::move(tableName)),
               m_callBack(callBack) {
+        // use a dedicated connection: libpq is not thread-safe, so the
+        // listener thread must not share the connection with other queries
+        m_conn = PQconnectdb(m_connection.m_connInfo.c_str());
+        if (m_conn == nullptr) {
+            throw db::SQLException("LISTEN connection failed: PQconnectdb returned null");
+        }
+        if (PQstatus(m_conn) != CONNECTION_OK) {
+            std::string const msg = PQerrorMessage(m_conn);
+            PQfinish(m_conn);
+            m_conn = nullptr;
+            throw db::SQLException("LISTEN connection failed: " + msg);
+        }
         // start the thread only after all members are initialized
         m_thread = std::thread([this]() { run(); });
     }
@@ -21,7 +35,7 @@ namespace postgresql {
 
         // select() modifies the timeout, so reset it before each call
         m_timeout = {m_timeoutSeconds, 0};
-        int sock = PQsocket(m_connection.m_conn);
+        int sock = PQsocket(m_conn);
 
         if (sock < 0) {
             throw db::SQLException("LISTEN sock connection failed");
@@ -40,10 +54,10 @@ namespace postgresql {
                 // timeout
                 break;
             default:
-                PQconsumeInput(m_connection.m_conn);
+                PQconsumeInput(m_conn);
                 PGnotify *notify = nullptr;
                 do {
-                    notify = PQnotifies(m_connection.m_conn);
+                    notify = PQnotifies(m_conn);
                     // clean received messages
                     if (notify != nullptr) {
                         PQfreemem(notify);
@@ -57,11 +71,15 @@ namespace postgresql {
 
     void Notify::run() {
         try {
-            auto result = m_connection.execute("LISTEN " + m_tableName);
-            if (!result->isState(ExecStatusType::PGRES_COMMAND_OK)) {
-                throw db::SQLException("LISTEN command failed: " +
-                                       m_connection.getErrorMessage());
+            auto result = PQexec(m_conn, ("LISTEN " + db::quoteIdentifier(m_tableName)).c_str());
+            if (result == nullptr || PQresultStatus(result) != ExecStatusType::PGRES_COMMAND_OK) {
+                std::string const msg = PQerrorMessage(m_conn);
+                if (result != nullptr) {
+                    PQclear(result);
+                }
+                throw db::SQLException("LISTEN command failed: " + msg);
             }
+            PQclear(result);
             while (!m_shutdown) {
                 listen();
             }
@@ -76,6 +94,10 @@ namespace postgresql {
         m_shutdown.store(true);
         if (m_thread.joinable()) {
             m_thread.join();
+        }
+        if (m_conn != nullptr) {
+            PQfinish(m_conn);
+            m_conn = nullptr;
         }
     }
 }  // namespace postgresql

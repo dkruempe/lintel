@@ -16,7 +16,7 @@ void GroupDto::serialize(
   // GROUP_NAME
   writer->String(shape.GROUP_NAME);
   writer->String(m_groupName.c_str());
-  if (m_groups.empty()) {
+  if (!m_groups.empty()) {
     // GROUPS
     writer->String(shape.GROUPS);
     GroupsDto dto(m_groups);

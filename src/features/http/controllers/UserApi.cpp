@@ -218,7 +218,7 @@ std::vector<GroupDto> UserApi::allOf(const std::string &groupName,
     httplib::Headers headers{};
     headers.insert({"Content-Type", "application/json"});
     httplib::Result result =
-            m_client->get("/user/groups/" + groupName, headers);
+            m_client->get("/user/groups/" + groupName + "/" + boolStr, headers);
     if (!HttpClientHelper::hasResponse(result)) {
         return {};
     }

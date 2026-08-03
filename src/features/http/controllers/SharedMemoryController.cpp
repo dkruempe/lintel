@@ -55,6 +55,10 @@ void SharedMemoryController::exportRepositoryOfGet(
             auto found = m_uuidSharedMemoryRepositories.find(uuid);
             if (found != m_uuidSharedMemoryRepositories.end()) {
                 response.set_content(found->second->serialize(), contentType.getName());
+            } else {
+                LOG_WARN("exportRepositoryOfGet: repository {} not found", uuid);
+                response.status = HttpStatusCodes::NotFound;
+                response.set_content("", contentType.getName());
             }
             break;
         }
@@ -220,7 +224,15 @@ void SharedMemoryController::growSegmentOfPut(
     const std::string sizeStr = request.matches[2];
     switch (contentType) {
         case ContentType::ApplicationJson: {
-            std::size_t growSize = MemorySize::deserialize(sizeStr);
+            std::size_t growSize = 0;
+            try {
+                growSize = MemorySize::deserialize(sizeStr);
+            } catch (const std::invalid_argument &exception) {
+                LOG_WARN("growSegmentOfPut: {}", exception.what());
+                response.status = HttpStatusCodes::BadRequest;
+                response.set_content("", contentType.getName());
+                return;
+            }
             auto segment = m_sharedMemorySegmentManager->of(segmentName);
             if (segment == nullptr) {
                 response.status = HttpStatusCodes::Forbidden;

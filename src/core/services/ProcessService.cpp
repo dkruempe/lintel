@@ -72,18 +72,21 @@ std::vector<ProcessInfo> ProcessService::allActiveOf()
     std::lock_guard<std::mutex> locker(m_processesMutex);
     for (auto &[id, process] : m_processes) {
       auto found = processGroupMap.find(id);
+      bool running = process.getChild()->running();
+      // exit_code() is only valid after the child has been waited on
+      int exitCode = running ? 0 : process.getChild()->exit_code();
       if (found != processGroupMap.end()) {
         temp.emplace_back(process.getProcess(),
           process.getChild()->id(),
-          process.getChild()->running(),
-          process.getChild()->exit_code(),
+          running,
+          exitCode,
           found->second->getName(),
           found->second->getId());
       } else {
         temp.emplace_back(process.getProcess(),
           process.getChild()->id(),
-          process.getChild()->running(),
-          process.getChild()->exit_code(),
+          running,
+          exitCode,
           "none",
           "none");
       }
@@ -144,8 +147,12 @@ void ProcessService::run()
   while (m_running) {
     std::unique_lock<std::mutex> lock(m_mutex);
     m_condition.wait_for(lock, m_monitorWaitTime->getValue());
-    monitorProcess();
-    // monitorProcessGroups();
+    try {
+      monitorProcess();
+      // monitorProcessGroups();
+    } catch (const std::exception &exception) {
+      LOG_ERROR("monitorProcess failed: {}", exception.what());
+    }
   }
 }
 
@@ -185,7 +192,14 @@ void ProcessService::monitorProcess()
       processExecutes.getProcess()->onRestart();
       continue;
     }
-    int exitCode = processExecutes.getChild()->exit_code();
+    int exitCode = 0;
+    try {
+      // only valid after the child has been waited on
+      processExecutes.getChild()->wait();
+      exitCode = processExecutes.getChild()->exit_code();
+    } catch (const std::exception &exception) {
+      LOG_ERROR("{}/{} failed to read exit code: {}", name, processExecutes.getProcess()->getPath().filename().string(), exception.what());
+    }
     processExecutes.setPromiseValue(exitCode);
     processExecutes.getProcess()->onStop();
     DEFINE_HISTORY_ENTRY(historyEntry,
@@ -268,6 +282,10 @@ bool ProcessService::stopOf(const Process &process)
     // monitorProcess may have already detected the stop and fulfilled the promise
     auto found = m_processes.find(process.getId());
     if (found == m_processes.end()) { return true; }
+    // process may have been auto-restarted while we waited => keep the new child
+    if (found->second.getChild() != processExecutes.getChild()) {
+      return false;
+    }
     found->second.setPromiseValue(processExecutes.getChild()->exit_code());
     found->second.getProcess()->onStop();
     m_processes.erase(found);
@@ -346,12 +364,13 @@ void ProcessService::detachOf(const Process &process)
 
   {
     std::lock_guard<std::mutex> locker(m_processesMutex);
-    // detach process => erase process from list bc. of separate running process
-    // with no further monitoring
+    // monitorProcess may have already detected the stop and fulfilled the promise
+    auto found = m_processes.find(process.getId());
+    if (found == m_processes.end()) { return; }
     processExecutes.getChild()->detach();
     // inform about success exit bc. no further monitoring
     processExecutes.setPromiseValue(EXIT_SUCCESS);
-    m_processes.erase(processExecutes.getProcess()->getId());
+    m_processes.erase(found);
   }
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
@@ -485,7 +504,8 @@ std::vector<ProcessGroupDto> ProcessService::allGroupsOf(const std::string &name
         std::shared_ptr<Process> temp = found->second.getProcess();
         boost::process::v1::pid_t id = found->second.getChild()->id();
         bool running = found->second.getChild()->running();
-        int exitCode = found->second.getChild()->exit_code();
+        // exit_code() is only valid after the child has been waited on
+        int exitCode = running ? 0 : found->second.getChild()->exit_code();
         ProcessInfo processInfo(temp, id, running, exitCode, iter->getName(), iter->getId());
         processInfos.push_back(processInfo);
       }

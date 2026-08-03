@@ -27,6 +27,7 @@ namespace postgresql {
     class Connection {
     private:
         PGconn *m_conn;
+        std::string m_connInfo;
 
         friend class Transaction;
 
@@ -78,6 +79,10 @@ namespace postgresql {
 
         /** @return the last error message from the PostgreSQL connection */
         [[nodiscard]] std::string getErrorMessage() const;
+
+        /** Builds a libpq connection string from a configuration entry. */
+        [[nodiscard]] static std::string buildConnInfo(
+                const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
     public:
         /**

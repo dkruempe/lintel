@@ -1,19 +1,26 @@
 #include "base_library/features/http/service/Client.h"
 
+#include "base_library/core/services/LoggerService.h"
+
 std::shared_ptr<httplib::SSLClient> Client::buildSslClient(
         const std::shared_ptr<ClientConfiguration> &clientConfiguration) {
-    if (clientConfiguration->getKeyFile().empty()) {
+    std::shared_ptr<httplib::SSLClient> sslClient;
+    if (!clientConfiguration->getCertFile().empty() &&
+        !clientConfiguration->getKeyFile().empty()) {
+        sslClient = std::make_shared<httplib::SSLClient>(
+                clientConfiguration->getHost(),
+                clientConfiguration->getPort(),
+                clientConfiguration->getCertFile(),
+                clientConfiguration->getKeyFile());
+    } else if (!clientConfiguration->getCaCertFile().empty()) {
+        sslClient = std::make_shared<httplib::SSLClient>(
+                clientConfiguration->getHost(),
+                clientConfiguration->getPort());
+    } else {
+        LOG_WARN("HTTP client running without TLS; credentials are transmitted "
+                 "in clear text. Configure cert/key files for production use.");
         return nullptr;
     }
-    if (clientConfiguration->getCertFile().empty()) {
-        return nullptr;
-    }
-    std::shared_ptr<httplib::SSLClient> sslClient =
-            std::make_shared<httplib::SSLClient>(
-                    clientConfiguration->getHost(),
-                    clientConfiguration->getPort(),
-                    clientConfiguration->getCertFile(),
-                    clientConfiguration->getKeyFile());
     if (!clientConfiguration->getCaCertFile().empty()) {
         sslClient->set_ca_cert_path(
                 clientConfiguration->getCaCertFile().string());

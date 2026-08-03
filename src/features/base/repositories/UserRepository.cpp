@@ -83,6 +83,7 @@ void UserRepository::deleteOf(const User &user) {
     where user_name = ?
   )",
                       builder);
+    transaction.commit();
 }
 
 void UserRepository::createOf(const User &user) {
@@ -109,6 +110,7 @@ void UserRepository::createOf(const User &user) {
     values (?, ?, ?, ?, ?, ?)
   )",
                 builder);
+        transaction.commit();
     } catch (const db::SQLException &exception) {
         LOG_ERROR("cannot create new User {}", exception.what());
     } catch (const std::exception &exception) {
@@ -131,6 +133,7 @@ void UserRepository::addGroupsOf(const User &user,
         builder.add(user.getUserName()).add(iter.getGroupName());
         statement.execute(builder);
     }
+    transaction.commit();
 }
 
 void UserRepository::addGroupOf(const User &user, const Group &group) {
@@ -150,6 +153,7 @@ void UserRepository::addGroupOf(const User &user, const Group &group) {
     insert into user_groups_relation(user_name, group_name) values(?, ?)
   )",
                       builder);
+    transaction.commit();
 }
 
 void UserRepository::removeGroupsOf(const User &user,
@@ -167,6 +171,7 @@ void UserRepository::removeGroupsOf(const User &user,
         builder.add(user.getUserName()).add(iter.getGroupName());
         preparedStatement.execute(builder);
     }
+    transaction.commit();
 }
 
 void UserRepository::removeGroupOf(const User &user, const Group &group) {
@@ -182,6 +187,7 @@ void UserRepository::removeGroupOf(const User &user, const Group &group) {
     delete from user_groups_relation where user_name = ? and group_name = ?
   )",
                       builder);
+    transaction.commit();
 }
 
 std::vector<User> UserRepository::allOf(const std::string &userNameMatches) {
@@ -272,7 +278,9 @@ std::vector<User> UserRepository::allOf(const std::string &userNameMatches) {
             lastPassword = password;
             lastCreatedTimestamp = createdTimestamp;
         }
-        func();
+        if (!lastUserName.empty()) {
+            func();
+        }
     } catch (const db::SQLException &exception) {
         LOG_ERROR("{}", exception.what());
     } catch (const std::exception &exception) {
@@ -343,7 +351,9 @@ std::vector<User> UserRepository::allOf() {
             lastPassword = password;
             lastCreatedTimestamp = createdTimestamp;
         }
-        func();
+        if (!lastUserName.empty()) {
+            func();
+        }
     } catch (const db::SQLException &exception) {
         LOG_ERROR("{}", exception.what());
     } catch (const std::exception &exception) {
@@ -365,6 +375,7 @@ void UserRepository::changeFirstNameOf(const User &user,
     where user_name = ?
   )",
                       builder);
+    transaction.commit();
 }
 
 void UserRepository::changeLastNameOf(const User &user,
@@ -380,6 +391,7 @@ void UserRepository::changeLastNameOf(const User &user,
     where user_name = ?
   )",
                       builder);
+    transaction.commit();
 }
 
 void UserRepository::changeUserNameOf(const User &user,
@@ -395,6 +407,7 @@ void UserRepository::changeUserNameOf(const User &user,
     where user_name = ?
   )",
                       builder);
+    transaction.commit();
 }
 
 void UserRepository::changePasswordOf(const User &user,
@@ -410,6 +423,7 @@ void UserRepository::changePasswordOf(const User &user,
     where user_name = ?
   )",
                       builder);
+    transaction.commit();
 }
 
 void UserRepository::changeEMailOf(const User &user, const std::string &eMail) {
@@ -424,6 +438,7 @@ void UserRepository::changeEMailOf(const User &user, const std::string &eMail) {
     where user_name = ?
   )",
                       builder);
+    transaction.commit();
 }
 
 void UserRepository::deleteOf(const std::vector<std::string> &userNames) {
@@ -443,5 +458,6 @@ void UserRepository::deleteOf(const std::vector<std::string> &userNames) {
     where user_name = ?
   )",
                           builder);
+        transaction.commit();
     }
 }

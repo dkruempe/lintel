@@ -1,6 +1,7 @@
 #include "base_library/features/http/controllers/ProcessController.h"
 
 #include "base_library/core/services/ProcessService.h"
+#include "base_library/core/utils/RegexUtils.h"
 #include "base_library/features/base/controller/ProcessGroupsDto.h"
 #include "base_library/features/base/controller/ProcessInfosDto.h"
 #include "base_library/features/base/models/Process.h"
@@ -33,7 +34,27 @@ void ProcessController::allProcessOfGet(
     }
     switch (contentType) {
         case ContentType::ApplicationJson: {
-            ProcessInfosDto processInfosDto(m_processService->allActiveOf());
+            const std::string processName = request.matches[1];
+            std::string errorMessage;
+            if (!RegexUtils::validatePattern(processName, errorMessage)) {
+                LOG_WARN("allProcessOfGet: {}", errorMessage);
+                response.status = HttpStatusCodes::BadRequest;
+                response.set_content("", contentType.getName());
+                return;
+            }
+            const std::regex nameRegex(processName);
+            std::vector<ProcessInfo> filtered;
+            for (const auto &processInfo : m_processService->allActiveOf()) {
+                const std::string path =
+                        processInfo.getProcess()->getPath().string();
+                const std::string fileName =
+                        processInfo.getProcess()->getPath().filename().string();
+                if (std::regex_match(path, nameRegex) ||
+                    std::regex_match(fileName, nameRegex)) {
+                    filtered.push_back(processInfo);
+                }
+            }
+            ProcessInfosDto processInfosDto(filtered);
             std::string content = processInfosDto.JsonSerializable::serialize();
             response.set_content(content, contentType.getName());
             break;

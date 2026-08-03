@@ -1,6 +1,5 @@
 #include "base_library/features/http/HttpFeature.h"
 
-#include "base_library/features/http/ExampleController.h"
 #include "base_library/features/http/controllers/HistoryApi.h"
 #include "base_library/features/http/controllers/HistoryController.h"
 #include "base_library/features/http/controllers/MessageQueueApi.h"
@@ -19,11 +18,6 @@ HttpFeature::HttpFeature(std::shared_ptr<Features> features) : Feature(Features:
 void HttpFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
     builder.registerType<ServerProvider>().singleInstance();
     builder.registerType<ClientProvider>().singleInstance();
-    builder.registerType<ExampleController>()
-            .as<Controller>()
-            .as<GroupProvider>()
-            .asSelf()
-            .singleInstance();
     builder.registerType<ProcessApi>().singleInstance();
     builder.registerType<ProcessController>()
             .as<Controller>()

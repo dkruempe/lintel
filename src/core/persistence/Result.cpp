@@ -2,6 +2,8 @@
 
 #include <utility>
 
+#include "base_library/core/exceptions/SQLException.h"
+
 namespace db {
     std::string Result::getValue(int row, int attribute) const {
         if (m_result != nullptr) {
@@ -43,14 +45,20 @@ namespace db {
         if (m_result != nullptr) {
             return m_result->of(pos);
         }
-        return m_resultSQLite->of(pos);
+        if (m_resultSQLite != nullptr) {
+            return m_resultSQLite->of(pos);
+        }
+        throw db::SQLException("Result is not initialized");
     }
 
     const Arguments &Result::of(std::size_t pos) const {
         if (m_result != nullptr) {
             return m_result->of(pos);
         }
-        return m_resultSQLite->of(pos);
+        if (m_resultSQLite != nullptr) {
+            return m_resultSQLite->of(pos);
+        }
+        throw db::SQLException("Result is not initialized");
     }
 
     Result::~Result() = default;

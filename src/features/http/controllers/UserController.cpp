@@ -313,7 +313,7 @@ void UserController::addUserPost(const httplib::Request &request,
             std::string password = Cryption::hashOf(
                     Cryption::decodeBase64(userPassword.value()));
             User userNew(userDto.getFirstName(), userDto.getLastName(),
-                         User::Sex::Male, userDto.getEMail(), userDto.getUserName(),
+                         userDto.getSex(), userDto.getEMail(), userDto.getUserName(),
                          password, {});
             std::stringstream ss;
             ss << userNew;
@@ -521,11 +521,6 @@ void UserController::loginStateOfGet(const httplib::Request &request,
                                      const ContentType &contentType,
                                      const std::optional<UserToken> &user) {
     if (!user.has_value()) {
-        response.status = HttpStatusCodes::Unauthorized;
-        response.set_content("", contentType.getName());
-        return;
-    }
-    if (!user->m_user.has(m_adminUser) && !user->m_user.has(m_userUser)) {
         response.status = HttpStatusCodes::Unauthorized;
         response.set_content("", contentType.getName());
         return;

@@ -46,7 +46,10 @@ namespace sqlite {
     Connection::Connection(const std::string &connectionInfo) : m_db(nullptr) {
         int const rc = sqlite3_open(connectionInfo.c_str(), &m_db);
         if (rc != SQLITE_OK) {
-            throw db::SQLException("Can't open database: " + getErrorMessage());
+            std::string const msg = getErrorMessage();
+            sqlite3_close(m_db);
+            m_db = nullptr;
+            throw db::SQLException("Can't open database: " + msg);
         }
         registerRegexp(m_db);
     }
@@ -56,7 +59,10 @@ namespace sqlite {
             : m_db(nullptr) {
         int const rc = sqlite3_open(connectionEntry->getConnection().c_str(), &m_db);
         if (rc != SQLITE_OK) {
-            throw db::SQLException("Can't open database: " + getErrorMessage());
+            std::string const msg = getErrorMessage();
+            sqlite3_close(m_db);
+            m_db = nullptr;
+            throw db::SQLException("Can't open database: " + msg);
         }
         registerRegexp(m_db);
     }
@@ -64,15 +70,17 @@ namespace sqlite {
     std::string Connection::getErrorMessage() const { return sqlite3_errmsg(m_db); }
 
     Connection::~Connection() {
-        if (m_db != nullptr) {
-            sqlite3_close(m_db);
-            m_db = nullptr;
-        }
-
         if (!m_preparedStatements.empty()) {
             for (auto &[queryName, stmt]: m_preparedStatements) {
                 sqlite3_finalize(stmt);
             }
+            m_preparedStatements.clear();
+        }
+
+        if (m_db != nullptr) {
+            // finalize first, otherwise sqlite3_close fails with SQLITE_BUSY
+            static_cast<void>(sqlite3_close(m_db));
+            m_db = nullptr;
         }
     }
 
@@ -114,15 +122,23 @@ namespace sqlite {
             throw db::SQLException("SQLite not prepared statement available");
         }
 
+        sqlite3_reset(found->second);
+        sqlite3_clear_bindings(found->second);
         int counter = 0;
         for (const auto &param: parameters.getParameters()) {
-            sqlite3_bind_text(found->second, ++counter, param, -1, SQLITE_TRANSIENT);
+            int const bindRc = sqlite3_bind_text(found->second, ++counter, param, -1, SQLITE_TRANSIENT);
+            if (bindRc != SQLITE_OK) {
+                throw db::SQLException("SQLite bind exception: " + getErrorMessage());
+            }
         }
         std::shared_ptr<Result> result = std::make_shared<Result>();
         int step = -1;
         do {
             step = sqlite3_step(found->second);
             if (step != SQLITE_ROW) {
+                if (step == SQLITE_ERROR || step == SQLITE_MISUSE) {
+                    throw db::SQLException("SQLite step exception: " + getErrorMessage());
+                }
                 continue;
             }
             const unsigned char *text = nullptr;
@@ -131,8 +147,14 @@ namespace sqlite {
             for (int i = 0; i < count; i++) {
                 text = sqlite3_column_text(found->second, i);
                 const char *name = sqlite3_column_name(found->second, i);
-                std::basic_string<unsigned char> temp = text;
-                std::string value(temp.begin(), temp.end());
+                std::string value;
+                if (text != nullptr) {
+                    std::basic_string<unsigned char> temp = text;
+                    value = std::string(temp.begin(), temp.end());
+                }
+                if (name == nullptr) {
+                    continue;
+                }
                 db::Argument argument(value, name);
                 arguments.add(argument);
             }
@@ -155,13 +177,21 @@ namespace sqlite {
 
         int i = 0;
         for (auto param: parameters.getParameters()) {
-            sqlite3_bind_text(stmt, ++i, param, -1, SQLITE_TRANSIENT);
+            int const bindRc = sqlite3_bind_text(stmt, ++i, param, -1, SQLITE_TRANSIENT);
+            if (bindRc != SQLITE_OK) {
+                sqlite3_finalize(stmt);
+                throw db::SQLException("SQLite bind exception: " + getErrorMessage());
+            }
         }
 
         int step = -1;
         do {
             step = sqlite3_step(stmt);
             if (step != SQLITE_ROW) {
+                if (step == SQLITE_ERROR || step == SQLITE_MISUSE) {
+                    sqlite3_finalize(stmt);
+                    throw db::SQLException("SQLite step exception: " + getErrorMessage());
+                }
                 continue;
             }
             const unsigned char *text = nullptr;

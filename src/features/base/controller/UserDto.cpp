@@ -24,6 +24,7 @@ UserDto::UserDto(const User &user, std::string id)
           m_eMail(user.getEmail()),
           m_userName(user.getUserName()),
           m_id(std::move(id)),
+          m_sex(user.getSex()),
           m_createdTimestamp(user.getCreatedTimestamp()),
           m_groups(std::make_shared<GroupsDto>(user.getGroups())) {}
 
@@ -39,6 +40,9 @@ void UserDto::serialize(
     // EMAIL
     writer->String(shape.EMAIL);
     writer->String(m_eMail.c_str());
+    // SEX
+    writer->String(shape.SEX);
+    writer->String(m_sex == User::Sex::Female ? "female" : "male");
     // USER_NAME
     writer->String(shape.USER_NAME);
     writer->String(m_userName.c_str());
@@ -100,6 +104,18 @@ bool UserDto::deserialize(const rapidjson::Value &obj) {
         success = false;
         LOG_ERROR("{} not defined in json serializatioon", shape.USER_NAME);
     }
+    // SEX
+    if (obj.HasMember(shape.SEX) && obj[shape.SEX].IsString()) {
+        const std::string sex = obj[shape.SEX].GetString();
+        if (sex == "female") {
+            m_sex = User::Sex::Female;
+        } else if (sex == "male") {
+            m_sex = User::Sex::Male;
+        } else {
+            success = false;
+            LOG_ERROR("invalid sex in json serializatioon: {}", sex);
+        }
+    }
     // CREATED_TIMESTAMP
     if (obj.HasMember(shape.CREATED_TIMESTAMP)) {
         m_createdTimestamp =
@@ -127,6 +143,8 @@ bool UserDto::deserialize(const rapidjson::Value &obj) {
 }
 
 const std::string &UserDto::getId() const { return m_id; }
+
+User::Sex UserDto::getSex() const { return m_sex; }
 
 std::vector<GroupDto> UserDto::getGroups() const {
     if (m_groups == nullptr) {

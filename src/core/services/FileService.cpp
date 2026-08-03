@@ -86,6 +86,8 @@ void FileService::createFile(std::size_t sizeOfFile)
     fbuf.open(m_path, std::ios_base::in | std::ios_base::out | std::ios_base::trunc | std::ios_base::binary);
   if (result == nullptr || !result->is_open()) { throw std::runtime_error("File is not able to be opened"); }
   // Set the size
-  fbuf.pubseekoff(static_cast<long long>(sizeOfFile - 1), std::ios_base::beg);
-  fbuf.sputc(0);
+  if (sizeOfFile > 0) {
+    fbuf.pubseekoff(static_cast<long long>(sizeOfFile - 1), std::ios_base::beg);
+    fbuf.sputc(0);
+  }
 }

@@ -10,6 +10,8 @@
  */
 #include <spdlog/logger.h>
 
+#include <mutex>
+
 class Configuration;
 #include "base_library/features/base/models/ProcessName.h"
 
@@ -26,7 +28,7 @@ private:
   std::shared_ptr<spdlog::logger> init();
 
   static std::unique_ptr<LoggerService> m_instance;
-  static std::once_flag m_initInstanceFlag;
+  static std::mutex m_instanceMutex;
 
 public:
   /** Default constructor. */

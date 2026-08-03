@@ -69,8 +69,8 @@ void Process::enableAutoStart(int maxAutoRestarts) {
 }
 
 void Process::disableAutoStart() {
-    m_autoRestart = true;
-    m_maxAutoRestarts = -1;
+    m_autoRestart = false;
+    m_maxAutoRestarts = 0;
 }
 
 const std::string &Process::getId() const { return m_id; }

@@ -97,13 +97,22 @@ template<typename DATA, typename DAO, std::size_t MaxSize>
  */
 class SharedMemoryArrayRepository : public SharedMemoryRepository {
 private:
-    std::array<DATA, MaxSize> &m_array;
+    mutable std::array<DATA, MaxSize> *m_array;
+    mutable std::size_t m_generation;
 
 protected:
     std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
 
     /** @return reference to the underlying array */
-    std::array<DATA, MaxSize> &getArray() const { return m_array; }
+    std::array<DATA, MaxSize> &getArray() const {
+        const auto generation = m_sharedMemoryService->getGeneration();
+        if (generation != m_generation) {
+            m_array = &m_sharedMemoryService->constructArray<DATA, MaxSize>(
+                    getSharedMemorySegment(), getSharedMemoryRepository());
+            m_generation = generation;
+        }
+        return *m_array;
+    }
 
 public:
     SharedMemoryArrayRepository(
@@ -111,8 +120,9 @@ public:
             const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
                                      std::string(type_name<DATA>()), codeVersion, uuid),
-              m_array(sharedMemoryService->constructArray<DATA, MaxSize>(
+              m_array(&sharedMemoryService->constructArray<DATA, MaxSize>(
                       segment, getSharedMemoryRepository())),
+              m_generation(sharedMemoryService->getGeneration()),
               m_sharedMemoryService(sharedMemoryService) {}
 
     [[nodiscard]] SharedMemoryType getType() const override {
@@ -126,7 +136,7 @@ public:
         writer->String("SharedMemoryArrayRepository");
         writer->String("array");
         writer->StartArray();
-        for (const auto &iter: m_array) {
+        for (const auto &iter: getArray()) {
             LOG_TRACE("serialize vector entry");
             if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
                 DAO dao(iter);
@@ -157,12 +167,21 @@ private:
             DATA,
             boost::interprocess::allocator<
                     DATA, boost::interprocess::managed_mapped_file::segment_manager>>;
-    Vector &m_vector;
+    mutable Vector *m_vector;
+    mutable std::size_t m_generation;
 
 protected:
     std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
 
-    [[nodiscard]] Vector &getVector() const { return m_vector; }
+    [[nodiscard]] Vector &getVector() const {
+        const auto generation = m_sharedMemoryService->getGeneration();
+        if (generation != m_generation) {
+            m_vector = &m_sharedMemoryService->constructVector<DATA>(
+                    getSharedMemorySegment(), getSharedMemoryRepository());
+            m_generation = generation;
+        }
+        return *m_vector;
+    }
 
 public:
     SharedMemoryVectorRepository(
@@ -170,8 +189,9 @@ public:
             const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
                                      std::string(type_name<DATA>()), codeVersion, uuid),
-              m_vector(sharedMemoryService->constructVector<DATA>(
+              m_vector(&sharedMemoryService->constructVector<DATA>(
                       segment, getSharedMemoryRepository())),
+              m_generation(sharedMemoryService->getGeneration()),
               m_sharedMemoryService(sharedMemoryService) {}
 
     [[nodiscard]] SharedMemoryType getType() const override {
@@ -185,7 +205,7 @@ public:
         writer->String("SharedMemoryVectorRepository");
         writer->String("vector");
         writer->StartArray();
-        for (const auto &iter: m_vector) {
+        for (const auto &iter: getVector()) {
             LOG_TRACE("serialize vector entry");
             if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
                 DAO dao(iter);
@@ -219,12 +239,21 @@ private:
             boost::interprocess::allocator<
                     std::pair<const KEY, VALUE>,
                     boost::interprocess::managed_mapped_file::segment_manager>>;
-    Map &m_map;
+    mutable Map *m_map;
+    mutable std::size_t m_generation;
 
 protected:
     std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
 
-    [[nodiscard]] Map &getMap() { return m_map; }
+    [[nodiscard]] Map &getMap() const {
+        const auto generation = m_sharedMemoryService->getGeneration();
+        if (generation != m_generation) {
+            m_map = &m_sharedMemoryService->constructMap<KEY, VALUE>(
+                    getSharedMemorySegment(), getSharedMemoryRepository());
+            m_generation = generation;
+        }
+        return *m_map;
+    }
 
 public:
     SharedMemoryMapRepository(
@@ -233,12 +262,13 @@ public:
             int32_t sizeOfData = sizeof(VALUE))
             : SharedMemoryRepository(segment, sizeOfData,
                                      std::string(type_name<VALUE>()), codeVersion, uuid),
-              m_map(sharedMemoryService->constructMap<KEY, VALUE>(
+              m_map(&sharedMemoryService->constructMap<KEY, VALUE>(
                       segment, getSharedMemoryRepository())),
+              m_generation(sharedMemoryService->getGeneration()),
               m_sharedMemoryService(sharedMemoryService) {
         static_assert(isSerializable<KeyDao>());
         static_assert(isSerializable<ValueDao>());
-        LOG_TRACE("map loaded with size of {}", m_map.size());
+        LOG_TRACE("map loaded with size of {}", getMap().size());
     }
 
     [[nodiscard]] SharedMemoryType getType() const override {
@@ -252,7 +282,7 @@ public:
         writer->String("SharedMemoryMapRepository");
         writer->String("map");
         writer->StartArray();
-        for (auto &iterator: m_map) {
+        for (auto &iterator: getMap()) {
             const KEY &key = iterator.first;
             const VALUE &value = iterator.second;
             LOG_TRACE("serialize map entry");
@@ -292,12 +322,21 @@ template<typename DATA, typename DAO>
  */
 class SharedMemoryObjectRepository : public SharedMemoryRepository {
 private:
-    DATA &m_data;
+    mutable DATA *m_data;
+    mutable std::size_t m_generation;
 
 protected:
     std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
 
-    DATA &getData() const { return m_data; }
+    DATA &getData() const {
+        const auto generation = m_sharedMemoryService->getGeneration();
+        if (generation != m_generation) {
+            m_data = &m_sharedMemoryService->constructObject<DATA>(
+                    getSharedMemorySegment(), getSharedMemoryRepository());
+            m_generation = generation;
+        }
+        return *m_data;
+    }
 
 public:
     SharedMemoryObjectRepository(
@@ -305,8 +344,9 @@ public:
             const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
                                      std::string(type_name<DATA>()), codeVersion, uuid),
-              m_data(sharedMemoryService->constructObject<DATA>(
+              m_data(&sharedMemoryService->constructObject<DATA>(
                       segment, getSharedMemoryRepository())),
+              m_generation(sharedMemoryService->getGeneration()),
               m_sharedMemoryService(sharedMemoryService) {}
 
     [[nodiscard]] SharedMemoryType getType() const override {
@@ -320,10 +360,10 @@ public:
         writer->String("SharedMemoryObjectRepository");
         writer->String("object");
         if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
-            DAO dao(m_data);
+            DAO dao(getData());
             dao.serialize(writer);
         } else if constexpr (std::is_same<SharedMemoryService::ShmString, DATA>()) {
-            writer->String(m_data.c_str());
+            writer->String(getData().c_str());
         }
         writer->EndObject();
     }

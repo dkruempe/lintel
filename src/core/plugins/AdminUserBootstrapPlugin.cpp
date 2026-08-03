@@ -94,6 +94,7 @@ void AdminUserBootstrapPlugin::onStart() {
       values (?, ?)
     )",
                           relationBuilder);
+        transaction.commit();
         LOG_INFO("initial admin user {} created", userName);
     } catch (std::exception &exception) {
         LOG_ERROR("failed to create initial admin user - {}", exception.what());

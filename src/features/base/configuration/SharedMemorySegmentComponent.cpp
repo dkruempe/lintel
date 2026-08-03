@@ -24,7 +24,7 @@ void SharedMemorySegmentComponent::processPathElement(
                                      lineNumber);
     }
     std::string tmpPath = pathStr;
-    if (tmpPath[0] == '~') {
+    if (!tmpPath.empty() && tmpPath[0] == '~') {
         std::string rest(tmpPath.begin() + 1, tmpPath.end());
         tmpPath = m_environmentConfiguration->of(EnvironmentConfiguration::Home);
         tmpPath += '/';

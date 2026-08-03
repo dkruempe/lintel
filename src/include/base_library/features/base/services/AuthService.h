@@ -32,10 +32,9 @@ private:
     // variables
     std::map<std::string, UserToken> m_userTokens;
     std::mutex m_mutex;
-    /** Failed login tracking per IP address for brute-force protection. */
+    /** Failed login timestamps per IP for sliding-window lockout. */
     struct FailedAttempt {
-        int32_t m_failures = 0;
-        std::chrono::steady_clock::time_point m_firstFailure;
+        std::deque<std::chrono::steady_clock::time_point> m_timestamps;
     };
     std::map<std::string, FailedAttempt> m_failedAttempts;
     /** Login attempt timestamps per IP for sliding-window rate limiting. */

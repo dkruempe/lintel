@@ -224,23 +224,25 @@ bool AuthService::isLockedOut(const std::string &ipAddress) {
     if (found == m_failedAttempts.end()) {
         return false;
     }
-    const FailedAttempt &attempt = found->second;
-    if (attempt.m_failures < m_maxLoginFailures->getValue()) {
+    const auto now = std::chrono::steady_clock::now();
+    const auto lockout = m_loginLockout->getValue();
+    auto &timestamps = found->second.m_timestamps;
+    // sliding window: only failures within the lockout duration count
+    while (!timestamps.empty() && (now - timestamps.front()) >= lockout) {
+        timestamps.pop_front();
+    }
+    if (timestamps.empty()) {
+        m_failedAttempts.erase(found);
         return false;
     }
-    const auto now = std::chrono::steady_clock::now();
-    return (now - attempt.m_firstFailure) < m_loginLockout->getValue();
+    return timestamps.size() >=
+           static_cast<std::size_t>(m_maxLoginFailures->getValue());
 }
 
 void AuthService::recordFailedLogin(const std::string &ipAddress) {
     std::lock_guard<std::mutex> lock(m_mutex);
-    auto found = m_failedAttempts.find(ipAddress);
-    if (found == m_failedAttempts.end()) {
-        m_failedAttempts.insert(
-                {ipAddress, {1, std::chrono::steady_clock::now()}});
-        return;
-    }
-    found->second.m_failures++;
+    m_failedAttempts[ipAddress].m_timestamps.push_back(
+            std::chrono::steady_clock::now());
 }
 
 void AuthService::clearFailedLogins(const std::string &ipAddress) {
@@ -279,8 +281,13 @@ void AuthService::pruneLoginAttempts() {
 
 void AuthService::pruneFailedLogins() {
     const auto now = std::chrono::steady_clock::now();
+    const auto lockout = m_loginLockout->getValue();
     for (auto iter = m_failedAttempts.begin(); iter != m_failedAttempts.end();) {
-        if ((now - iter->second.m_firstFailure) > m_loginLockout->getValue()) {
+        auto &timestamps = iter->second.m_timestamps;
+        while (!timestamps.empty() && (now - timestamps.front()) > lockout) {
+            timestamps.pop_front();
+        }
+        if (timestamps.empty()) {
             iter = m_failedAttempts.erase(iter);
             continue;
         }

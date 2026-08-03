@@ -1,6 +1,7 @@
 #include "base_library/features/property/controller/PropertyApi.h"
 
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/features/http/service/HttpClientHelper.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 #include "base_library/features/http/service/HttpUnauthorizedException.h"
 #include "base_library/features/property/controller/PropertiesDto.h"
@@ -14,6 +15,9 @@ std::vector<PropertyDto> PropertyApi::allOf(const std::string &processName,
     const httplib::Result &result = m_client->get(
             "/properties/" + processName + "/" + className + "/" + instanceName,
             headers);
+    if (!HttpClientHelper::hasResponse(result)) {
+        return {};
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
@@ -44,6 +48,9 @@ std::optional<PropertyDto> PropertyApi::of(const std::string &processName,
             m_client->get("/properties/" + processName + "/" + className + "/" +
                           instanceName + "/" + propertyName,
                           headers);
+    if (!HttpClientHelper::hasResponse(result)) {
+        return std::nullopt;
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:
@@ -72,6 +79,9 @@ bool PropertyApi::updateOf(const PropertyDto &propertyDto,
             propertyDto.getClassName() + "/" + propertyDto.getInstanceName() +
             "/" + propertyDto.getName(),
             propertyValueDto.JsonSerializable::serialize(), "application/json");
+    if (!HttpClientHelper::hasResponse(result)) {
+        return false;
+    }
     HttpStatusCodes status(result->status);
     switch (status) {
         case HttpStatusCodes::Unauthorized:

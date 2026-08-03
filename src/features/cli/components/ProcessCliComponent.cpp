@@ -8,7 +8,7 @@ ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
     m_commandParser.addCommand(
             Command("show_processes", "Show all processes!")
                     .addArgument(
-                            {"-process-name", "-p"}, &m_processName,
+                            {"--process-name", "-p"}, &m_processName,
                             "Process Name of process itself, which is same as the filename."),
             ShowProcesses);
     m_commandParser.addCommand(

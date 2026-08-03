@@ -21,6 +21,8 @@ private:
     std::string m_userName;
     /** The user ID */
     std::string m_id;
+    /** The sex */
+    User::Sex m_sex = User::Sex::Male;
     /** The password (optional, used for creation only) */
     std::optional<std::string> m_password = std::nullopt;
     /** The account creation timestamp */
@@ -34,6 +36,7 @@ private:
         const char *const LAST_NAME = "last_name";
         const char *const EMAIL = "email";
         const char *const USER_NAME = "user_name";
+        const char *const SEX = "sex";
         const char *const CREATED_TIMESTAMP = "created_timestamp";
         const char *const GROUPS = "groups";
         const char *const ID = "id";
@@ -60,6 +63,10 @@ public:
     /** Get the user ID
      * @return The ID */
     [[nodiscard]] const std::string &getId() const;
+
+    /** Get the sex
+     * @return The sex */
+    [[nodiscard]] User::Sex getSex() const;
 
     /** Get the groups this user belongs to
      * @return Vector of group DTOs */

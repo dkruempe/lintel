@@ -26,18 +26,55 @@ SharedMemoryService::SharedMemoryService(
 
 void SharedMemoryService::growOf(
         const std::shared_ptr<SharedMemorySegment> &segment, std::size_t grow) {
-    boost::interprocess::managed_mapped_file::grow(segment->getPath().c_str(),
-                                                   grow);
+    std::lock_guard<std::mutex> lock(m_segmentsMutex);
+    auto found = m_segments.find(segment->getName());
+    if (found == m_segments.end()) {
+        throw ShmSegmentNotFound(segment->getName());
+    }
+    // The static grow() extends the file and updates the segment-manager header
+    // stored inside the file. The live mapping's length, however, is fixed at
+    // mmap() time, so it must be reopened to observe the larger file.
+    if (!boost::interprocess::managed_mapped_file::grow(segment->getPath().c_str(),
+                                                       grow)) {
+        throw std::runtime_error("failed to grow shared memory segment '" +
+                                 segment->getName() + "'");
+    }
+    // Reopen the segment so the new mapping covers the grown file. This
+    // invalidates references into the old mapping - repositories detect the
+    // bump of the generation counter and re-fetch their references.
+    found->second.m_managedMappedFile =
+            std::make_shared<boost::interprocess::managed_mapped_file>(
+                    boost::interprocess::open_only, segment->getPath().c_str());
+    ++m_generation;
 }
 
 void SharedMemoryService::shrinkOf(
         const std::shared_ptr<SharedMemorySegment> &segment) {
-    boost::interprocess::managed_mapped_file::shrink_to_fit(
-            segment->getPath().c_str());
+    std::lock_guard<std::mutex> lock(m_segmentsMutex);
+    auto found = m_segments.find(segment->getName());
+    if (found == m_segments.end()) {
+        throw ShmSegmentNotFound(segment->getName());
+    }
+    if (!boost::interprocess::managed_mapped_file::shrink_to_fit(
+                segment->getPath().c_str())) {
+        throw std::runtime_error("failed to shrink shared memory segment '" +
+                                 segment->getName() + "'");
+    }
+    // Reopen the segment so the new mapping covers the shrunk file.
+    found->second.m_managedMappedFile =
+            std::make_shared<boost::interprocess::managed_mapped_file>(
+                    boost::interprocess::open_only, segment->getPath().c_str());
+    ++m_generation;
+}
+
+std::size_t SharedMemoryService::getGeneration() const {
+    std::lock_guard<std::mutex> lock(m_segmentsMutex);
+    return m_generation;
 }
 
 SharedMemorySegmentInfo SharedMemoryService::showStateOf(
         const std::shared_ptr<SharedMemorySegment> &segment) const {
+    std::lock_guard<std::mutex> lock(m_segmentsMutex);
     auto found = m_segments.find(segment->getName());
     if (found == m_segments.end()) {
         throw ShmSegmentNotFound(segment->getName());
@@ -77,6 +114,7 @@ SharedMemoryService::create(
 SharedMemoryService::ShmString SharedMemoryService::constructString(
         const std::shared_ptr<SharedMemorySegment> &segment,
         const std::string &name) {
+    std::lock_guard<std::mutex> lock(m_segmentsMutex);
     try {
         auto &segmentCopy = m_segments.at(segment->getName());
         charAllocator charallocator(
@@ -101,20 +139,57 @@ void SharedMemoryService::onInitialize() {
 }
 
 void SharedMemoryService::onCheck() {
-    // check all segments if max size is reached
-    for (const auto &[name, mappedFile]: m_segments) {
-        const std::shared_ptr<SharedMemorySegment> &sharedMemorySegment =
-                mappedFile.m_sharedMemorySegment;
-        if (!sharedMemorySegment->isAutoExtend()) {
+    if (!m_autoExtend->getValue()) {
+        return;
+    }
+    std::vector<std::shared_ptr<SharedMemorySegment>> segments;
+    {
+        std::lock_guard<std::mutex> lock(m_segmentsMutex);
+        segments.reserve(m_segments.size());
+        for (const auto &entry : m_segments) {
+            segments.push_back(entry.second.m_sharedMemorySegment);
+        }
+    }
+    for (const auto &segment : segments) {
+        if (!segment->isAutoExtend()) {
             continue;
         }
-        const auto freeMemory = mappedFile.m_managedMappedFile->get_free_memory();
+        std::size_t freeMemory = 0;
+        std::size_t currentSize = 0;
+        try {
+            std::lock_guard<std::mutex> lock(m_segmentsMutex);
+            auto found = m_segments.find(segment->getName());
+            if (found == m_segments.end()) {
+                continue;
+            }
+            freeMemory = found->second.m_managedMappedFile->get_free_memory();
+            currentSize = found->second.m_managedMappedFile->get_size();
+        } catch (const std::exception &exception) {
+            LOG_ERROR("{}: reading state failed: {}", segment->getName(),
+                      exception.what());
+            continue;
+        }
         if (freeMemory < m_autoExtendEpsilon->getValue()) {
-            const uint64_t currentSize = mappedFile.m_managedMappedFile->get_size();
-            growOf(sharedMemorySegment, sharedMemorySegment->getAutoExtendSize());
-            LOG_INFO("{}: extend current {}/{} -> increase by {}", name,
-                     currentSize - freeMemory, currentSize,
-                     sharedMemorySegment->getAutoExtendSize());
+            const auto maxSize = segment->getMaxSize();
+            const auto autoExtendSize = segment->getAutoExtendSize();
+            if (maxSize != 0 && currentSize >= maxSize) {
+                LOG_WARN("{}: segment reached its maximum size {}/{}",
+                         segment->getName(), currentSize, maxSize);
+                continue;
+            }
+            std::size_t grow = autoExtendSize;
+            if (maxSize != 0 && currentSize + autoExtendSize > maxSize) {
+                grow = maxSize - currentSize;
+            }
+            try {
+                growOf(segment, grow);
+                LOG_INFO("{}: extend current {}/{} -> increase by {}",
+                         segment->getName(), currentSize - freeMemory,
+                         currentSize, grow);
+            } catch (const std::exception &exception) {
+                LOG_ERROR("{}: auto extend failed: {}", segment->getName(),
+                          exception.what());
+            }
         }
     }
 }

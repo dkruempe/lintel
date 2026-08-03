@@ -81,38 +81,53 @@ void StartupBuilder::start() {
     sigaddset(&signalSet, SIGCHLD);
     sigaddset(&signalSet, SIGTERM);
     pthread_sigmask(SIG_BLOCK, &signalSet, nullptr);
-    m_signalThread = std::thread(&StartupBuilder::signalThreadLoop, this);
-    // IV start IOC Container build
-    m_container = builder.build();
-    // IV boostrap plugins trigger initialization
-    if (m_bootStrapServiceActive) {
-        std::shared_ptr<BootstrapService> bootstrapService =
-                m_container->resolve<BootstrapService>();
-        bootstrapService->onStart();
+    try {
+        // IV start IOC Container build
+        m_container = builder.build();
+        // IV boostrap plugins trigger initialization
+        if (m_bootStrapServiceActive) {
+            std::shared_ptr<BootstrapService> bootstrapService =
+                    m_container->resolve<BootstrapService>();
+            bootstrapService->onStart();
+        }
+        // V set AbstractService for shutdown event (before the signal thread
+        // starts, so onShutdown never reads the vector unsynchronized)
+        m_abstractServices = m_container->resolveAll<AbstractServiceInterface>();
+        m_signalThread = std::thread(&StartupBuilder::signalThreadLoop, this);
+        // VI start services
+        for (auto &&feature: m_featureVec) {
+            feature->initialize(m_container);
+        }
+        std::shared_ptr<ProcessArgumentService> processArgumentService =
+                m_container->resolve<ProcessArgumentService>();
+        processArgumentService->parseArguments(m_arguments);
+        // VII awake all from persistence
+        std::shared_ptr<PersistableService> persistableService =
+                m_container->resolve<PersistableService>();
+        persistableService->awake();
+        // VIII initialize services
+        std::shared_ptr<InitializeService> initializeService =
+                m_container->resolve<InitializeService>();
+        initializeService->onInitialize();
+        LOG_INFO("{} finished initialization", m_name->getProcessName());
+        // IX wait for signal to shutdown
+        std::unique_lock<std::mutex> lock(mutex);
+        m_conditionVariable.wait(lock, [&]() -> bool { return m_stop; });
+        if (m_signalThread.joinable()) {
+            m_signalThread.join();
+        }
+    } catch (...) {
+        // never leave the signal thread joinable (std::terminate in the
+        // destructor) and restore the signal mask so the process can still
+        // be stopped if the startup failed before the thread was created
+        m_stop.store(true);
+        m_conditionVariable.notify_all();
+        if (m_signalThread.joinable()) {
+            m_signalThread.join();
+        }
+        pthread_sigmask(SIG_UNBLOCK, &signalSet, nullptr);
+        throw;
     }
-    // V set AbstractService for shutdown event
-    m_abstractServices = m_container->resolveAll<AbstractServiceInterface>();
-    // VI start services
-    for (auto &&feature: m_featureVec) {
-        feature->initialize(m_container);
-    }
-    std::shared_ptr<ProcessArgumentService> processArgumentService =
-            m_container->resolve<ProcessArgumentService>();
-    processArgumentService->parseArguments(m_arguments);
-    // VII awake all from persistence
-    std::shared_ptr<PersistableService> persistableService =
-            m_container->resolve<PersistableService>();
-    persistableService->awake();
-    // VIII initialize services
-    std::shared_ptr<InitializeService> initializeService =
-            m_container->resolve<InitializeService>();
-    initializeService->onInitialize();
-    LOG_INFO("{} finished initialization", m_name->getProcessName());
-    // IX wait for signal to shutdown
-    std::unique_lock<std::mutex> lock(mutex);
-    m_conditionVariable.wait(lock, [&]() -> bool { return m_stop; });
-    if (m_signalThread.joinable())
-        m_signalThread.join();
 }
 
 void StartupBuilder::signalThreadLoop() {

@@ -36,7 +36,7 @@ void SharedMemoryBootstrapPlugin::onStart() {
                  sharedMemoryRepository});
     }
     db::Connection const connection(m_connectionEntry);
-    db::Transaction const transaction(connection);
+    db::Transaction transaction(connection);
     db::Statement statement(connection);
     auto result = statement.execute(R"(
   select uuid,
@@ -105,4 +105,5 @@ void SharedMemoryBootstrapPlugin::onStart() {
                               builder);
         }
     }
+    transaction.commit();
 }

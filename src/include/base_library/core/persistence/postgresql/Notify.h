@@ -1,6 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_POSTGRESQL_NOTIFY_H
 #define CPP_BASE_LIBRARY_POSTGRESQL_NOTIFY_H
 
+#include <libpq-fe.h>
+
 #include <sys/select.h>
 
 #include <atomic>
@@ -13,12 +15,16 @@
 namespace postgresql {
     /**
      * Listens for PostgreSQL NOTIFY events on a dedicated thread.
+     *
+     * Uses its own libpq connection (libpq is not thread-safe), so the
+     * passed-in Connection is only used to derive the connection parameters.
      */
     class Notify {
     private:
         const int32_t m_timeoutSeconds = 1;
         std::atomic<bool> m_shutdown = false;
         Connection &m_connection;
+        PGconn *m_conn = nullptr;
         std::thread m_thread;
 
         std::string m_tableName;

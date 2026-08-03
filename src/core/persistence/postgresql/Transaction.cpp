@@ -1,5 +1,7 @@
 #include "base_library/core/persistence/postgresql/Transaction.h"
 
+#include "base_library/core/persistence/Identifier.h"
+
 namespace postgresql {
     void Transaction::checkState(const std::shared_ptr<Result> &result) {
         if (!result->isState(PGRES_COMMAND_OK)) {
@@ -37,7 +39,7 @@ namespace postgresql {
         if (m_finished) {
             throw db::SQLException("Transaction is finished and not available anymore");
         }
-        m_connection.execute("SAVEPOINT " + savepoint);  // saves current state of transaction
+        m_connection.execute("SAVEPOINT " + db::quoteIdentifier(savepoint));  // saves current state of transaction
     }
 
     void Transaction::rollback() {
@@ -53,13 +55,14 @@ namespace postgresql {
         if (m_finished) {
             throw db::SQLException("Transaction is finished and not available anymore");
         }
-        m_connection.execute("ROLLBACK TO " + savepoint);
+        m_connection.execute("ROLLBACK TO " + db::quoteIdentifier(savepoint));
     }
 
     Transaction::~Transaction() {
         if (m_finished) {
             return;
         }
-        static_cast<void>(m_connection.execute("END"));
+        // roll back on exception unwinding, never commit partial work
+        static_cast<void>(m_connection.execute("ROLLBACK"));
     }
 }  // namespace postgresql

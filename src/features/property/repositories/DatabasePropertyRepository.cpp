@@ -77,6 +77,7 @@ void DatabasePropertyRepository::save(
                     .add(item->toString());
             preparedStatement.execute(builder);
         }
+        transaction.commit();
     } catch (db::SQLException &exception) {
         LOG_ERROR("failed to update property {}", exception.what());
     }
@@ -150,6 +151,7 @@ void DatabasePropertyRepository::deleteOf(
             builder.add(property->getName());
             stmt.execute(builder);
         }
+        transaction.commit();
     } catch (db::SQLException &exception) {
         LOG_ERROR("delete failed: {}", exception.what());
     }

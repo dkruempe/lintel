@@ -20,7 +20,7 @@ MessageQueueRepository::MessageQueueRepository(
 void MessageQueueRepository::insertOf(const std::vector<MessageQueueEntry> &entries)
 {
   const db::Connection connection(m_connectionEntry);
-  const db::Transaction transaction(connection);
+  db::Transaction transaction(connection);
   db::PreparedStatement preparedStatement(connection,
     "insert into message_queues (name, process_name, max_messages) values (?, ?, ?)",
     "insert_message_queues");
@@ -31,12 +31,13 @@ void MessageQueueRepository::insertOf(const std::vector<MessageQueueEntry> &entr
     builder.add(item.get_max_messages());
     preparedStatement.execute(builder);
   }
+  transaction.commit();
 }
 
 void MessageQueueRepository::deleteOf(const std::vector<MessageQueueEntry> &entries)
 {
   const db::Connection connection(m_connectionEntry);
-  const db::Transaction transaction(connection);
+  db::Transaction transaction(connection);
   db::PreparedStatement preparedStatement(connection,
     "delete from message_queues where name = ?",
     "delte_message_queues");
@@ -45,6 +46,7 @@ void MessageQueueRepository::deleteOf(const std::vector<MessageQueueEntry> &entr
     builder.add(item.get_message_queue_name());
     preparedStatement.execute(builder);
   }
+  transaction.commit();
 }
 
 std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &processName,
@@ -75,8 +77,8 @@ std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &
   db::PreparedStatement preparedStatement(connection, stmt, "message_queue_all_select");
   std::vector<MessageQueueEntry> entries;
   db::ParameterBuilder builder(m_connectionEntry);
-  builder.add(processName);
   builder.add(messageQueueName);
+  builder.add(processName);
   auto result = preparedStatement.execute(builder);
   for (const auto &iter : result) {
     auto messageQueueEntry = MessageQueueEntry("",
@@ -117,19 +119,19 @@ MessageQueueEntry MessageQueueRepository::allMessageQueueNameOf(const std::strin
   switch (m_connectionEntry->getType()) {
   case db::ConnectionType::SQLite:
     stmt = R"(select name,
-                             process_name,
-                             max_messages
-                      from message_queues
-                      where name REGEXP ?
-                      fetch first row only)";
+                     process_name,
+                     max_messages
+              from message_queues
+              where name REGEXP ?
+              limit 1)";
     break;
   case db::ConnectionType::PostgreSQL:
     stmt = R"(select name,
-                             process_name,
-                             max_messages
-                      from message_queues
-                      where name ~* ?
-                      fetch first row only)";
+                     process_name,
+                     max_messages
+              from message_queues
+              where name ~* ?
+              limit 1)";
     break;
   default:
     throw db::SQLException("DatabaseType currently not supported");
@@ -139,9 +141,13 @@ MessageQueueEntry MessageQueueRepository::allMessageQueueNameOf(const std::strin
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(name);
   auto result = preparedStatement.execute(builder);
+  if (result.getSize() <= 0) {
+    throw db::SQLException("message queue with name pattern '" + name +
+                           "' not found");
+  }
   MessageQueueEntry messageQueueEntry("",
     result.of(0).of(1).getValue<std::string>(),
-    result.of(0).of(1).getValue<std::string>(),
+    result.of(0).of(0).getValue<std::string>(),
     result.of(0).of(2).getValue<int32_t>());
   return messageQueueEntry;
 }

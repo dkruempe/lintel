@@ -88,13 +88,21 @@ Server::Server(const ServerConfiguration &serverConfiguration,
                std::vector<std::shared_ptr<Controller>> controller)
         : m_controller(std::move(controller)),
           m_sslServer(initSslServer(m_controller, serverConfiguration)),
-          m_server(initServer(m_controller, serverConfiguration, m_sslServer)),
-          m_thread([serverConfiguration, this]() {
-              if (m_sslServer != nullptr) {
-                  m_sslServer->listen(serverConfiguration.getHost().c_str(),
-                                      serverConfiguration.getPort());
-              } else {
-                  m_server->listen(serverConfiguration.getHost().c_str(),
-                                   serverConfiguration.getPort());
-              }
-          }) {}
+          m_server(initServer(m_controller, serverConfiguration, m_sslServer)) {
+    const std::string host = serverConfiguration.getHost();
+    const int port = serverConfiguration.getPort();
+    const bool bound = m_sslServer != nullptr
+                               ? m_sslServer->bind_to_port(host, port)
+                               : m_server->bind_to_port(host, port);
+    if (!bound) {
+        throw std::runtime_error("HTTP server: failed to bind to " + host +
+                                 ":" + std::to_string(port));
+    }
+    m_thread = std::thread([this]() {
+        if (m_sslServer != nullptr) {
+            m_sslServer->listen_after_bind();
+        } else {
+            m_server->listen_after_bind();
+        }
+    });
+}

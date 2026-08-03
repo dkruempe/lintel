@@ -1,5 +1,7 @@
 #include "base_library/core/persistence/sqlite3/Transaction.h"
 
+#include "base_library/core/persistence/Identifier.h"
+
 namespace sqlite {
     Transaction::Transaction(const Connection &tempConnection)
             : m_connection(tempConnection) {
@@ -37,15 +39,16 @@ namespace sqlite {
         if (m_finished) {
             return;
         }
-        auto result = m_connection.execute("END");
+        // roll back on exception unwinding, never commit partial work
+        auto result = m_connection.execute("ROLLBACK");
     }
 
     void Transaction::save(const std::string &savepoint) const {
         isFinished();
-        auto result = m_connection.execute("SAVEPOINT " + savepoint);
+        auto result = m_connection.execute("SAVEPOINT " + db::quoteIdentifier(savepoint));
     }
 
     void Transaction::rollbackTo(const std::string &savepoint) const {
-        auto result = m_connection.execute("ROLLBACK TO " + savepoint);
+        auto result = m_connection.execute("ROLLBACK TO " + db::quoteIdentifier(savepoint));
     }
 }  // namespace sqlite

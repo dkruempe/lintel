@@ -2,7 +2,30 @@
 
 #include <fmt/format.h>
 
+#include <limits>
+
 #include "base_library/core/utils/StringUtils.h"
+
+namespace {
+/** Parses a numeric prefix and validates it, optionally scaling it by a multiplier. */
+std::size_t parseAndScale(const std::string &input, const std::string &prefix,
+                          std::size_t multiplier) {
+    std::size_t pos = 0;
+    unsigned long value = 0;
+    try {
+        value = std::stoul(prefix, &pos);
+    } catch (const std::exception &) {
+        throw std::invalid_argument("invalid memory size: '" + input + "'");
+    }
+    if (pos != prefix.size()) {
+        throw std::invalid_argument("invalid memory size: '" + input + "'");
+    }
+    if (value > (std::numeric_limits<std::size_t>::max() / multiplier)) {
+        throw std::invalid_argument("memory size overflow: '" + input + "'");
+    }
+    return static_cast<std::size_t>(value) * multiplier;
+}
+}  // namespace
 
 std::size_t MemorySize::deserialize(const std::string &size) {
     bool isByte = StringUtils::endsWith(size, "B");
@@ -12,24 +35,24 @@ std::size_t MemorySize::deserialize(const std::string &size) {
     bool isTeraByte = StringUtils::endsWith(size, "TB");
     bool isPetaByte = StringUtils::endsWith(size, "PB");
     if (isKiloByte) {
-        return std::stoul(size.substr(0, size.length() - 2)) * 1000;
+        return parseAndScale(size, size.substr(0, size.length() - 2), 1000);
     }
     if (isMegaByte) {
-        return std::stoul(size.substr(0, size.length() - 2)) * 1000000;
+        return parseAndScale(size, size.substr(0, size.length() - 2), 1000000);
     }
     if (isGigaByte) {
-        return std::stoul(size.substr(0, size.length() - 2)) * 1000000000;
+        return parseAndScale(size, size.substr(0, size.length() - 2), 1000000000);
     }
     if (isTeraByte) {
-        return std::stoul(size.substr(0, size.length() - 2)) * 1000000000000;
+        return parseAndScale(size, size.substr(0, size.length() - 2), 1000000000000);
     }
     if (isPetaByte) {
-        return std::stoul(size.substr(0, size.length() - 2)) * 1000000000000000;
+        return parseAndScale(size, size.substr(0, size.length() - 2), 1000000000000000);
     }
     if (isByte) {
-        return std::stoul(size.substr(0, size.length() - 1));
+        return parseAndScale(size, size.substr(0, size.length() - 1), 1);
     }
-    return std::stoul(size);
+    return parseAndScale(size, size, 1);
 }
 
 std::string MemorySize::serialize(std::size_t byte) {

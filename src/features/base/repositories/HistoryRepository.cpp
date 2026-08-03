@@ -219,7 +219,7 @@ std::vector<HistoryEntry> HistoryRepository::allOfService(
 void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) const {
     try {
         db::Connection const connection(m_connectionEntry);
-        db::Transaction const transaction(connection);
+        db::Transaction transaction(connection);
         db::PreparedStatement preparedStatement(connection, R"(
     insert into history (
     process_name,
@@ -240,6 +240,7 @@ void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) const
             builder.add(entry.getCreatedTimestamp());
             preparedStatement.execute(builder);
         }
+        transaction.commit();
     } catch (db::SQLException &exception) {
         LOG_ERROR("insert failed: {}", exception.what());
     }
@@ -248,7 +249,7 @@ void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) const
 void HistoryRepository::cleanAllOlderThan(
         date::sys_time<std::chrono::microseconds> timestamp) const {
     const db::Connection connection(m_connectionEntry);
-    const db::Transaction transaction(connection);
+    db::Transaction transaction(connection);
     db::PreparedStatement preparedStatement(connection, R"(
     delete from history
     where created_timestamp < ?
@@ -257,4 +258,5 @@ void HistoryRepository::cleanAllOlderThan(
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(timestamp);
     preparedStatement.execute(builder);
+    transaction.commit();
 }

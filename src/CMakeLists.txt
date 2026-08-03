@@ -68,6 +68,7 @@ set(headers
     include/base_library/core/persistence/Connection.h
     include/base_library/core/persistence/ConnectionType.h
     include/base_library/core/persistence/DatabaseConnectionConfigurations.h
+    include/base_library/core/persistence/Identifier.h
     include/base_library/core/persistence/Notify.h
     include/base_library/core/persistence/Parameter.h
     include/base_library/core/persistence/ParameterBuilder.h

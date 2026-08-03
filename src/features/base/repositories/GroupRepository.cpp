@@ -182,7 +182,7 @@ void GroupRepository::deleteOf(const Group &group) {
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(group.getGroupName());
     db::Result result = statement.execute(
-            "select user_name, group_name from public.user_groups_relation where "
+            "select user_name, group_name from user_groups_relation where "
             "group_name = ?",
             builder);
     if (result.getSize() > 0) {
@@ -190,6 +190,13 @@ void GroupRepository::deleteOf(const Group &group) {
                 "cannot remove group which is in usage of an user");
     }
     statement.execute("delete from groups where name = ?", builder);
+    m_groupMap.erase(group.getGroupName());
+    m_groups.erase(
+            std::remove_if(m_groups.begin(), m_groups.end(),
+                           [&](const Group &g) {
+                               return g.getGroupName() == group.getGroupName();
+                           }),
+            m_groups.end());
 }
 
 void GroupRepository::addGroupOf(const Group &group, const Group &add) {
@@ -216,6 +223,16 @@ void GroupRepository::addGroupOf(const Group &group, const Group &add) {
     insert into group_groups_relation(group_name, base_group_name) values(?,?)
   )",
                                           builder);
+    std::vector<Group> members = group.getGroups();
+    members.push_back(add);
+    Group updatedGroup(group.getGroupName(), members, group.isVirtual());
+    m_groupMap.insert_or_assign(group.getGroupName(), updatedGroup);
+    std::replace_if(
+            m_groups.begin(), m_groups.end(),
+            [&](const Group &g) {
+                return g.getGroupName() == updatedGroup.getGroupName();
+            },
+            updatedGroup);
 }
 
 void GroupRepository::removeGroupOf(const Group &group, const Group &remove) {
@@ -232,9 +249,23 @@ void GroupRepository::removeGroupOf(const Group &group, const Group &remove) {
     builder.add(group.getGroupName()).add(remove.getGroupName());
     db::Result result = statement.execute(
             R"(
-    delete from group_groups_relation(group_name, base_group_name) where group_name = ? and base_group_name = ?
+    delete from group_groups_relation where group_name = ? and base_group_name = ?
       )",
             builder);
+    std::vector<Group> members = group.getGroups();
+    members.erase(std::remove_if(members.begin(), members.end(),
+                                 [&](const Group &g) {
+                                     return g.getGroupName() == remove.getGroupName();
+                                 }),
+                  members.end());
+    Group updatedGroup(group.getGroupName(), members, group.isVirtual());
+    m_groupMap.insert_or_assign(group.getGroupName(), updatedGroup);
+    std::replace_if(
+            m_groups.begin(), m_groups.end(),
+            [&](const Group &g) {
+                return g.getGroupName() == updatedGroup.getGroupName();
+            },
+            updatedGroup);
 }
 
 void GroupRepository::onAwake() { initGroups(); }

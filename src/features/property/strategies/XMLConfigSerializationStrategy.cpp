@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "base_library/core/services/FileService.h"
+#include "base_library/core/services/LoggerService.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
 
 #define CONFIG_ROOT "Properties"
@@ -71,22 +72,28 @@ XMLConfigSerializationStrategy::deserialize(const std::string &fileName,
         if (std::string(propertyElement->Name()) != PROPERTY_ROOT) {
             continue;
         }
-        std::string processName =
-                std::string(propertyElement->Attribute(PROCESS_ROOT));
-        std::string className = std::string(propertyElement->Attribute(CLASS_ROOT));
-        std::string instanceName =
-                std::string(propertyElement->Attribute(INSTANCE_ROOT));
-        std::string propertyName =
-                std::string(propertyElement->Attribute(ELEMENT_NAME));
-        std::string propertyType =
-                std::string(propertyElement->Attribute(PROPERTY_TYPE));
-        std::string propertyValue =
-                std::string(propertyElement->Attribute(PROPERTY_VALUE));
+        // Attribute() returns nullptr for missing attributes; never hand that
+        // to std::string (UB)
+        auto attribute = [propertyElement](const char *name) -> std::string {
+            const char *value = propertyElement->Attribute(name);
+            return value == nullptr ? std::string() : std::string(value);
+        };
+        std::string processName = attribute(PROCESS_ROOT);
+        std::string className = attribute(CLASS_ROOT);
+        std::string instanceName = attribute(INSTANCE_ROOT);
+        std::string propertyName = attribute(ELEMENT_NAME);
+        std::string propertyType = attribute(PROPERTY_TYPE);
+        std::string propertyValue = attribute(PROPERTY_VALUE);
         // default no description and runtime change not allowed => default set is
         // overwritten later via orignal properties
         auto property = PropertyFactory::Create(
                 propertyName, instanceName, className, processName, propertyType,
                 propertyValue, "", false);
+        if (property == nullptr) {
+            LOG_ERROR("XML property '{}' has unknown type '{}' and is skipped",
+                      propertyName, propertyType);
+            continue;
+        }
         property->setDataStorage(DataStorage(
                 PropertyRepositoryType::FILE_REPOSITORY,
                 fileName + ":" + std::to_string(propertyElement->GetLineNum())));

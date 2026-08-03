@@ -9,6 +9,7 @@
 #include <filesystem>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <ostream>
 #include <set>
 #include <utility>
@@ -34,6 +35,8 @@ private:
     };
     // variables
     std::map<std::string, MappedFile> m_segments;
+    mutable std::mutex m_segmentsMutex;
+    std::size_t m_generation = 0;
     std::shared_ptr<SchedulerService> m_schedulerService;
     // properties
     std::shared_ptr<Property<std::chrono::seconds>> m_scheduleRate;
@@ -67,6 +70,11 @@ public:
     /** Initialize all shared memory segments by opening or creating them. */
     void onInitialize() override;
 
+    /** Generation counter incremented on every grow/shrink. Repositories use it
+     * to detect that a segment was remapped and re-fetch their references.
+     * @return the current generation */
+    [[nodiscard]] std::size_t getGeneration() const;
+
     /** grows the size of the mentioned shared memory block */
     void growOf(const std::shared_ptr<SharedMemorySegment> &segment,
                 std::size_t grow) override;
@@ -93,6 +101,7 @@ public:
     std::array<Object, Size> &constructArray(
             const std::shared_ptr<SharedMemorySegment> &segment,
             const std::string &name) {
+        std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
             return *(
@@ -121,6 +130,7 @@ public:
         using pairType = std::pair<const Key, Value>;
         using persistentMapAllocator = boost::interprocess::allocator<
                 pairType, boost::interprocess::managed_mapped_file::segment_manager>;
+        std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
             persistentMapAllocator allocator(
@@ -156,6 +166,7 @@ public:
                      const std::string &name) {
         using persistentVectorAllocator = boost::interprocess::allocator<
                 Object, boost::interprocess::managed_mapped_file::segment_manager>;
+        std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
             persistentVectorAllocator allocator(
@@ -177,6 +188,7 @@ public:
     template<class Object>
     Object &constructObject(const std::shared_ptr<SharedMemorySegment> &segment,
                             const std::string &name) {
+        std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
             return *(segmentCopy.m_managedMappedFile->find_or_construct<Object>(

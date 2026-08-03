@@ -7,6 +7,8 @@
 
 #include <string>
 
+#include "base_library/features/http/service/HttpBadRequestException.h"
+
 /**
  * Class for serialization and deserialization of Json Types
  */
@@ -51,6 +53,9 @@ public:
     virtual void deserialize(const std::string &json) {
         rapidjson::Document document;
         document.Parse(json.c_str());
+        if (document.HasParseError() || !(document.IsObject() || document.IsArray())) {
+            throw HttpBadRequestException();
+        }
         deserialize(document);
     }
 };

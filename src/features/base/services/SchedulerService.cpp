@@ -42,7 +42,13 @@ void SchedulerService::run() {
                 std::push_heap(m_tasks.begin(), m_tasks.end(), TaskComperator());
             }
         }
-        funcTask();
+        try {
+            funcTask();
+        } catch (const std::exception &exception) {
+            LOG_ERROR("scheduled task failed: {}", exception.what());
+        } catch (...) {
+            LOG_ERROR("scheduled task failed with unknown exception");
+        }
     }
 }
 

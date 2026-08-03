@@ -20,7 +20,7 @@
 
 // initialization of static variables
 std::unique_ptr<LoggerService> LoggerService::m_instance = nullptr;
-std::once_flag LoggerService::m_initInstanceFlag;
+std::mutex LoggerService::m_instanceMutex;
 
 LoggerService::LoggerService()
         : m_processName(nullptr),
@@ -217,14 +217,17 @@ LoggerService::~LoggerService() = default;
 LoggerService &LoggerService::getOrCreate(
         const std::shared_ptr<ProcessName> &processInfo,
         const std::shared_ptr<Configuration> &configuration) {
-    std::call_once(m_initInstanceFlag, &LoggerService::initSingleton, processInfo,
-                   configuration);
-    return get();
+    std::lock_guard<std::mutex> lock(m_instanceMutex);
+    // replace a default instance that may have been created by an early
+    // LOG_* call before DECLARE_LOGGER, so the configured logger wins
+    m_instance = std::make_unique<LoggerService>(processInfo, configuration);
+    return *m_instance;
 }
 
 LoggerService &LoggerService::get() {
+    std::lock_guard<std::mutex> lock(m_instanceMutex);
     if (m_instance == nullptr) {
-        std::call_once(m_initInstanceFlag, &LoggerService::initSingleton2);
+        m_instance = std::make_unique<LoggerService>();
     }
     return *m_instance;
 }

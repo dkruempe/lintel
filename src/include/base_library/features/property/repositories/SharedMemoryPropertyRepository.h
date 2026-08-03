@@ -17,7 +17,7 @@ struct PropertyDataDto {
     SharedMemoryService::ShmString m_type;
 
     static int32_t getSize() {
-        return sizeof(SharedMemoryService::ShmString) * 4;
+        return sizeof(SharedMemoryService::ShmString) * 6;
     }
 
     bool operator<(const PropertyDataDto &rhs) const;

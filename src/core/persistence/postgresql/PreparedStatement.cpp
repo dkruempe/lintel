@@ -46,6 +46,13 @@ namespace postgresql {
                                    "' closed");
         }
 
+        if (static_cast<int32_t>(params.size()) != m_nParams) {
+            throw db::SQLException("Prepared Statement '" + m_statementName +
+                                   "' expects " + std::to_string(m_nParams) +
+                                   " parameters but got " +
+                                   std::to_string(params.size()));
+        }
+
         std::shared_ptr<Result> result = m_connection.executePreparedStatement(
                 m_statementName, m_statement, m_nParams, db::Parameters(params));
         if (!result->isState(PGRES_TUPLES_OK) && !result->isState(PGRES_COMMAND_OK)) {

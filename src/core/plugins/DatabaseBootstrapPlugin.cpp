@@ -146,6 +146,7 @@ void DatabaseBootstrapPlugin::executeInitFile(
         db::Statement statement(connection);
         statement.execute(token);
     }
+    transaction.commit();
 }
 
 void DatabaseBootstrapPlugin::initDatabase(

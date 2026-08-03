@@ -40,6 +40,9 @@ namespace sqlite {
         explicit Notify(Connection &connection,
                         std::function<void()> functionCallBack,
                         std::string tableName);
+
+        /** Destructor, removes the update hook from the connection. */
+        ~Notify();
     };
 }  // namespace sqlite
 

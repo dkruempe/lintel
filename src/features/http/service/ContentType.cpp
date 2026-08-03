@@ -1,5 +1,8 @@
 #include "base_library/features/http/service/ContentType.h"
 
+#include <cctype>
+#include <string_view>
+
 // NOLINTNEXTLINE(cert-err58-cpp)
 std::map<ContentType::Value, std::string> ContentType::m_valueToName = {
         {ContentType::UNDEFINED,
@@ -89,7 +92,20 @@ ContentType::Value ContentType::build(const std::string &contentType) {
     if (contentType.empty()) {
         return UNDEFINED;
     }
-    auto found = m_nameToValue.find(contentType);
+    // strip parameters like "; charset=utf-8" and surrounding whitespace
+    const std::size_t parameterPos = contentType.find(';');
+    std::string_view mediaType(
+            contentType.data(),
+            parameterPos == std::string::npos ? contentType.size() : parameterPos);
+    while (!mediaType.empty() &&
+           std::isspace(static_cast<unsigned char>(mediaType.front()))) {
+        mediaType.remove_prefix(1);
+    }
+    while (!mediaType.empty() &&
+           std::isspace(static_cast<unsigned char>(mediaType.back()))) {
+        mediaType.remove_suffix(1);
+    }
+    auto found = m_nameToValue.find(mediaType);
     if (found == m_nameToValue.end()) {
         return UNDEFINED;
     }

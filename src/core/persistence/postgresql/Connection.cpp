@@ -42,17 +42,8 @@ namespace postgresql {
         return PQerrorMessage(m_conn);
     }
 
-    Connection::Connection(const std::string &connectionInfo)
-            : m_conn(PQconnectdb(connectionInfo.c_str())) {
-        if (PQstatus(m_conn) != CONNECTION_OK) {
-            throw db::SQLException("Connection to database failed: " +
-                                   getErrorMessage());
-        }
-    }
-
-    Connection::Connection(
-            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
-            : m_conn(nullptr) {
+    [[nodiscard]] std::string Connection::buildConnInfo(
+            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry) {
         std::string connInfo;
         if (!connectionEntry->getUserName().empty()) {
             connInfo += "user=";
@@ -78,10 +69,34 @@ namespace postgresql {
             connInfo += "port=";
             connInfo += std::to_string(connectionEntry->getPort());
         }
-        m_conn = PQconnectdb(connInfo.c_str());
+        return connInfo;
+    }
+
+    Connection::Connection(const std::string &connectionInfo)
+            : m_conn(PQconnectdb(connectionInfo.c_str())), m_connInfo(connectionInfo) {
+        if (m_conn == nullptr) {
+            throw db::SQLException("Connection to database failed: PQconnectdb returned null");
+        }
         if (PQstatus(m_conn) != CONNECTION_OK) {
-            throw db::SQLException("Connection to database failed: " +
-                                   getErrorMessage());
+            std::string const msg = getErrorMessage();
+            PQfinish(m_conn);
+            m_conn = nullptr;
+            throw db::SQLException("Connection to database failed: " + msg);
+        }
+    }
+
+    Connection::Connection(
+            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
+            : m_conn(nullptr), m_connInfo(buildConnInfo(connectionEntry)) {
+        m_conn = PQconnectdb(m_connInfo.c_str());
+        if (m_conn == nullptr) {
+            throw db::SQLException("Connection to database failed: PQconnectdb returned null");
+        }
+        if (PQstatus(m_conn) != CONNECTION_OK) {
+            std::string const msg = getErrorMessage();
+            PQfinish(m_conn);
+            m_conn = nullptr;
+            throw db::SQLException("Connection to database failed: " + msg);
         }
     }
 

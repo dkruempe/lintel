@@ -16,6 +16,7 @@
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/ClientIpResolver.h"
 #include "base_library/features/http/service/ContentType.h"
+#include "base_library/features/http/service/HttpBadRequestException.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 
 
@@ -28,8 +29,11 @@
           pattern,                                                            \
           [&](const httplib::Request &request, httplib::Response &response) { \
             std::string auth = request.get_header_value("Authorization");     \
-            const std::string contentTypeString =                             \
+            std::string contentTypeString =                                   \
                 request.get_header_value("Content-Type");                     \
+            if (contentTypeString.empty() && httpType == Get) {               \
+              contentTypeString = "application/json";                         \
+            }                                                                 \
             ContentType contentType(contentTypeString);                       \
             std::optional<UserToken> user = std::nullopt;                     \
             try {                                                             \
@@ -40,6 +44,10 @@
                 user = m_authService->onAccessOf(userTokenLogin);               \
               }                                                                 \
               name##httpType(request, response, contentType, user);           \
+            } catch (const HttpBadRequestException &e) {                      \
+              LOG_ERROR("{}: {}", #name, e.what());                           \
+              response.status = HttpStatusCodes::BadRequest;                  \
+              response.set_content("bad request", "text/plain");              \
             } catch (const std::exception &e) {                               \
               LOG_ERROR("{}: {}", #name, e.what());                           \
               response.status = HttpStatusCodes::InternalServerError;         \

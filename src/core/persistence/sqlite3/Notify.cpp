@@ -14,6 +14,12 @@ namespace sqlite {
 
     void Notify::notify() { m_functionCallBack(); }
 
+    Notify::~Notify() {
+        if (m_connection.m_db != nullptr) {
+            sqlite3_update_hook(m_connection.m_db, nullptr, nullptr);
+        }
+    }
+
     void Notify::callBack(void *arg, int operation, const char *thread,
                           const char *tableName, sqlite3_int64 changes) {
         auto *notify = static_cast<Notify *>(arg);

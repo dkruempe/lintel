@@ -54,7 +54,7 @@ std::vector<UserNameDto> UserNamesDto::init(
   userNames.reserve(users.size());
   std::transform(users.begin(),
     users.end(),
-    userNames.begin(),
+    std::back_inserter(userNames),
     [](const std::string &user) -> UserNameDto { return UserNameDto(user); });
   return userNames;
 }

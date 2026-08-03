@@ -46,8 +46,9 @@ namespace db {
             }
 
             Iterator operator++(int) {
+                Iterator tmp = *this;
                 ++m_pos;
-                return *this;
+                return tmp;
             }
 
             bool operator==(Iterator other) const { return m_pos == other.m_pos; }
@@ -84,8 +85,9 @@ namespace db {
             }
 
             ConstIterator operator++(int) {
+                ConstIterator tmp = *this;
                 ++m_pos;
-                return *this;
+                return tmp;
             }
 
             bool operator==(ConstIterator other) const { return m_pos == other.m_pos; }

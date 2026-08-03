@@ -102,5 +102,6 @@ void VirtualGroupBootstrapPlugin::onStart() {
             }
         }
     }
+    transaction.commit();
     LOG_INFO("start");
 }
