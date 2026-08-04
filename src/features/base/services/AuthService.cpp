@@ -59,7 +59,7 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin) {
     const std::string ipAddress = ip.to_string();
     // IIb brute-force protection: reject locked-out IPs
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
         if (isLockedOut(ipAddress)) {
             LOG_WARN("{}: login attempts for {} blocked (lockout)",
                      ipAddress, userLogin.m_userName);
@@ -68,7 +68,7 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin) {
     }
     // IIc sliding-window rate limiting per IP
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard lock(m_mutex);
         if (!allowLoginAttempt(ipAddress)) {
             LOG_WARN("{}: login attempts for {} rate limited",
                      ipAddress, userLogin.m_userName);
@@ -176,9 +176,9 @@ void AuthService::onCheck() {
     date::sys_time<std::chrono::microseconds> now =
             std::chrono::time_point_cast<std::chrono::microseconds>(
                     std::chrono::system_clock::now());
+  {
     std::vector<std::string> toBeRemoved;
-    {
-        std::lock_guard<std::mutex> lock(m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
         for (auto &iter: m_userTokens) {
             if ((now - iter.second.m_lastAccessTimestamps) <
                 m_timeoutLogin->getValue()) {
@@ -194,7 +194,7 @@ void AuthService::onCheck() {
         pruneLoginAttempts();
     }
     if (m_running) {
-        std::weak_ptr<AuthService> weakSelf = shared_from_this();
+        std::weak_ptr weakSelf = shared_from_this();
         m_scheduler->schedule_after(m_scheduleRate->getValue(),
                                     [weakSelf]() {
                                         if (auto self = weakSelf.lock()) {
