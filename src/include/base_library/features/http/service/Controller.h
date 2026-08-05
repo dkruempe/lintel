@@ -10,13 +10,14 @@
 #include <type_traits>
 #include <vector>
 
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/base/provider/GroupProvider.h"
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/ClientIpResolver.h"
 #include "base_library/features/http/service/ContentType.h"
-#include "base_library/features/http/service/HttpBadRequestException.h"
+#include "base_library/core/exceptions/HttpBadRequestException.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
 
 

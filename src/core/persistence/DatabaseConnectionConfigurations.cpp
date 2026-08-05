@@ -3,8 +3,9 @@
 #include <algorithm>
 #include <map>
 
-#include "base_library/core/exceptions/SQLException.h"
-#include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
+#include "base_library/core/configuration/DatabaseConnectionComponent.h"
+
+import base_library.core.exceptions;
 
 DatabaseConnectionConfigurations::DatabaseConnectionConfigurations(
         const std::shared_ptr<Configuration> &configuration)

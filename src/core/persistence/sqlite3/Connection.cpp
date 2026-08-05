@@ -3,9 +3,10 @@
 #include <functional>
 #include <regex>
 
-#include "base_library/core/exceptions/SQLException.h"
-#include "base_library/core/utils/RegexUtils.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/core/configuration/DatabaseConnectionEntry.h"
+import base_library.core.utils;
+
+import base_library.core.exceptions;
 
 namespace {
 

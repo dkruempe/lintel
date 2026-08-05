@@ -1,15 +1,16 @@
 #include "base_library/features/cli/services/CommandLineHistoryService.h"
 #include "base_library/config.h"
-#include "base_library/core/exceptions/FileServiceIsNotFileException.h"
 #include "base_library/core/services/FileService.h"
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/StringUtils.h"
 
 #include "base_library/features/cli/models/CommandHistoryEntry.h"
 #include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <string>
+import base_library.core.utils;
+
+import base_library.core.exceptions;
 
 CommandLineHistoryService::CommandLineHistoryService(const std::shared_ptr<ProcessName> &processName)
   : PropertyRegistration(processName->getProcessName()), m_position(std::nullopt)

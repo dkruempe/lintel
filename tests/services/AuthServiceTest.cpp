@@ -4,11 +4,11 @@
 #include <base_library/core/persistence/Transaction.h>
 #include <base_library/core/utils/Cryption.h>
 #include <base_library/core/utils/TypeName.h>
-#include <base_library/features/base/configuration/Configuration.h>
-#include <base_library/features/base/configuration/DatabaseConnectionComponent.h>
-#include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/base/models/ProcessName.h>
+#include <base_library/core/configuration/Configuration.h>
+#include <base_library/core/configuration/DatabaseConnectionComponent.h>
+#include <base_library/core/configuration/DatabaseConnectionEntry.h>
+#include <base_library/core/configuration/EnvironmentConfiguration.h>
+#include <base_library/core/models/ProcessName.h>
 #include <base_library/features/base/models/User.h>
 #include <base_library/features/base/repositories/GroupRepository.h>
 #include <base_library/features/base/repositories/UserRepository.h>

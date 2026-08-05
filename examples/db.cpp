@@ -1,7 +1,8 @@
-#include "base_library/core/persistence/ConnectionType.h"
+#include "base_library/core/configuration/ConnectionType.h"
 #include <vector>
 #include <memory>
 #include <string>
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/persistence/Connection.h"
 #include "base_library/core/persistence/ParameterBuilder.h"

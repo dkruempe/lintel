@@ -1,7 +1,6 @@
 #include "base_library/features/cli/components/HistoryCliComponent.h"
+import base_library.core.utils;
 
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/core/utils/TableBuilder.h"
 
 HistoryCliComponent::HistoryCliComponent(
         std::shared_ptr<HistoryApi> historyApi) : CommandLineComponent(n_name, m_alias),

@@ -2,7 +2,7 @@
 
 #include <utility>
 
-#include "base_library/core/exceptions/SQLException.h"
+import base_library.core.exceptions;
 
 namespace db {
     std::string Result::getValue(int row, int attribute) const {

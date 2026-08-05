@@ -1,5 +1,5 @@
-#include "base_library/core/utils/UUID.h"
 #include "base_library/features/base/models/HistoryEntry.h"
+import base_library.core.utils;
 
 HistoryEntry::HistoryEntry(
         std::string processName, std::string serviceName, std::string label,

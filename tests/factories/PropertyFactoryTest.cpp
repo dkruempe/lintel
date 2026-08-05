@@ -1,5 +1,5 @@
 #include <base_library/features/property/factories/PropertyFactory.h>
-#include <base_library/features/property/models/Property.h>
+#include <base_library/core/property/Property.h>
 
 #include <catch2/catch_all.hpp>
 

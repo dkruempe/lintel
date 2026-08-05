@@ -3,9 +3,9 @@
 
 #include <memory>
 #include <vector>
-#include <base_library/features/base/configuration/MessageQueueEntry.h>
+#include <base_library/core/configuration/MessageQueueEntry.h>
 #include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
-#include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
+#include <base_library/core/configuration/DatabaseConnectionEntry.h>
 #include <base_library/features/base/repositories/IMessageQueueRepository.h>
 
 /**

@@ -1,4 +1,4 @@
-#include <base_library/features/property/models/Property.h>
+#include <base_library/core/property/Property.h>
 #include <base_library/features/property/strategies/XMLConfigSerializationStrategy.h>
 #include <base_library/features/property/factories/PropertyFactory.h>
 

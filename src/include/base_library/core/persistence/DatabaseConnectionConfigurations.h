@@ -4,8 +4,8 @@
 #include <map>
 #include <vector>
 
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/core/configuration/Configuration.h"
+#include "base_library/core/configuration/DatabaseConnectionEntry.h"
 
 /**
  * Manages database connection configurations loaded from a Configuration object.

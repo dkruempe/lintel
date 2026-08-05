@@ -31,9 +31,10 @@ Verifizierte Ausgangslage (cppreference, 03.08.2026):
 - Macro-lastig (`LOG_*` via spdlog) → Macros überleben keine Modulgrenzen → Global-Module-Fragment pro TU.
 
 Staged (je Meilenstein einzeln committbar, nach Möglichkeit auf Ninja-Tree `-j2`):
-- [ ] Stage A: frischer Ninja-Configure + Build (`-j2`) + ctest 21/21 → Generator-Wechsel validiert.
-- [ ] Stage B: Feasibility-Spike – kleines Modul (`export module` + `import`) via CMake 3.31/GCC 14 bauen; P1689-Scanning + Header-Unit-Import im Ninja-Tree verifizieren.
-- [ ] Stage C: Modul-Umstellung bottom-up (Blatt → Wurzel); Public-Header schrittweise als Modul-Interface; `#include`-Interop über Global-Module-Fragment/Header-Units.
+- [x] **Vorbereitung: Makro-Split** (nicht-modularisierbare `LOG_*`, `DEFINE_HISTORY_ENTRY*`, `DEFINE_PROPERTY`/`LOAD_PROPERTIES` aus Klassen-Headern in eigene Plain-Header ausgelagert): `core/services/LoggerMacros.h`, `features/base/models/HistoryEntryMacros.h`, `features/property/services/PropertyMacros.h` + STL-Aggregator `StdIncludes.h` (für Global-Module-Fragment). Alle Nutzer (Header + cpp + examples + tests) inkludieren die Makro-Header jetzt explizit; Klassen-Header (LoggerService/HistoryEntry/PropertyService) sind makrofrei.
+- [x] **Stage A: Generator-Wechsel validiert** – frischer Ninja-Tree (`build/Release_ninja/build/Release`) mit `ENABLE_UNITY_BUILD=OFF` (Unity ist mit Modulen inkompatibel) + PCH + ccache; `-j2` Build 0 Warnings, ctest 21/21 grün (3,5 s). **Neu entdeckt:** ohne Unity tauchen unter GCC 14 + `-O3` drei bekannte False-Positives auf (inlined `std::string` SSO-Moves, z. B. `DatabaseBootstrapPlugin.cpp:100`): `-Warray-bounds`, `-Wstringop-overflow`, `-Wstringop-overread` → in `cmake/CompilerWarnings.cmake` deaktiviert (Muster wie das bestehende `-Wno-null-dereference`).
+- [x] **Stage B: Feasibility-Spike validiert** – kleines Modul (`export module` + `import`) via CMake 3.31.6/GCC 14 im Ninja-Tree gebaut: P1689-Scanning (`CXX_SCAN`/`dyndep`/`fmodule-mapper`), `-fmodules-ts -fdeps-format=p1689r5` funktionieren end-to-end. Validierte Muster für Stage C: (1) Modul-Interface mit Global-Module-Fragment (`module;` + `#include` von STL/`StdIncludes.h`/Makro-Headern); (2) **Modul-Implementierungs-Unit braucht eigene GMF-Includes** (Interface-GMF wird nicht vererbt); (3) Consumer nutzen `import` + `#include` für Makros (Klartext-Header).
+- [ ] **Stage C**: Modul-Umstellung bottom-up (Blatt → Wurzel); Public-Header schrittweise als Modul-Interface; `#include`-Interop über Global-Module-Fragment (Muster aus Stage B-Spike verifiziert).
 - [ ] Stage D: `import std;` erst wenn Toolchains voll unterstützen (GCC ≥15, libc++ voll) – bis dahin verschoben.
 
 ## Kritische Bugs (Hoch)

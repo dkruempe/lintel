@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/cli/services/CommandLineService.h"
 
 #include <cstdint>
@@ -9,9 +10,9 @@
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/SignalService.h"
-#include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
 #include "base_library/features/cli/utils/CommandLineUtils.h"
+import base_library.core.utils;
 
 CommandLineService::CommandLineService(const std::vector<std::shared_ptr<CommandLineComponent>> &components,
   std::shared_ptr<AuthCliService> authCliService,

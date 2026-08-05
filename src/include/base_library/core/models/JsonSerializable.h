@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "base_library/features/http/service/HttpBadRequestException.h"
+#include "base_library/core/exceptions/HttpBadRequestException.h"
 
 /**
  * Class for serialization and deserialization of Json Types

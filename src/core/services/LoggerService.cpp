@@ -1,7 +1,7 @@
 #include "base_library/core/services/LoggerService.h"
 
 #include <spdlog/sinks/daily_file_sink.h>
-#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/core/configuration/Configuration.h"
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/tcp_sink.h>
@@ -12,11 +12,12 @@
 #include <regex>
 
 #include "base_library/config.h"
-#include "base_library/core/exceptions/LoggerServiceNotInitialized.h"
 #include "base_library/core/services/DirectoryService.h"
 #include "base_library/core/services/FileService.h"
-#include "base_library/features/base/configuration/LoggerComponent.h"
-#include "base_library/features/base/configuration/LoggerEnrty.h"
+#include "base_library/core/configuration/LoggerComponent.h"
+#include "base_library/core/configuration/LoggerEnrty.h"
+
+import base_library.core.exceptions;
 
 // initialization of static variables
 std::unique_ptr<LoggerService> LoggerService::m_instance = nullptr;

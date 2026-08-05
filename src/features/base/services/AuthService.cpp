@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/base/services/AuthService.h"
 
 #include <date/date.h>
@@ -7,8 +8,7 @@
 #include <vector>
 
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/Cryption.h"
-#include "base_library/core/utils/UUID.h"
+import base_library.core.utils;
 
 AuthService::AuthService(const std::shared_ptr<ProcessName> &processName,
                          std::shared_ptr<UserRepository> userRepository,

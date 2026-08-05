@@ -1,6 +1,6 @@
 #include "base_library/features/cli/components/ProcessCliComponent.h"
+import base_library.core.utils;
 
-#include <base_library/core/utils/TableBuilder.h>
 
 ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
         : CommandLineComponent(m_name, m_alias),

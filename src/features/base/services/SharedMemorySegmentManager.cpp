@@ -1,11 +1,12 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
 #include <regex>
 
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/RegexUtils.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
+import base_library.core.utils;
 
 std::shared_ptr<SharedMemorySegment> SharedMemorySegmentManager::of(
         const std::string &sharedMemorySegmentName) {

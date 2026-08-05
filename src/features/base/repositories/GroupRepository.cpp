@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
 
 #include <regex>
@@ -8,7 +9,7 @@
 #include "base_library/core/persistence/Result.h"
 #include "base_library/core/persistence/Statement.h"
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/RegexUtils.h"
+import base_library.core.utils;
 
 GroupRepository::GroupRepository(
         std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)

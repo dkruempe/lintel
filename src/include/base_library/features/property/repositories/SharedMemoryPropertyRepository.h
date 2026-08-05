@@ -3,6 +3,7 @@
 
 #include <boost/interprocess/sync/named_upgradable_mutex.hpp>
 
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/base/repositories/SharedMemoryRepository.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"

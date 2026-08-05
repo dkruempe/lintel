@@ -1,12 +1,13 @@
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 
-#include <base_library/core/utils/TypeName.h>
-#include <base_library/features/base/configuration/ConfigurationException.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
+#include <base_library/core/configuration/ConfigurationException.h>
+#include <base_library/core/configuration/EnvironmentConfiguration.h>
 #include <base_library/features/base/configuration/SharedMemorySegmentEntry.h>
 #include <tinyxml2.h>
 
 #include <filesystem>
+import base_library.core.utils;
+import base_library.core.utils.type_name;
 
 const SharedMemorySegmentComponent::Shapes SharedMemorySegmentComponent::m_shape{};
 

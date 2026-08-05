@@ -1,12 +1,13 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/base/services/MessageQueueService.h"
 
-#include "base_library/features/base/configuration/MessageQueueComponent.h"
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
+#include "base_library/core/configuration/MessageQueueComponent.h"
+#include "base_library/core/configuration/MessageQueueEntry.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/msg/MessageQueue.h"
 #include "base_library/features/base/repositories/MessageQueueRepository.h"
-#include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/core/models/ProcessName.h"
+#include "base_library/core/configuration/Configuration.h"
 #include <map>
 #include <memory>
 #include <utility>

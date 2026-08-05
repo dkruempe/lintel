@@ -1,16 +1,17 @@
 #include "base_library/features/base/repositories/MessageQueueRepository.h"
 
-#include <base_library/core/exceptions/SQLException.h>
-#include <base_library/core/persistence/ConnectionType.h>
+#include <base_library/core/configuration/ConnectionType.h>
 #include <base_library/core/persistence/Connection.h>
 #include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
 #include <base_library/core/persistence/ParameterBuilder.h>
 #include <base_library/core/persistence/Transaction.h>
 #include <base_library/core/persistence/PreparedStatement.h>
-#include <base_library/features/base/configuration/MessageQueueEntry.h>
+#include <base_library/core/configuration/MessageQueueEntry.h>
 #include <cstdint>
 #include <memory>
 #include <vector>
+
+import base_library.core.exceptions;
 
 MessageQueueRepository::MessageQueueRepository(
   const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations)

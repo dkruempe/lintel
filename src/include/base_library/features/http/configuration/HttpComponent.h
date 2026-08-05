@@ -4,8 +4,8 @@
 #include <memory>
 #include <tinyxml2.h>
 
-#include "base_library/features/base/configuration/Component.h"
-#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
+#include "base_library/core/configuration/Component.h"
+#include "base_library/core/configuration/EnvironmentConfiguration.h"
 
 /** Parses HTTP host configuration (server/client) from XML */
 class HttpComponent : public Component {

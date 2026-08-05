@@ -3,6 +3,7 @@
 
 #include <httplib.h>
 
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/core/services/LoggerService.h"
 
 /** Shared HTTP client helper functions. */

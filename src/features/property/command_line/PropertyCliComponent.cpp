@@ -1,7 +1,7 @@
 #include "base_library/features/property/command_line/PropertyCliComponent.h"
 
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/TableBuilder.h"
+import base_library.core.utils;
 
 PropertyCliComponent::PropertyCliComponent(
         std::shared_ptr<PropertyApi> propertyApi)

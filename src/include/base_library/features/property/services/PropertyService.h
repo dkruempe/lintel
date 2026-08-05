@@ -7,23 +7,15 @@
 #include <vector>
 
 #include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/PersistableBean.h"
-#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/core/models/ProcessName.h"
 #include "base_library/features/property/exceptions/PropertyNoRuntimeChangeSupported.h"
 #include "base_library/features/property/exceptions/PropertyNotFoundException.h"
-#include "base_library/features/property/models/Property.h"
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "base_library/core/property/Property.h"
+#include "base_library/core/property/PropertyRepositoryType.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
-
-#define DEFINE_PROPERTY(name, type, defaultValue, description, runtime)     \
-  std::shared_ptr<Property<type>> name =                                    \
-      registerProperty<type>(std::string(#name), defaultValue, description, \
-                             runtime, __FILE__, __LINE__)
-#define LOAD_PROPERTIES()                       \
-  if (propertyService != nullptr) {             \
-    propertyService->getOrCreate(m_properties); \
-  }
 
 /** Central service for managing, querying and persisting properties */
 class PropertyService : public PersistableBean {

@@ -3,7 +3,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
+#include "base_library/core/configuration/MessageQueueEntry.h"
 #include "base_library/features/base/repositories/IMessageQueueRepository.h"
 
 class MockMessageQueueRepository : public IMessageQueueRepository {

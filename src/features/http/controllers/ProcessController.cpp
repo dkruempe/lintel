@@ -1,10 +1,11 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/http/controllers/ProcessController.h"
 
-#include "base_library/core/services/ProcessService.h"
-#include "base_library/core/utils/RegexUtils.h"
+#include "base_library/features/base/services/ProcessService.h"
 #include "base_library/features/base/controller/ProcessGroupsDto.h"
 #include "base_library/features/base/controller/ProcessInfosDto.h"
-#include "base_library/features/base/models/Process.h"
+#include "base_library/core/models/Process.h"
+import base_library.core.utils;
 
 ProcessController::ProcessController(
         const std::shared_ptr<IAuthService> &authService,

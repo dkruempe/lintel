@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_PROCESSCONTROLLER_H
 #define CPP_BASE_LIBRARY_PROCESSCONTROLLER_H
 
-#include "base_library/core/services/ProcessService.h"
+#include "base_library/features/base/services/ProcessService.h"
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 

@@ -5,11 +5,11 @@
 #include <string>
 
 #include "base_library/config.h"
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/core/utils/StringifyService.h"
+#include "base_library/core/models/ProcessName.h"
 #include "base_library/features/cli/models/CommandHistoryEntry.h"
 #include "base_library/features/cli/services/CommandLineHistoryService.h"
-#include "base_library/features/property/models/Property.h"
+#include "base_library/core/property/Property.h"
 
 namespace {
 

@@ -3,7 +3,7 @@
 
 #include "ProcessInfosDto.h"
 #include "base_library/core/models/JsonSerializable.h"
-#include "base_library/features/base/models/ProcessGroup.h"
+#include "base_library/core/models/ProcessGroup.h"
 
 /** DTO representing a process group with its processes */
 class ProcessGroupDto : public JsonSerializable {

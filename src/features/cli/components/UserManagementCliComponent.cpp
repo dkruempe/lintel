@@ -1,9 +1,6 @@
 #include "base_library/features/cli/components/UserManagementCliComponent.h"
+import base_library.core.utils;
 
-#include <base_library/core/utils/TableBuilder.h>
-
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/core/utils/Cryption.h"
 
 UserManagementCliComponent::UserManagementCliComponent(
         std::shared_ptr<UserApi> userApi)

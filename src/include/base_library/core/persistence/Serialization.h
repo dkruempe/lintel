@@ -6,7 +6,7 @@
 
 #include "base_library/core/persistence/postgresql/Serialization.h"
 #include "base_library/core/persistence/sqlite3/Serialization.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/core/configuration/DatabaseConnectionEntry.h"
 
 namespace db {
     /**

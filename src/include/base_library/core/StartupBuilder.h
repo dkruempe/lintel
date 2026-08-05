@@ -9,7 +9,7 @@
 #include <thread>
 #include <vector>
 
-#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
+#include "base_library/core/configuration/EnvironmentConfiguration.h"
 
 class AbstractServiceInterface;
 class Component;

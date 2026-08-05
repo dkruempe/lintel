@@ -1,14 +1,14 @@
-#include <base_library/features/base/configuration/LoggerComponent.h>
-#include <base_library/features/base/configuration/ProcessComponent.h>
-#include <base_library/features/base/configuration/MessageQueueComponent.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/base/configuration/LoggerEnrty.h>
-#include <base_library/features/base/configuration/ProcessEntry.h>
-#include <base_library/features/base/configuration/MessageQueueEntry.h>
-#include <base_library/features/base/configuration/LoggerConfiguration.h>
-#include <base_library/features/base/configuration/LoggerPathConfiguration.h>
-#include <base_library/features/base/configuration/LoggerSinkConfiguration.h>
-#include <base_library/features/base/configuration/ConfigurationException.h>
+#include <base_library/core/configuration/LoggerComponent.h>
+#include <base_library/core/configuration/ProcessComponent.h>
+#include <base_library/core/configuration/MessageQueueComponent.h>
+#include <base_library/core/configuration/EnvironmentConfiguration.h>
+#include <base_library/core/configuration/LoggerEnrty.h>
+#include <base_library/core/configuration/ProcessEntry.h>
+#include <base_library/core/configuration/MessageQueueEntry.h>
+#include <base_library/core/configuration/LoggerConfiguration.h>
+#include <base_library/core/configuration/LoggerPathConfiguration.h>
+#include <base_library/core/configuration/LoggerSinkConfiguration.h>
+#include <base_library/core/configuration/ConfigurationException.h>
 #include <base_library/core/utils/TypeName.h>
 
 #include <catch2/catch_all.hpp>

@@ -7,7 +7,7 @@
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/core/services/PersistableBean.h"
 #include "base_library/features/base/models/Group.h"
-#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/core/models/ProcessName.h"
 
 /**
  * Repository for CRUD operations on Group entities stored in the database.

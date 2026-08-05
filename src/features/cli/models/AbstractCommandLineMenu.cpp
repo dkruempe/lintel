@@ -1,9 +1,9 @@
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
 
-#include <base_library/core/utils/TableBuilder.h>
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/cli/models/CommandLineComponent.h"
+import base_library.core.utils;
 
 AbstractCommandLineMenu::AbstractCommandLineMenu(
   const std::vector<std::shared_ptr<CommandLineComponent> > &components)

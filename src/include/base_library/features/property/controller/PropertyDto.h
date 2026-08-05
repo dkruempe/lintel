@@ -4,8 +4,8 @@
 #include <memory>
 
 #include "base_library/core/models/JsonSerializable.h"
-#include "base_library/features/property/models/PropertyBase.h"
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "base_library/core/property/PropertyBase.h"
+#include "base_library/core/property/PropertyRepositoryType.h"
 
 /** DTO representing a single property, JSON-serializable */
 class PropertyDto : public JsonSerializable {

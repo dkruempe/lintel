@@ -2,10 +2,10 @@
 
 #include <memory>
 
-#include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
-#include "base_library/features/base/configuration/LoggerComponent.h"
-#include "base_library/features/base/configuration/MessageQueueComponent.h"
-#include "base_library/features/base/configuration/ProcessComponent.h"
+#include "base_library/core/configuration/DatabaseConnectionComponent.h"
+#include "base_library/core/configuration/LoggerComponent.h"
+#include "base_library/core/configuration/MessageQueueComponent.h"
+#include "base_library/core/configuration/ProcessComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/http/configuration/HttpComponent.h"
 #include "base_library/features/property/configuration/PropertyComponent.h"

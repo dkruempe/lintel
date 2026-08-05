@@ -1,6 +1,6 @@
 #include "base_library/features/property/configuration/PropertyRepositoryEntry.h"
 
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "base_library/core/property/PropertyRepositoryType.h"
 
 PropertyRepositoryEntry::PropertyRepositoryEntry(std::string_view component,
                                                  PropertyRepositoryType type,

@@ -1,6 +1,5 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/property/repositories/DatabasePropertyRepository.h"
-
-#include <base_library/core/exceptions/SQLException.h>
 
 #include <iostream>
 #include <sstream>
@@ -8,14 +7,16 @@
 #include <utility>
 
 #include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/ConnectionType.h"
+#include "base_library/core/configuration/ConnectionType.h"
 #include "base_library/core/persistence/ParameterBuilder.h"
 #include "base_library/core/persistence/PreparedStatement.h"
 #include "base_library/core/persistence/Statement.h"
 #include "base_library/core/persistence/Transaction.h"
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
+import base_library.core.utils;
+
+import base_library.core.exceptions;
 
 DatabasePropertyRepository::DatabasePropertyRepository(
         std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,

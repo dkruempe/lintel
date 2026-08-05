@@ -5,7 +5,7 @@
 #include <ostream>
 
 #include "base_library/core/models/SharedMemorySegment.h"
-#include "base_library/features/base/configuration/Entry.h"
+#include "base_library/core/configuration/Entry.h"
 
 /** Configuration entry for a shared memory segment */
 class SharedMemorySegmentEntry : public Entry {

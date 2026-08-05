@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <string>
 
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/features/property/models/Property.h"
+#include "base_library/core/property/Property.h"
+import base_library.core.utils;
 
 namespace {
 

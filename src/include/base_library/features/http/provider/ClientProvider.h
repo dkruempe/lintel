@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_CLIENTPROVIDER_H
 #define CPP_BASE_LIBRARY_CLIENTPROVIDER_H
 
-#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/core/configuration/Configuration.h"
 #include "base_library/features/http/service/Client.h"
 
 /** Provides a shared HTTP client instance built from configuration */

@@ -1,5 +1,7 @@
+#include "base_library/core/services/LoggerMacros.h"
+
 #include <base_library/core/StartupBuilder.h>
-#include <base_library/core/services/SharedMemoryService.h>
+#include <base_library/features/base/services/SharedMemoryService.h>
 #include <base_library/features/base/BaseFeature.h>
 #include <base_library/features/base/repositories/SharedMemoryRepository.h>
 #include <base_library/features/cli/CommandLineFeature.h>

@@ -10,7 +10,7 @@
 #include "base_library/core/exceptions/SQLException.h"
 #include "base_library/core/persistence/Parameter.h"
 #include "base_library/core/persistence/postgresql/Result.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/core/configuration/DatabaseConnectionEntry.h"
 
 namespace postgresql {
     class Transaction;

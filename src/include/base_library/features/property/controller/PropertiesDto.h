@@ -7,7 +7,7 @@
 
 #include "base_library/core/models/JsonSerializable.h"
 #include "base_library/features/property/controller/PropertyDto.h"
-#include "base_library/features/property/models/PropertyBase.h"
+#include "base_library/core/property/PropertyBase.h"
 
 /** DTO for a collection of properties, JSON-serializable */
 class PropertiesDto : public JsonSerializable {

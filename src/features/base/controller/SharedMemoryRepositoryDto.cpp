@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/base/controller/SharedMemoryRepositoryDto.h"
 
 SharedMemoryRepositoryDto::Shapes SharedMemoryRepositoryDto::m_shape{};

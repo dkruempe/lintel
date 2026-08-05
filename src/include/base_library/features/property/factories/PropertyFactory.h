@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "base_library/features/property/models/PropertyBase.h"
+#include "base_library/core/property/PropertyBase.h"
 
 /** Factory for creating PropertyBase instances from string-typed values */
 class PropertyFactory {

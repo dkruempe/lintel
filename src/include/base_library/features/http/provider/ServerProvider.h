@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_SERVERPROVIDER_H
 #define CPP_BASE_LIBRARY_SERVERPROVIDER_H
 
-#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/core/configuration/Configuration.h"
 #include "base_library/features/http/service/Server.h"
 
 /** Provides a shared HTTP server instance built from configuration and controllers */

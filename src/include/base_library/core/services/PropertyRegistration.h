@@ -5,8 +5,9 @@
 #include <filesystem>
 
 #include "base_library/core/services/AbstractService.h"
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/core/services/LoggerService.h"
-#include "base_library/features/property/models/Property.h"
+#include "base_library/core/property/Property.h"
 
 /** CRTP base class that adds property registration capabilities to services. */
 template<class T>

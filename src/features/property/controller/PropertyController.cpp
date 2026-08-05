@@ -1,5 +1,6 @@
 #include "base_library/features/property/controller/PropertyController.h"
 #include "base_library/core/models/JsonSerializable.h"
+#include "base_library/features/base/models/HistoryEntryMacros.h"
 #include <fmt/core.h>
 
 #include <optional>

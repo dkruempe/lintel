@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "base_library/core/models/SharedMemorySegment.h"
-#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/core/configuration/Configuration.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
 #include "base_library/features/base/services/ISharedMemorySegmentManager.h"
 

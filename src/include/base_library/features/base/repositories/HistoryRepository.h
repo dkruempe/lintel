@@ -2,7 +2,7 @@
 #define CPP_BASE_LIBRARY_HISTORYREPOSITORY_H
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/core/configuration/DatabaseConnectionEntry.h"
 #include "base_library/features/base/models/HistoryEntry.h"
 
 /**

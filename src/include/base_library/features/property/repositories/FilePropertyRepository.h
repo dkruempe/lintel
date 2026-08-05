@@ -1,10 +1,10 @@
 #ifndef LOGGING_FILEPROPERTYREPOSITORY_H
 #define LOGGING_FILEPROPERTYREPOSITORY_H
 
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/core/configuration/Configuration.h"
+#include "base_library/core/models/ProcessName.h"
 #include "base_library/features/base/services/ExecutorService.h"
-#include "base_library/features/property/models/DataStorage.h"
+#include "base_library/core/property/DataStorage.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
 /**

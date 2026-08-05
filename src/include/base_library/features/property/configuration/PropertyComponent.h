@@ -3,7 +3,7 @@
 
 #include <tinyxml2.h>
 
-#include "base_library/features/base/configuration/Component.h"
+#include "base_library/core/configuration/Component.h"
 
 /** Parses property definitions from XML configuration */
 class PropertyComponent : public Component {

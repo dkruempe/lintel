@@ -4,8 +4,8 @@
 #include <memory>
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
-#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/core/configuration/DatabaseConnectionEntry.h"
+#include "base_library/core/models/ProcessName.h"
 #include "base_library/features/property/repositories/PropertyRepository.h"
 
 /** Property repository that persists properties to a database */

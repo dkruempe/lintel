@@ -9,11 +9,6 @@
 
 #include "base_library/core/services/AbstractService.h"
 
-#define DEFINE_HISTORY_ENTRY(name, label, text) HistoryEntry name = HistoryEntry(*this, label, text)
-
-#define DEFINE_HISTORY_ENTRY2(name, label, text, processName, serviceName) \
-  HistoryEntry name = HistoryEntry(processName, serviceName, label, text, std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()))
-
 /**
  * Represents a single history entry with process/service context, a label, text, and timestamp.
  */

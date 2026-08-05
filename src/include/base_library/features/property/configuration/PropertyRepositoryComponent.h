@@ -3,7 +3,7 @@
 
 #include <tinyxml2.h>
 
-#include "base_library/features/base/configuration/Component.h"
+#include "base_library/core/configuration/Component.h"
 
 /** Parses property repository type configuration (mutable, shadow, type) from XML */
 class PropertyRepositoryComponent : public Component {

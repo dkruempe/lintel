@@ -7,9 +7,9 @@
 #include <string>
 #include <vector>
 
-#include "base_library/core/persistence/ConnectionType.h"
+#include "base_library/core/configuration/ConnectionType.h"
 #include "base_library/core/persistence/Serialization.h"
-#include "base_library/core/services/StringifyService.h"
+#include "base_library/core/utils/StringifyService.h"
 
 namespace db {
     /**

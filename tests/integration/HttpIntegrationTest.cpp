@@ -1,6 +1,6 @@
 #include <httplib.h>
 
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
+#include <base_library/core/configuration/EnvironmentConfiguration.h>
 #include <base_library/features/http/service/Client.h>
 #include <base_library/features/http/service/ContentType.h>
 #include <base_library/features/http/service/HttpStatusCodes.h>

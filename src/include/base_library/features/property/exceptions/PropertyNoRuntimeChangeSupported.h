@@ -6,7 +6,7 @@
 #include <string>
 #include <utility>
 
-#include "base_library/features/property/models/PropertyBase.h"
+#include "base_library/core/property/PropertyBase.h"
 
 /** Exception thrown when a runtime change is attempted on a non-runtime-changeable property */
 class PropertyNoRuntimeChangeSupported : public std::exception {

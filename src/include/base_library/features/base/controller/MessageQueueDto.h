@@ -2,7 +2,7 @@
 #define CPP_BASE_LIBRARY_MESSAGEQUEUEDTO_H
 
 #include "base_library/core/models/JsonSerializable.h"
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
+#include "base_library/core/configuration/MessageQueueEntry.h"
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <cstdint>

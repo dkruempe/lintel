@@ -3,9 +3,9 @@
 #include <iomanip>
 #include <sstream>
 
-#include "base_library/core/utils/StringUtils.h"
 
 #include <numeric>
+import base_library.core.utils;
 
 Command::Command(std::string command, std::string description)
   : m_command(std::move(command)), m_description(std::move(description)) {}

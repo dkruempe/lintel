@@ -1,6 +1,7 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
 
-#include <base_library/features/property/models/PropertyRepositoryType.h>
+#include <base_library/core/property/PropertyRepositoryType.h>
 
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>

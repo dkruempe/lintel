@@ -3,7 +3,7 @@
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/core/plugins/BootstrapPlugin.h"
+#include "base_library/features/base/plugins/BootstrapPlugin.h"
 
 class MockBootstrapPlugin : public BootstrapPlugin {
 public:

@@ -4,11 +4,11 @@
 #include <memory>
 #include <vector>
 
-#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/core/configuration/Configuration.h"
 #include "base_library/features/property/configuration/PropertyRepositoryComponent.h"
 #include "base_library/features/property/configuration/PropertyRepositoryEntry.h"
-#include "base_library/features/property/models/DataStorage.h"
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "base_library/core/property/DataStorage.h"
+#include "base_library/core/property/PropertyRepositoryType.h"
 
 class PropertyBase;
 

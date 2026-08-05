@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/property/strategies/XMLConfigSerializationStrategy.h"
 
 #include <tinyxml2.h>

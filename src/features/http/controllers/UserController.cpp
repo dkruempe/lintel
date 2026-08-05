@@ -1,10 +1,9 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/http/controllers/UserController.h"
 
 #include <algorithm>
 #include <utility>
 
-#include "base_library/core/utils/Cryption.h"
-#include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/base/controller/UserDto.h"
 #include "base_library/features/base/controller/UserGroupDto.h"
 #include "base_library/features/base/controller/UserLoginDto.h"
@@ -14,6 +13,7 @@
 #include "base_library/features/base/controller/UserSessionsDto.h"
 #include "base_library/features/base/controller/UserTokenDto.h"
 #include "base_library/features/http/service/HttpStatusCodes.h"
+import base_library.core.utils;
 
 void UserController::loginOfPost(const httplib::Request &request,
                                  httplib::Response &response,

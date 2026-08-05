@@ -64,6 +64,12 @@ function(set_project_warnings project_name)
             -Wuseless-cast # warn if you perform a cast to the same type
             -Wno-null-dereference # GCC false positives with deeply inlined templates (e.g. Hypodermic/STL)
             -Wno-error=null-dereference # don't promote to error even if re-enabled by -Wall
+            -Wno-array-bounds # GCC 14 false positives at -O3 with inlined std::string SSO moves (e.g. DatabaseBootstrapPlugin ctor)
+            -Wno-error=array-bounds # don't promote to error even if re-enabled by -Wall
+            -Wno-stringop-overflow # GCC 14 false positives at -O3 with inlined std::string SSO moves (same site as -Warray-bounds)
+            -Wno-error=stringop-overflow # don't promote to error even if re-enabled by -Wall
+            -Wno-stringop-overread # GCC 14 false positive at -O3 (same site, sibling of -Wstringop-overflow)
+            -Wno-error=stringop-overread # don't promote to error even if re-enabled by -Wall
             )
 
     if (MSVC)

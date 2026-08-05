@@ -6,7 +6,7 @@
 
 #include "ClientConfiguration.h"
 #include "ServerConfiguration.h"
-#include "base_library/features/base/configuration/Entry.h"
+#include "base_library/core/configuration/Entry.h"
 
 /** Configuration entry holding either a server or client HTTP configuration */
 class HttpEntry : public Entry {

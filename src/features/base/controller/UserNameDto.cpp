@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/base/controller/UserNameDto.h"
 
 #include "base_library/features/base/controller/UserDto.h"

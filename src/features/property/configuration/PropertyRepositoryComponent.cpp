@@ -4,10 +4,11 @@
 
 #include <memory>
 
-#include "base_library/core/utils/TypeName.h"
-#include "base_library/features/base/configuration/ConfigurationException.h"
+#include "base_library/core/configuration/ConfigurationException.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "base_library/core/property/PropertyRepositoryType.h"
+import base_library.core.utils;
+import base_library.core.utils.type_name;
 
 PropertyRepositoryComponent::Shapes PropertyRepositoryComponent::shape{};
 

@@ -4,11 +4,11 @@
 #include <memory>
 
 #include "../mocks/MockMessageQueueRepository.h"
-#include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
-#include "base_library/features/base/configuration/MessageQueueComponent.h"
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
+#include "base_library/core/models/ProcessName.h"
+#include "base_library/core/configuration/Configuration.h"
+#include "base_library/core/configuration/EnvironmentConfiguration.h"
+#include "base_library/core/configuration/MessageQueueComponent.h"
+#include "base_library/core/configuration/MessageQueueEntry.h"
 #include "base_library/features/base/services/MessageQueueService.h"
 
 using namespace trompeloeil;

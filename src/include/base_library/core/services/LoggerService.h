@@ -13,7 +13,7 @@
 #include <mutex>
 
 class Configuration;
-#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/core/models/ProcessName.h"
 
 /** Singleton service providing spdlog-based logging for the application. */
 class LoggerService
@@ -75,23 +75,4 @@ public:
   }
 };
 
-#define DECLARE_LOGGER(processName, configuration) LoggerService::getOrCreate(processName, configuration)
-#define LOG_INFO(message, ...) \
-  LoggerService::get().log(    \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::info, message, ##__VA_ARGS__)
-#define LOG_DEBUG(message, ...) \
-  LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::debug, message, ##__VA_ARGS__)
-#define LOG_TRACE(message, ...) \
-  LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::trace, message, ##__VA_ARGS__)
-#define LOG_ERROR(message, ...) \
-  LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::err, message, ##__VA_ARGS__)
-#define LOG_FATAL(message, ...) \
-  LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::critical, message, ##__VA_ARGS__)
-#define LOG_WARN(message, ...) \
-  LoggerService::get().log(    \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::warn, message, ##__VA_ARGS__)
 #endif// LOGGING_LOGGER_H

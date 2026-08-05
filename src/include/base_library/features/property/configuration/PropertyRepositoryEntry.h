@@ -4,8 +4,8 @@
 #include <memory>
 #include <ostream>
 
-#include "base_library/features/base/configuration/Entry.h"
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "base_library/core/configuration/Entry.h"
+#include "base_library/core/property/PropertyRepositoryType.h"
 
 /** Configuration entry for a property repository (type, mutability, shadow mode) */
 class PropertyRepositoryEntry : public Entry {

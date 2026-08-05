@@ -9,8 +9,9 @@
 #include <boost/container/vector.hpp>
 
 #include "base_library/core/models/SharedMemorySegment.h"
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/core/services/PersistableBean.h"
-#include "base_library/core/services/SharedMemoryService.h"
+#include "base_library/features/base/services/SharedMemoryService.h"
 #include "base_library/core/utils/TypeName.h"
 
 /** Types of shared memory data structures. */

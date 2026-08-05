@@ -9,7 +9,7 @@
 
 #include "base_library/core/persistence/Parameter.h"
 #include "base_library/core/persistence/sqlite3/Result.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/core/configuration/DatabaseConnectionEntry.h"
 
 namespace sqlite {
     class Transaction;

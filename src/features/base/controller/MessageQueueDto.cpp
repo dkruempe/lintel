@@ -1,6 +1,7 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/base/controller/MessageQueueDto.h"
 
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
+#include "base_library/core/configuration/MessageQueueEntry.h"
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/http/controllers/MessageQueueApi.h"

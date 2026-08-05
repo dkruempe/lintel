@@ -6,8 +6,6 @@
 #include <type_traits>
 
 #include "base_library/core/persistence/postgresql/Serialization.h"
-#include "base_library/core/persistence/sqlite3/Serialization.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
 
 /**
  * Macro that generates a full specialization of Serialization for a given type

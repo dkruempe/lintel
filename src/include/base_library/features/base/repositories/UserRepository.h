@@ -5,7 +5,7 @@
 #include <set>
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/core/configuration/DatabaseConnectionEntry.h"
 #include "base_library/features/base/models/User.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
 

@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/property/services/PropertyService.h"
 
 #include <algorithm>
@@ -5,8 +6,8 @@
 #include <sstream>
 
 #include "base_library/features/property/exceptions/PropertyNotFoundException.h"
-#include "base_library/features/property/models/PropertyBase.h"
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "base_library/core/property/PropertyBase.h"
+#include "base_library/core/property/PropertyRepositoryType.h"
 
 std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
         const std::vector<std::shared_ptr<PropertyRepository>>

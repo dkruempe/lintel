@@ -1,6 +1,6 @@
 #include "base_library/core/persistence/sqlite3/PreparedStatement.h"
 
-#include "base_library/core/exceptions/SQLException.h"
+import base_library.core.exceptions;
 
 namespace sqlite {
     PreparedStatement::PreparedStatement(Connection &connection,

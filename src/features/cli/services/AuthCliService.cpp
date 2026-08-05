@@ -1,3 +1,4 @@
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/cli/services/AuthCliService.h"
 
 #include <base_library/core/services/SignalService.h>

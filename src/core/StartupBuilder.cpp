@@ -1,21 +1,22 @@
 #include "base_library/core/StartupBuilder.h"
 
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
+#include <base_library/core/configuration/EnvironmentConfiguration.h>
 
 #include <algorithm>
 #include <csignal>
 #include <memory>
 #include <thread>
 
+#include "base_library/core/services/LoggerMacros.h"
 #include "base_library/features/Feature.h"
 
-#include "base_library/core/services/BootstrapService.h"
+#include "base_library/features/base/services/BootstrapService.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/PersistableService.h"
-#include "base_library/features/base/configuration/Component.h"
-#include "base_library/features/base/configuration/Configuration.h"
+#include "base_library/core/configuration/Component.h"
+#include "base_library/core/configuration/Configuration.h"
 #include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
-#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/core/models/ProcessName.h"
 #include "base_library/features/base/services/InitializeService.h"
 #include "base_library/features/base/services/ProcessArgumentService.h"
 

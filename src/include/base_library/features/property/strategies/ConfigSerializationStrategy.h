@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-#include "base_library/features/property/models/PropertyBase.h"
+#include "base_library/core/property/PropertyBase.h"
 
 /**
  * Strategy for serialize/deserialize a list of properties or a property

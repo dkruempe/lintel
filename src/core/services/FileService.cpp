@@ -1,9 +1,9 @@
 #include "base_library/core/services/FileService.h"
 
-#include "base_library/core/exceptions/FileServiceFileExists.h"
-#include "base_library/core/exceptions/FileServiceIsNotFileException.h"
 #include <boost/next_prior.hpp>
 #include <streambuf>
+
+import base_library.core.exceptions;
 
 FileService::Stream::Stream(const std::filesystem::path &path) : m_file(path.string())
 {

@@ -2,7 +2,7 @@
 #include <catch2/trompeloeil.hpp>
 
 #include "../mocks/MockBootstrapPlugin.h"
-#include "base_library/core/services/BootstrapService.h"
+#include "base_library/features/base/services/BootstrapService.h"
 
 using namespace trompeloeil;
 

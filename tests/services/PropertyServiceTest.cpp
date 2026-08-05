@@ -1,3 +1,4 @@
+#include "base_library/features/property/services/PropertyMacros.h"
 #include <base_library/core/services/PropertyRegistration.h>
 #include <base_library/features/property/services/PropertyService.h>
 

@@ -4,12 +4,12 @@
 #include <map>
 #include <string>
 #include <memory>
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
+#include "base_library/core/configuration/MessageQueueEntry.h"
 #include "base_library/features/base/repositories/IMessageQueueRepository.h"
 
 #include "base_library/core/services/AbstractService.h"
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/core/configuration/Configuration.h"
+#include "base_library/core/models/ProcessName.h"
 #include "base_library/features/base/msg/Message.h"
 #include "base_library/features/base/msg/MessageQueue.h"
 
