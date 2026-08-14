@@ -45,7 +45,14 @@
         <Path path="~/dev/shm"/>
         <SharedMemorySegment name="shm_property" size="5MB" auto_extend_size="2MB" max_size="100MB"/>
         <SharedMemorySegment name="shm_test" size="5MB" auto_extend_size="2MB" max_size="50MB"/>
+        <SharedMemorySegment name="shm_eventbus" size="8MB" auto_extend_size="2MB" max_size="50MB"/>
     </SharedMemorySegments>
+
+    <!-- Event Bus Configuration -->
+    <EventBuses>
+        <EventBus name="main" segment="shm_eventbus" bus_capacity="128"
+                  subscriber_capacity="128" max_topics="8" max_subscribers="8"/>
+    </EventBuses>
 
     <!-- Http Server / Client Configuration -->
     <HttpHost>

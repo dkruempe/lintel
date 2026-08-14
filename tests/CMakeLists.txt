@@ -74,6 +74,12 @@ target_compile_features(configComponentsTest PUBLIC cxx_std_17)
 target_link_libraries(configComponentsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.ConfigComponentsTest COMMAND configComponentsTest)
 
+# Event Bus Test
+ADD_EXECUTABLE(eventBusTest events/EventBusTest.cpp)
+target_compile_features(eventBusTest PUBLIC cxx_std_17)
+target_link_libraries(eventBusTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.EventBusTest COMMAND eventBusTest)
+
 # CLI Parser Test
 ADD_EXECUTABLE(cliParserTest cli/CliParserTest.cpp)
 target_compile_features(cliParserTest PUBLIC cxx_std_17)

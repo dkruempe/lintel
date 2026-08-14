@@ -18,6 +18,7 @@
 #include "base_library/features/base/repositories/IMessageQueueRepository.h"
 #include "base_library/features/base/repositories/UserRepository.h"
 #include "base_library/features/base/services/AuthService.h"
+#include "base_library/features/base/services/EventBusService.h"
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/base/services/ExecutorService.h"
 #include "base_library/features/base/services/HistoryService.h"
@@ -101,4 +102,8 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
   .as<AbstractServiceInterface>()
   .asSelf()
   .singleInstance();
+  builder.registerType<EventBusService>()
+    .as<AbstractServiceInterface>()
+    .asSelf()
+    .singleInstance();
 }

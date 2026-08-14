@@ -127,6 +127,17 @@ SharedMemoryService::ShmString SharedMemoryService::constructString(
     }
 }
 
+boost::interprocess::managed_mapped_file::segment_manager *
+SharedMemoryService::getSegmentManager(
+        const std::shared_ptr<SharedMemorySegment> &segment) {
+    std::lock_guard<std::mutex> lock(m_segmentsMutex);
+    auto found = m_segments.find(segment->getName());
+    if (found == m_segments.end()) {
+        return nullptr;
+    }
+    return found->second.m_managedMappedFile->get_segment_manager();
+}
+
 void SharedMemoryService::onInitialize() {
     std::weak_ptr<SharedMemoryService> weakSelf = shared_from_this();
     m_schedulerService->schedule_at_fixed_rate(m_scheduleRate->getValue(),

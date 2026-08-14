@@ -198,6 +198,35 @@ public:
         }
     }
 
+    /** Find or construct a single object with constructor arguments in the
+     * given shared memory segment.
+     * @tparam Object the object type
+     * @tparam Args   the constructor argument types
+     * @param segment the shared memory segment
+     * @param name    the name of the object
+     * @param args    arguments forwarded to the constructor
+     * @return reference to the constructed or found object
+     * @throws ShmSegmentNotFound if the segment does not exist */
+    template<class Object, class... Args>
+    Object &constructObjectWith(
+            const std::shared_ptr<SharedMemorySegment> &segment,
+            const std::string &name, Args &&... args) {
+        std::lock_guard<std::mutex> lock(m_segmentsMutex);
+        try {
+            auto &segmentCopy = m_segments.at(segment->getName());
+            return *(segmentCopy.m_managedMappedFile->find_or_construct<Object>(
+                    name.c_str())(std::forward<Args>(args)...));
+        } catch (std::out_of_range &exception) {
+            throw ShmSegmentNotFound(segment->getName());
+        }
+    }
+
+    /** Get the raw segment manager of the given shared memory segment.
+     * @param segment the shared memory segment
+     * @return the segment manager, or nullptr if the segment does not exist */
+    boost::interprocess::managed_mapped_file::segment_manager *getSegmentManager(
+            const std::shared_ptr<SharedMemorySegment> &segment);
+
     /** Find or construct a string in the given shared memory segment.
      * @param segment the shared memory segment
      * @param name    the name of the string object

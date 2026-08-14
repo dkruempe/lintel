@@ -42,3 +42,9 @@ add_executable(cleanup cleanup.cpp)
 target_compile_features(cleanup PUBLIC cxx_std_17)
 target_include_directories(cleanup PRIVATE ${magic_enum_INCLUDE_DIRS})
 target_link_libraries(cleanup PRIVATE kruempelmann::base_library)
+
+# event bus example
+add_executable(event_bus event_bus.cpp)
+target_compile_features(event_bus PUBLIC cxx_std_17)
+target_include_directories(event_bus PRIVATE ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(event_bus PRIVATE kruempelmann::base_library)

@@ -141,6 +141,8 @@ set(headers
     include/base_library/features/base/configuration/LoggerSinkConfiguration.h
     include/base_library/features/base/configuration/MessageQueueComponent.h
     include/base_library/features/base/configuration/MessageQueueEntry.h
+    include/base_library/features/base/configuration/EventBusComponent.h
+    include/base_library/features/base/configuration/EventBusEntry.h
     include/base_library/features/base/configuration/ProcessComponent.h
     include/base_library/features/base/configuration/ProcessEntry.h
     include/base_library/features/base/configuration/SharedMemorySegmentComponent.h
@@ -180,6 +182,9 @@ set(headers
     include/base_library/features/base/msg/Message.h
     include/base_library/features/base/msg/MessageQueue.h
     include/base_library/features/base/msg/MessageQueues.h
+    # features - base - events
+    include/base_library/features/base/events/Event.h
+    include/base_library/features/base/events/EventBus.h
     # features - base - provider
     include/base_library/features/base/provider/GroupProvider.h
     # features - base - repositories
@@ -194,6 +199,7 @@ set(headers
     include/base_library/features/base/services/HistoryService.h
     include/base_library/features/base/services/InitializeService.h
     include/base_library/features/base/services/MessageQueueService.h
+    include/base_library/features/base/services/EventBusService.h
     include/base_library/features/base/services/ProcessArgumentService.h
     include/base_library/features/base/services/SchedulerService.h
     include/base_library/features/base/services/SharedMemorySegmentManager.h
@@ -456,6 +462,13 @@ set(sources
     features/property/repositories/SharedMemoryPropertyRepository.cpp
     features/property/services/PropertyService.cpp
     features/property/strategies/XMLConfigSerializationStrategy.cpp
+    # features - base - events
+    features/base/events/EventBus.cpp
+    # features - base - configuration
+    features/base/configuration/EventBusComponent.cpp
+    features/base/configuration/EventBusEntry.cpp
+    # features - base - services
+    features/base/services/EventBusService.cpp
 )
 
 add_library(base_library ${headers} ${sources})

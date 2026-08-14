@@ -1,6 +1,9 @@
 #include <base_library/features/base/configuration/LoggerComponent.h>
 #include <base_library/features/base/configuration/ProcessComponent.h>
 #include <base_library/features/base/configuration/MessageQueueComponent.h>
+#include <base_library/features/base/configuration/EventBusComponent.h>
+#include <base_library/features/base/configuration/EventBusEntry.h>
+#include <base_library/features/base/events/EventBus.h>
 #include <base_library/features/base/configuration/EnvironmentConfiguration.h>
 #include <base_library/features/base/configuration/LoggerEnrty.h>
 #include <base_library/features/base/configuration/ProcessEntry.h>
@@ -360,5 +363,88 @@ TEST_CASE("MessageQueueComponent: throw on missing max_messages") {
     std::string xml = R"(<MessageQueues>
         <MessageQueue process_name="main" name="test"/>
     </MessageQueues>)";
+    REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+}
+
+TEST_CASE("EventBusComponent: parse single bus") {
+    EventBusComponent component;
+
+    std::string xml = R"(<EventBuses>
+        <EventBus name="main" segment="shm_eventbus" bus_capacity="64"
+                  subscriber_capacity="32" max_topics="4" max_subscribers="2"/>
+    </EventBuses>)";
+
+    auto entries = component.parse(xml, "test.xml", 0);
+    REQUIRE(entries.size() == 1);
+
+    auto entry = std::static_pointer_cast<EventBusEntry>(entries[0]);
+    REQUIRE(entry->get_name() == "main");
+    REQUIRE(entry->get_segment() == "shm_eventbus");
+    REQUIRE(entry->get_bus_capacity() == 64);
+    REQUIRE(entry->get_subscriber_capacity() == 32);
+    REQUIRE(entry->get_max_topics() == 4);
+    REQUIRE(entry->get_max_subscribers() == 2);
+}
+
+TEST_CASE("EventBusComponent: defaults for omitted capacities") {
+    EventBusComponent component;
+
+    std::string xml = R"(<EventBuses>
+        <EventBus name="main" segment="shm_eventbus"/>
+    </EventBuses>)";
+
+    auto entries = component.parse(xml, "test.xml", 0);
+    REQUIRE(entries.size() == 1);
+
+    auto entry = std::static_pointer_cast<EventBusEntry>(entries[0]);
+    REQUIRE(entry->get_name() == "main");
+    REQUIRE(entry->get_segment() == "shm_eventbus");
+    REQUIRE(entry->get_bus_capacity() == 128);
+    REQUIRE(entry->get_subscriber_capacity() == 128);
+    REQUIRE(entry->get_max_topics() == EventBusLimits::MAX_TOPICS);
+    REQUIRE(entry->get_max_subscribers() == EventBusLimits::MAX_SUBSCRIBERS);
+}
+
+TEST_CASE("EventBusComponent: parse multiple buses") {
+    EventBusComponent component;
+
+    std::string xml = R"(<EventBuses>
+        <EventBus name="main" segment="shm_a" bus_capacity="16"/>
+        <EventBus name="worker" segment="shm_b" bus_capacity="32"/>
+    </EventBuses>)";
+
+    auto entries = component.parse(xml, "test.xml", 0);
+    REQUIRE(entries.size() == 2);
+
+    auto first = std::static_pointer_cast<EventBusEntry>(entries[0]);
+    auto second = std::static_pointer_cast<EventBusEntry>(entries[1]);
+    REQUIRE(first->get_name() == "main");
+    REQUIRE(first->get_segment() == "shm_a");
+    REQUIRE(first->get_bus_capacity() == 16);
+    REQUIRE(second->get_name() == "worker");
+    REQUIRE(second->get_segment() == "shm_b");
+    REQUIRE(second->get_bus_capacity() == 32);
+}
+
+TEST_CASE("EventBusComponent: empty EventBuses returns empty") {
+    EventBusComponent component;
+    std::string xml = R"(<EventBuses></EventBuses>)";
+    auto entries = component.parse(xml, "test.xml", 0);
+    REQUIRE(entries.empty());
+}
+
+TEST_CASE("EventBusComponent: throw on missing name") {
+    EventBusComponent component;
+    std::string xml = R"(<EventBuses>
+        <EventBus segment="shm_eventbus"/>
+    </EventBuses>)";
+    REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+}
+
+TEST_CASE("EventBusComponent: throw on missing segment") {
+    EventBusComponent component;
+    std::string xml = R"(<EventBuses>
+        <EventBus name="main"/>
+    </EventBuses>)";
     REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
 }
