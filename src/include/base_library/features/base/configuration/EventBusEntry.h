@@ -40,27 +40,27 @@ public:
 
     /** Get the event bus name
      * @return The bus name */
-    [[nodiscard]] const std::string &get_name() const;
+    [[nodiscard]] const std::string &getName() const;
 
     /** Get the shared memory segment name
      * @return The segment name */
-    [[nodiscard]] const std::string &get_segment() const;
+    [[nodiscard]] const std::string &getSegment() const;
 
     /** Get the point-to-point queue capacity
      * @return The bus capacity */
-    [[nodiscard]] std::size_t get_bus_capacity() const;
+    [[nodiscard]] std::size_t getBusCapacity() const;
 
     /** Get the per-subscriber queue capacity
      * @return The subscriber capacity */
-    [[nodiscard]] std::size_t get_subscriber_capacity() const;
+    [[nodiscard]] std::size_t getSubscriberCapacity() const;
 
     /** Get the maximum topic count
      * @return The maximum topics */
-    [[nodiscard]] std::size_t get_max_topics() const;
+    [[nodiscard]] std::size_t getMaxTopics() const;
 
     /** Get the maximum subscriber count
      * @return The maximum subscribers */
-    [[nodiscard]] std::size_t get_max_subscribers() const;
+    [[nodiscard]] std::size_t getMaxSubscribers() const;
 
     /** Stream insertion operator
      * @param os The output stream

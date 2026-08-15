@@ -119,16 +119,16 @@ EventBus::ShmRing::ShmRing(std::size_t capacity,
         throw std::invalid_argument("event bus segment manager must not be null");
     }
     const std::size_t bufferSize = capacity * sizeof(Slot);
-    void *raw = segmentManager->allocate(bufferSize + CACHE_LINE - 1u);
+    std::byte *raw = static_cast<std::byte *>(
+            segmentManager->allocate(bufferSize + CACHE_LINE - 1u));
     if (raw == nullptr) {
         throw std::bad_alloc();
     }
     m_allocation = raw;
-    void *aligned = reinterpret_cast<void *>(
+    std::byte *aligned = reinterpret_cast<std::byte *>(
             (reinterpret_cast<std::uintptr_t>(raw) + CACHE_LINE - 1u) &
             ~(CACHE_LINE - 1u));
-    m_bufferOffset = static_cast<char *>(aligned) -
-                     reinterpret_cast<char *>(this);
+    m_bufferOffset = aligned - reinterpret_cast<std::byte *>(this);
     Slot *slots = buffer();
     for (std::size_t i = 0; i < capacity; ++i) {
         new (&slots[i]) Slot();

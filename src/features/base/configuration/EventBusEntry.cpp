@@ -14,27 +14,27 @@ EventBusEntry::EventBusEntry(const std::string_view &component,
           maxTopics(_maxTopics),
           maxSubscribers(_maxSubscribers) {}
 
-const std::string &EventBusEntry::get_name() const {
+const std::string &EventBusEntry::getName() const {
     return eventBusName;
 }
 
-const std::string &EventBusEntry::get_segment() const {
+const std::string &EventBusEntry::getSegment() const {
     return segmentName;
 }
 
-std::size_t EventBusEntry::get_bus_capacity() const {
+std::size_t EventBusEntry::getBusCapacity() const {
     return busCapacity;
 }
 
-std::size_t EventBusEntry::get_subscriber_capacity() const {
+std::size_t EventBusEntry::getSubscriberCapacity() const {
     return subscriberCapacity;
 }
 
-std::size_t EventBusEntry::get_max_topics() const {
+std::size_t EventBusEntry::getMaxTopics() const {
     return maxTopics;
 }
 
-std::size_t EventBusEntry::get_max_subscribers() const {
+std::size_t EventBusEntry::getMaxSubscribers() const {
     return maxSubscribers;
 }
 

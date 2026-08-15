@@ -70,7 +70,7 @@ public:
      * @param data pointer to the payload (may be nullptr when size is zero)
      * @param size number of bytes to copy; clamped to CONTENT_SIZE
      */
-    void setContent(const void *data, std::size_t size) {
+    void setContent(const std::byte *data, std::size_t size) {
         const std::size_t length = size > CONTENT_SIZE ? CONTENT_SIZE : size;
         if (length > 0 && data != nullptr) {
             std::memcpy(m_content, data, length);
@@ -114,7 +114,9 @@ public:
     [[nodiscard]] std::size_t contentLength() const { return m_contentLength; }
 
     /** @return pointer to the raw payload bytes */
-    [[nodiscard]] const void *content() const { return m_content; }
+    [[nodiscard]] const std::byte *content() const {
+        return reinterpret_cast<const std::byte *>(m_content);
+    }
 
     /** @return true if the event has no payload */
     [[nodiscard]] bool isContentEmpty() const { return m_contentLength == 0; }

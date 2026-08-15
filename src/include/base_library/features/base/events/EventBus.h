@@ -244,7 +244,7 @@ private:
         std::byte m_tailPadding[CACHE_LINE - sizeof(std::uint64_t)]{};
         std::size_t m_capacity = 0;
         ShmSegmentManager *m_segmentManager = nullptr;
-        void *m_allocation = nullptr;
+        std::byte *m_allocation = nullptr;
         std::int64_t m_bufferOffset = 0;
 
         [[nodiscard]] Slot *buffer();

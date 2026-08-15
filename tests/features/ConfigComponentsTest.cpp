@@ -378,12 +378,12 @@ TEST_CASE("EventBusComponent: parse single bus") {
     REQUIRE(entries.size() == 1);
 
     auto entry = std::static_pointer_cast<EventBusEntry>(entries[0]);
-    REQUIRE(entry->get_name() == "main");
-    REQUIRE(entry->get_segment() == "shm_eventbus");
-    REQUIRE(entry->get_bus_capacity() == 64);
-    REQUIRE(entry->get_subscriber_capacity() == 32);
-    REQUIRE(entry->get_max_topics() == 4);
-    REQUIRE(entry->get_max_subscribers() == 2);
+    REQUIRE(entry->getName() == "main");
+    REQUIRE(entry->getSegment() == "shm_eventbus");
+    REQUIRE(entry->getBusCapacity() == 64);
+    REQUIRE(entry->getSubscriberCapacity() == 32);
+    REQUIRE(entry->getMaxTopics() == 4);
+    REQUIRE(entry->getMaxSubscribers() == 2);
 }
 
 TEST_CASE("EventBusComponent: defaults for omitted capacities") {
@@ -397,12 +397,12 @@ TEST_CASE("EventBusComponent: defaults for omitted capacities") {
     REQUIRE(entries.size() == 1);
 
     auto entry = std::static_pointer_cast<EventBusEntry>(entries[0]);
-    REQUIRE(entry->get_name() == "main");
-    REQUIRE(entry->get_segment() == "shm_eventbus");
-    REQUIRE(entry->get_bus_capacity() == 128);
-    REQUIRE(entry->get_subscriber_capacity() == 128);
-    REQUIRE(entry->get_max_topics() == EventBusLimits::MAX_TOPICS);
-    REQUIRE(entry->get_max_subscribers() == EventBusLimits::MAX_SUBSCRIBERS);
+    REQUIRE(entry->getName() == "main");
+    REQUIRE(entry->getSegment() == "shm_eventbus");
+    REQUIRE(entry->getBusCapacity() == 128);
+    REQUIRE(entry->getSubscriberCapacity() == 128);
+    REQUIRE(entry->getMaxTopics() == EventBusLimits::MAX_TOPICS);
+    REQUIRE(entry->getMaxSubscribers() == EventBusLimits::MAX_SUBSCRIBERS);
 }
 
 TEST_CASE("EventBusComponent: parse multiple buses") {
@@ -418,12 +418,12 @@ TEST_CASE("EventBusComponent: parse multiple buses") {
 
     auto first = std::static_pointer_cast<EventBusEntry>(entries[0]);
     auto second = std::static_pointer_cast<EventBusEntry>(entries[1]);
-    REQUIRE(first->get_name() == "main");
-    REQUIRE(first->get_segment() == "shm_a");
-    REQUIRE(first->get_bus_capacity() == 16);
-    REQUIRE(second->get_name() == "worker");
-    REQUIRE(second->get_segment() == "shm_b");
-    REQUIRE(second->get_bus_capacity() == 32);
+    REQUIRE(first->getName() == "main");
+    REQUIRE(first->getSegment() == "shm_a");
+    REQUIRE(first->getBusCapacity() == 16);
+    REQUIRE(second->getName() == "worker");
+    REQUIRE(second->getSegment() == "shm_b");
+    REQUIRE(second->getBusCapacity() == 32);
 }
 
 TEST_CASE("EventBusComponent: empty EventBuses returns empty") {

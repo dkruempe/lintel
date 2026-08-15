@@ -22,8 +22,8 @@ std::map<std::string, std::shared_ptr<EventBusEntry>> EventBusService::init(
     std::map<std::string, std::shared_ptr<EventBusEntry>> map;
     for (const auto &iter : confs) {
         auto entry = std::static_pointer_cast<EventBusEntry>(iter);
-        map.insert({entry->get_name(), entry});
-        LOG_INFO("found event bus {}", entry->get_name());
+        map.insert({entry->getName(), entry});
+        LOG_INFO("found event bus {}", entry->getName());
     }
     return map;
 }
@@ -31,13 +31,13 @@ std::map<std::string, std::shared_ptr<EventBusEntry>> EventBusService::init(
 EventBusConfig EventBusService::configOf(
         const std::shared_ptr<EventBusEntry> &entry) {
     EventBusConfig config;
-    config.busCapacity = entry->get_bus_capacity();
-    config.subscriberCapacity = entry->get_subscriber_capacity();
-    config.maxTopics = entry->get_max_topics();
-    config.maxSubscribers = entry->get_max_subscribers();
+    config.busCapacity = entry->getBusCapacity();
+    config.subscriberCapacity = entry->getSubscriberCapacity();
+    config.maxTopics = entry->getMaxTopics();
+    config.maxSubscribers = entry->getMaxSubscribers();
     if (!config.isValid()) {
         throw std::runtime_error("invalid event bus configuration for '" +
-                                 entry->get_name() + "'");
+                                 entry->getName() + "'");
     }
     return config;
 }
@@ -45,37 +45,37 @@ EventBusConfig EventBusService::configOf(
 EventBus &EventBusService::resolve(
         const std::shared_ptr<EventBusEntry> &entry) {
     const std::size_t generation = m_sharedMemoryService->getGeneration();
-    const auto cached = m_generations.find(entry->get_name());
+    const auto cached = m_generations.find(entry->getName());
     if (cached != m_generations.end() && cached->second == generation) {
-        return *m_buses.at(entry->get_name());
+        return *m_buses.at(entry->getName());
     }
-    auto segment = m_segmentManager->of(entry->get_segment());
+    auto segment = m_segmentManager->of(entry->getSegment());
     if (segment == nullptr) {
         LOG_ERROR("segment '{}' not found for event bus '{}'",
-                  entry->get_segment(), entry->get_name());
+                  entry->getSegment(), entry->getName());
         throw std::runtime_error("segment not found for event bus " +
-                                 entry->get_name());
+                                 entry->getName());
     }
     const EventBusConfig config = configOf(entry);
     const std::size_t required = EventBus::requiredSize(config);
     if (segment->getSize() < required) {
         LOG_WARN("segment '{}' size {} may be too small for event bus '{}' "
                  "(estimated {})",
-                 segment->getName(), segment->getSize(), entry->get_name(),
+                 segment->getName(), segment->getSize(), entry->getName(),
                  required);
     }
     auto *segmentManager = m_sharedMemoryService->getSegmentManager(segment);
     if (segmentManager == nullptr) {
         LOG_ERROR("segment '{}' not mapped for event bus '{}'",
-                  entry->get_segment(), entry->get_name());
+                  entry->getSegment(), entry->getName());
         throw std::runtime_error("segment not mapped for event bus " +
-                                 entry->get_name());
+                                 entry->getName());
     }
     EventBus &bus = m_sharedMemoryService->constructObjectWith<EventBus>(
-            segment, entry->get_name(), entry->get_name(), config,
+            segment, entry->getName(), entry->getName(), config,
             segmentManager);
-    m_buses[entry->get_name()] = &bus;
-    m_generations[entry->get_name()] = generation;
+    m_buses[entry->getName()] = &bus;
+    m_generations[entry->getName()] = generation;
     return bus;
 }
 
@@ -101,7 +101,7 @@ void EventBusService::onInitialize() {
                      config.maxSubscribers);
         } catch (const std::exception &exception) {
             LOG_ERROR("event bus '{}' initialization failed: {}",
-                      entry.second->get_name(), exception.what());
+                      entry.second->getName(), exception.what());
         }
     }
 }

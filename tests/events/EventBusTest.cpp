@@ -1,4 +1,5 @@
 #include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
@@ -317,9 +318,11 @@ TEST_CASE("Event: content size limits and round trip") {
     REQUIRE(back.number == 7);
     REQUIRE(back.ratio == 2.5);
 
-    event.setContent(payload.text, sizeof(payload.text));
+    event.setContent(reinterpret_cast<const std::byte *>(payload.text),
+                     sizeof(payload.text));
     REQUIRE(event.contentLength() == sizeof(payload.text));
-    REQUIRE(std::memcmp(event.content(), payload.text, sizeof(payload.text)) == 0);
+    REQUIRE(std::memcmp(event.content(), payload.text, sizeof(payload.text)) ==
+            0);
 
     REQUIRE(std::is_trivially_copyable_v<Event>);
     REQUIRE(std::is_trivially_copyable_v<Payload>);
