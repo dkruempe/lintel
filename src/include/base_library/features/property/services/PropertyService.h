@@ -3,13 +3,16 @@
 
 #include <functional>
 #include <map>
+#include <optional>
 #include <ostream>
 #include <vector>
 
 #include "base_library/core/services/AbstractService.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/PersistableBean.h"
+#include "base_library/features/base/events/EventBus.h"
 #include "base_library/features/base/models/ProcessName.h"
+#include "base_library/features/property/events/PropertyChange.h"
 #include "base_library/features/property/exceptions/PropertyNoRuntimeChangeSupported.h"
 #include "base_library/features/property/exceptions/PropertyNotFoundException.h"
 #include "base_library/features/property/models/Property.h"
@@ -38,6 +41,8 @@ private:
             m_properties;  // identifier (name_instanceName_processName), Property
     std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>>
             m_typeRepositoryMap;
+    std::shared_ptr<IEventBus> m_changeBus;
+    std::string m_changeSubscriber;
 
     // functions
     /** Build a unique identifier string from property coordinates */
@@ -76,7 +81,27 @@ private:
             std::map<PropertyRepositoryType,
                     std::vector<std::shared_ptr<PropertyBase>>> &map);
 
+    /** Publish a change notification on the configured bus.
+     * @param property the changed property */
+    void publishChange(const std::shared_ptr<PropertyBase> &property);
+
+    /** Apply a change notification to a local property.
+     * @param change the received change notification
+     * @return true if a local property was updated */
+    bool applyChange(const PropertyChange &change);
+
+    /** Resolve the full value of a truncated change notification by reading it
+     * from a locked source (the shared memory property repository).
+     * @param change the truncated change notification
+     * @return the full value, or std::nullopt if it could not be resolved */
+    std::optional<std::string> resolveChangeValue(const PropertyChange &change);
+
 public:
+    /** Event bus topic carrying property change notifications. */
+    static constexpr std::string_view PROPERTY_CHANGES_TOPIC =
+            "property_changes";
+    /** Event type of property change notifications. */
+    static constexpr std::string_view PROPERTY_CHANGES_TYPE = "property_change";
     /** @param propertyRepositories list of all property repositories
      *  @param abstractServices list of services to notify on property changes */
     PropertyService(
@@ -154,6 +179,16 @@ public:
     void changeStringValueOf(const std::shared_ptr<PropertyBase> &property,
                              const std::string &value);
 
+    /** Connect the change notification bus and subscribe for property changes.
+     * @param bus the event bus view used for notifications
+     * @param subscriberName a name unique to this process */
+    void setPropertyChangeBus(const std::shared_ptr<IEventBus> &bus,
+                              const std::string &subscriberName);
+
+    /** Drain pending change notifications and apply them to local properties.
+     * @return the number of applied changes */
+    std::size_t applyChangeNotifications();
+
     /** Build repository type-to-instance map */
     std::map<PropertyRepositoryType, std::shared_ptr<PropertyRepository>>
     buildMap(const std::vector<std::shared_ptr<PropertyRepository>> &vector);
@@ -198,13 +233,16 @@ void PropertyService::changeValueOf(
     std::static_pointer_cast<Property<T>>(propertyBase)->setValue(value);
     if (m_mutablePropertyRepositories.empty()) {
         LOG_ERROR("no mutable property repositories available");
-        return;
+    } else {
+        std::static_pointer_cast<Property<T>>(propertyBase)
+                ->setDataStorage(m_mutablePropertyRepositories[0]->getDataStorage());
+        for (const auto &item: m_mutablePropertyRepositories) {
+            item->save(propertyBase);
+        }
     }
-    std::static_pointer_cast<Property<T>>(propertyBase)
-            ->setDataStorage(m_mutablePropertyRepositories[0]->getDataStorage());
-    for (const auto &item: m_mutablePropertyRepositories) {
-        item->save(propertyBase);
-    }
+    // publish after the repositories are updated, so that receivers resolving
+    // a truncated value from shared memory read the new value
+    publishChange(propertyBase);
 }
 
 #endif  // LOGGING_PROPERTYSERVICE_H

@@ -3,22 +3,21 @@
 
 #include <chrono>
 #include <memory>
-#include <shared_mutex>
 #include <string>
 #include <type_traits>
 
 #include "base_library/core/services/StringifyService.h"
 #include "base_library/core/utils/TypeName.h"
 #include "base_library/features/property/models/PropertyBase.h"
+#include "base_library/features/property/models/PropertyValueStorage.h"
 
 class PropertyService;
 
-/** Typed property with thread-safe read/write access */
+/** Typed property with thread-safe, lock-free read/write access for POD types */
 template<class T>
 class Property : public PropertyBase {
 private:
-    T m_value;
-    std::shared_mutex m_mutex;
+    PropertyValueStorage<T> m_storage;
 
     /** @return the type name string for this property's template type */
     static std::string_view getTypeName() {
@@ -50,37 +49,34 @@ public:
              T value, const std::string &description, bool runtimeChange)
         : PropertyBase(name, instanceName, className, processName,
                        description, runtimeChange),
-          m_value(std::move(value)) {}
+          m_storage(std::move(value)) {}
 
     Property()
-        : PropertyBase("", "", "", "", "", false), m_value{} {}
+        : PropertyBase("", "", "", "", "", false), m_storage() {}
 
     [[nodiscard]] std::string getType() const override {
         return std::string(getTypeName());
     }
 
     /** @return the current value (thread-safe read) */
-    T getValue() {
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
-        return m_value;
+    T getValue() { return m_storage.load(); }
+
+    /** @return true if reads/writes are guaranteed lock-free */
+    [[nodiscard]] static constexpr bool isLockFree() {
+        return PropertyValueStorage<T>::isLockFree();
     }
 
     /** @return string representation of the current value */
     std::string toString() override {
-        std::shared_lock<std::shared_mutex> lock(m_mutex);
-        return StringifyService<T>::serializeToString(m_value);
+        return StringifyService<T>::serializeToString(m_storage.load());
     }
 
     /** Set the value (thread-safe write) */
-    void setValue(const T &value) {
-        std::lock_guard<std::shared_mutex> lock(m_mutex);
-        m_value = value;
-    }
+    void setValue(const T &value) { m_storage.store(value); }
 
     /** Set the value from a string representation */
     void setValueString(const std::string &value) override {
-        std::lock_guard<std::shared_mutex> lock(m_mutex);
-        m_value = StringifyService<T>::deserializeFromString(value);
+        m_storage.store(StringifyService<T>::deserializeFromString(value));
     }
 
     friend class PropertyService;

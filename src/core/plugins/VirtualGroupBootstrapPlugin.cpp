@@ -19,6 +19,10 @@ BootstrapSequence VirtualGroupBootstrapPlugin::getPriority() {
 }
 
 void VirtualGroupBootstrapPlugin::onStart() {
+    if (m_connectionEntry == nullptr) {
+        LOG_INFO("no default database connection - skip virtual group bootstrap");
+        return;
+    }
     auto groupProviders = m_container->resolveAll<GroupProvider>();
     std::set<Group> groups;
     for (const auto &groupProvider: groupProviders) {

@@ -99,6 +99,7 @@ set(headers
     include/base_library/core/plugins/DatabaseBootstrapPlugin.h
     include/base_library/core/plugins/MessageQueueBootstrapPlugin.h
     include/base_library/core/plugins/SharedMemoryBootstrapPlugin.h
+    include/base_library/core/plugins/SingleInstanceBootstrapPlugin.h
     include/base_library/core/plugins/VirtualGroupBootstrapPlugin.h
     # core - services
     include/base_library/core/services/AbstractService.h
@@ -141,6 +142,8 @@ set(headers
     include/base_library/features/base/configuration/LoggerSinkConfiguration.h
     include/base_library/features/base/configuration/MessageQueueComponent.h
     include/base_library/features/base/configuration/MessageQueueEntry.h
+    include/base_library/features/base/configuration/HistoryComponent.h
+    include/base_library/features/base/configuration/HistoryServiceEntry.h
     include/base_library/features/base/configuration/EventBusComponent.h
     include/base_library/features/base/configuration/EventBusEntry.h
     include/base_library/features/base/configuration/ProcessComponent.h
@@ -197,9 +200,11 @@ set(headers
     include/base_library/features/base/services/AuthService.h
     include/base_library/features/base/services/ExecutorService.h
     include/base_library/features/base/services/HistoryService.h
+    include/base_library/features/base/services/IHistoryService.h
     include/base_library/features/base/services/InitializeService.h
     include/base_library/features/base/services/MessageQueueService.h
     include/base_library/features/base/services/EventBusService.h
+    include/base_library/features/base/services/NoopHistoryService.h
     include/base_library/features/base/services/ProcessArgumentService.h
     include/base_library/features/base/services/SchedulerService.h
     include/base_library/features/base/services/SharedMemorySegmentManager.h
@@ -264,6 +269,7 @@ set(headers
     include/base_library/features/property/controller/PropertyController.h
     include/base_library/features/property/controller/PropertyDto.h
     include/base_library/features/property/controller/PropertyValueDto.h
+    include/base_library/features/property/events/PropertyChange.h
     include/base_library/features/property/exceptions/PropertyNoRuntimeChangeSupported.h
     include/base_library/features/property/exceptions/PropertyNotFoundException.h
     include/base_library/features/property/factories/PropertyFactory.h
@@ -271,6 +277,7 @@ set(headers
     include/base_library/features/property/models/Property.h
     include/base_library/features/property/models/PropertyBase.h
     include/base_library/features/property/models/PropertyRepositoryType.h
+    include/base_library/features/property/models/PropertyValueStorage.h
     include/base_library/features/property/repositories/DatabasePropertyRepository.h
     include/base_library/features/property/repositories/FilePropertyRepository.h
     include/base_library/features/property/repositories/PropertyRepository.h
@@ -315,6 +322,7 @@ set(sources
     core/plugins/DatabaseBootstrapPlugin.cpp
     core/plugins/MessageQueueBootstrapPlugin.cpp
     core/plugins/SharedMemoryBootstrapPlugin.cpp
+    core/plugins/SingleInstanceBootstrapPlugin.cpp
     core/plugins/VirtualGroupBootstrapPlugin.cpp
     # core - services
     core/services/BootstrapService.cpp
@@ -345,6 +353,8 @@ set(sources
     features/base/configuration/LoggerComponent.cpp
     features/base/configuration/LoggerConfiguration.cpp
     features/base/configuration/LoggerEntry.cpp
+    features/base/configuration/HistoryComponent.cpp
+    features/base/configuration/HistoryServiceEntry.cpp
     features/base/configuration/LoggerPathConfiguration.cpp
     features/base/configuration/LoggerSinkConfiguration.cpp
     features/base/configuration/MessageQueueComponent.cpp

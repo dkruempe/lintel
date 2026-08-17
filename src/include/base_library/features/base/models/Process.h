@@ -20,6 +20,7 @@ private:
     std::filesystem::path m_path;
     std::vector<std::string> m_args;
     // configuration
+    std::string m_configName;
     bool m_autoRestart = false;
     int32_t m_restarts = 0;
     int m_maxAutoRestarts = -1;
@@ -35,8 +36,10 @@ public:
      * Constructor.
      * @param path path to the executable
      * @param args command-line arguments
+     * @param configName bootstrap config name used by the child process (empty = inherit)
      */
-    explicit Process(std::filesystem::path path, std::vector<std::string> args);
+    explicit Process(std::filesystem::path path, std::vector<std::string> args,
+                     std::string configName = "");
 
     /** @param onStart callback invoked when the process starts */
     void addOnStartEvent(
@@ -87,6 +90,9 @@ public:
 
     /** @return command-line arguments */
     [[nodiscard]] const std::vector<std::string> &getArgs() const;
+
+    /** @return bootstrap config name of the child process (empty = inherit) */
+    [[nodiscard]] const std::string &getConfigName() const;
 
     /** Trigger the onStart event. */
     void onStart() const;

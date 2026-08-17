@@ -1,7 +1,10 @@
 #include "base_library/features/base/models/Process.h"
 
-Process::Process(std::filesystem::path path, std::vector<std::string> args)
-        : m_path(std::move(path)), m_args(std::move(args)) {}
+Process::Process(std::filesystem::path path, std::vector<std::string> args,
+                 std::string configName)
+        : m_path(std::move(path)),
+          m_args(std::move(args)),
+          m_configName(std::move(configName)) {}
 
 void Process::onStart() const {
     if (m_onStart == nullptr) {
@@ -82,6 +85,8 @@ bool Process::isAutoRestart() const { return m_autoRestart; }
 int Process::getMaxAutoRestarts() const { return m_maxAutoRestarts; }
 
 const std::vector<std::string> &Process::getArgs() const { return m_args; }
+
+const std::string &Process::getConfigName() const { return m_configName; }
 
 void Process::increaseRestarts() { m_restarts++; }
 

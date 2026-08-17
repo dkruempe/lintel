@@ -16,6 +16,10 @@ GroupRepository::GroupRepository(
           m_connectionEntry(m_connectionConfigurations->ofDefault()) {}
 
 void GroupRepository::initGroups() {
+    if (m_connectionEntry == nullptr) {
+        LOG_INFO("no default database connection - skip group initialization");
+        return;
+    }
     db::Connection connection(m_connectionEntry);
     db::Statement statement(connection);
     // initialize virtual groups

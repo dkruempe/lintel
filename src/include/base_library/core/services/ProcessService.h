@@ -17,7 +17,7 @@
 #include "base_library/features/base/models/ProcessGroup.h"
 #include "base_library/features/base/models/ProcessInfo.h"
 #include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/base/services/HistoryService.h"
+#include "base_library/features/base/services/IHistoryService.h"
 
 /** Service for managing process execution, monitoring, and process groups. */
 class ProcessService : public PropertyRegistration<ProcessService> {
@@ -82,7 +82,7 @@ private:
     std::shared_ptr<EnvironmentConfiguration> m_environmentConfiguration;
     std::shared_ptr<Process> m_process;
     std::shared_ptr<Configuration> m_configuration;
-    std::shared_ptr<HistoryService> m_historyService;
+    std::shared_ptr<IHistoryService> m_historyService;
     // variables
     std::mutex m_processesMutex;
     std::map<std::string, ProcessExecutes> m_processes;
@@ -102,6 +102,16 @@ private:
 
     void monitorProcessGroups();
 
+    /** Spawn a child process with the configured bootstrap config.
+     * @param path the resolved executable path
+     * @param args the command-line arguments
+     * @param configName the bootstrap config name for the child, empty to inherit
+     * @return the child process handle */
+    std::shared_ptr<boost::process::v1::child> spawnChild(
+            const std::filesystem::path &path,
+            const std::vector<std::string> &args,
+            const std::string &configName);
+
 public:
     /** Construct a ProcessService.
      * @param processName              the process name
@@ -112,7 +122,7 @@ public:
             std::shared_ptr<ProcessName> processName,
             std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,
             std::shared_ptr<Configuration> configuration,
-            std::shared_ptr<HistoryService> historyService);
+            std::shared_ptr<IHistoryService> historyService);
 
     ~ProcessService() override;
 

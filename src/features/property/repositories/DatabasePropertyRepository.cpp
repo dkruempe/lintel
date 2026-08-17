@@ -73,8 +73,12 @@ void DatabasePropertyRepository::save(
                     .add(item->getClassName())
                     .add(item->getProcessName())
                     .add(item->getType())
-                    .add(item->toString())
                     .add(item->toString());
+            if (m_connectionEntry->getType() == db::ConnectionType::PostgreSQL) {
+                // the PostgreSQL query has an additional placeholder for the
+                // value inside the ON CONFLICT DO UPDATE clause
+                builder.add(item->toString());
+            }
             preparedStatement.execute(builder);
         }
         transaction.commit();

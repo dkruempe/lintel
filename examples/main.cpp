@@ -2,9 +2,11 @@
 #include <base_library/core/services/SharedMemoryService.h>
 #include <base_library/features/base/BaseFeature.h>
 #include <base_library/features/base/repositories/SharedMemoryRepository.h>
+#include <base_library/features/base/services/EventBusService.h>
 #include <base_library/features/cli/CommandLineFeature.h>
 #include <base_library/features/http/HttpFeature.h>
 #include <base_library/features/property/PropertyFeature.h>
+#include <base_library/features/property/services/PropertyService.h>
 
 #include <utility>
 
@@ -342,6 +344,12 @@ public:
 
     void initialize(std::shared_ptr<Hypodermic::Container> container) override {
         m_shmVec = container->resolve<ShmVec>();
+        // publish property changes on the event bus so that the worker
+        // processes receive them through the shared memory mirror
+        auto propertyService = container->resolve<PropertyService>();
+        auto eventBusService = container->resolve<EventBusService>();
+        propertyService->setPropertyChangeBus(eventBusService->of("main"),
+                                              "main");
     }
 };
 

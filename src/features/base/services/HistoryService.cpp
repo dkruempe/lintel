@@ -12,6 +12,7 @@ HistoryService::HistoryService(
         : PropertyRegistration(processName->getProcessName()),
           m_schedulerService(std::move(schedulerService)),
           m_historyRepository(std::move(historyRepository)), m_messageQueueSerivice(std::move(messageQueueService)),
+          m_ownProcessName(processName->getProcessName()),
           m_processName(std::move(processName)), m_historyMessageQueue(
                 m_messageQueueSerivice->of(static_cast<MessageQueues>(MessageQueues::HISTORY).getMessageQueueName())),
           m_historyMessageQueueReceive(m_messageQueueSerivice->of(
@@ -30,7 +31,16 @@ HistoryService::HistoryService(
             "Commit Rate", true, __FILE__, __LINE__);
 }
 
+const std::string &HistoryService::getProcessName() const {
+    return m_ownProcessName;
+}
+
 void HistoryService::onInitialize() {
+    if (!m_historyMessageQueue->isOwner()) {
+        LOG_INFO("non-owner process {} — consumer thread not started",
+                 m_processName->getProcessName());
+        return;
+    }
     std::weak_ptr<HistoryService> weakSelf = shared_from_this();
     m_schedulerService->schedule_after(m_period->getValue(),
                                        [weakSelf]() {

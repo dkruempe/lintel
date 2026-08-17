@@ -65,7 +65,7 @@ void AdminUserBootstrapPlugin::onStart() {
         db::ParameterBuilder groupBuilder(connectionEntry);
         groupBuilder.add(std::string(kAdminGroupName));
         db::Result groupResult = statement.execute(
-                "select group_name from groups where group_name = ?",
+                "select name from groups where name = ?",
                 groupBuilder);
         if (groupResult.getSize() <= 0) {
             LOG_ERROR("group {} does not exist - skip admin bootstrap",

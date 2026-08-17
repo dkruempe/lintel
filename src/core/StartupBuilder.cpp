@@ -64,14 +64,17 @@ void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment
 void StartupBuilder::start() {
     // I injection
     Hypodermic::ContainerBuilder builder;
-    for (auto &&feature: m_featureVec) {
-        feature->registerTypes(builder);
-    }
-    builder.registerInstance(m_name);
-    builder.registerInstance(m_environmentConfiguration);
     m_configuration = std::make_shared<Configuration>(
             m_configurationComponentBuilder->build(), m_environmentConfiguration);
     builder.registerInstance(m_configuration);
+    builder.registerInstance(m_name);
+    builder.registerInstance(m_environmentConfiguration);
+    // the configuration and process name are available to features during
+    // registration so that services can be registered conditionally
+    // (e.g. HistoryService only in its explicitly configured owner process)
+    for (auto &&feature: m_featureVec) {
+        feature->registerTypes(builder, m_configuration, m_name);
+    }
     // II logger
     DECLARE_LOGGER(m_name, m_configuration);
     // III dedicated signal handling thread (sigwait instead of std::signal)

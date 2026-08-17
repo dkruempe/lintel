@@ -22,6 +22,9 @@ std::shared_ptr<Entry> ProcessComponent::parseProcess(
             processElement->Attribute(m_shapes.PROCESS_MAX_RESTARTS);
     const char *argsStr =
             processElement->Attribute(m_shapes.PROCESS_ARGS);
+    // optional bootstrap config name for the child process
+    const char *configName =
+            processElement->Attribute(m_shapes.PROCESS_CONFIG);
 
     if (name == nullptr) {
         throw ConfigurationException(getConfigRoot(), "process - name is null",
@@ -46,7 +49,8 @@ std::shared_ptr<Entry> ProcessComponent::parseProcess(
     if (std::strcmp(argsStr, "") != 0) {
         args = StringUtils::split(argsStr, ',');
     }
-    std::shared_ptr<Process> process = std::make_shared<Process>(name, args);
+    std::shared_ptr<Process> process = std::make_shared<Process>(
+            name, args, configName == nullptr ? "" : configName);
     bool isAutoRestart = std::strcmp(autoRestartsStr, "true") == 0;
     int32_t maxRestarts = std::stoi(maxRestartsStr);
     if (isAutoRestart) {

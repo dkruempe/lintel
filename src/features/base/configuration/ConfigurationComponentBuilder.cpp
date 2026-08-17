@@ -4,6 +4,7 @@
 
 #include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
 #include "base_library/features/base/configuration/EventBusComponent.h"
+#include "base_library/features/base/configuration/HistoryComponent.h"
 #include "base_library/features/base/configuration/LoggerComponent.h"
 #include "base_library/features/base/configuration/MessageQueueComponent.h"
 #include "base_library/features/base/configuration/ProcessComponent.h"
@@ -26,6 +27,7 @@ ConfigurationComponentBuilder::ConfigurationComponentBuilder(
     m_components.push_back(std::make_shared<PropertyRepositoryComponent>());
     m_components.push_back(std::make_shared<ProcessComponent>());
     m_components.push_back(std::make_shared<MessageQueueComponent>());
+    m_components.push_back(std::make_shared<HistoryComponent>());
     m_components.push_back(std::make_shared<EventBusComponent>());
 }
 

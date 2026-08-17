@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_PROPERTYCONTROLLER_H
 #define CPP_BASE_LIBRARY_PROPERTYCONTROLLER_H
 
-#include "base_library/features/base/services/HistoryService.h"
+#include "base_library/features/base/services/IHistoryService.h"
 #include "base_library/features/base/services/IAuthService.h"
 #include "base_library/features/http/service/Controller.h"
 #include "base_library/features/property/services/PropertyService.h"
@@ -10,7 +10,7 @@
 class PropertyController : public Controller {
 private:
     std::shared_ptr<PropertyService> m_propertyService;
-    std::shared_ptr<HistoryService> m_historyService;
+    std::shared_ptr<IHistoryService> m_historyService;
     Group m_adminGroup;
     Group m_userGroup;
     ADD_HANDLER_METHOD(R"(/properties/([^\/]+)/([^\/]+)/([^\/]+))", Get,
@@ -25,7 +25,7 @@ private:
 public:
     explicit PropertyController(std::shared_ptr<PropertyService> propertyService,
                                 const std::shared_ptr<IAuthService> &authService,
-                                std::shared_ptr<HistoryService> historyService);
+                                std::shared_ptr<IHistoryService> historyService);
 };
 
 #endif  // CPP_BASE_LIBRARY_PROPERTYCONTROLLER_H

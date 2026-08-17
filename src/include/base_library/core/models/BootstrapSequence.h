@@ -13,11 +13,12 @@ public:
     // value is defining priority of property repository type
     enum Value {
         Undefined = 0,
-        Database = 1,
-        MessageQueue = 2,
-        VirtualGroups = 3,
-        SharedMemory = 4,
-        AdminUser = 5
+        SingleInstance = 1,
+        Database = 2,
+        MessageQueue = 3,
+        VirtualGroups = 4,
+        SharedMemory = 5,
+        AdminUser = 6
     };
 
     /** Default constructor, initializes to Undefined. */

@@ -2,16 +2,12 @@
 <Configuration>
     <!-- Process Configuration for Application -->
     <Processes>
-        <!--<Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"
-                 maxRestarts="-1"/>-->
-        <!--        <ProcessGroup name="test_group">-->
-        <!--            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"-->
-        <!--                     maxRestarts="-1"/>-->
-        <!--            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test.sh" args="" autoRestart="true"-->
-        <!--                     maxRestarts="5"/>-->
-        <!--            <Process name="/Users/dkruempe/CLionProjects/cpp-base-library/examples/test_process.sh" args=""-->
-        <!--                     autoRestart="true" maxRestarts="2"/>-->
-        <!--        </ProcessGroup>-->
+        <!-- worker processes share memory + event bus with main but never
+             touch the database; config selects their DB-free bootstrap -->
+        <Process name="/home/dominik/cpp-base-library/bin/worker" args="" autoRestart="true"
+                 maxRestarts="-1" config="bootstrap_worker"/>
+        <Process name="/home/dominik/cpp-base-library/bin/worker" args="" autoRestart="true"
+                 maxRestarts="-1" config="bootstrap_worker"/>
     </Processes>
 
     <!-- Logging Configuration for Application -->
@@ -32,6 +28,13 @@
     <MessageQueues>
         <MessageQueue process_name="main" name="history" max_messages="1000" remove_on_shutdown="false"/>
     </MessageQueues>
+
+    <!-- History Service Configuration: explicitly activated and owned by the
+         main process. Only the process whose name matches process_name
+         creates the HistoryService; all other processes never start it. -->
+    <HistoryServices>
+        <HistoryService process_name="main" queue="history" max_messages="1000"/>
+    </HistoryServices>
 
     <!-- Database Connections Configuration -->
     <DatabaseConnections>

@@ -52,6 +52,10 @@ void MessageQueueRepository::deleteOf(const std::vector<MessageQueueEntry> &entr
 std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &processName,
   const std::string &messageQueueName)
 {
+  if (m_connectionEntry == nullptr) {
+    LOG_INFO("no default database connection - skip message queue sync from database");
+    return {};
+  }
   std::string stmt;
   switch (m_connectionEntry->getType()) {
   case db::ConnectionType::SQLite:

@@ -12,7 +12,7 @@
 PropertyController::PropertyController(
         std::shared_ptr<PropertyService> propertyService,
         const std::shared_ptr<IAuthService> &authService,
-        std::shared_ptr<HistoryService> historyService)
+        std::shared_ptr<IHistoryService> historyService)
         : Controller(authService),
           m_propertyService(std::move(propertyService)),
           m_historyService(std::move(historyService)),

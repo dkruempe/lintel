@@ -1,0 +1,51 @@
+<!-- General configuration of the worker processes.
+     The worker processes never touch the database: they load properties from
+     the shared memory mirror (shm_property) and receive change notifications
+     through the event bus (shm_eventbus). The worker opens the owner's
+     "history" message queue (process_name="main") for producing entries;
+     the real HistoryService in the worker is producer-only — no consumer
+     thread is started. Main reads from the queue and persists the entries. -->
+<Configuration>
+    <!-- Logging Configuration for worker processes -->
+    <Loggers>
+        <Path path="~/dev/log/cpp-base-library" create_sub_dirs="true"/>
+        <Logger process_name="worker" level="info" async="false">
+            <LoggerSink type="RotatingFileSink" level="trace" size="5MB" max_files="10"/>
+        </Logger>
+    </Loggers>
+
+    <!-- History Service Configuration: the worker is NOT the owner
+         (process_name="main" ≠ "worker"), so HistoryService runs in
+         producer-only mode — entries are sent through the IPC queue. -->
+    <HistoryServices>
+        <HistoryService process_name="main" queue="history" max_messages="1000"/>
+    </HistoryServices>
+
+    <!-- Message Queue Configuration: open the owner's history queue for
+         producing entries; the worker is NOT the queue owner (process_name
+         matches "main"), so historizeOf() automatically sends through the
+         IPC queue instead of buffering in memory. -->
+    <MessageQueues>
+        <MessageQueue process_name="main" name="history" max_messages="1000"
+                      remove_on_shutdown="false"/>
+    </MessageQueues>
+
+    <!-- Shared Memory Segments Configuration (same segments as the main process) -->
+    <SharedMemorySegments>
+        <Path path="~/dev/shm"/>
+        <SharedMemorySegment name="shm_property" size="5MB" auto_extend_size="2MB" max_size="100MB"/>
+        <SharedMemorySegment name="shm_eventbus" size="8MB" auto_extend_size="2MB" max_size="50MB"/>
+    </SharedMemorySegments>
+
+    <!-- Event Bus Configuration (same bus as the main process) -->
+    <EventBuses>
+        <EventBus name="main" segment="shm_eventbus" bus_capacity="128"
+                  subscriber_capacity="128" max_topics="8" max_subscribers="8"/>
+    </EventBuses>
+
+    <!-- Property Configurations: file + shared memory mirror only, no database -->
+    <PropertyRepositories>
+        <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="false"/>
+        <PropertyRepository type="SHM_REPOSITORY" mutable="true" shadow="false"/>
+    </PropertyRepositories>
+</Configuration>

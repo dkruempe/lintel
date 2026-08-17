@@ -362,14 +362,131 @@ void PropertyService::changeStringValueOf(
     LOG_INFO("{} change to {}", ss.str(), value);
     propertyBase->setValueString(value);
     if (m_mutablePropertyRepositories.empty()) {
-        LOG_ERROR("{}: not mutable property repository", propertyBase->getIdentifier());
+        LOG_ERROR("{}: not mutable property repository",
+                  propertyBase->getIdentifier());
+    } else {
+        // PropertyRepository with highest priority wins => DataStorage of the
+        // highest priority is set
+        propertyBase->setDataStorage(
+                m_mutablePropertyRepositories[0]->getDataStorage());
+        for (const auto &iter: m_mutablePropertyRepositories) {
+            iter->save(propertyBase);
+        }
+    }
+    // publish after the repositories are updated, so that receivers resolving
+    // a truncated value from shared memory read the new value
+    publishChange(propertyBase);
+}
+
+void PropertyService::publishChange(
+        const std::shared_ptr<PropertyBase> &property) {
+    if (m_changeBus == nullptr) {
         return;
     }
-    // PropertyRepository with highest priority wins => DataStorage of the highest
-    // priority is set
-    propertyBase->setDataStorage(
-            m_mutablePropertyRepositories[0]->getDataStorage());
-    for (const auto &iter: m_mutablePropertyRepositories) {
-        iter->save(propertyBase);
+    Event event{std::string(PROPERTY_CHANGES_TOPIC),
+                std::string(PROPERTY_CHANGES_TYPE)};
+    event.assign(PropertyChange::of(*property));
+    if (!m_changeBus->publishToSubscribers(event)) {
+        LOG_WARN("property change for {} could not be delivered",
+                 property->getIdentifier());
     }
+}
+
+void PropertyService::setPropertyChangeBus(
+        const std::shared_ptr<IEventBus> &bus, const std::string &subscriberName) {
+    m_changeBus = bus;
+    m_changeSubscriber = subscriberName;
+    if (m_changeBus == nullptr) {
+        return;
+    }
+    m_changeBus->registerTopic(std::string(PROPERTY_CHANGES_TOPIC));
+    if (!m_changeBus->subscribe(std::string(PROPERTY_CHANGES_TOPIC),
+                                m_changeSubscriber)) {
+        LOG_ERROR("could not subscribe {} to {}",
+                  m_changeSubscriber, PROPERTY_CHANGES_TOPIC);
+    }
+}
+
+bool PropertyService::applyChange(const PropertyChange &change) {
+    try {
+        auto &property = get(change.name, change.instanceName, change.className,
+                             change.processName);
+        if (!property->isRuntimeChange()) {
+            LOG_WARN("ignoring change of {}: runtime change not supported",
+                     change.identifier());
+            return false;
+        }
+        std::string value = change.value;
+        if (change.m_valueTruncated) {
+            // the event payload cannot carry the full value: deliberately take
+            // the lock and read the authoritative value from shared memory
+            auto resolved = resolveChangeValue(change);
+            if (!resolved) {
+                return false;
+            }
+            value = *resolved;
+        }
+        if (property->toString() == value) {
+            return false;
+        }
+        property->setValueString(value);
+        LOG_INFO("property {} changed to {}", change.identifier(), value);
+        return true;
+    } catch (PropertyNotFoundException &exception) {
+        LOG_WARN("received change for unknown property {}", change.identifier());
+        return false;
+    }
+}
+
+std::optional<std::string>
+PropertyService::resolveChangeValue(const PropertyChange &change) {
+    for (const auto &repository: m_propertyRepositories) {
+        if (repository->getType() != PropertyRepositoryType::SHM_REPOSITORY) {
+            continue;
+        }
+        std::vector<std::shared_ptr<PropertyBase>> candidates;
+        try {
+            candidates =
+                    repository->allOf(change.processName, change.className,
+                                      change.instanceName, change.name);
+        } catch (const std::exception &exception) {
+            LOG_ERROR("cannot resolve value of {}: {}", change.identifier(),
+                      exception.what());
+            return std::nullopt;
+        }
+        for (const auto &candidate: candidates) {
+            if (candidate->getName() == change.name &&
+                candidate->getInstanceName() == change.instanceName &&
+                candidate->getClassName() == change.className &&
+                candidate->getProcessName() == change.processName) {
+                return candidate->toString();
+            }
+        }
+        LOG_ERROR(
+                "cannot resolve value of {}: property not found in shared memory",
+                change.identifier());
+        return std::nullopt;
+    }
+    LOG_ERROR(
+            "cannot apply truncated change of {}: no shared memory repository "
+            "configured",
+            change.identifier());
+    return std::nullopt;
+}
+
+std::size_t PropertyService::applyChangeNotifications() {
+    if (m_changeBus == nullptr) {
+        return 0;
+    }
+    std::size_t applied = 0;
+    while (auto event = m_changeBus->receiveOf(m_changeSubscriber)) {
+        if (event->topic() != PROPERTY_CHANGES_TOPIC ||
+            event->type() != PROPERTY_CHANGES_TYPE) {
+            continue;
+        }
+        if (applyChange(event->as<PropertyChange>())) {
+            ++applied;
+        }
+    }
+    return applied;
 }

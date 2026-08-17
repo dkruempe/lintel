@@ -30,6 +30,12 @@ target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
 target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
 
+# property Change Test
+ADD_EXECUTABLE(propertyChangeTest property/PropertyChangeTest.cpp)
+target_compile_features(propertyChangeTest PUBLIC cxx_std_17)
+target_link_libraries(propertyChangeTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.PropertyChangeTest COMMAND propertyChangeTest)
+
 # Integration Tests
 
 # SQLite Integration Test
@@ -74,11 +80,35 @@ target_compile_features(configComponentsTest PUBLIC cxx_std_17)
 target_link_libraries(configComponentsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.ConfigComponentsTest COMMAND configComponentsTest)
 
+# History Component Test
+ADD_EXECUTABLE(historyComponentTest features/HistoryComponentTest.cpp)
+target_compile_features(historyComponentTest PUBLIC cxx_std_17)
+target_link_libraries(historyComponentTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.HistoryComponentTest COMMAND historyComponentTest)
+
+# History Service Gating Test
+ADD_EXECUTABLE(historyServiceGatingTest features/HistoryServiceGatingTest.cpp)
+target_compile_features(historyServiceGatingTest PUBLIC cxx_std_17)
+target_link_libraries(historyServiceGatingTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.HistoryServiceGatingTest COMMAND historyServiceGatingTest)
+
 # Event Bus Test
 ADD_EXECUTABLE(eventBusTest events/EventBusTest.cpp)
 target_compile_features(eventBusTest PUBLIC cxx_std_17)
 target_link_libraries(eventBusTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
 ADD_TEST(NAME BaseLibrary.EventBusTest COMMAND eventBusTest)
+
+# SharedMemoryBootstrapPlugin Test
+ADD_EXECUTABLE(sharedMemoryBootstrapPluginTest plugins/SharedMemoryBootstrapPluginTest.cpp)
+target_compile_features(sharedMemoryBootstrapPluginTest PUBLIC cxx_std_17)
+target_link_libraries(sharedMemoryBootstrapPluginTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.SharedMemoryBootstrapPluginTest COMMAND sharedMemoryBootstrapPluginTest)
+
+# SingleInstanceBootstrapPlugin Test
+ADD_EXECUTABLE(singleInstanceBootstrapPluginTest plugins/SingleInstanceBootstrapPluginTest.cpp)
+target_compile_features(singleInstanceBootstrapPluginTest PUBLIC cxx_std_17)
+target_link_libraries(singleInstanceBootstrapPluginTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
+ADD_TEST(NAME BaseLibrary.SingleInstanceBootstrapPluginTest COMMAND singleInstanceBootstrapPluginTest)
 
 # CLI Parser Test
 ADD_EXECUTABLE(cliParserTest cli/CliParserTest.cpp)

@@ -217,6 +217,9 @@ std::vector<HistoryEntry> HistoryRepository::allOfService(
 }
 
 void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) const {
+    if (m_connectionEntry == nullptr) {
+        return;
+    }
     try {
         db::Connection const connection(m_connectionEntry);
         db::Transaction transaction(connection);

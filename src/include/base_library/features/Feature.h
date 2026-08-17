@@ -9,11 +9,33 @@
 #include "Hypodermic/Container.h"
 #include "base_library/features/Features.h"
 
+class Configuration;
+class ProcessName;
+
 /** Interface for all feature implementations */
 class FeatureInterface {
 public:
     /** Register dependency injection types for this feature */
     virtual void registerTypes(Hypodermic::ContainerBuilder &builder) = 0;
+
+    /** Register dependency injection types for this feature.
+     *
+     * The configuration and process name are available at registration time
+     * so that features can conditionally register types (e.g. a service that
+     * is only created in the process explicitly configured as its owner).
+     *
+     * @param builder the DI container builder
+     * @param configuration the parsed application configuration
+     * @param processName the process name of the running process
+     */
+    virtual void registerTypes(
+            Hypodermic::ContainerBuilder &builder,
+            const std::shared_ptr<Configuration> &configuration,
+            const std::shared_ptr<ProcessName> &processName) {
+        (void)configuration;
+        (void)processName;
+        registerTypes(builder);
+    }
 
     /** Initialize the feature with the resolved container */
     virtual void initialize(std::shared_ptr<Hypodermic::Container> container) = 0;

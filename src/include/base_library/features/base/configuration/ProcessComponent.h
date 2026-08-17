@@ -17,6 +17,7 @@ private:
         const char *const PROCESS_AUTO_RESTART = "autoRestart";
         const char *const PROCESS_ARGS = "args";
         const char *const PROCESS_MAX_RESTARTS = "maxRestarts";
+        const char *const PROCESS_CONFIG = "config";
         const char *const PROCESS_GROUP_ROOT = "ProcessGroup";
         const char *const PROCESS_GROUP_NAME = "name";
     } m_shapes;

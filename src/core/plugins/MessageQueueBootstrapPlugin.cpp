@@ -27,6 +27,10 @@ BootstrapSequence MessageQueueBootstrapPlugin::getPriority() {
 }
 
 void MessageQueueBootstrapPlugin::onStart() {
+    if (m_connectionEntry == nullptr) {
+        LOG_INFO("no default database connection - skip message queue bootstrap");
+        return;
+    }
     auto entries = m_configuration->configurationOf<MessageQueueComponent>();
     std::map<std::string, std::shared_ptr<MessageQueueEntry>> messageQueueEntries;
     for (const auto &entry: entries) {

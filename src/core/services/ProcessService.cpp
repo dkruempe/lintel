@@ -23,7 +23,7 @@
 ProcessService::ProcessService(std::shared_ptr<ProcessName> processName,
   std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,
   std::shared_ptr<Configuration> configuration,
-  std::shared_ptr<HistoryService> historyService)
+  std::shared_ptr<IHistoryService> historyService)
   : PropertyRegistration<ProcessService>(processName->getProcessName()), m_processName(std::move(processName)),
     m_environmentConfiguration(std::move(environmentConfiguration)), m_configuration(std::move(configuration)),
     m_historyService(std::move(historyService))
@@ -96,6 +96,21 @@ std::vector<ProcessInfo> ProcessService::allActiveOf()
   return temp;
 }
 
+std::shared_ptr<boost::process::v1::child> ProcessService::spawnChild(
+        const std::filesystem::path &path,
+        const std::vector<std::string> &args, const std::string &configName) {
+    if (configName.empty()) {
+        return std::make_shared<boost::process::v1::child>(path.string(), args,
+          boost::process::v1::std_out > boost::process::v1::null,
+          boost::process::v1::std_err > boost::process::v1::null);
+    }
+    // the child loads its own bootstrap config (e.g. a DB-free variant)
+    return std::make_shared<boost::process::v1::child>(path.string(), args,
+      boost::process::v1::env["BOOTSTRAP_CONFIG_NAME"] = configName,
+      boost::process::v1::std_out > boost::process::v1::null,
+      boost::process::v1::std_err > boost::process::v1::null);
+}
+
 std::optional<std::future<int>> ProcessService::startOf(const Process &process)
 {
   if (!m_running) { return std::nullopt; }
@@ -127,10 +142,8 @@ std::optional<std::future<int>> ProcessService::startOf(const Process &process)
     std::lock_guard<std::mutex> locker(m_processesMutex);
     ProcessExecutes processExecutes;
     processExecutes.setProcess(std::make_shared<Process>(process));
-    processExecutes.setChild(std::make_shared<boost::process::v1::child>(path.string(),
-      process.getArgs(),
-      boost::process::v1::std_out > boost::process::v1::null,
-      boost::process::v1::std_err > boost::process::v1::null));
+    processExecutes.setChild(spawnChild(path, process.getArgs(),
+                                       process.getConfigName()));
     future = processExecutes.getFuture();
     m_processes.insert({ process.getId(), processExecutes });
   }
@@ -176,10 +189,8 @@ void ProcessService::monitorProcess()
         if (!optPath.has_value()) { throw std::runtime_error("path invalid"); }
         path = optPath.value();
       }
-      processExecutes.setChild(std::make_shared<boost::process::v1::child>(path.string(),
-        processExecutes.getProcess()->getArgs(),
-        boost::process::v1::std_out > boost::process::v1::null,
-        boost::process::v1::std_err > boost::process::v1::null));
+      processExecutes.setChild(spawnChild(path, processExecutes.getProcess()->getArgs(),
+                                          processExecutes.getProcess()->getConfigName()));
       DEFINE_HISTORY_ENTRY(historyEntry,
         "PROCESS",
         fmt::format("{}/{} process restarted",
