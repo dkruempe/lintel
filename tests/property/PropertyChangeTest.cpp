@@ -28,29 +28,29 @@ namespace {
 
 using Segment = boost::interprocess::managed_mapped_file;
 
-std::filesystem::path uniqueShmPath() {
+std::filesystem::path uniquePropChangeShmPath() {
     static std::uint64_t counter = 0;
     return std::filesystem::temp_directory_path() /
            ("property_change_test_" + std::to_string(counter++) + ".bin");
 }
 
-struct BusFixture {
+struct PropChangeBusFixture {
     EventBusConfig config;
     std::filesystem::path path;
     std::size_t size;
     Segment segment;
     EventBus *bus;
 
-    explicit BusFixture(EventBusConfig fixtureConfig = EventBusConfig{})
+    explicit PropChangeBusFixture(EventBusConfig fixtureConfig = EventBusConfig{})
         : config(fixtureConfig),
-          path(uniqueShmPath()),
+          path(uniquePropChangeShmPath()),
           size(EventBus::requiredSize(config) + 4096u),
           segment(boost::interprocess::open_or_create, path.c_str(), size) {
         bus = segment.find_or_construct<EventBus>("bus")(
                 "bus", config, segment.get_segment_manager());
     }
 
-    ~BusFixture() {
+    ~PropChangeBusFixture() {
         segment.destroy_ptr(bus);
         segment.flush();
         std::filesystem::remove(path);
@@ -68,7 +68,7 @@ struct PropertyRepositoryFixture {
     std::filesystem::path path;
 
     PropertyRepositoryFixture()
-        : path(uniqueShmPath()) {
+        : path(uniquePropChangeShmPath()) {
         auto environmentConfiguration =
                 std::make_shared<EnvironmentConfiguration>();
         environmentConfiguration->overrides(
@@ -170,7 +170,7 @@ TEST_CASE("long string values are marked as truncated in the payload") {
 }
 
 TEST_CASE("property change is published and applied through the event bus") {
-    BusFixture fixture;
+    PropChangeBusFixture fixture;
     std::shared_ptr<IEventBus> busA =
             std::make_shared<EventBusView>(*fixture.bus);
     std::shared_ptr<IEventBus> busB =
@@ -203,7 +203,7 @@ TEST_CASE("property change is published and applied through the event bus") {
 }
 
 TEST_CASE("property change for an unknown property is ignored") {
-    BusFixture fixture;
+    PropChangeBusFixture fixture;
     std::shared_ptr<IEventBus> bus =
             std::make_shared<EventBusView>(*fixture.bus);
 
@@ -235,7 +235,7 @@ TEST_CASE("no change bus configured means no notifications") {
 }
 
 TEST_CASE("truncated value is applied in full from shared memory") {
-    BusFixture fixture;
+    PropChangeBusFixture fixture;
     std::shared_ptr<IEventBus> busA =
             std::make_shared<EventBusView>(*fixture.bus);
     std::shared_ptr<IEventBus> busB =
@@ -261,7 +261,7 @@ TEST_CASE("truncated value is applied in full from shared memory") {
 }
 
 TEST_CASE("truncated change without shared memory repository is not applied") {
-    BusFixture fixture;
+    PropChangeBusFixture fixture;
     std::shared_ptr<IEventBus> busA =
             std::make_shared<EventBusView>(*fixture.bus);
     std::shared_ptr<IEventBus> busB =

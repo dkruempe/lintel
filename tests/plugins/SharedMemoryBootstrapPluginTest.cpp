@@ -57,7 +57,7 @@ public:
     void onMigrate(int32_t) override {}
 };
 
-struct Fixture {
+struct ShmPluginFixture {
     static constexpr std::size_t propertySize = 1u << 20;
     static constexpr std::size_t eventBusSize = 8u << 20;
 
@@ -67,7 +67,7 @@ struct Fixture {
     std::shared_ptr<TestRepository> repository;
     std::shared_ptr<SharedMemoryBootstrapPlugin> plugin;
 
-    explicit Fixture(bool createFiles, bool withEventBus = true,
+    explicit ShmPluginFixture(bool createFiles, bool withEventBus = true,
                      const std::shared_ptr<DatabaseConnectionEntry> &dbEntry = nullptr,
                      const std::shared_ptr<EventBusEntry> &eventBusOverride = nullptr)
         : propertyPath(uniquePath("property")), eventBusPath(uniquePath("eventbus")) {
@@ -108,7 +108,7 @@ struct Fixture {
                 config);
     }
 
-    ~Fixture() {
+    ~ShmPluginFixture() {
         std::filesystem::remove(propertyPath);
         std::filesystem::remove(eventBusPath);
     }
@@ -141,29 +141,29 @@ void createTable(const std::filesystem::path &dbPath) {
 }  // namespace
 
 TEST_CASE("SharedMemoryBootstrapPlugin: missing segment files are valid") {
-    Fixture fixture(false);
+    ShmPluginFixture fixture(false);
     REQUIRE_NOTHROW(fixture.plugin->onStart());
 }
 
 TEST_CASE("SharedMemoryBootstrapPlugin: healthy segment files are valid") {
-    Fixture fixture(true);
+    ShmPluginFixture fixture(true);
     REQUIRE_NOTHROW(fixture.plugin->onStart());
 }
 
 TEST_CASE("SharedMemoryBootstrapPlugin: truncated segment file throws") {
-    Fixture fixture(true);
+    ShmPluginFixture fixture(true);
     std::filesystem::resize_file(fixture.propertyPath, 5000);
     REQUIRE_THROWS_AS(fixture.plugin->onStart(), std::runtime_error);
 }
 
 TEST_CASE("SharedMemoryBootstrapPlugin: garbage segment file throws") {
-    Fixture fixture(true);
+    ShmPluginFixture fixture(true);
     std::filesystem::resize_file(fixture.propertyPath, 64);
     REQUIRE_THROWS_AS(fixture.plugin->onStart(), std::runtime_error);
 }
 
 TEST_CASE("SharedMemoryBootstrapPlugin: event bus with matching config is valid") {
-    Fixture fixture(true);
+    ShmPluginFixture fixture(true);
     EventBusConfig config;
     config.busCapacity = 128;
     config.subscriberCapacity = 128;
@@ -174,7 +174,7 @@ TEST_CASE("SharedMemoryBootstrapPlugin: event bus with matching config is valid"
 }
 
 TEST_CASE("SharedMemoryBootstrapPlugin: event bus with different config throws") {
-    Fixture fixture(true);
+    ShmPluginFixture fixture(true);
     EventBusConfig config;
     config.busCapacity = 64;
     config.subscriberCapacity = 128;
@@ -187,14 +187,14 @@ TEST_CASE("SharedMemoryBootstrapPlugin: event bus with different config throws")
 TEST_CASE("SharedMemoryBootstrapPlugin: invalid event bus config throws") {
     auto badEntry = std::make_shared<EventBusEntry>(
             type_name<EventBusComponent>(), "main", "shm_eventbus", 128, 128, 0, 8);
-    Fixture fixture(true, true, nullptr, badEntry);
+    ShmPluginFixture fixture(true, true, nullptr, badEntry);
     REQUIRE_THROWS_AS(fixture.plugin->onStart(), std::runtime_error);
 }
 
 TEST_CASE("SharedMemoryBootstrapPlugin: inserts missing database bookmark") {
     const auto dbPath = uniquePath("db");
     createTable(dbPath);
-    Fixture fixture(true, false, sqliteEntry(dbPath));
+    ShmPluginFixture fixture(true, false, sqliteEntry(dbPath));
     REQUIRE_NOTHROW(fixture.plugin->onStart());
     db::Connection conn(db::ConnectionType::SQLite, dbPath.string());
     db::Statement stmt(conn);
@@ -212,7 +212,7 @@ TEST_CASE("SharedMemoryBootstrapPlugin: matching database bookmark is valid") {
         stmt.execute("INSERT INTO shared_memory_repositories VALUES "
                      "('test-repository', 'shm_property', 'Object', 'TestRepository', 1, 128)");
     }
-    Fixture fixture(true, false, sqliteEntry(dbPath));
+    ShmPluginFixture fixture(true, false, sqliteEntry(dbPath));
     REQUIRE_NOTHROW(fixture.plugin->onStart());
     std::filesystem::remove(dbPath);
 }
@@ -226,7 +226,7 @@ TEST_CASE("SharedMemoryBootstrapPlugin: database version mismatch throws") {
         stmt.execute("INSERT INTO shared_memory_repositories VALUES "
                      "('test-repository', 'shm_property', 'Object', 'TestRepository', 99, 128)");
     }
-    Fixture fixture(true, false, sqliteEntry(dbPath));
+    ShmPluginFixture fixture(true, false, sqliteEntry(dbPath));
     REQUIRE_THROWS_AS(fixture.plugin->onStart(), std::runtime_error);
     std::filesystem::remove(dbPath);
 }

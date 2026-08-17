@@ -33,13 +33,13 @@ std::filesystem::path uniqueLockDir(const std::string &tag) {
     return path;
 }
 
-struct Fixture {
+struct SingleInstanceFixture {
     std::filesystem::path lockDir;
     std::shared_ptr<Configuration> config;
     std::shared_ptr<ProcessName> processName;
     std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigs;
 
-    explicit Fixture(const std::string &process,
+    explicit SingleInstanceFixture(const std::string &process,
                      const std::string &tag = "default",
                      bool withDatabase = true,
                      const std::filesystem::path &dir = {})
@@ -62,12 +62,12 @@ struct Fixture {
         connectionConfigs = std::make_shared<DatabaseConnectionConfigurations>(config);
     }
 
-    ~Fixture() {
+    ~SingleInstanceFixture() {
         std::filesystem::remove_all(lockDir);
     }
 };
 
-std::shared_ptr<SingleInstanceBootstrapPlugin> pluginOf(const Fixture &fixture) {
+std::shared_ptr<SingleInstanceBootstrapPlugin> pluginOf(const SingleInstanceFixture &fixture) {
     return std::make_shared<SingleInstanceBootstrapPlugin>(
             fixture.connectionConfigs, fixture.config, fixture.processName);
 }
@@ -76,7 +76,7 @@ std::shared_ptr<SingleInstanceBootstrapPlugin> pluginOf(const Fixture &fixture) 
  * @param fixture the test fixture
  * @param expectThrow whether the child must observe the single instance conflict
  * @return 0 if the child behaved as expected, non-zero otherwise */
-int runInChild(const Fixture &fixture, bool expectThrow) {
+int runInChild(const SingleInstanceFixture &fixture, bool expectThrow) {
     int pipeFds[2];
     REQUIRE(::pipe(pipeFds) == 0);
     const pid_t pid = ::fork();
@@ -107,28 +107,28 @@ int runInChild(const Fixture &fixture, bool expectThrow) {
 }  // namespace
 
 TEST_CASE("SingleInstanceBootstrapPlugin: no default database skips the lock") {
-    Fixture fixture("main", "no_db", false);
+    SingleInstanceFixture fixture("main", "no_db", false);
     auto plugin = pluginOf(fixture);
     REQUIRE_NOTHROW(plugin->onStart());
     REQUIRE_FALSE(std::filesystem::exists(fixture.lockDir / "main.lock"));
 }
 
 TEST_CASE("SingleInstanceBootstrapPlugin: first instance acquires the lock") {
-    Fixture fixture("main");
+    SingleInstanceFixture fixture("main");
     auto plugin = pluginOf(fixture);
     REQUIRE_NOTHROW(plugin->onStart());
     REQUIRE(std::filesystem::exists(fixture.lockDir / "main.lock"));
 }
 
 TEST_CASE("SingleInstanceBootstrapPlugin: a second process of the same name throws") {
-    Fixture fixture("main");
+    SingleInstanceFixture fixture("main");
     auto first = pluginOf(fixture);
     REQUIRE_NOTHROW(first->onStart());
     REQUIRE(runInChild(fixture, true) == 0);
 }
 
 TEST_CASE("SingleInstanceBootstrapPlugin: lock is released when the instance ends") {
-    Fixture fixture("main");
+    SingleInstanceFixture fixture("main");
     auto first = pluginOf(fixture);
     REQUIRE_NOTHROW(first->onStart());
     first.reset();
@@ -136,8 +136,8 @@ TEST_CASE("SingleInstanceBootstrapPlugin: lock is released when the instance end
 }
 
 TEST_CASE("SingleInstanceBootstrapPlugin: different process names are independent") {
-    Fixture fixture("main", "multi");
-    Fixture other("worker", "multi_other");
+    SingleInstanceFixture fixture("main", "multi");
+    SingleInstanceFixture other("worker", "multi_other");
     auto main = pluginOf(fixture);
     auto worker = pluginOf(other);
     REQUIRE_NOTHROW(main->onStart());

@@ -11,169 +11,45 @@ if (NOT TARGET kruempelmann::base_library)
 endif ()
 find_package(Catch2 REQUIRED)
 find_package(trompeloeil REQUIRED)
+include(CTest)
+include(Catch)
 
-# property Test
-ADD_EXECUTABLE(propertyTest models/PropertyTest.cpp)
-target_compile_features(propertyTest PUBLIC cxx_std_17)
-target_link_libraries(propertyTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.PropertyTest COMMAND propertyTest)
+# All tests in a single binary — one link instead of 27.
+ADD_EXECUTABLE(base_tests
+    models/PropertyTest.cpp
+    factories/PropertyFactoryTest.cpp
+    services/PropertyServiceTest.cpp
+    property/PropertyChangeTest.cpp
+    integration/SQLiteIntegrationTest.cpp
+    integration/ConfigIntegrationTest.cpp
+    integration/HttpIntegrationTest.cpp
+    integration/PropertySerializationTest.cpp
+    core/CoreUtilsTest.cpp
+    core/RegexUtilsTest.cpp
+    features/ConfigComponentsTest.cpp
+    features/HistoryComponentTest.cpp
+    features/HistoryServiceGatingTest.cpp
+    events/EventBusTest.cpp
+    plugins/SharedMemoryBootstrapPluginTest.cpp
+    plugins/SingleInstanceBootstrapPluginTest.cpp
+    cli/CliParserTest.cpp
+    services/BootstrapServiceMockTest.cpp
+    services/AuthServiceTest.cpp
+    services/MessageQueueServiceMockTest.cpp
+    cli/CommandLineComponentMockTest.cpp
+    cli/CommandLineHistoryServiceTest.cpp
+    cli/AuthCliServiceMockTest.cpp
+    cli/UserManagementCliComponentMockTest.cpp
+    http/ControllerMockTest.cpp
+    http/ClientIpResolverTest.cpp
+    http/SharedMemoryControllerMockTest.cpp
+)
+target_compile_features(base_tests PUBLIC cxx_std_17)
+target_link_libraries(base_tests PRIVATE
+    kruempelmann::base_library
+    Catch2::Catch2WithMain
+    trompeloeil::trompeloeil
+)
 
-# propertyFactory Test
-ADD_EXECUTABLE(propertyFactoryTest factories/PropertyFactoryTest.cpp)
-target_compile_features(propertyFactoryTest PUBLIC cxx_std_17)
-target_link_libraries(propertyFactoryTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.PropertyFactoryTest COMMAND propertyFactoryTest)
-
-# property Service Test
-ADD_EXECUTABLE(propertyServiceTest services/PropertyServiceTest.cpp)
-target_compile_features(propertyServiceTest PUBLIC cxx_std_17)
-target_link_libraries(propertyServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.PropertyServiceTest COMMAND propertyServiceTest)
-
-# property Change Test
-ADD_EXECUTABLE(propertyChangeTest property/PropertyChangeTest.cpp)
-target_compile_features(propertyChangeTest PUBLIC cxx_std_17)
-target_link_libraries(propertyChangeTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.PropertyChangeTest COMMAND propertyChangeTest)
-
-# Integration Tests
-
-# SQLite Integration Test
-ADD_EXECUTABLE(sqliteIntegrationTest integration/SQLiteIntegrationTest.cpp)
-target_compile_features(sqliteIntegrationTest PUBLIC cxx_std_17)
-target_link_libraries(sqliteIntegrationTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.SQLiteIntegrationTest COMMAND sqliteIntegrationTest)
-
-# Configuration Integration Test
-ADD_EXECUTABLE(configIntegrationTest integration/ConfigIntegrationTest.cpp)
-target_compile_features(configIntegrationTest PUBLIC cxx_std_17)
-target_link_libraries(configIntegrationTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.ConfigIntegrationTest COMMAND configIntegrationTest)
-
-# HTTP Integration Test
-ADD_EXECUTABLE(httpIntegrationTest integration/HttpIntegrationTest.cpp)
-target_compile_features(httpIntegrationTest PUBLIC cxx_std_17)
-target_link_libraries(httpIntegrationTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.HttpIntegrationTest COMMAND httpIntegrationTest)
-
-# Property Serialization Test
-ADD_EXECUTABLE(propertySerializationTest integration/PropertySerializationTest.cpp)
-target_compile_features(propertySerializationTest PUBLIC cxx_std_17)
-target_link_libraries(propertySerializationTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.PropertySerializationTest COMMAND propertySerializationTest)
-
-# Core Utils Test
-ADD_EXECUTABLE(coreUtilsTest core/CoreUtilsTest.cpp)
-target_compile_features(coreUtilsTest PUBLIC cxx_std_17)
-target_link_libraries(coreUtilsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.CoreUtilsTest COMMAND coreUtilsTest)
-
-# Regex Utils Test
-ADD_EXECUTABLE(regexUtilsTest core/RegexUtilsTest.cpp)
-target_compile_features(regexUtilsTest PUBLIC cxx_std_17)
-target_link_libraries(regexUtilsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.RegexUtilsTest COMMAND regexUtilsTest)
-
-# Config Components Test
-ADD_EXECUTABLE(configComponentsTest features/ConfigComponentsTest.cpp)
-target_compile_features(configComponentsTest PUBLIC cxx_std_17)
-target_link_libraries(configComponentsTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.ConfigComponentsTest COMMAND configComponentsTest)
-
-# History Component Test
-ADD_EXECUTABLE(historyComponentTest features/HistoryComponentTest.cpp)
-target_compile_features(historyComponentTest PUBLIC cxx_std_17)
-target_link_libraries(historyComponentTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.HistoryComponentTest COMMAND historyComponentTest)
-
-# History Service Gating Test
-ADD_EXECUTABLE(historyServiceGatingTest features/HistoryServiceGatingTest.cpp)
-target_compile_features(historyServiceGatingTest PUBLIC cxx_std_17)
-target_link_libraries(historyServiceGatingTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.HistoryServiceGatingTest COMMAND historyServiceGatingTest)
-
-# Event Bus Test
-ADD_EXECUTABLE(eventBusTest events/EventBusTest.cpp)
-target_compile_features(eventBusTest PUBLIC cxx_std_17)
-target_link_libraries(eventBusTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.EventBusTest COMMAND eventBusTest)
-
-# SharedMemoryBootstrapPlugin Test
-ADD_EXECUTABLE(sharedMemoryBootstrapPluginTest plugins/SharedMemoryBootstrapPluginTest.cpp)
-target_compile_features(sharedMemoryBootstrapPluginTest PUBLIC cxx_std_17)
-target_link_libraries(sharedMemoryBootstrapPluginTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.SharedMemoryBootstrapPluginTest COMMAND sharedMemoryBootstrapPluginTest)
-
-# SingleInstanceBootstrapPlugin Test
-ADD_EXECUTABLE(singleInstanceBootstrapPluginTest plugins/SingleInstanceBootstrapPluginTest.cpp)
-target_compile_features(singleInstanceBootstrapPluginTest PUBLIC cxx_std_17)
-target_link_libraries(singleInstanceBootstrapPluginTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.SingleInstanceBootstrapPluginTest COMMAND singleInstanceBootstrapPluginTest)
-
-# CLI Parser Test
-ADD_EXECUTABLE(cliParserTest cli/CliParserTest.cpp)
-target_compile_features(cliParserTest PUBLIC cxx_std_17)
-target_link_libraries(cliParserTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.CliParserTest COMMAND cliParserTest)
-
-# Mock-based Unit Tests
-
-# Bootstrap Service Mock Test
-ADD_EXECUTABLE(bootstrapServiceMockTest services/BootstrapServiceMockTest.cpp)
-target_compile_features(bootstrapServiceMockTest PUBLIC cxx_std_17)
-target_link_libraries(bootstrapServiceMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
-ADD_TEST(NAME BaseLibrary.BootstrapServiceMockTest COMMAND bootstrapServiceMockTest)
-
-# Auth Service Test
-ADD_EXECUTABLE(authServiceTest services/AuthServiceTest.cpp)
-target_compile_features(authServiceTest PUBLIC cxx_std_17)
-target_link_libraries(authServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.AuthServiceTest COMMAND authServiceTest)
-
-# CLI CommandLineComponent Mock Test
-ADD_EXECUTABLE(commandLineComponentMockTest cli/CommandLineComponentMockTest.cpp)
-target_compile_features(commandLineComponentMockTest PUBLIC cxx_std_17)
-target_link_libraries(commandLineComponentMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
-ADD_TEST(NAME BaseLibrary.CommandLineComponentMockTest COMMAND commandLineComponentMockTest)
-
-# CLI CommandLineHistoryService Test
-ADD_EXECUTABLE(commandLineHistoryServiceTest cli/CommandLineHistoryServiceTest.cpp)
-target_compile_features(commandLineHistoryServiceTest PUBLIC cxx_std_17)
-target_link_libraries(commandLineHistoryServiceTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.CommandLineHistoryServiceTest COMMAND commandLineHistoryServiceTest)
-
-# HTTP Controller Mock Test
-ADD_EXECUTABLE(controllerMockTest http/ControllerMockTest.cpp)
-target_compile_features(controllerMockTest PUBLIC cxx_std_17)
-target_link_libraries(controllerMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
-ADD_TEST(NAME BaseLibrary.ControllerMockTest COMMAND controllerMockTest)
-
-# Client IP Resolver Test
-ADD_EXECUTABLE(clientIpResolverTest http/ClientIpResolverTest.cpp)
-target_compile_features(clientIpResolverTest PUBLIC cxx_std_17)
-target_link_libraries(clientIpResolverTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain)
-ADD_TEST(NAME BaseLibrary.ClientIpResolverTest COMMAND clientIpResolverTest)
-
-# MessageQueue Service Mock Test
-ADD_EXECUTABLE(messageQueueServiceMockTest services/MessageQueueServiceMockTest.cpp)
-target_compile_features(messageQueueServiceMockTest PUBLIC cxx_std_17)
-target_link_libraries(messageQueueServiceMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
-ADD_TEST(NAME BaseLibrary.MessageQueueServiceMockTest COMMAND messageQueueServiceMockTest)
-
-# AuthCliService Mock Test
-ADD_EXECUTABLE(authCliServiceMockTest cli/AuthCliServiceMockTest.cpp)
-target_compile_features(authCliServiceMockTest PUBLIC cxx_std_17)
-target_link_libraries(authCliServiceMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
-ADD_TEST(NAME BaseLibrary.AuthCliServiceMockTest COMMAND authCliServiceMockTest)
-
-# UserManagementCliComponent Mock Test
-ADD_EXECUTABLE(userManagementCliComponentMockTest cli/UserManagementCliComponentMockTest.cpp)
-target_compile_features(userManagementCliComponentMockTest PUBLIC cxx_std_17)
-target_link_libraries(userManagementCliComponentMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
-ADD_TEST(NAME BaseLibrary.UserManagementCliComponentMockTest COMMAND userManagementCliComponentMockTest)
-
-# SharedMemoryController Mock Test
-ADD_EXECUTABLE(sharedMemoryControllerMockTest http/SharedMemoryControllerMockTest.cpp)
-target_compile_features(sharedMemoryControllerMockTest PUBLIC cxx_std_17)
-target_link_libraries(sharedMemoryControllerMockTest PRIVATE kruempelmann::base_library Catch2::Catch2WithMain trompeloeil::trompeloeil)
-ADD_TEST(NAME BaseLibrary.SharedMemoryControllerMockTest COMMAND sharedMemoryControllerMockTest)
+# Auto-register each TEST_CASE / SECTION as a separate CTest test
+catch_discover_tests(base_tests PROPERTIES LABELS "unit")
