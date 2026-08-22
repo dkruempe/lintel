@@ -110,6 +110,8 @@ set(headers
     include/base_library/core/services/PersistableBean.h
     include/base_library/core/services/PersistableService.h
     include/base_library/core/services/ProcessService.h
+    include/base_library/core/services/ISharedMemoryService.h
+    include/base_library/core/services/PropertyRegistration.h
     include/base_library/core/services/SharedMemoryService.h
     include/base_library/core/services/SignalService.h
     include/base_library/core/services/StopWatchService.h
@@ -193,6 +195,7 @@ set(headers
     # features - base - repositories
     include/base_library/features/base/repositories/GroupRepository.h
     include/base_library/features/base/repositories/HistoryRepository.h
+    include/base_library/features/base/repositories/IMessageQueueRepository.h
     include/base_library/features/base/repositories/MessageQueueRepository.h
     include/base_library/features/base/repositories/SharedMemoryRepository.h
     include/base_library/features/base/repositories/UserRepository.h
@@ -200,8 +203,10 @@ set(headers
     include/base_library/features/base/services/AuthService.h
     include/base_library/features/base/services/ExecutorService.h
     include/base_library/features/base/services/HistoryService.h
+    include/base_library/features/base/services/IAuthService.h
     include/base_library/features/base/services/IHistoryService.h
     include/base_library/features/base/services/InitializeService.h
+    include/base_library/features/base/services/ISharedMemorySegmentManager.h
     include/base_library/features/base/services/MessageQueueService.h
     include/base_library/features/base/services/EventBusService.h
     include/base_library/features/base/services/NoopHistoryService.h
@@ -210,6 +215,7 @@ set(headers
     include/base_library/features/base/services/SharedMemorySegmentManager.h
     # features - cli
     include/base_library/features/cli/CommandLineFeature.h
+    include/base_library/features/cli/CliTypes.h
     include/base_library/features/cli/models/AbstractCommandLineMenu.h
     include/base_library/features/cli/models/Command.h
     include/base_library/features/cli/models/CommandHistoryEntry.h
@@ -219,6 +225,8 @@ set(headers
     include/base_library/features/cli/services/AuthCliService.h
     include/base_library/features/cli/services/CommandLineHistoryService.h
     include/base_library/features/cli/services/CommandLineService.h
+    include/base_library/features/cli/services/IInputService.h
+    include/base_library/features/cli/services/ITerminalService.h
     include/base_library/features/cli/services/InputService.h
     include/base_library/features/cli/services/TerminalService.h
     include/base_library/features/cli/utils/CommandLineUtils.h
@@ -244,6 +252,7 @@ set(headers
     include/base_library/features/http/service/ContentType.h
     include/base_library/features/http/service/Controller.h
     include/base_library/features/http/service/HttpStatusCodes.h
+    include/base_library/features/http/service/HttpBadRequestException.h
     include/base_library/features/http/service/HttpUnauthorizedException.h
     include/base_library/features/http/service/HttpClientHelper.h
     include/base_library/features/http/service/Server.h

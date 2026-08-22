@@ -22,16 +22,20 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unistd.h>
 
 namespace {
 
-const std::string kTestDb = (std::filesystem::temp_directory_path() /
-                             "auth_service_test.db").string();
+std::string kTestDb() {
+    return (std::filesystem::temp_directory_path() /
+            ("auth_service_test_" + std::to_string(getpid()) + ".db")).string();
+}
 
 struct AuthFixture {
     AuthFixture() {
-        std::remove(kTestDb.c_str());
-        db::Connection connection(db::ConnectionType::SQLite, kTestDb);
+        m_dbPath = kTestDb();
+        std::remove(m_dbPath.c_str());
+        db::Connection connection(db::ConnectionType::SQLite, m_dbPath);
         db::Statement statement(connection);
         statement.execute(R"(
             CREATE TABLE users (
@@ -63,7 +67,7 @@ struct AuthFixture {
         configuration = std::make_shared<Configuration>(
                 std::vector<std::shared_ptr<Component>>{}, envConfig);
         auto entry = std::make_shared<DatabaseConnectionEntry>(
-                type_name<DatabaseConnectionComponent>(), kTestDb, "", "",
+                type_name<DatabaseConnectionComponent>(), m_dbPath, "", "",
                 db::ConnectionType::SQLite, "default", 0, "", true);
         configuration->setEntries(
                 std::vector<std::shared_ptr<Entry>>{entry});
@@ -84,7 +88,7 @@ struct AuthFixture {
     ~AuthFixture() {
         authService->onShutdown();
         scheduler->onShutdown();
-        std::remove(kTestDb.c_str());
+        std::remove(m_dbPath.c_str());
     }
 
     void createUser(const std::string &userName, const std::string &password) {
@@ -93,6 +97,7 @@ struct AuthFixture {
         userRepository->createOf(user);
     }
 
+    std::string m_dbPath;
     std::shared_ptr<EnvironmentConfiguration> envConfig;
     std::shared_ptr<Configuration> configuration;
     std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;

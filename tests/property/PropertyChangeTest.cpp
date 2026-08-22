@@ -2,6 +2,8 @@
 #include <string>
 #include <type_traits>
 
+#include <unistd.h>
+
 #include <boost/interprocess/managed_mapped_file.hpp>
 
 #include <catch2/catch_all.hpp>
@@ -31,7 +33,8 @@ using Segment = boost::interprocess::managed_mapped_file;
 std::filesystem::path uniquePropChangeShmPath() {
     static std::uint64_t counter = 0;
     return std::filesystem::temp_directory_path() /
-           ("property_change_test_" + std::to_string(counter++) + ".bin");
+           ("property_change_test_" + std::to_string(getpid()) + "_" +
+            std::to_string(counter++) + ".bin");
 }
 
 struct PropChangeBusFixture {
@@ -94,6 +97,13 @@ struct PropertyRepositoryFixture {
                 segmentManager, scheduler, processName);
         repository = std::make_shared<SharedMemoryPropertyRepository>(
                 sharedMemoryService, segmentManager, configuration, processName);
+    }
+
+    ~PropertyRepositoryFixture() {
+        repository.reset();
+        sharedMemoryService.reset();
+        segmentManager.reset();
+        std::filesystem::remove(path);
     }
 };
 

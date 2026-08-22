@@ -1,6 +1,6 @@
 # TODOs
 
-> Stand: 02.08.2026 – Systematische Fehleranalyse (Build + ctest 21/21 grün). Alle Punkte unten wurden am Quellcode verifiziert; Datei:Zeile bezieht sich auf den aktuellen Stand.
+> Stand: 19.08.2026 – ctest 311/311 grün. Alle Punkte unten wurden am Quellcode verifiziert; Datei:Zeile bezieht sich auf den aktuellen Stand.
 
 ## Kritische Bugs (Hoch)
 
@@ -69,8 +69,8 @@
 - [x] **`MessageQueueService::numberMessagesOf` erzeugt Queue als Nebenwirkung** – `MessageQueueService.cpp:49-58`: `open_or_create` legt eine Queue an, nur um die Anzahl zu lesen; Map ist nur nach `get_message_queue_name()` keyed (Kollision zwischen Prozessen mit gleichem Namen).
 
 ## Tests / Mocks
-- [ ] unit tests for ProcessService (start/stop/terminate/restart, monitor-loop, allGroupsOf)
-- [ ] unit tests for UserRepository / GroupRepository (CRUD, allOf-Regex, Gruppen-Relationen)
+- [x] unit tests for ProcessService (start/stop/terminate/restart, allGroupsOf, isLastProcess, of, currentOf, detachOf, group lifecycle)
+- [x] unit tests for UserRepository / GroupRepository (CRUD, allOf-Regex, Gruppen-Relationen, virtual groups, addGroupOf/removeGroupOf)
 - [ ] Tests für oben gelistete Bugs (Regex-Vertauschung in MessageQueueRepository, `MemorySize` mit `"kB"`, leere Pfade, `PropertyDataDto::getSize`, non-object JSON-Body)
 
 ## Security

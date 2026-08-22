@@ -43,6 +43,8 @@ ADD_EXECUTABLE(base_tests
     http/ControllerMockTest.cpp
     http/ClientIpResolverTest.cpp
     http/SharedMemoryControllerMockTest.cpp
+    services/ProcessServiceTest.cpp
+    repositories/UserGroupRepositoryTest.cpp
 )
 target_compile_features(base_tests PUBLIC cxx_std_17)
 target_link_libraries(base_tests PRIVATE
