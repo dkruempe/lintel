@@ -14,20 +14,22 @@
 
 #include <catch2/catch_all.hpp>
 
+#include <boost/process/v1/environment.hpp>
+
 #include <cstdlib>
 #include <filesystem>
 #include <memory>
 #include <set>
 #include <string>
 #include <vector>
-#include <unistd.h>
 
 namespace {
 
 std::string kRepoTestDb() {
     static int counter = 0;
     return (std::filesystem::temp_directory_path() /
-            ("user_group_repo_test_" + std::to_string(getpid()) + "_" +
+            ("user_group_repo_test_" +
+             std::to_string(boost::this_process::get_id()) + "_" +
              std::to_string(counter++) + ".db"))
             .string();
 }
