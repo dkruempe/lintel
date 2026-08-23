@@ -13,6 +13,7 @@ boost/1.91.0
 rapidjson/cci.20250205
 date/3.0.4
 zlib/1.3.2
+benchmark/1.9.5
 
 [generators]
 CMakeDeps

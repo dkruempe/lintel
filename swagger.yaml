@@ -2,26 +2,19 @@ swagger: "2.0"
 info:
   title: C++ Base Library API
   version: "1.0.0"
+  description: |
+    REST API for the cpp-base-library.
+    Authentication: obtain a bearer token via POST /user/login (HTTP Basic auth),
+    then pass it as `Authorization: Bearer <token>` on subsequent requests.
 host: localhost:8080
 schemes:
   - http
 paths:
-  /hello:
-    get:
-      summary: Greets the user
-      description: |
-        Returns a personalized greeting if a valid Bearer token is provided, otherwise returns a generic "Hello World!".
-      security:
-        - bearerAuth: []
-      responses:
-        "200":
-          description: A successful response
-          schema:
-            type: string
-            example: "Hello >user< !"
   /history/{processName}/{serviceName}/{label}:
     get:
       summary: Get history
+      security:
+        - bearerAuth: []
       parameters:
         - name: processName
           in: path
@@ -41,10 +34,14 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /messageQueue/{processName}/{messageQueueName}:
     get:
       summary: Get message queue
+      security:
+        - bearerAuth: []
       parameters:
         - name: processName
           in: path
@@ -60,25 +57,36 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /process/processes/{groupName}:
     get:
       summary: Get all processes
+      security:
+        - bearerAuth: []
       parameters:
         - name: groupName
           in: path
           required: true
           type: string
+          description: Regex pattern to filter process groups
       responses:
         "200":
           description: A successful response
+        "400":
+          description: Invalid regex pattern
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /process/groups/{groupName}:
     get:
       summary: Get all process groups
+      security:
+        - bearerAuth: []
       parameters:
         - name: groupName
           in: path
@@ -90,20 +98,28 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /process/start:
     post:
       summary: Start a process
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: A successful response
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /process/stop/{processId}:
     delete:
       summary: Stop a process
+      security:
+        - bearerAuth: []
       parameters:
         - name: processId
           in: path
@@ -115,12 +131,16 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
         "501":
-          description: Not Implemented
+          description: Unknown process id
+        "500":
+          description: Internal server error
   /process/terminate/{processId}:
     delete:
       summary: Terminate a process
+      security:
+        - bearerAuth: []
       parameters:
         - name: processId
           in: path
@@ -132,12 +152,16 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
         "501":
-          description: Not Implemented
+          description: Unknown process id
+        "500":
+          description: Internal server error
   /shm/segments/{segmentName}:
     get:
       summary: Get all segments
+      security:
+        - bearerAuth: []
       parameters:
         - name: segmentName
           in: path
@@ -149,10 +173,14 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /shm/segments/shrink/{segmentName}:
     put:
       summary: Shrink a segment
+      security:
+        - bearerAuth: []
       parameters:
         - name: segmentName
           in: path
@@ -164,10 +192,14 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type or unknown segment)
+        "500":
+          description: Internal server error
   /shm/segments/grow/{segmentName}/{size}:
     put:
       summary: Grow a segment
+      security:
+        - bearerAuth: []
       parameters:
         - name: segmentName
           in: path
@@ -177,35 +209,50 @@ paths:
           in: path
           required: true
           type: string
+          description: New size in bytes
       responses:
         "200":
           description: A successful response
+        "400":
+          description: Unparseable size string
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type or unknown segment)
+        "500":
+          description: Internal server error
   /shm/repositories/{repositoryName}/{segmentName}:
     get:
       summary: Get all repositories
+      security:
+        - bearerAuth: []
       parameters:
         - name: repositoryName
           in: path
           required: true
           type: string
+          description: Regex pattern to filter repository names
         - name: segmentName
           in: path
           required: true
           type: string
+          description: Regex pattern to filter segment names
       responses:
         "200":
           description: A successful response
+        "400":
+          description: Invalid regex pattern
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /shm/repository/{uuid}:
     get:
       summary: Export a repository
+      security:
+        - bearerAuth: []
       parameters:
         - name: uuid
           in: path
@@ -217,57 +264,94 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown repository UUID
+        "500":
+          description: Internal server error
   /user/login:
     post:
       summary: User login
+      description: |
+        Authenticate via HTTP Basic auth (base64-encoded user:password).
+        Returns a UserDto with the bearer token on success.
+        Passes must NOT hold a valid bearer token already.
+      parameters:
+        - name: Authorization
+          in: header
+          required: true
+          type: string
+          description: "Basic base64(user:password)"
       responses:
         "200":
-          description: A successful response
+          description: A successful response (UserDto JSON)
         "403":
-          description: Forbidden
+          description: Invalid credentials, already logged in, or malformed Basic header
+        "500":
+          description: Internal server error
   /user/logout:
     delete:
       summary: User logout
-      responses:
-        "200":
-          description: A successful response
-  /user/state:
-    get:
-      summary: Get user login state
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: A successful response
         "401":
           description: Unauthorized
+        "500":
+          description: Internal server error
+  /user/state:
+    get:
+      summary: Get user login state
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: A successful response (empty body)
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
   /user/groups:
     get:
       summary: Get all groups
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: A successful response
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /user/groups/{groupNameOrIsVirtual}:
     get:
-      summary: Get all groups of group name or is virtual group
+      summary: Get all groups by name or virtual flag
+      security:
+        - bearerAuth: []
       parameters:
         - name: groupNameOrIsVirtual
           in: path
           required: true
           type: string
+          description: Group name or "true"/"false" for virtual filter
       responses:
         "200":
           description: A successful response
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /user/groups/{groupName}/{isVirtual}:
     get:
-      summary: Get all groups of group name and is virtual group
+      summary: Get all groups by name and virtual flag
+      security:
+        - bearerAuth: []
       parameters:
         - name: groupName
           in: path
@@ -283,20 +367,28 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /user/users:
     get:
       summary: Get all users
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: A successful response
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /user/users/{userName}:
     get:
-      summary: Get all users of user name
+      summary: Get all users by user name
+      security:
+        - bearerAuth: []
       parameters:
         - name: userName
           in: path
@@ -308,39 +400,53 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /user/add:
     post:
       summary: Add a user
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: A successful response
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
         "406":
-          description: Not Acceptable
+          description: Not Acceptable (missing password)
+        "500":
+          description: Internal server error
   /user/update:
     put:
-      summary: Update a user
+      summary: Update a user (group membership)
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: A successful response
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type or unknown target user)
+        "500":
+          description: Internal server error
   /user/delete:
     delete:
-      summary: Delete a user
+      summary: Delete users
+      security:
+        - bearerAuth: []
       responses:
         "200":
           description: A successful response
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type or self-delete attempt)
+        "500":
+          description: Internal server error
   /user/password:
     put:
       summary: Change the password of a user
@@ -361,7 +467,11 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (empty/unknown username, wrong old password, wrong content type)
+        "406":
+          description: Not Acceptable (empty new password)
+        "500":
+          description: Internal server error
   /user/sessions:
     get:
       summary: Get all active sessions of the current user
@@ -376,24 +486,32 @@ paths:
               $ref: "#/definitions/UserSessionDto"
         "401":
           description: Unauthorized
+        "403":
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /user/sessions/{sessionId}:
     delete:
       summary: Revoke an active session
+      security:
+        - bearerAuth: []
       parameters:
         - name: sessionId
           in: path
           required: true
           type: string
-      security:
-        - bearerAuth: []
       responses:
         "200":
           description: A successful response
         "401":
-          description: Unauthorized
+          description: Unauthorized (no token, wrong group, or revoking foreign session as non-admin)
+        "500":
+          description: Internal server error
   /properties/{processName}/{className}/{instanceName}:
     get:
       summary: Get all properties
+      security:
+        - bearerAuth: []
       parameters:
         - name: processName
           in: path
@@ -413,10 +531,40 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
+    put:
+      summary: Update a property
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: processName
+          in: path
+          required: true
+          type: string
+        - name: className
+          in: path
+          required: true
+          type: string
+        - name: instanceName
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /properties/{processName}/{className}/{instanceName}/{propertyName}:
     get:
       summary: Get a property
+      security:
+        - bearerAuth: []
       parameters:
         - name: processName
           in: path
@@ -440,11 +588,15 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
         "405":
-          description: Method Not Allowed
+          description: Property not found
+        "500":
+          description: Internal server error
     put:
       summary: Update a property
+      security:
+        - bearerAuth: []
       parameters:
         - name: processName
           in: path
@@ -468,9 +620,11 @@ paths:
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden
+          description: Forbidden (wrong content type)
         "405":
-          description: Method Not Allowed
+          description: Property not found, no runtime change support, or bad value
+        "500":
+          description: Internal server error
 definitions:
   UserPasswordChangeDto:
     type: object
@@ -513,4 +667,4 @@ securityDefinitions:
     type: apiKey
     name: Authorization
     in: header
-    description: "Bearer token authentication"
+    description: "Bearer token obtained via POST /user/login"

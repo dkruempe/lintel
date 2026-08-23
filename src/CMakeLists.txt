@@ -30,9 +30,6 @@ configure_file(
 # dependencies
 if (NOT TARGET kruempelmann::Hypodermic)
     find_package(Hypodermic REQUIRED)
-    include_directories(${Hypodermic_INCLUDE_DIRS})
-else ()
-    include_directories(../external/Hypodermic/include)
 endif ()
 
 find_package(fmt REQUIRED)
@@ -491,10 +488,18 @@ set(sources
 )
 
 add_library(base_library ${headers} ${sources})
+# Hypodermic includes: propagated via target_link_libraries for vendored target,
+# explicit variable for find_package fallback
+if (NOT TARGET kruempelmann::Hypodermic)
+    set(HYPODERMIC_INCLUDE_DIRS_VAR ${Hypodermic_INCLUDE_DIRS})
+else ()
+    set(HYPODERMIC_INCLUDE_DIRS_VAR "")
+endif ()
+
 target_compile_features(base_library PUBLIC cxx_std_17)
 target_include_directories(base_library
         SYSTEM PUBLIC
-        "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${CMAKE_CURRENT_SOURCE_DIR}/include>"
+        "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${HYPODERMIC_INCLUDE_DIRS_VAR};${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};include>"
 )
 target_link_libraries(base_library PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3

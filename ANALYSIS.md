@@ -59,7 +59,7 @@ Alle identifizierten Bugs wurden behoben. Die vollständige Liste der Fixes find
 | Priorität | Maßnahme | Status | Begründung |
 |-----------|----------|--------|------------|
 | **Hoch** | **Fehlende Features abschließen (TODO.md)** | Offen | MySQL Support, Cursor, Paging |
-| **Mittel** | **Benchmark-Suite aufsetzen** | Offen | Performance-Messungen für Property-System, Persistenz, Serialisierung |
-| **Mittel** | **Swagger-Dokumentation an tatsächliche Auth-/Status-Codes angleichen** | Offen | Doku spiegelt Auth-Modell nicht korrekt wider |
-| **Niedrig** | **CMake modernisieren** (`include_directories` → `target_include_directories`) | Teilweise erledigt | Library-Target (`src/CMakeLists.txt:495`) nutzt bereits `target_include_directories`. Noch alt: `tests/CMakeLists.txt:10`, `examples/CMakeLists.txt:9`, `src/CMakeLists.txt:33-35` (Hypodermic). |
+| **Mittel** | **Swagger-Dokumentation an tatsächliche Auth-/Status-Codes angleichen** | Erledigt (23.08.2026) | Auth-Annotationen, fehlende PUT-Methode, korrekte Status-Codes, 404/501 ergänzt |
+| **Mittel** | **Benchmark-Suite aufsetzen** | Erledigt (23.08.2026) | 27 Benchmarks: Regex, SQLite (Insert/Select/Transaction), PropertyDto Serialize/Deserialize |
+| **Niedrig** | **CMake modernisieren** (`include_directories` → `target_include_directories`) | Erledigt (23.08.2026) | `tests/`, `examples/`, `src/` – alle `include_directories()` eliminiert |
 | **Niedrig** | **Hypodermic durch Boost.DI ersetzen** | Offen | Aktiver maintained, standardkonformer |

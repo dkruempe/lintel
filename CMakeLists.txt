@@ -51,3 +51,9 @@ ADD_SUBDIRECTORY(examples)
 # Tests
 enable_testing()
 ADD_SUBDIRECTORY(tests)
+
+# Benchmarks (off by default)
+option(BUILD_BENCHMARKS "Build benchmark suite" OFF)
+if(BUILD_BENCHMARKS)
+    ADD_SUBDIRECTORY(benchmarks)
+endif()

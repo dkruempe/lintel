@@ -5,10 +5,6 @@ set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
 enable_testing()
 #dependencies
-if (NOT TARGET kruempelmann::base_library)
-    find_package(base_library REQUIRED)
-    include_directories(${base_library_INCLUDE_DIRS})
-endif ()
 find_package(Catch2 REQUIRED)
 find_package(trompeloeil REQUIRED)
 include(CTest)

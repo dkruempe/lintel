@@ -1,6 +1,6 @@
 # TODOs
 
-> Stand: 19.08.2026 – ctest 311/311 grün. Alle Punkte unten wurden am Quellcode verifiziert; Datei:Zeile bezieht sich auf den aktuellen Stand.
+> Stand: 23.08.2026 – ctest 311/311 grün, 27 Benchmarks (Google Benchmark) laufen. Alle Punkte unten wurden am Quellcode verifiziert; Datei:Zeile bezieht sich auf den aktuellen Stand.
 
 ## Kritische Bugs (Hoch)
 
@@ -90,3 +90,8 @@
 ## Docker Support
 - [ ] working docker container for testing macOS ?
 - [ ] review docker-compose defaults – Postgres test/test auf 5432 und App ohne TLS exponiert
+
+## Erledigte Optimierungen
+- [x] CMake modernisierung – `include_directories()` in `tests/`, `examples/`, `src/` eliminiert (23.08.2026)
+- [x] Swagger-Dokumentation – Auth-Annotations, Status-Codes, PUT-Methode für Properties, 404/501 ergänzt; `/hello` entfernt (23.08.2026)
+- [x] Benchmark-Suite – Google Benchmark mit 27 Benchmarks: RegexUtils (8), SQLite Persistence (9), PropertyDto Serialize/Deserialize (10) – `bin/base_benchmarks` (23.08.2026)

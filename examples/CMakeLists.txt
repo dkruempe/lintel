@@ -4,10 +4,6 @@ cmake_policy(SET CMP0025 NEW)
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
 #dependencies
-if (NOT TARGET kruempelmann::base_library)
-    find_package(base_library REQUIRED)
-    include_directories(${base_library_INCLUDE_DIRS})
-endif ()
 
 # playground
 find_package(date REQUIRED)
