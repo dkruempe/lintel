@@ -21,25 +21,34 @@ RUN pip3 install conan --break-system-packages --no-cache-dir
 
 WORKDIR /workspace
 
+# ── Dependency layer (invalidated only when conanfile.txt changes) ────
 FROM base AS deps
 
 COPY conanfile.txt .
-RUN conan profile detect --force
-RUN conan install . --output-folder=build --build=missing -s build_type=Release -c tools.cmake.cmaketoolchain:generator=Ninja
+RUN conan profile detect --force \
+    && conan install . \
+       --output-folder=build \
+       --build=missing \
+       -s build_type=Release \
+       -c tools.cmake.cmaketoolchain:generator=Ninja
 
+# ── Build layer ──────────────────────────────────────────────────────
 FROM deps AS builder
 
 COPY . .
 RUN cmake -S . -B build/build/Release \
     -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
     -G Ninja \
     && cmake --build build/build/Release --parallel $(nproc)
 
+# ── Test layer ───────────────────────────────────────────────────────
 FROM builder AS test
 WORKDIR /workspace/build/build/Release
 CMD ["ctest", "--output-on-failure"]
 
+# ── Runtime layer (minimal image) ────────────────────────────────────
 FROM ubuntu:24.04 AS runtime
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -52,6 +61,5 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
 WORKDIR /workspace
 COPY --from=builder /workspace/bin ./bin
 COPY --from=builder /workspace/cfg ./cfg
-COPY --from=builder /workspace/build/build/Release ./build
 
 CMD ["./bin/main"]

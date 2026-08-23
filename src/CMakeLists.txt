@@ -510,18 +510,29 @@ option(ENABLE_PCH "Enable precompiled headers" ON)
 if(ENABLE_PCH)
     target_precompile_headers(base_library PRIVATE
         <algorithm>
+        <atomic>
         <chrono>
+        <cstdint>
         <cstring>
+        <exception>
         <filesystem>
         <functional>
         <fstream>
+        <iostream>
         <map>
         <memory>
         <mutex>
+        <optional>
+        <ostream>
+        <set>
         <shared_mutex>
         <sstream>
+        <stdexcept>
         <string>
+        <string_view>
         <thread>
+        <type_traits>
+        <utility>
         <vector>
         <spdlog/common.h>
         <spdlog/fwd.h>

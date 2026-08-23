@@ -2,67 +2,80 @@ name: CI
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [main]
   pull_request:
-    branches: [ main, master ]
-  workflow_dispatch:
+    branches: [main]
+
+env:
+  BUILD_TYPE: Release
+  CONAN_SYSREQUIRES_MODE: enabled
 
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+  build:
+    runs-on: ubuntu-24.04
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            cmake \
-            ninja-build \
-            ccache \
-            make \
-            python3-pip \
-            python3-venv \
-            libpq-dev \
-            libsqlite3-dev \
-            libssl-dev \
-            build-essential \
-            pkg-config
-
-      - name: Install Conan
-        run: pip3 install conan
-
-      - name: Detect Conan profile
-        run: conan profile detect --force
-
+      # ── Conan cache (1.5 GB, ~15 min sparen) ──────────────────────
       - name: Cache Conan packages
         uses: actions/cache@v4
         with:
           path: ~/.conan2
-          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.txt') }}
+          key: conan-${{ runner.os }}-${{ hashFiles('conanfile.txt') }}
           restore-keys: |
-            ${{ runner.os }}-conan-${{ hashFiles('conanfile.txt') }}
-            ${{ runner.os }}-conan-
+            conan-${{ runner.os }}-
 
+      # ── ccache (Objekt-File-Cache) ────────────────────────────────
       - name: Cache ccache
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ${{ runner.os }}-ccache-${{ github.sha }}
+          key: ccache-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-ccache-
+            ccache-${{ runner.os }}-
 
-      - name: Install dependencies via Conan
-        run: conan install . --output-folder=build --build=missing -s build_type=Release -c tools.cmake.cmaketoolchain:generator=Ninja
+      # ── System-Dependencies ────────────────────────────────────────
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build ccache \
+            pkg-config python3 python3-pip \
+            libpq-dev libsqlite3-dev libssl-dev
 
+      - name: Install Conan
+        run: pip3 install conan --break-system-packages --no-cache-dir
+
+      - name: Configure Conan profile
+        run: conan profile detect --force
+
+      # ── Conan Install (nur wenn conanfile.txt geändert) ───────────
+      - name: Install Conan dependencies
+        run: |
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      # ── Build ──────────────────────────────────────────────────────
       - name: Configure CMake
-        run: cmake --preset conan-release -DMYPROJECT_ENABLE_CLANG_TIDY=OFF
+        run: |
+          cmake -S . -B build/build/Release \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -G Ninja
 
       - name: Build
-        run: cmake --build --preset conan-release --parallel 8
-        env:
-          CCACHE_DIR: ~/.ccache
+        run: cmake --build build/build/Release --parallel $(nproc)
 
+      # ── Tests ──────────────────────────────────────────────────────
       - name: Run tests
-        run: ctest --preset conan-release --output-on-failure
+        working-directory: build/build/Release
+        run: ctest --output-on-failure --label-regex unit
+
+      # ── ccache stats ───────────────────────────────────────────────
+      - name: ccache stats
+        run: ccache -s

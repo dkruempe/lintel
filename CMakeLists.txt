@@ -14,7 +14,7 @@ endif()
 option(ENABLE_UNITY_BUILD "Enable unity/jumbo builds" ON)
 if(ENABLE_UNITY_BUILD)
     set(CMAKE_UNITY_BUILD ON)
-    set(CMAKE_UNITY_BUILD_BATCH_SIZE 16)
+    set(CMAKE_UNITY_BUILD_BATCH_SIZE 32)
 endif()
 
 # LTO/IPO - interprocedural optimization (off by default, can increase link time)

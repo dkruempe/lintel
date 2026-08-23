@@ -39,7 +39,7 @@ namespace postgresql {
         if (m_finished) {
             throw db::SQLException("Transaction is finished and not available anymore");
         }
-        m_connection.execute("SAVEPOINT " + db::quoteIdentifier(savepoint));  // saves current state of transaction
+        static_cast<void>(m_connection.execute("SAVEPOINT " + db::quoteIdentifier(savepoint)));  // saves current state of transaction
     }
 
     void Transaction::rollback() {
@@ -55,7 +55,7 @@ namespace postgresql {
         if (m_finished) {
             throw db::SQLException("Transaction is finished and not available anymore");
         }
-        m_connection.execute("ROLLBACK TO " + db::quoteIdentifier(savepoint));
+        static_cast<void>(m_connection.execute("ROLLBACK TO " + db::quoteIdentifier(savepoint)));
     }
 
     Transaction::~Transaction() {
