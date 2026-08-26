@@ -3,6 +3,7 @@ cmake-*
 *.sh
 !cfg/certs/*.sh
 *.txt
+!CMakeLists.txt
 *.json
 build*
 bin*
