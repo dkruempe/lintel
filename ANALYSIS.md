@@ -4,7 +4,7 @@
 
 1. **Saubere, modulare Architektur** – Feature-basiertes Plugin-System mit Serviceorientierung und Dependency Injection (Hypodermic). Jedes Feature (Base, CLI, HTTP, Property) ist in sich geschlossen mit eigenen Models, Services, Controllern, Repositories und Configuration-Komponenten.
 
-2. **Hervorragende Build- und Toolchain-Qualität** – Warnings-as-Errors (MSVC/Clang/GCC), clang-tidy, cppcheck (exhaustive), include-what-you-use, clang-format – alles konfiguriert und eingebunden. Das ist vorbildlich für ein C++ Projekt.
+2. **Hervorragende Build- und Toolchain-Qualität** – Warnings-as-Errors (MSVC/Clang/GCC), clang-tidy, cppcheck (exhaustive), include-what-you-use, clang-format – alles konfiguriert und eingebunden.
 
 3. **Durchdachte Abstraktionsschichten** – Die Persistenzschicht (`core/persistence/`) definiert saubere Interfaces (`Connection`, `Statement`, `PreparedStatement`, `Result`, `Transaction`) mit zwei konkreten Backends (PostgreSQL, SQLite). Der `db::Connection` nutzt ein Variant-ähnliches Pattern.
 
@@ -24,25 +24,57 @@
 
 ---
 
-## Sicherheitsanalyse (Stand: 19.08.2026)
+## Architektur-Details (Stand: 26.08.2026)
+
+### Cursor-Architektur
+
+`db::Cursor` ist eine einheitliche Fassade über zwei Backend-Implementierungen:
+
+- **PostgreSQL** (`postgresql::Cursor`): Zwei Modi:
+  - *Server-Side-Cursor* (`fetchSize > 0`): `DECLARE CURSOR` → `FETCH <N>` → `CLOSE` mit konfigurierbarer Batch-Größe (Default 100). Optimiert für große Ergebnismengen, vermeidet volles Laden in den Client-Speicher.
+  - *Client-Side-Streaming* (`fetchSize == 0`): `PQsetSingleRowMode` (Legacy-Modus).
+  - `FOR UPDATE` wird manuell in der Query-SQL angegeben (nicht über API-Flag).
+- **SQLite** (`sqlite::Cursor`): `sqlite3_step` mit konfigurierbarem Client-Puffer (Default 64). Kein Server-Side-Cursor möglich.
+- **Lazy-Backend-Init**: `db::Cursor` speichert Query/Params/Connection-Shared-Ptrs und erstellt den Backend-Cursor erst beim ersten `fetchNext()`/`begin()` via `initBackendCursor()`. Konfigurationsmethoden (`setFetchSize`, `setCursorName`, `setNoScroll`) können daher nach `executeCursor()` aufgerufen werden.
+- **Friend-Pattern**: `db::Cursor` ist Friend von `db::Connection` für Zugriff auf private `m_conn`/`m_connSQLite` Shared-Ptrs.
+
+### Keyset-Pagination
+
+- `Page<T>`-Modell mit Response-Envelope `{items, has_more, next_after}`.
+- Zweiphasige Abfrage für Multi-Group-User: Erste Phase `LIMIT n+1`, zweite Phase `OFFSET` für korrekte Seitengrenze.
+- `PagingParams`/`pagingParamsOf` in Controller-Basisklasse.
+- `?after=<sortKey>&limit=<n>` (Default 100, Max 1000, invalid limit → 400) für `/user/users`, `/user/users/{userName}` und `/messageQueue/...`.
+
+### Persistenzschicht
+
+`core/persistence/` definiert eine einheitliche Abstraktion über PostgreSQL und SQLite:
+
+- `db::Connection` nutzt ein Union-ähnliches Pattern mit `ConnectionType`-Enum.
+- `db::Cursor` (Iterator-API: `begin()`/`end()`, Input-Iterator) über `Statement::executeCursor`.
+- `db::Transaction` (RAII): COMMIT im Destruktor bei Erfolg, ROLLBACK bei Exception (Exception-sicher).
+- `db::PreparedStatement` mit typsicherer Parameter-Bindung über `ParameterBuilder`.
+
+---
+
+## Sicherheitsanalyse (Stand: 26.08.2026)
 
 ### Hoch
 
-1. **Hardcodierte Default-Credentials im Seed-Script** – `cfg/database/DEFAULT_SQLITE/data_schema_default_version_1.sql` legt den Admin-User `dominik` mit festem SHA-512-Hash an (vermutlich bekanntes Passwort). Auslieferung mit Default-Credentials ist ein Sicherheitsrisiko.
-   - **Status: BEWUSST BEIBEHALTEN (nur für lokale Tests)** – Vom Betreiber als pragmatischer Weg zum Testen bestätigt; Hash wird bei erstem Login automatisch auf salted PBKDF2 migriert. Für Produktion Default-Passwort ändern bzw. Seed-Script nicht ausliefern.
+1. **Hardcodierte Default-Credentials im Seed-Script** – `cfg/database/DEFAULT_SQLITE/data_schema_default_version_1.sql` legt den Admin-User `dominik` mit festem SHA-512-Hash an.
+   - **Status: BEWUSST BEIBEHALTEN (nur für lokale Tests)** – Hash wird bei erstem Login automatisch auf salted PBKDF2 migriert.
 
 ### Zu beachten
 
-2. **`/hello`-Endpoint (ExampleController)** und Swagger-Datei liegen ungeschützt im Repo; die Swagger-Spezifikation sollte an den tatsächlichen Auth-/Status-Codes-Stand angepasst werden (dokumentiert derzeit teilweise 200 ohne Auth-Anforderung).
+2. **Swagger-Datei** liegt ungeschützt im Repo; die Spezifikation sollte an den tatsächlichen Auth-/Status-Codes-Stand angepasst werden.
 3. **Docker-Compose** exponiert PostgreSQL (`test/test`) auf `5432` und die App auf `8080` ohne TLS – für Produktiv-Setups nicht geeignet.
 
 ---
 
 ## Offene Bugs / bekannte Fehler
 
-> Stand: 19.08.2026 – Alle nachfolgend gelisteten Punkte wurden behoben und über einen vollständigen Build (`-Werror`) sowie `ctest` (311/311 grün) verifiziert.
+> Stand: 26.08.2026 – Alle identifizierten Bugs wurden behoben und über einen vollständigen Build (`-Werror`) sowie `ctest` (331/331 grün) verifiziert.
 
-Alle identifizierten Bugs wurden behoben. Die vollständige Liste der Fixes findet sich in `TODO.md` unter „Kritische Bugs". Im Folgenden eine Zusammenfassung der wichtigsten Kategorien:
+Die vollständige Liste der Fixes wurde in der vorherigen Version dieses Dokuments dokumentiert. Zusammenfassung der wichtigsten Kategorien:
 
 - **Process-Service** (5 Fixes): disableAutoStart-Copy-Paste-Fehler, Monitor-Thread-Exception-Behandlung, doppeltes Promise-Setzen in detachOf, stopOf-Auto-Restart-Race, exit_code für laufende Kinder.
 - **Shared Memory** (4 Fixes): growOf-Remapping, maxSize-Erzwingung, Thread-Safe-Check, PropertyDataDto-Größenberechnung.
@@ -54,12 +86,12 @@ Alle identifizierten Bugs wurden behoben. Die vollständige Liste der Fixes find
 
 ---
 
-## Optimierungsmöglichkeiten (priorisiert)
+## Offene Maßnahmen (priorisiert)
 
 | Priorität | Maßnahme | Status | Begründung |
 |-----------|----------|--------|------------|
-| **Hoch** | **Fehlende Features abschließen (TODO.md)** | Offen | MySQL Support, Cursor, Paging |
-| **Mittel** | **Swagger-Dokumentation an tatsächliche Auth-/Status-Codes angleichen** | Erledigt (23.08.2026) | Auth-Annotationen, fehlende PUT-Methode, korrekte Status-Codes, 404/501 ergänzt |
-| **Mittel** | **Benchmark-Suite aufsetzen** | Erledigt (23.08.2026) | 27 Benchmarks: Regex, SQLite (Insert/Select/Transaction), PropertyDto Serialize/Deserialize |
-| **Niedrig** | **CMake modernisieren** (`include_directories` → `target_include_directories`) | Erledigt (23.08.2026) | `tests/`, `examples/`, `src/` – alle `include_directories()` eliminiert |
+| **Hoch** | **MySQL Support** | Offen | Einziges verbleibendes großes Feature |
+| **Mittel** | **`MemorySize`-Größen beim Grow begrenzen** | Offen | Resource Exhaustion über Shm-API, Overflow-Check |
+| **Mittel** | **Health/Readiness endpoint + Swagger-UI** | Offen | Observability für produktive Einsätze |
 | **Niedrig** | **Hypodermic durch Boost.DI ersetzen** | Offen | Aktiver maintained, standardkonformer |
+| **Niedrig** | **Backup/Archive-Strategie für Shared Memory** | Offen | Kein Dump/Restore-Mechanismus vorhanden |
