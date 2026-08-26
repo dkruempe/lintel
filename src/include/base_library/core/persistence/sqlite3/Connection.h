@@ -20,6 +20,8 @@ namespace sqlite {
 
     class Notify;
 
+    class Cursor;
+
     /**
      * SQLite database connection wrapping a sqlite3 handle.
      */
@@ -34,6 +36,8 @@ namespace sqlite {
         friend class PreparedStatement;
 
         friend class Notify;
+
+        friend class Cursor;
 
         std::map<std::string, sqlite3_stmt *> m_preparedStatements;
 

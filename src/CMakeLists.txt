@@ -64,6 +64,7 @@ set(headers
     include/base_library/core/persistence/Arguments.h
     include/base_library/core/persistence/Connection.h
     include/base_library/core/persistence/ConnectionType.h
+    include/base_library/core/persistence/Cursor.h
     include/base_library/core/persistence/DatabaseConnectionConfigurations.h
     include/base_library/core/persistence/Identifier.h
     include/base_library/core/persistence/Notify.h
@@ -76,6 +77,7 @@ set(headers
     include/base_library/core/persistence/Transaction.h
     # core - persistence - postgresql
     include/base_library/core/persistence/postgresql/Connection.h
+    include/base_library/core/persistence/postgresql/Cursor.h
     include/base_library/core/persistence/postgresql/Notify.h
     include/base_library/core/persistence/postgresql/PreparedStatement.h
     include/base_library/core/persistence/postgresql/Result.h
@@ -84,6 +86,7 @@ set(headers
     include/base_library/core/persistence/postgresql/Transaction.h
     # core - persistence - sqlite3
     include/base_library/core/persistence/sqlite3/Connection.h
+    include/base_library/core/persistence/sqlite3/Cursor.h
     include/base_library/core/persistence/sqlite3/Notify.h
     include/base_library/core/persistence/sqlite3/PreparedStatement.h
     include/base_library/core/persistence/sqlite3/Result.h
@@ -301,6 +304,7 @@ set(sources
     # core - persistence
     core/persistence/Arguments.cpp
     core/persistence/Connection.cpp
+    core/persistence/Cursor.cpp
     core/persistence/DatabaseConnectionConfigurations.cpp
     core/persistence/Notify.cpp
     core/persistence/Parameter.cpp
@@ -311,6 +315,7 @@ set(sources
     core/persistence/Transaction.cpp
     # core - persistence - postgresql
     core/persistence/postgresql/Connection.cpp
+    core/persistence/postgresql/Cursor.cpp
     core/persistence/postgresql/Notify.cpp
     core/persistence/postgresql/PreparedStatement.cpp
     core/persistence/postgresql/Result.cpp
@@ -318,6 +323,7 @@ set(sources
     core/persistence/postgresql/Transaction.cpp
     # core - persistence - sqlite3
     core/persistence/sqlite3/Connection.cpp
+    core/persistence/sqlite3/Cursor.cpp
     core/persistence/sqlite3/Notify.cpp
     core/persistence/sqlite3/PreparedStatement.cpp
     core/persistence/sqlite3/Result.cpp

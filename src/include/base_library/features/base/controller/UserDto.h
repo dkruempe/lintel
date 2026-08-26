@@ -6,6 +6,7 @@
 
 #include "base_library/core/models/JsonSerializable.h"
 #include "base_library/features/base/controller/GroupDto.h"
+#include "base_library/features/base/models/Page.h"
 #include "base_library/features/base/models/User.h"
 
 /** DTO representing a user */
@@ -136,6 +137,52 @@ public:
     /** Get the user DTOs
      * @return Vector of user DTOs */
     [[nodiscard]] const std::vector<UserDto> &getUsers() const;
+};
+
+/** DTO representing a single page of keyset-paginated users */
+class UsersPageDto : public JsonSerializable {
+private:
+    /** The user DTOs of this page */
+    std::vector<UserDto> m_users;
+    /** True if more pages follow */
+    bool m_hasMore = false;
+    /** Sort key to pass as 'after' for the next page */
+    std::optional<std::string> m_nextAfter;
+
+    /** JSON field name constants */
+    static struct Shapes {
+        const char *const ITEMS = "items";
+        const char *const HAS_MORE = "has_more";
+        const char *const NEXT_AFTER = "next_after";
+    } shape;
+
+public:
+    /** Construct from a paginated result
+     * @param page The page of users */
+    explicit UsersPageDto(const Page<User> &page);
+
+    /** Default constructor */
+    UsersPageDto() = default;
+
+    /** Serialize to JSON
+     * @param writer The rapidjson writer */
+    void serialize(
+            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+
+    /** Deserialize from JSON
+     * @param obj The JSON value
+     * @return True on success */
+    bool deserialize(const rapidjson::Value &obj) override;
+
+    /** Get the user DTOs of this page
+     * @return Vector of user DTOs */
+    [[nodiscard]] const std::vector<UserDto> &getUsers() const;
+
+    /** @return true if more pages follow */
+    [[nodiscard]] bool hasMore() const;
+
+    /** @return the continuation key for the next page, if any */
+    [[nodiscard]] const std::optional<std::string> &getNextAfter() const;
 };
 
 #endif  // CPP_BASE_LIBRARY_USERDTO_H

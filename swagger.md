@@ -66,18 +66,29 @@ Get history
 
 Get message queue
 
+##### Description
+
+Returns message queues matching the given name patterns as a JSON array.
+With the optional query parameters `after` and `limit` the result is
+keyset-paginated (ordered by queue name ascending) and returned as an
+envelope object `{items, has_more, next_after}`. Follow `next_after` to
+retrieve the next page.
+
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ------ |
 | processName | path |  | Yes | string |
 | messageQueueName | path |  | Yes | string |
+| after | query | Exclusive lower bound on queue name; use next_after of the previous page. | No | string |
+| limit | query | Maximum number of entries per page (default 100, max 1000). | No | integer |
 
 ##### Responses
 
 | Code | Description |
 | ---- | ----------- |
-| 200 | A successful response |
+| 200 | A successful response (array of message queues, or paging envelope when after/limit is given) |
+| 400 | Bad request (invalid limit) |
 | 401 | Unauthorized |
 | 403 | Forbidden |
 
@@ -395,11 +406,26 @@ Get all groups of group name and is virtual group
 
 Get all users
 
+##### Description
+
+Returns all users as a JSON array. With the optional query parameters
+`after` and `limit` the result is keyset-paginated (ordered by user_name
+ascending) and returned as an envelope object `{items, has_more, next_after}`.
+Follow `next_after` to retrieve the next page.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| after | query | Exclusive lower bound on user_name; use next_after of the previous page. | No | string |
+| limit | query | Maximum number of users per page (default 100, max 1000). | No | integer |
+
 ##### Responses
 
 | Code | Description |
 | ---- | ----------- |
-| 200 | A successful response |
+| 200 | A successful response (array of users, or paging envelope when after/limit is given) |
+| 400 | Bad request (invalid limit) |
 | 401 | Unauthorized |
 | 403 | Forbidden |
 
@@ -410,17 +436,26 @@ Get all users
 
 Get all users of user name
 
+##### Description
+
+Filters users by a regular expression on user_name. Supports the same optional
+keyset-paging parameters (`after`, `limit`) as /user/users; when paging is
+active the response is the envelope object `{items, has_more, next_after}`.
+
 ##### Parameters
 
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ------ |
 | userName | path |  | Yes | string |
+| after | query | Exclusive lower bound on user_name; use next_after of the previous page. | No | string |
+| limit | query | Maximum number of users per page (default 100, max 1000). | No | integer |
 
 ##### Responses
 
 | Code | Description |
 | ---- | ----------- |
-| 200 | A successful response |
+| 200 | A successful response (array of users, or paging envelope when after/limit is given) |
+| 400 | Bad request (invalid limit) |
 | 401 | Unauthorized |
 | 403 | Forbidden |
 

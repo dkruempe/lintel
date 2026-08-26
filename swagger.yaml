@@ -40,6 +40,12 @@ paths:
   /messageQueue/{processName}/{messageQueueName}:
     get:
       summary: Get message queue
+      description: >
+        Returns message queues matching the given name patterns as a JSON array.
+        With the optional query parameters 'after' and 'limit' the result is
+        keyset-paginated (ordered by queue name ascending) and returned as an
+        envelope object {items, has_more, next_after}. Follow next_after to
+        retrieve the next page.
       security:
         - bearerAuth: []
       parameters:
@@ -51,9 +57,23 @@ paths:
           in: path
           required: true
           type: string
+        - name: after
+          in: query
+          required: false
+          type: string
+          description: Exclusive lower bound on queue name; use next_after of the previous page.
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum number of entries per page (default 100).
       responses:
         "200":
-          description: A successful response
+          description: A successful response (array of message queues, or paging envelope when after/limit is given)
+        "400":
+          description: Bad request (invalid limit)
         "401":
           description: Unauthorized
         "403":
@@ -373,11 +393,31 @@ paths:
   /user/users:
     get:
       summary: Get all users
+      description: >
+        Returns all users as a JSON array. With the optional query parameters
+        'after' and 'limit' the result is keyset-paginated (ordered by
+        user_name ascending) and returned as an envelope object
+        {items, has_more, next_after}. Follow next_after to retrieve the next page.
       security:
         - bearerAuth: []
+      parameters:
+        - name: after
+          in: query
+          required: false
+          type: string
+          description: Exclusive lower bound on user_name; use next_after of the previous page.
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum number of users per page (default 100).
       responses:
         "200":
-          description: A successful response
+          description: A successful response (array of users, or paging envelope when after/limit is given)
+        "400":
+          description: Bad request (invalid limit)
         "401":
           description: Unauthorized
         "403":
@@ -387,6 +427,11 @@ paths:
   /user/users/{userName}:
     get:
       summary: Get all users by user name
+      description: >
+        Filters users by a regular expression on user_name. Supports the same
+        optional keyset-paging parameters ('after', 'limit') as /user/users;
+        when paging is active the response is the envelope object
+        {items, has_more, next_after}.
       security:
         - bearerAuth: []
       parameters:
@@ -394,9 +439,23 @@ paths:
           in: path
           required: true
           type: string
+        - name: after
+          in: query
+          required: false
+          type: string
+          description: Exclusive lower bound on user_name; use next_after of the previous page.
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum number of users per page (default 100).
       responses:
         "200":
-          description: A successful response
+          description: A successful response (array of users, or paging envelope when after/limit is given)
+        "400":
+          description: Bad request (invalid limit)
         "401":
           description: Unauthorized
         "403":

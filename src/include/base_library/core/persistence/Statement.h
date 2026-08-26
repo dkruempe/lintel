@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_STATEMENT_H
 
 #include "base_library/core/persistence/Connection.h"
+#include "base_library/core/persistence/Cursor.h"
 #include "base_library/core/persistence/ParameterBuilder.h"
 #include "base_library/core/persistence/Result.h"
 #include "base_library/core/persistence/postgresql/Statement.h"
@@ -38,6 +39,22 @@ namespace db {
          * @return the query result
          */
         Result execute(const std::string &query, const db::ParameterBuilder &builder);
+
+        /**
+         * Executes a plain SQL query as a streaming cursor.
+         * @param query the SQL query string
+         * @return the cursor; the connection must outlive it
+         */
+        Cursor executeCursor(const std::string &query);
+
+        /**
+         * Executes a parameterized SQL query as a streaming cursor.
+         * @param query the SQL query string with placeholders
+         * @param builder the parameter builder containing parameter values
+         * @return the cursor; the connection must outlive it
+         */
+        Cursor executeCursor(const std::string &query,
+                             const db::ParameterBuilder &builder);
     };
 }  // namespace db
 

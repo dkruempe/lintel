@@ -1,6 +1,6 @@
 # TODOs
 
-> Stand: 23.08.2026 – ctest 311/311 grün, 27 Benchmarks (Google Benchmark) laufen. Alle Punkte unten wurden am Quellcode verifiziert; Datei:Zeile bezieht sich auf den aktuellen Stand.
+> Stand: 23.08.2026 – ctest 326/326 grün, 27 Benchmarks (Google Benchmark) laufen. Alle Punkte unten wurden am Quellcode verifiziert; Datei:Zeile bezieht sich auf den aktuellen Stand.
 
 ## Kritische Bugs (Hoch)
 
@@ -80,8 +80,8 @@
 
 ## Features (nicht Bugs)
 - [ ] mySql Support
-- [ ] Cursor implementation
-- [ ] HTTP-Paging
+- [x] Cursor implementation – `db::Cursor`-Fassade mit Iterator-API (`begin()`/`end()`, Input-Iterator, Batchgröße 64) über `Statement::executeCursor`; Backends: SQLite (`sqlite3_step`, lazy) und PostgreSQL (libpq Single-Row-Mode statt DECLARE/FETCH). Tests: `tests/core/CursorTest.cpp` (23.08.2026)
+- [x] HTTP-Paging – Keyset/Cursor-Pagination (`?after=<sortKey>&limit=<n>`, Default 100, Max 1000, invalid limit → 400) für `/user/users`, `/user/users/{userName}` und `/messageQueue/...`; Response-Envelope `{items, has_more, next_after}`, ohne Parameter weiterhin klassisches Array (rückwärtskompatibel). `Page<T>`-Modell, `pageOf` in UserRepository (zweiphasig, damit Multi-Group-User nicht über Seitengrenze splittert) und MessageQueueRepository, `PagingParams`/`pagingParamsOf` in Controller-Basisklasse, Page-DTOs, Swagger aktualisiert. Tests: `UserRepositoryPagingTest.cpp` / `MessageQueueRepositoryPagingTest.cpp` (23.08.2026)
 - [ ] adds constexpr implementation for better usage and performance
 - [ ] backup or archive strategy for shm
 - [ ] add better usage of semaphores
@@ -95,3 +95,4 @@
 - [x] CMake modernisierung – `include_directories()` in `tests/`, `examples/`, `src/` eliminiert (23.08.2026)
 - [x] Swagger-Dokumentation – Auth-Annotations, Status-Codes, PUT-Methode für Properties, 404/501 ergänzt; `/hello` entfernt (23.08.2026)
 - [x] Benchmark-Suite – Google Benchmark mit 27 Benchmarks: RegexUtils (8), SQLite Persistence (9), PropertyDto Serialize/Deserialize (10) – `bin/base_benchmarks` (23.08.2026)
+- [x] Cursor + HTTP-Paging (siehe Features) – 15 neue Tests (6 Cursor, 5 User-Paging, 4 MessageQueue-Paging), ctest 326/326 (23.08.2026)

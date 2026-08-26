@@ -21,6 +21,8 @@ namespace postgresql {
 
     class Notify;
 
+    class Cursor;
+
     /**
      * PostgreSQL database connection wrapping a PGconn handle.
      */
@@ -36,6 +38,8 @@ namespace postgresql {
         friend class PreparedStatement;
 
         friend class Notify;
+
+        friend class Cursor;
 
         /**
          * Executes a plain SQL statement.

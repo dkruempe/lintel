@@ -11,7 +11,7 @@
 
 namespace {
 
-std::string trimmed(const std::string &value) {
+std::string trimHeaderValue(const std::string &value) {
     const std::string whitespace = " \t\r\n";
     const std::size_t first = value.find_first_not_of(whitespace);
     if (first == std::string::npos) {
@@ -110,7 +110,7 @@ std::string firstForwardedIp(const std::string &forwardedFor) {
         return {};
     }
     const std::size_t comma = forwardedFor.find(',');
-    return trimmed(forwardedFor.substr(0, comma));
+    return trimHeaderValue(forwardedFor.substr(0, comma));
 }
 
 }  // namespace

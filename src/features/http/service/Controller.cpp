@@ -2,9 +2,52 @@
 
 #include <utility>
 
+namespace {
+
+/** Default page size when only 'after' is given */
+constexpr std::size_t kDefaultPageLimit = 100;
+/** Hard cap for the 'limit' query parameter */
+constexpr std::size_t kMaxPageLimit = 1000;
+
+}  // namespace
+
 std::string Controller::clientIpOf(const httplib::Request &request) {
     return m_ipResolver.resolveClientIp(
             request.remote_addr, request.get_header_value("X-Forwarded-For"));
+}
+
+PagingParams Controller::pagingParamsOf(const httplib::Request &request) {
+    PagingParams params;
+    const bool hasLimit = request.has_param("limit");
+    const bool hasAfter = request.has_param("after");
+    if (!hasLimit && !hasAfter) {
+        return params;
+    }
+    params.m_enabled = true;
+    if (hasAfter) {
+        std::string after = request.get_param_value("after");
+        if (!after.empty()) {
+            params.m_after = std::move(after);
+        }
+    }
+    if (hasLimit) {
+        const std::string &raw = request.get_param_value("limit");
+        std::size_t consumed = 0;
+        unsigned long long parsed = 0;
+        try {
+            parsed = std::stoull(raw, &consumed);
+        } catch (const std::exception &) {
+            throw HttpBadRequestException();
+        }
+        if (consumed != raw.size()) {
+            throw HttpBadRequestException();
+        }
+        if (parsed == 0 || parsed > kMaxPageLimit) {
+            throw HttpBadRequestException();
+        }
+        params.m_limit = static_cast<std::size_t>(parsed);
+    }
+    return params;
 }
 
 void Controller::setTrustedProxies(std::vector<std::string> trustedProxies) {

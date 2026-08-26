@@ -11,6 +11,7 @@ namespace postgresql {
     private:
         const Connection &m_connection;
 
+    public:
         /**
          * Counts the number of '?' placeholders in a statement template.
          * @param tempStatement the statement template
@@ -25,7 +26,6 @@ namespace postgresql {
          */
         static std::string initStatement(const std::string &tempStatement);
 
-    public:
         /**
          * Constructs a Statement bound to the given connection.
          * @param connection the PostgreSQL connection

@@ -3,10 +3,12 @@
 
 #include <httplib.h>
 
+#include <cstddef>
 #include <functional>
 #include <map>
 #include <memory>
 #include <exception>
+#include <optional>
 #include <type_traits>
 #include <vector>
 
@@ -77,6 +79,16 @@
                       const httplib::ContentReader &contentReader,          \
                       const ContentType &contentType)
 
+/** Parsed paging query parameters of a request */
+struct PagingParams {
+    /** True if paging was requested via 'limit' and/or 'after' */
+    bool m_enabled = false;
+    /** Exclusive lower bound for the sort key (continuation token) */
+    std::optional<std::string> m_after;
+    /** Maximum number of items per page */
+    std::size_t m_limit = 100;
+};
+
 /** Base class for HTTP controllers with automatic method registration and auth */
 class Controller : public GroupProvider {
 protected:
@@ -90,6 +102,15 @@ protected:
      * @return the client IP address
      */
     std::string clientIpOf(const httplib::Request &request);
+
+    /**
+     * Parses keyset-paging query parameters ('after', 'limit').
+     * @param request the HTTP request
+     * @return the parsed parameters; enabled=false when neither parameter
+     *         is present
+     * @throws HttpBadRequestException on an invalid 'limit' value
+     */
+    static PagingParams pagingParamsOf(const httplib::Request &request);
 
     ClientIpResolver m_ipResolver;
 

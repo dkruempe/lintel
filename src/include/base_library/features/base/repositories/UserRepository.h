@@ -6,6 +6,7 @@
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "base_library/features/base/models/Page.h"
 #include "base_library/features/base/models/User.h"
 #include "base_library/features/base/repositories/GroupRepository.h"
 
@@ -43,6 +44,19 @@ public:
      * @return matching users
      */
     std::vector<User> allOf(const std::string &userNameMatches);
+
+    /**
+     * Keyset-paginated user query ordered by user_name ascending.
+     * @param userNameMatches filter by username (partial match); empty string
+     *                        disables filtering
+     * @param afterUserName exclusive lower bound; pass the previous page's
+     *                      nextAfter value (nullopt for the first page)
+     * @param limit maximum number of users per page
+     * @return one page of users plus continuation info
+     */
+    [[nodiscard]] Page<User> pageOf(const std::string &userNameMatches,
+                                    const std::optional<std::string> &afterUserName,
+                                    std::size_t limit);
 
     /**
      * Create a new user.

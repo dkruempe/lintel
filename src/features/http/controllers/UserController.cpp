@@ -193,6 +193,15 @@ void UserController::allUsersOfGet(const httplib::Request &request,
     }
     switch (contentType) {
         case ContentType::ApplicationJson: {
+            PagingParams paging = pagingParamsOf(request);
+            if (paging.m_enabled) {
+                Page<User> page =
+                        m_userRepository->pageOf("", paging.m_after, paging.m_limit);
+                UsersPageDto usersPageDto(page);
+                response.set_content(usersPageDto.JsonSerializable::serialize(),
+                                     contentType.getName());
+                break;
+            }
             UsersDto usersDto(m_userRepository->allOf());
             response.set_content(usersDto.JsonSerializable::serialize(),
                                  contentType.getName());
@@ -222,6 +231,15 @@ void UserController::allUsersOfUserNameGet(
     switch (contentType) {
         case ContentType::ApplicationJson: {
             std::string userName = request.matches[1];
+            PagingParams paging = pagingParamsOf(request);
+            if (paging.m_enabled) {
+                Page<User> page = m_userRepository->pageOf(userName, paging.m_after,
+                                                           paging.m_limit);
+                UsersPageDto usersPageDto(page);
+                response.set_content(usersPageDto.JsonSerializable::serialize(),
+                                     contentType.getName());
+                break;
+            }
             UsersDto usersDto(m_userRepository->allOf(userName));
             response.set_content(usersDto.JsonSerializable::serialize(),
                                  contentType.getName());

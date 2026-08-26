@@ -94,6 +94,68 @@ std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &
   return entries;
 }
 
+Page<MessageQueueEntry> MessageQueueRepository::pageOf(const std::string &processName,
+  const std::string &messageQueueName,
+  const std::optional<std::string> &afterName,
+  std::size_t limit)
+{
+  if (limit == 0) {
+    return Page<MessageQueueEntry>({}, false, std::nullopt);
+  }
+  if (m_connectionEntry == nullptr) {
+    LOG_INFO("no default database connection - skip message queue sync from database");
+    return Page<MessageQueueEntry>({}, false, std::nullopt);
+  }
+  std::string stmt;
+  switch (m_connectionEntry->getType()) {
+  case db::ConnectionType::SQLite:
+    stmt = R"(select name,
+                     process_name,
+                     max_messages
+             from message_queues
+              where name REGEXP ?
+               and  process_name REGEXP ?)";
+    break;
+  case db::ConnectionType::PostgreSQL:
+    stmt = R"(select name,
+                     process_name,
+                     max_messages
+              from message_queues
+              where name ~* ?
+              and process_name ~* ?)";
+    break;
+  default:
+    throw db::SQLException("DatabaseType currently not supported");
+  }
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(messageQueueName);
+  builder.add(processName);
+  if (afterName.has_value()) {
+    stmt += " and name > ?";
+    builder.add(afterName.value());
+  }
+  stmt += " order by name asc limit ?";
+  builder.add(limit + 1);
+  const db::Connection connection(m_connectionEntry);
+  db::PreparedStatement preparedStatement(connection, stmt, "message_queue_page_select");
+  auto result = preparedStatement.execute(builder);
+  std::vector<MessageQueueEntry> entries;
+  const bool hasMore = static_cast<std::size_t>(result.getSize()) > limit;
+  const std::size_t pageSize =
+      hasMore ? limit : static_cast<std::size_t>(result.getSize());
+  for (std::size_t i = 0; i < pageSize; i++) {
+    entries.push_back(MessageQueueEntry("",
+      result.of(i).of(1).getValue<std::string>(),
+      result.of(i).of(0).getValue<std::string>(),
+      result.of(i).of(2).getValue<int32_t>()));
+  }
+  std::optional<std::string> nextAfter = std::nullopt;
+  if (hasMore && !entries.empty()) {
+    nextAfter = entries.back().get_message_queue_name();
+  }
+  return Page<MessageQueueEntry>(std::move(entries), hasMore, nextAfter);
+}
+
 std::vector<MessageQueueEntry> MessageQueueRepository::allProcessNameOf(const std::string &processName)
 {
   std::string stmt = R"(select name,

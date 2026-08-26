@@ -2,10 +2,12 @@
 #define CPP_BASE_LIBRARY_MESSAGEQUEUEREPOSITORY_H
 
 #include <memory>
+#include <optional>
 #include <vector>
 #include <base_library/features/base/configuration/MessageQueueEntry.h>
 #include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
 #include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
+#include <base_library/features/base/models/Page.h>
 #include <base_library/features/base/repositories/IMessageQueueRepository.h>
 
 /**
@@ -30,6 +32,20 @@ public:
    * @return matching entries
    */
   std::vector<MessageQueueEntry> allOf(const std::string &processName, const std::string &messageQueueName);
+
+  /**
+   * Keyset-paginated queue query ordered by queue name ascending.
+   * @param processName process name filter
+   * @param messageQueueName queue name filter
+   * @param afterName exclusive lower bound on the queue name; pass the
+   *                  previous page's nextAfter value (nullopt for first page)
+   * @param limit maximum number of entries per page
+   * @return one page of entries plus continuation info
+   */
+  Page<MessageQueueEntry> pageOf(const std::string &processName,
+                                 const std::string &messageQueueName,
+                                 const std::optional<std::string> &afterName,
+                                 std::size_t limit) override;
 
   /**
    * @param processName filter by process name

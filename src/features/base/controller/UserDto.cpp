@@ -194,3 +194,67 @@ bool UsersDto::deserialize(const rapidjson::Value &obj) {
     }
     return true;
 }
+
+UsersPageDto::Shapes UsersPageDto::shape{};
+
+UsersPageDto::UsersPageDto(const Page<User> &page) {
+    m_users.reserve(page.getItems().size());
+    for (const auto &user: page.getItems()) {
+        m_users.emplace_back(user);
+    }
+    m_hasMore = page.hasMore();
+    m_nextAfter = page.getNextAfter();
+}
+
+const std::vector<UserDto> &UsersPageDto::getUsers() const { return m_users; }
+
+bool UsersPageDto::hasMore() const { return m_hasMore; }
+
+const std::optional<std::string> &UsersPageDto::getNextAfter() const {
+    return m_nextAfter;
+}
+
+void UsersPageDto::serialize(
+        rapidjson::Writer<rapidjson::StringBuffer> *writer) const {
+    writer->StartObject();
+    writer->String(shape.ITEMS);
+    writer->StartArray();
+    for (const auto &item: m_users) {
+        item.serialize(writer);
+    }
+    writer->EndArray();
+    writer->String(shape.HAS_MORE);
+    writer->Bool(m_hasMore);
+    if (m_nextAfter.has_value()) {
+        writer->String(shape.NEXT_AFTER);
+        writer->String(m_nextAfter.value().c_str());
+    }
+    writer->EndObject();
+}
+
+bool UsersPageDto::deserialize(const rapidjson::Value &obj) {
+    bool success = true;
+    if (obj.HasMember(shape.ITEMS) && obj[shape.ITEMS].IsArray()) {
+        for (auto iter = obj[shape.ITEMS].Begin(); iter != obj[shape.ITEMS].End();
+             iter++) {
+            UserDto userDto;
+            userDto.deserialize(*iter);
+            m_users.push_back(std::move(userDto));
+        }
+    } else {
+        success = false;
+        LOG_ERROR("{} not defined in json serialization", shape.ITEMS);
+    }
+    if (obj.HasMember(shape.HAS_MORE) && obj[shape.HAS_MORE].IsBool()) {
+        m_hasMore = obj[shape.HAS_MORE].GetBool();
+    } else {
+        success = false;
+        LOG_ERROR("{} not defined in json serialization", shape.HAS_MORE);
+    }
+    if (obj.HasMember(shape.NEXT_AFTER) && obj[shape.NEXT_AFTER].IsString()) {
+        m_nextAfter = std::make_optional(obj[shape.NEXT_AFTER].GetString());
+    } else {
+        m_nextAfter = std::nullopt;
+    }
+    return success;
+}

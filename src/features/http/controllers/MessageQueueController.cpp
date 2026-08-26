@@ -32,6 +32,14 @@ void MessageQueueController::messageQueueOfGet(const httplib::Request &request,
   const std::string messageQueueName = request.matches[2];
   switch (contentType) {
     case ContentType::ApplicationJson: {
+      PagingParams paging = pagingParamsOf(request);
+      if (paging.m_enabled) {
+        Page<MessageQueueEntry> page = m_messageQueueRepository->pageOf(
+            processName, messageQueueName, paging.m_after, paging.m_limit);
+        MessageQueuesPageDto messageQueuesPageDto(page);
+        response.set_content(messageQueuesPageDto.JsonSerializable::serialize(), contentType.getName());
+        break;
+      }
       std::vector<MessageQueueEntry> entries = m_messageQueueRepository->allOf(processName, messageQueueName);
       std::vector<std::pair<MessageQueueEntry, int32_t> > messageQueueInformation;
       for (const auto &entry : entries) { messageQueueInformation.push_back(m_messageQueueService->numberMessagesOf(entry)); }
