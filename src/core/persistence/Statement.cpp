@@ -1,7 +1,5 @@
 #include "base_library/core/persistence/Statement.h"
 
-#include "base_library/core/persistence/postgresql/Cursor.h"
-#include "base_library/core/persistence/sqlite3/Cursor.h"
 #include "base_library/core/persistence/postgresql/Statement.h"
 
 namespace db {
@@ -47,41 +45,38 @@ namespace db {
     }
 
     Cursor Statement::executeCursor(const std::string &query) {
+        Cursor cursor;
+        cursor.m_query = query;
+        cursor.m_needsInit = true;
         switch (m_connection.m_connectionType) {
             case ConnectionType::SQLite:
-                return Cursor(nullptr,
-                              std::make_shared<sqlite::Cursor>(
-                                      *m_connection.m_connSQLite, query,
-                                      std::vector<std::string>{}));
+                cursor.m_sqliteConn = m_connection.m_connSQLite;
+                break;
             case ConnectionType::PostgreSQL:
-                return Cursor(std::make_shared<postgresql::Cursor>(
-                                      *m_connection.m_conn,
-                                      postgresql::Statement::initStatement(query),
-                                      std::vector<std::string>{}),
-                              nullptr);
+                cursor.m_pgConn = m_connection.m_conn;
+                break;
             case ConnectionType::UNDEFINED:
                 throw db::SQLException("Undefined Database Type");
         }
-        return {};
+        return cursor;
     }
 
     Cursor Statement::executeCursor(const std::string &query,
                                     const ParameterBuilder &builder) {
+        Cursor cursor;
+        cursor.m_query = query;
+        cursor.m_params = builder.build();
+        cursor.m_needsInit = true;
         switch (m_connection.m_connectionType) {
             case ConnectionType::SQLite:
-                return Cursor(nullptr,
-                              std::make_shared<sqlite::Cursor>(
-                                      *m_connection.m_connSQLite, query,
-                                      builder.build()));
+                cursor.m_sqliteConn = m_connection.m_connSQLite;
+                break;
             case ConnectionType::PostgreSQL:
-                return Cursor(std::make_shared<postgresql::Cursor>(
-                                      *m_connection.m_conn,
-                                      postgresql::Statement::initStatement(query),
-                                      builder.build()),
-                              nullptr);
+                cursor.m_pgConn = m_connection.m_conn;
+                break;
             case ConnectionType::UNDEFINED:
                 throw db::SQLException("Undefined Database Type");
         }
-        return {};
+        return cursor;
     }
 }  // namespace db

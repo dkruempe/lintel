@@ -3,6 +3,7 @@
 
 #include <sqlite3.h>
 
+#include <cstddef>
 #include <string>
 #include <vector>
 
@@ -12,16 +13,22 @@ namespace sqlite {
     class Connection;
 
     /**
-     * Forward-only streaming cursor over an SQLite query result.
+     * Forward-only cursor over an SQLite query result.
      * Rows are fetched lazily via sqlite3_step() instead of buffering the
      * whole result set. The cursor owns its statement and finalizes it on
      * destruction; the underlying Connection must outlive the cursor.
+     *
+     * The @p fetchSize parameter controls the client-side prefetch buffer
+     * size (how many rows are buffered per fetchNext() call).  SQLite has
+     * no server-side cursor concept, so fetchSize only affects client
+     * memory usage, not server behaviour.
      */
     class Cursor {
     private:
         sqlite3 *m_db;
         sqlite3_stmt *m_stmt;
         bool m_exhausted;
+        std::size_t m_fetchSize;
 
     public:
         /**
@@ -29,10 +36,12 @@ namespace sqlite {
          * @param connection the SQLite connection (must outlive the cursor)
          * @param query the SQL query with '?' placeholders
          * @param params the parameter values to bind
+         * @param fetchSize client-side prefetch buffer size (default 64)
          * @throws db::SQLException on prepare or bind failure
          */
         explicit Cursor(const Connection &connection, const std::string &query,
-                        const std::vector<std::string> &params);
+                        const std::vector<std::string> &params,
+                        std::size_t fetchSize = 64);
 
         Cursor(Cursor &cursor) = delete;
 
@@ -41,6 +50,7 @@ namespace sqlite {
 
         /**
          * Fetches up to maxRows further rows from the query.
+         * Internally buffers up to fetchSize rows per sqlite3_step() call.
          * @param maxRows maximum number of rows to fetch (must be > 0)
          * @return the fetched rows; fewer rows than requested means the
          *         result set is exhausted

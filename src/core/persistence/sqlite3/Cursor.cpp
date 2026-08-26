@@ -1,5 +1,7 @@
 #include "base_library/core/persistence/sqlite3/Cursor.h"
 
+#include <algorithm>
+
 #include "base_library/core/exceptions/SQLException.h"
 #include "base_library/core/persistence/sqlite3/Connection.h"
 
@@ -27,8 +29,10 @@ namespace {
 
 namespace sqlite {
     Cursor::Cursor(const Connection &connection, const std::string &query,
-                   const std::vector<std::string> &params)
-        : m_db(connection.m_db), m_stmt(nullptr), m_exhausted(false) {
+                   const std::vector<std::string> &params,
+                   std::size_t fetchSize)
+        : m_db(connection.m_db), m_stmt(nullptr), m_exhausted(false),
+          m_fetchSize(fetchSize > 0 ? fetchSize : 64) {
         const int rc = sqlite3_prepare_v2(m_db, query.c_str(),
                                           static_cast<int>(query.size() + 1),
                                           &m_stmt, nullptr);
@@ -58,9 +62,10 @@ namespace sqlite {
     }
 
     std::vector<db::Arguments> Cursor::fetchNext(std::size_t maxRows) {
+        const std::size_t limit = std::min(maxRows, m_fetchSize);
         std::vector<db::Arguments> rows;
-        rows.reserve(maxRows);
-        while (rows.size() < maxRows && !m_exhausted) {
+        rows.reserve(limit);
+        while (rows.size() < limit && !m_exhausted) {
             const int step = sqlite3_step(m_stmt);
             switch (step) {
                 case SQLITE_ROW:

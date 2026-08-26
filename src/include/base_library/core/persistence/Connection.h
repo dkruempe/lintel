@@ -35,6 +35,8 @@ namespace db {
 
         friend class Notify;
 
+        friend class Cursor;
+
     public:
         /**
          * Constructs a connection from a type and connection info string.

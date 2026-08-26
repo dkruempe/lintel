@@ -1,6 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_CURSOR_H
 #define CPP_BASE_LIBRARY_CURSOR_H
 
+#include <cstddef>
 #include <memory>
 #include <string>
 #include <vector>
@@ -12,12 +13,19 @@
 
 namespace db {
     /**
-     * Forward-only streaming cursor over a query result.
-     * Unlike Result, rows are fetched lazily in batches from the database
-     * instead of buffering the whole result set upfront.
-     * The cursor is single-pass: iterate it once with begin()/end() like an
-     * istream_iterator, or consume it with fetchNext(). The underlying
-     * Connection must outlive the cursor.
+     * Forward-only cursor over a query result.
+     *
+     * Two modes controlled by fetchSize:
+     *  - fetchSize == 0: client-side streaming (PQsetSingleRowMode on PG).
+     *  - fetchSize > 0:  server-side cursor (DECLARE/FETCH/CLOSE on PG,
+     *                    client-side prefetch buffer on SQLite).  Default.
+     *
+     * The cursor is single-pass: iterate it once with begin()/end(), or
+     * consume it with fetchNext().  The underlying Connection must outlive
+     * the cursor.
+     *
+     * Configuration (setFetchSize / setCursorName / setNoScroll) must be
+     * called before the first call to begin() or fetchNext().
      */
     class Cursor {
     private:
@@ -31,13 +39,31 @@ namespace db {
         bool m_started = false;
         bool m_exhausted = false;
 
-        /** Number of rows fetched per backend round trip */
-        static constexpr std::size_t BATCH_SIZE = 64;
+        /** Fetch size: rows per backend round-trip (0 = streaming) */
+        std::size_t m_fetchSize = 100;
+        /** Server-side cursor name (auto-generated if empty) */
+        std::string m_cursorName;
+        /** NO SCROLL flag for server-side cursor */
+        bool m_noScroll = true;
+
+        /** Lazy-init state: query, params, and connection handles */
+        bool m_needsInit = false;
+        std::string m_query;
+        std::vector<std::string> m_params;
+        std::shared_ptr<postgresql::Connection> m_pgConn;
+        std::shared_ptr<sqlite::Connection> m_sqliteConn;
 
         /**
-         * Starts the stream by fetching the first batch (no-op if started).
+         * Starts the stream by creating the backend cursor and fetching
+         * the first batch (no-op if started).
          */
         void start();
+
+        /**
+         * Creates the backend cursor from stored query/params/connection.
+         * Called once by start() when m_needsInit is true.
+         */
+        void initBackendCursor();
 
         /**
          * Discards the current batch and fetches the next one.
@@ -98,6 +124,29 @@ namespace db {
 
         /** Default constructor, creates an exhausted cursor. */
         Cursor() = default;
+
+        /**
+         * Sets the number of rows fetched per backend round-trip.
+         *  0 = client-side streaming (PQsetSingleRowMode on PG, no DECLARE CURSOR)
+         * >0 = server-side cursor (DECLARE/FETCH/CLOSE on PG, prefetch buffer on SQLite)
+         * Default: 100 (server-side).
+         * Must be called before begin() or fetchNext().
+         */
+        Cursor &setFetchSize(std::size_t rows);
+
+        /**
+         * Sets the server-side cursor name.
+         * If empty (default), a unique name is auto-generated.
+         * Must be called before begin() or fetchNext().
+         */
+        Cursor &setCursorName(const std::string &name);
+
+        /**
+         * Sets the NO SCROLL flag on the server-side cursor.
+         * Default: true (NO SCROLL).
+         * Must be called before begin() or fetchNext().
+         */
+        Cursor &setNoScroll(bool enable);
 
         /**
          * Fetches up to maxRows further rows from the stream.

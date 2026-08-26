@@ -3,6 +3,11 @@
 
 #include "Connection.h"
 
+namespace db {
+    class Statement;
+    class Cursor;
+}  // namespace db
+
 namespace postgresql {
     /**
      * Executes SQL statements on a PostgreSQL connection.
@@ -11,7 +16,6 @@ namespace postgresql {
     private:
         const Connection &m_connection;
 
-    public:
         /**
          * Counts the number of '?' placeholders in a statement template.
          * @param tempStatement the statement template
@@ -25,6 +29,11 @@ namespace postgresql {
          * @return the converted statement
          */
         static std::string initStatement(const std::string &tempStatement);
+
+        friend class db::Statement;
+        friend class db::Cursor;
+
+    public:
 
         /**
          * Constructs a Statement bound to the given connection.
