@@ -1,0 +1,55 @@
+# AGENTS.md
+
+## Build & Test Commands
+
+CI is the source of truth (`.github/workflows/ci.yml`). C++17, CMake 3.16+, Conan 2, Ninja.
+
+```bash
+# 1. Conan dependencies
+conan install . --output-folder=build --build=missing -s build_type=Release -c tools.cmake.cmaketoolchain:generator=Ninja
+
+# 2. CMake configure
+cmake -S . -B build/build/Release \
+  -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+  -G Ninja
+
+# 3. Build
+cmake --build build/build/Release --parallel $(nproc)
+
+# 4. Run tests (single binary, Catch2 + trompeloeil)
+cd build/build/Release && ctest --output-on-failure --label-regex unit
+```
+
+Binaries output to `bin/`.
+
+## Code Style
+
+- **Formatting**: `clang-format` — 120-col limit, 2-space indent, custom brace wrapping. Run `clang-format -i` on changed files.
+- **Warnings**: `-Werror` is ON by default (`myproject_WARNINGS_AS_ERRORS`). Fix all warnings before committing.
+- **clang-tidy**: Off by default. Enable with `-DMYPROJECT_ENABLE_CLANG_TIDY=ON`. Header filter: `.*base_library/.*`.
+- **Unity builds**: ON by default (`ENABLE_UNITY_BUILD`). Can mask include-order bugs — disable to test `#include` completeness.
+
+## Architecture
+
+`base_library` is a CMake library (`kruempelmann::base_library`).
+
+- **`src/core/`** — StartupBuilder, DI wiring, persistence abstraction (PostgreSQL + SQLite), logging, services, plugins.
+- **`src/features/`** — Optional modules: `http/` (cpp-httplib server/client), `cli/`, `property/` (XML/file/DB/SHM config), `base/` (auth, processes, message queues, event bus, shared memory).
+- **`src/include/base_library/`** — Public headers. `config.h` is generated from `config.h.in` by CMake.
+- **`external/Hypodermic/`** — Vendored DI framework.
+- **`cfg/`** — Runtime XML config (`bootstrap.xml`, `bootstrap_worker.xml`). `CONFIG_DIRECTORY` env var overrides path.
+- **`examples/`** — Reference apps showing how to wire StartupBuilder.
+- **`tests/`** — Single binary (`base_tests`), all test files listed explicitly in `tests/CMakeLists.txt`.
+
+## Gotchas
+
+- **New test files**: Must be added to the `ADD_EXECUTABLE(base_tests ...)` list in `tests/CMakeLists.txt`. They won't be discovered automatically.
+- **New source files**: Must be added to the `headers`/`sources` lists in `src/CMakeLists.txt`. No globbing.
+- **Build dir mismatch**: CI uses `build/build/Release`, README mentions `cmake-build-debug`. Follow CI layout for consistency.
+- **PostgreSQL tests**: Require a running Postgres. Use `docker compose up postgres` (user/pass/db: test/test/test on port 5432).
+- **TLS certs**: Self-signed dev certs in `cfg/certs/`. Regenerate with `./cfg/certs/generate_certs.sh`. Referenced by `cfg/bootstrap.xml`.
+- **PCH**: Precompiled headers are ON by default (`ENABLE_PCH`). New stdlib headers needed by source files should be added to the PCH list in `src/CMakeLists.txt`.
+- **`config.h.in`**: CMake substitutes `PROJECT_PATH`, `CONFIG_DIRECTORY`, `BOOTSTRAP_CONFIG_NAME`, `MSG_QUEUE_NAME_SIZE`, `MSG_QUUEUE_CONTENT_SIZE` (note typo in original). Build touches `src/include/base_library/config.h`.
+- **Docker dev**: `docker compose --profile dev run dev` mounts source + builds inside container.
