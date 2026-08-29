@@ -10,6 +10,50 @@ host: localhost:8080
 schemes:
   - http
 paths:
+  /hello:
+    get:
+      summary: Greets the user
+      description: >
+        Returns a personalized greeting if a valid Bearer token is provided,
+        otherwise a generic "Hello World!".
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: A successful response (text/plain)
+        "500":
+          description: Internal server error
+  /health:
+    get:
+      summary: Liveness probe
+      description: >
+        Returns 200 with {"status":"ok"} as long as the HTTP process is alive.
+        Unauthenticated so orchestrators (Kubernetes probes, Docker healthcheck)
+        can use it.
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: ok
+  /ready:
+    get:
+      summary: Readiness probe
+      description: >
+        Returns 200 with {"status":"ready"} when the process accepts traffic.
+        Unauthenticated; lightweight liveness-style readiness check.
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: ready
   /history/{processName}/{serviceName}/{label}:
     get:
       summary: Get history

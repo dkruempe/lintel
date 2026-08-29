@@ -1,15 +1,15 @@
 # TODOs
 
-> Stand: 29.08.2026 – ctest 331/331 grün, 27 Benchmarks (Google Benchmark). Alle identifizierten Bugs wurden behoben, `constexpr`-Refactor abgeschlossen (siehe ANALYSIS.md für Zusammenfassung).
+> Stand: 29.08.2026 – ctest 332/332 grün, 27 Benchmarks (Google Benchmark). Alle identifizierten Bugs wurden behoben, `constexpr`-Refactor abgeschlossen (siehe ANALYSIS.md für Zusammenfassung).
 
 ## Nächste Prioritäten (fokussiert)
 
 1. **Security-Härtung**
    - [x] `MemorySize`-Größen beim Grow begrenzen (Resource Exhaustion über Shm-API) und Overflow-Check
    - [x] Health/Readiness endpoint (`GET /health`, `GET /ready`, unauthentifiziert, 200 JSON)
-   - [ ] Swagger-Spezifikation an tatsächlichen Auth-/Status-Code-Stand anpassen + serien
+   - [x] Swagger-Spezifikation an tatsächlichen Auth-/Status-Code-Stand anpassen (Spec-only, `/hello`, `/health`, `/ready`; kein Serving/Embedding)
 2. **Shared Memory Robustheit**
-   - [ ] Backup/Archive-Strategie für Shared Memory
+   - [x] Backup-Strategie geprüft → **verworfen** (Property-Persistenz läuft bereits über DB-Priorität + Shadowing; kein separater SHM-Backup-Mechanismus)
    - [ ] Bessere Semaphore-Nutzung + Resource-/Overflow-Checks
 
 ## Tests / Mocks
@@ -23,7 +23,7 @@
 
 ## Features
 
-- [ ] Backup or archive strategy for shared memory (siehe Nächste Prioritäten)
+- [x] Backup or archive strategy for shared memory → verworfen (siehe Nächste Prioritäten); Persistenz über DB-Priorität + Shadowing
 - [ ] Add better usage of semaphores
 - [ ] Adds better possibility to manage processes automatically
 - [ ] MySQL Support (zurückgestellt – aktuell nicht priorisiert)

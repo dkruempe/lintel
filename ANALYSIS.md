@@ -97,6 +97,6 @@ Die vollständige Liste der Fixes wurde in der vorherigen Version dieses Dokumen
 |-----------|----------|--------|------------|
 | **Hoch** | **`MemorySize`-Größen beim Grow begrenzen** | In Arbeit (2026-08-29) | Resource Exhaustion über Shm-API, Overflow-Check in `SharedMemoryService::onCheck` |
 | **Hoch** | **Health/Readiness endpoint** | Erledigt (2026-08-29) | `GET /health` (liveness), `GET /ready` (readiness), unauthentifiziert, 200 JSON |
-| **Hoch** | **Backup/Archive-Strategie für Shared Memory** | Offen | Kein Dump/Restore-Mechanismus vorhanden |
+| **Hoch** | **Backup/Archive-Strategie für Shared Memory** | Verworfen (2026-08-29) | Geprüft: `PropertyService` persistiert jede Änderung bereits synchron in alle `mutable`-Repositories (inkl. `DATABASE_REPOSITORY`, mutable=true) über Prioritäts-+Shadowing-Mechanik; die DB ist die autoritative Quelle. Ein paralleles SHM-Backup wäre redundant und würde auf dem RT-Pfad doppelte Schreiblatenz erzeugen. Kein Mechanismus gebaut. |
 | **Mittel** | **MySQL Support** | Zurückgestellt | Bewusst nach hinten verschoben (User-Anforderung) |
 | **Niedrig** | **Hypodermic durch Boost.DI ersetzen** | Offen | Aktiver maintained, standardkonformer |
