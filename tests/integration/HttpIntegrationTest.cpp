@@ -18,6 +18,28 @@
 #include <thread>
 #include <vector>
 
+TEST_CASE("Server: health and readiness endpoints respond 200 without auth") {
+    int port = 18993;
+    Server server(ServerConfiguration("127.0.0.1", port),
+                  std::vector<std::shared_ptr<Controller>>{});
+
+    httplib::Client client("127.0.0.1", port);
+    client.set_connection_timeout(std::chrono::seconds(2));
+    client.set_read_timeout(std::chrono::seconds(2));
+
+    auto health = client.Get("/health");
+    REQUIRE(health != nullptr);
+    REQUIRE(health->status == 200);
+    REQUIRE(health->body == "{\"status\":\"ok\"}");
+    REQUIRE(health->get_header_value("Content-Type") == "application/json");
+
+    auto ready = client.Get("/ready");
+    REQUIRE(ready != nullptr);
+    REQUIRE(ready->status == 200);
+    REQUIRE(ready->body == "{\"status\":\"ready\"}");
+    REQUIRE(ready->get_header_value("Content-Type") == "application/json");
+}
+
 TEST_CASE("ContentType: parse from string") {
     ContentType ct("application/json");
     REQUIRE(ct.getValue() == ContentType::ApplicationJson);

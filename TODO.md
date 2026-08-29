@@ -5,8 +5,9 @@
 ## Nächste Prioritäten (fokussiert)
 
 1. **Security-Härtung**
-   - [ ] `MemorySize`-Größen beim Grow begrenzen (Resource Exhaustion über Shm-API) und Overflow-Check
-   - [ ] Health/Readiness endpoint + Swagger-UI
+   - [x] `MemorySize`-Größen beim Grow begrenzen (Resource Exhaustion über Shm-API) und Overflow-Check
+   - [x] Health/Readiness endpoint (`GET /health`, `GET /ready`, unauthentifiziert, 200 JSON)
+   - [ ] Swagger-Spezifikation an tatsächlichen Auth-/Status-Code-Stand anpassen + serien
 2. **Shared Memory Robustheit**
    - [ ] Backup/Archive-Strategie für Shared Memory
    - [ ] Bessere Semaphore-Nutzung + Resource-/Overflow-Checks

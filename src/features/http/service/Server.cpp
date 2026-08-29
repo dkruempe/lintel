@@ -3,6 +3,28 @@
 #include <stdexcept>
 
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/features/http/service/ContentType.h"
+#include "base_library/features/http/service/HttpStatusCodes.h"
+
+namespace {
+/** Body of the liveness (health) response */
+constexpr const char *kHealthBody = "{\"status\":\"ok\"}";
+/** Body of the readiness response */
+constexpr const char *kReadyBody = "{\"status\":\"ready\"}";
+}  // namespace
+
+void Server::registerHealthEndpoints(std::shared_ptr<httplib::Server> server) {
+    server->Get("/health", [](const httplib::Request &,
+                              httplib::Response &response) {
+        response.status = HttpStatusCodes::OK;
+        response.set_content(kHealthBody, ContentType(ContentType::ApplicationJson).getName());
+    });
+    server->Get("/ready", [](const httplib::Request &,
+                             httplib::Response &response) {
+        response.status = HttpStatusCodes::OK;
+        response.set_content(kReadyBody, ContentType(ContentType::ApplicationJson).getName());
+    });
+}
 
 Server::~Server() {
     if (m_sslServer != nullptr) {
@@ -38,6 +60,7 @@ std::shared_ptr<httplib::Server> Server::initServer(
     for (const auto &iter: controllers) {
         iter->registerMethods(server);
     }
+    registerHealthEndpoints(server);
     if (serverConfiguration.getWriteTimeOut().count() != 0) {
         server->set_write_timeout(serverConfiguration.getWriteTimeOut());
     }
@@ -81,6 +104,7 @@ std::shared_ptr<httplib::SSLServer> Server::initSslServer(
     for (const auto &iter: controllers) {
         iter->registerMethods(server);
     }
+    registerHealthEndpoints(server);
     return sslServer;
 }
 

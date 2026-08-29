@@ -29,6 +29,9 @@ private:
             const std::vector<std::shared_ptr<Controller>> &controllers,
             const ServerConfiguration &serverConfiguration);
 
+    /** Register unauthenticated liveness/readiness endpoints on the server */
+    static void registerHealthEndpoints(std::shared_ptr<httplib::Server> server);
+
 public:
     /** @param serverConfiguration server settings
      *  @param controller list of controllers to register */

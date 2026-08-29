@@ -56,12 +56,17 @@
 
 ---
 
-## Sicherheitsanalyse (Stand: 26.08.2026)
+## Sicherheitsanalyse (Stand: 29.08.2026)
 
 ### Hoch
 
 1. **Hardcodierte Default-Credentials im Seed-Script** – `cfg/database/DEFAULT_SQLITE/data_schema_default_version_1.sql` legt den Admin-User `dominik` mit festem SHA-512-Hash an.
    - **Status: BEWUSST BEIBEHALTEN (nur für lokale Tests)** – Hash wird bei erstem Login automatisch auf salted PBKDF2 migriert.
+
+### Health/Readiness
+
+- **`GET /health`** (Liveness) und **`GET /ready`** (Readiness) antworten unauthentifiziert mit `200` und einem JSON-Body (`{"status":"ok"}` / `{"status":"ready"}`). Bewusst ohne Bearer-Token-Pflicht, damit Orchestratoren (K8s-Probes, Docker healthcheck) sie als Liveness/Readiness-Hooks verwenden können.
+- Registriert direkt in `Server::registerHealthEndpoints` (Plain- und SSL-Pfad); kein echter Dependency-/DB-Check (lightweight, nur "Prozess läuft").
 
 ### Zu beachten
 
@@ -91,7 +96,7 @@ Die vollständige Liste der Fixes wurde in der vorherigen Version dieses Dokumen
 | Priorität | Maßnahme | Status | Begründung |
 |-----------|----------|--------|------------|
 | **Hoch** | **`MemorySize`-Größen beim Grow begrenzen** | In Arbeit (2026-08-29) | Resource Exhaustion über Shm-API, Overflow-Check in `SharedMemoryService::onCheck` |
-| **Hoch** | **Health/Readiness endpoint + Swagger-UI** | Offen | Observability für produktive Einsätze |
+| **Hoch** | **Health/Readiness endpoint** | Erledigt (2026-08-29) | `GET /health` (liveness), `GET /ready` (readiness), unauthentifiziert, 200 JSON |
 | **Hoch** | **Backup/Archive-Strategie für Shared Memory** | Offen | Kein Dump/Restore-Mechanismus vorhanden |
 | **Mittel** | **MySQL Support** | Zurückgestellt | Bewusst nach hinten verschoben (User-Anforderung) |
 | **Niedrig** | **Hypodermic durch Boost.DI ersetzen** | Offen | Aktiver maintained, standardkonformer |
