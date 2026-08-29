@@ -31,6 +31,25 @@ void SharedMemoryService::growOf(
     if (found == m_segments.end()) {
         throw ShmSegmentNotFound(segment->getName());
     }
+    if (grow == 0) {
+        return;
+    }
+    const std::size_t maxSize = segment->getMaxSize();
+    if (maxSize != 0) {
+        const std::size_t currentSize =
+                found->second.m_managedMappedFile->get_size();
+        if (currentSize >= maxSize) {
+            throw std::runtime_error("shared memory segment '" +
+                                     segment->getName() +
+                                     "' already at its maximum size");
+        }
+        // cap the request to the remaining headroom to avoid overflow and
+        // to respect the configured resource limit
+        const std::size_t headroom = maxSize - currentSize;
+        if (grow > headroom) {
+            grow = headroom;
+        }
+    }
     // The static grow() extends the file and updates the segment-manager header
     // stored inside the file. The live mapping's length, however, is fixed at
     // mmap() time, so it must be reopened to observe the larger file.
@@ -183,14 +202,22 @@ void SharedMemoryService::onCheck() {
         if (freeMemory < m_autoExtendEpsilon->getValue()) {
             const auto maxSize = segment->getMaxSize();
             const auto autoExtendSize = segment->getAutoExtendSize();
-            if (maxSize != 0 && currentSize >= maxSize) {
-                LOG_WARN("{}: segment reached its maximum size {}/{}",
-                         segment->getName(), currentSize, maxSize);
-                continue;
-            }
+            // compute the grow size without overflowing the addition in
+            // `currentSize + autoExtendSize`
             std::size_t grow = autoExtendSize;
-            if (maxSize != 0 && currentSize + autoExtendSize > maxSize) {
-                grow = maxSize - currentSize;
+            if (maxSize != 0) {
+                if (currentSize >= maxSize) {
+                    LOG_WARN("{}: segment reached its maximum size {}/{}",
+                             segment->getName(), currentSize, maxSize);
+                    continue;
+                }
+                const std::size_t headroom = maxSize - currentSize;
+                if (grow == 0 || grow > headroom) {
+                    grow = headroom;
+                }
+            }
+            if (grow == 0) {
+                continue;
             }
             try {
                 growOf(segment, grow);

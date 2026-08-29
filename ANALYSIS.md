@@ -24,7 +24,7 @@
 
 ---
 
-## Architektur-Details (Stand: 26.08.2026)
+## Architektur-Details (Stand: 29.08.2026)
 
 ### Cursor-Architektur
 
@@ -90,8 +90,8 @@ Die vollständige Liste der Fixes wurde in der vorherigen Version dieses Dokumen
 
 | Priorität | Maßnahme | Status | Begründung |
 |-----------|----------|--------|------------|
-| **Hoch** | **MySQL Support** | Offen | Einziges verbleibendes großes Feature |
-| **Mittel** | **`MemorySize`-Größen beim Grow begrenzen** | Offen | Resource Exhaustion über Shm-API, Overflow-Check |
-| **Mittel** | **Health/Readiness endpoint + Swagger-UI** | Offen | Observability für produktive Einsätze |
+| **Hoch** | **`MemorySize`-Größen beim Grow begrenzen** | In Arbeit (2026-08-29) | Resource Exhaustion über Shm-API, Overflow-Check in `SharedMemoryService::onCheck` |
+| **Hoch** | **Health/Readiness endpoint + Swagger-UI** | Offen | Observability für produktive Einsätze |
+| **Hoch** | **Backup/Archive-Strategie für Shared Memory** | Offen | Kein Dump/Restore-Mechanismus vorhanden |
+| **Mittel** | **MySQL Support** | Zurückgestellt | Bewusst nach hinten verschoben (User-Anforderung) |
 | **Niedrig** | **Hypodermic durch Boost.DI ersetzen** | Offen | Aktiver maintained, standardkonformer |
-| **Niedrig** | **Backup/Archive-Strategie für Shared Memory** | Offen | Kein Dump/Restore-Mechanismus vorhanden |

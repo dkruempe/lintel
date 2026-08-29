@@ -1,6 +1,15 @@
 # TODOs
 
-> Stand: 26.08.2026 – ctest 331/331 grün, 27 Benchmarks (Google Benchmark). Alle identifizierten Bugs wurden behoben (siehe ANALYSIS.md für Zusammenfassung).
+> Stand: 29.08.2026 – ctest 331/331 grün, 27 Benchmarks (Google Benchmark). Alle identifizierten Bugs wurden behoben, `constexpr`-Refactor abgeschlossen (siehe ANALYSIS.md für Zusammenfassung).
+
+## Nächste Prioritäten (fokussiert)
+
+1. **Security-Härtung**
+   - [ ] `MemorySize`-Größen beim Grow begrenzen (Resource Exhaustion über Shm-API) und Overflow-Check
+   - [ ] Health/Readiness endpoint + Swagger-UI
+2. **Shared Memory Robustheit**
+   - [ ] Backup/Archive-Strategie für Shared Memory
+   - [ ] Bessere Semaphore-Nutzung + Resource-/Overflow-Checks
 
 ## Tests / Mocks
 
@@ -10,16 +19,13 @@
 ## Security
 
 - [ ] Remove hardcoded default admin credentials from seed data (`cfg/database/DEFAULT_SQLITE/data_schema_default_version_1.sql`) – bewusst beibehalten für lokale Tests; Hash wird bei Login automatisch migriert
-- [ ] Health/Readiness endpoint + Swagger-UI
-- [ ] `MemorySize`-Größen beim Grow begrenzen (Resource Exhaustion über Shm-API) und Overflow-Check
 
 ## Features
 
-- [ ] MySQL Support
-- [ ] Adds `constexpr` implementations for better usage and performance
-- [ ] Backup or archive strategy for shared memory
+- [ ] Backup or archive strategy for shared memory (siehe Nächste Prioritäten)
 - [ ] Add better usage of semaphores
 - [ ] Adds better possibility to manage processes automatically
+- [ ] MySQL Support (zurückgestellt – aktuell nicht priorisiert)
 
 ## Docker Support
 
