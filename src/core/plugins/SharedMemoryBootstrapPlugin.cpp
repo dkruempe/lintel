@@ -225,7 +225,7 @@ void SharedMemoryBootstrapPlugin::onStart() {
             builder.add<std::string>(sharedMemoryRepository->getUuid());
             builder.add<std::string>(
                     sharedMemoryRepository->getSharedMemorySegment()->getName());
-            builder.add<std::string>(sharedMemoryRepository->getTypeName());
+            builder.add<std::string>(std::string(sharedMemoryRepository->getTypeName()));
             builder.add<std::string>(
                     std::string(sharedMemoryRepository->getSharedMemoryRepository()));
             builder.add<int32_t>(sharedMemoryRepository->getCodeVersion());

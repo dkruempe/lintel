@@ -19,8 +19,6 @@ ServerConfiguration::ServerConfiguration(
 
 const std::string &ServerConfiguration::getHost() const { return m_host; }
 
-int32_t ServerConfiguration::getPort() const { return m_port; }
-
 const std::chrono::milliseconds &ServerConfiguration::getReadTimeOut() const {
     return m_readTimeOut;
 }
@@ -40,8 +38,6 @@ const std::filesystem::path &ServerConfiguration::getCertFile() const {
 const std::filesystem::path &ServerConfiguration::getKeyFile() const {
     return m_keyFile;
 }
-
-bool ServerConfiguration::isTlsRequired() const { return m_requireTls; }
 
 const std::vector<std::string> &ServerConfiguration::getTrustedProxies() const {
     return m_trustedProxies;

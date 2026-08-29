@@ -1,6 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_POSTGRESQL_PREPAREDSTATEMENT_H
 #define CPP_BASE_LIBRARY_POSTGRESQL_PREPAREDSTATEMENT_H
 
+#include <string_view>
+
 #include "Connection.h"
 
 namespace postgresql {
@@ -26,7 +28,15 @@ namespace postgresql {
          * @param tempStatement the statement template
          * @return the number of parameters
          */
-        static int32_t initNParams(const std::string &tempStatement);
+        static constexpr int32_t initNParams(std::string_view tempStatement) {
+            int32_t count = 0;
+            for (const char c : tempStatement) {
+                if (c == '?') {
+                    ++count;
+                }
+            }
+            return count;
+        }
 
         /**
          * Converts '?' placeholders to PostgreSQL's $1, $2, ... format.

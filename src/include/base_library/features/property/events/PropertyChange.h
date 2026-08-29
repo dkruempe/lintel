@@ -61,16 +61,16 @@ struct PropertyChange {
     }
 
 private:
-    static void copyInto(char (&destination)[PART_SIZE],
-                         const std::string &value) {
+    static constexpr void copyInto(char (&destination)[PART_SIZE],
+                         std::string_view value) {
         const std::size_t length =
                 value.size() >= PART_SIZE ? PART_SIZE - 1 : value.size();
         std::memcpy(destination, value.data(), length);
         destination[length] = '\0';
     }
 
-    static void copyInto(char (&destination)[VALUE_SIZE],
-                         const std::string &value) {
+    static constexpr void copyInto(char (&destination)[VALUE_SIZE],
+                         std::string_view value) {
         const std::size_t length =
                 value.size() >= VALUE_SIZE ? VALUE_SIZE - 1 : value.size();
         std::memcpy(destination, value.data(), length);

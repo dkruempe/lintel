@@ -37,19 +37,19 @@ public:
     getSharedMemorySegment() const;
 
     /** @return currently used size in bytes */
-    [[nodiscard]] size_t getCurrentSize() const;
+    [[nodiscard]] constexpr size_t getCurrentSize() const { return m_currentSize; }
 
     /** @return free space in bytes */
-    [[nodiscard]] size_t getFreeSize() const;
+    [[nodiscard]] constexpr size_t getFreeSize() const { return m_freeSize; }
 
     /** @return number of named objects */
-    [[nodiscard]] size_t getAmountNamedObjects() const;
+    [[nodiscard]] constexpr size_t getAmountNamedObjects() const { return m_amountNamedObjects; }
 
     /** @return number of unique (unnamed) objects */
-    [[nodiscard]] size_t getAmountUniqueObjects() const;
+    [[nodiscard]] constexpr size_t getAmountUniqueObjects() const { return m_amountUniqueObjects; }
 
     /** @return true if the segment passes sanity checks */
-    [[nodiscard]] bool isSanity() const;
+    [[nodiscard]] constexpr bool isSanity() const { return m_sanity; }
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYSEGMENTINFO_H

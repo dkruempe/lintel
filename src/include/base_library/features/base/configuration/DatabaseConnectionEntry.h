@@ -65,7 +65,7 @@ public:
 
     /** Get the connection port
      * @return The port number */
-    [[nodiscard]] int32_t getPort() const;
+    [[nodiscard]] constexpr int32_t getPort() const { return m_port; }
 
     /** Get the database name
      * @return The database name */
@@ -73,7 +73,7 @@ public:
 
     /** Check if this is the default connection
      * @return True if default */
-    [[nodiscard]] bool isDefault() const;
+    [[nodiscard]] constexpr bool isDefault() const { return m_isDefault; }
 
     /** Stream insertion operator for database connection entries
      * @param os The output stream

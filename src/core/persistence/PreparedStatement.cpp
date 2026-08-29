@@ -22,10 +22,6 @@ namespace db {
         }
     }
 
-    int32_t PreparedStatement::initNParams(const std::string &tempStatement) {
-        return postgresql::PreparedStatement::initNParams(tempStatement);
-    }
-
     std::string PreparedStatement::initStatement(const std::string &tempStatement) {
         return postgresql::PreparedStatement::initStatement(tempStatement);
     }

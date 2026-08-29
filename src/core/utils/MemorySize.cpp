@@ -7,6 +7,12 @@
 #include "base_library/core/utils/StringUtils.h"
 
 namespace {
+constexpr std::size_t kBytesPerKilo = 1000;
+constexpr std::size_t kBytesPerMega = 1000000;
+constexpr std::size_t kBytesPerGiga = 1000000000;
+constexpr std::size_t kBytesPerTera = 1000000000000;
+constexpr std::size_t kBytesPerPeta = 1000000000000000;
+
 /** Parses a numeric prefix and validates it, optionally scaling it by a multiplier. */
 std::size_t parseAndScale(const std::string &input, const std::string &prefix,
                           std::size_t multiplier) {
@@ -35,19 +41,19 @@ std::size_t MemorySize::deserialize(const std::string &size) {
     bool isTeraByte = StringUtils::endsWith(size, "TB");
     bool isPetaByte = StringUtils::endsWith(size, "PB");
     if (isKiloByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), 1000);
+        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerKilo);
     }
     if (isMegaByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), 1000000);
+        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerMega);
     }
     if (isGigaByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), 1000000000);
+        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerGiga);
     }
     if (isTeraByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), 1000000000000);
+        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerTera);
     }
     if (isPetaByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), 1000000000000000);
+        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerPeta);
     }
     if (isByte) {
         return parseAndScale(size, size.substr(0, size.length() - 1), 1);
@@ -56,11 +62,11 @@ std::size_t MemorySize::deserialize(const std::string &size) {
 }
 
 std::string MemorySize::serialize(std::size_t byte) {
-    double petaByte = static_cast<double>(byte) / 1000000000000000.0;
-    double teraByte = static_cast<double>(byte) / 1000000000000.0;
-    double gigaByte = static_cast<double>(byte) / 1000000000.0;
-    double megaByte = static_cast<double>(byte) / 1000000.0;
-    double kiloByte = static_cast<double>(byte) / 1000.0;
+    double petaByte = static_cast<double>(byte) / kBytesPerPeta;
+    double teraByte = static_cast<double>(byte) / kBytesPerTera;
+    double gigaByte = static_cast<double>(byte) / kBytesPerGiga;
+    double megaByte = static_cast<double>(byte) / kBytesPerMega;
+    double kiloByte = static_cast<double>(byte) / kBytesPerKilo;
     if (petaByte > 1) {
         return toString(petaByte) + "PB";
     }

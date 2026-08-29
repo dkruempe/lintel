@@ -30,7 +30,7 @@ namespace db {
         [[nodiscard]] std::size_t getLength() const;
 
         /** @return the format ID for this parameter type */
-        static int32_t getFormatId();
+        static constexpr int32_t getFormatId() { return 1; }
     };
 
     /**

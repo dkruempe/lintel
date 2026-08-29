@@ -1,6 +1,8 @@
 #ifndef CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
 #define CPP_BASE_LIBRARY_PREPAREDSTATEMENT_H
 
+#include <string_view>
+
 #include "base_library/core/persistence/Connection.h"
 #include "base_library/core/persistence/ParameterBuilder.h"
 #include "base_library/core/persistence/Result.h"
@@ -24,7 +26,9 @@ namespace db {
          * @param tempStatement the statement template with '?' placeholders
          * @return the number of parameters
          */
-        static int32_t initNParams(const std::string &tempStatement);
+        static constexpr int32_t initNParams(std::string_view tempStatement) {
+            return postgresql::PreparedStatement::initNParams(tempStatement);
+        }
 
         /**
          * Converts a statement template with '?' placeholders to the native format.

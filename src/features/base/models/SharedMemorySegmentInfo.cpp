@@ -17,17 +17,3 @@ const std::shared_ptr<SharedMemorySegment> &
 SharedMemorySegmentInfo::getSharedMemorySegment() const {
     return m_sharedMemorySegment;
 }
-
-size_t SharedMemorySegmentInfo::getCurrentSize() const { return m_currentSize; }
-
-size_t SharedMemorySegmentInfo::getFreeSize() const { return m_freeSize; }
-
-size_t SharedMemorySegmentInfo::getAmountNamedObjects() const {
-    return m_amountNamedObjects;
-}
-
-size_t SharedMemorySegmentInfo::getAmountUniqueObjects() const {
-    return m_amountUniqueObjects;
-}
-
-bool SharedMemorySegmentInfo::isSanity() const { return m_sanity; }

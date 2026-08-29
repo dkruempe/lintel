@@ -33,7 +33,7 @@ public:
   {}
 
   /** Implicit conversion to Value. */
-  operator Value() const { return m_value; }
+  constexpr operator Value() const { return m_value; }
 
   explicit operator bool() = delete;
 

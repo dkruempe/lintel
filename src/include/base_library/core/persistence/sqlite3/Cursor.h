@@ -31,6 +31,9 @@ namespace sqlite {
         std::size_t m_fetchSize;
 
     public:
+        /** Default client-side prefetch buffer size */
+        static constexpr std::size_t kDefaultFetchSize = 64;
+
         /**
          * Prepares and binds the query for streaming execution.
          * @param connection the SQLite connection (must outlive the cursor)
@@ -41,7 +44,7 @@ namespace sqlite {
          */
         explicit Cursor(const Connection &connection, const std::string &query,
                         const std::vector<std::string> &params,
-                        std::size_t fetchSize = 64);
+                        std::size_t fetchSize = kDefaultFetchSize);
 
         Cursor(Cursor &cursor) = delete;
 

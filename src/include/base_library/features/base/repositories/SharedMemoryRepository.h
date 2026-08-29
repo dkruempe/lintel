@@ -32,9 +32,9 @@ private:
 protected:
     template<typename TYPE>
     static constexpr bool isSerializable() {
-        return std::is_base_of<JsonSerializable, TYPE>() ||
-               std::is_same<SharedMemoryService::ShmString, TYPE>() ||
-               std::is_arithmetic<TYPE>();
+        return std::is_base_of_v<JsonSerializable, TYPE> ||
+               std::is_same_v<SharedMemoryService::ShmString, TYPE> ||
+               std::is_arithmetic_v<TYPE>;
     }
 
 public:
@@ -70,7 +70,7 @@ public:
     /** @return the shared memory data structure type */
     [[nodiscard]] virtual SharedMemoryType getType() const = 0;
 
-    [[nodiscard]] std::string getTypeName() const {
+    [[nodiscard]] std::string_view getTypeName() const {
         if (getType() == SharedMemoryType::Map) {
             return "Map";
         }

@@ -38,7 +38,7 @@ public:
             : m_value(magic_enum::enum_cast<Value>(enumName).value_or(Undefined)) {}
 
     /** Implicit conversion to Value. */
-    operator Value() const { return m_value; }
+    constexpr operator Value() const { return m_value; }
 
     explicit operator bool() = delete;
 

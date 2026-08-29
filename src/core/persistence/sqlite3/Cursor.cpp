@@ -32,7 +32,7 @@ namespace sqlite {
                    const std::vector<std::string> &params,
                    std::size_t fetchSize)
         : m_db(connection.m_db), m_stmt(nullptr), m_exhausted(false),
-          m_fetchSize(fetchSize > 0 ? fetchSize : 64) {
+          m_fetchSize(fetchSize > 0 ? fetchSize : Cursor::kDefaultFetchSize) {
         const int rc = sqlite3_prepare_v2(m_db, query.c_str(),
                                           static_cast<int>(query.size() + 1),
                                           &m_stmt, nullptr);

@@ -81,12 +81,14 @@
 
 /** Parsed paging query parameters of a request */
 struct PagingParams {
+    /** Default maximum number of items per page */
+    static constexpr std::size_t kDefaultLimit = 100;
     /** True if paging was requested via 'limit' and/or 'after' */
     bool m_enabled = false;
     /** Exclusive lower bound for the sort key (continuation token) */
     std::optional<std::string> m_after;
     /** Maximum number of items per page */
-    std::size_t m_limit = 100;
+    std::size_t m_limit = kDefaultLimit;
 };
 
 /** Base class for HTTP controllers with automatic method registration and auth */

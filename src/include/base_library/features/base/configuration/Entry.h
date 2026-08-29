@@ -17,7 +17,7 @@ public:
 
     /** Get the component name that produced this entry
      * @return The component name */
-    std::string_view getConfigurationParserComponent();
+    constexpr std::string_view getConfigurationParserComponent() const { return m_component; }
 
     /** Stream insertion operator
      * @param os The output stream

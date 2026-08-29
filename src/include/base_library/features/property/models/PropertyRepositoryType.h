@@ -25,7 +25,7 @@ public:
     constexpr explicit PropertyRepositoryType(std::string_view enumName)
             : m_value(magic_enum::enum_cast<Value>(enumName).value_or(UNDEFINED)) {}
 
-    operator Value() const { return m_value; }
+    constexpr operator Value() const { return m_value; }
 
     explicit operator bool() = delete;
 

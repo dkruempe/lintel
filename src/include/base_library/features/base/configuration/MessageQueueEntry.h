@@ -37,7 +37,7 @@ public:
 
     /** Get the maximum message count
      * @return The max messages */
-    [[nodiscard]] int32_t get_max_messages() const;
+    [[nodiscard]] constexpr int32_t get_max_messages() const { return maxMessages; }
 
     /** Stream insertion operator
      * @param os The output stream

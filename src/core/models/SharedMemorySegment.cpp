@@ -20,8 +20,6 @@ SharedMemorySegment::SharedMemorySegment(std::filesystem::path sharedMemoryPath,
     return m_name;
 }
 
-[[nodiscard]] size_t SharedMemorySegment::getSize() const { return m_size; }
-
 SharedMemorySegment::SharedMemorySegment(std::filesystem::path sharedMemoryPath,
                                          std::string name, std::size_t size,
                                          std::size_t autoExtendSize,
@@ -32,11 +30,3 @@ SharedMemorySegment::SharedMemorySegment(std::filesystem::path sharedMemoryPath,
           m_isAutoExtend(true),
           m_autoExtendSize(autoExtendSize),
           m_maxSize(maxSize) {}
-
-bool SharedMemorySegment::isAutoExtend() const { return m_isAutoExtend; }
-
-size_t SharedMemorySegment::getAutoExtendSize() const {
-    return m_autoExtendSize;
-}
-
-size_t SharedMemorySegment::getMaxSize() const { return m_maxSize; }

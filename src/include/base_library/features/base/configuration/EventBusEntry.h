@@ -48,19 +48,19 @@ public:
 
     /** Get the point-to-point queue capacity
      * @return The bus capacity */
-    [[nodiscard]] std::size_t getBusCapacity() const;
+    [[nodiscard]] constexpr std::size_t getBusCapacity() const { return busCapacity; }
 
     /** Get the per-subscriber queue capacity
      * @return The subscriber capacity */
-    [[nodiscard]] std::size_t getSubscriberCapacity() const;
+    [[nodiscard]] constexpr std::size_t getSubscriberCapacity() const { return subscriberCapacity; }
 
     /** Get the maximum topic count
      * @return The maximum topics */
-    [[nodiscard]] std::size_t getMaxTopics() const;
+    [[nodiscard]] constexpr std::size_t getMaxTopics() const { return maxTopics; }
 
     /** Get the maximum subscriber count
      * @return The maximum subscribers */
-    [[nodiscard]] std::size_t getMaxSubscribers() const;
+    [[nodiscard]] constexpr std::size_t getMaxSubscribers() const { return maxSubscribers; }
 
     /** Stream insertion operator
      * @param os The output stream

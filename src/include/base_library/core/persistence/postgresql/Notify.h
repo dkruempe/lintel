@@ -21,7 +21,7 @@ namespace postgresql {
      */
     class Notify {
     private:
-        const int32_t m_timeoutSeconds = 1;
+        static constexpr int32_t kTimeoutSeconds = 1;
         std::atomic<bool> m_shutdown = false;
         Connection &m_connection;
         PGconn *m_conn = nullptr;
@@ -30,7 +30,7 @@ namespace postgresql {
         std::string m_tableName;
         std::function<void()> m_callBack;
         struct timeval m_timeout{
-                m_timeoutSeconds, 0
+                kTimeoutSeconds, 0
         };
 
         /** Main loop that polls for notifications. */

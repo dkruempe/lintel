@@ -14,12 +14,6 @@ namespace postgresql {
         return result;
     }
 
-    int32_t Statement::initNParams(const std::string &tempStatement) {
-        return static_cast<int32_t>(
-                std::count_if(tempStatement.begin(), tempStatement.end(),
-                              [](char temp) { return temp == '?'; }));
-    }
-
     std::string Statement::initStatement(const std::string &tempStatement) {
         std::string temp;
         int32_t counter = 0;

@@ -44,10 +44,6 @@ const db::ConnectionType &DatabaseConnectionEntry::getType() const {
     return m_type;
 }
 
-int32_t DatabaseConnectionEntry::getPort() const { return m_port; }
-
 const std::string &DatabaseConnectionEntry::getDatabaseName() const {
     return m_databaseName;
 }
-
-bool DatabaseConnectionEntry::isDefault() const { return m_isDefault; }

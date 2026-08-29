@@ -46,7 +46,7 @@ public:
     [[nodiscard]] const std::string &getHost() const;
 
     /** @return the listen port */
-    [[nodiscard]] int32_t getPort() const;
+    [[nodiscard]] constexpr int32_t getPort() const { return m_port; }
 
     /** @return the read timeout */
     [[nodiscard]] const std::chrono::milliseconds &getReadTimeOut() const;
@@ -64,7 +64,7 @@ public:
     [[nodiscard]] const std::filesystem::path &getKeyFile() const;
 
     /** @return true if the server must not start without TLS */
-    [[nodiscard]] bool isTlsRequired() const;
+    [[nodiscard]] constexpr bool isTlsRequired() const { return m_requireTls; }
 
     /** @return IPs/CIDRs trusted to forward X-Forwarded-For */
     [[nodiscard]] const std::vector<std::string> &getTrustedProxies() const;

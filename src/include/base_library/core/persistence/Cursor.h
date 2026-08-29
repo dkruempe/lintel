@@ -39,8 +39,10 @@ namespace db {
         bool m_started = false;
         bool m_exhausted = false;
 
+        /** Default fetch size for server-side cursors */
+        static constexpr std::size_t kDefaultFetchSize = 100;
         /** Fetch size: rows per backend round-trip (0 = streaming) */
-        std::size_t m_fetchSize = 100;
+        std::size_t m_fetchSize = kDefaultFetchSize;
         /** Server-side cursor name (auto-generated if empty) */
         std::string m_cursorName;
         /** NO SCROLL flag for server-side cursor */

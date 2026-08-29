@@ -37,10 +37,10 @@ public:
     [[nodiscard]] const boost::process::v1::pid_t &getProcessId() const;
 
     /** @return true if the process is running */
-    [[nodiscard]] bool isRunning() const;
+    [[nodiscard]] constexpr bool isRunning() const { return m_isRunning; }
 
     /** @return process exit code */
-    [[nodiscard]] int getExitCode() const;
+    [[nodiscard]] constexpr int getExitCode() const { return m_exitCode; }
 
     /** @return group name */
     [[nodiscard]] std::string getGroupName() const;

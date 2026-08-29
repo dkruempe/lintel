@@ -18,8 +18,6 @@ const std::string &HistoryServiceEntry::get_queue_name() const {
     return m_queueName;
 }
 
-int32_t HistoryServiceEntry::get_max_messages() const { return m_maxMessages; }
-
 std::ostream &operator<<(std::ostream &os, const HistoryServiceEntry &entry) {
     os << static_cast<const Entry &>(entry)
        << " processName: " << entry.m_processName

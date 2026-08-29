@@ -45,16 +45,16 @@ public:
     [[nodiscard]] const std::string &getName() const;
 
     /** @return size of the segment in bytes */
-    [[nodiscard]] size_t getSize() const;
+    [[nodiscard]] constexpr size_t getSize() const { return m_size; }
 
     /** @return true if the segment can auto-extend when full */
-    [[nodiscard]] bool isAutoExtend() const;
+    [[nodiscard]] constexpr bool isAutoExtend() const { return m_isAutoExtend; }
 
     /** @return number of bytes to extend by when full */
-    [[nodiscard]] size_t getAutoExtendSize() const;
+    [[nodiscard]] constexpr size_t getAutoExtendSize() const { return m_autoExtendSize; }
 
     /** @return maximum allowed size in bytes */
-    [[nodiscard]] size_t getMaxSize() const;
+    [[nodiscard]] constexpr size_t getMaxSize() const { return m_maxSize; }
 };
 
 #endif  // CPP_BASE_LIBRARY_SHAREDMEMORYSEGMENT_H

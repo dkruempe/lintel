@@ -129,8 +129,8 @@ private:
     std::int64_t m_sequence = 0;
     std::int64_t m_timestamp = 0;
 
-    static void copyInto(char (&destination)[NAME_SIZE],
-                         const std::string &value) {
+    static constexpr void copyInto(char (&destination)[NAME_SIZE],
+                         std::string_view value) {
         const std::size_t length =
                 value.size() >= NAME_SIZE ? NAME_SIZE - 1 : value.size();
         std::memcpy(destination, value.data(), length);

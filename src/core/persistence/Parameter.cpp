@@ -9,8 +9,6 @@ namespace db {
 
     std::size_t Parameter::getLength() const { return m_value.size(); }
 
-    int32_t Parameter::getFormatId() { return 1; }
-
     Parameter Parameter::with(const std::string &value) { return Parameter(value); }
 
     std::vector<Parameter> Parameters::init(

@@ -40,7 +40,7 @@ public:
     [[nodiscard]] const std::string &getHost() const;
 
     /** @return the port number */
-    [[nodiscard]] int32_t getPort() const;
+    [[nodiscard]] constexpr int32_t getPort() const { return m_port; }
 
     /** @return the read timeout */
     [[nodiscard]] const std::chrono::milliseconds &getReadTimeOut() const;

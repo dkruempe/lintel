@@ -2,6 +2,7 @@
 #define CPP_BASE_LIBRARY_STRINGUTILS_H
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 /**
@@ -27,13 +28,18 @@ public:
      * @param s     the string to check
      * @param start the prefix to look for
      * @return true if s starts with start */
-    static bool startsWith(const std::string &s, const std::string &start);
+    static constexpr bool startsWith(std::string_view s, std::string_view start) {
+        return s.size() >= start.size() && s.compare(0, start.size(), start) == 0;
+    }
 
     /** Check if a string ends with the given suffix.
      * @param s   the string to check
      * @param end the suffix to look for
      * @return true if s ends with end */
-    static bool endsWith(const std::string &s, const std::string &end);
+    static constexpr bool endsWith(std::string_view s, std::string_view end) {
+        return s.size() >= end.size() &&
+               s.compare(s.size() - end.size(), end.size(), end) == 0;
+    }
 
     /** Replace all occurrences of a substring with another string.
      * @param s       the input string

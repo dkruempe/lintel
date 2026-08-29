@@ -22,22 +22,6 @@ const std::string &EventBusEntry::getSegment() const {
     return segmentName;
 }
 
-std::size_t EventBusEntry::getBusCapacity() const {
-    return busCapacity;
-}
-
-std::size_t EventBusEntry::getSubscriberCapacity() const {
-    return subscriberCapacity;
-}
-
-std::size_t EventBusEntry::getMaxTopics() const {
-    return maxTopics;
-}
-
-std::size_t EventBusEntry::getMaxSubscribers() const {
-    return maxSubscribers;
-}
-
 std::ostream &operator<<(std::ostream &os, const EventBusEntry &entry) {
     os << static_cast<const Entry &>(entry)
        << " eventBusName: " << entry.eventBusName

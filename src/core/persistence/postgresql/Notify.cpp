@@ -34,7 +34,7 @@ namespace postgresql {
         }
 
         // select() modifies the timeout, so reset it before each call
-        m_timeout = {m_timeoutSeconds, 0};
+        m_timeout = {kTimeoutSeconds, 0};
         int sock = PQsocket(m_conn);
 
         if (sock < 0) {

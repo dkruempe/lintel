@@ -20,7 +20,7 @@ private:
     PropertyValueStorage<T> m_storage;
 
     /** @return the type name string for this property's template type */
-    static std::string_view getTypeName() {
+    static constexpr std::string_view getTypeName() {
         if constexpr (std::is_same_v<T, int8_t>) return "int8_t";
         else if constexpr (std::is_same_v<T, int16_t>) return "int16_t";
         else if constexpr (std::is_same_v<T, int32_t>) return "int32_t";

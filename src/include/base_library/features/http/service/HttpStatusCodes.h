@@ -79,20 +79,21 @@ public:
     };
 
     /** @param value the status code enum value */
-    HttpStatusCodes(Value value);
+    constexpr HttpStatusCodes(Value value) : m_value(value) {}
 
     /** @param statusCode numeric HTTP status code */
-    explicit HttpStatusCodes(int statusCode);
+    constexpr explicit HttpStatusCodes(int statusCode)
+        : m_value(static_cast<Value>(statusCode)) {}
 
-    operator Value() const { return m_value; }
+    constexpr operator Value() const { return m_value; }
 
     explicit operator bool() = delete;
 
     /** @return the underlying enum value */
-    Value getValue();
+    [[nodiscard]] constexpr Value getValue() const { return m_value; }
 
     /** @return the numeric status code */
-    [[nodiscard]] int getCode() const;
+    [[nodiscard]] constexpr int getCode() const { return static_cast<int>(m_value); }
 
 private:
     Value m_value;

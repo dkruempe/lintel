@@ -5,12 +5,6 @@
 #include "base_library/core/persistence/Parameter.h"
 
 namespace postgresql {
-    int32_t PreparedStatement::initNParams(const std::string &tempStatement) {
-        return static_cast<int32_t>(
-                std::count_if(tempStatement.begin(), tempStatement.end(),
-                              [](char temp) { return temp == '?'; }));
-    }
-
     std::string PreparedStatement::initStatement(const std::string &tempStatement) {
         std::string temp;
         int32_t counter = 0;

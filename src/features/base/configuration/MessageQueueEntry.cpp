@@ -17,8 +17,6 @@ const std::string &MessageQueueEntry::get_message_queue_name() const {
     return messageQueueName;
 }
 
-int32_t MessageQueueEntry::get_max_messages() const { return maxMessages; }
-
 std::ostream &operator<<(std::ostream &os, const MessageQueueEntry &entry) {
     os << static_cast<const Entry &>(entry)
        << " processName: " << entry.processName

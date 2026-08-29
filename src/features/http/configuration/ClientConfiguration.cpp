@@ -18,8 +18,6 @@ ClientConfiguration::ClientConfiguration(
 
 const std::string &ClientConfiguration::getHost() const { return m_host; }
 
-int32_t ClientConfiguration::getPort() const { return m_port; }
-
 const std::chrono::milliseconds &ClientConfiguration::getReadTimeOut() const {
     return m_readTimeOut;
 }

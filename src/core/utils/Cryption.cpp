@@ -6,6 +6,7 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -187,24 +188,26 @@ std::string Cryption::hashOfSha512(const std::string &text) {
 
 std::string Cryption::decodeBase64(const std::string &in) {
     std::string out;
-    static const std::string m_lookup =
+    static constexpr std::string_view kBase64Lookup =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
-    std::vector<int> t(256, -1);
-    for (std::size_t i = 0; i < 64; i++) {
-        auto iter =
-                static_cast<std::size_t>(static_cast<unsigned char>(m_lookup[i]));
-        t[iter] = static_cast<int>(i);
-    }
+    static const std::array<int, 256> kReverseTable = [] {
+        std::array<int, 256> table{};
+        table.fill(-1);
+        for (std::size_t i = 0; i < 64; i++) {
+            table[static_cast<unsigned char>(kBase64Lookup[i])] = static_cast<int>(i);
+        }
+        return table;
+    }();
 
     int val = 0;
     int valb = -8;
     for (auto c: in) {
         const std::size_t index =
                 static_cast<std::size_t>(static_cast<unsigned char>(c));
-        if (t[index] == -1) { break; }
+        if (kReverseTable[index] == -1) { break; }
         auto uval = static_cast<unsigned>(val);
-        uval = (uval << 6U) + static_cast<unsigned>(t[index]);
+        uval = (uval << 6U) + static_cast<unsigned>(kReverseTable[index]);
         val = static_cast<int>(uval);
         valb += 6;
         if (valb >= 0) {
@@ -216,7 +219,7 @@ std::string Cryption::decodeBase64(const std::string &in) {
 }
 
 std::string Cryption::encodeBase64(const std::string &in) {
-    static const auto m_lookup =
+    static constexpr std::string_view kBase64Lookup =
             "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
     std::string out;
@@ -231,13 +234,13 @@ std::string Cryption::encodeBase64(const std::string &in) {
         val = static_cast<int>(uval);
         valb += 8;
         while (valb >= 0) {
-            out.push_back(m_lookup[(static_cast<unsigned>(val) >> static_cast<unsigned>(valb)) & 0x3FU]);
+            out.push_back(kBase64Lookup[(static_cast<unsigned>(val) >> static_cast<unsigned>(valb)) & 0x3FU]);
             valb -= 6;
         }
     }
 
     if (valb > -6) {
-        out.push_back(m_lookup[((static_cast<unsigned>(val) << 8U) >> static_cast<unsigned>(valb + 8)) & 0x3FU]);
+        out.push_back(kBase64Lookup[((static_cast<unsigned>(val) << 8U) >> static_cast<unsigned>(valb + 8)) & 0x3FU]);
     }
 
     while (out.size() % 4 != 0) {
