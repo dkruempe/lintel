@@ -29,6 +29,10 @@ HistoryService::HistoryService(
     m_commitRate = registerProperty<std::size_t>(
             "m_commitRate", static_cast<std::size_t>(100),
             "Commit Rate", true, __FILE__, __LINE__);
+    m_sendTimeout = registerProperty<std::chrono::milliseconds>(
+            "m_sendTimeout", std::chrono::milliseconds(100),
+            "max time to wait for queue space before dropping a history message",
+            true, __FILE__, __LINE__);
 }
 
 const std::string &HistoryService::getProcessName() const {
@@ -133,7 +137,15 @@ void HistoryService::historizeOf(std::vector<HistoryEntry> entries) {
                             historyMessage.createdTimestamp)).count();
             Message message = Message(m_historyMessageQueue->getName(), m_processName->getProcessName());
             message.assign(historyMessage);
-            m_historyMessageQueue->sendOf(message);
+            if (!m_historyMessageQueue->sendOfWithTimeout(
+                        message, m_sendTimeout->getValue())) {
+                LOG_WARN("history message for {} dropped: queue full for {} ms "
+                         "(total dropped: {})",
+                         entry.getServiceName(),
+                         std::chrono::duration_cast<std::chrono::milliseconds>(
+                                 m_sendTimeout->getValue()).count(),
+                         m_historyMessageQueue->droppedMessagesOf());
+            }
         }
         return;
     }

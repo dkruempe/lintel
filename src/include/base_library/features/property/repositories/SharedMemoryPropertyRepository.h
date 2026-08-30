@@ -118,8 +118,17 @@ private:
     std::shared_ptr<ProcessName> m_processName;
     DataStorage m_currentDataStorage =
             DataStorage(PropertyRepositoryType::SHM_REPOSITORY, "");
-    boost::interprocess::named_upgradable_mutex m_upgradableMutex;
+    mutable boost::interprocess::named_upgradable_mutex m_upgradableMutex;
     static constexpr std::string_view UUID = "B3F746E1-D4F0-49DB-A0F7-51F72436263A";
+
+protected:
+    void onAcquireReadLock() const override {
+        m_upgradableMutex.lock_sharable();
+    }
+
+    void onReleaseReadLock() const override {
+        m_upgradableMutex.unlock_sharable();
+    }
 
 public:
     SharedMemoryPropertyRepository(

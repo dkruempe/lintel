@@ -83,6 +83,35 @@ public:
         return "Object";
     }
 
+protected:
+    /** RAII guard that acquires the repository's shared read lock for the
+     *  duration of a serialization / external read, released on destruction.
+     *  The default hooks are no-ops; repositories backed by a cross-process
+     *  mutex override them. */
+    class ReadLockGuard {
+    public:
+        explicit ReadLockGuard(const SharedMemoryRepository &owner)
+            : m_owner(owner) {
+            m_owner.onAcquireReadLock();
+        }
+
+        ~ReadLockGuard() { m_owner.onReleaseReadLock(); }
+
+        ReadLockGuard(const ReadLockGuard &) = delete;
+        ReadLockGuard &operator=(const ReadLockGuard &) = delete;
+
+    private:
+        const SharedMemoryRepository &m_owner;
+    };
+
+    /** Acquire the shared read lock before serializing the underlying
+     *  shared memory structure. No-op by default. */
+    virtual void onAcquireReadLock() const {}
+
+    /** Release the shared read lock after serialization. No-op by default. */
+    virtual void onReleaseReadLock() const {}
+
+public:
     ~SharedMemoryRepository() override = default;
 
     virtual void onMigrate(int32_t currentActiveVersion) = 0;
@@ -131,6 +160,7 @@ public:
 
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+        ReadLockGuard guard(*this);
         writer->StartObject();
         writer->String("repository");
         writer->String("SharedMemoryArrayRepository");
@@ -200,6 +230,7 @@ public:
 
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+        ReadLockGuard guard(*this);
         writer->StartObject();
         writer->String("repository");
         writer->String("SharedMemoryVectorRepository");
@@ -277,6 +308,7 @@ public:
 
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+        ReadLockGuard guard(*this);
         writer->StartObject();
         writer->String("repository");
         writer->String("SharedMemoryMapRepository");
@@ -355,6 +387,7 @@ public:
 
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
+        ReadLockGuard guard(*this);
         writer->StartObject();
         writer->String("repository");
         writer->String("SharedMemoryObjectRepository");

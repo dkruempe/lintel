@@ -3,6 +3,9 @@
 
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/ipc/message_queue.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <atomic>
+#include <chrono>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -27,6 +30,7 @@ private:
     int32_t m_msgCount;
     boost::interprocess::message_queue m_messageQueue;
     std::shared_ptr<ProcessName> m_realProcessName;
+    std::atomic<std::uint64_t> m_droppedMessages{0};
 
 public:
     /**
@@ -91,6 +95,33 @@ public:
      */
     bool trySendOf(T message) {
         return m_messageQueue.try_send(&message, m_msgSize, 0);
+    }
+
+    /**
+     * send with a bounded wait. If the message queue stays full for the whole
+     * timeout the message is dropped and the drop counter is increased.
+     * @param message the message to send
+     * @param timeout maximum time to wait for queue space
+     * @return true if the message was queued, false if it was dropped
+     */
+    bool sendOfWithTimeout(T message,
+                           const std::chrono::milliseconds &timeout) {
+        const bool success = m_messageQueue.timed_send(
+                &message, m_msgSize, 0,
+                boost::posix_time::microsec_clock::universal_time() +
+                        boost::posix_time::milliseconds(timeout.count()));
+        if (!success) {
+            m_droppedMessages.fetch_add(1u, std::memory_order_relaxed);
+        }
+        return success;
+    }
+
+    /**
+     * @return the number of messages dropped because the queue stayed full
+     * beyond the configured timeout
+     */
+    [[nodiscard]] std::uint64_t droppedMessagesOf() const {
+        return m_droppedMessages.load(std::memory_order_relaxed);
     }
 
     /**

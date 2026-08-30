@@ -1,4 +1,5 @@
 #include <base_library/core/persistence/Connection.h>
+#include <base_library/core/persistence/Statement.h>
 #include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
 #include <base_library/features/base/configuration/Configuration.h>
 #include <base_library/features/base/configuration/DatabaseConnectionComponent.h>

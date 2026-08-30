@@ -6,6 +6,7 @@
 #include <boost/container/string.hpp>
 #include <boost/container/vector.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
+#include <boost/interprocess/sync/named_semaphore.hpp>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -32,7 +33,45 @@ private:
         std::shared_ptr<boost::interprocess::managed_mapped_file>
                 m_managedMappedFile;
         std::shared_ptr<SharedMemorySegment> m_sharedMemorySegment;
+        // Cross-process binary semaphore guarding the segment's remap and
+        // construct critical sections. Acquired (as a mutex) around grow/shrink
+        // and every find_or_construct so no process references the mapped file
+        // while another process resizes/reopens it.
+        std::unique_ptr<boost::interprocess::named_semaphore> m_remapSemaphore;
     };
+
+    /** RAII guard that acquires (default) the segment remap semaphore and
+     *  releases it on destruction. Used as a cross-process mutex around the
+     *  shared memory remap / construct critical sections. */
+    class SegmentSemaphoreGuard {
+    public:
+        explicit SegmentSemaphoreGuard(
+                boost::interprocess::named_semaphore &sem)
+                : m_semaphore(&sem) {
+            m_semaphore->wait();
+        }
+
+        ~SegmentSemaphoreGuard() {
+            if (m_semaphore != nullptr) {
+                m_semaphore->post();
+            }
+        }
+
+        SegmentSemaphoreGuard(const SegmentSemaphoreGuard &) = delete;
+        SegmentSemaphoreGuard &
+        operator=(const SegmentSemaphoreGuard &) = delete;
+
+    private:
+        boost::interprocess::named_semaphore *m_semaphore;
+    };
+
+    /** Name of the cross-process remap semaphore for a segment.
+     *  @param segmentName the segment name
+     *  @return the POSIX IPC name */
+    static std::string remapSemaphoreName(const std::string &segmentName) {
+        return segmentName + "_remap_sem";
+    }
+
     // variables
     std::map<std::string, MappedFile> m_segments;
     mutable std::mutex m_segmentsMutex;
@@ -104,6 +143,7 @@ public:
         std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
+            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
             return *(
                     segmentCopy.m_managedMappedFile
                             ->find_or_construct<std::array<Object, Size>>(name.c_str())());
@@ -133,6 +173,7 @@ public:
         std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
+            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
             persistentMapAllocator allocator(
                     segmentCopy.m_managedMappedFile->get_segment_manager());
             boost::container::map<
@@ -169,6 +210,7 @@ public:
         std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
+            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
             persistentVectorAllocator allocator(
                     segmentCopy.m_managedMappedFile->get_segment_manager());
             return *(segmentCopy.m_managedMappedFile->find_or_construct<
@@ -191,6 +233,7 @@ public:
         std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
+            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
             return *(segmentCopy.m_managedMappedFile->find_or_construct<Object>(
                     name.c_str())());
         } catch (std::out_of_range &exception) {
@@ -214,6 +257,7 @@ public:
         std::lock_guard<std::mutex> lock(m_segmentsMutex);
         try {
             auto &segmentCopy = m_segments.at(segment->getName());
+            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
             return *(segmentCopy.m_managedMappedFile->find_or_construct<Object>(
                     name.c_str())(std::forward<Args>(args)...));
         } catch (std::out_of_range &exception) {

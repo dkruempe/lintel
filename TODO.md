@@ -1,6 +1,6 @@
 # TODOs
 
-> Stand: 29.08.2026 – ctest 332/332 grün, 27 Benchmarks (Google Benchmark). Alle identifizierten Bugs wurden behoben, `constexpr`-Refactor abgeschlossen (siehe ANALYSIS.md für Zusammenfassung).
+> Stand: 29.08.2026 – ctest 334/334 grün, 27 Benchmarks (Google Benchmark). Alle identifizierten Bugs wurden behoben, `constexpr`-Refactor abgeschlossen (siehe ANALYSIS.md für Zusammenfassung).
 
 ## Nächste Prioritäten (fokussiert)
 
@@ -10,7 +10,11 @@
    - [x] Swagger-Spezifikation an tatsächlichen Auth-/Status-Code-Stand anpassen (Spec-only, `/hello`, `/health`, `/ready`; kein Serving/Embedding)
 2. **Shared Memory Robustheit**
    - [x] Backup-Strategie geprüft → **verworfen** (Property-Persistenz läuft bereits über DB-Priorität + Shadowing; kein separater SHM-Backup-Mechanismus)
-   - [ ] Bessere Semaphore-Nutzung + Resource-/Overflow-Checks
+   - [x] Bessere Semaphore-Nutzung + Resource-/Overflow-Checks
+       – Quer-Prozess-Semaphore pro Segment (`shm_<name>_remap_sem`) um Grow/Shrink/Remap + construct*-Pfade;
+         `MessageQueue::sendOfWithTimeout` + Drop-Zähler (HistoryService nutzt `m_sendTimeout`);
+         `serialize`/`getMap` unter `shm_property_mutex_upgradable` (shared ReadLock via `ReadLockGuard`);
+         2 neue Unit-Tests (Queue-Overflow). Boost-Wrap separat zurückgestellt.
 
 ## Tests / Mocks
 
@@ -24,7 +28,7 @@
 ## Features
 
 - [x] Backup or archive strategy for shared memory → verworfen (siehe Nächste Prioritäten); Persistenz über DB-Priorität + Shadowing
-- [ ] Add better usage of semaphores
+- [x] Bad usage of semaphores (`shm_<name>_remap_sem` pro Segment; MessageQueue-Timeouts; Named-Mutex um serialize) → Details unter „Nächste Prioritäten“
 - [ ] Adds better possibility to manage processes automatically
 - [ ] MySQL Support (zurückgestellt – aktuell nicht priorisiert)
 

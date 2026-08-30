@@ -24,6 +24,7 @@ private:
     std::shared_ptr<Property<std::chrono::seconds>> m_period;
     std::shared_ptr<Property<bool>> m_forceQueue;
     std::shared_ptr<Property<std::size_t>> m_commitRate;
+    std::shared_ptr<Property<std::chrono::milliseconds>> m_sendTimeout;
     // injections
     std::shared_ptr<SchedulerService> m_schedulerService;
     std::shared_ptr<HistoryRepository> m_historyRepository;

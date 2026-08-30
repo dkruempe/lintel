@@ -33,6 +33,7 @@ ADD_EXECUTABLE(base_tests
     services/BootstrapServiceMockTest.cpp
     services/AuthServiceTest.cpp
     services/MessageQueueServiceMockTest.cpp
+    services/MessageQueueOverflowTest.cpp
     cli/CommandLineComponentMockTest.cpp
     cli/CommandLineHistoryServiceTest.cpp
     cli/AuthCliServiceMockTest.cpp
