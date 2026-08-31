@@ -120,6 +120,7 @@ set(headers
     # core - utils
     include/base_library/core/utils/Cryption.h
     include/base_library/core/utils/MemorySize.h
+    include/base_library/core/utils/ProcessResourceReader.h
     include/base_library/core/utils/RegexUtils.h
     include/base_library/core/utils/StringUtils.h
     include/base_library/core/utils/TableBuilder.h
@@ -348,6 +349,7 @@ set(sources
     # core - utils
     core/utils/Cryption.cpp
     core/utils/MemorySize.cpp
+    core/utils/ProcessResourceReader.cpp
     core/utils/RegexUtils.cpp
     core/utils/StringUtils.cpp
     core/utils/UUID.cpp

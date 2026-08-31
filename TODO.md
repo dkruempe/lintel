@@ -1,6 +1,6 @@
 # TODOs
 
-> Stand: 29.08.2026 – ctest 334/334 grün, 27 Benchmarks (Google Benchmark). Alle identifizierten Bugs wurden behoben, `constexpr`-Refactor abgeschlossen (siehe ANALYSIS.md für Zusammenfassung).
+> Stand: 30.08.2026 – ctest 340/340 grün, 27 Benchmarks (Google Benchmark), `TODO.md`-Feature „Adds better possibility to manage processes automatically" umgesetzt (Backoff/Circuit-Breaker, Group-Monitoring, Ressourcen-Observability, Scheduler). Alle identifizierten Bugs wurden behoben, `constexpr`-Refactor abgeschlossen (siehe ANALYSIS.md für Zusammenfassung).
 
 ## Nächste Prioritäten (fokussiert)
 
@@ -29,7 +29,12 @@
 
 - [x] Backup or archive strategy for shared memory → verworfen (siehe Nächste Prioritäten); Persistenz über DB-Priorität + Shadowing
 - [x] Bad usage of semaphores (`shm_<name>_remap_sem` pro Segment; MessageQueue-Timeouts; Named-Mutex um serialize) → Details unter „Nächste Prioritäten“
-- [ ] Adds better possibility to manage processes automatically
+- [x] Adds better possibility to manage processes automatically
+    - Backoff/Circuit-Breaker beim Auto-Restart (`restartDelay`/`restartDelayMax`/`maxRestartRate`/`minUptime`/`restartWindow`), kein Endlos-Restart-Loop
+    - ProcessGroup-Monitoring reaktiviert (Recovery von `failed`-Prozessen), Scheduler (`restartInterval`/`activeFrom`/`activeTo`)
+    - Ressourcen-Observability (uptime/CPU/Mem) via `ProcessResourceReader` (Linux/macOS), Notify-Schwellwerte (`cpuNotify`/`memNotify`)
+    - HTTP: `PUT /process/restart/{id}`, `POST /process/reset/{id}`, `GET /process/health/{id}`; CLI: `restart_process`/`reset_process`/`show_process_details`
+    - Bugfixes: sicheres `exit_code`/`wait`, null-Promise, spawn/wait nicht mehr unter `m_processesMutex`
 - [ ] MySQL Support (zurückgestellt – aktuell nicht priorisiert)
 
 ## Docker Support
