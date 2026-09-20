@@ -1,7 +1,7 @@
 # ROADMAP – Veröffentlichung von `cpp-base-library`
 
-> Stand: 19.09.2026 · Ziel: öffentliches Open-Source-Release (MIT)
-> Basis: aktuelle Analyse (341 Tests grün, Stand 02.09.2026) + Inventur aus `TODO.md`, `ANALYSIS.md`, CI/CMake/Docker/README.
+> Stand: 20.09.2026 · Ziel: öffentliches Open-Source-Release (MIT)
+> Basis: aktuelle Analyse (341 Tests grün in Unity- UND Nicht-Unity-Build) + Inventur aus `TODO.md`, `ANALYSIS.md`, CI/CMake/Docker/README.
 
 ## Prioritäts-Legende
 
@@ -19,7 +19,7 @@
 1. **Software**: regressions Tests nachziehen, PostgreSQL-Backend testen, Seed-Credentials entfernen, Versionierung + Swagger synchronisieren.
 2. **Repo-Umzug**: **Ja, vor Release durchführen** – `<kruempelmann::>`-Namespace, globaler C++-Namespace und drei Namenswelten (`cpp-base-library`/`base_library`/`kruempelmann`) sind schwerwiegende strukturelle Risiken. Jetzt ist es am günstigsten (keine Nutzer).
 3. **Erreichbarkeit**: Repo öffentlich machen, LICENSE, README-Quickstart + Badges, Doxygen-Docs, CONTRIBUTING/SECURITY/CHANGELOG.
-4. **Kompilierzeit**: Einmal ccache richtig konfigurieren (Cross-Runner-Hits), Test-Unity-Batch aufteilen, PCH straffen, IWYU.
+4. **Kompilierzeit**: Großteils umgesetzt (20.09.2026) – ccache Cross-Env, Test-Unity-Batch aufgeteilt, PCH gestrafft, HTTP-pimpl, IWYU/Non-Unity-Fixes. Offen: `LoggerService.h`-fwd-Entscheidung, ccache-Hit-Rate messen. Details in Abschnitt 4.
 5. **Sonstiges**: CI auf `master` fixen (läuft aktuell nie), Release-Workflow, Versionierung, Secrets aus Historie entfernen.
 
 ---
@@ -147,22 +147,22 @@ Empirische Basis (gemessen 02.09.2026): Library 6 Unity-TUs (~2,05 Mio. präproz
 
 ### P0 – schnellste Gewinne
 
-- [ ] **Test-TU aufteilen** – `tests/unity_0` als Einzel-Batch (470 k Zeilen, 71,8 s) auslastet 4 Cores nicht. `CMAKE_UNITY_BUILD_BATCH_SIZE` nur für `base_tests` herunter (z. B. 8) oder eigenes Test-PCH. Nutzen: −20…−40 s vom kritischen Pfad.
-- [ ] **ccache cross-environment tauglich machen** – `CCACHE_BASEDIR` (Docker `/workspace` vs. GH-Runner `/home/runner/work/...` verhindert derzeit Cross-Runner-Hits), `CCACHE_COMPRESS=1`, `CCACHE_MAXSIZE`. Hit-Rate aktuell nur 32 %, 69 % uncacheable Calls.
-- [ ] **Versions-Makros + Versionierung fixen** (Beeinflusst Builds über `config.h`): Platzhalter `@VERSION_MAJOR @` (Leerzeichen) werden nie substituiert; Root-`project()` ohne VERSION.
+- [x] **Test-TU aufteilen** – UMGESETZT (20.09.2026): `UNITY_BUILD_BATCH_SIZE 8` als Target-Property auf `base_tests` (statt global 32) → `tests/unity_1..unity_4`, insgesamt 5 TUs statt 1. Unity- UND Nicht-Unity-Build 341/341 grün.
+- [x] **ccache cross-environment tauglich machen** – UMGESETZT (20.09.2026): `CCACHE_BASEDIR` (GH-Runner `${{ github.workspace }}`, Docker `/workspace`), `CCACHE_COMPRESS=1`, `CCACHE_MAXSIZE=500M` in `ci.yml`, `Dockerfile`-builder und `docker-compose.dev` (mit persistentem ccache-Volume); Cache-Key auf Content-Hash (`hashFiles(...)`) statt `github.sha`. **Offen:** Hit-Rate > 70 % erst nach mehreren CI-Läufen verifizierbar (lokal weiterhin ~32 % – dominiert von Unity-TUs + Erst-Compile der Non-Unity-Verifikation).
+- [x] **Versions-Makros + Versionierung fixen** – UMGESETZT (20.09.2026): `@VERSION_MAJOR @` → `@VERSION_MAJOR@` in `config.h.in`; Root `project(cpp-base-library VERSION ${BASE_LIBRARY_VERSION})` (CACHE-Var `BASE_LIBRARY_VERSION=0.1.0`), `src/` leitet Target-Version und `VERSION_*` daraus ab. `config.h` generiert korrekt (`VERSION_MAJOR 0/1/0`). Offen: Swagger-Abgleich (→ §5).
 
 ### P1 – Header-Sanierung (Voraussetzung für weitere Gewinne)
 
-- [ ] **PCH straffen** – 4 Projekt-Header (`LoggerService.h`, `Configuration.h`, `StringUtils.h`, `TypeName.h`) aus dem PCH nehmen: bringt bei Unity ~0 s (gemessen 56,3 s vs. 55,7 s), invalidiert aber bei jeder Änderung die 104-MB-`.gch` (= alle TUs als Cache-Miss).
-- [ ] **`LoggerService.h` auf `spdlog/fwd.h` umstellen** – entfernt spdlog+fmt aus 54 von 55 inkludierenden TUs (nur `LoggerService.cpp` braucht `spdlog/logger.h`).
+- [x] **PCH straffen** – UMGESETZT (20.09.2026): die 4 Projekt-Header (`LoggerService.h`, `Configuration.h`, `StringUtils.h`, `TypeName.h`) aus dem PCH entfernt; PCH enthält nur noch stdlib + `<spdlog/common.h>` + `<spdlog/fwd.h>`. Kein Unity-Build-Effekt, dafür keine `.gch`-Invalidierung bei Projekt-Header-Änderungen.
+- [ ] **`LoggerService.h` auf `spdlog/fwd.h` umstellen** – ANALYSIERT (20.09.2026), 1:1 NICHT umsetzbar ohne API-Änderung: `spdlog/fwd.h` forward-declared nur `logger`/`sink`/`level_enum`; das Header-Template `log()` ruft `m_logger->log(...)` und braucht damit den kompletten Typ, außerdem erzwingt spdlog `fmt` am Aufrufort. REALISTISCHER Ansatz (offen): Logging-API auf stringifizierte Argumente umstellen (im Repo nur `{}`-Platzhalter, keine Format-Specifier) – Breaking Change, als eigene Aufgabe nach Release.
 - [x] **HTTP-pimpl für `Server.h`/`Client.h`/`HttpClientHelper.h` umgesetzt** – `httplib.h` (20,6 k Zeilen) ist die teuerste Einzel-Datei, zieht in alle 20 HTTP-TUs. `Server.h`/`Client.h` halten jetzt nur noch Forward-Declarations (`httplib::Result` etc.); `HttpClientHelper.h` deklariert nur noch `hasResponse` (Definition in neuem `HttpClientHelper.cpp`). Konsequenz: `httplib.h` muss in TUs, die `httplib::*`-Typen nutzen und diese Header einbinden, jetzt selbst via `#include <httplib.h>` importiert werden (IWYU; explizit ergänzt in den 6 Api-Implementierungen). Pool: 341/341 Tests grün bei Head-rebuild (inkl. Fix des via `ProcessService.cpp` aufgedeckten boost `v1::env`-Include-Fehlers), `clang-format --dry-run --Werror` sauber.
-- [ ] **IWYU-Einzelfunde**: `boost/asio.hpp`-Umbrella (`AuthService.cpp`) → `ip/address.hpp`; `boost/process/v1.hpp`-Umbrella (`ProcessService.cpp`); `fmt/format.h` in 4 Exception-Headern → `fmt/core.h`; `Feature.h` fehlende `<type_traits>/<memory>/<string_view>`; `date/tz.h` in 8 Dateien → prüfen ob `date/date.h` reicht.
-- [ ] **Nicht-Unity-Build testen** (AGENTS.md): Unity kann `#include`-Fehler maskieren; die IWYU-Funde oben sind genau solche Kandidaten.
+- [x] **IWYU-Einzelfunde** – UMGESETZT (20.09.2026): `boost/asio.hpp`→`boost/asio/ip/address.hpp` (AuthService.cpp); `boost/process/v1.hpp`→`v1/child.hpp`+`v1/env.hpp` (ProcessService.cpp); `Feature.h` +`<type_traits>/<memory>/<string_view>`; `date/tz.h`→`date/date.h` in 8 Dateien (kein tz-Bedarf, verifiziert). `fmt/format.h`→`fmt/core.h`: **bewusst verworfen** – fmt 12.1 `core.h` ist nur ein Deprecation-Shim auf `format.h`, kein Kompiliergewinn.
+- [x] **Nicht-Unity-Build testen** – UMGESETZT (20.09.2026): `-DENABLE_UNITY_BUILD=OFF`-Release-Build grün (341/341). Deckte **8 Unity-maskierte Include-Bugs** auf, alle gefixt: `Argument.h` (`<cstdint>`), `AbstractService.h` (`<memory>`), `ConfigurationException.h` (`<string>/<cstdint>`), `CommandLineComponent.h` (`<set>/<string_view>`), `AbstractCommandLineMenu.cpp` (`<iostream>/<set>/<algorithm>/<iterator>`), `MessageQueueRepository.cpp` + `MessageQueueBootstrapPlugin.cpp` (`LoggerService.h`), `SingleInstanceBootstrapPlugin.cpp` (`SharedMemorySegmentEntry.h`).
 
 ### P2 – Metabuild & Messbarkeit
 
-- [ ] **Mess-Skripte versionieren** (`time ninja`, `ninja -d explain`, `ccache -s`) – Commit `64d8216` nennt −22 % ohne reproduzierbares Protokoll.
-- [ ] Boost-Install schrumpfen (`boost*:without_*`, 218 MB Install) – spart Installzeit, kein Kompilier-Effekt.
+- [x] **Mess-Skripte versionieren** – UMGESETZT (20.09.2026): `scripts/measure-compile-times.sh` (Cold/Incremental, wall-clock + `ccache -s`). Offen: Referenz-Messprotokoll (vorher/nachher) ins Repo aufnehmen.
+- [ ] Boost-Install schrumpfen (`boost*:without_*`, 218 MB Install) – spart Installzeit, kein Kompilier-Effekt. **VERSCHOBEN (20.09.2026):** Options-Änderung kann lokalen Boost-Rebuild auslösen – auf dieser Produktionsmaschine mit laufenden Diensten (evcc) bewusst ausgelassen.
 - [ ] **C++20 Module**: aktuell nicht realistisch (CMake 3.16, alle Kernsachen header-only ohne Module) – nach IWYU/Umbau erneut prüfen.
 
 ---
@@ -171,7 +171,8 @@ Empirische Basis (gemessen 02.09.2026): Library 6 Unity-TUs (~2,05 Mio. präproz
 
 ### Release-Mechanik
 
-- [ ] **`project()`-Version im Root** setzen; `config.h.in`-Platzhalter fixen; generierte `config.h`-Version mit Swagger abgleichen.
+- [x] **`project()`-Version im Root** setzen + `config.h.in`-Platzhalter fixen – UMGESETZT (20.09.2026, siehe §4 P0).
+- [ ] **generierte `config.h`-Version mit Swagger abgleichen** (`1.0.0` vs. `0.1.0`) – offen.
 - [ ] **SemVer + Git-Tags** einführen (z. B. `v0.1.0`), CHANGELOG anlegen (Keep a Changelog), Commits künftig Conventional-Commit-Stil.
 - [ ] **GitHub Release-Workflow**: Trigger `on: pull_request` (PR-Test) + `on: push: tags` / `on: release`: Build → `ctest` → Artifacts → `gh release create`.
 - [ ] **`base_libraryConfig.cmake`** + relozierbares Install-Package (siehe Abschnitt 2) vor erstem Tag.
@@ -201,7 +202,7 @@ Empirische Basis (gemessen 02.09.2026): Library 6 Unity-TUs (~2,05 Mio. präproz
 | **v0.1.0-Blocker** | Phase 0 vollständig: Secrets weg, LICENSE/NOTICE, CI läuft, Repo public, Versionierung steht, `config.h`-Makros funktionieren, PG-Tests minimal, Swagger synchron | CI grün auf `master`, `find_package`-Install-Paket relozierbar, Repo sichtbar |
 | **v0.1.0** | Erster Tag `v0.1.0` + GitHub Release + CHANGELOG | Tag mit Assets, `conan create` funktioniert |
 | **v0.2.0** | Namespace-Umzug `base_library::` + Repo-Rename abgeschlossen (Abschnitt 2), Breaking-Change dokumentiert | Alle Tests grün nach Umzug, Migrationstabelle im CHANGELOG |
-| **v0.3.0** | Kompilierzeit-P0/P1 (Abschnitt 4), Regressions-Tests, CI-Lint-Jobs | Messprotokoll im Repo, `tests/unity_0` aufgeteilt, ccache-Hits > 70 % |
+| **v0.3.0** | Kompilierzeit-P0/P1 größtenteils umgesetzt (20.09.2026, Abschnitt 4); offen: `LoggerService.h`-fwd-Entscheidung, Referenz-Messprotokoll, ccache-Hit-Rate im CI messen. Regressions-Tests, CI-Lint-Jobs | Messprotokoll im Repo, `tests/unity_0` aufgeteilt (✓), ccache-Hits > 70 % |
 | **v1.0.0** | API-stabil erklären (`base_library::` fix), Doxygen-docs + Pages, Plattform-Matrix grün | Semantic-Versioning ab jetzt verbindlich |
 
 ---
