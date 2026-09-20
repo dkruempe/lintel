@@ -1,7 +1,10 @@
 #ifndef CPP_BASE_LIBRARY_FEATURE_H
 #define CPP_BASE_LIBRARY_FEATURE_H
 
+#include <memory>
 #include <string>
+#include <string_view>
+#include <type_traits>
 #include <utility>
 
 #include "base_library/core/utils/TypeName.h"

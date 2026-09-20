@@ -1,6 +1,7 @@
 #ifndef LOGGING_ABSTRACTSERVICE_H
 #define LOGGING_ABSTRACTSERVICE_H
 
+#include <memory>
 #include <ostream>
 #include <string>
 #include <utility>

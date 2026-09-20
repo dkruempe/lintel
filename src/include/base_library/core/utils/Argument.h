@@ -1,6 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_ARGUMENT_H
 #define CPP_BASE_LIBRARY_ARGUMENT_H
 
+#include <cstdint>
 #include <iostream>
 #include <optional>
 #include <string>

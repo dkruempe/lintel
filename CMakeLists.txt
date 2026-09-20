@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-project(cpp-base-library)
+set(BASE_LIBRARY_VERSION "0.1.0" CACHE STRING "Release version of base_library (SemVer)")
+project(cpp-base-library VERSION ${BASE_LIBRARY_VERSION})
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

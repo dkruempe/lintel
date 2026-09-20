@@ -1,7 +1,7 @@
 #ifndef LOGGING_STRINGIFYSERVICE_H
 #define LOGGING_STRINGIFYSERVICE_H
 
-#include <date/tz.h>
+#include <date/date.h>
 
 #include <chrono>
 #include <sstream>

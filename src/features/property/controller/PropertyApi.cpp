@@ -1,3 +1,5 @@
+#include <httplib.h>
+
 #include "base_library/features/property/controller/PropertyApi.h"
 
 #include "base_library/core/services/LoggerService.h"

@@ -2,7 +2,6 @@
 #define CPP_BASE_LIBRARY_USER_H
 
 #include <date/date.h>
-#include <date/tz.h>
 
 #include <chrono>
 #include <ostream>

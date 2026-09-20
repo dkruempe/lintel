@@ -2,7 +2,6 @@
 #define COMMANDHISTORYENTRY_H
 
 #include <date/date.h>
-#include <date/tz.h>
 #include <ostream>
 #include <string>
 

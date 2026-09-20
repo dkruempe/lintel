@@ -1,3 +1,5 @@
+#include <httplib.h>
+
 #include "base_library/features/http/controllers/UserApi.h"
 
 #include "base_library/features/base/controller/UserDto.h"

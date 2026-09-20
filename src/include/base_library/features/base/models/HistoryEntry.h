@@ -2,7 +2,6 @@
 #define CPP_BASE_LIBRARY_HISTORYENTRY_H
 
 #include <date/date.h>
-#include <date/tz.h>
 
 #include <string>
 #include <utility>

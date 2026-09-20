@@ -1,6 +1,7 @@
 #include "base_library/core/plugins/MessageQueueBootstrapPlugin.h"
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
+#include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/configuration/Configuration.h"
 #include "base_library/core/models/BootstrapSequence.h"
 #include "base_library/features/base/configuration/MessageQueueComponent.h"

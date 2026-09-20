@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_POSTGRES_SERIALIZATION_H
 #define CPP_BASE_LIBRARY_POSTGRES_SERIALIZATION_H
 
-#include <date/tz.h>
+#include <date/date.h>
 
 #include <string>
 #include <type_traits>

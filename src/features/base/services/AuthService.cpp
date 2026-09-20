@@ -2,7 +2,7 @@
 
 #include <date/date.h>
 
-#include <boost/asio.hpp>
+#include <boost/asio/ip/address.hpp>
 #include <chrono>
 #include <vector>
 

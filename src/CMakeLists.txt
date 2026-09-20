@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0025 NEW)
-project(base_library VERSION 0.0.1)
+if(NOT DEFINED BASE_LIBRARY_VERSION)
+    set(BASE_LIBRARY_VERSION "0.1.0")
+endif()
+project(base_library VERSION ${BASE_LIBRARY_VERSION})
 set(CMAKE_MACOSX_RPATH OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
@@ -22,6 +25,10 @@ endif ()
 IF (NOT DEFINED MSG_QUEUE_CONTENT_SIZE)
     set(MSG_QUEUE_CONTENT_SIZE 1000)
 endif ()
+
+set(VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(VERSION_PATCH ${PROJECT_VERSION_PATCH})
 
 configure_file(
         ${PROJECT_SOURCE_DIR}/include/base_library/config.h.in
@@ -454,6 +461,7 @@ set(sources
     features/http/service/Client.cpp
     features/http/service/ClientIpResolver.cpp
     features/http/service/ContentType.cpp
+    features/http/service/HttpClientHelper.cpp
     features/http/service/Controller.cpp
     features/http/service/HttpStatusCode.cpp
     features/http/service/Server.cpp
@@ -544,10 +552,6 @@ if(ENABLE_PCH)
         <vector>
         <spdlog/common.h>
         <spdlog/fwd.h>
-        <base_library/core/services/LoggerService.h>
-        <base_library/features/base/configuration/Configuration.h>
-        <base_library/core/utils/StringUtils.h>
-        <base_library/core/utils/TypeName.h>
     )
 endif()
 

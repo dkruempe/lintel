@@ -1,7 +1,9 @@
 #ifndef CPP_BASE_LIBRARY_CONFIGURATIONEXCEPTION_H
 #define CPP_BASE_LIBRARY_CONFIGURATIONEXCEPTION_H
 
+#include <cstdint>
 #include <exception>
+#include <string>
 #include <utility>
 
 /** Exception thrown when configuration parsing fails */

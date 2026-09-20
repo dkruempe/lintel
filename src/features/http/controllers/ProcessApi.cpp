@@ -1,3 +1,5 @@
+#include <httplib.h>
+
 #include "base_library/features/http/controllers/ProcessApi.h"
 
 #include "base_library/core/services/LoggerService.h"

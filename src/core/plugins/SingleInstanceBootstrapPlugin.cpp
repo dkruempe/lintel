@@ -8,6 +8,7 @@
 
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
+#include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
 
 SingleInstanceBootstrapPlugin::SingleInstanceBootstrapPlugin(
         const std::shared_ptr<DatabaseConnectionConfigurations>

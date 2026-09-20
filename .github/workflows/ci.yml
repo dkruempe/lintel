@@ -9,6 +9,9 @@ on:
 env:
   BUILD_TYPE: Release
   CONAN_SYSREQUIRES_MODE: enabled
+  CCACHE_BASEDIR: ${{ github.workspace }}
+  CCACHE_COMPRESS: "1"
+  CCACHE_MAXSIZE: "500M"
 
 jobs:
   build:
@@ -31,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ccache-${{ runner.os }}-${{ github.sha }}
+          key: ccache-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'tests/**', 'examples/**', 'external/**') }}
           restore-keys: |
             ccache-${{ runner.os }}-
 

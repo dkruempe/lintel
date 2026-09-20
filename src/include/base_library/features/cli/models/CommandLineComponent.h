@@ -2,7 +2,9 @@
 #define CPP_BASE_LIBRARY_COMMANDLINECOMPONENT_H
 
 #include <memory>
+#include <set>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "base_library/features/http/service/Client.h"

@@ -2,7 +2,8 @@
 
 #include <base_library/features/base/configuration/ProcessEntry.h>
 
-#include <boost/process/v1.hpp>
+#include <boost/process/v1/child.hpp>
+#include <boost/process/v1/env.hpp>
 #include <boost/process/v1/environment.hpp>
 #include <boost/process/v1/io.hpp>
 #include <chrono>

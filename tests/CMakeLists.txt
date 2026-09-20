@@ -46,6 +46,8 @@ ADD_EXECUTABLE(base_tests
     repositories/UserRepositoryPagingTest.cpp
     repositories/MessageQueueRepositoryPagingTest.cpp
 )
+# Split the single-test-binary unity batch so multiple cores in CI actually get used
+set_target_properties(base_tests PROPERTIES UNITY_BUILD_BATCH_SIZE 8)
 target_compile_features(base_tests PUBLIC cxx_std_17)
 target_link_libraries(base_tests PRIVATE
     kruempelmann::base_library

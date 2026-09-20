@@ -35,6 +35,10 @@ RUN conan profile detect --force \
 # ── Build layer ──────────────────────────────────────────────────────
 FROM deps AS builder
 
+ENV CCACHE_BASEDIR=/workspace \
+    CCACHE_COMPRESS=1 \
+    CCACHE_MAXSIZE=500M
+
 COPY . .
 RUN cmake -S . -B build/build/Release \
     -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \

@@ -22,10 +22,14 @@ services:
     image: cpp-base-library:dev
     profiles:
       - dev
+    environment:
+      CCACHE_BASEDIR: /workspace
+      CCACHE_MAXSIZE: 500M
     volumes:
       - .:/workspace
       - conan_cache:/root/.conan2
       - build_cache:/workspace/build
+      - ccache_cache:/root/.ccache
     working_dir: /workspace
     command: >
       bash -c "conan profile detect --force &&
@@ -65,3 +69,4 @@ volumes:
   postgres_data:
   conan_cache:
   build_cache:
+  ccache_cache:

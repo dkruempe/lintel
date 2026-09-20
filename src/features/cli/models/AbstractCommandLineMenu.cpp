@@ -1,5 +1,9 @@
 #include "base_library/features/cli/models/AbstractCommandLineMenu.h"
 
+#include <algorithm>
+#include <iostream>
+#include <iterator>
+
 #include <base_library/core/utils/TableBuilder.h>
 
 #include "base_library/core/services/LoggerService.h"
