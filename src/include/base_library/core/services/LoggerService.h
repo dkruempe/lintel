@@ -4,16 +4,42 @@
 /**
  * LoggerService class for easier logging in process itself
  *
- * Uses <spdlog/logger.h> instead of <spdlog/spdlog.h> to reduce
- * transitive includes (avoids registry, synchronous_factory).
- * With PCH enabled, all of spdlog is parsed only once.
+ * This public header parses only <fmt/base.h>. spdlog is hidden behind a
+ * forward declaration and stays in LoggerService.cpp.
+ * The variadic log() applies fmt's template-elimination idea
+ * (fmt::format -> fmt::vformat): the template only boxes its arguments with
+ * fmt::make_format_args and forwards them to the non-template logImpl(), so
+ * formatting and spdlog are compiled once instead of at every call site.
  */
-#include <spdlog/logger.h>
+#include <fmt/base.h>
 
+#include <memory>
 #include <mutex>
 
 class Configuration;
 #include "base_library/features/base/models/ProcessName.h"
+
+namespace spdlog {
+/** Forward declaration only; users of this header never need spdlog itself. */
+class logger;
+}// namespace spdlog
+
+/**
+ * Log levels used by LoggerService and the LOG_* macros.
+ * The values intentionally match spdlog::level::level_enum.
+ */
+enum class LogLevel : int { trace = 0, debug = 1, info = 2, warn = 3, error = 4, critical = 5, off = 6 };
+
+/** Source location function name for the LOG_* macros, equivalent to spdlog's SPDLOG_FUNCTION. */
+#ifndef BASE_LIBRARY_FUNCTION
+#if defined(_MSC_VER)
+#define BASE_LIBRARY_FUNCTION __FUNCSIG__
+#elif defined(__GNUC__) || defined(__clang__)
+#define BASE_LIBRARY_FUNCTION __PRETTY_FUNCTION__
+#else
+#define BASE_LIBRARY_FUNCTION __func__
+#endif
+#endif
 
 /** Singleton service providing spdlog-based logging for the application. */
 class LoggerService
@@ -26,6 +52,17 @@ private:
 
   /** Initialize the spdlog logger instance. */
   std::shared_ptr<spdlog::logger> init();
+
+  /**
+   * Non-template formatting backend: filters the level and performs all fmt formatting.
+   * spdlog is touched here only. Defined in LoggerService.cpp.
+   */
+  void logImpl(const char *file,
+    int line,
+    const char *function,
+    LogLevel lvl,
+    fmt::string_view message,
+    fmt::format_args args);
 
   static std::unique_ptr<LoggerService> m_instance;
   static std::mutex m_instanceMutex;
@@ -63,35 +100,33 @@ public:
   static void initSingleton2();
 
   /** Log a formatted message at the given level with source location.
+   * Template-eliminated: boxes the arguments (fmt::make_format_args) and defers all formatting
+   * to the non-template logImpl() in LoggerService.cpp.
    * @tparam Args the argument types
-   * @param source  the source location (file, line, function)
-   * @param lvl     the log level
-   * @param message the format string
-   * @param args    the format arguments */
+   * @param file     the source file name
+   * @param line     the source line number
+   * @param function the source function name
+   * @param lvl      the log level
+   * @param message  the format string
+   * @param args     the format arguments */
   template<typename... Args>
-  void log(spdlog::source_loc source, spdlog::level::level_enum lvl, spdlog::string_view_t message, Args &&...args)
+  void log(const char *file, int line, const char *function, LogLevel lvl, fmt::string_view message, Args &&...args)
   {
-    m_logger->log(source, lvl, message, args...);
+    logImpl(file, line, function, lvl, message, fmt::make_format_args(args...));
   }
 };
 
 #define DECLARE_LOGGER(processName, configuration) LoggerService::getOrCreate(processName, configuration)
 #define LOG_INFO(message, ...) \
-  LoggerService::get().log(    \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::info, message, ##__VA_ARGS__)
+  LoggerService::get().log(__FILE__, __LINE__, BASE_LIBRARY_FUNCTION, LogLevel::info, message, ##__VA_ARGS__)
 #define LOG_DEBUG(message, ...) \
-  LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::debug, message, ##__VA_ARGS__)
+  LoggerService::get().log(__FILE__, __LINE__, BASE_LIBRARY_FUNCTION, LogLevel::debug, message, ##__VA_ARGS__)
 #define LOG_TRACE(message, ...) \
-  LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::trace, message, ##__VA_ARGS__)
+  LoggerService::get().log(__FILE__, __LINE__, BASE_LIBRARY_FUNCTION, LogLevel::trace, message, ##__VA_ARGS__)
 #define LOG_ERROR(message, ...) \
-  LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::err, message, ##__VA_ARGS__)
+  LoggerService::get().log(__FILE__, __LINE__, BASE_LIBRARY_FUNCTION, LogLevel::error, message, ##__VA_ARGS__)
 #define LOG_FATAL(message, ...) \
-  LoggerService::get().log(     \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::critical, message, ##__VA_ARGS__)
+  LoggerService::get().log(__FILE__, __LINE__, BASE_LIBRARY_FUNCTION, LogLevel::critical, message, ##__VA_ARGS__)
 #define LOG_WARN(message, ...) \
-  LoggerService::get().log(    \
-    spdlog::source_loc{ __FILE__, __LINE__, SPDLOG_FUNCTION }, spdlog::level::warn, message, ##__VA_ARGS__)
+  LoggerService::get().log(__FILE__, __LINE__, BASE_LIBRARY_FUNCTION, LogLevel::warn, message, ##__VA_ARGS__)
 #endif// LOGGING_LOGGER_H

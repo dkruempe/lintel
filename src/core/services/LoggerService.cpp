@@ -2,6 +2,7 @@
 
 #include <spdlog/sinks/daily_file_sink.h>
 #include "base_library/features/base/configuration/Configuration.h"
+#include <fmt/format.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/tcp_sink.h>
@@ -17,6 +18,9 @@
 #include "base_library/core/services/FileService.h"
 #include "base_library/features/base/configuration/LoggerComponent.h"
 #include "base_library/features/base/configuration/LoggerEnrty.h"
+
+// spdlog is used here only, never in the public header
+#include <spdlog/logger.h>
 
 // initialization of static variables
 std::unique_ptr<LoggerService> LoggerService::m_instance = nullptr;
@@ -240,4 +244,29 @@ void LoggerService::initSingleton(
 
 void LoggerService::initSingleton2() {
     m_instance = std::make_unique<LoggerService>();
+}
+
+void LoggerService::logImpl(const char *file,
+                            int line,
+                            const char *function,
+                            LogLevel lvl,
+                            fmt::string_view message,
+                            fmt::format_args args) {
+    if (m_logger == nullptr) {
+        return;
+    }
+    auto level = static_cast<spdlog::level::level_enum>(lvl);
+    if (!m_logger->should_log(level)) {
+        return;
+    }
+    std::string text;
+    try {
+        text = fmt::vformat(message, args);
+    } catch (const std::exception &ex) {
+        text = fmt::format("log formatting failed: {} [{}:{}]",
+                           ex.what(), file, line);
+    }
+    m_logger->log(spdlog::source_loc{file, line, function},
+                  level,
+                  fmt::string_view(text));
 }

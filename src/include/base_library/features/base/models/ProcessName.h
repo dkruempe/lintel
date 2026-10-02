@@ -2,6 +2,8 @@
 #define CPP_BASE_LIBRARY_PROCESSNAME_H
 
 #include <filesystem>
+#include <string>
+#include <vector>
 
 /**
  * Represents the name and arguments of the current process, typically derived from argc/argv.
