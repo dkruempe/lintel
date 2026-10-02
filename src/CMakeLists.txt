@@ -550,8 +550,7 @@ if(ENABLE_PCH)
         <type_traits>
         <utility>
         <vector>
-        <spdlog/common.h>
-        <spdlog/fwd.h>
+        <fmt/base.h>
     )
 endif()
 

@@ -2,6 +2,7 @@ cmake-*
 *.cmake
 *.sh
 !cfg/certs/*.sh
+!scripts/*.sh
 *.txt
 !CMakeLists.txt
 *.json
