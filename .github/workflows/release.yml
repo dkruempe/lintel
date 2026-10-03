@@ -73,7 +73,7 @@ jobs:
           echo "## Release $tag" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: ${{ steps.tag.outputs.tag }}
 
@@ -88,7 +88,7 @@ jobs:
           echo "version $version verified"
 
       - name: Cache Conan packages
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.conan2
           key: conan-${{ runner.os }}-gcc-release-${{ hashFiles('conanfile.txt') }}
@@ -96,7 +96,7 @@ jobs:
             conan-${{ runner.os }}-gcc-release-
 
       - name: Cache ccache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.ccache
           key: ccache-${{ runner.os }}-gcc-release-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'tests/**', 'examples/**', 'external/**') }}
@@ -158,7 +158,7 @@ jobs:
           ls -la
 
       - name: Upload release artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: base_library-${{ steps.tag.outputs.version }}-linux-x86_64
           path: |
