@@ -2,43 +2,107 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
-    branches: [main]
+    branches: [master]
+  workflow_dispatch:
+
+# Superseded runs on the same ref are pointless (every job pays for a Conan build).
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
 
 env:
-  BUILD_TYPE: Release
   CONAN_SYSREQUIRES_MODE: enabled
+  # Keeps object paths independent of the runner workspace -> cross-run cache hits.
   CCACHE_BASEDIR: ${{ github.workspace }}
   CCACHE_COMPRESS: "1"
   CCACHE_MAXSIZE: "500M"
+  # `content` instead of mtime: runner images change compiler mtimes, which would
+  # silently invalidate every cached object file.
+  CCACHE_COMPILERCHECK: content
 
 jobs:
   build:
+    name: build (${{ matrix.name }})
     runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    strategy:
+      # One broken matrix entry must not hide the results of the others.
+      fail-fast: false
+      matrix:
+        include:
+          # gate: what we release from
+          - name: gcc-release
+            cc: gcc
+            cxx: g++
+            build_type: Release
+            unity: ON
+          # second opinion on the compiler, catches GCC-specific behaviour
+          - name: clang-release
+            cc: clang-18
+            cxx: clang++-18
+            build_type: Release
+            unity: ON
+          # Debug build + non-unity in one run: catches unity-masked missing includes
+          - name: gcc-debug-nonunity
+            cc: gcc
+            cxx: g++
+            build_type: Debug
+            unity: OFF
+
+    services:
+      # Ready for the [pg] tests that are still missing (see ROADMAP §1).
+      # Credentials match docker-compose.yml.
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      BUILD_TYPE: ${{ matrix.build_type }}
+      CC: ${{ matrix.cc }}
+      CXX: ${{ matrix.cxx }}
+      BUILD_DIR: build/build/${{ matrix.build_type }}
+      # Part of every cache key: packages and object files are only interchangeable
+      # within the same compiler/build-type/unity combination.
+      CACHE_ID: ${{ matrix.name }}
 
     steps:
       - uses: actions/checkout@v4
 
-      # ── Conan cache (1.5 GB, ~15 min sparen) ──────────────────────
+      # ── Conan cache (Boost/openssl/libpq come from source otherwise) ────
       - name: Cache Conan packages
         uses: actions/cache@v4
         with:
           path: ~/.conan2
-          key: conan-${{ runner.os }}-${{ hashFiles('conanfile.txt') }}
+          key: conan-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('conanfile.txt') }}
           restore-keys: |
-            conan-${{ runner.os }}-
+            conan-${{ runner.os }}-${{ env.CACHE_ID }}-
 
-      # ── ccache (Objekt-File-Cache) ────────────────────────────────
+      # ── ccache (object-file cache) ─────────────────────────────────────
       - name: Cache ccache
         uses: actions/cache@v4
         with:
           path: ~/.ccache
-          key: ccache-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'tests/**', 'examples/**', 'external/**') }}
+          key: ccache-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'tests/**', 'examples/**', 'external/**') }}
           restore-keys: |
-            ccache-${{ runner.os }}-
+            ccache-${{ runner.os }}-${{ env.CACHE_ID }}-
 
-      # ── System-Dependencies ────────────────────────────────────────
+      # ── System-Dependencies ────────────────────────────────────────────
       - name: Install system dependencies
         run: |
           sudo apt-get update
@@ -50,10 +114,14 @@ jobs:
       - name: Install Conan
         run: pip3 install conan --break-system-packages --no-cache-dir
 
+      # The profile is derived from CC/CXX, so the Clang entry gets a Clang
+      # profile. Do not override single settings here: host and build context have
+      # to stay identical, otherwise Conan computes two package IDs per dependency.
       - name: Configure Conan profile
-        run: conan profile detect --force
+        run: |
+          conan profile detect --force
+          conan profile show
 
-      # ── Conan Install (nur wenn conanfile.txt geändert) ───────────
       - name: Install Conan dependencies
         run: |
           conan install . \
@@ -62,23 +130,150 @@ jobs:
             -s build_type=${{ env.BUILD_TYPE }} \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
-      # ── Build ──────────────────────────────────────────────────────
+      # ── Build ──────────────────────────────────────────────────────────
       - name: Configure CMake
         run: |
-          cmake -S . -B build/build/Release \
-            -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
+          cmake -S . -B ${{ env.BUILD_DIR }} \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/${{ env.BUILD_TYPE }}/generators/conan_toolchain.cmake \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DENABLE_UNITY_BUILD=${{ matrix.unity }} \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -G Ninja
 
       - name: Build
-        run: cmake --build build/build/Release --parallel $(nproc)
+        run: cmake --build ${{ env.BUILD_DIR }} --parallel $(nproc)
 
-      # ── Tests ──────────────────────────────────────────────────────
+      # ── Tests ──────────────────────────────────────────────────────────
       - name: Run tests
-        working-directory: build/build/Release
+        working-directory: ${{ env.BUILD_DIR }}
         run: ctest --output-on-failure --label-regex unit
 
-      # ── ccache stats ───────────────────────────────────────────────
-      - name: ccache stats
-        run: ccache -s
+      # ── ccache hit rate ───────────────────────────────────────────────
+      # The roadmap target is > 70 % hits; CCACHE_BASEDIR makes paths
+      # independent of the runner workspace.
+      - name: ccache statistics
+        if: always()
+        run: |
+          {
+            echo '## ccache (${{ matrix.name }})'
+            echo '```'
+            ccache -s
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  format:
+    name: clang-format
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # the check diffs against the base commit, so we need its history
+          fetch-depth: 0
+
+      - name: Install clang-format
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang-format-18
+          clang-format-18 --version
+
+      - name: Baseline ref
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            echo "BASE_REF=$PR_BASE_SHA" >> "$GITHUB_ENV"
+          else
+            echo "BASE_REF=$PUSH_BEFORE" >> "$GITHUB_ENV"
+          fi
+
+      # Blocking: a change must not add new formatting violations to the files it
+      # touches. Legacy violations are tolerated, the whole repo is not reformatted.
+      - name: Check formatting of changed files
+        env:
+          SUMMARY_FILE: ${{ github.step_summary }}
+          CLANG_FORMAT: clang-format-18
+        run: ./scripts/check-format.sh "$BASE_REF"
+
+      # Advisory: how far the repo is from `make format`-clean, to size up the
+      # remaining reformat work.
+      - name: Report repo-wide formatting drift
+        if: always()
+        env:
+          SUMMARY_FILE: ${{ github.step_summary }}
+          CLANG_FORMAT: clang-format-18
+        run: ./scripts/check-format.sh --all
+
+  lint:
+    name: clang-tidy
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # Advisory: existing findings (e.g. in ProcessService.cpp) would turn every
+    # PR that touches them red. Becomes blocking once those are cleaned up.
+    continue-on-error: true
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-tidy-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-tidy-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential clang-tidy-18 cmake ninja-build \
+            pkg-config python3 python3-pip \
+            libpq-dev libsqlite3-dev libssl-dev
+
+      - name: Install Conan
+        run: pip3 install conan --break-system-packages --no-cache-dir
+
+      - name: Install Conan dependencies
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=Release \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      # Configure only, no build: compile_commands.json exists after configure, and
+      # unity/PCH would make it unusable for per-file clang-tidy.
+      - name: Configure CMake (non-unity, no PCH)
+        run: |
+          cmake -S . -B build/tidy \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_UNITY_BUILD=OFF \
+            -DENABLE_PCH=OFF \
+            -G Ninja
+
+      - name: Baseline ref
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            echo "BASE_REF=$PR_BASE_SHA" >> "$GITHUB_ENV"
+          else
+            echo "BASE_REF=$PUSH_BEFORE" >> "$GITHUB_ENV"
+          fi
+
+      - name: Run clang-tidy on changed files
+        env:
+          CLANG_TIDY: clang-tidy-18
+          TIDY_MAX_FILES: "20"
+          SUMMARY_FILE: ${{ github.step_summary }}
+        run: ./scripts/check-tidy.sh "$BASE_REF" build/tidy

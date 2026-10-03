@@ -4,8 +4,6 @@
 
 namespace {
 
-/** Default page size when only 'after' is given */
-constexpr std::size_t kDefaultPageLimit = 100;
 /** Hard cap for the 'limit' query parameter */
 constexpr std::size_t kMaxPageLimit = 1000;
 

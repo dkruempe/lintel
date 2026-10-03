@@ -1,0 +1,188 @@
+name: Release
+
+# Tag-driven: v0.1.0, v0.2.0, ...
+# The tag must match BASE_LIBRARY_VERSION in the top-level CMakeLists.txt.
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to build and publish (e.g. v0.1.0)'
+        required: true
+        type: string
+      dry_run:
+        description: 'Build and test, but do not create a release'
+        type: boolean
+        default: true
+
+concurrency:
+  group: release-${{ github.event.inputs.tag || github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  BUILD_TYPE: Release
+  CONAN_SYSREQUIRES_MODE: enabled
+  CCACHE_BASEDIR: ${{ github.workspace }}
+  CCACHE_COMPRESS: "1"
+  CCACHE_MAXSIZE: "500M"
+  CCACHE_COMPILERCHECK: content
+  BUILD_DIR: build/build/Release
+
+jobs:
+  release:
+    name: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - name: Resolve tag
+        id: tag
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          tag="$INPUT_TAG"
+          if [ -z "$tag" ]; then
+            tag="$REF_NAME"
+          fi
+          case "$tag" in
+            v*) ;;
+            *) tag="v$tag" ;;
+          esac
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+          echo "## Release $tag" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag.outputs.tag }}
+
+      - name: Tag must match the project version
+        run: |
+          version="$(sed -n 's/^set(BASE_LIBRARY_VERSION "\([^"]*\)".*/\1/p' CMakeLists.txt)"
+          expected="${{ steps.tag.outputs.version }}"
+          if [ "$version" != "$expected" ]; then
+            echo "::error::tag v$expected does not match BASE_LIBRARY_VERSION $version in CMakeLists.txt"
+            exit 1
+          fi
+          echo "version $version verified"
+
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-gcc-release-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-gcc-release-
+
+      - name: Cache ccache
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ runner.os }}-gcc-release-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'tests/**', 'examples/**', 'external/**') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-gcc-release-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build ccache \
+            pkg-config python3 python3-pip \
+            libpq-dev libsqlite3-dev libssl-dev
+
+      - name: Install Conan
+        run: pip3 install conan --break-system-packages --no-cache-dir
+
+      - name: Install Conan dependencies
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B ${{ env.BUILD_DIR }} \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -G Ninja
+
+      - name: Build
+        run: cmake --build ${{ env.BUILD_DIR }} --parallel $(nproc)
+
+      - name: Run tests
+        working-directory: ${{ env.BUILD_DIR }}
+        run: ctest --output-on-failure --label-regex unit
+
+      # Binaries end up in ./bin (CMAKE_RUNTIME_OUTPUT_DIRECTORY), the example
+      # configuration in ./cfg. certs/ stays out: it is development material and
+      # must never be published as a "default" TLS identity.
+      - name: Collect release artifacts
+        run: |
+          mkdir -p artifact/bin artifact/cfg
+          cp -a bin/. artifact/bin/
+          cp -a cfg/. artifact/cfg/
+          rm -rf artifact/cfg/certs artifact/cfg/.history
+          cp swagger.yaml artifact/
+          cp LICENSE artifact/ 2>/dev/null || echo "note: no LICENSE file yet (see ROADMAP phase 0)"
+          version="$(sed -n 's/^set(BASE_LIBRARY_VERSION "\([^"]*\)".*/\1/p' CMakeLists.txt)"
+          git rev-parse --short HEAD > artifact/BUILD_COMMIT
+          printf 'base_library %s built from %s\n' "$version" "$(cat artifact/BUILD_COMMIT)" > artifact/NOTES.txt
+          tar -czf base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz -C artifact .
+          sha256sum base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz \
+            > base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256
+          ls -la
+
+      - name: Upload release artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: base_library-${{ steps.tag.outputs.version }}-linux-x86_64
+          path: |
+            base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz
+            base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256
+            artifact/swagger.yaml
+            artifact/NOTES.txt
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        if: github.event_name == 'push' && !inputs.dry_run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ steps.tag.outputs.tag }}" \
+            base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz \
+            base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256 \
+            artifact/swagger.yaml \
+            --title "${{ steps.tag.outputs.tag }}" \
+            --generate-notes
+
+      - name: Release skipped (dry run)
+        if: github.event_name == 'workflow_dispatch' || inputs.dry_run
+        run: |
+          {
+            echo "dry run — no GitHub release created for v${{ steps.tag.outputs.version }}"
+          } >> "$GITHUB_STEP_SUMMARY"

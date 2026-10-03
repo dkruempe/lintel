@@ -1,7 +1,7 @@
 # ROADMAP – Veröffentlichung von `cpp-base-library`
 
-> Stand: 20.09.2026 · Ziel: öffentliches Open-Source-Release (MIT)
-> Basis: aktuelle Analyse (341 Tests grün in Unity- UND Nicht-Unity-Build) + Inventur aus `TODO.md`, `ANALYSIS.md`, CI/CMake/Docker/README.
+> Stand: 03.10.2026 · Ziel: öffentliches Open-Source-Release (MIT)
+> Basis: aktuelle Analyse (353 Tests grün) + Inventur aus `TODO.md`, `ANALYSIS.md`, CI/CMake/Docker/README.
 
 ## Prioritäts-Legende
 
@@ -20,7 +20,7 @@
 2. **Repo-Umzug**: **Ja, vor Release durchführen** – `<kruempelmann::>`-Namespace, globaler C++-Namespace und drei Namenswelten (`cpp-base-library`/`base_library`/`kruempelmann`) sind schwerwiegende strukturelle Risiken. Jetzt ist es am günstigsten (keine Nutzer).
 3. **Erreichbarkeit**: Repo öffentlich machen, LICENSE, README-Quickstart + Badges, Doxygen-Docs, CONTRIBUTING/SECURITY/CHANGELOG.
 4. **Kompilierzeit**: umgesetzt (20./21./22.10.2026) – ccache Cross-Env, Test-Unity-Batch aufgeteilt, PCH gestrafft, HTTP-pimpl, IWYU/Non-Unity-Fixes, **`LoggerService.h` ohne spdlog** (fmt-Vorwärtsdeklaration + Template-Eliminierung), **Boost aus den öffentlichen Headern** (`child.hpp` 14 → 2 TUs, `posix_time.hpp` 8 → 1 TU, `EventBus.h` −60,8 %). Offen: Boost-Install schrumpfen, C++20-Module neu bewerten. Messprotokoll mit Vorher/Nachher-Zahlen in `docs/compile-time-measurements.md`, Details in Abschnitt 4.
-5. **Sonstiges**: CI auf `master` fixen (läuft aktuell nie), Release-Workflow, Versionierung, Secrets aus Historie entfernen.
+5. **Sonstiges**: **CI umgesetzt (03.10.2026)** – Trigger auf `master` fixiert, Matrix GCC/Clang × Release/Debug+Non-Unity, Format-Gate + clang-tidy + Postgres-Service + Dependabot, Release-Workflow mit Tag-Gate. Offen: Secrets aus der Historie entfernen, Repo public stellen.
 
 ---
 
@@ -42,7 +42,7 @@
 
 ### Repo & CI (Voraussetzung für jede Sichtbarkeit)
 
-- [ ] **CI-Trigger auf `master` fixen** – `.github/workflows/ci.yml` triggert auf `main`, der Default-Branch heißt aber `master` → die Pipeline feuert **nie**. Entweder Branch umbenennen oder Trigger anpassen.
+- [x] **CI-Trigger auf `master` fixen** – ERLEDIGT (03.10.2026, siehe §5): `ci.yml` feuert jetzt auf `push`/`pull_request` auf `master` + `workflow_dispatch`, dazu `concurrency`-Gruppe (Superseded-Runs auf demselben PR werden abgebrochen), `permissions: contents: read`.
 - [ ] **Repo öffentlich machen** – aktuell `PRIVATE`, Description leer, keine Topics, keine Homepage (`gh repo view`).
 
 ---
@@ -51,7 +51,7 @@
 
 ### Tests nachziehen (🟠 Hoch)
 
-- [ ] **PostgreSQL-Backend testen** – komplett ungetestet (kein einziger `[pg]`-Test): Server-Side-Cursor, Notify, PreparedStatement, Transaction. Prüfen, ob PG bereits Grundlage der CLI/HTTP-Tests ist. CI braucht dann einen Postgres-Service (`services: postgres`) oder `docker compose up postgres`.
+- [ ] **PostgreSQL-Backend testen** – komplett ungetestet (kein einziger `[pg]`-Test): Server-Side-Cursor, Notify, PreparedStatement, Transaction. Prüfen, ob PG bereits Grundlage der CLI/HTTP-Tests ist. **CI-seitig vorbereitet (03.10.2026):** `postgres:17` (test/test/test, Port 5432, Health-Check) läuft in allen CI-Jobs, die Zugangsdaten entsprechen `docker-compose.yml`.
 - [ ] **Regressionstests für die 42 dokumentierten Bugfixes** – laut `TODO.md` offen: Regex-Vertauschung in `MessageQueueRepository`, `MemorySize` mit `"kB"`, leere Pfade, `PropertyDataDto::getSize`, non-object JSON-Body.
 - [ ] **Weiche Tests härten** – HTTP-Tests mit `WARN`-Fallback *(bestehen auch bei Fehlschlag)* in echte `REQUIRE`s umwandeln; `SKIP`-Pfade (fehlendes `sleep`-Binary, Nicht-Linux) über Tags/Requirements statt stillem Skip.
 - [ ] **Tests für ungetestete Module**: Bootstrap-Plugins (Admin/Database/MessageQueue/VirtualGroup), StartupBuilder, Scheduler/Executor, CLI-Komponenten (History/MessageQueue/Process/SharedMemory), HTTP-Controller (Process, History, User), Property-Repositories (Database/File/SharedMemory), `LoggerService`.
@@ -59,7 +59,7 @@
 
 ### Code-Reinigung (🟡 Mittel)
 
-- [ ] **Unfertige/leere Codepfade entscheiden** – bewusst erklären oder implementieren: `FilePropertyRepository::save()` (no-op), `SharedMemoryPropertyRepository::onMigrate()`, `BaseFeature::initialize()`, `UserManagementCliComponent::onShowMenu()` u. a. Mindestens als dokumentiertes No-Op markieren.
+- [ ] **Unfertige/leere Codepfade entscheiden** – bewusst erklären oder implementieren: `FilePropertyRepository::save()` (no-op), `SharedMemoryPropertyRepository::onMigrate()`, `BaseFeature::initialize()`, `UserManagementCliComponent::onShowMenu()` u. a. Mindestens als dokumentiertes No-Op markieren. **Teilerledigt (03.10.2026):** toter `constexpr kDefaultPageLimit` in `src/features/http/service/Controller.cpp` (Default-Limit wird nirgends benutzt) entfernt – Clang im CI hat ihn gefunden, GCC nicht.
 - [ ] **`DatabasePropertyRepository` Fehlerpropagation** – schluckt `db::SQLException` (nur `LOG_ERROR`, leere Ergebnisliste). Fehler nach außen durchreichen oder explizit dokumentieren.
 - [ ] **`ProcessController` 501 statt 404** bei unbekanntem Prozess – API-Semantik überdenken und mit Swagger abgleichen.
 - [ ] **Tippfehler in öffentlichen Headern** – `LoggerEnrty.h`, `SharedMemoryRepsoitoriesDto.h` vor Release umbenennen (öffentliche API!), da sonst dauerhaft Breaks entstehen.
@@ -200,17 +200,34 @@ Empirische Basis (gemessen 02.09.2026): Library 6 Unity-TUs (~2,05 Mio. präproz
 - [x] **`project()`-Version im Root** setzen + `config.h.in`-Platzhalter fixen – UMGESETZT (20.09.2026, siehe §4 P0).
 - [ ] **generierte `config.h`-Version mit Swagger abgleichen** (`1.0.0` vs. `0.1.0`) – offen.
 - [ ] **SemVer + Git-Tags** einführen (z. B. `v0.1.0`), CHANGELOG anlegen (Keep a Changelog), Commits künftig Conventional-Commit-Stil.
-- [ ] **GitHub Release-Workflow**: Trigger `on: pull_request` (PR-Test) + `on: push: tags` / `on: release`: Build → `ctest` → Artifacts → `gh release create`.
+- [x] **GitHub Release-Workflow** – UMGESETZT (03.10.2026): `.github/workflows/release.yml`, getriggert auf Tag-Push `v*` sowie `workflow_dispatch` (mit `tag`-Input und `dry_run`, damit der Ablauf vor dem ersten echten Tag testbar ist). Ablauf: Tag normalisieren → `actions/checkout` auf den Tag → **Versions-Gate** (Tag `vX.Y.Z` muss `BASE_LIBRARY_VERSION` im Root-`CMakeLists.txt` entsprechen, sonst Abbruch – fängt die im Repo bisher leere `1.0.0`-Swagger-Nummer) → Conan/ccache-Cache → Release-Build GCC → `ctest --label-regex unit` → Tarball (`bin/`, `cfg/` **ohne** `certs/`, `swagger.yaml`, `LICENSE`, `BUILD_COMMIT`, `NOTES.txt`) + `.sha256` → `actions/upload-artifact` → `gh release create --generate-notes` (nur bei Tag-Push, nicht im Dry-Run; `--notes-file` und `--generate-notes` sind in `gh` mutually exclusive, deshalb nur letzteres). Postgres-Service wie in `ci.yml`. **Offen:** CHANGELOG als Release-Notes-Quelle (Keep a Changelog) statt `--generate-notes`, macOS-/Windows-Artefakte, `conan create`-Smoke-Test.
 - [ ] **`base_libraryConfig.cmake`** + relozierbares Install-Package (siehe Abschnitt 2) vor erstem Tag.
 
 ### CI-Qualität & Plattformabdeckung
 
-- [ ] **CI-Trigger auf `master`** (oder Branch umbenennen zu `main`) – aktuell tote Pipeline. 🔴
-- [ ] **Plattform-Matrix ausbauen** – min. GCC+Clang auf Linux, optional macOS/Windows; Debug-Build zusätzlich.
-- [ ] **`clang-format --check` + clang-tidy als CI-Job** – `-Werror` ist Build-intern aktiv, Format/Lint aber NICHT CI-erzwungen.
-- [ ] **Postgres-Service in CI** für `[pg]`-Tests (`services: postgres`), sobald Tests existieren.
-- [ ] **Dependabot** (Conan/conanfile.txt + GitHub-Actions), optional CodeQL-Security-Scan.
-- [ ] Release-Artifakte: gebaute Binaries + `swagger.yaml` + Beispiel-Konfig an Tag hängen.
+Umgesetzt in `.github/workflows/ci.yml` (Jobs `build`, `format`, `lint`) – Stand 03.10.2026.
+
+- [x] **CI-Trigger auf `master`** (oder Branch umbenennen zu `main`) – 🔴 war eine tote Pipeline. UMGESETZT: `push`/`pull_request` auf `master` + `workflow_dispatch`, `concurrency`-Gruppe `ci-${{ github.ref }}` mit `cancel-in-progress` nur für PRs (ein Push auf `master` läuft immer zu Ende), Workflow-`permissions: contents: read`.
+- [x] **Plattform-Matrix ausbauen** – UMGESETZT: drei Einträge auf `ubuntu-24.04`, `fail-fast: false`, damit ein defekter Eintrag die anderen nicht verdeckt.
+  | Eintrag | Compiler | Build | Unity | Zweck |
+  |---|---|---|---|---|
+  | `gcc-release` | GCC 13 (Default) | Release | ON | Gate, Release-Referenz |
+  | `clang-release` | Clang 18 (`CC`/`CXX` als Matrix-Variablen, damit `conan profile detect` das passende Profil erzeugt – verifiziert: `clang/18/gnu17/libstdc++11`) | Release | ON | Compiler-Zweitmeinung |
+  | `gcc-debug-nonunity` | GCC 13 | Debug | OFF | Debug-Build **und** Include-Vollständigkeit (deckt dieselben Unity-maskierten Include-Fehler ab wie ein Non-Unity-Release) |
+
+  **Cache-Keys korrigiert (wichtig):** vorher hatten Conan- und ccache-Cache-Key *keinen* Compiler/Build-Typ/Unity-Anteil – GCC- und Clang-Jobs bzw. Release und Debug hätten dieselben Pakete/Objektdateien bekommen (ABI-Fehler statt Coverage). Jetzt `CACHE_ID: ${{ matrix.name }}` in beiden Keys plus `restore-keys` mit derselben ID. Zusätzlich `CCACHE_COMPILERCHECK=content` (mtime-basierte Prüfung würde bei jedem Runner-Image-Wechsel alle Treffer verlieren).
+  **Vorab-Verifikation des Clang-Eintrags** (03.10.2026, GCC-Flags der Non-Unity-Compile-Commands, Clang-Warnset aus `cmake/CompilerWarnings.cmake`, also ohne die vier GCC-only-Flags, die Clang mit `-Werror` hart abweist): alle **219 TUs** mit `clang++-18 -fsyntax-only` durchgeprüft – genau **ein** Treffer: `src/features/http/service/Controller.cpp:8`, unbenutzte `constexpr kDefaultPageLimit` (`-Wunused-const-variable`, von GCC nicht gemeldet) → toter Code entfernt. Ebenso alle 219 TUs mit GCC und Debug-Flags (ohne `-O3 -DNDEBUG`, `-Werror` an) durchgeprüft: 0 Treffer. **Einschränkung:** `-fsyntax-only` sieht keine Optimizer-Durchgänge, ein echter Debug-Build kann also noch `-Wmaybe-uninitialized`/`-Wstringop-*` auslösen – das prüft der erste CI-Lauf. macOS/Windows bleiben bewusst offen (CMake-3.16-Policy, Boost/Conan-Plattform-Unterstützung).
+- [x] **`clang-format --check` + clang-tidy als CI-Job** – UMGESETZT als **Regressions-Check statt Voll-Check**, weil das Repo nicht formatkonform ist: gemessen (clang-format 19, ohne `external/`) **27.749 Verstöße in 425 von 464 Dateien**. Ein blockierender Voll-Check wäre bei jedem PR rot und würde einen ~500-Dateien-Reformat erzwingen, der nichts mit der eigentlichen Änderung zu tun hat. Stattdessen:
+  - Job `format` (blockierend): `scripts/check-format.sh <BASE_REF>` vergleicht für **jede geänderte** C/C++-Datei die Verstoßzahl gegen dieselbe Datei im Base-Commit – mehr Verstoße als vorher = Fehler, neue Dateien gelten als „0 → n“. `--all` erzeugt zusätzlich einen (nur informativen) repo-weiten Drift-Report inkl. Top-10-Liste, `--all --strict` ist die Blocker-Variante für später. `external/` ist per `FORMAT_EXCLUDE` ausgenommen (vendort). Umgesetzt und getestet: Regression, neue Datei, uncommittete Änderungen, Repo-Drift.
+  - Job `lint` (`continue-on-error: true`): `scripts/check-tidy.sh <BASE_REF> build/tidy` – clang-tidy nur auf geänderten Dateien, `TIDY_CHECKS=-*,clang-analyzer-*,bugprone-*,cert-*,performance-*,portability-*` (bewusst **nicht** die `.clang-tidy`-Checkliste: `Checks: "*"` ist als Gate unbrauchbar), `TIDY_MAX_FILES=20` als Kostenbremse, `tests/`/`benchmarks/`/`external/` ausgenommen. Braucht ein **Non-Unity- und PCH-freies** `compile_commands.json` (in einem Unity-TU ist eine Einzeldatei nicht auffindbar, ein GCC-PCH für Clang unlesbar) – der Job macht dafür `conan install` + Configure, aber **keinen** Build. Ergebnis geht in `$GITHUB_STEP_SUMMARY`.
+  - **Warum `lint` noch advisory ist:** es gibt bereits Funde im Bestand (beispielhaft `src/core/services/ProcessService.cpp`: 4× `bugprone-empty-catch`, 2× `bugprone-unchecked-optional-access`, 1× `performance-enum-size`). Erst wenn die Bestandsfunde weg sind, auf blockierend umgestellt und `continue-on-error` entfernt.
+  - **Der neue Gate hätte die letzten Commits bereits geschlagen** (`master` gegen `HEAD~1`): `tests/external/HypodermicSignalTest.cpp` ist eine neue Datei mit **118** Verstößen, `src/include/base_library/features/Features.h` hat **einen** zusätzlichen bekommen (77 → 78). Beides ist Legacy aus den Hypodermic-/Boost-Commits, kein Blocker – aber der nächste PR, der diese Dateien anfasst, muss sie formatieren.
+  - **Nacharbeiten:** (a) Repo-weiter Reformat als **eigener** PR, danach `--strict` aktivieren; (b) clang-tidy-Funde in den angefassten Dateien beheben, dann `lint` blockierend; (c) `clang-format`/`clang-tidy` in der CI auf eine feste Major-Version gepinnt (aktuell 18), sonst kippt der Check bei einem Image-Wechsel.
+- [x] **Postgres-Service in CI** für `[pg]`-Tests (`services: postgres`) – UMGESETZT (03.10.2026): `postgres:17`, `test/test/test`, Port 5432, Health-Check `pg_isready -U test` (identisch zu `docker-compose.yml`), in **allen** `build`-Jobs und in `release.yml`. Der eigentliche PG-Test fehlt weiterhin → Punkt bleibt in §1 offen.
+- [x] **Dependabot** – UMGESETZT (03.10.2026) in `.github/dependabot.yml`: `github-actions` und `docker`, wöchentlich, **gruppiert** (eine PR pro Ökosystem statt eine pro Action), mit `dependencies`/`ci`-Labels und `ci`-Commit-Präfix. **Conan hat kein Dependabot-Ökosystem** – Updates in `conanfile.txt` bleiben manuell (kein automatisierter Ersatz möglich, ohne ein `conanfile.py` mit Recipe-Constraints zu bauen).
+- [ ] ~~CodeQL-Security-Scan~~ – **bewusst nicht umgesetzt:** CodeQL unterstützt C/C++ nur experimentell (kein produktionsreifer Build-Mode für C++-Builds im GH-Runner-Image); der Job würde entweder nichts scannen oder an der Codebase-Generierung scheitern. Stattdessen deckt `clang-analyzer-*`/`bugprone-*` im `lint`-Job die statische Analyse ab. Wiedervorlage, sobald es eine tragfähige C++-CodeQL-Anbindung gibt.
+- [x] **Release-Artifakte** (Binaries + `swagger.yaml` + Beispiel-Konfig an den Tag) – UMGESETZT im Release-Workflow (s.o.).
+- [ ] **ccache-Hit-Rate > 70 %** (aus §4 P0, weiterhin offen) – die `build`-Jobs schreiben jetzt `ccache -s` in das Job-Summary, die Zahl lässt sich also direkt über die Läufe hinweg ablesen. Erster Referenzwert folgt mit dem ersten echten Lauf auf `master`.
 
 ### Hygiene & Tooling
 
@@ -225,10 +242,10 @@ Empirische Basis (gemessen 02.09.2026): Library 6 Unity-TUs (~2,05 Mio. präproz
 
 | Meilenstein | Inhalt | Definition of Done |
 |-------------|--------|---------------------|
-| **v0.1.0-Blocker** | Phase 0 vollständig: Secrets weg, LICENSE/NOTICE, CI läuft, Repo public, Versionierung steht, `config.h`-Makros funktionieren, PG-Tests minimal, Swagger synchron | CI grün auf `master`, `find_package`-Install-Paket relozierbar, Repo sichtbar |
+| **v0.1.0-Blocker** | Phase 0 vollständig: Secrets weg, LICENSE/NOTICE, Repo public, Versionierung steht, `config.h`-Makros funktionieren, PG-Tests minimal, Swagger synchron. **CI steht seit 03.10.2026** (Trigger, Matrix, Format-Gate, Postgres, Release-Workflow) | CI grün auf `master` (erster Lauf steht aus), `find_package`-Install-Paket relozierbar, Repo sichtbar |
 | **v0.1.0** | Erster Tag `v0.1.0` + GitHub Release + CHANGELOG | Tag mit Assets, `conan create` funktioniert |
 | **v0.2.0** | Namespace-Umzug `base_library::` + Repo-Rename abgeschlossen (Abschnitt 2), Breaking-Change dokumentiert | Alle Tests grün nach Umzug, Migrationstabelle im CHANGELOG |
-| **v0.3.0** | Kompilierzeit-P0/P1 umgesetzt (20.–22.10.2026, Abschnitt 4) inkl. `LoggerService.h`-Refactor und Boost-Entkopplung (Breaking: `pid_t`, `shm::`-Funktionen); offen: Boost-Install schrumpfen, ccache-Hit-Rate über mehrere CI-Läufe messen. Regressions-Tests, CI-Lint-Jobs | Messprotokoll im Repo (✓ `docs/compile-time-measurements.md`), `tests/unity_0` aufgeteilt (✓), `LoggerService.h` ohne spdlog (✓, −18,6 % Voll-Build), `child.hpp` nur noch in 2 TUs (✓), Breaking-Change-Tabelle im CHANGELOG, ccache-Hits > 70 % |
+| **v0.3.0** | Kompilierzeit-P0/P1 umgesetzt (20.–22.10.2026, Abschnitt 4) inkl. `LoggerService.h`-Refactor und Boost-Entkopplung (Breaking: `pid_t`, `shm::`-Funktionen); offen: Boost-Install schrumpfen, ccache-Hit-Rate über mehrere CI-Läufe messen. CI-Lint-Jobs (Format-Gate + clang-tidy) seit 03.10.2026 ✓; offen: repo-weiter Reformat, `lint` von advisory auf blockierend | Messprotokoll im Repo (✓ `docs/compile-time-measurements.md`), `tests/unity_0` aufgeteilt (✓), `LoggerService.h` ohne spdlog (✓, −18,6 % Voll-Build), `child.hpp` nur noch in 2 TUs (✓), Breaking-Change-Tabelle im CHANGELOG, ccache-Hits > 70 % |
 | **v1.0.0** | API-stabil erklären (`base_library::` fix), Doxygen-docs + Pages, Plattform-Matrix grün | Semantic-Versioning ab jetzt verbindlich |
 
 ---
@@ -237,4 +254,5 @@ Empirische Basis (gemessen 02.09.2026): Library 6 Unity-TUs (~2,05 Mio. präproz
 
 - `TODO.md` (Stand 30.08.2026), `ANALYSIS.md` (Stand 29.08.2026)
 - Messungen Kompilierzeit (Unity-TU-Größen via `-E`, Kompilierzeiten aus `compile_commands.json`)
-- Inventur: `src/CMakeLists.txt`, `external/Hypodermic/CMakeLists.txt`, `tests/CMakeLists.txt`, `.github/workflows/ci.yml`, `conanfile.txt`, `Dockerfile`, `docker-compose.yml`, `cfg/`, `.gitignore`, `git log`
+- Inventur: `src/CMakeLists.txt`, `external/Hypodermic/CMakeLists.txt`, `tests/CMakeLists.txt`, `.github/workflows/ci.yml`, `.github/workflows/release.yml`, `.github/dependabot.yml`, `scripts/check-format.sh`, `scripts/check-tidy.sh`, `conanfile.txt`, `Dockerfile`, `docker-compose.yml`, `cfg/`, `.gitignore`, `git log`
+- CI-Stand 03.10.2026: Format-Drift gemessen mit `clang-format` 19.1.7 (`scripts/check-format.sh --all`), Compiler-Gegenprobe mit `clang++-18`/`g++ -fsyntax-only` über die 219 Non-Unity-TUs aus `compile_commands.json`, Workflow-Dateien geprüft mit `actionlint` 1.7.7 + `yamllint` + `shellcheck`

@@ -24,9 +24,26 @@ cd build/build/Release && ctest --output-on-failure --label-regex unit
 
 Binaries output to `bin/`.
 
+## CI (`.github/workflows/`)
+
+| Workflow | Trigger | Inhalt |
+|----------|---------|--------|
+| `ci.yml` → `build` | push/PR auf `master`, `workflow_dispatch` | Matrix `gcc-release` (Gate), `clang-release`, `gcc-debug-nonunity` (Debug + Non-Unity in einem Lauf) |
+| `ci.yml` → `format` | dito | **blockierend**: geänderte Dateien dürfen keine neuen `clang-format`-Verstöße enthalten; zusätzlich repo-weiter Drift-Report (nur informativ) |
+| `ci.yml` → `lint` | dito | `clang-tidy` auf geänderten Dateien (`src/`, ohne `tests/`/`external/`), aktuell `continue-on-error` |
+| `release.yml` | Tag `v*`, `workflow_dispatch` (dry-run) | Version prüfen → Release-Build → `ctest` → Tarball mit `bin/`, `cfg/` (ohne `certs/`), `swagger.yaml` → `gh release create` |
+
+Lokal dasselbe prüfen:
+
+```bash
+./scripts/check-format.sh master   # Format-Regression auf geänderten Dateien
+./scripts/check-format.sh --all    # repo-weiter Drift-Report (Blockierend: --strict)
+./scripts/check-tidy.sh master build/tidy   # braucht Non-Unity-/PCH-freies compile_commands.json
+```
+
 ## Code Style
 
-- **Formatting**: `clang-format` — 120-col limit, 2-space indent, custom brace wrapping. Run `clang-format -i` on changed files.
+- **Formatting**: `clang-format` — 120-col limit, 2-space indent, custom brace wrapping. Run `clang-format -i` on changed files. CI (`format`-Job) vergleicht Verstöße gegen den Base-Commit: geänderte Dateien dürfen **keine neuen** Verstöße enthalten (Legacy-Verstöße sind toleriert).
 - **Warnings**: `-Werror` is ON by default (`myproject_WARNINGS_AS_ERRORS`). Fix all warnings before committing.
 - **clang-tidy**: Off by default. Enable with `-DMYPROJECT_ENABLE_CLANG_TIDY=ON`. Header filter: `.*base_library/.*`.
 - **Unity builds**: ON by default (`ENABLE_UNITY_BUILD`). Can mask include-order bugs — disable to test `#include` completeness.
