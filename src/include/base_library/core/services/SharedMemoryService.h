@@ -1,12 +1,6 @@
 #ifndef CPP_BASE_LIBRARY_SHAREDMEMORYSERVICE_H
 #define CPP_BASE_LIBRARY_SHAREDMEMORYSERVICE_H
 
-#include <array>
-#include <boost/container/map.hpp>
-#include <boost/container/string.hpp>
-#include <boost/container/vector.hpp>
-#include <boost/interprocess/managed_mapped_file.hpp>
-#include <boost/interprocess/sync/named_semaphore.hpp>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -18,265 +12,100 @@
 #include "base_library/core/exceptions/ShmSegmentNotFound.h"
 #include "base_library/core/models/SharedMemorySegment.h"
 #include "base_library/core/services/ISharedMemoryService.h"
-#include "base_library/core/services/PropertyRegistration.h"
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/services/PropertyRegistration.h"
+#include "base_library/features/base/events/ShmSegmentAccessor.h"
 #include "base_library/features/base/models/SharedMemorySegmentInfo.h"
 #include "base_library/features/base/services/SchedulerService.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
 
-/** Service for managing shared memory segments and constructing data structures within them. */
-class SharedMemoryService : public PropertyRegistration<SharedMemoryService>,
-                            public ISharedMemoryService,
-                            public std::enable_shared_from_this<SharedMemoryService> {
+/** Allocated state of a mapped shared memory segment. Defined in
+ *  ShmConstructors.h, because it exposes the boost interprocess types. */
+class SharedMemorySegmentHandle;
+
+/** Service for managing shared memory segments and constructing data structures
+ *  within them.
+ *
+ *  The service itself is boost free: everything that needs the boost
+ *  interprocess types lives in ShmConstructors.h (free functions taking the
+ *  service as first argument) and in ShmSegmentAccessor.h. */
+class SharedMemoryService
+  : public PropertyRegistration<SharedMemoryService>
+  , public ISharedMemoryService
+  , public std::enable_shared_from_this<SharedMemoryService>
+{
 private:
-    struct MappedFile {
-        std::shared_ptr<boost::interprocess::managed_mapped_file>
-                m_managedMappedFile;
-        std::shared_ptr<SharedMemorySegment> m_sharedMemorySegment;
-        // Cross-process binary semaphore guarding the segment's remap and
-        // construct critical sections. Acquired (as a mutex) around grow/shrink
-        // and every find_or_construct so no process references the mapped file
-        // while another process resizes/reopens it.
-        std::unique_ptr<boost::interprocess::named_semaphore> m_remapSemaphore;
-    };
+  // variables
+  std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> m_segments;
+  mutable std::mutex m_segmentsMutex;
+  std::size_t m_generation = 0;
+  std::shared_ptr<SchedulerService> m_schedulerService;
+  // properties
+  std::shared_ptr<Property<std::chrono::seconds>> m_scheduleRate;
+  std::shared_ptr<Property<bool>> m_autoExtend;
+  std::shared_ptr<Property<std::size_t>> m_autoExtendEpsilon;
 
-    /** RAII guard that acquires (default) the segment remap semaphore and
-     *  releases it on destruction. Used as a cross-process mutex around the
-     *  shared memory remap / construct critical sections. */
-    class SegmentSemaphoreGuard {
-    public:
-        explicit SegmentSemaphoreGuard(
-                boost::interprocess::named_semaphore &sem)
-                : m_semaphore(&sem) {
-            m_semaphore->wait();
-        }
+  // initializer function
+  static std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> create(
+    const std::vector<std::shared_ptr<SharedMemorySegment>> &set);
 
-        ~SegmentSemaphoreGuard() {
-            if (m_semaphore != nullptr) {
-                m_semaphore->post();
-            }
-        }
-
-        SegmentSemaphoreGuard(const SegmentSemaphoreGuard &) = delete;
-        SegmentSemaphoreGuard &
-        operator=(const SegmentSemaphoreGuard &) = delete;
-
-    private:
-        boost::interprocess::named_semaphore *m_semaphore;
-    };
-
-    /** Name of the cross-process remap semaphore for a segment.
-     *  @param segmentName the segment name
-     *  @return the POSIX IPC name */
-    static std::string remapSemaphoreName(const std::string &segmentName) {
-        return segmentName + "_remap_sem";
-    }
-
-    // variables
-    std::map<std::string, MappedFile> m_segments;
-    mutable std::mutex m_segmentsMutex;
-    std::size_t m_generation = 0;
-    std::shared_ptr<SchedulerService> m_schedulerService;
-    // properties
-    std::shared_ptr<Property<std::chrono::seconds>> m_scheduleRate;
-    std::shared_ptr<Property<bool>> m_autoExtend;
-    std::shared_ptr<Property<std::size_t>> m_autoExtendEpsilon;
-
-    // initializer function
-    static std::map<std::string, MappedFile> create(
-            const std::vector<std::shared_ptr<SharedMemorySegment>> &set);
-
-    void onCheck();
+  void onCheck();
 
 public:
-    using charAllocator = boost::interprocess::allocator<
-            char, boost::interprocess::managed_mapped_file::segment_manager>;
-    using ShmString =
-            boost::container::basic_string<char, std::char_traits<char>,
-                    charAllocator>;
+  /** Construct a SharedMemoryService.
+   * @param sharedMemorySegmentManager the segment manager providing segment definitions
+   * @param schedulerService           the scheduler for periodic maintenance tasks
+   * @param processName                the process name */
+  SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager> &sharedMemorySegmentManager,
+    std::shared_ptr<SchedulerService> schedulerService,
+    const std::shared_ptr<ProcessName> &processName);
 
-    /** Construct a SharedMemoryService.
-     * @param sharedMemorySegmentManager the segment manager providing segment definitions
-     * @param schedulerService           the scheduler for periodic maintenance tasks
-     * @param processName                the process name */
-    SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager>
-                        &sharedMemorySegmentManager,
-                        std::shared_ptr<SchedulerService> schedulerService,
-                        const std::shared_ptr<ProcessName> &processName);
+  ~SharedMemoryService() override = default;
 
-    ~SharedMemoryService() override = default;
+  /** Initialize all shared memory segments by opening or creating them. */
+  void onInitialize() override;
 
-    /** Initialize all shared memory segments by opening or creating them. */
-    void onInitialize() override;
+  /** Generation counter incremented on every grow/shrink. Repositories use it
+   * to detect that a segment was remapped and re-fetch their references.
+   * @return the current generation */
+  [[nodiscard]] std::size_t getGeneration() const;
 
-    /** Generation counter incremented on every grow/shrink. Repositories use it
-     * to detect that a segment was remapped and re-fetch their references.
-     * @return the current generation */
-    [[nodiscard]] std::size_t getGeneration() const;
+  /** grows the size of the mentioned shared memory block */
+  void growOf(const std::shared_ptr<SharedMemorySegment> &segment, std::size_t grow) override;
 
-    /** grows the size of the mentioned shared memory block */
-    void growOf(const std::shared_ptr<SharedMemorySegment> &segment,
-                std::size_t grow) override;
+  /** shrinks the shared memory size to the minimum */
+  void shrinkOf(const std::shared_ptr<SharedMemorySegment> &segment) override;
 
-    /** shrinks the shared memory size to the minimum */
-    void shrinkOf(const std::shared_ptr<SharedMemorySegment> &segment) override;
+  /**
+   * shows state of the mentioned shared memory segment
+   * @param segment
+   * @return string with the printed information
+   */
+  [[nodiscard]] SharedMemorySegmentInfo showStateOf(const std::shared_ptr<SharedMemorySegment> &segment) const override;
 
-    /**
-     * shows state of the mentioned shared memory segment
-     * @param segment
-     * @return string with the printed information
-     */
-    [[nodiscard]] SharedMemorySegmentInfo showStateOf(
-            const std::shared_ptr<SharedMemorySegment> &segment) const override;
+  /** @return the raw segment map. Internal: used by the shm construct
+   *  helpers of ShmConstructors.h. */
+  std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> &segmentsOf() { return m_segments; }
 
-    /** Find or construct a fixed-size array in the given shared memory segment.
-     * @tparam Object the element type
-     * @tparam Size   the array size
-     * @param segment the shared memory segment
-     * @param name    the name of the array object
-     * @return reference to the constructed or found array
-     * @throws ShmSegmentNotFound if the segment does not exist */
-    template<class Object, std::size_t Size>
-    std::array<Object, Size> &constructArray(
-            const std::shared_ptr<SharedMemorySegment> &segment,
-            const std::string &name) {
-        std::lock_guard<std::mutex> lock(m_segmentsMutex);
-        try {
-            auto &segmentCopy = m_segments.at(segment->getName());
-            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
-            return *(
-                    segmentCopy.m_managedMappedFile
-                            ->find_or_construct<std::array<Object, Size>>(name.c_str())());
-        } catch (std::out_of_range &exception) {
-            throw ShmSegmentNotFound(segment->getName());
-        }
-    }
+  /** @return the mutex guarding the segment map. Internal: used by the shm
+   *  construct helpers of ShmConstructors.h, which take the lock before
+   *  calling segmentOf. */
+  std::mutex &segmentsMutexOf() { return m_segmentsMutex; }
 
-    /** Find or construct a map in the given shared memory segment.
-     * @tparam Key   the map key type
-     * @tparam Value the map value type
-     * @param segment the shared memory segment
-     * @param name    the name of the map object
-     * @return reference to the constructed or found map
-     * @throws ShmSegmentNotFound if the segment does not exist */
-    template<class Key, class Value>
-    boost::container::map<
-            Key, Value, std::less<Key>,
-            boost::interprocess::allocator<
-                    std::pair<const Key, Value>,
-                    boost::interprocess::managed_mapped_file::segment_manager>>
-    &constructMap(const std::shared_ptr<SharedMemorySegment> &segment,
-                  const std::string &name) {
-        using pairType = std::pair<const Key, Value>;
-        using persistentMapAllocator = boost::interprocess::allocator<
-                pairType, boost::interprocess::managed_mapped_file::segment_manager>;
-        std::lock_guard<std::mutex> lock(m_segmentsMutex);
-        try {
-            auto &segmentCopy = m_segments.at(segment->getName());
-            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
-            persistentMapAllocator allocator(
-                    segmentCopy.m_managedMappedFile->get_segment_manager());
-            boost::container::map<
-                    Key, Value, std::less<Key>,
-                    boost::interprocess::allocator<
-                            std::pair<const Key, Value>,
-                            boost::interprocess::managed_mapped_file::segment_manager>> *map =
-                    segmentCopy.m_managedMappedFile
-                            ->find_or_construct<boost::container::map<
-                                    Key, Value, std::less<Key>, persistentMapAllocator>>(
-                                    name.c_str())(std::less<Key>(), allocator);
-            LOG_TRACE("map {}", map->size());
-            return *map;
-        } catch (std::out_of_range &exception) {
-            throw ShmSegmentNotFound(segment->getName());
-        }
-    }
+  /** Get the allocated state of the named shared memory segment.
+   *  Internal: the caller has to hold segmentsMutexOf().
+   * @param name the name of the segment
+   * @return the segment handle
+   * @throws ShmSegmentNotFound if the segment does not exist */
+  SharedMemorySegmentHandle &segmentOf(const std::string &name);
 
-    /** Find or construct a vector in the given shared memory segment.
-     * @tparam Object the element type
-     * @param segment the shared memory segment
-     * @param name    the name of the vector object
-     * @return reference to the constructed or found vector
-     * @throws ShmSegmentNotFound if the segment does not exist */
-    template<class Object>
-    boost::container::vector<
-            Object,
-            boost::interprocess::allocator<
-                    Object, boost::interprocess::managed_mapped_file::segment_manager>>
-    &constructVector(const std::shared_ptr<SharedMemorySegment> &segment,
-                     const std::string &name) {
-        using persistentVectorAllocator = boost::interprocess::allocator<
-                Object, boost::interprocess::managed_mapped_file::segment_manager>;
-        std::lock_guard<std::mutex> lock(m_segmentsMutex);
-        try {
-            auto &segmentCopy = m_segments.at(segment->getName());
-            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
-            persistentVectorAllocator allocator(
-                    segmentCopy.m_managedMappedFile->get_segment_manager());
-            return *(segmentCopy.m_managedMappedFile->find_or_construct<
-                    boost::container::vector<Object, persistentVectorAllocator>>(
-                    name.c_str())(allocator));
-        } catch (std::out_of_range &exception) {
-            throw ShmSegmentNotFound(segment->getName());
-        }
-    }
-
-    /** Find or construct a single object in the given shared memory segment.
-     * @tparam Object the object type
-     * @param segment the shared memory segment
-     * @param name    the name of the object
-     * @return reference to the constructed or found object
-     * @throws ShmSegmentNotFound if the segment does not exist */
-    template<class Object>
-    Object &constructObject(const std::shared_ptr<SharedMemorySegment> &segment,
-                            const std::string &name) {
-        std::lock_guard<std::mutex> lock(m_segmentsMutex);
-        try {
-            auto &segmentCopy = m_segments.at(segment->getName());
-            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
-            return *(segmentCopy.m_managedMappedFile->find_or_construct<Object>(
-                    name.c_str())());
-        } catch (std::out_of_range &exception) {
-            throw ShmSegmentNotFound(segment->getName());
-        }
-    }
-
-    /** Find or construct a single object with constructor arguments in the
-     * given shared memory segment.
-     * @tparam Object the object type
-     * @tparam Args   the constructor argument types
-     * @param segment the shared memory segment
-     * @param name    the name of the object
-     * @param args    arguments forwarded to the constructor
-     * @return reference to the constructed or found object
-     * @throws ShmSegmentNotFound if the segment does not exist */
-    template<class Object, class... Args>
-    Object &constructObjectWith(
-            const std::shared_ptr<SharedMemorySegment> &segment,
-            const std::string &name, Args &&... args) {
-        std::lock_guard<std::mutex> lock(m_segmentsMutex);
-        try {
-            auto &segmentCopy = m_segments.at(segment->getName());
-            SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
-            return *(segmentCopy.m_managedMappedFile->find_or_construct<Object>(
-                    name.c_str())(std::forward<Args>(args)...));
-        } catch (std::out_of_range &exception) {
-            throw ShmSegmentNotFound(segment->getName());
-        }
-    }
-
-    /** Get the raw segment manager of the given shared memory segment.
-     * @param segment the shared memory segment
-     * @return the segment manager, or nullptr if the segment does not exist */
-    boost::interprocess::managed_mapped_file::segment_manager *getSegmentManager(
-            const std::shared_ptr<SharedMemorySegment> &segment);
-
-    /** Find or construct a string in the given shared memory segment.
-     * @param segment the shared memory segment
-     * @param name    the name of the string object
-     * @return the constructed or found shared-memory string */
-    ShmString constructString(const std::shared_ptr<SharedMemorySegment> &segment,
-                              const std::string &name);
+  /** Get an accessor to allocate from the given shared memory segment. The
+   * returned accessor is a value type and stays valid as long as the segment
+   * is mapped by this service.
+   * @param segment the shared memory segment
+   * @return accessor of the segment
+   * @throws ShmSegmentNotFound if the segment does not exist */
+  ShmSegmentAccessor getSegmentAccessor(const std::shared_ptr<SharedMemorySegment> &segment);
 };
 
-#endif  // CPP_BASE_LIBRARY_SHAREDMEMORYSERVICE_H
+#endif// CPP_BASE_LIBRARY_SHAREDMEMORYSERVICE_H

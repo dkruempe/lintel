@@ -1,7 +1,7 @@
 #include "base_library/features/base/models/ProcessInfo.h"
 
 ProcessInfo::ProcessInfo(std::shared_ptr<Process> process,
-  boost::process::v1::pid_t id,
+  pid_t id,
   bool isRunning,
   int exitCode,
   std::string groupName,
@@ -15,7 +15,7 @@ ProcessInfo::ProcessInfo(std::shared_ptr<Process> process,
 
 const std::shared_ptr<Process> &ProcessInfo::getProcess() const { return m_process; }
 
-const boost::process::v1::pid_t &ProcessInfo::getProcessId() const { return m_id; }
+pid_t ProcessInfo::getProcessId() const { return m_id; }
 
 std::string ProcessInfo::getGroupName() const { return m_groupName; }
 

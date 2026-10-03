@@ -120,10 +120,10 @@ public:
 };
 
 struct TestDataDto {
-    SharedMemoryService::ShmString m_name;
-    SharedMemoryService::ShmString m_addr;
-    SharedMemoryService::ShmString m_plz;
-    SharedMemoryService::ShmString m_location;
+    shm::String m_name;
+    shm::String m_addr;
+    shm::String m_plz;
+    shm::String m_location;
     int32_t m_age = 0;
 
     bool operator==(const TestDataDto &rhs) const {
@@ -168,7 +168,7 @@ public:
     explicit TestDataDao(const TestDataDto &dto) : m_dto(dto) {}
 
     static int32_t getSize() {
-        return sizeof(SharedMemoryService::ShmString) * 4 + sizeof(int32_t);
+        return sizeof(shm::String) * 4 + sizeof(int32_t);
     }
 
     void serialize(
@@ -299,13 +299,18 @@ public:
             m_version, std::string{UUID}) {
         if (getVector().empty()) {
             for (int i = 0; i < 100; i++) {
-                TestDataDto dto{.m_name = m_sharedMemoryService->constructString(
-                        getSharedMemorySegment(), "Example User"),
-                        .m_addr = m_sharedMemoryService->constructString(
+                TestDataDto dto{
+                        .m_name = shm::constructString(
+                                *m_sharedMemoryService,
+                                getSharedMemorySegment(), "Example User"),
+                        .m_addr = shm::constructString(
+                                *m_sharedMemoryService,
                                 getSharedMemorySegment(), "Musterstraße 1"),
-                        .m_plz = m_sharedMemoryService->constructString(
-                                getSharedMemorySegment(), "48496"),
-                        .m_location = m_sharedMemoryService->constructString(
+                        .m_plz = shm::constructString(*m_sharedMemoryService,
+                                                      getSharedMemorySegment(),
+                                                      "48496"),
+                        .m_location = shm::constructString(
+                                *m_sharedMemoryService,
                                 getSharedMemorySegment(), "Example City"),
                         .m_age = i};
                 getVector().push_back(dto);

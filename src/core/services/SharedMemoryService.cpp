@@ -1,6 +1,8 @@
 #include "base_library/core/services/SharedMemoryService.h"
 
 #include <base_library/core/models/SharedMemorySegment.h>
+#include <base_library/core/services/ShmConstructors.h>
+#include <base_library/features/base/events/BoostSegmentAllocator.h>
 #include <base_library/features/base/models/SharedMemorySegmentInfo.h>
 
 SharedMemoryService::SharedMemoryService(
@@ -37,7 +39,7 @@ void SharedMemoryService::growOf(
     const std::size_t maxSize = segment->getMaxSize();
     if (maxSize != 0) {
         const std::size_t currentSize =
-                found->second.m_managedMappedFile->get_size();
+                found->second->m_managedMappedFile->get_size();
         if (currentSize >= maxSize) {
             throw std::runtime_error("shared memory segment '" +
                                      segment->getName() +
@@ -54,8 +56,8 @@ void SharedMemoryService::growOf(
     // stored inside the file. The live mapping's length, however, is fixed at
     // mmap() time, so it must be reopened to observe the larger file.
     // Hold the cross-process remap semaphore so no other process references the
-    // segment (find_or_construct / getSegmentManager) while it is being resized.
-    SegmentSemaphoreGuard gate(*found->second.m_remapSemaphore);
+    // segment (find_or_construct / getSegmentAccessor) while it is being resized.
+    shm::SegmentSemaphoreGuard gate(*found->second->m_remapSemaphore);
     if (!boost::interprocess::managed_mapped_file::grow(segment->getPath().c_str(),
                                                        grow)) {
         throw std::runtime_error("failed to grow shared memory segment '" +
@@ -64,7 +66,8 @@ void SharedMemoryService::growOf(
     // Reopen the segment so the new mapping covers the grown file. This
     // invalidates references into the old mapping - repositories detect the
     // bump of the generation counter and re-fetch their references.
-    found->second.m_managedMappedFile =
+    found->second->m_segmentAllocator.reset();
+    found->second->m_managedMappedFile =
             std::make_shared<boost::interprocess::managed_mapped_file>(
                     boost::interprocess::open_only, segment->getPath().c_str());
     ++m_generation;
@@ -79,14 +82,15 @@ void SharedMemoryService::shrinkOf(
     }
     // Hold the cross-process remap semaphore so no other process references the
     // segment while it is being resized and reopened (see growOf).
-    SegmentSemaphoreGuard gate(*found->second.m_remapSemaphore);
+    shm::SegmentSemaphoreGuard gate(*found->second->m_remapSemaphore);
     if (!boost::interprocess::managed_mapped_file::shrink_to_fit(
                 segment->getPath().c_str())) {
         throw std::runtime_error("failed to shrink shared memory segment '" +
                                  segment->getName() + "'");
     }
     // Reopen the segment so the new mapping covers the shrunk file.
-    found->second.m_managedMappedFile =
+    found->second->m_segmentAllocator.reset();
+    found->second->m_managedMappedFile =
             std::make_shared<boost::interprocess::managed_mapped_file>(
                     boost::interprocess::open_only, segment->getPath().c_str());
     ++m_generation;
@@ -104,70 +108,61 @@ SharedMemorySegmentInfo SharedMemoryService::showStateOf(
     if (found == m_segments.end()) {
         throw ShmSegmentNotFound(segment->getName());
     }
-    std::size_t currentSize = found->second.m_managedMappedFile->get_size();
-    std::size_t freeSize = found->second.m_managedMappedFile->get_free_memory();
+    std::size_t currentSize = found->second->m_managedMappedFile->get_size();
+    std::size_t freeSize = found->second->m_managedMappedFile->get_free_memory();
     std::size_t namedObjects =
-            found->second.m_managedMappedFile->get_num_named_objects();
+            found->second->m_managedMappedFile->get_num_named_objects();
     std::size_t uniqueObjects =
-            found->second.m_managedMappedFile->get_num_unique_objects();
-    bool sanity = found->second.m_managedMappedFile->check_sanity();
+            found->second->m_managedMappedFile->get_num_unique_objects();
+    bool sanity = found->second->m_managedMappedFile->check_sanity();
 
     SharedMemorySegmentInfo info(segment, currentSize, freeSize, namedObjects,
                                  uniqueObjects, sanity);
     return info;
 }
 
-std::map<std::string, SharedMemoryService::MappedFile>
+std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>>
 SharedMemoryService::create(
         const std::vector<std::shared_ptr<SharedMemorySegment>> &set) {
-    std::map<std::string, MappedFile> map;
+    std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> map;
     std::transform(
             set.begin(), set.end(), std::inserter(map, map.end()),
             [](const std::shared_ptr<SharedMemorySegment> &segment)
-                    -> std::pair<std::string, MappedFile> {
-                MappedFile mappedFile;
-                mappedFile.m_managedMappedFile =
+                    -> std::pair<std::string, std::shared_ptr<SharedMemorySegmentHandle>> {
+                auto handle = std::make_shared<SharedMemorySegmentHandle>();
+                handle->m_managedMappedFile =
                         std::make_shared<boost::interprocess::managed_mapped_file>(
                                 boost::interprocess::open_or_create, segment->getPath().c_str(),
                                 segment->getSize());
-                mappedFile.m_remapSemaphore =
+                handle->m_remapSemaphore =
                         std::make_unique<boost::interprocess::named_semaphore>(
                                 boost::interprocess::open_or_create,
-                                remapSemaphoreName(segment->getName()).c_str(), 1u);
-                mappedFile.m_sharedMemorySegment = segment;
-                return std::make_pair(segment->getName(),
-                                      std::move(mappedFile));
+                                (segment->getName() + "_remap_sem").c_str(), 1u);
+                handle->m_sharedMemorySegment = segment;
+                return std::make_pair(segment->getName(), handle);
             });
     return map;
 }
 
-SharedMemoryService::ShmString SharedMemoryService::constructString(
-        const std::shared_ptr<SharedMemorySegment> &segment,
+SharedMemorySegmentHandle &SharedMemoryService::segmentOf(
         const std::string &name) {
-    std::lock_guard<std::mutex> lock(m_segmentsMutex);
-    try {
-        auto &segmentCopy = m_segments.at(segment->getName());
-        SegmentSemaphoreGuard gate(*segmentCopy.m_remapSemaphore);
-        charAllocator charallocator(
-                segmentCopy.m_managedMappedFile->get_segment_manager());
-        ShmString myString(charallocator);
-        myString = name.c_str();
-        return myString;
-    } catch (std::out_of_range &exception) {
-        throw ShmSegmentNotFound(segment->getName());
+    auto found = m_segments.find(name);
+    if (found == m_segments.end()) {
+        throw ShmSegmentNotFound(name);
     }
+    return *found->second;
 }
 
-boost::interprocess::managed_mapped_file::segment_manager *
-SharedMemoryService::getSegmentManager(
+ShmSegmentAccessor SharedMemoryService::getSegmentAccessor(
         const std::shared_ptr<SharedMemorySegment> &segment) {
     std::lock_guard<std::mutex> lock(m_segmentsMutex);
-    auto found = m_segments.find(segment->getName());
-    if (found == m_segments.end()) {
-        return nullptr;
+    auto &handle = segmentOf(segment->getName());
+    shm::SegmentSemaphoreGuard gate(*handle.m_remapSemaphore);
+    if (handle.m_segmentAllocator == nullptr) {
+        handle.m_segmentAllocator = std::make_shared<BoostSegmentAllocator>(
+                *handle.m_managedMappedFile->get_segment_manager());
     }
-    SegmentSemaphoreGuard gate(*found->second.m_remapSemaphore);
-    return found->second.m_managedMappedFile->get_segment_manager();
+    return ShmSegmentAccessor(*handle.m_segmentAllocator);
 }
 
 void SharedMemoryService::onInitialize() {
@@ -190,7 +185,7 @@ void SharedMemoryService::onCheck() {
         std::lock_guard<std::mutex> lock(m_segmentsMutex);
         segments.reserve(m_segments.size());
         for (const auto &entry : m_segments) {
-            segments.push_back(entry.second.m_sharedMemorySegment);
+            segments.push_back(entry.second->m_sharedMemorySegment);
         }
     }
     for (const auto &segment : segments) {
@@ -205,8 +200,8 @@ void SharedMemoryService::onCheck() {
             if (found == m_segments.end()) {
                 continue;
             }
-            freeMemory = found->second.m_managedMappedFile->get_free_memory();
-            currentSize = found->second.m_managedMappedFile->get_size();
+            freeMemory = found->second->m_managedMappedFile->get_free_memory();
+            currentSize = found->second->m_managedMappedFile->get_size();
         } catch (const std::exception &exception) {
             LOG_ERROR("{}: reading state failed: {}", segment->getName(),
                       exception.what());
@@ -238,8 +233,8 @@ void SharedMemoryService::onCheck() {
                          segment->getName(), currentSize - freeMemory,
                          currentSize, grow);
             } catch (const std::exception &exception) {
-                LOG_ERROR("{}: auto extend failed: {}", segment->getName(),
-                          exception.what());
+                LOG_ERROR("{}: auto extend failed: {}",
+                          segment->getName(), exception.what());
             }
         }
     }

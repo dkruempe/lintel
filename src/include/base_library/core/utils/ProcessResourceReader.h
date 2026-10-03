@@ -1,7 +1,7 @@
 #ifndef CPP_BASE_LIBRARY_PROCESSRESOURCEREADER_H
 #define CPP_BASE_LIBRARY_PROCESSRESOURCEREADER_H
 
-#include <boost/process/v1/child.hpp>
+#include <unistd.h>
 
 #include <chrono>
 #include <cstdint>
@@ -45,7 +45,7 @@ public:
    * @param previous a previously read snapshot used to compute the CPU delta
    * @return the resource snapshot (valid=false on unsupported platforms or unreadable pid)
    */
-  static ProcessResourceData readOf(boost::process::v1::pid_t pid, const std::optional<ProcessResourceData> &previous);
+  static ProcessResourceData readOf(pid_t pid, const std::optional<ProcessResourceData> &previous);
 };
 
 #endif// CPP_BASE_LIBRARY_PROCESSRESOURCEREADER_H

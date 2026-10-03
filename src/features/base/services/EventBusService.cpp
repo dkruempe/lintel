@@ -3,7 +3,9 @@
 #include <stdexcept>
 
 #include "base_library/core/services/LoggerService.h"
+#include "base_library/core/services/ShmConstructors.h"
 #include "base_library/features/base/configuration/EventBusComponent.h"
+#include "base_library/features/base/events/ShmSegmentAccessor.h"
 
 EventBusService::EventBusService(
         const std::shared_ptr<Configuration> &configuration,
@@ -64,16 +66,11 @@ EventBus &EventBusService::resolve(
                  segment->getName(), segment->getSize(), entry->getName(),
                  required);
     }
-    auto *segmentManager = m_sharedMemoryService->getSegmentManager(segment);
-    if (segmentManager == nullptr) {
-        LOG_ERROR("segment '{}' not mapped for event bus '{}'",
-                  entry->getSegment(), entry->getName());
-        throw std::runtime_error("segment not mapped for event bus " +
-                                 entry->getName());
-    }
-    EventBus &bus = m_sharedMemoryService->constructObjectWith<EventBus>(
-            segment, entry->getName(), entry->getName(), config,
-            segmentManager);
+    const ShmSegmentAccessor accessor =
+            m_sharedMemoryService->getSegmentAccessor(segment);
+    EventBus &bus = shm::constructObjectWith<EventBus>(
+            *m_sharedMemoryService, segment, entry->getName(), entry->getName(),
+            config, accessor);
     m_buses[entry->getName()] = &bus;
     m_generations[entry->getName()] = generation;
     return bus;

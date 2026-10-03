@@ -10,6 +10,7 @@
 #include <boost/interprocess/managed_mapped_file.hpp>
 
 #include "base_library/features/base/events/Event.h"
+#include "base_library/features/base/events/BoostSegmentAllocator.h"
 #include "base_library/features/base/events/EventBus.h"
 
 #include <catch2/catch_all.hpp>
@@ -32,15 +33,17 @@ struct BusFixture {
     std::filesystem::path path;
     std::size_t size;
     Segment segment;
+    BoostSegmentAllocator segmentAllocator;
     EventBus *bus;
 
     explicit BusFixture(EventBusConfig fixtureConfig)
         : config(fixtureConfig),
           path(uniqueShmPath()),
           size(EventBus::requiredSize(config) + 4096u),
-          segment(boost::interprocess::open_or_create, path.c_str(), size) {
+          segment(boost::interprocess::open_or_create, path.c_str(), size),
+          segmentAllocator(*segment.get_segment_manager()) {
         bus = segment.find_or_construct<EventBus>("bus")(
-                "bus", config, segment.get_segment_manager());
+                "bus", config, ShmSegmentAccessor(segmentAllocator));
     }
 
     ~BusFixture() {
@@ -230,10 +233,12 @@ TEST_CASE("EventBus: IPC across independent mappings") {
 
     auto *managerA = mappingA.get_segment_manager();
     auto *managerB = mappingB.get_segment_manager();
+    BoostSegmentAllocator allocatorA(*managerA);
+    BoostSegmentAllocator allocatorB(*managerB);
     EventBus *busA = mappingA.find_or_construct<EventBus>("bus")(
-            "bus", config, managerA);
+            "bus", config, ShmSegmentAccessor(allocatorA));
     EventBus *busB = mappingB.find_or_construct<EventBus>("bus")(
-            "bus", config, managerB);
+            "bus", config, ShmSegmentAccessor(allocatorB));
 
     REQUIRE(busA != busB);
 
@@ -292,8 +297,9 @@ TEST_CASE("EventBus: invalid configuration is rejected") {
     std::filesystem::remove(path);
     Segment segment(boost::interprocess::open_or_create, path.c_str(),
                     EventBus::requiredSize(defaultConfig()) + 4096u);
+    BoostSegmentAllocator allocator(*segment.get_segment_manager());
     REQUIRE_THROWS_AS(segment.find_or_construct<EventBus>("bad")(
-                              "bad", config, segment.get_segment_manager()),
+                              "bad", config, ShmSegmentAccessor(allocator)),
                       std::invalid_argument);
     std::filesystem::remove(path);
 }

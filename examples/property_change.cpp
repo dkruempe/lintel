@@ -16,6 +16,7 @@
 #include "base_library/features/base/configuration/EnvironmentConfiguration.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
+#include "base_library/features/base/events/BoostSegmentAllocator.h"
 #include "base_library/features/base/events/Event.h"
 #include "base_library/features/base/events/EventBus.h"
 #include "base_library/features/base/models/ProcessName.h"
@@ -118,8 +119,9 @@ int main() {
                 boost::interprocess::open_or_create, path.c_str(),
                 EventBus::requiredSize(config) + 4096u);
 
+        BoostSegmentAllocator allocator(*segment.get_segment_manager());
         EventBus *bus = segment.find_or_construct<EventBus>("main")(
-                "main", config, segment.get_segment_manager());
+                "main", config, ShmSegmentAccessor(allocator));
 
         pid_t pid = ::fork();
         if (pid < 0) {

@@ -21,6 +21,12 @@
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/IHistoryService.h"
 
+namespace boost::process {
+inline namespace v1 {
+class child;
+}
+}
+
 /** Service for managing process execution, monitoring, and process groups. */
 class ProcessService : public PropertyRegistration<ProcessService>
 {

@@ -10,6 +10,7 @@
 
 #include <boost/interprocess/managed_mapped_file.hpp>
 
+#include "base_library/features/base/events/BoostSegmentAllocator.h"
 #include "base_library/features/base/events/Event.h"
 #include "base_library/features/base/events/EventBus.h"
 
@@ -55,8 +56,9 @@ int main() {
                 boost::interprocess::open_or_create, path.c_str(),
                 EventBus::requiredSize(config) + 4096u);
 
+        BoostSegmentAllocator allocator(*segment.get_segment_manager());
         EventBus *bus = segment.find_or_construct<EventBus>("main")(
-                "main", config, segment.get_segment_manager());
+                "main", config, ShmSegmentAccessor(allocator));
 
         std::cout << "event bus '" << bus->getName() << "' lock free: "
                   << (bus->isLockFree() ? "yes" : "no") << "\n";

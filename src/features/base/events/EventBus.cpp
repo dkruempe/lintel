@@ -1,5 +1,7 @@
 #include "base_library/features/base/events/EventBus.h"
 
+#include "base_library/features/base/events/ShmSegmentAccessor.h"
+
 #include <chrono>
 #include <cstring>
 #include <new>
@@ -14,12 +16,12 @@ static_assert(std::atomic<std::size_t>::is_always_lock_free,
               "EventBus requires lock-free size_t atomics");
 
 EventBus::EventBus(const std::string &name, const EventBusConfig &config,
-                   ShmSegmentManager *segmentManager)
+                   ShmSegmentAccessor segment)
     : m_busCapacity(config.busCapacity),
       m_subscriberCapacity(config.subscriberCapacity),
       m_maxTopics(config.maxTopics),
       m_maxSubscribers(config.maxSubscribers),
-      m_bus(config.busCapacity, segmentManager) {
+      m_bus(config.busCapacity, segment) {
     if (!config.isValid()) {
         throw std::invalid_argument("invalid event bus configuration");
     }
@@ -28,7 +30,7 @@ EventBus::EventBus(const std::string &name, const EventBusConfig &config,
     try {
         for (; built < EventBusLimits::MAX_SUBSCRIBERS; ++built) {
             new (&m_subscriberQueues[built])
-                    ShmRing(config.subscriberCapacity, segmentManager);
+                    ShmRing(config.subscriberCapacity, segment);
         }
     } catch (...) {
         for (std::size_t i = 0; i < built; ++i) {
@@ -108,19 +110,15 @@ bool EventBus::nameEquals(const char *lhs, const char *rhs) {
     return std::strncmp(lhs, rhs, Event::NAME_SIZE) == 0;
 }
 
-EventBus::ShmRing::ShmRing(std::size_t capacity,
-                           ShmSegmentManager *segmentManager)
+EventBus::ShmRing::ShmRing(std::size_t capacity, ShmSegmentAccessor segment)
     : m_capacity(capacity),
-      m_segmentManager(segmentManager) {
+      m_segment(segment) {
     if (capacity == 0) {
         throw std::invalid_argument("event bus queue capacity must be positive");
     }
-    if (segmentManager == nullptr) {
-        throw std::invalid_argument("event bus segment manager must not be null");
-    }
     const std::size_t bufferSize = capacity * sizeof(Slot);
     std::byte *raw = static_cast<std::byte *>(
-            segmentManager->allocate(bufferSize + CACHE_LINE - 1u));
+            segment.allocate(bufferSize + CACHE_LINE - 1u));
     if (raw == nullptr) {
         throw std::bad_alloc();
     }
@@ -138,8 +136,8 @@ EventBus::ShmRing::ShmRing(std::size_t capacity,
 }
 
 EventBus::ShmRing::~ShmRing() {
-    if (m_allocation != nullptr && m_segmentManager != nullptr) {
-        m_segmentManager->deallocate(m_allocation);
+    if (m_allocation != nullptr) {
+        m_segment.deallocate(m_allocation);
         m_allocation = nullptr;
     }
 }

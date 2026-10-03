@@ -9,15 +9,15 @@
 
 /** DTO for property data stored in shared memory */
 struct PropertyDataDto {
-    SharedMemoryService::ShmString m_processName;
-    SharedMemoryService::ShmString m_className;
-    SharedMemoryService::ShmString m_instanceName;
-    SharedMemoryService::ShmString m_name;
-    SharedMemoryService::ShmString m_value;
-    SharedMemoryService::ShmString m_type;
+    shm::String m_processName;
+    shm::String m_className;
+    shm::String m_instanceName;
+    shm::String m_name;
+    shm::String m_value;
+    shm::String m_type;
 
     static int32_t getSize() {
-        return sizeof(SharedMemoryService::ShmString) * 6;
+        return sizeof(shm::String) * 6;
     }
 
     bool operator<(const PropertyDataDto &rhs) const;
@@ -110,8 +110,8 @@ public:
 /** Property repository backed by shared memory */
 class SharedMemoryPropertyRepository
         : public SharedMemoryMapRepository<
-                SharedMemoryService::ShmString, PropertyDataDto,
-                SharedMemoryService::ShmString, PropertyDataDao>,
+                shm::String, PropertyDataDto,
+                shm::String, PropertyDataDao>,
           public PropertyRepository {
 private:
     static constexpr int32_t m_version = 0;

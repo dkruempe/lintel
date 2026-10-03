@@ -1,11 +1,18 @@
 #!/usr/bin/env bash
 # Single-core weight probe for public headers of cpp-base-library.
-# Mirrors how a LOG_*-consumer TU is compiled and reports the preprocessed
-# size and a -fsyntax-only compile time of a probe TU. Single-threaded by
-# design so numbers are reproducible and the machine stays responsive.
+# Mirrors how a consumer TU is compiled and reports the preprocessed size and a
+# -fsyntax-only compile time of a probe TU that includes the probed header.
+# Single-threaded by design so numbers are reproducible and the machine stays
+# responsive.
 #
 # Usage:
 #   scripts/measure-header-weight.sh [--build-dir build/build/Release] [--header LoggerService.h]
+#                                    [--body <file with additional probe code>]
+#
+# --header takes a header file name (e.g. ProcessInfo.h); it is resolved below
+# src/include and the probe includes it by that path. --body adds code that uses
+# the header (needed to instantiate templates); without it the probe only
+# includes the header, which is what "header weight" means.
 #
 # Flags (-I/-isystem/-D/-std) are extracted from the given build dir's
 # compile_commands.json. Unity builds have no per-TU LoggerService.cpp entry,
@@ -15,11 +22,13 @@ set -euo pipefail
 
 BUILD_DIR="build/build/Release"
 TARGET="LoggerService.h"
+BODY=""
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --build-dir) BUILD_DIR="$2"; shift 2 ;;
         --header) TARGET="$2"; shift 2 ;;
+        --body) BODY="$2"; shift 2 ;;
         *) echo "unknown option: $1" >&2; exit 2 ;;
     esac
 done
@@ -29,12 +38,29 @@ if [[ ! -f "$COMPILE_DB" ]]; then
     echo "no compile_commands.json at $COMPILE_DB (run cmake with -DCMAKE_EXPORT_COMPILE_COMMANDS=ON)" >&2
     exit 1
 fi
+if [[ -n "$BODY" && ! -f "$BODY" ]]; then
+    echo "no such body file: $BODY" >&2
+    exit 1
+fi
 
 PROJ_ROOT="$(git rev-parse --show-toplevel)"
+HEADER_PATH="$(find "$PROJ_ROOT/src/include" -name "$TARGET" -print -quit)"
+if [[ -z "$HEADER_PATH" ]]; then
+    echo "header '$TARGET' not found below src/include" >&2
+    exit 1
+fi
+HEADER_REL="${HEADER_PATH#"$PROJ_ROOT"/src/include/}"
+
 PROBE="$(mktemp /tmp/opencode/header_weight_probe.XXXXXX.cc)"
 PREDIR="$(dirname "$PROBE")"
-cat > "$PROBE" <<'EOF'
-#include "base_library/core/services/LoggerService.h"
+{
+    echo "#include \"$HEADER_REL\""
+    if [[ -n "$BODY" ]]; then
+        cat "$BODY"
+    elif [[ "$TARGET" == "LoggerService.h" ]]; then
+        # historical probe body, kept so the recorded LoggerService numbers stay
+        # reproducible
+        cat <<'EOF'
 void log_probe()
 {
   int id = 1;
@@ -42,6 +68,12 @@ void log_probe()
   LOG_ERROR("probe error: {}", 3);
 }
 EOF
+    else
+        echo "void probe()"
+        echo "{"
+        echo "}"
+    fi
+} > "$PROBE"
 
 # Extract compiler flags (drop -o/-c/ccache/-include PCH from the template cmd).
 FLAGS=$(

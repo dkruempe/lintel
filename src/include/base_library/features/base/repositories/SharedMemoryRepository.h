@@ -11,6 +11,7 @@
 #include "base_library/core/models/SharedMemorySegment.h"
 #include "base_library/core/services/PersistableBean.h"
 #include "base_library/core/services/SharedMemoryService.h"
+#include "base_library/core/services/ShmConstructors.h"
 #include "base_library/core/utils/TypeName.h"
 
 /** Types of shared memory data structures. */
@@ -33,7 +34,7 @@ protected:
     template<typename TYPE>
     static constexpr bool isSerializable() {
         return std::is_base_of_v<JsonSerializable, TYPE> ||
-               std::is_same_v<SharedMemoryService::ShmString, TYPE> ||
+               std::is_same_v<shm::String, TYPE> ||
                std::is_arithmetic_v<TYPE>;
     }
 
@@ -136,7 +137,7 @@ protected:
     std::array<DATA, MaxSize> &getArray() const {
         const auto generation = m_sharedMemoryService->getGeneration();
         if (generation != m_generation) {
-            m_array = &m_sharedMemoryService->constructArray<DATA, MaxSize>(
+            m_array = &shm::constructArray<DATA, MaxSize>(*m_sharedMemoryService,
                     getSharedMemorySegment(), getSharedMemoryRepository());
             m_generation = generation;
         }
@@ -149,7 +150,7 @@ public:
             const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
                                      std::string(type_name<DATA>()), codeVersion, uuid),
-              m_array(&sharedMemoryService->constructArray<DATA, MaxSize>(
+              m_array(&shm::constructArray<DATA, MaxSize>(*sharedMemoryService,
                       segment, getSharedMemoryRepository())),
               m_generation(sharedMemoryService->getGeneration()),
               m_sharedMemoryService(sharedMemoryService) {}
@@ -171,8 +172,7 @@ public:
             if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
                 DAO dao(iter);
                 dao.serialize(writer);
-            } else if constexpr (std::is_same<SharedMemoryService::ShmString,
-                    DATA>()) {
+            } else if constexpr (std::is_same<shm::String, DATA>()) {
                 writer->String(iter.c_str());
             }
         }
@@ -206,7 +206,7 @@ protected:
     [[nodiscard]] Vector &getVector() const {
         const auto generation = m_sharedMemoryService->getGeneration();
         if (generation != m_generation) {
-            m_vector = &m_sharedMemoryService->constructVector<DATA>(
+            m_vector = &shm::constructVector<DATA>(*m_sharedMemoryService,
                     getSharedMemorySegment(), getSharedMemoryRepository());
             m_generation = generation;
         }
@@ -219,7 +219,7 @@ public:
             const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
                                      std::string(type_name<DATA>()), codeVersion, uuid),
-              m_vector(&sharedMemoryService->constructVector<DATA>(
+              m_vector(&shm::constructVector<DATA>(*sharedMemoryService,
                       segment, getSharedMemoryRepository())),
               m_generation(sharedMemoryService->getGeneration()),
               m_sharedMemoryService(sharedMemoryService) {}
@@ -241,8 +241,7 @@ public:
             if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
                 DAO dao(iter);
                 dao.serialize(writer);
-            } else if constexpr (std::is_same<SharedMemoryService::ShmString,
-                    DATA>()) {
+            } else if constexpr (std::is_same<shm::String, DATA>()) {
                 writer->String(iter.c_str());
             }
         }
@@ -279,7 +278,7 @@ protected:
     [[nodiscard]] Map &getMap() const {
         const auto generation = m_sharedMemoryService->getGeneration();
         if (generation != m_generation) {
-            m_map = &m_sharedMemoryService->constructMap<KEY, VALUE>(
+            m_map = &shm::constructMap<KEY, VALUE>(*m_sharedMemoryService,
                     getSharedMemorySegment(), getSharedMemoryRepository());
             m_generation = generation;
         }
@@ -293,7 +292,7 @@ public:
             int32_t sizeOfData = sizeof(VALUE))
             : SharedMemoryRepository(segment, sizeOfData,
                                      std::string(type_name<VALUE>()), codeVersion, uuid),
-              m_map(&sharedMemoryService->constructMap<KEY, VALUE>(
+              m_map(&shm::constructMap<KEY, VALUE>(*sharedMemoryService,
                       segment, getSharedMemoryRepository())),
               m_generation(sharedMemoryService->getGeneration()),
               m_sharedMemoryService(sharedMemoryService) {
@@ -323,7 +322,7 @@ public:
             if constexpr (std::is_base_of<JsonSerializable, KeyDao>()) {
                 KeyDao dao(key);
                 dao.serialize(writer);
-            } else if constexpr (std::is_same<SharedMemoryService::ShmString,
+            } else if constexpr (std::is_same<shm::String,
                     KEY>()) {
                 writer->String(key.c_str());
             }
@@ -331,7 +330,7 @@ public:
             if constexpr (std::is_base_of<JsonSerializable, ValueDao>()) {
                 ValueDao dao(value);
                 dao.serialize(writer);
-            } else if constexpr (std::is_same<SharedMemoryService::ShmString,
+            } else if constexpr (std::is_same<shm::String,
                     VALUE>()) {
                 writer->String(value.c_str());
             }
@@ -363,7 +362,7 @@ protected:
     DATA &getData() const {
         const auto generation = m_sharedMemoryService->getGeneration();
         if (generation != m_generation) {
-            m_data = &m_sharedMemoryService->constructObject<DATA>(
+            m_data = &shm::constructObject<DATA>(*m_sharedMemoryService,
                     getSharedMemorySegment(), getSharedMemoryRepository());
             m_generation = generation;
         }
@@ -376,7 +375,7 @@ public:
             const std::shared_ptr<SharedMemorySegment> &segment, int32_t codeVersion, std::string uuid)
             : SharedMemoryRepository(segment, sizeof(DATA),
                                      std::string(type_name<DATA>()), codeVersion, uuid),
-              m_data(&sharedMemoryService->constructObject<DATA>(
+              m_data(&shm::constructObject<DATA>(*sharedMemoryService,
                       segment, getSharedMemoryRepository())),
               m_generation(sharedMemoryService->getGeneration()),
               m_sharedMemoryService(sharedMemoryService) {}
@@ -395,7 +394,7 @@ public:
         if constexpr (std::is_base_of<JsonSerializable, DAO>()) {
             DAO dao(getData());
             dao.serialize(writer);
-        } else if constexpr (std::is_same<SharedMemoryService::ShmString, DATA>()) {
+        } else if constexpr (std::is_same<shm::String, DATA>()) {
             writer->String(getData().c_str());
         }
         writer->EndObject();

@@ -3,8 +3,6 @@
 #include "base_library/core/utils/ProcessResourceReader.h"
 #include "base_library/features/base/models/Process.h"
 
-#include <boost/process/v1/child.hpp>
-
 /**
  * Runtime information about a running process including its PID, status,
  * group membership and (optional) resource usage.
@@ -13,7 +11,7 @@ class ProcessInfo
 {
 private:
   std::shared_ptr<Process> m_process;
-  boost::process::v1::pid_t m_id;
+  pid_t m_id;
   bool m_isRunning;
   int m_exitCode;
   bool m_exitCodeValid;
@@ -34,7 +32,7 @@ public:
    * @param resourceData optional resource snapshot
    */
   ProcessInfo(std::shared_ptr<Process> process,
-    boost::process::v1::pid_t id,
+    pid_t id,
     bool isRunning,
     int exitCode,
     std::string groupName,
@@ -46,7 +44,7 @@ public:
   [[nodiscard]] const std::shared_ptr<Process> &getProcess() const;
 
   /** @return OS process ID */
-  [[nodiscard]] const boost::process::v1::pid_t &getProcessId() const;
+  [[nodiscard]] pid_t getProcessId() const;
 
   /** @return true if the process is running */
   [[nodiscard]] constexpr bool isRunning() const { return m_isRunning; }

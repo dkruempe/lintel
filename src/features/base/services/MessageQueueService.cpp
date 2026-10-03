@@ -58,14 +58,7 @@ std::pair<MessageQueueEntry, int32_t> MessageQueueService::numberMessagesOf(cons
   if (found != m_messageQueues.end()) { return { entry, found->second->numberMessagesOf() }; }
   // open the queue without creating it; the previous open_or_create created
   // a queue as a side effect just to read the number of messages
-  try {
-    boost::interprocess::message_queue queue(
-        boost::interprocess::open_only, entry.get_message_queue_name().c_str());
-    return { entry, static_cast<int32_t>(queue.get_num_msg()) };
-  } catch (const boost::interprocess::interprocess_exception &) {
-    // queue does not exist yet => no messages
-    return { entry, 0 };
-  }
+  return { entry, MessageQueueCore::numberMessagesOfIfExistsOf(entry.get_message_queue_name()) };
 }
 
 std::unique_ptr<MessageQueue<Message> > MessageQueueService::of(

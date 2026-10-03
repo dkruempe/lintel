@@ -22,6 +22,7 @@
 #include "base_library/features/base/configuration/EventBusEntry.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
+#include "base_library/features/base/events/BoostSegmentAllocator.h"
 #include "base_library/features/base/events/EventBus.h"
 #include "base_library/features/base/repositories/SharedMemoryRepository.h"
 #include "base_library/features/base/services/SharedMemorySegmentManager.h"
@@ -117,7 +118,8 @@ struct ShmPluginFixture {
 void createBusInSegment(const std::filesystem::path &path, const EventBusConfig &config,
                         const char *name = "main") {
     Segment mapping(boost::interprocess::open_only, path.c_str());
-    mapping.find_or_construct<EventBus>(name)(name, config, mapping.get_segment_manager());
+    BoostSegmentAllocator allocator(*mapping.get_segment_manager());
+    mapping.find_or_construct<EventBus>(name)(name, config, ShmSegmentAccessor(allocator));
 }
 
 std::shared_ptr<DatabaseConnectionEntry> sqliteEntry(const std::filesystem::path &dbPath) {

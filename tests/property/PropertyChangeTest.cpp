@@ -14,6 +14,7 @@
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
 #include "base_library/features/base/events/Event.h"
+#include "base_library/features/base/events/BoostSegmentAllocator.h"
 #include "base_library/features/base/events/EventBus.h"
 #include "base_library/features/base/models/ProcessName.h"
 #include "base_library/features/base/services/SchedulerService.h"
@@ -42,15 +43,17 @@ struct PropChangeBusFixture {
     std::filesystem::path path;
     std::size_t size;
     Segment segment;
+    BoostSegmentAllocator segmentAllocator;
     EventBus *bus;
 
     explicit PropChangeBusFixture(EventBusConfig fixtureConfig = EventBusConfig{})
         : config(fixtureConfig),
           path(uniquePropChangeShmPath()),
           size(EventBus::requiredSize(config) + 4096u),
-          segment(boost::interprocess::open_or_create, path.c_str(), size) {
+          segment(boost::interprocess::open_or_create, path.c_str(), size),
+          segmentAllocator(*segment.get_segment_manager()) {
         bus = segment.find_or_construct<EventBus>("bus")(
-                "bus", config, segment.get_segment_manager());
+                "bus", config, ShmSegmentAccessor(segmentAllocator));
     }
 
     ~PropChangeBusFixture() {

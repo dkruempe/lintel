@@ -11,15 +11,13 @@
 #include <string>
 #endif
 
-#include <unistd.h>
-
 namespace {
 
 constexpr double kClockTicksPerSecond = 100.0;
 
 }// namespace
 
-ProcessResourceData ProcessResourceReader::readOf(boost::process::v1::pid_t pid,
+ProcessResourceData ProcessResourceReader::readOf(pid_t pid,
   const std::optional<ProcessResourceData> &previous)
 {
   ProcessResourceData data;

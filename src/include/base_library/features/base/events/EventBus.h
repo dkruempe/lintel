@@ -7,12 +7,8 @@
 #include <optional>
 #include <string>
 
-#include <boost/interprocess/managed_mapped_file.hpp>
-
 #include "base_library/features/base/events/Event.h"
-
-/** Segment manager type of a boost managed mapped file. */
-using ShmSegmentManager = boost::interprocess::managed_mapped_file::segment_manager;
+#include "base_library/features/base/events/ShmSegmentAccessor.h"
 
 /** Compile-time upper bounds for the fixed event bus slots. */
 struct EventBusLimits {
@@ -80,11 +76,11 @@ public:
      * already constructed object.
      * @param name the name of the bus
      * @param config the runtime configuration
-     * @param segmentManager the segment manager to allocate the queues from
+     * @param segment accessor to the segment to allocate the queues from
      * @throws std::invalid_argument if the configuration is invalid
      */
     EventBus(const std::string &name, const EventBusConfig &config,
-             ShmSegmentManager *segmentManager);
+             ShmSegmentAccessor segment);
 
     /** Destroys the per-subscriber queues.
      * @note the object normally lives forever inside the segment */
@@ -210,9 +206,9 @@ private:
 
         /** Construct a ring with a fixed capacity.
          * @param capacity the maximum number of queued events
-         * @param segmentManager the segment the node buffer is allocated from
+         * @param segment accessor to the segment the node buffer is allocated from
          * @throws std::invalid_argument on invalid arguments */
-        ShmRing(std::size_t capacity, ShmSegmentManager *segmentManager);
+        ShmRing(std::size_t capacity, ShmSegmentAccessor segment);
 
         /** Deallocates the node buffer. */
         ~ShmRing();
@@ -243,7 +239,7 @@ private:
         std::atomic<std::uint64_t> m_tail{0};
         std::byte m_tailPadding[CACHE_LINE - sizeof(std::uint64_t)]{};
         std::size_t m_capacity = 0;
-        ShmSegmentManager *m_segmentManager = nullptr;
+        ShmSegmentAccessor m_segment;
         std::byte *m_allocation = nullptr;
         std::int64_t m_bufferOffset = 0;
 

@@ -1,11 +1,11 @@
 #ifndef CPP_BASE_LIBRARY_MESSAGEQUEUE_H
 #define CPP_BASE_LIBRARY_MESSAGEQUEUE_H
 
-#include <boost/interprocess/creation_tags.hpp>
-#include <boost/interprocess/ipc/message_queue.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
+#include "base_library/features/base/models/ProcessName.h"
+#include "base_library/features/base/msg/MessageQueueCore.h"
+
 #include <atomic>
-#include <chrono>
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -26,9 +26,9 @@ private:
     // variables
     std::string m_processName;
     std::string m_name;
-    static constexpr int32_t m_msgSize = sizeof(T);
+    static constexpr std::size_t m_msgSize = sizeof(T);
     int32_t m_msgCount;
-    boost::interprocess::message_queue m_messageQueue;
+    MessageQueueCore m_messageQueue;
     std::shared_ptr<ProcessName> m_realProcessName;
     std::atomic<std::uint64_t> m_droppedMessages{0};
 
@@ -37,7 +37,7 @@ public:
      * remove of message queue
      */
     static void removeOf(const std::string &messageQueueName) {
-        boost::interprocess::message_queue::remove(messageQueueName.c_str());
+        MessageQueueCore::removeOf(messageQueueName);
     }
 
     /**
@@ -64,7 +64,7 @@ public:
 
     /** @return current number of messages in the queue */
     [[nodiscard]] int32_t numberMessagesOf() const {
-        return m_messageQueue.get_num_msg();
+        return m_messageQueue.numberMessagesOf();
     }
 
     /**
@@ -78,15 +78,14 @@ public:
             : m_processName(std::move(processName)),
               m_name(std::move(name)),
               m_msgCount(msgCount),
-              m_messageQueue(boost::interprocess::open_or_create, m_name.c_str(),
-                             m_msgCount, m_msgSize),
+              m_messageQueue(m_name, msgCount, m_msgSize),
               m_realProcessName(std::move(realProcessName)) {}
 
     /**
      * send of message. Message Queue full => blocks until message queue is free
      * @param message
      */
-    void sendOf(T message) { m_messageQueue.send(&message, m_msgSize, 0); }
+    void sendOf(T message) { m_messageQueue.sendOf(&message, m_msgSize); }
 
     /**
      * send non blocking. Message Queue full => return false and doesn't send
@@ -94,7 +93,7 @@ public:
      * @param message
      */
     bool trySendOf(T message) {
-        return m_messageQueue.try_send(&message, m_msgSize, 0);
+        return m_messageQueue.trySendOf(&message, m_msgSize);
     }
 
     /**
@@ -106,10 +105,7 @@ public:
      */
     bool sendOfWithTimeout(T message,
                            const std::chrono::milliseconds &timeout) {
-        const bool success = m_messageQueue.timed_send(
-                &message, m_msgSize, 0,
-                boost::posix_time::microsec_clock::universal_time() +
-                        boost::posix_time::milliseconds(timeout.count()));
+        const bool success = m_messageQueue.sendOfWithTimeout(&message, m_msgSize, timeout);
         if (!success) {
             m_droppedMessages.fetch_add(1u, std::memory_order_relaxed);
         }
@@ -131,9 +127,7 @@ public:
      */
     T receiveOf() {
         T temp{};
-        boost::interprocess::message_queue::size_type recvSize;
-        unsigned int priority;
-        m_messageQueue.receive(&temp, m_msgSize, recvSize, priority);
+        m_messageQueue.receiveOf(&temp, m_msgSize);
         return temp;
     }
 
@@ -144,11 +138,7 @@ public:
      */
     std::optional<T> tryReceiveOf() {
         T temp{};
-        boost::interprocess::message_queue::size_type recvSize;
-        unsigned int priority;
-        bool success =
-                m_messageQueue.try_receive(&temp, m_msgSize, recvSize, priority);
-        if (!success) {
+        if (!m_messageQueue.tryReceiveOf(&temp, m_msgSize)) {
             return std::nullopt;
         }
         return std::make_optional(temp);
@@ -176,7 +166,7 @@ public:
     }
 
     /** @return true if queues are not equal */
-    bool operator!=(const MessageQueue &rhs) const { return !(rhs == *this); }
+    bool operator!=(const MessageQueue &rhs) const { return !(*this == rhs); }
 };
 
 #endif  // CPP_BASE_LIBRARY_MESSAGEQUEUE_H

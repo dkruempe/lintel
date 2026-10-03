@@ -1,6 +1,7 @@
 #include "base_library/core/plugins/SingleInstanceBootstrapPlugin.h"
 
 #include <boost/interprocess/exceptions.hpp>
+#include <boost/interprocess/sync/file_lock.hpp>
 
 #include <filesystem>
 #include <fstream>
@@ -9,6 +10,21 @@
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
+
+/** Operating system file lock of the single instance plugin. */
+class SingleInstanceBootstrapPlugin::Lock {
+public:
+    /** @param path path of the lock file */
+    explicit Lock(const std::filesystem::path &path) : m_lock(path.c_str()) {}
+
+    /** @return true if the exclusive lock was acquired */
+    [[nodiscard]] bool tryLock() { return m_lock.try_lock(); }
+
+private:
+    boost::interprocess::file_lock m_lock;
+};
+
+SingleInstanceBootstrapPlugin::~SingleInstanceBootstrapPlugin() = default;
 
 SingleInstanceBootstrapPlugin::SingleInstanceBootstrapPlugin(
         const std::shared_ptr<DatabaseConnectionConfigurations>
@@ -42,9 +58,8 @@ void SingleInstanceBootstrapPlugin::acquireLock() {
     if (!std::filesystem::exists(lockFile)) {
         std::ofstream(lockFile) << "";
     }
-    auto fileLock = std::make_unique<boost::interprocess::file_lock>(
-            lockFile.c_str());
-    if (!fileLock->try_lock()) {
+    auto fileLock = std::make_unique<Lock>(lockFile);
+    if (!fileLock->tryLock()) {
         throw std::runtime_error(
                 "another instance of process '" + m_processName->getProcessName()
                 + "' is already running (lock file '" + lockFile.string()

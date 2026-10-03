@@ -1,8 +1,6 @@
 #ifndef CPP_BASE_LIBRARY_SINGLEINSTANCEBOOTSTRAPPLUGIN_H
 #define CPP_BASE_LIBRARY_SINGLEINSTANCEBOOTSTRAPPLUGIN_H
 
-#include <boost/interprocess/sync/file_lock.hpp>
-
 #include <memory>
 
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
@@ -27,10 +25,15 @@
  */
 class SingleInstanceBootstrapPlugin : public BootstrapPlugin {
 private:
+    /** Boost typed operating system file lock. Defined in the implementation
+     *  file to keep boost out of this header; the plugin holds it for its
+     *  whole lifetime so a second instance detects the conflict. */
+    class Lock;
+
     std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
     std::shared_ptr<Configuration> m_configuration;
     std::shared_ptr<ProcessName> m_processName;
-    std::unique_ptr<boost::interprocess::file_lock> m_fileLock;
+    std::unique_ptr<Lock> m_fileLock;
 
     /** Resolve the lock file path and acquire the exclusive lock.
      * @throws std::runtime_error if another instance is already running */
@@ -47,6 +50,8 @@ public:
             &connectionConfigurations,
             std::shared_ptr<Configuration> configuration,
             std::shared_ptr<ProcessName> processName);
+
+    ~SingleInstanceBootstrapPlugin() override;
 
     /** Acquire the single instance lock unless no database connection exists. */
     void onStart() override;

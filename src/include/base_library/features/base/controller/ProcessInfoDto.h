@@ -4,6 +4,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unistd.h>
 
 #include "base_library/core/models/JsonSerializable.h"
 #include "base_library/core/utils/ProcessResourceReader.h"
@@ -26,7 +27,7 @@ private:
   /** Maximum allowed restarts */
   int32_t m_maxAutoRestarts;
   /** Operating system process ID */
-  boost::process::v1::pid_t m_processId;
+  pid_t m_processId;
   /** Whether the process is currently running */
   bool m_isRunning;
   /** The exit code of the process */

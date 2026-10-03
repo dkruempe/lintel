@@ -120,6 +120,7 @@ set(headers
     include/base_library/core/services/ISharedMemoryService.h
     include/base_library/core/services/PropertyRegistration.h
     include/base_library/core/services/SharedMemoryService.h
+    include/base_library/core/services/ShmConstructors.h
     include/base_library/core/services/SignalService.h
     include/base_library/core/services/StopWatchService.h
     include/base_library/core/services/StringifyService.h
@@ -194,10 +195,13 @@ set(headers
     # features - base - msg
     include/base_library/features/base/msg/Message.h
     include/base_library/features/base/msg/MessageQueue.h
+    include/base_library/features/base/msg/MessageQueueCore.h
     include/base_library/features/base/msg/MessageQueues.h
     # features - base - events
     include/base_library/features/base/events/Event.h
     include/base_library/features/base/events/EventBus.h
+    include/base_library/features/base/events/BoostSegmentAllocator.h
+    include/base_library/features/base/events/ShmSegmentAccessor.h
     # features - base - provider
     include/base_library/features/base/provider/GroupProvider.h
     # features - base - repositories
@@ -416,6 +420,7 @@ set(sources
     features/base/models/User.cpp
     # features - base - msg
     features/base/msg/Message.cpp
+    features/base/msg/MessageQueueCore.cpp
     # features - base - repositories
     features/base/repositories/GroupRepository.cpp
     features/base/repositories/HistoryRepository.cpp
