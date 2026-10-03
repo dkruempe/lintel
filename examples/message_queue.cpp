@@ -8,15 +8,21 @@
 
 class Message {
 private:
-    char m_to[100];
-    char m_from[100];
-    char m_content[1000];
+  char m_to[100]{};
+  char m_from[100]{};
+  char m_content[1000]{};
 
 public:
-    Message(const std::string &to, const std::string &from) {
-        std::strncpy(m_to, to.c_str(), std::strlen(m_to));
-        std::strncpy(m_from, from.c_str(), std::strlen(m_from));
-        std::memset(m_content, 0, sizeof(char) * std::strlen(m_content));
+  /** Default ctor: the queue transfers raw object representations, so a
+   * receive target has to be default constructible. */
+  Message() = default;
+
+  Message(const std::string &to, const std::string &from)
+  {
+    // The destination size has to come from the array, not from strlen() on
+    // the (previously uninitialized) target buffer.
+    std::strncpy(m_to, to.c_str(), sizeof(m_to) - 1);
+    std::strncpy(m_from, from.c_str(), sizeof(m_from) - 1);
     }
 
     template<typename T>
@@ -29,9 +35,7 @@ public:
          * and not with std::strcpy or std::strncpy bc. those function will stop
          * copying by the first 0 terminator.
          */
-        for (int i = 0; i < sizeof(T); i++) {
-            m_content[i] = temp[i];
-        }
+        for (std::size_t i = 0; i < sizeof(T); i++) { m_content[i] = temp[i]; }
     }
 
     [[nodiscard]] const char *getTo() const { return m_to; }
@@ -80,10 +84,12 @@ public:
      * @param msgCount limit of queue itself
      */
     MessageQueue(std::string name, int32_t msgCount)
-            : m_name(std::move(name)),
-              m_msgCount(msgCount),
-              m_messageQueue(boost::interprocess::open_or_create, m_name.c_str(),
-                             m_msgCount, m_msgSize) {}
+      : m_name(std::move(name)), m_msgCount(msgCount),
+        m_messageQueue(boost::interprocess::open_or_create,
+          m_name.c_str(),
+          static_cast<boost::interprocess::message_queue::size_type>(m_msgCount),
+          static_cast<boost::interprocess::message_queue::size_type>(m_msgSize))
+    {}
 
     ~MessageQueue() {
         if (removeMessageQueue) {
@@ -125,15 +131,15 @@ public:
      * @return optional of received message
      */
     std::optional<T> tryReceiveOf() {
-        T *temp;
-        boost::interprocess::message_queue::size_type recvSize;
-        unsigned int priority;
-        bool success =
-                m_messageQueue.try_receive(temp, m_msgSize, recvSize, priority);
-        if (!success) {
-            return std::nullopt;
-        }
-        return *temp;
+      // The receive buffer has to be a valid object: an uninitialized pointer
+      // was passed to try_receive() before.
+      std::optional<T> received;
+      boost::interprocess::message_queue::size_type recvSize = 0;
+      unsigned int priority = 0;
+      bool success = m_messageQueue.try_receive(
+        &received.emplace(), static_cast<boost::interprocess::message_queue::size_type>(m_msgSize), recvSize, priority);
+      if (!success) { return std::nullopt; }
+      return received;
     }
 };
 

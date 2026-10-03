@@ -13,6 +13,8 @@ target_compile_features(base_benchmarks PUBLIC cxx_std_17)
 target_link_libraries(base_benchmarks PRIVATE
     kruempelmann::base_library
     benchmark::benchmark_main
+    project_warnings
+    myproject_options
 )
 
 add_custom_command(TARGET base_benchmarks POST_BUILD

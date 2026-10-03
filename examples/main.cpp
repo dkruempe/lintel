@@ -11,6 +11,8 @@
 #include "Hypodermic/Container.h"
 #include "Hypodermic/ContainerBuilder.h"
 
+#include <cstddef>
+#include <cstring>
 #include <utility>
 
 struct ArrayDto {
@@ -20,16 +22,16 @@ struct ArrayDto {
     char m_location[100]{};
     int32_t m_age = 0;
 
+    // char arrays must be compared explicitly: `lhs < rhs` decays to a pointer
+    // comparison (and `==` compared addresses, so it was always false).
+    static int compare(const char *lhs, const char *rhs) { return std::strcmp(lhs, rhs); }
+
     bool operator<(const ArrayDto &rhs) const {
-        if (m_name < rhs.m_name) return true;
-        if (rhs.m_name < m_name) return false;
-        if (m_addr < rhs.m_addr) return true;
-        if (rhs.m_addr < m_addr) return false;
-        if (m_plz < rhs.m_plz) return true;
-        if (rhs.m_plz < m_plz) return false;
-        if (m_location < rhs.m_location) return true;
-        if (rhs.m_location < m_location) return false;
-        return m_age < rhs.m_age;
+      if (compare(m_name, rhs.m_name) != 0) return compare(m_name, rhs.m_name) < 0;
+      if (compare(m_addr, rhs.m_addr) != 0) return compare(m_addr, rhs.m_addr) < 0;
+      if (compare(m_plz, rhs.m_plz) != 0) return compare(m_plz, rhs.m_plz) < 0;
+      if (compare(m_location, rhs.m_location) != 0) return compare(m_location, rhs.m_location) < 0;
+      return m_age < rhs.m_age;
     }
 
     bool operator>(const ArrayDto &rhs) const { return rhs < *this; }
@@ -39,8 +41,8 @@ struct ArrayDto {
     bool operator>=(const ArrayDto &rhs) const { return !(*this < rhs); }
 
     bool operator==(const ArrayDto &rhs) const {
-        return m_name == rhs.m_name && m_addr == rhs.m_addr && m_plz == rhs.m_plz &&
-               m_location == rhs.m_location && m_age == rhs.m_age;
+      return compare(m_name, rhs.m_name) == 0 && compare(m_addr, rhs.m_addr) == 0 && compare(m_plz, rhs.m_plz) == 0
+             && compare(m_location, rhs.m_location) == 0 && m_age == rhs.m_age;
     }
 
     bool operator!=(const ArrayDto &rhs) const { return !(rhs == *this); }
@@ -261,7 +263,10 @@ public:
     void onMigrate(int32_t currentActiveVersion) override {}
 };
 
-class ShmArray : public SharedMemoryArrayRepository<ArrayDto, ArrayDao, 100> {
+constexpr std::size_t kArraySize = 100;
+
+class ShmArray : public SharedMemoryArrayRepository<ArrayDto, ArrayDao, kArraySize>
+{
 private:
     static constexpr int32_t m_version = 0;
     static constexpr std::string_view UUID = "F6DF706E-AB1A-4F7B-A8C7-0D60165E2517";
@@ -273,16 +278,16 @@ public:
             : SharedMemoryArrayRepository(sharedMemoryService,
                                           sharedMemorySegmentManager->of("shm_test"),
                                           m_version, std::string{UUID}) {
-        if (getArray()[99].m_age == 0) {
-            for (int i = 0; i < 100; i++) {
-                ArrayDto &dto = getArray()[i];
-                std::strncpy(dto.m_name, "Example User", 100);
-                std::strncpy(dto.m_addr, "Musterstraße 1", 100);
-                std::strncpy(dto.m_plz, "48496", 100);
-                std::strncpy(dto.m_location, "Example City", 100);
-                dto.m_age = i;
-            }
+      if (getArray()[kArraySize - 1].m_age == 0) {
+        for (std::size_t i = 0; i < kArraySize; i++) {
+          ArrayDto &dto = getArray()[i];
+          std::strncpy(dto.m_name, "Example User", sizeof(dto.m_name) - 1);
+          std::strncpy(dto.m_addr, "Musterstraße 1", sizeof(dto.m_addr) - 1);
+          std::strncpy(dto.m_plz, "48496", sizeof(dto.m_plz) - 1);
+          std::strncpy(dto.m_location, "Example City", sizeof(dto.m_location) - 1);
+          dto.m_age = static_cast<int32_t>(i);
         }
+      }
     }
 
     void onMigrate(int32_t currentActiveVersion) override {}
@@ -301,23 +306,17 @@ public:
             sharedMemoryService, sharedMemorySegmentManager->of("shm_test"),
             m_version, std::string{UUID}) {
         if (getVector().empty()) {
-            for (int i = 0; i < 100; i++) {
-                TestDataDto dto{
-                        .m_name = shm::constructString(
-                                *m_sharedMemoryService,
-                                getSharedMemorySegment(), "Example User"),
-                        .m_addr = shm::constructString(
-                                *m_sharedMemoryService,
-                                getSharedMemorySegment(), "Musterstraße 1"),
-                        .m_plz = shm::constructString(*m_sharedMemoryService,
-                                                      getSharedMemorySegment(),
-                                                      "48496"),
-                        .m_location = shm::constructString(
-                                *m_sharedMemoryService,
-                                getSharedMemorySegment(), "Example City"),
-                        .m_age = i};
-                getVector().push_back(dto);
-            }
+          for (std::size_t i = 0; i < kArraySize; i++) {
+            // Plain aggregate init: designated initializers are C++20 and only
+            // compiled as a GNU extension under -std=c++17 (-Wpedantic).
+            TestDataDto dto{ shm::constructString(
+                               *m_sharedMemoryService, getSharedMemorySegment(), "Example User"),
+              shm::constructString(*m_sharedMemoryService, getSharedMemorySegment(), "Musterstraße 1"),
+              shm::constructString(*m_sharedMemoryService, getSharedMemorySegment(), "48496"),
+              shm::constructString(*m_sharedMemoryService, getSharedMemorySegment(), "Example City"),
+              static_cast<int32_t>(i) };
+            getVector().push_back(dto);
+          }
         }
     }
 

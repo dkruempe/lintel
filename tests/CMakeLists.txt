@@ -54,6 +54,12 @@ target_link_libraries(base_tests PRIVATE
     kruempelmann::base_library
     Catch2::Catch2WithMain
     trompeloeil::trompeloeil
+    # Same warning set (incl. -Werror) as the library itself: `project_warnings` is
+    # linked PRIVATE into kruempelmann::base_library, so its INTERFACE options do
+    # not reach this target — tests were compiled with plain defaults and CI could
+    # not fail on a warning here.
+    project_warnings
+    myproject_options
 )
 
 # Auto-register each TEST_CASE / SECTION as a separate CTest test

@@ -64,36 +64,31 @@ public:
      * @param maxMessages maximum size of messages
      * @return messages
      */
-    [[nodiscard]] std::vector<std::string> read(int maxMessages = 100) const {
-        std::vector<std::string> messages;
-        while (messages.size() < maxMessages) {
-            std::vector<char> sizeVec(17);
-            ssize_t numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
-            if (numBytes == 0) {
-                continue;
-            }
-            if (numBytes < 0) {
-                if (errno == EAGAIN) {
-                    // named pipe empty
-                    return messages;
-                }
-                throw std::system_error(errno, std::system_category(),
-                                        "Failed to read from named pipe");
-            }
-            // erase STX
-            sizeVec.erase(sizeVec.begin());
-            std::string const sizeStr(sizeVec.data(), sizeVec.size());
-            std::size_t const size = std::strtol(sizeStr.c_str(), nullptr, 16) + 1;
-            std::vector<char> tempVec(size);
-            numBytes = ::read(m_pipe_fd, tempVec.data(), tempVec.size());
-            if (numBytes < 0) {
-                throw std::system_error(errno, std::system_category(),
-                                        "Failed to read from named pipe");
-            }
-            tempVec.erase(tempVec.end() - 1);
-            messages.emplace_back(tempVec.data(), tempVec.size());
+    [[nodiscard]] std::vector<std::string> read(std::size_t maxMessages = 100) const
+    {
+      std::vector<std::string> messages;
+      while (messages.size() < maxMessages) {
+        std::vector<char> sizeVec(17);
+        ssize_t numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
+        if (numBytes == 0) { continue; }
+        if (numBytes < 0) {
+          if (errno == EAGAIN) {
+            // named pipe empty
+            return messages;
+          }
+          throw std::system_error(errno, std::system_category(), "Failed to read from named pipe");
         }
-        return messages;
+        // erase STX
+        sizeVec.erase(sizeVec.begin());
+        std::string const sizeStr(sizeVec.data(), sizeVec.size());
+        std::size_t const size = static_cast<std::size_t>(std::strtol(sizeStr.c_str(), nullptr, 16)) + 1;
+        std::vector<char> tempVec(size);
+        numBytes = ::read(m_pipe_fd, tempVec.data(), tempVec.size());
+        if (numBytes < 0) { throw std::system_error(errno, std::system_category(), "Failed to read from named pipe"); }
+        tempVec.erase(tempVec.end() - 1);
+        messages.emplace_back(tempVec.data(), tempVec.size());
+      }
+      return messages;
     }
 
     /**
@@ -120,7 +115,7 @@ public:
             // erase STX
             sizeVec.erase(sizeVec.begin());
             std::string const sizeStr(sizeVec.data(), sizeVec.size());
-            std::size_t const size = std::strtol(sizeStr.c_str(), nullptr, 16) + 1;
+            std::size_t const size = static_cast<std::size_t>(std::strtol(sizeStr.c_str(), nullptr, 16)) + 1;
             std::vector<char> tempVec(size);
             numBytes = ::read(m_pipe_fd, tempVec.data(), tempVec.size());
             if (numBytes < 0) {

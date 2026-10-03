@@ -90,9 +90,9 @@ int runInChild(const SingleInstanceFixture &fixture, bool expectThrow) {
             threw = true;
         }
         const int result = (threw == expectThrow) ? 0 : 1;
-        ::write(pipeFds[1], &result, sizeof(result));
+        const ssize_t written = ::write(pipeFds[1], &result, sizeof(result));
         ::close(pipeFds[1]);
-        _exit(0);
+        _exit(written == static_cast<ssize_t>(sizeof(result)) ? 0 : 1);
     }
     ::close(pipeFds[1]);
     int childResult = 1;
