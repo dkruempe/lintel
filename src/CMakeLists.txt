@@ -527,6 +527,11 @@ target_link_libraries(base_library PUBLIC fmt::fmt-header-only tinyxml2::tinyxml
         Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib ${rapidjson_LIBRARIES_DEBUG} date::date spdlog::spdlog_header_only
         kruempelmann::Hypodermic Boost::boost Boost::headers Boost::filesystem PRIVATE project_warnings)
 
+# Boost.UUID formatiert UUIDs per SSE2-Intrinsics. Ohne Optimierung (-O0) inlined GCC 13 das Intrinsic
+# _mm_slli_si128 nicht mehr, der Backend-Aufruf mit variablem Shift erzeugt dann aber einen harten Fehler
+# ("the last argument must be an 8-bit immediate"). In Debug-Builds den generischen Boost-Pfad verwenden.
+target_compile_definitions(base_library PRIVATE $<$<CONFIG:Debug>:BOOST_UUID_NO_SIMD>)
+
 option(ENABLE_PCH "Enable precompiled headers" ON)
 if(ENABLE_PCH)
     target_precompile_headers(base_library PRIVATE

@@ -70,3 +70,5 @@ Lokal dasselbe prüfen:
 - **PCH**: Precompiled headers are ON by default (`ENABLE_PCH`). New stdlib headers needed by source files should be added to the PCH list in `src/CMakeLists.txt`.
 - **`config.h.in`**: CMake substitutes `PROJECT_PATH`, `CONFIG_DIRECTORY`, `BOOTSTRAP_CONFIG_NAME`, `MSG_QUEUE_NAME_SIZE`, `MSG_QUUEUE_CONTENT_SIZE` (note typo in original). Build touches `src/include/base_library/config.h`.
 - **Docker dev**: `docker compose --profile dev run dev` mounts source + builds inside container.
+- **Debug + GCC**: Boost.UUIDs SSE2-Pfad nutzt `_mm_slli_si128`; bei `-O0` inlined GCC 13 das Intrinsic nicht mehr und bricht mit `the last argument must be an 8-bit immediate` ab. `src/CMakeLists.txt` definiert für `CONFIG:Debug` deshalb `BOOST_UUID_NO_SIMD`.
+- **`-Wnull-dereference`**: nur für Clang aktiv (siehe `cmake/CompilerWarnings.cmake`). GCC 13 meldet in `std::function::_M_empty()` einen Fehlalarm, der mit `-Werror` den Release-Build stoppt.
