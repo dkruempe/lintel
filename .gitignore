@@ -10,6 +10,7 @@ build*
 bin*
 .idea
 .cache
+.ccache
 .vscode
 tags
 log

@@ -24,6 +24,7 @@ services:
       - dev
     environment:
       CCACHE_BASEDIR: /workspace
+      CCACHE_DIR: /root/.ccache
       CCACHE_MAXSIZE: 500M
     volumes:
       - .:/workspace

@@ -27,6 +27,7 @@ env:
   BUILD_TYPE: Release
   CONAN_SYSREQUIRES_MODE: enabled
   CCACHE_BASEDIR: ${{ github.workspace }}
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_COMPRESS: "1"
   CCACHE_MAXSIZE: "500M"
   CCACHE_COMPILERCHECK: content
@@ -98,7 +99,7 @@ jobs:
       - name: Cache ccache
         uses: actions/cache@v6
         with:
-          path: ~/.ccache
+          path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ runner.os }}-gcc-release-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'tests/**', 'examples/**', 'external/**') }}
           restore-keys: |
             ccache-${{ runner.os }}-gcc-release-

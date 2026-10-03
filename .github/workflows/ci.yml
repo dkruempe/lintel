@@ -19,6 +19,9 @@ env:
   CONAN_SYSREQUIRES_MODE: enabled
   # Keeps object paths independent of the runner workspace -> cross-run cache hits.
   CCACHE_BASEDIR: ${{ github.workspace }}
+  # ccache >= 4 defaults to ~/.cache/ccache, so the cache action must point at the
+  # same explicit directory. Without this the cache path never existed (no-op).
+  CCACHE_DIR: ${{ github.workspace }}/.ccache
   CCACHE_COMPRESS: "1"
   CCACHE_MAXSIZE: "500M"
   # `content` instead of mtime: runner images change compiler mtimes, which would
@@ -97,7 +100,7 @@ jobs:
       - name: Cache ccache
         uses: actions/cache@v6
         with:
-          path: ~/.ccache
+          path: ${{ env.CCACHE_DIR }}
           key: ccache-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'tests/**', 'examples/**', 'external/**') }}
           restore-keys: |
             ccache-${{ runner.os }}-${{ env.CACHE_ID }}-

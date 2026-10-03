@@ -36,6 +36,7 @@ RUN conan profile detect --force \
 FROM deps AS builder
 
 ENV CCACHE_BASEDIR=/workspace \
+    CCACHE_DIR=/root/.ccache \
     CCACHE_COMPRESS=1 \
     CCACHE_MAXSIZE=500M
 
