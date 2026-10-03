@@ -307,8 +307,17 @@ print(next(e['command'] for e in d if 'StartupBuilder' in e['file']))") | wc -l
   lokal aber **100 %**, sobald nur dieselben TUs erneut gebaut werden.
 - Für den ersten CI-Lauf eines Commits ist die Quote naturgemäß niedrig
   (0 Treffer). Ein belastbarer Wert (> 70 %) braucht mindestens zwei
-  aufeinanderfolgende Läuufe mit unterschiedlichen, aber ähnlich großen
+  aufeinanderfolgende Läufe mit unterschiedlichen, aber ähnlich großen
   Änderungen – der Cache-Key ist bereits auf `hashFiles(...)` (Inhalt) statt
   `github.sha` umgestellt, damit Zweitläufe denselben Key treffen.
 - `CCACHE_BASEDIR` zeigt auf `${{ github.workspace }}` (GH-Runner) bzw.
   `/workspace` (Docker), `CCACHE_COMPRESS=1`, `CCACHE_MAXSIZE=500M`.
+- **`CCACHE_DIR` ist seit 03.10.2026 explizit gesetzt** (GH-Runner:
+  `${{ github.workspace }}/.ccache`, Docker: `/root/.ccache`): ccache ab 4.x
+  nutzt sonst `~/.cache/ccache`, während `actions/cache` den in
+  `~/.ccache` erwarteten Pfad sichern wollte. Folge war ein No-op-Cache –
+  die Joblogs meldeten `Path Validation Error: Path(s) specified in the action
+  for caching do(es) not exist, hence no cache is being saved`, und alle Läufe
+  bis einschließlich Release `v0.1.0` waren objektseitig kalt (0 Treffer).
+  **Hit-Rate-Messungen der CI sind erst ab dem ersten Lauf nach diesem Fix
+  aussagekräftig.**
