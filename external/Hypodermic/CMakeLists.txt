@@ -7,7 +7,10 @@ add_library(Hypodermic INTERFACE)
 target_sources(Hypodermic INTERFACE "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>")
 target_compile_features(Hypodermic INTERFACE cxx_std_11)
-target_include_directories(Hypodermic INTERFACE
+# SYSTEM: this is vendored third-party code. Without it the headers are treated
+# as project headers, so -Werror in the consuming target fires on upstream style
+# issues (e.g. the old-style cast in Hypodermic/LogLevel.h).
+target_include_directories(Hypodermic SYSTEM INTERFACE
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>")
 add_library(kruempelmann::Hypodermic ALIAS Hypodermic)

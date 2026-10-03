@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/signals2.hpp>
 #include <functional>
 #include <memory>
 #include <vector>
@@ -10,6 +9,7 @@
 #include "Hypodermic/IRegistrationActivator.h"
 #include "Hypodermic/InstanceFactory.h"
 #include "Hypodermic/Log.h"
+#include "Hypodermic/Signal.h"
 #include "Hypodermic/TypeInfo.h"
 
 namespace Hypodermic {
@@ -46,8 +46,7 @@ namespace Hypodermic {
     private:
         const IRegistration &m_registration;
         InstanceFactory m_instanceFactory;
-        boost::signals2::signal<void(ComponentContext &, const std::shared_ptr<void> &)>
-                m_activated;
+        Signal<ComponentContext &, const std::shared_ptr<void> &> m_activated;
     };
 
 }  // namespace Hypodermic

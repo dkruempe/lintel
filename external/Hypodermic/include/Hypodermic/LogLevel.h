@@ -28,7 +28,7 @@ namespace Hypodermic {
             case LogLevels::Off:
                 return "Off";
             default:
-                return "Unknown LogLevel (" + std::to_string((int) logLevel) + ")";
+                return "Unknown LogLevel (" + std::to_string(static_cast<int>(logLevel)) + ")";
         }
     }
 

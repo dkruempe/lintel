@@ -8,6 +8,9 @@
 #include <base_library/features/property/PropertyFeature.h>
 #include <base_library/features/property/services/PropertyService.h>
 
+#include "Hypodermic/Container.h"
+#include "Hypodermic/ContainerBuilder.h"
+
 #include <utility>
 
 struct ArrayDto {

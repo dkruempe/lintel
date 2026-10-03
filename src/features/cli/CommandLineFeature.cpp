@@ -1,5 +1,8 @@
 #include "base_library/features/cli/CommandLineFeature.h"
 
+#include "Hypodermic/Container.h"
+#include "Hypodermic/ContainerBuilder.h"
+
 #include "base_library/features/cli/components/HistoryCliComponent.h"
 #include "base_library/features/cli/components/MessageQueueCliComponent.h"
 #include "base_library/features/cli/components/ProcessCliComponent.h"

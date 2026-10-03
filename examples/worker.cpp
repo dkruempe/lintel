@@ -22,6 +22,9 @@
 #include <base_library/features/property/repositories/SharedMemoryPropertyRepository.h>
 #include <base_library/features/property/services/PropertyService.h>
 
+#include "Hypodermic/Container.h"
+#include "Hypodermic/ContainerBuilder.h"
+
 /**
  * Worker process started by the main process through ProcessService.
  *

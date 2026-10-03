@@ -1,13 +1,21 @@
 #ifndef CPP_BASE_LIBRARY_FEATURES_H
 #define CPP_BASE_LIBRARY_FEATURES_H
 
+#include <functional>
 #include <utility>
 #include <vector>
 #include <string>
 #include <map>
 #include <magic_enum/magic_enum.hpp>
-#include "Hypodermic/ContainerBuilder.h"
-#include "Hypodermic/Container.h"
+
+// Hypodermic is only needed as an incomplete type here: ContainerBuilder is
+// passed by reference and Container travels inside a shared_ptr. Forward
+// declaring both keeps the DI container - and the Boost headers it used to
+// pull in - out of every translation unit that only talks to Features.
+namespace Hypodermic {
+class Container;
+class ContainerBuilder;
+}  // namespace Hypodermic
 
 /**
  * Features class for configuration support of Features, which are active

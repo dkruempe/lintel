@@ -1,0 +1,32 @@
+# NOTICE
+
+## Hypodermic
+
+This directory contains a vendored copy of **Hypodermic**, a header-only
+Dependency Injection container for C++11.
+
+- Upstream: https://github.com/TheranBryant/Hypodermic
+- License: MIT (see `LICENSE` in this directory)
+- Copyright (c) 2016 Theran Bryant
+- Vendored state: last synced from upstream in 2017, unmaintained since
+
+### Local modifications
+
+Unlike upstream, this copy carries local changes that are **compile-time
+optimizations only**. No public API, no behavior and no ABI-visible semantics
+were changed; the modifications exist purely to reduce the preprocessed
+header weight of the DI container, which is pulled into every translation unit
+that implements or derives from `FeatureInterface`.
+
+| File | Change | Rationale |
+| --- | --- | --- |
+| `include/Hypodermic/TypeInfo.h` | Dropped `#include <regex>`; replaced `boost::algorithm::replace_all_copy` with an inline loop | `<regex>` was only referenced from the non-GNUC branch, i.e. dead code on GCC/Clang/MSVC. `boost/algorithm/string.hpp` cost ~95 k preprocessed lines for a single 2-to-1 character replacement. |
+| `include/Hypodermic/ComponentContext.h` | Replaced `boost::adaptors::reverse` with a `rbegin`/`rend` loop | `boost/range/adaptor/reversed.hpp` cost ~62 k preprocessed lines for one reverse iteration. |
+| `include/Hypodermic/ResolutionContainer.h` | Replaced `boost::range::sub_range` with a standard-library range | `boost/range/sub_range.hpp` cost ~62 k preprocessed lines. |
+| `include/Hypodermic/Signal.h` | Added a small `Hypodermic::Signal` replacement for `boost::signals2::signal` | `boost/signals2.hpp` was the single heaviest include at ~109 k preprocessed lines. |
+| `include/Hypodermic/IRegistrationDescriptor.h`, `include/Hypodermic/RegistrationActivator.h` | Use `Hypodermic::Signal` instead of `boost::signals2::signal` | See `Signal.h`. Only the subset of the signals2 API that Hypodermic actually used is provided. |
+
+Together these reduced the preprocessed weight of `Hypodermic/ContainerBuilder.h`
+from ~151 k to ~75 k lines. See `../../ROADMAP.md` §4 for measurements.
+
+If you re-sync this directory from upstream, re-apply the changes listed above.

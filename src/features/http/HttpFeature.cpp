@@ -1,5 +1,8 @@
 #include "base_library/features/http/HttpFeature.h"
 
+#include "Hypodermic/Container.h"
+#include "Hypodermic/ContainerBuilder.h"
+
 #include "base_library/features/http/controllers/HistoryApi.h"
 #include "base_library/features/http/controllers/HistoryController.h"
 #include "base_library/features/http/controllers/MessageQueueApi.h"

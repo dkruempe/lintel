@@ -120,6 +120,186 @@ nice -n 10 scripts/measure-header-weight.sh --build-dir build/build/Release --he
 
 ---
 
+## Datensatz 2: Boost-Entkopplung (Header ohne Boost)
+
+Vorher: `250ff06` · Nachher: Arbeitsstand (Boost-Suffix-Refactor)
+Ziel: schwere Boost-Header aus öffentlichen Headern entfernen. Betroffen waren
+`boost/process`, `boost/interprocess` (Message-Queue, EventBus, Dateisperre) und
+die Shared-Memory-Konstruktoren. Grundregel: **Boost-Typen stehen nur noch in
+Implementierungsdateien oder in bewusst boost-gebundenen Headern**, nie in einem
+Header, den fachliche Consumer includieren.
+
+### Was geändert wurde
+
+| Bereich | Lösung | API-Bruch |
+|---------|--------|-----------|
+| `ProcessResourceReader`, `ProcessInfo`, `ProcessInfoDto`, `ProcessService` | `boost::process::v1::pid_t` → `pid_t` (`<unistd.h>`), `child` nur vorwärtsdeklariert | `getProcessId()` liefert jetzt `pid_t` by value |
+| `MessageQueue<T>` | nicht-template Kern `MessageQueueCore` (Pimpl), Boost in `MessageQueueCore.cpp` | nein (Template-API unverändert) |
+| `EventBus` | `ShmSegmentAccessor` (boost-frei, 1 Zeiger) + `ShmSegmentAccessor::Allocator`-Interface; boost gebunden in `BoostSegmentAllocator.h` | Konstruktor nimmt `ShmSegmentAccessor` statt `segment_manager*` |
+| `SingleInstanceBootstrapPlugin` | `Lock`-Klasse (boost `file_lock`) als private Pimpl im `.cpp` | nein |
+| `SharedMemoryService` | boost-gebundene freie Funktionen in `shm::` (`ShmConstructors.h`), Segment-Zustand in `SharedMemorySegmentHandle` | **ja**: `constructX()` → `shm::constructX(service, …)`, `ShmString` → `shm::String`, `getSegmentManager()` → `shm::segmentManagerOf()` |
+
+### Header-Gewicht (GCC `-fsyntax-only`, ohne PCH, `build/nonunity`)
+
+| Header | vorher Zeilen / CPU | nachher Zeilen / CPU | Δ Zeilen | Δ CPU |
+|--------|--------------------|----------------------|---------|-------|
+| `ProcessInfo.h` | 144.195 / 3,28 s | 71.136 / 1,44 s | −50,7 % | −56,1 % |
+| `ProcessResourceReader.h` | 139.902 / 3,08 s | 12.995 / 0,23 s | −90,7 % | −92,5 % |
+| `ProcessService.h` | 187.623 / 5,28 s | 124.055 / 3,43 s | −33,9 % | −35,0 % |
+| `ProcessInfoDto.h` | 152.060 / 3,56 s | 79.810 / 1,66 s | −47,5 % | −53,4 % |
+| `MessageQueue.h` | 143.244 / 3,23 s | 62.930 / 1,27 s | −56,1 % | −60,7 % |
+| `EventBus.h` | 89.532 / 1,68 s | 35.125 / 0,66 s | −60,8 % | −60,7 % |
+| `SingleInstanceBootstrapPlugin.h` | 83.934 / 2,08 s | 76.335 / 1,96 s | −9,0 % | −5,8 % |
+| `SharedMemoryService.h` | 168.813 / 4,30 s | 114.504 / 3,08 s | −32,2 % | −28,4 % |
+
+`SharedMemoryService.h` ist **boost-frei** (im Präprozessor-Output kommt kein
+`boost/interprocess` mehr vor); die verbleibenden 114 k Zeilen stammen aus
+spdlog/fmt, Hypodermic und magic_enum – ein eigenes Thema.
+
+`SingleInstanceBootstrapPlugin.h` und `EventBus`-Konsumenten bleiben
+teilweise schwer, weil sie weiterhin `SharedMemoryRepository.h` einbinden, das
+als generische Abstraktion `shm::String`/`shm::Map`/`shm::Vector` in der
+Template-API nennt.
+
+### Boost-Header je Übersetzungseinheit (`ninja -t deps`, Non-Unity)
+
+| Boost-Header | vorher | nachher | verbleibende Nutzer |
+|--------------|--------|---------|---------------------|
+| `boost/process/v1/child.hpp` | 14 | 2 | `ProcessService.cpp`, `ProcessServiceTest.cpp` |
+| `boost/interprocess/ipc/message_queue.hpp` | 9 | 2 | `MessageQueueCore.cpp`, Beispiel `message_queue.cpp` |
+| `boost/date_time/posix_time/posix_time.hpp` | 8 | 1 | `MessageQueueCore.cpp` |
+| `boost/interprocess/sync/file_lock.hpp` | 3 | 1 | `SingleInstanceBootstrapPlugin.cpp` |
+| `boost/interprocess/managed_mapped_file.hpp` | 28 | 22 | alle über `ShmConstructors.h` bzw. `SharedMemoryRepository.h` |
+
+### Bewusst nicht umgesetzt
+
+- **Conan `without_options`** (`without_process`, `without_filesystem`, …): die
+  Header werden trotzdem installiert, der Effekt wäre Installzeit/Platz, nicht
+  Kompilierzeit. `BOOST_PROCESS_USE_STD_FS` (Boost.Process v1) wurde geprüft und
+  bringt keinen messbaren Gewinn (`child.hpp` 138.918 → 138.914 Zeilen).
+
+### Reproduktion
+
+```bash
+cmake -S . -B build/nonunity -DENABLE_PCH=OFF -DENABLE_UNITY_BUILD=OFF
+cmake --build build/nonunity --parallel $(nproc)
+nice -n 10 scripts/measure-header-weight.sh --build-dir build/nonunity --header EventBus.h
+```
+
+---
+
+## Datensatz 3: Hypodermic (vendorter DI-Container)
+
+Vorher: `250ff06` · Nachher: Arbeitsstand (Hypodermic-Patch)
+Anlass: Wartezeit in CLion bei Änderungen unter `src/features/`.
+`Hypodermic/ContainerBuilder.h` war der schwerste einzelne Header-Block des
+Projekts: **151.116 präprozessierte Zeilen und 2.983 Boost-Dateien** allein,
+obwohl der Container nur 95 kleine Header hat. Zum Vergleich `httplib.h` = 20,6 k
+Zeilen. Verstärkt wurde das dadurch, dass `Feature.h`/`Features.h` den Container
+per `#include` in jeden TU holten, der einen Feature-Typ anfasst.
+
+### Was geändert wurde
+
+| Datei (vendort) | vorher | nachher | Begründung |
+|-----------------|--------|---------|------------|
+| `TypeInfo.h` | `<boost/algorithm/string.hpp>`, `<regex>` | `<string>` + Inline-Loop | `<regex>` nur im `#else`-Zweig (Nicht-GNU) benutzt → toter Include; `algorithm/string.hpp` (94,8 k Z.) allein für `replace_all_copy(name, "::", ".")` in Z. 30 |
+| `ComponentContext.h` | `<boost/range/adaptor/reversed.hpp>` | `rbegin()`/`rend()` | 62,2 k Z. für eine Rückwärts-Iteration |
+| `ResolutionContainer.h` | `<boost/range/sub_range.hpp>` | gelöscht | 62,4 k Z., im ganzen Baum **nirgends benutzt** |
+| `RegistrationActivator.h`, `IRegistrationDescriptor.h` | `<boost/signals2.hpp>` | `Hypodermic/Signal.h` | 109,0 k Z., der teuerste Einzel-Include des Projekts |
+| `CMakeLists.txt` | `target_include_directories(... INTERFACE ...)` | `... SYSTEM INTERFACE ...` | Fremdcode gehört als System-Header behandelt |
+| `LogLevel.h` | `(int) logLevel` | `static_cast<int>(logLevel)` | sonst `-Werror`-Blindgänger |
+
+Dazu in der Projekt-Halbschale: `Feature.h`/`Features.h` forward-deklarieren
+`Hypodermic::Container`/`ContainerBuilder` (beide werden nur als `&` bzw. in
+`std::shared_ptr` gebraucht). IWYU-Folge: 7 Implementierungsdateien includen die
+Hypodermic-Header jetzt selbst (`StartupBuilder.cpp`, `BaseFeature.cpp`,
+`CommandLineFeature.cpp`, `HttpFeature.cpp`, `PropertyFeature.cpp`,
+`examples/main.cpp`, `examples/worker.cpp`) – vier davon waren im Unity-Build
+von Nachbar-TUs maskiert.
+
+### `Hypodermic/ContainerBuilder.h` isoliert
+
+| | vorher | nachher | Δ |
+|---|--------|---------|---|
+| präprozessierte Zeilen | 151.116 | 74.438 | **−50,7 %** |
+| Bytes | 4.166.824 | 1.952.702 | **−53,1 %** |
+| Boost-Dateien im Graph | 2.983 | 0 | −100 % |
+
+### `-fsyntax-only` je betroffener TU (Non-Unity-Flags des TUs, Best-of-2)
+
+| TU | vorher | nachher | Δ |
+|----|--------|---------|---|
+| `StartupBuilder.cpp` | 3,77 s | 2,29 s | −39,3 % |
+| `examples/worker.cpp` | 5,48 s | 3,63 s | −33,8 % |
+| `VirtualGroupBootstrapPlugin.cpp` | 2,88 s | 2,08 s | −27,8 % |
+| `PropertyFeature.cpp` | 10,09 s | 8,19 s | −18,8 % |
+| `CommandLineFeature.cpp` | 10,56 s | 8,59 s | −18,7 % |
+| `HttpFeature.cpp` | 10,06 s | 8,18 s | −18,7 % |
+| `BaseFeature.cpp` | 8,42 s | 7,10 s | −15,7 % |
+| `examples/main.cpp` | ~6,06 s | 4,88 s | −19,4 % (≈) |
+| **Summe** | **57,3 s** | **44,9 s** | **−21,6 %** |
+
+`examples/main.cpp` ist nur näherungsweise belastbar: der `git show HEAD:`-Vorher-Stand
+baut nicht gegen die parallel laufenden WIP-Header der Feature-Arbeit, dort
+wurden nur die von diesem Datensatz geänderten Header substituiert.
+
+### Der IDE-Fall: TU, die nur `Feature.h` includiert
+
+Der eigentlich interessante Fall für CLion – z. B. eine TU, die nur
+`builder.addFeature<HttpFeature>()` aufruft und den Container nie anfasst:
+
+| | vorher | nachher | Δ |
+|---|--------|---------|---|
+| präprozessierte Zeilen | 153.570 | 55.711 | **−63,7 %** |
+| `-fsyntax-only` | 2,84 s | 0,56 s | **−80,3 %** |
+
+### Über alle TUs
+
+218 Non-Unity-TUs, Summe der präprozessierten Zeilen: 24.150.450 → 23.658.075
+(**−2,0 %**). Der Voll-Build gewinnt wenig, weil die 8 betroffenen TUs nur einen
+kleinen Teil des Volumens ausmachen; die relevanten Ziele sind (a) die
+Inkubationszeit der 8 TUs (−21,6 %) und (b) die Tatsache, dass eine Änderung an
+`Feature.h`/`Features.h` in CLion keine TU mehr aufbohrt, die den DI-Container
+selbst gar nicht benutzt.
+
+### Nebenbefund: `-isystem` schützte vor `-Werror`
+
+Beim Forward-Deklarieren flog `LogLevel.h:31` als `-Werror=old-style-cast` auf, obwohl
+der Cast seit jeher existierte. Ursache: `src/include` ist als `-isystem` markiert,
+Hypodermics eigenes Include-Dir nicht. Wer `LogLevel.h` also über `Feature.h`
+erreichte, bekam alle Warnungen darin unterdrückt; wer es direkt includierte, nicht.
+Die Forward-Declarations haben genau diese latente Landmine sichtbar gemacht. Als
+Fix `SYSTEM` am Hypodermic-Target (korrekte Behandlung von Fremdcode) **plus**
+`static_cast`, damit der Header auch als `-I`-Header warn-frei bleibt.
+
+### Tests
+
+`tests/external/HypodermicSignalTest.cpp` (12 Fälle) sichert die Semantik des
+Signal-Ersatzes ab, die der Container benötigt: Aufrufreihenfolge, leere Slots,
+`disconnect_all_slots`, `Connection::disconnect` (inkl. Idempotenz),
+Mehrfachargumente, sowie die beiden Reentrancy-Fälle – Slot trennt sich während
+des Emit selbst (das Muster aus `ContainerBuilder`) und Slot verbindet sich
+während des Emit. Ohne den Reentrancy-Fall wäre eine naive Implementierung
+durchgerutscht: die erste Fassung iterierte eine Kopie der Slot-Liste und rief
+abgehängte Slots trotzdem noch auf.
+
+Ergebnis: **353/353 grün im Unity- und im Non-Unity-Build.**
+
+### Reproduktion
+
+```bash
+cmake -S . -B build/nonunity -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+cmake --build build/nonunity --parallel $(nproc)
+
+# Gewicht des Containers isoliert
+echo '#include "Hypodermic/ContainerBuilder.h"' | c++ -x c++ -E - \
+  $(python3 -c "
+import json;d=json.load(open('build/nonunity/compile_commands.json'))
+print(next(e['command'] for e in d if 'StartupBuilder' in e['file']))") | wc -l
+```
+
+---
+
 ## ccache-Hinweise
 
 - Der lokale Cache ist klein (Cache-Größe 0,06–0,45 % von 5 GB): die Unity-TUs

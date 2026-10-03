@@ -1,8 +1,9 @@
 #pragma once
 
-#include <boost/signals2.hpp>
 #include <functional>
 #include <memory>
+
+#include "Hypodermic/Signal.h"
 
 namespace Hypodermic {
 
@@ -14,9 +15,7 @@ namespace Hypodermic {
 
     class IRegistrationDescriptor {
     public:
-        typedef boost::signals2::signal<void(
-                const std::shared_ptr<IRegistrationDescriptor> &)>
-                Updated;
+        typedef Signal<const std::shared_ptr<IRegistrationDescriptor> &> Updated;
 
     public:
         virtual ~IRegistrationDescriptor() = default;

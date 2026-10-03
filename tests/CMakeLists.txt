@@ -26,6 +26,7 @@ ADD_EXECUTABLE(base_tests
     features/ConfigComponentsTest.cpp
     features/HistoryComponentTest.cpp
     features/HistoryServiceGatingTest.cpp
+    external/HypodermicSignalTest.cpp
     events/EventBusTest.cpp
     plugins/SharedMemoryBootstrapPluginTest.cpp
     plugins/SingleInstanceBootstrapPluginTest.cpp

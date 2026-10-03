@@ -1,7 +1,5 @@
 #pragma once
 
-#include <boost/algorithm/string.hpp>
-#include <regex>
 #include <string>
 #include <typeinfo>
 
@@ -27,7 +25,18 @@ namespace Hypodermic {
         }
 
         static std::string dotNetify(const std::string &typeName) {
-            return boost::algorithm::replace_all_copy(typeName, "::", ".");
+            std::string result;
+            result.reserve(typeName.size());
+            for (std::string::size_type i = 0; i < typeName.size();) {
+                if (typeName.compare(i, 2, "::") == 0) {
+                    result += '.';
+                    i += 2;
+                } else {
+                    result += typeName[i];
+                    ++i;
+                }
+            }
+            return result;
         }
 
         static std::string demangleTypeName(const std::string &typeName) {
@@ -41,6 +50,10 @@ namespace Hypodermic {
             free(demangledName);
             return result;
 #else
+            // Only non-GNU compilers demangle by hand, so <regex> is needed on
+            // those toolchains only. Keeping it out of the GNU branch removes
+            // ~72k preprocessed lines from every including translation unit.
+            #include <regex>
             std::string demangled = typeName;
             demangled = std::regex_replace(
                 demangled, std::regex("(const\\s+|\\s+const)"), std::string());

@@ -9,6 +9,9 @@
 
 #include "base_library/features/Feature.h"
 
+#include "Hypodermic/Container.h"
+#include "Hypodermic/ContainerBuilder.h"
+
 #include "base_library/core/services/BootstrapService.h"
 #include "base_library/core/services/LoggerService.h"
 #include "base_library/core/services/PersistableService.h"

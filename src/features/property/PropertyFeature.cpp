@@ -1,5 +1,8 @@
 #include "base_library/features/property/PropertyFeature.h"
 
+#include "Hypodermic/Container.h"
+#include "Hypodermic/ContainerBuilder.h"
+
 #include "base_library/core/services/PersistableBean.h"
 #include "base_library/features/property/command_line/PropertyCliComponent.h"
 #include "base_library/features/property/controller/PropertyApi.h"

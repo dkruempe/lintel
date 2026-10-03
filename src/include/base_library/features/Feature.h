@@ -8,12 +8,19 @@
 #include <utility>
 
 #include "base_library/core/utils/TypeName.h"
-#include "Hypodermic/ContainerBuilder.h"
-#include "Hypodermic/Container.h"
 #include "base_library/features/Features.h"
 
 class Configuration;
 class ProcessName;
+
+// The DI container is only referenced through pointers/references in the
+// signatures below, so an incomplete type is enough. Implementations of
+// registerTypes()/initialize() include "Hypodermic/ContainerBuilder.h" and
+// "Hypodermic/Container.h" themselves.
+namespace Hypodermic {
+class Container;
+class ContainerBuilder;
+}  // namespace Hypodermic
 
 /** Interface for all feature implementations */
 class FeatureInterface {

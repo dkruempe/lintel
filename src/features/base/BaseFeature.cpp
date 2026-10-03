@@ -1,5 +1,8 @@
 #include "base_library/features/base/BaseFeature.h"
 
+#include "Hypodermic/Container.h"
+#include "Hypodermic/ContainerBuilder.h"
+
 #include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
 #include "base_library/core/plugins/AdminUserBootstrapPlugin.h"
 #include "base_library/core/plugins/DatabaseBootstrapPlugin.h"

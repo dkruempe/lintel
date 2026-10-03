@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/range/adaptor/reversed.hpp>
 #include <memory>
 #include <vector>
 
@@ -78,10 +77,11 @@ namespace Hypodermic {
 
             if (registrationContexts.empty()) return nullptr;
 
-            for (auto &&registrationContext:
-                    boost::adaptors::reverse(registrationContexts)) {
-                if (!registrationContext->registration()->isFallback())
-                    return resolveErasedType(typeAliasKey, registrationContext);
+            for (auto registrationContext = registrationContexts.rbegin();
+                 registrationContext != registrationContexts.rend();
+                 ++registrationContext) {
+                if (!(*registrationContext)->registration()->isFallback())
+                    return resolveErasedType(typeAliasKey, *registrationContext);
             }
 
             return resolveErasedType(typeAliasKey, registrationContexts.back());

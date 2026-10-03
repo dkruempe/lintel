@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/range/sub_range.hpp>
 #include <exception>
 #include <mutex>
 #include <sstream>
