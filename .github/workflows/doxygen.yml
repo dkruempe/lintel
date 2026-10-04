@@ -57,7 +57,10 @@ jobs:
       # WARN_AS_ERROR is set in the Doxyfile, so any new documentation warning
       # fails this job. Baseline is zero warnings.
       - name: Generate Doxygen documentation
-        run: doxygen Doxyfile
+        run: |
+          # Doxygen creates OUTPUT_DIRECTORY but not its parents
+          mkdir -p build/doxygen
+          doxygen Doxyfile
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v4
