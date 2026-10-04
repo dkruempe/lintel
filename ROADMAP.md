@@ -28,7 +28,7 @@
 
 ### Secrets & persönliche Daten (kritischste Punkte)
 
-> #### 🔴🔴 SOFORT: Der Passwort-History-Punkt ist jetzt kein Release-Vorbereitungsthema mehr, sondern eine laufende Exposition
+> #### 🔴🔴 SOFORT: Passwort-Rotation ist offen – der History-Rewrite ist seit 04.10.2026 durchgeführt, die Exposition damit aber **nicht vollständig behoben**
 >
 > **Verifiziert am 04.10.2026 per API:** `gh repo view` → **`visibility: PUBLIC`**. Das Repo ist also bereits öffentlich, während dieser Roadmap-Abschnitt und §3 es noch als privat geführt haben. Damit ist das Klartext-Passwort aus der Historie **jetzt für jeden mit einem `git clone` abrufbar**, und `security_and_analysis` meldet für dieses Repo **`secret_scanning: disabled`** und `secret_scanning_push_protection: disabled` – GitHub sucht also weder die Historie noch neue Commits nach dem Wert. Es gibt keinen Mechanismus, der den Betreiber alarmiert.
 >
@@ -51,7 +51,49 @@
 
 ### Runbook: History-Rewrite für das Klartext-Passwort
 
-> **Status: vorbereitet, aber NICHT ausgeführt.** Ein History-Rewrite ist nicht rückgängig zu machen und wird per Force-Push in ein bereits öffentliches Repo geschrieben – die Ausführung ist eine bewusste Betreiberentscheidung. Der Wert wird hier bewusst nicht eingesetzt; er wird im Schritt „Wert ermitteln" lokal gelesen.
+> **Status: AUSGEFÜHRT am 04.10.2026 (Betreiber-Entscheidung).** Ergebnis in zwei Teilen: die drei Branches und der Tag `v0.1.0` sind **sauber**, die **PR-Refs sind es nicht** und lassen sich von der Kommandozeile aus nicht entfernen. Details und Beweis unten, das Runbook ist um die zwei tatsächlich aufgetretenen Lücken ergänzt.
+
+#### Ergebnis des Laufs (verifiziert, nicht behauptet)
+
+| Bereich | Ergebnis | Nachweis |
+|---|---|---|
+| `master`, `feature/dev`, `feature/cpp23-bump-and-modules`, Tag `v0.1.0` | **bereinigt** | Frischer Clone **nur** mit Branches + Tag: Objekt-Scan über **alle** Blobs → **0 Treffer** (4701 Blobs) |
+| Inhalt des Repos | **unverändert** | Tree von `master` vor und nach dem Rewrite **identisch** (`eefc1aaa…`) – nur die Historie ist neu geschrieben, keine Datei wurde inhaltlich verändert |
+| Tests | **354/354 grün** auf der umgeschriebenen Historie, Release-Build ohne Warnung bei `-Werror` | `ctest --label-regex unit` |
+| PR-Refs `refs/pull/1,3,4,5/head` | **NICHT bereinigt** | Erst nach `git fetch '+refs/pull/*:refs/remotes/pull/*'` steigt der Blob-Zähler von 4701 auf 4815 und der Scan findet den Wert. Alle vier PRs sind **gemerged**; ihre Head-Refs zeigen auf die alten Pre-Merge-Commits. **Nicht per `git push` ansteuerbar** – GitHub verweigert Schreibzugriffe auf `refs/pull/*`. |
+| Normaler `git clone` | **ohne Secret** | `git cat-file -t <blob>` → *Not a valid object name* |
+
+**Damit ist die Exposition nicht vollständig weg.** Ein `git clone` gibt den Wert nicht mehr her – aber wer bewusst `refs/pull/*` abruft, bekommt ihn weiterhin. Das ist der dokumentierte Fall „sensitive data removal": neben dem Rewrite ist die **Rotation des Passworts zwingend**, und für die PR-Refs braucht es den GitHub-Support (siehe „Offene Restarbeiten").
+
+#### Zwei Lücken, die erst das Ausführen gezeigt hat
+
+Beide waren in der ersten Fassung dieses Runbooks nicht enthalten und hätten das Ergebnis verfälscht – sie sind jetzt als Schritte ergänzt:
+
+1. **`refs/remotes/origin/*` halten die alte Historie am Leben.** `git filter-repo --refs refs/heads/…` rewritet nur die lokalen Branches. Die Remote-Tracking-Refs zeigten weiter auf den alten Stand, der Blob blieb dadurch erreichbar, der erste Verifikationslauf meldete korrekt „1 Treffer". **Fix:** Remote-Tracking-Refs löschen, `git reflog expire --expire=now --all`, `git gc --prune=now` – erst danach 0 Treffer.
+2. **`refs/pull/*` existieren nur serverseitig.** Sie tauchen in einem `--mirror`-Clone auf, nicht in `git for-each-ref` des lokalen Repos, und sind per Push nicht veränderbar. Ohne diesen Schritt wäre „PRs sind gemerged, also unkritisch" die falsche Schlussfolgerung.
+
+**Und eine Fehlerquelle in der Verifikation selbst:** `git cat-file --batch` akzeptiert **kein** `<oid> <size>` als Eingabe – es antwortet `<input> missing` und der Byte-Stream desynchronisiert sich stillschweigend, woraufhin ein naiv gepufferter Textscan **0 Treffer** meldet, also ein falsches „Passwort ist weg". Der zuverlässige Aufruf ist `printf '%s\n' "$oid"` pro Zeile **nur** mit der Objekt-ID, und die Ausgabe muss gegen `missing`/Längenfehler abgesichert werden. Gegenprobe: derselbe Scanner **muss** den bekannten Blob im Backup-Mirror finden, sonst prüft er nichts.
+
+#### Korrigiertes Runbook (für den nächsten Fall)
+
+1. **Wert ermitteln, ohne ihn zu notieren:** `git show 6add07e:cfg/bootstrap.xml | grep -n 'password='`
+2. **Rotation zuerst** – Passwort auf allen Instanzen ersetzen, auf denen es als Zugangsdienst lebt.
+3. **Sicherung:** `git clone --mirror … backup.git` (enthält weiterhin das Secret – offline halten, nicht in die Cloud).
+4. **Rewrite** mit explizitem `--refs` auf Branches **und** Tag `v0.1.0`.
+5. **Remote-Tracking-Refs löschen + prune** (siehe Lücke 1): `git update-ref -d` je `refs/remotes/origin/*`, dann `git reflog expire --expire=now --all && git gc --prune=now`.
+6. **Verifikation lokal** über alle Objekte – mit der korrigierten Batch-Syntax und einer **Positivkontrolle** (der Scanner muss den Blob im Backup finden).
+7. **Inhalts-Gegenprobe:** Tree-Hash von `master` vor und nach dem Rewrite vergleichen – muss identisch sein.
+8. **Force-Push** der Branches und des Tags.
+9. **Verifikation auf dem Server:** frischer Clone **nur** mit Branches + Tag → muss 0 Treffer geben. Zusätzlich mit `+refs/pull/*` → **hier überraschend 1 Treffer**, das ist der Normalfall und kein Fehler im Rewrite.
+10. **GitHub-Support:** Entfernung der `refs/pull/*` und der gecachten Objekte anfordern (Prozess „removing sensitive data").
+11. **Push-Protection aktivieren** (`secret_scanning_push_protection`, `secret_scanning_validity_checks` – beide derzeit `disabled`).
+
+#### Offene Restarbeiten
+
+- [ ] **🔴 Passwort rotieren** – unverändert oberste Priorität, unabhängig vom Rewrite. Der Wert war 3 Jahre in der Historie; die PR-Refs halten ihn weiterhin.
+- [ ] **🔴 GitHub-Support:** Löschung der `refs/pull/1,3,4,5/head` und der gecachten Objekte anfordern. Angaben: Repo `dkruempe/cpp-base-library`, betroffene Objekt-ID des Secret-Blobs nennen (steht im lokalen Backup-Mirror unter `d8e0d2ea…`), Pfad `cfg/bootstrap.xml`, Force-Push-Zeitpunkt 04.10.2026. **Ergänzend erwähnen:** falls die Empfehlung lautet, das Repo zwischenzeitlich auf `private` zu setzen, ist das die einfachste Maßnahme, weil public Repos sonst ggf. schon geforkt wurden.
+- [ ] **PRs #1/#3 löschen** (alle vier sind gemerged und damit funktional entbehrlich) – das entfernt die Refs ohne Support-Ticket. **Erfolg prüfen**, nicht annehmen: `git fetch '+refs/pull/*:refs/remotes/pull/*'` darf danach den Blob nicht mehr bringen.
+- [ ] **`secret_scanning_push_protection` aktivieren**, damit der Platzhalter-Passwort nicht beim nächsten Mal durchrutscht.
 
 **Reihenfolge ist Teil des Plans: Rotation zuerst, Rewrite danach.**
 
@@ -92,7 +134,7 @@
 - [ ] **Klartext-DB-Passwort: Rotation + History-Rewrite – 🔴 OFFEN, höchste Priorität, EXPONIERT (04.10.2026)** *(Arbeitsbaum-Teil ist erledigt, die zwei gefährlichen Teile stehen aus.)*
   **Erledigt:** Der Klartextwert steht nicht mehr im Arbeitsbaum. Alle Fundstellen repo-weit gesucht und durch den Platzhalter `${ADMIN_PASSWORD}` ersetzt: `cfg/bootstrap.xml:41` (auskommentierte `DEFAULT_PSQL`-Connection, Kommentar „das alte Passwort steht in der Git-Historie und muss rotiert werden" direkt dahinter) und `examples/db.cpp` (PG-Connection-Entry). Der Benutzername `dominik` wurde auf den neutralen Seed-User `example_user` umgestellt, passend zum bereinigten Seed. Der Klartextwert wurde auch aus **diesem** Roadmap-Absatz entfernt – eine repo-weite `grep`-Suche über den Arbeitsbaum ist trefferfrei. *Formatier-Nebenwirkung:* `clang-format` normalisiert bei `--lines` den umgebenden Funktions-Scope, deshalb ist der Diff in `examples/db.cpp` größer als die eine Zeile (nötig für das Format-Gate, `scripts/check-format.sh master`: 29 → 1 Violations).
   **Offen (1) – Rotation, sofort und unabhängig vom Rewrite:** Das Passwort ist als Klartext 3 Jahre lang in der Historie gestanden. Ob der Wert noch irgendwo als gültiges Zugangsdienst lebt, ist aus dem Repo **nicht** feststellbar. Zu rotieren: PostgreSQL-Rolle (lokal, CI-Service, Docker-Compose-Volumes), jedes deployte System und ggf. alles, was denselben Wert wiederverwendet hat. **Die Rotation ist der wichtigere der beiden Schritte** – ein History-Rewrite ohne Rotation löscht nur die Spur, nicht das Zugangsdienst, und der Hash bleibt aus der Historie rekonstruierbar.
-  **Offen (2) – History-Rewrite, Reihenfolge nicht umkehren:** Erst rotieren, dann die Historie bereinigen. Wenn umgekehrt gearbeitet wird, entsteht zwischen Force-Push und Rotation ein Zeitfenster, in dem der alte Wert noch immer gültig war.
+  **Offen (2) – History-Rewrite: teilweise erledigt (04.10.2026).** Erst rotieren, dann bereinigen – die Reihenfolge wurde bewusst vom Betreiber umgangen, der Rewrite ist ausgeführt. Ergebnis: die drei Branches und der Tag `v0.1.0` sind sauber (frischer Clone → 0 Treffer, Tree-Hash unverändert, 354/354 Tests grün). **Was bleibt: die vier `refs/pull/*`-Refs der gemergten PRs sind per Push nicht ansteuerbar und tragen den Blob weiter** – dafür GitHub-Support und ggf. Löschen der PRs, siehe das Runbook unten. Details, Beweise und die zwei aufgetretenen Lücken dort.
   **Offen (3) – bereits veröffentlichte Klons bleiben betroffen:** Nach dem Force-Push ist `master` bereinigt, aber jeder bereits geklonte oder geforkte Stand enthält den Blob weiter. Das lässt sich nicht zurückholen; die Rotation ist der Grund, warum der Rewrite nur die kosmetische Hälfte ist. Für die verbleibende Exposition ist eine neue Historie + Warnung an bekannte Nutzer die einzige Option – aktuell hat das Repo **keine** Nutzer, was den Rewrite jetzt günstig macht.
   **Ausführungsplan (Runbook):** siehe „Runbook: History-Rewrite" unten.
 
@@ -374,7 +416,7 @@ Der erste `build-mode: none`-Lauf hat **95 offene Alerts** gemeldet. Ein Workflo
 
 - [x] **`.gitignore`/`git ls-files` auditieren** – **ERLEDIGT (04.10.2026).** Audit: `git ls-files | grep -E "(log/|CMakeCache.txt|cmake_install.cmake|CTestTestfile|compile_commands|.vscode/|.idea/|.cache/|ccache|vgcore|core.)"` ergab keine getrackten Treffer. `git ls-files --others --ignored --exclude-standard` nur lokales (`bin/`, `build/`, `CMakeUserPresets.json`), durch `.gitignore` abgedeckt. Keine Änderungen an `.gitignore`/Index.
 - [ ] **`bin/`-Alt-Artefakte** (27 alte Test-Binaries) löschen.
-- [ ] **Commit-History-Bereinigung** des Passworts – **🔴 OFFEN und exponiert (04.10.2026).** Der ursprüngliche Plan „ein finaler `git filter-repo`-Lauf **vor** dem ersten öffentlichen Push" ist überholt: Der öffentliche Push ist bereits erfolgt (`visibility: PUBLIC`), der Blob liegt weiterhin in der Historie und `secret_scanning_push_protection` ist `disabled`. Ausführbares Runbook mit Reihenfolge, Verifikationsbefehl und Force-Push in Phase 0. **Rotation vor Rewrite** – der Rewrite allein löscht nur die Spur, nicht das Zugangsdienst.
+- [x] **Commit-History-Bereinigung** des Passworts – **Branches/Tag erledigt (04.10.2026), Rest über PR-Refs offen.** `git filter-repo` über `master`, `feature/dev`, `feature/cpp23-bump-and-modules` und Tag `v0.1.0`, Force-Push, verifiziert: frischer Clone mit Branches+Tag → **0** Blobs mit dem Wert, Tree-Hash von `master` unverändert, 354/354 Tests grün. **Offen:** die vier `refs/pull/*` der gemergten PRs sind per Push nicht veränderbar und tragen den Blob weiter (Nachweis und Eskalationsweg im Runbook in Phase 0). Der ursprüngliche Plan „Rewrite **vor** dem ersten öffentlichen Push" ist überholt – der öffentliche Push war bereits erfolgt.
 - [ ] Branches aufräumen (`feature/dev`, `feature/cpp23-bump-and-modules`); als Git-Tags archivieren falls relevant.
 
 ---
@@ -384,7 +426,7 @@ Der erste `build-mode: none`-Lauf hat **95 offene Alerts** gemeldet. Ein Workflo
 | Meilenstein | Inhalt | Definition of Done |
 |-------------|--------|---------------------|
 | **v0.1.0-Blocker** | Phase 0 vollständig: Secrets weg, LICENSE/NOTICE, Repo public, Versionierung steht, `config.h`-Makros funktionieren, PG-Tests minimal, Swagger synchron. **CI steht seit 03.10.2026** (Trigger, Matrix, Format-Gate, Postgres, Release-Workflow) | CI grün auf `master` (verifiziert 03.10.2026: 5/5 Jobs, 353/353 Tests), `find_package`-Install-Paket relozierbar, Repo sichtbar |
-| **🔴 Vor allen weiteren Releases** | Passwort-Rotation + History-Rewrite (Phase 0, Runbook). Reihenfolge: Rotation zuerst, dann Rewrite, dann `secret_scanning_push_protection` aktivieren | Objekt-DB-Scan über alle Blobs liefert **0** Treffer, Passwort-Rotation auf allen Instanzen bestätigt |
+| **🔴 Vor allen weiteren Releases** | Passwort-Rotation + Abschluss der History-Bereinigung (Phase 0, Runbook). **Erledigt 04.10.2026:** Rewrite der drei Branches + Tag `v0.1.0`, verifiziert sauber. **Offen:** Rotation, Entfernung der PR-Refs (Support/PR-Löschung), `secret_scanning_push_protection` | Objekt-Scan über **alle** Blobs eines frischen Server-Clones liefert **0** Treffer – auch nach `git fetch '+refs/pull/*'`; Passwort-Rotation auf allen Instanzen bestätigt |
 | **v0.1.0** | Erster Tag `v0.1.0` + GitHub Release + CHANGELOG | Tag mit Assets ✓ (Release `v0.1.0` veröffentlicht 03.10.2026: Tarball + `.sha256` + `swagger.yaml`, ohne `cfg/certs/`), `conan create` funktioniert |
 | **v0.2.0** | Namespace-Umzug `base_library::` + Repo-Rename abgeschlossen (Abschnitt 2), Breaking-Change dokumentiert | Alle Tests grün nach Umzug, Migrationstabelle im CHANGELOG |
 | **v0.3.0** | Kompilierzeit-P0/P1 umgesetzt (20.–22.10.2026, Abschnitt 4) inkl. `LoggerService.h`-Refactor und Boost-Entkopplung (Breaking: `pid_t`, `shm::`-Funktionen); offen: Boost-Install schrumpfen, ccache-Hit-Rate über mehrere CI-Läufe messen. CI-Lint-Jobs (Format-Gate + clang-tidy) seit 03.10.2026 ✓; offen: repo-weiter Reformat, `lint` von advisory auf blockierend | Messprotokoll im Repo (✓ `docs/compile-time-measurements.md`), `tests/unity_0` aufgeteilt (✓), `LoggerService.h` ohne spdlog (✓, −18,6 % Voll-Build), `child.hpp` nur noch in 2 TUs (✓), Breaking-Change-Tabelle im CHANGELOG, ccache-Hits > 70 % |
