@@ -17,3 +17,9 @@ log
 include/config.h
 CMakeUserPresets.json
 cfg/.history
+
+# TLS certificates (generated locally)
+cfg/certs/*.key
+cfg/certs/*.crt
+cfg/certs/*.csr
+cfg/certs/*.srl
