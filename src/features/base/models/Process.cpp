@@ -127,7 +127,9 @@ bool Process::hasActiveWindow() const { return m_activeFromHour.has_value() && m
 
 bool Process::inActiveWindow() const
 {
-  if (!hasActiveWindow()) { return true; }
+  // checked here instead of via hasActiveWindow() so that the .value() calls below are
+  // provably guarded (clang-tidy bugprone-unchecked-optional-access)
+  if (!m_activeFromHour.has_value() || !m_activeToHour.has_value()) { return true; }
   const std::time_t now = std::time(nullptr);
   std::tm local{};
   // localtime_r writes into the caller's storage, localtime shares one static buffer

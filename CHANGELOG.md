@@ -20,6 +20,7 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 ### Behoben
 - `db::Argument::getValue<TYPE>()`: bei einem unbekannten `ConnectionType` Verlassen die Funktion aus einem Non-`void`-Funktionsrumpf heraus (Undefined Behaviour). Sie wirft jetzt `db::SQLException`. Der `UNDEFINED`-, SQLite- und PostgreSQL-Pfad sind unverändert.
 - `Process::inActiveWindow()` und der `operator<<` in `examples/message_queue.cpp` nutzen nicht mehr die thread-unsicheren `std::localtime`/`std::ctime`, sondern `localtime_r` (kein geteilter statischer Puffer mehr). Zeitformat im Beispiel ist jetzt deterministisch (`%Y-%m-%d %H:%M:%S`) und ohne angehängten Newline.
+- Beispiele und öffentliche Header bereinigt: keine C-Casts über `void*` mehr im Message-Queue-Beispiel, fehlende Empfangsprüfung dort abgesichert, `getValue<TYPE>()` mit explizitem `default`-Zweig und die beiden `operator++(int)`-Iteratoren mit `const`-Rückgabetyp (`CERT DCL21-CPP`). Die vom CodeQL-Fix berührten Dateien sind frei von clang-tidy-Funden.
 
 ### Sicherheitsrelevant
 - Sensitive Daten aus Repo entfernt (TLS-Private-Key, Klartext-Credentials). Meldeweg für Sicherheitslücken in `SECURITY.md` festgelegt (E-Mail statt öffentlichem Issue).

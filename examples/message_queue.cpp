@@ -30,7 +30,7 @@ public:
   template<typename T> void assign(T content)
   {
     static_assert(sizeof(T) <= sizeof(m_content), "content is bigger than reserved size for content");
-    const char *temp = static_cast<char *>(static_cast<void *>(&content));
+    const char *temp = reinterpret_cast<const char *>(&content);
     /*
      * We'll cast an object to a char array. We have to copy it manually
      * and not with std::strcpy or std::strncpy bc. those function will stop
@@ -46,7 +46,7 @@ public:
   template<typename T> T as()
   {
     static_assert(sizeof(T) <= sizeof(m_content), "content is bigger than reserved size for content");
-    return *static_cast<T *>(static_cast<void *>(m_content));
+    return *reinterpret_cast<T *>(m_content);
   }
 };
 
@@ -180,6 +180,10 @@ int main(int /*argc*/, char ** /*argv[]*/)
     MessageQueue<Message> messageQueue("msg_test_queue", 10);
     messageQueue.trySendOf(msg);
     std::optional<Message> messageOpt = messageQueue.tryReceiveOf();
+    if (!messageOpt.has_value()) {
+      std::cerr << "no message received\n";
+      return 1;
+    }
     std::cout << "Message >" << messageOpt.has_value() << "<\n";
     auto testObjectRecv = messageOpt->as<TestObject>();
     std::cout << test << "\n";

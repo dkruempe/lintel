@@ -57,8 +57,12 @@ public:
       return sqlite::Serialization<TYPE>::deserialize(m_value);
     case ConnectionType::UNDEFINED:
       return StringifyService<TYPE>::deserializeFromString(m_value);
+    default:
+      // Reached for an enumerator outside ConnectionType::Value, e.g. from a corrupt or
+      // foreign configuration. Without this the function ran off its end (undefined
+      // behaviour, CodeQL cpp/missing-return).
+      throw db::SQLException("Unknown connection type " + std::to_string(static_cast<int>(m_connectionType)));
     }
-    throw db::SQLException("Unknown connection type " + std::to_string(static_cast<int>(m_connectionType)));
   }
 
   /** Streams the argument value and name. */
@@ -103,7 +107,7 @@ private:
       return *this;
     }
 
-    Iterator operator++(int)
+    const Iterator operator++(int)
     {
       Iterator tmp = *this;
       ++m_pos;
@@ -144,7 +148,7 @@ private:
       return *this;
     }
 
-    ConstIterator operator++(int)
+    const ConstIterator operator++(int)
     {
       ConstIterator tmp = *this;
       ++m_pos;
