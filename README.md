@@ -1,6 +1,11 @@
 # C++ Base Library
 
+[![build](https://github.com/dkruempe/cpp-base-library/actions/workflows/ci.yml/badge.svg)](https://github.com/dkruempe/cpp-base-library/actions/workflows/ci.yml)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 A modular and feature-rich C++ library designed to accelerate the development of modern, high-performance applications.
+
+> **Status:** private repository, pre-1.0 API. Nothing here is covered by semantic versioning yet.
 
 ## Overview
 
@@ -51,7 +56,7 @@ The HTTP server is configured via the `<HttpHost>` section in the bootstrap XML 
 </HttpHost>
 ```
 
-- `cert_path` / `key_path` – PEM certificate/key for HTTPS. When set, the server uses TLS. Relative paths are resolved against the configuration directory (e.g. `cfg/`); the same attributes on `<Client>` enable HTTPS on the client. Self-signed test certificates are committed under `cfg/certs/` for local development.
+- `cert_path` / `key_path` – PEM certificate/key for HTTPS. When set, the server uses TLS. Relative paths are resolved against the configuration directory (e.g. `cfg/`); the same attributes on `<Client>` enable HTTPS on the client. Self-signed test certificates are generated locally under `cfg/certs/` (see below).
 - `ca_cert_path` (client) – PEM CA certificate used to verify the server certificate (e.g. the self-signed `certs/server.crt`). Without it, the HTTPS client rejects self-signed certificates.
 
 To (re)generate self-signed test certificates during initial setup, run:
@@ -60,7 +65,8 @@ To (re)generate self-signed test certificates during initial setup, run:
 ./cfg/certs/generate_certs.sh
 ```
 
-This writes `cfg/certs/server.crt` and `cfg/certs/server.key` (SAN: `localhost`, `127.0.0.1`), which are referenced by the default `cfg/bootstrap.xml`. Replace them with real certificates for production.
+This writes `cfg/certs/server.crt` and `cfg/certs/server.key` (SAN: `localhost`, `127.0.0.1`), which are referenced by the default `cfg/bootstrap.xml`. Both files are git-ignored and are **not** part of the repository, so run this script once before the first build. The CI workflows generate their own throwaway pair, because the TLS integration test requires both files. See [cfg/certs/README.md](cfg/certs/README.md) for details. Replace them with real certificates for production.
+
 - `require_tls` – refuse to start the server without a configured TLS certificate/key (`true`/`false`). Defaults to `false`; use it in production to avoid serving credentials in clear text.
 - `trusted_proxies` – comma-separated list of IPs or CIDR ranges (e.g. `10.0.0.0/8`) whose `X-Forwarded-For` header is trusted for client-IP detection. By default the header is ignored, so clients behind a proxy must be listed here for correct IP binding, rate limiting and lockout.
 
@@ -68,11 +74,16 @@ This writes `cfg/certs/server.crt` and `cfg/certs/server.key` (SAN: `localhost`,
 
 ### Prerequisites
 
-- C++17 (or newer) compatible compiler
+- C++17 (or newer) compatible compiler (CI uses GCC 13 and Clang 18)
 - [CMake](https://cmake.org/) (version 3.16 or newer)
-- [Conan](https://conan.io/) (C/C++ Package Manager)
+- [Conan](https://conan.io/) version 2 (C/C++ Package Manager)
+- [Ninja](https://ninja-build.org/) (the generator used by CI)
+- Optionally [ccache](https://ccache.dev/) to speed up repeated builds
+- A running PostgreSQL if you want the database-backed tests to do more than skip
 
 ### Building the Project
+
+The commands below are identical to the ones the CI pipeline runs (`Release`, GCC 13, Ninja).
 
 1.  **Clone the repository:**
     ```bash
@@ -80,23 +91,37 @@ This writes `cfg/certs/server.crt` and `cfg/certs/server.key` (SAN: `localhost`,
     cd cpp-base-library
     ```
 
-2.  **Install dependencies using Conan:**
-    This command will download and set up the required libraries.
+2.  **Install the dependencies with Conan:**
     ```bash
-    conan install . --output-folder=cmake-build-debug --build=missing
+    conan install . --output-folder=build --build=missing \
+        -s build_type=Release \
+        -c tools.cmake.cmaketoolchain:generator=Ninja
     ```
 
-3.  **Configure the project with CMake:**
-    This command generates the build files, linking the Conan dependencies.
+3.  **Generate the local TLS test certificates:**
     ```bash
-    cmake -S . -B cmake-build-debug -DCMAKE_TOOLCHAIN_FILE=cmake-build-debug/conan_toolchain.cmake
+    ./cfg/certs/generate_certs.sh
     ```
 
-4.  **Build the library, examples, and tests:**
+4.  **Configure the project with CMake:**
     ```bash
-    cmake --build cmake-build-debug --parallel
+    cmake -S . -B build/build/Release \
+        -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+        -G Ninja
     ```
-    The compiled binaries will be located in the `bin` directory.
+
+    Drop `-DCMAKE_CXX_COMPILER_LAUNCHER=ccache` if you do not have `ccache` installed.
+
+5.  **Build the library, examples, benchmarks, and tests:**
+    ```bash
+    cmake --build build/build/Release --parallel $(nproc)
+    ```
+    The compiled binaries are written to the `bin/` directory.
+
+A Debug build works the same way with `-s build_type=Debug`, `-DCMAKE_BUILD_TYPE=Debug`
+and `-B build/build/Debug`.
 
 ## Usage
 
@@ -129,13 +154,21 @@ This project uses [Conan](https://conan.io/) to manage the following external li
 
 ## Testing
 
-The library is tested using the [Catch2](https://github.com/catchorg/Catch2) framework. To run the tests, build the project and then execute `ctest` from the build directory:
+The unit tests use [Catch2](https://github.com/catchorg/Catch2) and are built as a single `base_tests` binary. Build the project and run the unit tests from the build directory:
 
 ```bash
-cd cmake-build-debug
-ctest
+cd build/build/Release
+ctest --output-on-failure --label-regex unit
 ```
+
+All test files are listed explicitly in `tests/CMakeLists.txt`; new test files are not discovered automatically.
+
+The PostgreSQL-backed tests need a running server (`docker compose up postgres`, database/user/password `test`/`test`/`test` on port `5432`). Without one they are reported as skipped rather than failed.
+
+## Contributing
+
+The checks a change has to pass are documented in [AGENTS.md](AGENTS.md): build, `ctest --output-on-failure --label-regex unit`, `./scripts/check-format.sh <base-branch>` (blocking format gate) and `./scripts/check-tidy.sh <base-branch> build/tidy` (advisory). `CONTRIBUTING.md` and `SECURITY.md` are still on the roadmap.
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [MIT License](LICENSE). Third-party dependencies and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
