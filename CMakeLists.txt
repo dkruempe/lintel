@@ -1,6 +1,31 @@
 cmake_minimum_required(VERSION 3.16)
 set(BASE_LIBRARY_VERSION "0.1.0" CACHE STRING "Release version of base_library (SemVer)")
 project(cpp-base-library VERSION ${BASE_LIBRARY_VERSION})
+
+# Single source of truth for the version number: BASE_LIBRARY_VERSION above. src/include/base_library/config.h
+# is generated from it (VERSION_MAJOR/MINOR/PATCH) and release.yml checks the git tag against it, so the version
+# in swagger.yaml - which documents the same release - has to follow. Fail at configure time instead of shipping
+# two different version numbers.
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/swagger.yaml" BASE_LIBRARY_SWAGGER_SPEC)
+string(REGEX MATCHALL
+    "\n  version:[ \t]*\"?([0-9]+\\.[0-9]+\\.[0-9]+)\"?[ \t\r]*\n"
+    BASE_LIBRARY_SWAGGER_VERSION_MATCHES "${BASE_LIBRARY_SWAGGER_SPEC}")
+list(LENGTH BASE_LIBRARY_SWAGGER_VERSION_MATCHES BASE_LIBRARY_SWAGGER_VERSION_COUNT)
+if(BASE_LIBRARY_SWAGGER_VERSION_COUNT EQUAL 0)
+    message(FATAL_ERROR "swagger.yaml contains no 'info.version' entry - cannot verify it against ${BASE_LIBRARY_VERSION}")
+endif()
+if(NOT BASE_LIBRARY_SWAGGER_VERSION_COUNT EQUAL 1)
+    message(FATAL_ERROR "swagger.yaml contains ${BASE_LIBRARY_SWAGGER_VERSION_COUNT} 'info.version' entries - expected exactly one")
+endif()
+string(REGEX REPLACE "\n  version:[ \t]*\"?([0-9]+\\.[0-9]+\\.[0-9]+)\"?[ \t\r]*\n" "\\1"
+    BASE_LIBRARY_SWAGGER_VERSION "${BASE_LIBRARY_SWAGGER_VERSION_MATCHES}")
+if(NOT BASE_LIBRARY_SWAGGER_VERSION STREQUAL BASE_LIBRARY_VERSION)
+    message(FATAL_ERROR
+        "swagger.yaml declares version '${BASE_LIBRARY_SWAGGER_VERSION}', "
+        "but BASE_LIBRARY_VERSION is '${BASE_LIBRARY_VERSION}'. "
+        "Update swagger.yaml or BASE_LIBRARY_VERSION in this file so both match.")
+endif()
+message(STATUS "swagger.yaml version matches BASE_LIBRARY_VERSION: ${BASE_LIBRARY_SWAGGER_VERSION}")
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 

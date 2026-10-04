@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   title: C++ Base Library API
-  version: "1.0.0"
+  version: "0.1.0"
   description: |
     REST API for the cpp-base-library.
     Authentication: obtain a bearer token via POST /user/login (HTTP Basic auth),
@@ -146,6 +146,54 @@ paths:
           description: Forbidden (wrong content type)
         "500":
           description: Internal server error
+  /process/restart/{processId}:
+    put:
+      summary: Restart a process
+      description: >
+        Stops and starts the process again. Requires a bearer token of a user
+        in the "Admin-Process" group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: processId
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (wrong content type)
+        "501":
+          description: Unknown process id
+        "500":
+          description: Internal server error
+  /process/reset/{processId}:
+    post:
+      summary: Reset a process
+      description: >
+        Resets the restart counter and the failure state of the process without
+        stopping it. Requires a bearer token of a user in the "Admin-Process" group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: processId
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (wrong content type)
+        "501":
+          description: Unknown process id
+        "500":
+          description: Internal server error
   /process/groups/{groupName}:
     get:
       summary: Get all process groups
@@ -163,6 +211,32 @@ paths:
           description: Unauthorized
         "403":
           description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
+  /process/health/{processId}:
+    get:
+      summary: Health of a single process
+      description: >
+        Returns the ProcessInfoDto of one active process. Requires a bearer token
+        of a user in the "Admin-Process" group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: processId
+          in: path
+          required: true
+          type: string
+      responses:
+        "200":
+          description: A successful response
+          schema:
+            $ref: "#/definitions/ProcessInfoDto"
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (wrong content type)
+        "501":
+          description: Unknown or not active process id
         "500":
           description: Internal server error
   /process/start:
@@ -729,6 +803,83 @@ paths:
         "500":
           description: Internal server error
 definitions:
+  ProcessInfoDto:
+    type: object
+    properties:
+      id:
+        type: string
+        description: Library-internal process id
+      path:
+        type: string
+        description: Executable path
+      args:
+        type: array
+        description: Command line arguments
+        items:
+          type: object
+          properties:
+            arg:
+              type: string
+      auto_restart:
+        type: boolean
+        description: Whether the process is restarted automatically
+      restarts:
+        type: integer
+        format: int32
+        description: Restart counter since the last reset
+      max_restarts:
+        type: integer
+        format: int32
+        description: Maximum number of automatic restarts
+      process_id:
+        type: integer
+        format: int32
+        description: Operating system process id
+      runs:
+        type: boolean
+        description: Whether the process is currently running
+      exit_code:
+        type: integer
+        format: int32
+        description: Last exit code, only meaningful if exit_code_valid is true
+      exit_code_valid:
+        type: boolean
+        description: Whether exit_code carries a real exit code
+      group_name:
+        type: string
+        description: Name of the process group
+      group_id:
+        type: string
+        description: Id of the process group
+      resources_valid:
+        type: boolean
+        description: Whether the resource fields below were collected
+      uptime_seconds:
+        type: integer
+        format: int64
+        description: Uptime in seconds, null if resources_valid is false
+      cpu_percent:
+        type: number
+        format: double
+        description: CPU usage in percent, null if resources_valid is false
+      memory_bytes:
+        type: integer
+        format: int64
+        description: Resident memory in bytes, null if resources_valid is false
+    required:
+      - id
+      - path
+      - args
+      - auto_restart
+      - restarts
+      - max_restarts
+      - process_id
+      - runs
+      - exit_code
+      - exit_code_valid
+      - group_name
+      - group_id
+      - resources_valid
   UserPasswordChangeDto:
     type: object
     properties:
