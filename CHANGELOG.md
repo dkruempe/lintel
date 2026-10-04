@@ -24,14 +24,15 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 - Testabschnitt auf `ctest --output-on-failure --label-regex unit` umgestellt; Hinweis auf explizite Testliste in `tests/CMakeLists.txt` ergänzt.
 - Formatprüf-Skript (`scripts/check-format.sh`) und clang-tidy-Skript (`scripts/check-tidy.sh`) werden in Doku referenziert.
 
-## [0.1.0] - 2025-09-XX
+## [0.1.0] - 2026-10-03
 
-Erster Release-Tag `v0.1.0`. Wesentliche Themen (aus Commit-Historie):
+Erster Release-Tag `v0.1.0` (Commit `86b72f4`). Wesentliche Themen (aus Commit-Historie):
 - CI-End-to-End: Trigger auf `master`, Matrix GCC/Clang, Format-Gate, Release-Workflow.
 - Build-System: CMake 3.16+, Conan 2, Ninja, Unity-Builds, PCH, Compiler-Warnings mit `-Werror`.
 - Core-Bibliothek (`kruempelmann::base_library`), Features (HTTP via cpp-httplib, CLI, Property, Persistence PostgreSQL/SQLite), vendored DI (Hypodermic).
 - Tests (Catch2 + trompeloeil), Beispiele, Konfiguration (`cfg/`), Docker-Profile.
-- Lizenz (MIT), `THIRD_PARTY_NOTICES`, Sicherheits-/Doku-Audits in nachfolgenden Commits.
+
+Die folgenden Commits nach diesem Tag (u. a. `LICENSE`, `THIRD_PARTY_NOTICES.md`, CI-Korrekturen, Sicherheits- und Doku-Audits) sind oben unter `[Unreleased]` erfasst.
 
 [Unreleased]: https://github.com/dkruempe/cpp-base-library/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/dkruempe/cpp-base-library/releases/tag/v0.1.0

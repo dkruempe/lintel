@@ -6,7 +6,7 @@ Vielen Dank für dein Interesse an `cpp-base-library`! Wir akzeptieren Beiträge
 
 ## Voraussetzungen
 
-- C++17-kompatibler Compiler (CI testet GCC 13 und Clang 19)
+- C++17-kompatibler Compiler (CI testet GCC 13 und Clang 18)
 - CMake 3.16+
 - Conan 2
 - Ninja
