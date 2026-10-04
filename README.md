@@ -182,7 +182,7 @@ This project uses [Conan](https://conan.io/) to manage the following external li
 
 Docker workflows are defined in [`docker-compose.yml`](docker-compose.yml). The following profiles and commands match the actual configuration:
 
-- **`dev` profile** (`service: dev`, image `cpp-base-library:dev`, target `base`, working dir `/workspace`): mounts the source (`.:/workspace`), caches Conan (`/root/.conan2`), build artifacts (`/workspace/build`), and ccache (`/root/.ccache`). On startup it runs `conan profile detect --force`, installs dependencies with Conan (Release), configures CMake using the generated toolchain, and builds with Ninja in parallel.  
+- **`dev` profile** (`service: dev`, image `cpp-base-library:dev`, target `base`, working dir `/workspace`): mounts the source (`.:/workspace`), caches Conan (`/root/.conan2`), build artifacts (`/workspace/build`), and ccache (`/root/.ccache`). On startup it runs `conan profile detect --force`, installs dependencies with Conan (Release), configures CMake using the generated toolchain, and builds the target in parallel. Note that this profile does not pass `-G Ninja`, so the container builds with CMake's default generator (Makefiles) even though `ninja-build` is installed; pass `-G Ninja` in `docker-compose.yml` if you want the CI generator.  
   ```bash
   docker compose --profile dev up --build
   ```
