@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/SharedMemoryRepsoitoriesDto.h"
+#include "base_library/features/base/controller/SharedMemoryRepositoriesDto.h"
 
 SharedMemoryRepositoriesDto::SharedMemoryRepositoriesDto(
         std::vector<SharedMemoryRepositoryDto> repositories)

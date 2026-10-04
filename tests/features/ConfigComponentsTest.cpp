@@ -5,7 +5,7 @@
 #include <base_library/features/base/configuration/EventBusEntry.h>
 #include <base_library/features/base/configuration/LoggerComponent.h>
 #include <base_library/features/base/configuration/LoggerConfiguration.h>
-#include <base_library/features/base/configuration/LoggerEnrty.h>
+#include <base_library/features/base/configuration/LoggerEntry.h>
 #include <base_library/features/base/configuration/LoggerPathConfiguration.h>
 #include <base_library/features/base/configuration/LoggerSinkConfiguration.h>
 #include <base_library/features/base/configuration/MessageQueueComponent.h>

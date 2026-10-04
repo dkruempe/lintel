@@ -4,7 +4,7 @@
 
 #include "base_library/core/utils/TypeName.h"
 #include "base_library/features/base/configuration/ConfigurationException.h"
-#include "base_library/features/base/configuration/LoggerEnrty.h"
+#include "base_library/features/base/configuration/LoggerEntry.h"
 #include "base_library/features/base/configuration/LoggerPathConfiguration.h"
 
 const LoggerComponent::Shapes LoggerComponent::shape{};

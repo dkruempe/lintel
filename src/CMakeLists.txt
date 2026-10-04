@@ -148,7 +148,7 @@ set(headers
     include/base_library/features/base/configuration/EnvironmentConfiguration.h
     include/base_library/features/base/configuration/LoggerComponent.h
     include/base_library/features/base/configuration/LoggerConfiguration.h
-    include/base_library/features/base/configuration/LoggerEnrty.h
+    include/base_library/features/base/configuration/LoggerEntry.h
     include/base_library/features/base/configuration/LoggerPathConfiguration.h
     include/base_library/features/base/configuration/LoggerSinkConfiguration.h
     include/base_library/features/base/configuration/MessageQueueComponent.h
@@ -172,7 +172,7 @@ set(headers
     include/base_library/features/base/controller/ProcessInfoDto.h
     include/base_library/features/base/controller/ProcessInfosDto.h
     include/base_library/features/base/controller/SharedMemoryRepositoryDto.h
-    include/base_library/features/base/controller/SharedMemoryRepsoitoriesDto.h
+    include/base_library/features/base/controller/SharedMemoryRepositoriesDto.h
     include/base_library/features/base/controller/SharedMemorySegmentDto.h
     include/base_library/features/base/controller/SharedMemorySegmentsDto.h
     include/base_library/features/base/controller/UserDto.h

@@ -17,7 +17,7 @@
 #include "base_library/core/services/DirectoryService.h"
 #include "base_library/core/services/FileService.h"
 #include "base_library/features/base/configuration/LoggerComponent.h"
-#include "base_library/features/base/configuration/LoggerEnrty.h"
+#include "base_library/features/base/configuration/LoggerEntry.h"
 
 // spdlog is used here only, never in the public header
 #include <spdlog/logger.h>
