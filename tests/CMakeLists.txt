@@ -50,6 +50,25 @@ ADD_EXECUTABLE(base_tests
 # Split the single-test-binary unity batch so multiple cores in CI actually get used
 set_target_properties(base_tests PROPERTIES UNITY_BUILD_BATCH_SIZE 8)
 target_compile_features(base_tests PUBLIC cxx_std_17)
+
+# Stand-in for the system `sleep` utility, which ProcessServiceTest needs as a child process that
+# stays alive. Depending on a system package made 16 test cases SKIP silently when it was missing;
+# building it here removes the dependency. It lands in bin/ next to base_tests, like every other
+# binary in this project (CMAKE_RUNTIME_OUTPUT_DIRECTORY).
+ADD_EXECUTABLE(base_test_sleeper helpers/TestSleeper.cpp)
+target_compile_features(base_test_sleeper PRIVATE cxx_std_17)
+target_link_libraries(base_test_sleeper PRIVATE
+    project_warnings
+    myproject_options
+)
+
+# Hand the test binary the exact path of the helper. CMake knows it, so no PATH lookup and no
+# guessing from argv[0]/cwd is needed; findSleepBinary() still falls back to a sibling binary and
+# then to the system `sleep` if the file is gone.
+add_dependencies(base_tests base_test_sleeper)
+target_compile_definitions(base_tests PRIVATE
+    BASE_TEST_SLEEPER_BINARY="$<TARGET_FILE:base_test_sleeper>")
+
 target_link_libraries(base_tests PRIVATE
     kruempelmann::base_library
     Catch2::Catch2WithMain

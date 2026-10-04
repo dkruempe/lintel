@@ -19,20 +19,43 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <system_error>
 #include <thread>
+#include <vector>
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 
+#ifdef BASE_TEST_SLEEPER_BINARY
+#define kHasSleeperPath true
+#else
+#define kHasSleeperPath false
+#endif
+
 namespace {
 
+/** Locate a program that sleeps for a given number of seconds.
+ *
+ * The helper built next to the test binary (target `base_test_sleeper`, see tests/CMakeLists.txt)
+ * wins: CMake passes its exact path in, so there is nothing to find at run time. Only if that file
+ * is missing does this fall back to a sibling in the current working directory and finally to the
+ * system `sleep` via PATH.
+ *
+ * @return path of the sleeper, or an empty string if no usable binary exists */
 std::string findSleepBinary()
 {
-  auto path = boost::process::v1::search_path("sleep");
-  if (!path.empty()) { return path.string(); }
-#if defined(_WIN32)
-  auto timeoutPath = boost::process::v1::search_path("timeout");
-  if (!timeoutPath.empty()) { return timeoutPath.string(); }
-#endif
+  if constexpr (kHasSleeperPath) {
+    const std::filesystem::path helper{ BASE_TEST_SLEEPER_BINARY };
+    std::error_code error;
+    if (std::filesystem::is_regular_file(helper, error)) { return helper.string(); }
+  }
+  std::error_code error;
+  const auto workingDirectory = std::filesystem::current_path(error);
+  if (!error) {
+    const auto candidate = workingDirectory / "base_test_sleeper";
+    if (std::filesystem::is_regular_file(candidate, error)) { return candidate.string(); }
+  }
+  const auto systemSleep = boost::process::v1::search_path("sleep");
+  if (!systemSleep.empty()) { return systemSleep.string(); }
   return {};
 }
 
@@ -51,7 +74,13 @@ struct ProcessServiceFixture
   ProcessServiceFixture()
   {
     sleepBinary = findSleepBinary();
-    processName = std::make_shared<ProcessName>(sleepBinary.empty() ? "/bin/true" : sleepBinary);
+    if (sleepBinary.empty()) {
+      // Not a SKIP: the helper binary is built together with the tests, so a missing one means the
+      // build tree is broken. A SKIP here would turn a broken build into 16 test cases that quietly
+      // stop testing anything - the exact silent hole this replaced.
+      FAIL("no sleeper binary found - expected base_test_sleeper (target) or a system 'sleep' in PATH");
+    }
+    processName = std::make_shared<ProcessName>(sleepBinary);
     envConfig = std::make_shared<EnvironmentConfiguration>();
     configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
     historyService = std::make_shared<NoopHistoryService>(processName);
@@ -60,14 +89,8 @@ struct ProcessServiceFixture
   std::shared_ptr<ProcessService> createService()
   { return std::make_shared<ProcessService>(processName, envConfig, configuration, historyService); }
 
-  Process makeSleepProcess() const
-  {
-#if defined(_WIN32)
-    return Process(sleepBinary, { "5" });
-#else
-    return Process(sleepBinary, { "600" });
-#endif
-  }
+  /** @return a sleeper child process that outlives any test using it */
+  Process makeSleepProcess() const { return Process(sleepBinary, { "600" }); }
 };
 
 }// namespace
@@ -75,7 +98,6 @@ struct ProcessServiceFixture
 TEST_CASE("ProcessService constructor creates self process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   auto self = service->currentOf();
@@ -87,7 +109,6 @@ TEST_CASE("ProcessService constructor creates self process", "[process_service]"
 TEST_CASE("ProcessService::startOf starts a process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -106,7 +127,6 @@ TEST_CASE("ProcessService::startOf starts a process", "[process_service]")
 TEST_CASE("ProcessService::startOf rejects duplicate process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -129,7 +149,6 @@ TEST_CASE("ProcessService::startOf rejects non-existent path", "[process_service
 TEST_CASE("ProcessService::stopOf sends signal and stops process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -146,7 +165,6 @@ TEST_CASE("ProcessService::stopOf sends signal and stops process", "[process_ser
 TEST_CASE("ProcessService::terminateOf force-kills process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -162,7 +180,6 @@ TEST_CASE("ProcessService::terminateOf force-kills process", "[process_service]"
 TEST_CASE("ProcessService::detachOf detaches process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -178,7 +195,6 @@ TEST_CASE("ProcessService::detachOf detaches process", "[process_service]")
 TEST_CASE("ProcessService::restartOf restarts process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -198,7 +214,6 @@ TEST_CASE("ProcessService::restartOf restarts process", "[process_service]")
 TEST_CASE("ProcessService::of returns process by ID", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -223,7 +238,6 @@ TEST_CASE("ProcessService::of returns nullopt for unknown ID", "[process_service
 TEST_CASE("ProcessService::allActiveOf includes current process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   auto info = service->allActiveOf();
@@ -234,7 +248,6 @@ TEST_CASE("ProcessService::allActiveOf includes current process", "[process_serv
 TEST_CASE("ProcessService::allActiveOf refreshes resources for running process", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -263,7 +276,6 @@ TEST_CASE("ProcessService::allActiveOf refreshes resources for running process",
 TEST_CASE("ProcessService::isLastProcess", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   REQUIRE_FALSE(service->isLastProcess());
@@ -280,7 +292,6 @@ TEST_CASE("ProcessService::isLastProcess", "[process_service]")
 TEST_CASE("ProcessService::allGroupsOf with regex", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process p1 = fixture.makeSleepProcess();
@@ -300,7 +311,6 @@ TEST_CASE("ProcessService::allGroupsOf with regex", "[process_service]")
 TEST_CASE("ProcessService::allGroupsOf with regex no match", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process p1 = fixture.makeSleepProcess();
@@ -317,7 +327,6 @@ TEST_CASE("ProcessService::allGroupsOf with regex no match", "[process_service]"
 TEST_CASE("ProcessService process group lifecycle", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process p1 = fixture.makeSleepProcess();
@@ -340,7 +349,6 @@ TEST_CASE("ProcessService process group lifecycle", "[process_service]")
 TEST_CASE("ProcessService process group detach", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process p1 = fixture.makeSleepProcess();
@@ -389,7 +397,6 @@ TEST_CASE("Process restart notification triggers", "[process_service]")
 TEST_CASE("ProcessService::resetOf resets restarts and failure state", "[process_service]")
 {
   ProcessServiceFixture fixture;
-  if (fixture.sleepBinary.empty()) { SKIP("sleep binary not found"); }
   auto service = fixture.createService();
 
   Process process = fixture.makeSleepProcess();
@@ -409,7 +416,10 @@ TEST_CASE("ProcessService::resetOf resets restarts and failure state", "[process
   service->terminateOf(process);
 }
 
-TEST_CASE("ProcessResourceReader reads own process resources", "[process_service]")
+// Hidden tag [linux]: the body only has an implementation on Linux, so the case has to be skipped
+// elsewhere. The tag makes that selectable - `./bin/base_tests "[linux]"` runs only this case, and a
+// platform gate can exclude it explicitly instead of relying on a silent skip.
+TEST_CASE("ProcessResourceReader reads own process resources", "[process_service][linux]")
 {
 #if defined(__linux__)
   auto pid = boost::this_process::get_id();
