@@ -1,0 +1,58 @@
+name: Doxygen
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'src/include/**'
+      - 'Doxyfile'
+      - 'docs/**'
+      - '.github/workflows/doxygen.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: doxygen-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    name: build-docs
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Doxygen
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y doxygen
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Enable Pages
+        uses: actions/enable-pages@v5
+        # Enable GitHub Pages via Actions (avoids Pages API edge cases; CI job has pages:write permission)
+
+      - name: Generate Doxygen documentation
+        run: doxygen Doxyfile
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: build/doxygen/html
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
