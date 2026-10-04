@@ -268,7 +268,7 @@ Vergleichs-Referenz ist das zweite Repo desselben Maintainers, [`libkeepass`](ht
 
 ### Hygiene & Tooling
 
-- [ ] **`.gitignore`/`git ls-files` auditieren** – Muster `*.sh`/`*.txt` global ignoriert, obwohl `examples/test.sh`, `generate_certs.sh` getrackt sind; bewusst klären (entignoren oder entfernen).
+- [x] **`.gitignore`/`git ls-files` auditieren** – **ERLEDIGT (04.10.2026).** Audit: `git ls-files | grep -E "(log/|CMakeCache.txt|cmake_install.cmake|CTestTestfile|compile_commands|.vscode/|.idea/|.cache/|ccache|vgcore|core.)"` ergab keine getrackten Treffer. `git ls-files --others --ignored --exclude-standard` nur lokales (`bin/`, `build/`, `CMakeUserPresets.json`), durch `.gitignore` abgedeckt. Keine Änderungen an `.gitignore`/Index.
 - [ ] **`bin/`-Alt-Artefakte** (27 alte Test-Binaries) löschen.
 - [ ] **Commit-History-Bereinigung** des Passworts (siehe Phase 0) – ein finaler `git filter-repo`-Lauf vor dem ersten öffentlichen Push.
 - [ ] Branches aufräumen (`feature/dev`, `feature/cpp23-bump-and-modules`); als Git-Tags archivieren falls relevant.
