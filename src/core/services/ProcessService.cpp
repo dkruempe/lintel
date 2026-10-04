@@ -60,6 +60,13 @@ void ProcessService::onInitialize()
 std::filesystem::path ProcessService::resolvePath(const std::filesystem::path &path) const
 {
   if (is_regular_file(path)) { return path; }
+  // relative paths are resolved against the configuration directory (e.g. "../bin/worker"
+  // in cfg/bootstrap.xml), so a checked out repository or a docker image works anywhere
+  if (path.is_relative()) {
+    std::filesystem::path configRelative(m_environmentConfiguration->of(EnvironmentConfiguration::ConfigDirectory));
+    configRelative /= path;
+    if (is_regular_file(configRelative)) { return configRelative; }
+  }
   auto optPath = m_environmentConfiguration->pathOf(path.string());
   if (!optPath.has_value()) { throw std::runtime_error(path.filename().string() + ": is not a file"); }
   return optPath.value();

@@ -3,17 +3,23 @@
     <!-- Process Configuration for Application -->
     <Processes>
         <!-- worker processes share memory + event bus with main but never
-             touch the database; config selects their DB-free bootstrap -->
-        <Process name="/home/dominik/cpp-base-library/bin/worker" args="" autoRestart="true"
+             touch the database; config selects their DB-free bootstrap.
+             Relative process names are resolved against the configuration
+             directory (CONFIG_DIRECTORY, default <repo>/cfg), so "../bin/worker"
+             points to <repo>/bin/worker in a checkout and to /workspace/bin/worker
+             in the docker "app" service. -->
+        <Process name="../bin/worker" args="" autoRestart="true"
                  maxRestarts="-1" config="bootstrap_worker"/>
-        <Process name="/home/dominik/cpp-base-library/bin/worker" args="" autoRestart="true"
+        <Process name="../bin/worker" args="" autoRestart="true"
                  maxRestarts="-1" config="bootstrap_worker"/>
     </Processes>
 
     <!-- Logging Configuration for Application -->
     <Loggers>
-        <!-- path to logger directory -->
-        <Path path="~/dev/log/cpp-base-library" create_sub_dirs="true"/>
+        <!-- path to logger directory; a leading "~" is expanded to $HOME
+             (EnvironmentConfiguration::Home), missing directories are created
+             because create_sub_dirs="true" -->
+        <Path path="~/log/cpp-base-library" create_sub_dirs="true"/>
         <!-- Special template for logger -->
         <Logger process_name=".*" level="info" async="false">
             <!-- <LoggerSink type="ConsoleSink" level="trace"/> -->

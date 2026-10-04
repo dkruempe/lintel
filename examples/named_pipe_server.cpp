@@ -159,50 +159,59 @@ void onMessage(const std::string &message) {
     std::cout << "message: " << message << "\n";
 }
 
-void performanceTest() {
-    auto start = std::chrono::steady_clock::now();
-    NamedPipeService const s("/Users/dkruempe/history_service.pipe");
-    std::cout << "start write\n";
-    for (int i = 0; i < 1000; i++) {
-        try {
-            s.write("Hello World!");
-        } catch (std::exception &ex) {
-            std::cout << ex.what() << " i: " << i << "\n";
-        }
-    }
-    std::cout << "finished write\n";
-    auto end = std::chrono::steady_clock::now();
-    std::cout << "Duration: "
-              << std::chrono::duration_cast<std::chrono::milliseconds>(end -
-                                                                       start).count()
-              << "\n";
+/**
+ * pipe path: first command line argument or a default inside the temporary
+ * directory of the current machine
+ */
+std::filesystem::path pipePathOf(int argc, char *argv[])
+{
+  if (argc > 1) { return std::filesystem::path(argv[1]); }
+  return std::filesystem::temp_directory_path() / "history_service.pipe";
 }
 
-int main(int /*argc*/, char * /*argv*/[]) {
+void performanceTest(const std::filesystem::path &path)
+{
+  auto start = std::chrono::steady_clock::now();
+  NamedPipeService const s(path);
+  std::cout << "start write\n";
+  for (int i = 0; i < 1000; i++) {
     try {
-        performanceTest();
-        NamedPipeService const s("/Users/dkruempe/history_service.pipe");
-        s.write("Hello World!");
-        s.write("Hello World 1!");
-        s.write("Hello World 2!");
-        s.write("Hello World <1337>!");
-        std::vector<std::string> const messages = s.read(2);
-        for (const auto &message: messages) {
-            std::cout << "message: " << message << "\n";
-        }
-        std::cout << "Read " << messages.size() << "\n";
-        s.write("New World!");
-        s.write("New World! 1");
-        s.write("New World! 2");
-        s.write("New World! 3");
-        s.write("New World! 4");
-        s.write("New World! 1337");
-        s.read([&](const std::string &message) { onMessage(message); });
+      s.write("Hello World!");
     } catch (std::exception &ex) {
-        std::cerr << ex.what() << "\n";
-    } catch (...) {
-        std::cerr << "Unknown exception"
-                  << "\n";
+      std::cout << ex.what() << " i: " << i << "\n";
     }
-    return 0;
+  }
+  std::cout << "finished write\n";
+  auto end = std::chrono::steady_clock::now();
+  std::cout << "Duration: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "\n";
+}
+
+int main(int argc, char *argv[])
+{
+  try {
+    std::filesystem::path const path = pipePathOf(argc, argv);
+    std::cout << "pipe: " << path << "\n";
+    performanceTest(path);
+    NamedPipeService const s(path);
+    s.write("Hello World!");
+    s.write("Hello World 1!");
+    s.write("Hello World 2!");
+    s.write("Hello World <1337>!");
+    std::vector<std::string> const messages = s.read(2);
+    for (const auto &message : messages) { std::cout << "message: " << message << "\n"; }
+    std::cout << "Read " << messages.size() << "\n";
+    s.write("New World!");
+    s.write("New World! 1");
+    s.write("New World! 2");
+    s.write("New World! 3");
+    s.write("New World! 4");
+    s.write("New World! 1337");
+    s.read([&](const std::string &message) { onMessage(message); });
+  } catch (std::exception &ex) {
+    std::cerr << ex.what() << "\n";
+  } catch (...) {
+    std::cerr << "Unknown exception"
+              << "\n";
+  }
+  return 0;
 }
