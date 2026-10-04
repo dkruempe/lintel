@@ -36,9 +36,9 @@
 
 ### Lizenz & Rechtliches
 
-- [ ] **`LICENSE`-Datei anlegen** (MIT) – README verweist bereits darauf, die Datei existiert aber nicht. Ohne sie ist die GitHub-Lizenz-Erkennung und damit der rechtliche Rahmen leer.
-- [x] **Vendored Hypodermic attribuieren** – ERLEDIGT (03.10.2026, siehe §4 P1): `external/Hypodermic/LICENSE` (MIT, Copyright (c) 2016 Theran Bryant) + `external/Hypodermic/NOTICE` angelegt. Letzter Stand des NOTICEs: alle lokalen Abweichungen vom Upstream-Stand 2017 einzeln aufgelistet, damit ein Re-Sync nachvollziehbar bleibt. **README-Erwähnung steht noch aus.**
-- [ ] **`NOTICE`/`THIRD_PARTY_NOTICES`** für alle externen Dependencies (Conan: Boost, spdlog, fmt, cpp-httplib, rapidjson, date, magic_enum, tinyxml2, libpq, sqlite, openssl, zlib, Catch2, trompeloeil, benchmark; vendored: Hypodermic).
+- [x] **`LICENSE`-Datei anlegen** (MIT) – ERLEDIGT (03.10.2026): `LICENSE` im Repo-Root mit **kanonischem MIT-Wortlaut**, Copyright (c) 2026 Example User. Der README-Link (`[MIT License](LICENSE)`) zeigt damit auf eine existierende Datei, die GitHub-Lizenz-Erkennung greift. Text gegen die vorhandene MIT-Vorlage `external/Hypodermic/LICENSE` diffed – **identisch außer der Copyright-Zeile**.
+- [x] **Vendored Hypodermic attribuieren** – ERLEDIGT (03.10.2026, siehe §4 P1): `external/Hypodermic/LICENSE` (MIT, Copyright (c) 2016 Theran Bryant) + `external/Hypodermic/NOTICE` angelegt. Letzter Stand des NOTICEs: alle lokalen Abweichungen vom Upstream-Stand 2017 einzeln aufgelistet, damit ein Re-Sync nachvollziehbar bleibt. **README-Erwähnung steht noch aus** (Hinweis auf `THIRD_PARTY_NOTICES.md` wäre sinnvoll).
+- [x] **`NOTICE`/`THIRD_PARTY_NOTICES`** für alle externen Dependencies – ERLEDIGT (03.10.2026): `THIRD_PARTY_NOTICES.md` mit Tabelle über **alle 15 Requires aus `conanfile.txt` plus das vendorte Hypodermic**, zusätzlich `lz4` (Laufzeit-Abhängigkeit von `libpq`, nicht gepinnt). Pro Komponente Name, Version, Lizenz, Projekt-URL, Rolle und Copyright; die Build-Tools (`meson`, `ninja`, `flex`, `bison`, …) sind als **nicht weiterverteilt** ausgewiesen. **Lizenzangaben aus den Paket-Dateien im Conan-Cache gelesen** (`~/.conan2/p/<pkg>/licenses/*`, via `conan cache path`), nicht geraten; alle Urheber-Zeilen wörtlich übernommen. **Offen markiert:** Perl-Modul `Text-Template-1.56` im `openssl`-Paket (GPL/Artistic, nur Build-/Test-Helfer), unbesetzte Copyright-Platzhalter in `benchmark`/`openssl` (Apache-2.0-Anhang) sowie fehlende BSL-1.0-Urheberzeilen bei Catch2/trompeloeil/Boost.
 
 ### Repo & CI (Voraussetzung für jede Sichtbarkeit)
 
@@ -254,7 +254,7 @@ Vergleichs-Referenz ist das zweite Repo desselben Maintainers, [`libkeepass`](ht
 
 **Aktionsreihenfolge, sobald das Repo public ist** (Phase 0 geht vor, siehe §1 und Meilenstein-Plan):
 
-1. **Secrets aus der Git-Historie entfernen** – Voraussetzung für alles Öffentliche, auch für eine öffentliche Doku. Danach `LICENSE` anlegen (das README verweist auf eine nicht existierende Datei).
+1. **Secrets aus der Git-Historie entfernen** – Voraussetzung für alles Öffentliche, auch für eine öffentliche Doku. `LICENSE`/`THIRD_PARTY_NOTICES.md` sind seit 03.10.2026 bereits angelegt (Phase 0, „Lizenz & Rechtliches"), vor dem Public-Stellen aber mit aus der Historie entfernen.
 2. **Doxygen + GitHub Pages** nach libkeepass-Vorbild:
    - `Doxyfile`: `INPUT = src/include/base_library docs README.md`, `OUTPUT_DIRECTORY = docs`, `GENERATE_HTML`, kein LaTeX, `HAVE_DOT = NO`, `USE_MDFILE_AS_MAINPAGE` (README als Landingpage), `WARN_IF_UNDOCUMENTED = YES`, `WARN_NO_PARAMDOC = NO` (unser Doku-Stil nutzt selten `@param`), `EXCLUDE_PATTERNS = */html/*`.
    - `docs/html/` in `.gitignore` aufnehmen – **aktuell nicht ignoriert**, sonst würde der generierte Output mit-committet.
