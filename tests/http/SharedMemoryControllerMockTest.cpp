@@ -17,11 +17,14 @@ using namespace trompeloeil;
 
 namespace {
 
-Group adminGroup{"Admin-Shm", {}, true};
-Group userGroup{"User-Shm", {}, true};
+// `k`-Präfix: in Unity-Builds teilen sich alle Test-Dateien einen anonymen
+// Namespace, ein generisches `adminGroup` verdeckt dort lokale Variablen
+// anderer Testdateien (Clang -Wshadow).
+Group kAdminGroup{"Admin-Shm", {}, true};
+Group kUserGroup{"User-Shm", {}, true};
 
 User testUser("Admin", "User", User::Male, "admin@test.com", "admin", "",
-              {adminGroup, userGroup});
+              {kAdminGroup, kUserGroup});
 
 UserToken makeToken() {
     return UserToken{"127.0.0.1", "token-id",
