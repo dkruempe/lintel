@@ -123,6 +123,32 @@ The commands below are identical to the ones the CI pipeline runs (`Release`, GC
 A Debug build works the same way with `-s build_type=Debug`, `-DCMAKE_BUILD_TYPE=Debug`
 and `-B build/build/Debug`.
 
+## Quickstart (5 Minutes)
+
+This minimal example shows how to bootstrap an application using `StartupBuilder`. The snippet below is fully compilable as shown and uses the real library API.
+
+### Prerequisites for the quickstart
+
+1. Build the project as described above (binaries land in `bin/`).
+2. Generate local TLS test certificates once: `./cfg/certs/generate_certs.sh` (self-signed dev certs under `cfg/certs/`). The server requires a certificate/key when `require_tls="true"` in `cfg/bootstrap.xml`.
+3. By default, runtime configuration is loaded from `cfg/` (the repository's `cfg/bootstrap.xml`). The `CONFIG_DIRECTORY` environment variable can override this path if needed (see `src/include/base_library/config.h.in`).
+
+```cpp
+#include <base_library/core/StartupBuilder.h>
+#include <base_library/features/base/BaseFeature.h>
+#include <base_library/features/property/PropertyFeature.h>
+
+int main(int argc, char* argv[]) {
+  auto builder = StartupBuilder::with(argc, argv);
+  builder->addFeature<PropertyFeature>();
+  builder->addFeature<BaseFeature>();
+  builder->start();
+  return 0;
+}
+```
+
+What this does: `StartupBuilder::with(argc, argv)` initializes the core, `addFeature<PropertyFeature>()` enables configuration/property support, `addFeature<BaseFeature>()` adds base services, and `start()` runs the application using the bootstrap configuration from `cfg/bootstrap.xml`. If TLS is enabled in that configuration, valid certificate/key files must exist under `cfg/certs/` (or the overridden `CONFIG_DIRECTORY`).
+
 ## Usage
 
 The primary entry point for using the library is the `StartupBuilder`. This class allows you to fluently configure, initialize, and launch your application.
@@ -151,6 +177,25 @@ This project uses [Conan](https://conan.io/) to manage the following external li
 - [SQLite3](https://www.sqlite.org/index.html)
 - [tinyxml2](https://github.com/leethomason/tinyxml2)
 - [zlib](https://zlib.net/)
+
+## Docker
+
+Docker workflows are defined in [`docker-compose.yml`](docker-compose.yml). The following profiles and commands match the actual configuration:
+
+- **`dev` profile** (`service: dev`, image `cpp-base-library:dev`, target `base`, working dir `/workspace`): mounts the source (`.:/workspace`), caches Conan (`/root/.conan2`), build artifacts (`/workspace/build`), and ccache (`/root/.ccache`). On startup it runs `conan profile detect --force`, installs dependencies with Conan (Release), configures CMake using the generated toolchain, and builds with Ninja in parallel.  
+  ```bash
+  docker compose --profile dev up --build
+  ```
+- **`test` profile** (`service: test`, target `test`, depends on `postgres` with `service_healthy`): runs the tests via the image's `CMD ["ctest", "--output-on-failure"]` from `/workspace/build/build/Release`, with `CONFIG_DIRECTORY=/workspace/cfg`. Postgres (image `postgres:17`, user/password/db `test`/`test`/`test`, port `5432:5432`) is started as a dependency.  
+  ```bash
+  docker compose --profile test up --build --abort-on-container-exit
+  ```
+- **`app` profile** (`service: app`, target `runtime`, working dir `/workspace`, ports `8080:8080`, `CONFIG_DIRECTORY=/workspace/cfg`, depends on `postgres` healthy): runs `./bin/main`. The runtime image contains only the required libraries (`libpq5`, `libsqlite3-0`, `libssl3t64`, `ca-certificates`) and copies `bin/` and `cfg/` from the builder stage.  
+  ```bash
+  docker compose --profile app up --build
+  ```
+
+Notes: the dev container exposes no published ports by default; `postgres` is published on `5432` (as defined). These commands were verified against `docker compose config`.
 
 ## Testing
 

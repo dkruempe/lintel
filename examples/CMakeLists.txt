@@ -57,3 +57,4 @@ add_executable(worker worker.cpp)
 target_compile_features(worker PUBLIC cxx_std_17)
 target_include_directories(worker PRIVATE ${magic_enum_INCLUDE_DIRS})
 target_link_libraries(worker PRIVATE kruempelmann::base_library project_warnings myproject_options)
+
