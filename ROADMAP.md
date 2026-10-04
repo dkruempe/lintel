@@ -126,7 +126,7 @@
 
 ### Offizielle OSS-Dokumente (🟠 Hoch)
 
-- [ ] `LICENSE` (siehe Phase 0), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CHANGELOG.md`, `NOTICE`.
+- [x] `LICENSE` (siehe Phase 0), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md`, `CHANGELOG.md`, `NOTICE`. – **ERLEDIGT (04.10.2026).** Vier neue Root-Dateien angelegt: `CONTRIBUTING.md` (Build/Tests/Format/Lint, Hinw.: neue Testdateien in `tests/CMakeLists.txt`, neue Sources in `src/CMakeLists.txt`, realer Commit-Stil, ROADMAP), `CODE_OF_CONDUCT.md` (Contributor Covenant 2.1, Kontakt `example@example.com`), `SECURITY.md` (E-Mail-Meldeweg ohne öffentliches Issue, realistische Reaktionszeiten, unterstützte Versionen nur `master`/pre-1.0, Hinweis auf Secrets/TLS), `CHANGELOG.md` (Keep-a-Changelog, `[Unreleased]` + `[0.1.0]`, faktenbasiert aus `git log`/`git tag` seit `v0.1.0`). `NOTICE` existiert bereits (`THIRD_PARTY_NOTICES`). **Faktisch erledigt:** die vier geforderten neuen Dateien sind erstellt; `NOTICE` ist bereits vorhanden.
 - [ ] GitHub-Metadata: Description (EN), Topics, Homepage; Repo public stellen.
 
 ### API-Dokumentation (🟡 Mittel)
