@@ -5,7 +5,7 @@
 
 A modular and feature-rich C++ library designed to accelerate the development of modern, high-performance applications.
 
-> **Status:** private repository, pre-1.0 API. Nothing here is covered by semantic versioning yet.
+> **Status:** pre-1.0 API. Nothing here is covered by semantic versioning yet.
 
 ## Overview
 
