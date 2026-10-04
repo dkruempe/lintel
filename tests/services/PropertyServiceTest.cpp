@@ -57,12 +57,12 @@ TEST_CASE("test example service with properties") {
     REQUIRE(propertyExampleClass.enable->getValue() == true);
 
     propertyService->changeValueOf<std::string>(
-            propertyExampleClass.string, "Ich liebe dich Anna Krümpelmann <3!");
+            propertyExampleClass.string, "Ich bin ein Beispieltext <3!");
     REQUIRE(propertyExampleClass.string->getValue() ==
-            "Ich liebe dich Anna Krümpelmann <3!");
+            "Ich bin ein Beispieltext <3!");
     auto stringProperty = propertyService->get(
             "string", "testInstance", "PropertyExampleClass", "testProcess");
-    REQUIRE(stringProperty->toString() == "Ich liebe dich Anna Krümpelmann <3!");
+    REQUIRE(stringProperty->toString() == "Ich bin ein Beispieltext <3!");
 }
 
 TEST_CASE("test create/get of PropertyService") {

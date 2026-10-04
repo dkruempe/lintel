@@ -163,7 +163,7 @@ int main(int /*argc*/, char ** /*argv[]*/) {
     try {
         Message msg("to", "to");
         TestObject test;
-        std::strncpy(test.msg, "Hello World!", sizeof(test.msg));
+        std::strncpy(test.msg, "Hello World from the example!", sizeof(test.msg));
         test.age = 32;
         std::strncpy(test.name, "Example User", sizeof(test.name));
         test.rate = 3.14159265359;

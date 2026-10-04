@@ -39,7 +39,7 @@
     <!-- Database Connections Configuration -->
     <DatabaseConnections>
 	    <!--<DatabaseConnection name="DEFAULT_PSQL" user_name="example_user" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
-	    database_name="temp" type="PostgreSQL"/>-->
+	    database_name="temp" type="PostgreSQL"/>--><!-- NOTE: Das alte Passwort steht in der Git-Historie und muss rotiert werden. ${ADMIN_PASSWORD} durch echtes Passwort ersetzen. -->
         <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true"/>
     </DatabaseConnections>
 

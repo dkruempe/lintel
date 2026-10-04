@@ -254,7 +254,7 @@ public:
             ArrayDto &dto = getData();
             std::strncpy(dto.m_name, "Example User", 100);
             std::strncpy(dto.m_addr, "Musterstraße 1", 100);
-            std::strncpy(dto.m_plz, "48496", 100);
+            std::strncpy(dto.m_plz, "12345", 100);
             std::strncpy(dto.m_location, "Example City", 100);
             dto.m_age = 1337;
         }
@@ -283,7 +283,7 @@ public:
           ArrayDto &dto = getArray()[i];
           std::strncpy(dto.m_name, "Example User", sizeof(dto.m_name) - 1);
           std::strncpy(dto.m_addr, "Musterstraße 1", sizeof(dto.m_addr) - 1);
-          std::strncpy(dto.m_plz, "48496", sizeof(dto.m_plz) - 1);
+          std::strncpy(dto.m_plz, "12345", sizeof(dto.m_plz) - 1);
           std::strncpy(dto.m_location, "Example City", sizeof(dto.m_location) - 1);
           dto.m_age = static_cast<int32_t>(i);
         }
@@ -312,7 +312,7 @@ public:
             TestDataDto dto{ shm::constructString(
                                *m_sharedMemoryService, getSharedMemorySegment(), "Example User"),
               shm::constructString(*m_sharedMemoryService, getSharedMemorySegment(), "Musterstraße 1"),
-              shm::constructString(*m_sharedMemoryService, getSharedMemorySegment(), "48496"),
+              shm::constructString(*m_sharedMemoryService, getSharedMemorySegment(), "12345"),
               shm::constructString(*m_sharedMemoryService, getSharedMemorySegment(), "Example City"),
               static_cast<int32_t>(i) };
             getVector().push_back(dto);
