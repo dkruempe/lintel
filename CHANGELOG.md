@@ -17,12 +17,19 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 - Konfiguration und Beispiele: Parametrisierung von Pfaden (z. B. Named-Pipes, Konfiguration), Entfernung von Klartext-Passwörtern/Credentials und unnötigen Personendaten aus Beispielen/Konfiguration.
 - CI/Build: Anpassungen für GCC 13 (Debug/Unity), `-Wnull-dereference` nur für Clang, `BOOST_UUID_NO_SIMD` in Debug (GCC 13), `CCACHE_DIR` explizit gesetzt; Format- und Lint-Gates (advisory für Lint) dokumentiert.
 
+### Behoben
+- `db::Argument::getValue<TYPE>()`: bei einem unbekannten `ConnectionType` Verlassen die Funktion aus einem Non-`void`-Funktionsrumpf heraus (Undefined Behaviour). Sie wirft jetzt `db::SQLException`. Der `UNDEFINED`-, SQLite- und PostgreSQL-Pfad sind unverändert.
+- `Process::inActiveWindow()` und der `operator<<` in `examples/message_queue.cpp` nutzen nicht mehr die thread-unsicheren `std::localtime`/`std::ctime`, sondern `localtime_r` (kein geteilter statischer Puffer mehr). Zeitformat im Beispiel ist jetzt deterministisch (`%Y-%m-%d %H:%M:%S`) und ohne angehängten Newline.
+
 ### Sicherheitsrelevant
 - Sensitive Daten aus Repo entfernt (TLS-Private-Key, Klartext-Credentials). Meldeweg für Sicherheitslücken in `SECURITY.md` festgelegt (E-Mail statt öffentlichem Issue).
+- CodeQL-Scan für C++ aktiviert (`.github/workflows/codeql.yml`). Die drei Befunde mit Defekt-Charakter (fehlendes `return`, zwei `localtime`/`ctime`-Aufrufe) sind behoben; ein Befund (`cpp/cleartext-storage-database`) wurde als Fehlalarm triagiert – gespeichert wird ausschließlich der gehashte Passwortwert, siehe `ROADMAP.md` §5 „CodeQL-Triage".
 
 ### Entwicklererfahrung
 - Testabschnitt auf `ctest --output-on-failure --label-regex unit` umgestellt; Hinweis auf explizite Testliste in `tests/CMakeLists.txt` ergänzt.
 - Formatprüf-Skript (`scripts/check-format.sh`) und clang-tidy-Skript (`scripts/check-tidy.sh`) werden in Doku referenziert.
+- Regressionstest für den `ConnectionType`-Fehlerpfad in `db::Argument::getValue<TYPE>()` ergänzt.
+- Die von den CodeQL-Fixes berührten Dateien wurden vollständig `clang-format`iert, damit das Format-Regressions-Gate grün bleibt.
 
 ## [0.1.0] - 2026-10-03
 

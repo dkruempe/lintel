@@ -1,11 +1,15 @@
+#include <base_library/core/exceptions/SQLException.h>
+#include <base_library/core/persistence/Arguments.h>
 #include <base_library/core/persistence/Connection.h>
 #include <base_library/core/persistence/Cursor.h>
 #include <base_library/core/persistence/Statement.h>
 
 #include <catch2/catch_all.hpp>
 
+#include <cstring>
 #include <filesystem>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 namespace {
@@ -15,6 +19,17 @@ std::string kCursorTestDb() {
     return (std::filesystem::temp_directory_path() /
             ("cursor_test_" + std::to_string(counter++) + ".db"))
             .string();
+}
+
+db::ConnectionType unknownConnectionType()
+{
+  using Underlying = std::underlying_type_t<db::ConnectionType::Value>;
+  // Value outside the enumerator range, as a corrupt or foreign configuration could
+  // carry. memcpy keeps -Wconversion happy, a direct cast is diagnosed as an error.
+  const Underlying raw = 42;
+  db::ConnectionType::Value value{};
+  std::memcpy(&value, &raw, sizeof(value));
+  return db::ConnectionType(value);
 }
 
 struct CursorFixture {
@@ -292,4 +307,18 @@ TEST_CASE("Cursor: range-for with small fetchSize", "[cursor]") {
         expected++;
     }
     REQUIRE(expected == 7);
+}
+
+TEST_CASE("Argument: typed getValue rejects an unknown connection type", "[argument]")
+{
+  db::Argument argument("1", "unknown_connection_type");
+
+  // UNDEFINED deserializes through StringifyService
+  REQUIRE(argument.getValue<int>() == 1);
+
+  // An enumerator that is not part of ConnectionType::Value used to fall out of the
+  // switch without returning, which is undefined behaviour (CodeQL cpp/missing-return).
+  argument.setConnectionType(unknownConnectionType());
+  REQUIRE_THROWS_AS(argument.getValue<int>(), db::SQLException);
+  REQUIRE_THROWS_AS(argument.getValue<std::string>(), db::SQLException);
 }

@@ -37,19 +37,29 @@ void Process::onTerminate() const
 }
 
 void Process::addOnStartEvent(std::shared_ptr<std::function<void(const Process &)>> onStart)
-{ m_onStart = std::move(onStart); }
+{
+  m_onStart = std::move(onStart);
+}
 
 void Process::addOnStopEvent(std::shared_ptr<std::function<void(const Process &)>> onStop)
-{ m_onStop = std::move(onStop); }
+{
+  m_onStop = std::move(onStop);
+}
 
 void Process::addOnRestartEvent(std::shared_ptr<std::function<void(const Process &)>> onRestart)
-{ m_onRestart = std::move(onRestart); }
+{
+  m_onRestart = std::move(onRestart);
+}
 
 void Process::addOnTerminateEvent(std::shared_ptr<std::function<void(const Process &)>> onTerminate)
-{ m_onTerminate = std::move(onTerminate); }
+{
+  m_onTerminate = std::move(onTerminate);
+}
 
 void Process::addOnFinishEvent(std::shared_ptr<std::function<void(const Process &)>> onFinish)
-{ m_onFinish = std::move(onFinish); }
+{
+  m_onFinish = std::move(onFinish);
+}
 
 void Process::enableAutoStart(int maxAutoRestarts)
 {
@@ -119,7 +129,10 @@ bool Process::inActiveWindow() const
 {
   if (!hasActiveWindow()) { return true; }
   const std::time_t now = std::time(nullptr);
-  const std::tm local = *std::localtime(&now);
+  std::tm local{};
+  // localtime_r writes into the caller's storage, localtime shares one static buffer
+  // between all threads and is therefore a data race (CodeQL cpp/potentially-dangerous-function).
+  if (::localtime_r(&now, &local) == nullptr) { return true; }
   const int32_t hour = local.tm_hour;
   const int32_t from = m_activeFromHour.value();
   const int32_t to = m_activeToHour.value();
