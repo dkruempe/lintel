@@ -31,20 +31,31 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Doxygen
         run: |
           sudo apt-get update
           sudo apt-get install -y doxygen
+          doxygen --version
 
+      # Pages must already be enabled for the repository (build type
+      # "workflow"). There is no actions/enable-pages action.
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Enable Pages
-        uses: actions/enable-pages@v5
-        # Enable GitHub Pages via Actions (avoids Pages API edge cases; CI job has pages:write permission)
+      - name: Check Doxyfile version against CMakeLists.txt
+        run: |
+          doxyfile_version="$(sed -n 's/^PROJECT_NUMBER *=[ ]*"\([^"]*\)".*/\1/p' Doxyfile)"
+          cmake_version="$(sed -n 's/^set(BASE_LIBRARY_VERSION "\([^"]*\)".*/\1/p' CMakeLists.txt)"
+          if [ "$doxyfile_version" != "$cmake_version" ]; then
+            echo "::error::Doxyfile PROJECT_NUMBER $doxyfile_version does not match BASE_LIBRARY_VERSION $cmake_version"
+            exit 1
+          fi
+          echo "version $cmake_version verified"
 
+      # WARN_AS_ERROR is set in the Doxyfile, so any new documentation warning
+      # fails this job. Baseline is zero warnings.
       - name: Generate Doxygen documentation
         run: doxygen Doxyfile
 

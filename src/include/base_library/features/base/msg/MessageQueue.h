@@ -68,10 +68,10 @@ public:
     }
 
     /**
-     * constructor of message queue
-     *
+     * @param processName name of the owning process
      * @param name of message queue. No filepath just name.
      * @param msgCount limit of queue itself
+     * @param realProcessName shared handle used to resolve the process name
      */
     MessageQueue(std::string processName, std::string name, int32_t msgCount,
                  std::shared_ptr<ProcessName> realProcessName)

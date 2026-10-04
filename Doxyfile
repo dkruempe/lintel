@@ -17,6 +17,10 @@ EXAMPLE_PATH           =
 IMAGE_PATH             =
 
 # Build
+# Graphviz is deliberately not used: it is not installable without root in the
+# local dev container, and with WARN_AS_ERROR a missing "dot" aborts the run.
+# Set to YES (and install graphviz locally + in CI) to get inheritance graphs.
+HAVE_DOT               = NO
 EXTRACT_ALL            = YES
 EXTRACT_PRIVATE        = NO
 EXTRACT_PACKAGE        = NO
@@ -45,7 +49,9 @@ WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
 WARN_IF_INCOMPLETE_DOC = YES
 WARN_NO_PARAMDOC       = YES
-WARN_AS_ERROR          = NO
+# Gate: documentation warnings fail the build. Baseline is zero warnings
+# (all 13 warnings found in the first run were fixed in the headers).
+WARN_AS_ERROR          = YES
 
 # Other
 QUIET                  = NO

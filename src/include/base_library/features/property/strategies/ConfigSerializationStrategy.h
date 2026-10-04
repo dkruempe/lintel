@@ -25,7 +25,7 @@ public:
             std::vector<std::shared_ptr<PropertyBase>> properties) = 0;
 
     /**
-     * deserialize a collection of properties
+     * @param fileName name of the file the content originates from
      * @param content serialized properties
      * @return deserialized properties in a vector
      */

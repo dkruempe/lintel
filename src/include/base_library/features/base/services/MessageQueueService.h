@@ -30,21 +30,17 @@ private:
 public:
   /**
    * constructor of message queue service
-   * @param configuration
-   * @param processName
+   * @param configuration parsed bootstrap configuration
+   * @param processName name of the current process
+   * @param messageQueueRepository repository holding the queue metadata
    */
   MessageQueueService(const std::shared_ptr<Configuration> &configuration,
     std::shared_ptr<ProcessName> processName,
     std::shared_ptr<IMessageQueueRepository> messageQueueRepository);
 
   /**
-   * returns self owning message queue, processName is current processName
-   * @param name of message queue
-   * @return message queue
-   */
-  /**
    * Returns a self-owned message queue (processName matches current process).
-   * @param name queue name
+   * @param name of message queue
    * @return message queue instance
    */
   std::unique_ptr<MessageQueue<Message> > of(const std::string &name);

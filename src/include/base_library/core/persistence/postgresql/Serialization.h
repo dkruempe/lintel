@@ -61,11 +61,19 @@ namespace postgresql {
             [](const std::string &string) -> std::string { return string; },
             [](const std::string &string) -> std::string { return string; })
 
-    IMPLEMENT_SERIALIZE(
-            bool, [](bool value) -> std::string { return value ? "t" : "f"; },
-            [](const std::string &string) -> bool {
-                return string == "t" ? true : false;
-            })
+/**
+ * Serialization of bool values.
+ * True is stored as "t", false as "f".
+ *
+ * Hand-written instead of IMPLEMENT_SERIALIZE because Doxygen fails to resolve
+ * the explicit template specialization for the bool template argument.
+ */
+template <>
+class Serialization<bool> {
+ public:
+  static std::string serialize(const bool &value) { return value ? "t" : "f"; }
+  static bool deserialize(const std::string &value) { return value == "t"; }
+};
 
     IMPLEMENT_SERIALIZE(
             date::sys_time<std::chrono::microseconds>,

@@ -14,7 +14,7 @@
  * (the server) only runs once.
  *
  * The plugin acquires an exclusive operating system file lock on
- * <shared memory path>/<process name>.lock and holds it for the lifetime of
+ * &lt;shared memory path&gt;/&lt;process name&gt;.lock and holds it for the lifetime of
  * the process. A second instance of the same process detects the conflict on
  * startup and aborts fatally. The lock is released automatically by the
  * operating system when the process exits or crashes, so no stale locks

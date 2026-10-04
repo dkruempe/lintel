@@ -48,7 +48,7 @@ namespace sqlite {
         /** Destructor. */
         ~Transaction();
 
-        /** @return true if the transaction has been finished (committed or rolled back) */
+        /** @throw db::SQLException if the transaction was already committed or rolled back */
         void isFinished() const;
     };
 }  // namespace sqlite

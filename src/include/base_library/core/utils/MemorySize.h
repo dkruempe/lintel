@@ -18,7 +18,7 @@ public:
 
     /**
      * converts byte to memory size string
-     * @param size as byte integer
+     * @param byte as byte integer
      * @return size as string
      */
     static std::string serialize(std::size_t byte);

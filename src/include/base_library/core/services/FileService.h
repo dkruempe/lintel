@@ -95,8 +95,8 @@ public:
     std::filesystem::path getPath();
 
     /**
-     * write content to file in total
      * @param content to be written in file
+     * @param overwrite replace existing content instead of appending
      */
     void writeToFile(const std::string &content, bool overwrite = false);
 
