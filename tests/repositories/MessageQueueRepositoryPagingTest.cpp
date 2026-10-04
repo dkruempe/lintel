@@ -16,6 +16,8 @@
 #include <string>
 #include <vector>
 
+#include "../helpers/ScopedEnvironmentVariable.h"
+
 namespace {
 
 std::string kMqPagingDb() {
@@ -25,7 +27,11 @@ std::string kMqPagingDb() {
             .string();
 }
 
+// m_configDirectory must be the first member: members initialize in declaration order, so the guard
+// sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration, and it is
+// destroyed last - after the test case is done with it.
 struct MessageQueuePagingFixture {
+  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_mq_paging_cfg" };
     std::string m_dbPath;
     std::shared_ptr<EnvironmentConfiguration> envConfig;
     std::shared_ptr<Configuration> configuration;
@@ -46,7 +52,6 @@ struct MessageQueuePagingFixture {
             );
         )");
 
-        setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_mq_paging_cfg", 1);
         envConfig = std::make_shared<EnvironmentConfiguration>();
         configuration = std::make_shared<Configuration>(
                 std::vector<std::shared_ptr<Component>>{}, envConfig);

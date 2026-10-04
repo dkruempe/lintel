@@ -21,6 +21,8 @@
 #include <string>
 #include <thread>
 
+#include "../helpers/ScopedEnvironmentVariable.h"
+
 namespace {
 
 std::string findSleepBinary()
@@ -34,8 +36,12 @@ std::string findSleepBinary()
   return {};
 }
 
+// m_configDirectory must be the first member: members initialize in declaration order, so the guard
+// sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration, and it is
+// destroyed last - after the test case is done with it.
 struct ProcessServiceFixture
 {
+  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_ps_test_cfg" };
   std::shared_ptr<ProcessName> processName;
   std::shared_ptr<EnvironmentConfiguration> envConfig;
   std::shared_ptr<Configuration> configuration;
@@ -45,7 +51,6 @@ struct ProcessServiceFixture
   ProcessServiceFixture()
   {
     sleepBinary = findSleepBinary();
-    setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_ps_test_cfg", 1);
     processName = std::make_shared<ProcessName>(sleepBinary.empty() ? "/bin/true" : sleepBinary);
     envConfig = std::make_shared<EnvironmentConfiguration>();
     configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);

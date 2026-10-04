@@ -24,6 +24,8 @@
 #include <vector>
 #include <unistd.h>
 
+#include "../helpers/ScopedEnvironmentVariable.h"
+
 namespace {
 
 std::string kTestDb() {
@@ -31,6 +33,9 @@ std::string kTestDb() {
             ("auth_service_test_" + std::to_string(getpid()) + ".db")).string();
 }
 
+// m_configDirectory must be declared before m_dbPath: members initialize in declaration order, so
+// the guard sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration,
+// and it is destroyed last - after the test case is done with it.
 struct AuthFixture {
     AuthFixture() {
         m_dbPath = kTestDb();
@@ -62,7 +67,6 @@ struct AuthFixture {
                 CONSTRAINT user_groups_pk PRIMARY KEY (user_name, group_name)
             );
         )");
-        setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_authtest_cfg", 1);
         envConfig = std::make_shared<EnvironmentConfiguration>();
         configuration = std::make_shared<Configuration>(
                 std::vector<std::shared_ptr<Component>>{}, envConfig);
@@ -97,6 +101,7 @@ struct AuthFixture {
         userRepository->createOf(user);
     }
 
+  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_authtest_cfg" };
     std::string m_dbPath;
     std::shared_ptr<EnvironmentConfiguration> envConfig;
     std::shared_ptr<Configuration> configuration;

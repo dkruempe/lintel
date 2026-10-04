@@ -13,6 +13,8 @@
 #include <filesystem>
 #include <fstream>
 
+#include "../helpers/ScopedEnvironmentVariable.h"
+
 TEST_CASE("Component: getConfigRoot returns configured root name") {
     class TestComponent : public Component {
     public:
@@ -223,7 +225,7 @@ TEST_CASE("HttpComponent: client ca_cert_path resolved against config dir") {
 }
 
 TEST_CASE("Configuration: setEntries and query by type") {
-    setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
 
     class TestEntry : public Entry {
     public:
@@ -255,7 +257,7 @@ TEST_CASE("Configuration: setEntries and query by type") {
 }
 
 TEST_CASE("Configuration: with type_name matching") {
-    setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
 
     class TestComponent : public Component {
     public:

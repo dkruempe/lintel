@@ -21,11 +21,15 @@
 #include <memory>
 #include <vector>
 
+#include "../helpers/ScopedEnvironmentVariable.h"
+
 namespace {
 
 std::shared_ptr<Configuration> configurationWith(
         const std::vector<std::shared_ptr<Entry>> &entries) {
-    setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  // Local guard: it only has to outlive the EnvironmentConfiguration built below, not the whole
+  // test case.
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
     auto config = std::make_shared<Configuration>(
             std::vector<std::shared_ptr<Component>>{},
             std::make_shared<EnvironmentConfiguration>());

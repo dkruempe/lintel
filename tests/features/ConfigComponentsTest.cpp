@@ -16,13 +16,15 @@
 
 #include <catch2/catch_all.hpp>
 
+#include "../helpers/ScopedEnvironmentVariable.h"
+
 #include <cstdlib>
 #include <filesystem>
 #include <sstream>
 
 TEST_CASE("LoggerComponent: parse Logger with ConsoleSink")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -50,7 +52,7 @@ TEST_CASE("LoggerComponent: parse Logger with ConsoleSink")
 
 TEST_CASE("LoggerComponent: parse Logger with RotatingFileSink")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -75,7 +77,7 @@ TEST_CASE("LoggerComponent: parse Logger with RotatingFileSink")
 
 TEST_CASE("LoggerComponent: parse multiple sinks")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -100,7 +102,7 @@ TEST_CASE("LoggerComponent: parse multiple sinks")
 
 TEST_CASE("LoggerComponent: parse with custom pattern")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -119,8 +121,8 @@ TEST_CASE("LoggerComponent: parse with custom pattern")
 
 TEST_CASE("LoggerComponent: parse Path")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
-  setenv("HOME", "/tmp", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  ScopedEnvironmentVariable home{ "HOME", "/tmp" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
 
   LoggerComponent component(envConfig);
@@ -141,7 +143,7 @@ TEST_CASE("LoggerComponent: parse Path")
 
 TEST_CASE("LoggerComponent: parse empty child returns empty")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -152,7 +154,7 @@ TEST_CASE("LoggerComponent: parse empty child returns empty")
 
 TEST_CASE("LoggerComponent: throw on missing process_name")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -167,7 +169,7 @@ TEST_CASE("LoggerComponent: throw on missing process_name")
 
 TEST_CASE("LoggerComponent: throw on missing level")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -182,7 +184,7 @@ TEST_CASE("LoggerComponent: throw on missing level")
 
 TEST_CASE("LoggerComponent: throw on missing async")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -197,7 +199,7 @@ TEST_CASE("LoggerComponent: throw on missing async")
 
 TEST_CASE("LoggerComponent: throw on missing sink type")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
@@ -212,7 +214,7 @@ TEST_CASE("LoggerComponent: throw on missing sink type")
 
 TEST_CASE("LoggerComponent: throw on unknown sink type")
 {
-  setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 

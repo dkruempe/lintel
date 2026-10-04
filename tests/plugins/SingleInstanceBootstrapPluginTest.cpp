@@ -21,6 +21,8 @@
 
 #include <catch2/catch_all.hpp>
 
+#include "../helpers/ScopedEnvironmentVariable.h"
+
 namespace {
 
 std::filesystem::path uniqueLockDir(const std::string &tag) {
@@ -33,7 +35,11 @@ std::filesystem::path uniqueLockDir(const std::string &tag) {
     return path;
 }
 
+// m_configDirectory must be the first member: members initialize in declaration order, so the
+// guard sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration,
+// and it is destroyed last - after the test case is done with it.
 struct SingleInstanceFixture {
+  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
     std::filesystem::path lockDir;
     std::shared_ptr<Configuration> config;
     std::shared_ptr<ProcessName> processName;
@@ -44,7 +50,6 @@ struct SingleInstanceFixture {
                      bool withDatabase = true,
                      const std::filesystem::path &dir = {})
         : lockDir(dir.empty() ? uniqueLockDir(tag) : dir) {
-        setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
         std::vector<std::shared_ptr<Entry>> entries;
         entries.push_back(std::make_shared<SharedMemorySegmentEntry>(
                 type_name<SharedMemorySegmentComponent>(),

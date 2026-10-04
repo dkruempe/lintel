@@ -29,6 +29,8 @@
 
 #include <catch2/catch_all.hpp>
 
+#include "../helpers/ScopedEnvironmentVariable.h"
+
 namespace {
 
 using Segment = boost::interprocess::managed_mapped_file;
@@ -58,7 +60,11 @@ public:
     void onMigrate(int32_t) override {}
 };
 
+// m_configDirectory must be the first member: members initialize in declaration order, so the
+// guard sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration,
+// and it is destroyed last - after the test case is done with it.
 struct ShmPluginFixture {
+  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
     static constexpr std::size_t propertySize = 1u << 20;
     static constexpr std::size_t eventBusSize = 8u << 20;
 
@@ -95,7 +101,6 @@ struct ShmPluginFixture {
         if (dbEntry != nullptr) {
             entries.push_back(dbEntry);
         }
-        setenv("CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test", 1);
         config = std::make_shared<Configuration>(
                 std::vector<std::shared_ptr<Component>>{},
                 std::make_shared<EnvironmentConfiguration>());
