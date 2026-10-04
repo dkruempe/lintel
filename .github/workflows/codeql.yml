@@ -1,0 +1,84 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  analyze:
+    name: Analyze (cpp, security-and-quality)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Default: fast build-mode 'none'. Full instrumented build is optional/experimental.
+        mode: [none]
+
+    env:
+      # Prepare compiler environment for optional full build (used only if mode == 'full')
+      CC: gcc
+      CXX: g++
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+          queries: security-and-quality
+          build-mode: ${{ matrix.mode }}
+          # Path filter reduces noise and focuses on maintainable surfaces.
+          # See commit body for rationale.
+          config: |
+            paths:
+              - src
+              - src/include
+              - examples
+              - tests
+
+      # Full instrumented build (optional, experimental):
+      # Activates deep analysis (macro/constexpr/headers across TUs) via Conan + CMake.
+      # Very expensive due to source-built deps (Boost/OpenSSL/libpq). Disabled by default.
+      - name: Set up build tools (Ninja)
+        if: ${{ matrix.mode == 'full' }}
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y ninja-build ccache
+
+      - name: Install dependencies with Conan (full build only)
+        if: ${{ matrix.mode == 'full' }}
+        run: |
+          pipx install 'conan>=2.0,<3.0'
+          conan profile detect --force
+          conan install . --output-folder=build --build=missing \
+            -s build_type=Release \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      - name: Configure CMake (full build only)
+        if: ${{ matrix.mode == 'full' }}
+        run: |
+          cmake -S . -B build/build/Release \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -G Ninja
+
+      - name: Build (full build only)
+        if: ${{ matrix.mode == 'full' }}
+        run: |
+          cmake --build build/build/Release --parallel "$(nproc)"
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
