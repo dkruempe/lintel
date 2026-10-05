@@ -153,8 +153,9 @@ void ProcessController::stopProcessDelete(const httplib::Request &request,
   case ContentType::ApplicationJson: {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
+    // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
-      response.status = HttpStatusCodes::NotImplemented;
+      response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
       break;
     }
@@ -189,8 +190,9 @@ void ProcessController::terminateProcessDelete(const httplib::Request &request,
   case ContentType::ApplicationJson: {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
+    // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
-      response.status = HttpStatusCodes::NotImplemented;
+      response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
       break;
     }
@@ -225,8 +227,9 @@ void ProcessController::restartProcessPut(const httplib::Request &request,
   case ContentType::ApplicationJson: {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
+    // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
-      response.status = HttpStatusCodes::NotImplemented;
+      response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
       break;
     }
@@ -261,8 +264,9 @@ void ProcessController::resetProcessPost(const httplib::Request &request,
   case ContentType::ApplicationJson: {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
+    // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
-      response.status = HttpStatusCodes::NotImplemented;
+      response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
       break;
     }
@@ -297,8 +301,9 @@ void ProcessController::healthProcessGet(const httplib::Request &request,
   case ContentType::ApplicationJson: {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
+    // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
-      response.status = HttpStatusCodes::NotImplemented;
+      response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
       break;
     }
@@ -308,7 +313,8 @@ void ProcessController::healthProcessGet(const httplib::Request &request,
       response.set_content(processInfoDto.JsonSerializable::serialize(), contentType.getName());
       return;
     }
-    response.status = HttpStatusCodes::NotImplemented;
+    // known, but no active process info left => the addressed resource does not exist (anymore)
+    response.status = HttpStatusCodes::NotFound;
     response.set_content("", contentType.getName());
     break;
   }

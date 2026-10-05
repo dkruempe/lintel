@@ -196,7 +196,7 @@ Stops and starts the process again. Requires a bearer token of a user in the "Ad
 | 200 | A successful response |
 | 401 | Unauthorized |
 | 403 | Forbidden (wrong content type) |
-| 501 | Unknown process id |
+| 404 | Unknown process id |
 | 500 | Internal server error |
 
 ##### Security
@@ -229,7 +229,7 @@ Resets the restart counter and the failure state of the process without stopping
 | 200 | A successful response |
 | 401 | Unauthorized |
 | 403 | Forbidden (wrong content type) |
-| 501 | Unknown process id |
+| 404 | Unknown process id |
 | 500 | Internal server error |
 
 ##### Security
@@ -290,7 +290,7 @@ Returns the ProcessInfoDto of one active process. Requires a bearer token of a u
 | 200 | A successful response |
 | 401 | Unauthorized |
 | 403 | Forbidden (wrong content type) |
-| 501 | Unknown or not active process id |
+| 404 | Unknown or not active process id |
 | 500 | Internal server error |
 
 ##### Security
@@ -341,7 +341,7 @@ Stop a process
 | 200 | A successful response |
 | 401 | Unauthorized |
 | 403 | Forbidden (wrong content type) |
-| 501 | Unknown process id |
+| 404 | Unknown process id |
 | 500 | Internal server error |
 
 ##### Security
@@ -370,7 +370,7 @@ Terminate a process
 | 200 | A successful response |
 | 401 | Unauthorized |
 | 403 | Forbidden (wrong content type) |
-| 501 | Unknown process id |
+| 404 | Unknown process id |
 | 500 | Internal server error |
 
 ##### Security

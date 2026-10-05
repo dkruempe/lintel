@@ -10,17 +10,23 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 ### Hinzugefügt
 - Offizielle OSS-Dokumente: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` sowie `CHANGELOG.md` (dieses Dokument).
 - README: CI-Status-Badge und MIT-Lizenz-Badge, Statushinweis für Pre-1.0/API-Stabilität sowie Hinweise zu Tests, PostgreSQL-Abhängigkeit und Zertifikaten (korrekt an CI angepasst).
+- **Funktionsfähiges CMake-Paket:** `find_package(base_library CONFIG)` findet das installierte Paket, `base_libraryConfig.cmake` (neu) mit `find_dependency`-Kette und Relokationsfähigkeit sowie `base_libraryConfigVersion.cmake` in kanonischem Namen. `LICENSE`, `README.md` und `swagger.yaml` werden mitinstalliert. Das installierte Paket funktioniert aus einem beliebigen Präfix – mit einem externen Gegenproben-Projekt geprüft.
+- README: Abschnitt „Examples" mit Tabelle aller Beispiele (was es zeigt, wie es startet), Erläuterung von `CONFIG_DIRECTORY` und `BOOTSTRAP_CONFIG_NAME`, TLS-Voraussetzungen und SQLite vs. PostgreSQL.
 
 ### Geändert
 - Build-Anleitung im README konsequent an CI (`.github/workflows/ci.yml`) und `AGENTS.md` ausgerichtet (Conan 2, Toolchain-Pfad unter `build/build/Release/generators/conan_toolchain.cmake`, Release-Build mit `ccache`, Ninja, Ausgabe nach `bin/`).
 - TLS-Zertifikate: Private Schlüssel (`server.key`) aus dem Repository entfernt, generierte Zertifikate über `.gitignore` ausgeschlossen; CI erzeugt Zertifikate selbst. Doku (`cfg/certs/README.md`) entsprechend angepasst.
 - Konfiguration und Beispiele: Parametrisierung von Pfaden (z. B. Named-Pipes, Konfiguration), Entfernung von Klartext-Passwörtern/Credentials und unnötigen Personendaten aus Beispielen/Konfiguration.
 - CI/Build: Anpassungen für GCC 13 (Debug/Unity), `-Wnull-dereference` nur für Clang, `BOOST_UUID_NO_SIMD` in Debug (GCC 13), `CCACHE_DIR` explizit gesetzt; Format- und Lint-Gates (advisory für Lint) dokumentiert.
+- **`ProcessController`: unbekannte Prozess-ID antwortet jetzt 404 statt 501.** 501 („Not Implemented") war semantisch falsch – die Ressource existiert nicht, statt dass die Funktionalität fehlt. Betrifft `stopProcessDelete`, `terminateProcessDelete`, `restartProcessPut`, `resetProcessPost` und `healthProcessGet`; `swagger.yaml` und `swagger.md` sind synchron angepasst. **Breaking Change** für Clients, die auf 501 geprüft haben.
 
 ### Behoben
 - `db::Argument::getValue<TYPE>()`: bei einem unbekannten `ConnectionType` Verlassen die Funktion aus einem Non-`void`-Funktionsrumpf heraus (Undefined Behaviour). Sie wirft jetzt `db::SQLException`. Der `UNDEFINED`-, SQLite- und PostgreSQL-Pfad sind unverändert.
 - `Process::inActiveWindow()` und der `operator<<` in `examples/message_queue.cpp` nutzen nicht mehr die thread-unsicheren `std::localtime`/`std::ctime`, sondern `localtime_r` (kein geteilter statischer Puffer mehr). Zeitformat im Beispiel ist jetzt deterministisch (`%Y-%m-%d %H:%M:%S`) und ohne angehängten Newline.
 - Beispiele und öffentliche Header bereinigt: keine C-Casts über `void*` mehr im Message-Queue-Beispiel, fehlende Empfangsprüfung dort abgesichert, `getValue<TYPE>()` mit explizitem `default`-Zweig und die beiden `operator++(int)`-Iteratoren mit `const`-Rückgabetyp (`CERT DCL21-CPP`). Die vom CodeQL-Fix berührten Dateien sind frei von clang-tidy-Funden.
+- `INSTALL_INTERFACE` der Bibliothek enthält keine Build-Maschinen-Absolutpfade der Conan-Cache-Pfade mehr, Includes von `magic_enum`/`rapidjson` kommen über Targets statt über gebackene Pfade, und das private Target `project_warnings` landet nicht mehr im öffentlichen Export.
+- Property-Repositories: die bislang nur als `LOG_ERROR("{}", exception.what())` protokollierten Fehler nennen jetzt die konkrete Operation, die Prozess-ID und die Anzahl der Properties. Das bewusste „Best Effort"-Verhalten ist im Dateikopf begründet.
+- Leere Zweige in `SharedMemoryPropertyRepository.h` (`cpp/empty-block`) auf ihre positive Bedingung umgestellt; `FilePropertyRepository::save()` und `SharedMemoryPropertyRepository::onMigrate()` sind als bewusste No-Op dokumentiert.
 
 ### Sicherheitsrelevant
 - Sensitive Daten aus Repo entfernt (TLS-Private-Key, Klartext-Credentials). Meldeweg für Sicherheitslücken in `SECURITY.md` festgelegt (E-Mail statt öffentlichem Issue).
