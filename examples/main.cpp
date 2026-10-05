@@ -23,6 +23,7 @@
 #include "Hypodermic/ContainerBuilder.h"
 
 #include <cstddef>
+#include <cstdint>
 #include <cstring>
 #include <initializer_list>
 #include <string>
@@ -30,24 +31,27 @@
 
 /** JSON keys of the example record, shared by the fixed-size and the
  *  shm::String flavour of the DAO below. */
-struct ExampleRecordShape {
-    const std::string NAME = "name";
-    const std::string ADDR = "addr";
-    const std::string PLZ = "plz";
-    const std::string LOCATION = "location";
-    const std::string AGE = "age";
+struct ExampleRecordShape
+{
+  // constexpr char* statt std::string: die statische Initialisierung kann dann
+  // nicht werfen (clang-tidy cert-err58-cpp).
+  static constexpr const char *NAME = "name";
+  static constexpr const char *ADDR = "addr";
+  static constexpr const char *PLZ = "plz";
+  static constexpr const char *LOCATION = "location";
+  static constexpr const char *AGE = "age";
 };
 
 /** Checks that every key of the example record is present in the json object. */
-bool hasAllRecordKeys(const rapidjson::Value &obj, const ExampleRecordShape &shape) {
-    bool success = true;
-    for (const std::string *key: {&shape.NAME, &shape.ADDR, &shape.PLZ,
-                                 &shape.LOCATION, &shape.AGE}) {
-        if (!obj.HasMember(key->c_str())) {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", key->c_str());
-        }
+bool hasAllRecordKeys(const rapidjson::Value &obj, const ExampleRecordShape &shape)
+{
+  bool success = true;
+  for (const char *key : { shape.NAME, shape.ADDR, shape.PLZ, shape.LOCATION, shape.AGE }) {
+    if (!obj.HasMember(key)) {
+      success = false;
+      LOG_ERROR("{} not defined in json serialization", key);
     }
+  }
     return success;
 }
 
@@ -98,15 +102,15 @@ public:
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
         writer->StartObject();
-        writer->String(m_shape.NAME.c_str());
+        writer->String(m_shape.NAME);
         writer->String(m_dto.m_name);
-        writer->String(m_shape.ADDR.c_str());
+        writer->String(m_shape.ADDR);
         writer->String(m_dto.m_addr);
-        writer->String(m_shape.PLZ.c_str());
+        writer->String(m_shape.PLZ);
         writer->String(m_dto.m_plz);
-        writer->String(m_shape.LOCATION.c_str());
+        writer->String(m_shape.LOCATION);
         writer->String(m_dto.m_location);
-        writer->String(m_shape.AGE.c_str());
+        writer->String(m_shape.AGE);
         writer->String(std::to_string(m_dto.m_age).c_str());
         writer->EndObject();
     }
@@ -116,6 +120,11 @@ public:
     }
 };
 
+// Die implizit erzeugte Zuweisung kann bei shm::String theoretisch werfen
+// (bad_alloc). Im Beispiel werden die DTOs ausschliesslich einmalig befuellt und
+// danach nur gelesen/serialisiert - eine eigene operator= mit
+// noexcept-Signatur wuerde hier nur Falschheit dokumentieren.
+// NOLINTNEXTLINE(bugprone-exception-escape)
 struct TestDataDto {
     shm::String m_name;
     shm::String m_addr;
@@ -165,15 +174,15 @@ public:
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
         writer->StartObject();
-        writer->String(m_shape.NAME.c_str());
+        writer->String(m_shape.NAME);
         writer->String(m_dto.m_name.c_str());
-        writer->String(m_shape.ADDR.c_str());
+        writer->String(m_shape.ADDR);
         writer->String(m_dto.m_addr.c_str());
-        writer->String(m_shape.PLZ.c_str());
+        writer->String(m_shape.PLZ);
         writer->String(m_dto.m_plz.c_str());
-        writer->String(m_shape.LOCATION.c_str());
+        writer->String(m_shape.LOCATION);
         writer->String(m_dto.m_location.c_str());
-        writer->String(m_shape.AGE.c_str());
+        writer->String(m_shape.AGE);
         writer->String(std::to_string(m_dto.m_age).c_str());
         writer->EndObject();
     }
@@ -271,7 +280,10 @@ public:
     void onMigrate(int32_t currentActiveVersion) override {}
 };
 
-enum TestEnum {
+// uint8_t als Basistyp: der Enum hat genau einen Wert, ein int waere 4 Byte
+// zu viel (clang-tidy performance-enum-size).
+enum TestEnum : std::uint8_t
+{
     Test
 };
 

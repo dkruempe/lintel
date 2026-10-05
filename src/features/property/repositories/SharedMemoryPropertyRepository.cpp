@@ -100,6 +100,12 @@ SharedMemoryPropertyRepository::awake() {
 }
 
 std::vector<std::shared_ptr<PropertyBase>>
+  // Vier gleich typisierte Parameter sind Teil der reinen
+  // PropertyRepository-Schnittstelle; die Reihenfolge entspricht der
+  // Prozess/Property-Hierarchie und wird von allen Implementierungen und
+  // Aufrufern geteilt. Eine Aenderung waere ein Breaking Change der Schnittstelle.
+  // clang-format erwartet hier keinen Umbruch, deshalb NOLINT statt Umbruch.
+  // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 SharedMemoryPropertyRepository::allOf(const std::string &processName,
                                       const std::string &className,
                                       const std::string &instanceName,

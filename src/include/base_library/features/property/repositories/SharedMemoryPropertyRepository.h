@@ -36,13 +36,15 @@ struct PropertyDataDto {
 /** DAO for serializing PropertyDataDto to/from JSON */
 class PropertyDataDao : public JsonSerializable {
 private:
+  // constexpr char* statt std::string: die statische Initialisierung kann dann
+  // nicht werfen (clang-tidy cert-err58-cpp).
     static struct Shapes {
-        const std::string PROCESS_NAME = "process_name";
-        const std::string CLASS_NAME = "class_name";
-        const std::string INSTANCE_NAME = "instance_name";
-        const std::string NAME = "name";
-        const std::string VALUE = "value";
-        const std::string TYPE = "type";
+        static constexpr const char *PROCESS_NAME = "process_name";
+        static constexpr const char *CLASS_NAME = "class_name";
+        static constexpr const char *INSTANCE_NAME = "instance_name";
+        static constexpr const char *NAME = "name";
+        static constexpr const char *VALUE = "value";
+        static constexpr const char *TYPE = "type";
     } m_shape;
 
     const PropertyDataDto &m_dto;
@@ -53,49 +55,49 @@ public:
     void serialize(
             rapidjson::Writer<rapidjson::StringBuffer> *writer) const override {
         writer->StartObject();
-        writer->String(m_shape.PROCESS_NAME.c_str());
+        writer->String(m_shape.PROCESS_NAME);
         writer->String(m_dto.m_processName.c_str());
-        writer->String(m_shape.CLASS_NAME.c_str());
+        writer->String(m_shape.CLASS_NAME);
         writer->String(m_dto.m_className.c_str());
-        writer->String(m_shape.INSTANCE_NAME.c_str());
+        writer->String(m_shape.INSTANCE_NAME);
         writer->String(m_dto.m_instanceName.c_str());
-        writer->String(m_shape.NAME.c_str());
+        writer->String(m_shape.NAME);
         writer->String(m_dto.m_name.c_str());
-        writer->String(m_shape.VALUE.c_str());
+        writer->String(m_shape.VALUE);
         writer->String(m_dto.m_value.c_str());
-        writer->String(m_shape.TYPE.c_str());
+        writer->String(m_shape.TYPE);
         writer->String(m_dto.m_type.c_str());
         writer->EndObject();
     }
 
     bool deserialize(const rapidjson::Value &obj) override {
         bool success = true;
-        if (!obj.HasMember(m_shape.PROCESS_NAME.c_str())) {
+        if (!obj.HasMember(m_shape.PROCESS_NAME)) {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
-                      m_shape.PROCESS_NAME.c_str());
+                      m_shape.PROCESS_NAME);
         }
-        if (!obj.HasMember(m_shape.CLASS_NAME.c_str())) {
+        if (!obj.HasMember(m_shape.CLASS_NAME)) {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
-                      m_shape.CLASS_NAME.c_str());
+                      m_shape.CLASS_NAME);
         }
-        if (!obj.HasMember(m_shape.INSTANCE_NAME.c_str())) {
+    if (!obj.HasMember(m_shape.INSTANCE_NAME)) {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
-                      m_shape.INSTANCE_NAME.c_str());
+                      m_shape.INSTANCE_NAME);
         }
-        if (!obj.HasMember(m_shape.NAME.c_str())) {
+        if (!obj.HasMember(m_shape.NAME)) {
             success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
+            LOG_ERROR("{} not defined in json serialization", m_shape.NAME);
         }
-        if (!obj.HasMember(m_shape.VALUE.c_str())) {
+        if (!obj.HasMember(m_shape.VALUE)) {
             success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.VALUE.c_str());
+            LOG_ERROR("{} not defined in json serialization", m_shape.VALUE);
         }
-        if (!obj.HasMember(m_shape.TYPE.c_str())) {
+        if (!obj.HasMember(m_shape.TYPE)) {
             success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.TYPE.c_str());
+            LOG_ERROR("{} not defined in json serialization", m_shape.TYPE);
         }
         return success;
     }
