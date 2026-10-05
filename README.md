@@ -160,6 +160,45 @@ You can use it to:
 
 For concrete implementation details, please refer to the `examples` directory, which contains several samples demonstrating how to use the various components of the library.
 
+## Examples
+
+Every example is built into `bin/` (`CMAKE_RUNTIME_OUTPUT_DIRECTORY` in the top-level `CMakeLists.txt`); `examples/CMakeLists.txt` holds one `add_executable` entry per example.
+
+| Example | What it shows | How to run |
+|---|---|---|
+| `main.cpp` | The full-stack reference application: `StartupBuilder` with `PropertyFeature`, `BaseFeature`, `CommandLineFeature` and `HttpFeature`, plus three custom shared-memory repositories (object, array, vector) that the HTTP and CLI shared-memory endpoints export. Also starts the `worker` processes declared in the bootstrap configuration. | `./bin/main` |
+| `worker.cpp` | The worker process that `main` starts through `ProcessService`: reads properties from the shared-memory mirror, receives change notifications over the event bus and produces history entries, without ever touching a database. | `BOOTSTRAP_CONFIG_NAME=bootstrap_worker ./bin/worker` (see below) |
+| `property_change.cpp` | Property values and change notifications between two processes, over a shared-memory property repository and the event bus — including a value that does not fit into the event payload and travels through the mirror instead. Self-contained: it creates its own shared-memory files in the temp directory and needs neither `cfg/` nor a database. | `./bin/property_change` |
+| `event_bus.cpp` | `EventBus` on top of a `boost::interprocess` managed shared-memory file: broadcasting to subscribers plus point-to-point events between a forked worker and the main process. Self-contained, like `property_change`. | `./bin/event_bus` |
+| `message_queue.cpp` | A thin wrapper around `boost::interprocess::message_queue`: blocking and non-blocking send/receive of a POD payload. | `./bin/message_queue` |
+| `db.cpp` | The persistence layer on its own — `db::Connection`, `PreparedStatement`, `ParameterBuilder`, `Result` — querying the `history` table. It connects to **PostgreSQL** with a connection entry built in code instead of reading the bootstrap configuration. | `./bin/db` |
+| `named_pipe_server.cpp` | A POSIX FIFO (`mkfifo`) service: creating the pipe, writing, blocking and non-blocking reads, callback-based reading and a small throughput loop. Does not use the library itself. | `./bin/named_pipe_server` |
+| `cleanup.cpp` | Removes leftover `boost::interprocess` named mutexes, e.g. after a crash, taking one or more mutex names as arguments. | `./bin/cleanup <mutex-name> [...]` |
+
+### Configuration directory
+
+The `StartupBuilder`-based examples (`main`, `worker`) read their bootstrap XML from the directory named by the `CONFIG_DIRECTORY` environment variable. If that variable is not set, the path compiled into the binary is used: `CONFIG_DIRECTORY` is a macro generated into `base_library/config.h` from `src/include/base_library/config.h.in`, which CMake fills with `${PROJECT_SOURCE_DIR}/../cfg` — i.e. the `cfg/` directory of the checkout the binary was built in. The file inside that directory is `BOOTSTRAP_CONFIG_NAME` + `.xml`, where `BOOTSTRAP_CONFIG_NAME` defaults to `bootstrap`. The defaults therefore resolve to `<repo>/cfg/bootstrap.xml` (used by `main`) and `<repo>/cfg/bootstrap_worker.xml` (used by `worker`).
+
+`ProcessService` starts every `<Process>` entry it finds in the loaded configuration. `cfg/bootstrap_worker.xml` has no `<Processes>` section, while `cfg/bootstrap.xml` declares two `../bin/worker` entries, so a manually started worker needs `BOOTSTRAP_CONFIG_NAME=bootstrap_worker` to avoid spawning workers itself. `main` sets that variable automatically for the processes it spawns.
+
+Note that the database schema and seed files are an exception to the `CONFIG_DIRECTORY` override: they are always read from the compiled-in path (`<compiled CONFIG_DIRECTORY>/database/`).
+
+### TLS
+
+`cfg/bootstrap.xml` configures the HTTP server with `cert_path="certs/server.crt"`, `key_path="certs/server.key"` and `require_tls="true"`, all resolved relative to the configuration directory. `./bin/main` therefore refuses to start until the self-signed development certificates have been generated once:
+
+```bash
+./cfg/certs/generate_certs.sh
+```
+
+The certificates are deliberately not part of the repository (`.gitignore` ignores `*.key`, `*.crt`, `*.csr`, `*.srl`) and are not part of the release tarball either: it ships `bin/` and `cfg/`, minus `cfg/certs`. Examples that do not enable `HttpFeature` need no certificates. See [HTTP Server Configuration](#http-server-configuration) and [cfg/certs/README.md](cfg/certs/README.md).
+
+### SQLite vs. PostgreSQL
+
+`cfg/bootstrap.xml` ships with SQLite as the default connection (`DEFAULT_SQLITE`, `~/temp.db`, `default="true"`). A leading `~` is expanded to the user's home directory, so the database file is created there and its schema and seed data are applied from `cfg/database/DEFAULT_SQLITE/`. No database server is required for `./bin/main`.
+
+PostgreSQL is the alternative: declare a `<DatabaseConnection>` with `type="PostgreSQL"` and mark it as the default; schema and seed data for it live in `cfg/database/DEFAULT_PSQL/`. `./bin/db` is the only example that talks to PostgreSQL directly, because it does not use the bootstrap configuration — it hard-codes host `127.0.0.1`, database `temp` and user `example_user` (the seed user from `cfg/database/*/data_schema_default_version_1.sql`) and expects you to replace the password placeholder in the source.
+
 ## Dependencies
 
 This project uses [Conan](https://conan.io/) to manage the following external libraries:

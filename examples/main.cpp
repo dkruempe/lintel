@@ -1,3 +1,14 @@
+/**
+ * Reference application: everything in one process tree.
+ *
+ * Boots Property + Base + CLI + HTTP from cfg/bootstrap.xml, registers three
+ * custom shared-memory repositories (object / array / vector) so that the HTTP
+ * and CLI shared-memory endpoints have something to export, and starts the
+ * worker processes declared in the same bootstrap configuration.
+ *
+ * Run: ./bin/main  (needs CONFIG_DIRECTORY or the baked-in cfg/ path and
+ * ./cfg/certs/generate_certs.sh, because bootstrap.xml requires TLS).
+ */
 #include <base_library/core/StartupBuilder.h>
 #include <base_library/core/services/SharedMemoryService.h>
 #include <base_library/features/base/BaseFeature.h>
@@ -13,7 +24,32 @@
 
 #include <cstddef>
 #include <cstring>
+#include <initializer_list>
+#include <string>
 #include <utility>
+
+/** JSON keys of the example record, shared by the fixed-size and the
+ *  shm::String flavour of the DAO below. */
+struct ExampleRecordShape {
+    const std::string NAME = "name";
+    const std::string ADDR = "addr";
+    const std::string PLZ = "plz";
+    const std::string LOCATION = "location";
+    const std::string AGE = "age";
+};
+
+/** Checks that every key of the example record is present in the json object. */
+bool hasAllRecordKeys(const rapidjson::Value &obj, const ExampleRecordShape &shape) {
+    bool success = true;
+    for (const std::string *key: {&shape.NAME, &shape.ADDR, &shape.PLZ,
+                                 &shape.LOCATION, &shape.AGE}) {
+        if (!obj.HasMember(key->c_str())) {
+            success = false;
+            LOG_ERROR("{} not defined in json serialization", key->c_str());
+        }
+    }
+    return success;
+}
 
 struct ArrayDto {
     char m_name[100]{};
@@ -52,13 +88,7 @@ class ArrayDao : public JsonSerializable {
 private:
     const ArrayDto &m_dto;
 
-    static struct Shapes {
-        const std::string NAME = "name";
-        const std::string ADDR = "addr";
-        const std::string PLZ = "plz";
-        const std::string LOCATION = "location";
-        const std::string AGE = "age";
-    } m_shape;
+    static const ExampleRecordShape m_shape;
 
 public:
     explicit ArrayDao(const ArrayDto &dto) : m_dto(dto) {}
@@ -82,45 +112,7 @@ public:
     }
 
     bool deserialize(const rapidjson::Value &obj) override {
-        bool success = true;
-        // PROCESS_NAME
-        if (obj.HasMember(m_shape.NAME.c_str())) {
-            // m_processName = obj[m_shape.PROCESS_NAME.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
-        }
-        // CLASS_NAME
-        if (obj.HasMember(m_shape.ADDR.c_str())) {
-            // m_className = obj[m_shape.CLASS_NAME.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.ADDR.c_str());
-        }
-        // INSTANCE_NAME
-        if (obj.HasMember(m_shape.PLZ.c_str())) {
-            // m_instanceName = obj[m_shape.INSTANCE_NAME.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.PLZ.c_str());
-        }
-        // NAME
-        if (obj.HasMember(m_shape.LOCATION.c_str())) {
-            // m_name = obj[m_shape.NAME.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization",
-                      m_shape.LOCATION.c_str());
-        }
-        // VALUE
-        if (obj.HasMember(m_shape.AGE.c_str())) {
-            // m_value = obj[m_shape.VALUE.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.AGE.c_str());
-        }
-        // TYPE
-        return success;
+        return hasAllRecordKeys(obj, m_shape);
     }
 };
 
@@ -161,13 +153,7 @@ class TestDataDao : public JsonSerializable {
 private:
     const TestDataDto &m_dto;
 
-    static struct Shapes {
-        const std::string NAME = "name";
-        const std::string ADDR = "addr";
-        const std::string PLZ = "plz";
-        const std::string LOCATION = "location";
-        const std::string AGE = "age";
-    } m_shape;
+    static const ExampleRecordShape m_shape;
 
 public:
     explicit TestDataDao(const TestDataDto &dto) : m_dto(dto) {}
@@ -193,50 +179,12 @@ public:
     }
 
     bool deserialize(const rapidjson::Value &obj) override {
-        bool success = true;
-        // PROCESS_NAME
-        if (obj.HasMember(m_shape.NAME.c_str())) {
-            // m_processName = obj[m_shape.PROCESS_NAME.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
-        }
-        // CLASS_NAME
-        if (obj.HasMember(m_shape.ADDR.c_str())) {
-            // m_className = obj[m_shape.CLASS_NAME.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.ADDR.c_str());
-        }
-        // INSTANCE_NAME
-        if (obj.HasMember(m_shape.PLZ.c_str())) {
-            // m_instanceName = obj[m_shape.INSTANCE_NAME.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.PLZ.c_str());
-        }
-        // NAME
-        if (obj.HasMember(m_shape.LOCATION.c_str())) {
-            // m_name = obj[m_shape.NAME.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization",
-                      m_shape.LOCATION.c_str());
-        }
-        // VALUE
-        if (obj.HasMember(m_shape.AGE.c_str())) {
-            // m_value = obj[m_shape.VALUE.c_str()].GetString();
-        } else {
-            success = false;
-            LOG_ERROR("{} not defined in json serialization", m_shape.AGE.c_str());
-        }
-        // TYPE
-        return success;
+        return hasAllRecordKeys(obj, m_shape);
     }
 };
 
-TestDataDao::Shapes TestDataDao::m_shape{};
-ArrayDao::Shapes ArrayDao::m_shape{};
+const ExampleRecordShape ArrayDao::m_shape{};
+const ExampleRecordShape TestDataDao::m_shape{};
 
 class ShmObject : public SharedMemoryObjectRepository<ArrayDto, ArrayDao> {
 private:
