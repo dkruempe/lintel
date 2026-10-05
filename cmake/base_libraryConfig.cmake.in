@@ -1,0 +1,60 @@
+@PACKAGE_INIT@
+
+# Paketkonfiguration fuer base_library.
+#
+# Wichtig fuer die Relokation: hier steht kein Build-Maschinen-Pfad. Alles wird
+# relativ zu ${CMAKE_CURRENT_LIST_DIR} bzw. ${PACKAGE_PREFIX_DIR} aufgeloest, damit
+# das Paket nach einem `cmake --install` in ein beliebiges Praefix funktioniert.
+
+include(CMakeFindDependencyMacro)
+
+# Diese Abhaengigkeiten erscheinen als importierte Targets in der Schnittstelle von
+# kruempelmann::base_library (target_link_libraries(... PUBLIC ...) in src/CMakeLists.txt)
+# und muessen hier daher gefunden werden. Aenderungen an der Link-Liste dort gehoeren
+# mit dieser Liste synchronisiert.
+#
+# Voraussetzung ist, dass der Consumer sie mit denselben Optionen aufloest wie das
+# Rezept (fmt/spdlog header_only, cpp-httplib with_openssl) - siehe conanfile.txt.
+# magic_enum und rapidjson werden ueber die Conan-Targets magic_enum::magic_enum und
+# rapidjson verlinkt; ein Consumer, der sie anders bereitstellt, muss die Namen liefern.
+find_dependency(fmt)
+find_dependency(tinyxml2)
+find_dependency(PostgreSQL)
+find_dependency(SQLite3)
+find_dependency(Threads)
+find_dependency(OpenSSL)
+find_dependency(httplib)
+find_dependency(date)
+find_dependency(spdlog)
+find_dependency(magic_enum)
+find_dependency(RapidJSON)
+find_dependency(Boost 1.75.0)
+
+# Hypodermic ist vendored (external/Hypodermic) und wird in dasselbe Praefix installiert,
+# liefert aber nur Hypodermic_targets.cmake und keine Config-Datei. Da der base_library-Export
+# kruempelmann::Hypodermic referenziert, muss die Targets-Datei vor den base_library-Targets
+# geladen werden, sonst meldet der Export "The following imported targets are referenced,
+# but are missing". Der Pfad ueber ../Hypodermic deckt CMAKE_INSTALL_LIBDIR ab, der zweite
+# Kandidat das fest verdrahtete lib/cmake des vendorten Exports.
+set(_base_library_hypodermic_targets "")
+foreach(_candidate
+        "${CMAKE_CURRENT_LIST_DIR}/../Hypodermic/Hypodermic_targets.cmake"
+        "${PACKAGE_PREFIX_DIR}/lib/cmake/Hypodermic/Hypodermic_targets.cmake"
+        "${PACKAGE_PREFIX_DIR}/${CMAKE_INSTALL_LIBDIR}/cmake/Hypodermic/Hypodermic_targets.cmake")
+    if(EXISTS "${_candidate}")
+        set(_base_library_hypodermic_targets "${_candidate}")
+        break()
+    endif()
+endforeach()
+if(_base_library_hypodermic_targets)
+    include("${_base_library_hypodermic_targets}")
+else()
+    # Kein vendorter Export im Praefix - dann muss Hypodermic anderswo auffindbar sein.
+    find_dependency(Hypodermic)
+endif()
+unset(_candidate)
+unset(_base_library_hypodermic_targets)
+
+include("${CMAKE_CURRENT_LIST_DIR}/base_libraryTargets.cmake")
+
+check_required_components(base_library)

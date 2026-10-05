@@ -29,6 +29,15 @@ message(STATUS "swagger.yaml version matches BASE_LIBRARY_VERSION: ${BASE_LIBRAR
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
+# Install-Pfade (lib, include, share) zentral festlegen, damit CMake und alle
+# Unterverzeichnisse dieselben Zielordner benutzen. Muss im Top-Level passieren,
+# sonst waechst in jedem Unterverzeichnis ein eigener Satz Variablen.
+include(GNUInstallDirs)
+
+# Hilfsfunktionen fuer das CMake-Paket: configure_package_config_file() erzeugt aus
+# cmake/base_libraryConfig.cmake.in das installierte base_libraryConfig.cmake.
+include(CMakePackageConfigHelpers)
+
 # CCache - compiler cache for faster rebuilds
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)

@@ -518,14 +518,32 @@ else ()
 endif ()
 
 target_compile_features(base_library PUBLIC cxx_std_17)
+# Include-Verzeichnisse: alles, was dauerhaft noetig ist, kommt als verlinktes Target aus
+# target_link_libraries() weiter unten. Deshalb stehen hier nur die Include-Pfade, die es
+# wirklich nur zum Bauen braucht (Hypodermic aus find_package, eigene Header). Die
+# *_INCLUDE_DIRS-Variablen zeigen auf den Conan-Cache der Build-Maschine und waeren im
+# installierten Export toter Ballast - genau davor warnt das alte
+# $<INSTALL_INTERFACE:${OpenSSL_INCLUDES};...>. Die Include-Pfade der Abhaengigkeiten
+# kommen stattdessen ueber deren Targets im Consumer-Baum, der Export bleibt relokabel.
+# Das eigene include-Verzeichnis der installierten Bibliothek ist praefix-relativ.
 target_include_directories(base_library
         SYSTEM PUBLIC
         "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${HYPODERMIC_INCLUDE_DIRS_VAR};${CMAKE_CURRENT_SOURCE_DIR}/include>"
-        "$<INSTALL_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};include>"
+        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
+
+# magic_enum und rapidjson sind ueber oeffentliche Header Teil der Schnittstelle und werden
+# deshalb als Targets gelinkt (rapidjson ersetzt dabei das vorherige, in Debug geloeste
+# ${rapidjson_LIBRARIES_DEBUG}, das im Release-Export leer war).
+# project_warnings ist ein reines Build-Target des Projekts (CompilerWarnings.cmake). Als
+# PRIVATE verlinkte Abhaengigkeit einer statischen Bibliothek landet es als
+# $<LINK_ONLY:project_warnings> im Export und muesste dort mitexportiert werden. Das
+# $<BUILD_INTERFACE:...> nimmt es aus dem Install-Export heraus, behaelt aber die Flags im
+# Build-Baum - deshalb gehoert project_warnings nicht in den Export.
 target_link_libraries(base_library PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
-        Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib ${rapidjson_LIBRARIES_DEBUG} date::date spdlog::spdlog_header_only
-        kruempelmann::Hypodermic Boost::boost Boost::headers Boost::filesystem PRIVATE project_warnings)
+        Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib rapidjson magic_enum::magic_enum date::date
+        spdlog::spdlog_header_only kruempelmann::Hypodermic Boost::boost Boost::headers Boost::filesystem
+        PRIVATE $<BUILD_INTERFACE:project_warnings>)
 
 # Boost.UUID formatiert UUIDs per SSE2-Intrinsics. Ohne Optimierung (-O0) inlined GCC 13 das Intrinsic
 # _mm_slli_si128 nicht mehr, der Backend-Aufruf mit variablem Shift erzeugt dann aber einen harten Fehler
@@ -565,22 +583,54 @@ if(ENABLE_PCH)
 endif()
 
 add_library(kruempelmann::base_library ALIAS base_library)
-INSTALL(TARGETS base_library project_warnings
-        EXPORT base_library_targets
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        RUNTIME DESTINATION lib
-        INCLUDES DESTINATION include)
-INSTALL(EXPORT base_library_targets
-        DESTINATION lib/cmake/base_library
-        FILE base_library_targets.cmake
-        NAMESPACE kruempelmann::)
-INSTALL(DIRECTORY include/base_library
-        DESTINATION include)
 
-# library package version file
-include(CMakePackageConfigHelpers)
-write_basic_package_version_file(base_library_config_version.cmake
+# --- Installation und CMake-Paket ------------------------------------------------
+# In diesem Verzeichnis zeigt PROJECT_SOURCE_DIR auf src/ (das project() weiter oben setzt
+# es neu), die Repo-Wurzel liegt eine Ebene hoeher - wie schon bei CONFIG_DIRECTORY oben.
+set(BASE_LIBRARY_SOURCE_ROOT "${PROJECT_SOURCE_DIR}/..")
+
+# Zielordner aus GNUInstallDirs (im Top-Level eingebunden). Config-, Versions- und
+# Targets-Datei muessen im selben Verzeichnis liegen: base_libraryConfig.cmake laedt die
+# Targets-Datei ueber ${CMAKE_CURRENT_LIST_DIR}, und CMake rechnet relative
+# INSTALL_INTERFACE-Eintraege relativ dazu auf.
+set(BASE_LIBRARY_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/base_library")
+set(BASE_LIBRARY_DOCS_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/doc/base_library")
+
+# Nur base_library wird exportiert, project_warnings nicht (siehe Kommentar bei
+# target_link_libraries). Das include-Verzeichnis steckt bereits im
+# $<INSTALL_INTERFACE:...> der Include-Verzeichnisse, deshalb hier kein INCLUDES DESTINATION.
+install(TARGETS base_library
+        EXPORT base_library_targets
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY include/base_library
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+
+# NAMESPACE kruempelmann:: passt zum Alias, mit dem die Bibliothek im Build-Baum verwendet
+# wird - der importierte Name lautet also kruempelmann::base_library.
+install(EXPORT base_library_targets
+        DESTINATION ${BASE_LIBRARY_CMAKE_INSTALL_DIR}
+        FILE base_libraryTargets.cmake
+        NAMESPACE kruempelmann::)
+
+# Paketkonfiguration. @PACKAGE_INIT@ in der Vorlage macht sie relokabel, die
+# find_dependency()-Aufrufe fuer die Abhaengigkeiten aus dem oeffentlichen Export stehen
+# ebenfalls dort. Die Versionsdatei muss base_libraryConfigVersion.cmake heissen - nur dann
+# findet find_package(base_library <version>) die Versionsinformation.
+configure_package_config_file(
+        ${BASE_LIBRARY_SOURCE_ROOT}/cmake/base_libraryConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/base_libraryConfig.cmake
+        INSTALL_DESTINATION ${BASE_LIBRARY_CMAKE_INSTALL_DIR})
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/base_libraryConfigVersion.cmake
         COMPATIBILITY SameMajorVersion)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/base_library_config_version.cmake ${CMAKE_CURRENT_BINARY_DIR}/base_library_config_version.cmake
-        DESTINATION lib/cmake/base_library)
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/base_libraryConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/base_libraryConfigVersion.cmake
+        DESTINATION ${BASE_LIBRARY_CMAKE_INSTALL_DIR})
+
+# Lizenz und Doku gehoeren mit ins Paket - die Lizenzpflicht laeuft sonst nicht mit.
+install(FILES ${BASE_LIBRARY_SOURCE_ROOT}/LICENSE
+        ${BASE_LIBRARY_SOURCE_ROOT}/README.md
+        ${BASE_LIBRARY_SOURCE_ROOT}/swagger.yaml
+        DESTINATION ${BASE_LIBRARY_DOCS_INSTALL_DIR})
