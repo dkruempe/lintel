@@ -70,36 +70,30 @@ public:
 
     bool deserialize(const rapidjson::Value &obj) override {
         bool success = true;
-        if (obj.HasMember(m_shape.PROCESS_NAME.c_str())) {
-        } else {
+        if (!obj.HasMember(m_shape.PROCESS_NAME.c_str())) {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
                       m_shape.PROCESS_NAME.c_str());
         }
-        if (obj.HasMember(m_shape.CLASS_NAME.c_str())) {
-        } else {
+        if (!obj.HasMember(m_shape.CLASS_NAME.c_str())) {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
                       m_shape.CLASS_NAME.c_str());
         }
-        if (obj.HasMember(m_shape.INSTANCE_NAME.c_str())) {
-        } else {
+        if (!obj.HasMember(m_shape.INSTANCE_NAME.c_str())) {
             success = false;
             LOG_ERROR("{} not defined in json serialization",
                       m_shape.INSTANCE_NAME.c_str());
         }
-        if (obj.HasMember(m_shape.NAME.c_str())) {
-        } else {
+        if (!obj.HasMember(m_shape.NAME.c_str())) {
             success = false;
             LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
         }
-        if (obj.HasMember(m_shape.VALUE.c_str())) {
-        } else {
+        if (!obj.HasMember(m_shape.VALUE.c_str())) {
             success = false;
             LOG_ERROR("{} not defined in json serialization", m_shape.VALUE.c_str());
         }
-        if (obj.HasMember(m_shape.TYPE.c_str())) {
-        } else {
+        if (!obj.HasMember(m_shape.TYPE.c_str())) {
             success = false;
             LOG_ERROR("{} not defined in json serialization", m_shape.TYPE.c_str());
         }

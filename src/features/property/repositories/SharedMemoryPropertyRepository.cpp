@@ -159,6 +159,14 @@ void SharedMemoryPropertyRepository::deleteOf(
     }
 }
 
+/**
+ * Bewusstes No-Op: es gibt nichts zu migrieren. SharedMemoryBootstrapPlugin
+ * vergleicht in onStart() ausschliesslich currentVersion und currentDataSize und
+ * wirft bei einer Abweichung. Es gibt keinen Aufrufer von onMigrate() im Repo
+ * (src/ und tests/), m_version bleibt konstant 0 und getSize() unveraendert.
+ * Die Methode bleibt als Implementierung des reinen Interfaces OnMigrate.
+ * @param currentActiveVersion im Shared Memory hinterlegte Version, ungenutzt
+ */
 void SharedMemoryPropertyRepository::onMigrate(int32_t currentActiveVersion) {}
 
 bool PropertyDataDto::operator<(const PropertyDataDto &rhs) const {

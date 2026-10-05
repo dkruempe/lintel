@@ -17,6 +17,27 @@
 #include "base_library/core/utils/StringUtils.h"
 #include "base_library/features/property/factories/PropertyFactory.h"
 
+/*
+ * Bewusstes "Best Effort": Alle Methoden dieses Repositories unterdruecken
+ * db::SQLException, protokollieren den Fehler und liefern ein leeres Ergebnis.
+ * Begruendung:
+ *
+ * - Das Property-Repository ist eine reine Ueberschreibungsschicht. Die
+ *   konfigurierten Defaults liefert FilePropertyRepository aus der XML-
+ *   Konfiguration. Ein leeres Ergebnis bedeutet daher "Default beibehalten"
+ *   und nicht "Daten verloren".
+ * - PropertyService ruft awake(), save() und deleteOf() ohne Fehlerkanal auf
+ *   (awake() in PropertyService::onAwake(), save() in getOrCreate(),
+ *   deleteOf() in onAwake()). Eine weitergereichte Ausnahme wuerde den
+ *   Prozessstart abbrechen, sobald die Datenbank kurzfristig nicht
+ *   erreichbar ist.
+ * - In PropertyService::changeStringValueOf() wird der Wert bereits vor dem
+ *   Schreiben im Speicher gesetzt. Ein Propagieren liefe in HTTP 500, obwohl
+ *   die Aenderung lokal wirksam ist, und wuerde publishChange() ueberspringen.
+ * - Das entspricht dem Stil der uebrigen Repositories, siehe UserRepository
+ *   (createOf/allOf/pageOf) und HistoryRepository::saveOf().
+ */
+
 DatabasePropertyRepository::DatabasePropertyRepository(
         std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations,
         const std::shared_ptr<Configuration> &configuration,
@@ -83,7 +104,10 @@ void DatabasePropertyRepository::save(
         }
         transaction.commit();
     } catch (db::SQLException &exception) {
-        LOG_ERROR("failed to update property {}", exception.what());
+    LOG_ERROR("save of {} properties of process {} failed: {}",
+      properties.size(),
+      m_processName->getProcessName(),
+      exception.what());
     }
     LOG_TRACE("finished persistence of properties");
 }
@@ -126,7 +150,7 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake() {
             properties.push_back(property);
         }
     } catch (db::SQLException &exception) {
-        LOG_ERROR("{}", exception.what());
+    LOG_ERROR("database operation of process {} failed: {}", m_processName->getProcessName(), exception.what());
     }
     return properties;
 }
@@ -157,7 +181,7 @@ void DatabasePropertyRepository::deleteOf(
         }
         transaction.commit();
     } catch (db::SQLException &exception) {
-        LOG_ERROR("delete failed: {}", exception.what());
+    LOG_ERROR("delete of {} properties failed: {}", properties.size(), exception.what());
     }
 }
 
@@ -208,7 +232,7 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::allOf(
             properties.push_back(property);
         }
     } catch (db::SQLException &exception) {
-        LOG_ERROR("{}", exception.what());
+    LOG_ERROR("database operation of process {} failed: {}", m_processName->getProcessName(), exception.what());
     }
     return properties;
 }

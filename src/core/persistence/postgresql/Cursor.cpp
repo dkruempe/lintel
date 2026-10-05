@@ -176,11 +176,11 @@ namespace postgresql {
     std::vector<db::Arguments> Cursor::fetchNext(std::size_t maxRows) {
         if (m_serverSide) {
             auto rows = fetchFromServer(maxRows);
-            if (rows.size() < maxRows) {
-                // Fewer rows than requested => cursor exhausted
-                // Don't close yet — destructor will handle it, allowing
-                // the user to inspect state before destruction.
-            }
+            // Fewer rows than requested => cursor exhausted (see the
+            // @return contract in Cursor.h).  Nothing is closed here on
+            // purpose: the destructor issues the CLOSE, so the caller can
+            // still inspect its state before the cursor goes away.  A
+            // subsequent fetchNext() simply yields an empty batch.
             return rows;
         }
 
