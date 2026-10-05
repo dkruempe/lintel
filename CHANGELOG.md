@@ -24,7 +24,10 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 
 ### Sicherheitsrelevant
 - Sensitive Daten aus Repo entfernt (TLS-Private-Key, Klartext-Credentials). Meldeweg für Sicherheitslücken in `SECURITY.md` festgelegt (E-Mail statt öffentlichem Issue).
-- CodeQL-Scan für C++ aktiviert (`.github/workflows/codeql.yml`). Die drei Befunde mit Defekt-Charakter (fehlendes `return`, zwei `localtime`/`ctime`-Aufrufe) sind behoben; ein Befund (`cpp/cleartext-storage-database`) wurde als Fehlalarm triagiert – gespeichert wird ausschließlich der gehashte Passwortwert, siehe `ROADMAP.md` §5 „CodeQL-Triage".
+- CodeQL-Scan für C++ aktiviert (`.github/workflows/codeql.yml`). Die drei Befunde mit Defekt-Charakter (fehlendes `return`, zwei `localtime`/`ctime`-Aufrufe) sind behoben; ein Befund (`cpp/cleartext-storage-database`) wurde als Fehlalarm triagiert – gespeichert wird ausschließlich der gehashte Passwortwert. Die Triage-Tabelle mit Fundstellen, Fixes und Gegenproben sowie die Aufschlüsselung der verbleibenden Stil-Hinweise wird nicht im Repo geführt.
+
+### Entfernt
+- `TODO.md`, `ANALYSIS.md` und `ROADMAP.md` aus dem Repository entfernt. Sie enthielten betreiberinterne Arbeitsstände (u. a. offene Sicherheitsaktionen und Eskalationswege), die nicht Teil eines öffentlichen Repos sein sollten. Der Inhalt bleibt über die Git-Historie vollständig abrufbar (`git show <vorheriger-Commit>:ROADMAP.md`).
 
 ### Entwicklererfahrung
 - Testabschnitt auf `ctest --output-on-failure --label-regex unit` umgestellt; Hinweis auf explizite Testliste in `tests/CMakeLists.txt` ergänzt.

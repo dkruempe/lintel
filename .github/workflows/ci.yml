@@ -59,7 +59,7 @@ jobs:
             unity: OFF
 
     services:
-      # Ready for the [pg] tests that are still missing (see ROADMAP §1).
+      # Ready for the [pg] tests that are still missing.
       # Credentials match docker-compose.yml.
       postgres:
         image: postgres:17

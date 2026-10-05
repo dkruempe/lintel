@@ -77,6 +77,6 @@ Der reale Commit-Stil im Repo ist deutsch, kurz und imperativ (z. B. `docs: READ
 
 ## Weitere Hinweise
 
-- Arbeitsstand siehe `ROADMAP.md`.
+- Arbeitsstand und offene Punkte werden nicht im Repository geführt; `TODO.md`, `ANALYSIS.md` und `ROADMAP.md` wurden entfernt (Begründung siehe `CHANGELOG.md`, Abschnitt „Entfernt").
 - Build-Layout folgt CI (`build/build/Release`), README weist auf diesen Pfad hin.
 - Vor dem Erstellen eines Pull Requests: Status prüfen, Format-Gate lokal bestehen, relevante Unit-Tests ausführen.

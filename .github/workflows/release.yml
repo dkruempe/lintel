@@ -155,7 +155,7 @@ jobs:
           cp -a cfg/. artifact/cfg/
           rm -rf artifact/cfg/certs artifact/cfg/.history
           cp swagger.yaml artifact/
-          cp LICENSE artifact/ 2>/dev/null || echo "note: no LICENSE file yet (see ROADMAP phase 0)"
+          cp LICENSE artifact/ 2>/dev/null || echo "note: no LICENSE file yet"
           version="$(sed -n 's/^set(BASE_LIBRARY_VERSION "\([^"]*\)".*/\1/p' CMakeLists.txt)"
           git rev-parse --short HEAD > artifact/BUILD_COMMIT
           printf 'base_library %s built from %s\n' "$version" "$(cat artifact/BUILD_COMMIT)" > artifact/NOTES.txt

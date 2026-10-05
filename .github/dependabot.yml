@@ -1,6 +1,6 @@
 # Dependabot keeps the GitHub Actions and the container base image current.
 # Conan is not a Dependabot ecosystem — dependency updates for conanfile.txt are
-# done manually (see ROADMAP §5).
+# done manually.
 version: 2
 updates:
   - package-ecosystem: github-actions

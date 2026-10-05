@@ -1,6 +1,6 @@
 # Kompilierzeit-Messprotokoll (Referenz)
 
-> Referenzprotokoll zu ROADMAP.md Abschnitt 4 (P2: „Mess-Skripte versionieren").
+> Referenzprotokoll zur Kompilierzeit-Optimierung (P2: „Mess-Skripte versionieren").
 > Ziel: **reproduzierbare**, über Commits hinweg vergleichbare Zahlen für die
 > Kompilierzeit von `cpp-base-library`.
 
