@@ -6,6 +6,7 @@
 #include <csignal>
 #include <memory>
 #include <thread>
+#include <utility>
 
 #include "base_library/features/Feature.h"
 
@@ -37,7 +38,9 @@ void StartupBuilder::addConfigurationComponent(
     m_configurationComponentBuilder->add(std::move(component));
 }
 
-std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char *argv[]) {
+// argv decays to char** in the parameter list, so the pointer form is the same
+// type as the array form used in the declaration
+std::shared_ptr<StartupBuilder> StartupBuilder::with(int argc, char **argv) {
     // I process Information
     ProcessName name(argc, argv);
     // II arguments
@@ -61,7 +64,9 @@ void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
 }
 
 void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment, std::string value) {
-    m_environmentConfiguration->overrides(environment, value);
+  // std::move vermeidet die zweite Kopie: EnvironmentConfiguration::overrides
+  // nimmt den Wert selbst per value und bewegt ihn in seine Map.
+    m_environmentConfiguration->overrides(environment, std::move(value));
 }
 
 void StartupBuilder::start() {

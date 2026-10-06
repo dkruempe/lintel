@@ -45,22 +45,22 @@ TEST_CASE("XMLConfigSerializationStrategy: deserialize from XML string") {
 
     REQUIRE(properties.size() == 3);
 
-    auto &p1 = properties[0];
-    REQUIRE(p1->getName() == "maxConnections");
-    REQUIRE(p1->getClassName() == "DatabaseService");
-    REQUIRE(p1->getProcessName() == "main");
-    REQUIRE(p1->getType() == "int32_t");
-    REQUIRE(p1->toString() == "100");
+    auto &maxConnectionsProperty = properties[0];
+    REQUIRE(maxConnectionsProperty->getName() == "maxConnections");
+    REQUIRE(maxConnectionsProperty->getClassName() == "DatabaseService");
+    REQUIRE(maxConnectionsProperty->getProcessName() == "main");
+    REQUIRE(maxConnectionsProperty->getType() == "int32_t");
+    REQUIRE(maxConnectionsProperty->toString() == "100");
 
-    auto &p2 = properties[1];
-    REQUIRE(p2->getName() == "hostname");
-    REQUIRE(p2->getType() == "std::string");
-    REQUIRE(p2->toString() == "localhost");
+    auto &hostnameProperty = properties[1];
+    REQUIRE(hostnameProperty->getName() == "hostname");
+    REQUIRE(hostnameProperty->getType() == "std::string");
+    REQUIRE(hostnameProperty->toString() == "localhost");
 
-    auto &p3 = properties[2];
-    REQUIRE(p3->getName() == "debugMode");
-    REQUIRE(p3->getType() == "bool");
-    REQUIRE(p3->toString() == "true");
+    auto &debugModeProperty = properties[2];
+    REQUIRE(debugModeProperty->getName() == "debugMode");
+    REQUIRE(debugModeProperty->getType() == "bool");
+    REQUIRE(debugModeProperty->toString() == "true");
 }
 
 TEST_CASE("XMLConfigSerializationStrategy: roundtrip serialize and deserialize") {

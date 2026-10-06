@@ -27,7 +27,7 @@ public:
     std::strncpy(m_from, from.c_str(), sizeof(m_from) - 1);
   }
 
-  template<typename T> void assign(T content)
+  template<typename T> void assign(const T &content)
   {
     static_assert(sizeof(T) <= sizeof(m_content), "content is bigger than reserved size for content");
     const char *temp = reinterpret_cast<const char *>(&content);
@@ -101,14 +101,14 @@ public:
    * send of message. Message Queue full => blocks until message queue is free
    * @param message
    */
-  void sendOf(T message) { m_messageQueue.send(&message, m_msgSize, 0); }
+  void sendOf(const T &message) { m_messageQueue.send(&message, m_msgSize, 0); }
 
   /**
    * send non blocking. Message Queue full => return false and doesn't send
    * message.
    * @param message
    */
-  bool trySendOf(T message) { return m_messageQueue.try_send(&message, m_msgSize, 0); }
+  bool trySendOf(const T &message) { return m_messageQueue.try_send(&message, m_msgSize, 0); }
 
   /**
    * receives message. No message => waits until message is available

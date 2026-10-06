@@ -21,15 +21,11 @@ void MessageQueueCliComponent::onCommand(const UserDto &userDto,
 {
   try {
     Commands cmd = m_commandParser.parse(command, parameters);
-    switch (cmd) {
-    case ShowMessageQueues: {
+    if (cmd == ShowMessageQueues) {
       const std::string processNameTemp = m_processName.has_value() ? m_processName.value() : ".*";
       const std::string messageQueueNameTemp = m_messageQueueName.has_value() ? m_messageQueueName.value() : ".*";
       auto messageQueues = m_messageQueueApi->allOf(processNameTemp, messageQueueNameTemp);
       printMessageQueues(messageQueues);
-      break;
-    }
-    default: { break; }
     }
   } catch (const std::exception &exception) { std::cerr << "ERROR: " << exception.what() << "\n"; }
 }

@@ -17,17 +17,12 @@ void HistoryCliComponent::onCommand(const UserDto &userDto, const std::string &c
                                     const std::vector<std::string> &parameters) {
     try {
         Commands cmd = m_commandParser.parse(command, parameters);
-        switch (cmd) {
-            case ShowHistories: {
-                const std::string processNameTemp = m_processName.has_value() ? m_processName.value() : ".*";
-                const std::string serviceNameTemmp = m_serviceName.has_value() ? m_serviceName.value() : ".*";
-                const std::string labelTemp = m_label.has_value() ? m_label.value() : ".*";
-                auto histories = m_historyApi->allOf(processNameTemp, serviceNameTemmp, labelTemp);
-                printHistories(histories);
-                break;
-            }
-            default:
-                break;
+        if (cmd == ShowHistories) {
+            const std::string processNameTemp = m_processName.has_value() ? m_processName.value() : ".*";
+            const std::string serviceNameTemmp = m_serviceName.has_value() ? m_serviceName.value() : ".*";
+            const std::string labelTemp = m_label.has_value() ? m_label.value() : ".*";
+            auto histories = m_historyApi->allOf(processNameTemp, serviceNameTemmp, labelTemp);
+            printHistories(histories);
         }
     } catch (const std::exception &exception) {
         std::cerr << "ERROR: " << exception.what() << "\n";

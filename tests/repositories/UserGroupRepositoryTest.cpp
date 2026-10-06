@@ -32,7 +32,7 @@ std::string kRepoTestDb() {
     return (std::filesystem::temp_directory_path() /
             ("user_group_repo_test_" +
              std::to_string(boost::this_process::get_id()) + "_" +
-             std::to_string(counter++) + ".db"))
+             std::to_string(++counter) + ".db"))
             .string();
 }
 

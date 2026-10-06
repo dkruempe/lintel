@@ -31,8 +31,7 @@ void ProcessController::allProcessOfGet(const httplib::Request &request,
     response.set_content("", contentType.getName());
     return;
   }
-  switch (contentType) {
-  case ContentType::ApplicationJson: {
+  if (contentType == ContentType::ApplicationJson) {
     const std::string processName = request.matches[1];
     std::string errorMessage;
     if (!RegexUtils::validatePattern(processName, errorMessage)) {
@@ -53,13 +52,9 @@ void ProcessController::allProcessOfGet(const httplib::Request &request,
     ProcessInfosDto processInfosDto(filtered);
     std::string content = processInfosDto.JsonSerializable::serialize();
     response.set_content(content, contentType.getName());
-    break;
-  }
-  default: {
+  } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
-    break;
-  }
   }
 }
 
@@ -80,19 +75,14 @@ void ProcessController::allProcessGroupsOfGet(const httplib::Request &request,
     return;
   }
   const std::string groupName = request.matches[1];
-  switch (contentType) {
-  case ContentType::ApplicationJson: {
+  if (contentType == ContentType::ApplicationJson) {
     auto temp = m_processService->allGroupsOf(groupName);
     ProcessGroupsDto dtos(temp);
     std::string content = dtos.JsonSerializable::serialize();
     response.set_content(content, contentType.getName());
-    break;
-  }
-  default: {
+  } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
-    break;
-  }
   }
 }
 
@@ -112,8 +102,7 @@ void ProcessController::startProcessPost(const httplib::Request &request,
     response.set_content("", contentType.getName());
     return;
   }
-  switch (contentType) {
-  case ContentType::ApplicationJson: {
+  if (contentType == ContentType::ApplicationJson) {
     ProcessInfoDto processInfoDto;
     processInfoDto.JsonSerializable::deserialize(request.body);
     Process process(processInfoDto.getPath(), processInfoDto.getArgs());
@@ -123,13 +112,9 @@ void ProcessController::startProcessPost(const httplib::Request &request,
       process.disableAutoStart();
     }
     m_processService->startOf(process);
-    break;
-  }
-  default: {
+  } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
-    break;
-  }
   }
 }
 
@@ -149,24 +134,19 @@ void ProcessController::stopProcessDelete(const httplib::Request &request,
     response.set_content("", contentType.getName());
     return;
   }
-  switch (contentType) {
-  case ContentType::ApplicationJson: {
+  if (contentType == ContentType::ApplicationJson) {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
     // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
       response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
-      break;
+      return;
     }
     m_processService->stopOf(*process.value());
-    break;
-  }
-  default: {
+  } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
-    break;
-  }
   }
 }
 
@@ -186,25 +166,20 @@ void ProcessController::terminateProcessDelete(const httplib::Request &request,
     response.set_content("", contentType.getName());
     return;
   }
-  switch (contentType) {
-  case ContentType::ApplicationJson: {
+  if (contentType == ContentType::ApplicationJson) {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
     // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
       response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
-      break;
+      return;
     }
     LOG_INFO("terminate of {}", processId);
     m_processService->terminateOf(*process.value());
-    break;
-  }
-  default: {
+  } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
-    break;
-  }
   }
 }
 
@@ -223,25 +198,20 @@ void ProcessController::restartProcessPut(const httplib::Request &request,
     response.set_content("", contentType.getName());
     return;
   }
-  switch (contentType) {
-  case ContentType::ApplicationJson: {
+  if (contentType == ContentType::ApplicationJson) {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
     // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
       response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
-      break;
+      return;
     }
     LOG_INFO("restart of {}", processId);
     m_processService->restartOf(*process.value());
-    break;
-  }
-  default: {
+  } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
-    break;
-  }
   }
 }
 
@@ -260,25 +230,20 @@ void ProcessController::resetProcessPost(const httplib::Request &request,
     response.set_content("", contentType.getName());
     return;
   }
-  switch (contentType) {
-  case ContentType::ApplicationJson: {
+  if (contentType == ContentType::ApplicationJson) {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
     // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
       response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
-      break;
+      return;
     }
     LOG_INFO("reset of {}", processId);
     m_processService->resetOf(*process.value());
-    break;
-  }
-  default: {
+  } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
-    break;
-  }
   }
 }
 
@@ -297,15 +262,14 @@ void ProcessController::healthProcessGet(const httplib::Request &request,
     response.set_content("", contentType.getName());
     return;
   }
-  switch (contentType) {
-  case ContentType::ApplicationJson: {
+  if (contentType == ContentType::ApplicationJson) {
     std::string processId = request.matches[1];
     auto process = m_processService->of(processId);
     // unknown process id => the addressed resource does not exist
     if (!process.has_value()) {
       response.status = HttpStatusCodes::NotFound;
       response.set_content("", contentType.getName());
-      break;
+      return;
     }
     for (const auto &processInfo : m_processService->allActiveOf()) {
       if (processInfo.getProcess()->getId() != processId) { continue; }
@@ -316,12 +280,8 @@ void ProcessController::healthProcessGet(const httplib::Request &request,
     // known, but no active process info left => the addressed resource does not exist (anymore)
     response.status = HttpStatusCodes::NotFound;
     response.set_content("", contentType.getName());
-    break;
-  }
-  default: {
+  } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
-    break;
-  }
   }
 }

@@ -21,7 +21,7 @@ private:
 
     /** Build UUID-to-repository map from repository vector */
     static std::map<std::string, std::shared_ptr<SharedMemoryRepository>>
-    build(std::vector<std::shared_ptr<SharedMemoryRepository>> repositories);
+    build(const std::vector<std::shared_ptr<SharedMemoryRepository>> &repositories);
 
 public:
     // Shared Memory Segment handler methods

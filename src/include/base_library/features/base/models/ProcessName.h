@@ -19,7 +19,7 @@ public:
      * @param argc argument count
      * @param argv argument vector
      */
-    ProcessName(int argc, char *argv[]) {
+    ProcessName(int argc, char *const *argv) {
         m_path = argv[0];
         for (int i = 1; i < argc; i++) {
             m_args.push_back(argv[i]);

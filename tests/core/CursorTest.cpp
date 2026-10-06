@@ -284,8 +284,7 @@ TEST_CASE("Cursor: fetchSize respects query filter", "[cursor]") {
     REQUIRE(batch2[0].of(0).getValue<int>() == 8);
     REQUIRE(batch2[1].of(0).getValue<int>() == 9);
 
-    const auto batch3 = cursor.fetchNext(3);
-    REQUIRE(batch3.empty());
+    REQUIRE(cursor.fetchNext(3).empty());
 }
 
 TEST_CASE("Cursor: range-for with small fetchSize", "[cursor]") {

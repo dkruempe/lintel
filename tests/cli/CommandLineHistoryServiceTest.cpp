@@ -15,7 +15,11 @@ namespace {
 
 const char *const TEST_HISTORY_FILE = ".commandline_history_test.history";
 
-date::sys_time<std::chrono::microseconds> now()
+// date::sys_time<Duration> is defined as std::chrono::time_point<std::chrono::system_clock, Duration>;
+// spelling it out keeps this helper free of the third-party namespace.
+using MicrosecondSysTime = std::chrono::time_point<std::chrono::system_clock, std::chrono::microseconds>;
+
+MicrosecondSysTime now()
 {
     return std::chrono::time_point_cast<std::chrono::microseconds>(
             std::chrono::system_clock::now());
