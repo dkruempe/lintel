@@ -95,6 +95,7 @@ void UserManagementCliComponent::onCommand(
     try {
         Commands command = m_commandParser.parse(input, parameters);
         switch (command) {
+      // Gruppen: Filter stammen aus dem Sitzungs-Kontext, nicht aus den Parametern.
             case AllGroups:
                 if (!m_groupName.has_value() && !m_isVirtualGroup.has_value()) {
                     printGroups(m_userApi->allOf());
@@ -107,6 +108,7 @@ void UserManagementCliComponent::onCommand(
                             m_userApi->allOf(m_groupName.value(), m_isVirtualGroup.value()));
                 }
                 break;
+      // Benutzer: dito, gleiche vier Filterkombinationen.
             case AllUsers: {
                 if (m_userName.has_value()) {
                     printUsers(m_userApi->allUsersOf(m_userName.value()));
@@ -115,6 +117,8 @@ void UserManagementCliComponent::onCommand(
                 }
                 break;
             }
+      // Anlegen: Name, EMail, Passwort und Gruppen kommen aus den Parametern,
+      // das Passwort wird base64-kodiert uebergeben.
             case AddUser: {
                 if (!m_firstName.has_value() || !m_lastName.has_value() ||
                     !m_eMail.has_value() || !m_userName.has_value() ||
@@ -130,6 +134,7 @@ void UserManagementCliComponent::onCommand(
                 m_userApi->createOf(userDtoNew);
                 break;
             }
+      // Aendern: wie Anlegen, aber mit der Zielkennung aus dem Parameter.
             case UpdateUser: {
                 if (!m_userName.has_value()) {
                     std::cerr << "ERROR: please set username\n";
@@ -146,6 +151,7 @@ void UserManagementCliComponent::onCommand(
                 m_userApi->updateOf(m_userName.value(), groupAdds, groupRemoves);
                 break;
             }
+      // Loeschen: verlangt eine Bestaetigung, sonst keine Aktion.
             case RemoveUser: {
                 if (!m_userName.has_value()) {
                     std::cout << "ERROR: Please add username as value\n";
@@ -156,6 +162,7 @@ void UserManagementCliComponent::onCommand(
                 m_userApi->deleteOf(userRemoves);
                 break;
             }
+      // Passwortwechsel: altes und neues Passwort aus den Parametern.
             case ChangePassword: {
                 if (!m_userName.has_value() || !m_newPassword.has_value()) {
                     std::cerr << "ERROR: please set username and new password\n";
@@ -170,9 +177,11 @@ void UserManagementCliComponent::onCommand(
                 }
                 break;
             }
+      // Sitzungen: nur anzeigen, keine Parameter.
             case ShowSessions:
                 printSessions(m_userApi->sessionsOf());
                 break;
+      // Sitzung widerrufen: die Session-ID ist der erste Parameter.
             case RevokeSession: {
                 if (!m_sessionId.has_value()) {
                     std::cerr << "ERROR: please set the session id\n";

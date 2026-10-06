@@ -73,10 +73,14 @@ void BaseFeature::registerTypes(
         Hypodermic::ContainerBuilder &builder,
         const std::shared_ptr<Configuration> &configuration,
         const std::shared_ptr<ProcessName> &processName) {
+  // Leerer Prozessname, wenn die Komponente ohne ProcessName registriert wird - das
+  // passiert beim Testen der Komponente ohne Bootstrap.
     const std::string processNameString =
             processName != nullptr ? processName->getProcessName() : "";
     bool hasHistoryConfig = false;
     bool isHistoryOwner = false;
+  // Nur die Prozesse, die die Konfiguration als History-Owner benennt, bekommen
+  // eine echte Historie. Alle anderen: Noop.
     if (configuration != nullptr) {
         auto historyEntries = configuration->configurationOf<HistoryComponent>();
         hasHistoryConfig = !historyEntries.empty();
@@ -89,6 +93,9 @@ void BaseFeature::registerTypes(
             }
         }
     }
+  // Zwei Faelle zu unterscheiden: Konfiguration vorhanden, aber dieser Prozess ist
+  // nicht der Owner. Dann wird der Dienst trotzdem registriert (die anderen Prozesse
+  // schreiben in die Historie), aber nur lesend - daher Noop fuer den Rest.
     if (hasHistoryConfig) {
         if (isHistoryOwner) {
             LOG_INFO("register HistoryService for process {} (owner)",
@@ -104,6 +111,7 @@ void BaseFeature::registerTypes(
                 .asSelf()
                 .singleInstance();
     } else {
+    // Keine History-Sektion in der Konfiguration: Noop fuer alle Prozesse.
         LOG_INFO("process {} has no history configuration -> "
                  "register NoopHistoryService",
                  processNameString.empty() ? "<unknown>" : processNameString);
@@ -112,11 +120,13 @@ void BaseFeature::registerTypes(
                 .asSelf()
                 .singleInstance();
     }
+  // Auth ist in jedem Prozess identisch und wird deshalb ohne Filter registriert.
     builder.registerType<AuthService>()
     .as<AbstractServiceInterface>()
     .as<IAuthService>()
     .asSelf()
     .singleInstance();
+  // Scheduler und Executor sind transiente Dienste, InitializeService der Einstiegspunkt.
   builder.registerType<SchedulerService>()
     .as<AbstractServiceInterface>()
     .asSelf()
