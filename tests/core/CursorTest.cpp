@@ -6,10 +6,8 @@
 
 #include <catch2/catch_all.hpp>
 
-#include <cstring>
 #include <filesystem>
 #include <string>
-#include <type_traits>
 #include <vector>
 
 namespace {
@@ -19,17 +17,6 @@ std::string kCursorTestDb() {
     return (std::filesystem::temp_directory_path() /
             ("cursor_test_" + std::to_string(counter++) + ".db"))
             .string();
-}
-
-db::ConnectionType unknownConnectionType()
-{
-  using Underlying = std::underlying_type_t<db::ConnectionType::Value>;
-  // Value outside the enumerator range, as a corrupt or foreign configuration could
-  // carry. memcpy keeps -Wconversion happy, a direct cast is diagnosed as an error.
-  const Underlying raw = 42;
-  db::ConnectionType::Value value{};
-  std::memcpy(&value, &raw, sizeof(value));
-  return db::ConnectionType(value);
 }
 
 struct CursorFixture {
@@ -308,16 +295,24 @@ TEST_CASE("Cursor: range-for with small fetchSize", "[cursor]") {
     REQUIRE(expected == 7);
 }
 
-TEST_CASE("Argument: typed getValue rejects an unknown connection type", "[argument]")
+TEST_CASE("Argument: typed getValue deserializes for every connection type", "[argument]")
 {
-  db::Argument argument("1", "unknown_connection_type");
+  db::Argument argument("1", "value");
 
-  // UNDEFINED deserializes through StringifyService
+  // UNDEFINED goes through StringifyService.
   REQUIRE(argument.getValue<int>() == 1);
+  REQUIRE(argument.getValue<std::string>() == "1");
 
-  // An enumerator that is not part of ConnectionType::Value used to fall out of the
-  // switch without returning, which is undefined behaviour (CodeQL cpp/missing-return).
-  argument.setConnectionType(unknownConnectionType());
-  REQUIRE_THROWS_AS(argument.getValue<int>(), db::SQLException);
-  REQUIRE_THROWS_AS(argument.getValue<std::string>(), db::SQLException);
+  // SQLite goes through sqlite::Serialization.
+  argument.setConnectionType(db::ConnectionType::SQLite);
+  REQUIRE(argument.getValue<int>() == 1);
+  REQUIRE_NOTHROW(argument.getValue<int>());
+
+  // Deliberately NOT tested: a ConnectionType::Value outside the enumerator range.
+  // Argument::getValue() does have a `default:` branch that throws db::SQLException
+  // (CodeQL cpp/missing-return reported the old fall-out-of-function), but that path
+  // cannot be reached without undefined behaviour - loading an out-of-range value into
+  // an enumeration is UB in C++ and the UndefinedBehaviorSanitizer job flags exactly
+  // that. An earlier version of this test built such a value via memcpy; the sanitizer
+  // caught it and the test was rewritten. The branch stays as hardening, untested.
 }
