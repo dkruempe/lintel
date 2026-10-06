@@ -8,6 +8,7 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 ## [Unreleased]
 
 ### Hinzugefügt
+- README: Doxygen-Badge und Abschnitt „Documentation" mit der URL der veröffentlichten API-Referenz und dem lokalen Generierungskommando.
 - Offizielle OSS-Dokumente: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` sowie `CHANGELOG.md` (dieses Dokument).
 - README: CI-Status-Badge und MIT-Lizenz-Badge, Statushinweis für Pre-1.0/API-Stabilität sowie Hinweise zu Tests, PostgreSQL-Abhängigkeit und Zertifikaten (korrekt an CI angepasst).
 - **Funktionsfähiges CMake-Paket:** `find_package(base_library CONFIG)` findet das installierte Paket, `base_libraryConfig.cmake` (neu) mit `find_dependency`-Kette und Relokationsfähigkeit sowie `base_libraryConfigVersion.cmake` in kanonischem Namen. `LICENSE`, `README.md` und `swagger.yaml` werden mitinstalliert. Das installierte Paket funktioniert aus einem beliebigen Präfix – mit einem externen Gegenproben-Projekt geprüft.
@@ -25,8 +26,16 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 - `Process::inActiveWindow()` und der `operator<<` in `examples/message_queue.cpp` nutzen nicht mehr die thread-unsicheren `std::localtime`/`std::ctime`, sondern `localtime_r` (kein geteilter statischer Puffer mehr). Zeitformat im Beispiel ist jetzt deterministisch (`%Y-%m-%d %H:%M:%S`) und ohne angehängten Newline.
 - Beispiele und öffentliche Header bereinigt: keine C-Casts über `void*` mehr im Message-Queue-Beispiel, fehlende Empfangsprüfung dort abgesichert, `getValue<TYPE>()` mit explizitem `default`-Zweig und die beiden `operator++(int)`-Iteratoren mit `const`-Rückgabetyp (`CERT DCL21-CPP`). Die vom CodeQL-Fix berührten Dateien sind frei von clang-tidy-Funden.
 - `INSTALL_INTERFACE` der Bibliothek enthält keine Build-Maschinen-Absolutpfade der Conan-Cache-Pfade mehr, Includes von `magic_enum`/`rapidjson` kommen über Targets statt über gebackene Pfade, und das private Target `project_warnings` landet nicht mehr im öffentlichen Export.
-- Property-Repositories: die bislang nur als `LOG_ERROR("{}", exception.what())` protokollierten Fehler nennen jetzt die konkrete Operation, die Prozess-ID und die Anzahl der Properties. Das bewusste „Best Effort"-Verhalten ist im Dateikopf begründet.
+- `BaseFeature::registerTypes` und `UserManagementCliComponent::onCommand` sind jetzt an der Definition dokumentiert (Ablauf, Randbedingungen, `@param`), nicht nur am Header – der Doxygen-Workflow prüft das als Gate, und CodeQLs `cpp/poorly-documented-function` zählt an der Definition.
+- Vier CodeQL-Alarme als Fehlalarm dismissed: drei `cpp/ambiguously-signed-bit-field` (die Regel liest den Scope-Operator `::` aus `boost::interprocess::named_semaphore` als Bitfeld-Deklaration – im gesamten `include`-Baum existiert kein einziges Bitfeld) und `cpp/cleartext-storage-database` (es wird der gehashte, nicht der im Klartext gespeicherte Passwortwert geschrieben). Damit meldet CodeQL **null** Warnungen; übrig sind nur Stil-Hinweise auf `note`-Ebene.
+- Doppelter `install(FILES)`-Eintrag im vendorten Hypodermic bereinigt (dieselbe Datei zweimal in einer Zeile gelistet).
+
+
+- Property-Repositories: die bislang nur als`LOG_ERROR("{}", exception.what())` protokollierten Fehler nennen jetzt die konkrete Operation, die Prozess-ID und die Anzahl der Properties. Das bewusste „Best Effort"-Verhalten ist im Dateikopf begründet.
 - Leere Zweige in `SharedMemoryPropertyRepository.h` (`cpp/empty-block`) auf ihre positive Bedingung umgestellt; `FilePropertyRepository::save()` und `SharedMemoryPropertyRepository::onMigrate()` sind als bewusste No-Op dokumentiert.
+
+### Bekannte Lücken
+- Die 404-Umstellung in `ProcessController` ist nicht durch Tests abgedeckt. Grund: `ProcessController` nimmt den konkreten `ProcessService` statt eines Interfaces, dessen Konstruktor über `PropertyRegistration` eine vollwertige Bootstrap-Umgebung braucht. Ein `IProcessService`-Interface wäre ein API-Bruch und ist für die Namespace-/API-Phase vorgemerkt.
 
 ### Sicherheitsrelevant
 - Sensitive Daten aus Repo entfernt (TLS-Private-Key, Klartext-Credentials). Meldeweg für Sicherheitslücken in `SECURITY.md` festgelegt (E-Mail statt öffentlichem Issue).

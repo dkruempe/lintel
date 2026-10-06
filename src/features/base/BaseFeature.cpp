@@ -49,6 +49,26 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
     registerTypes(builder, nullptr, nullptr);
 }
 
+/**
+ * Registriert die Kern-Dienste im DI-Container.
+ *
+ * Der Verlauf im Wesentlichen:
+ *   1. Prozessnamen ermitteln (leer, wenn kein ProcessName uebergeben wurde).
+ *   2. HistoryService nur dort als echten Dienst registrieren, wo die
+ *      Konfiguration diesen Prozess ausdruecklich als History-Owner benennt.
+ *      Jeder andere Prozess bekommt eine NoopHistoryService-Instanz und
+ *      fuehrt damit nie eine Historie.
+ *   3. AuthService, SchedulerService, InitializeService und ExecutorService
+ *      als Singleton bzw. Transienten registrieren.
+ *
+ * Aufrufer ist StartupBuilder waehrend des Bootstraps; die null-Argument-
+ * Ueberladung ruft diese Variante mit leeren Werten auf und landet damit
+ * zwingend im Noop-Zweig.
+ *
+ * @param builder          der DI-Container-Builder des Prozesses
+ * @param configuration    die geparste Anwendungskonfiguration, darf null sein
+ * @param processName      der Prozessname des laufenden Prozesses, darf null sein
+ */
 void BaseFeature::registerTypes(
         Hypodermic::ContainerBuilder &builder,
         const std::shared_ptr<Configuration> &configuration,

@@ -72,6 +72,23 @@ UserManagementCliComponent::UserManagementCliComponent(
             RevokeSession);
 }
 
+/**
+ * Dispatcht einen eingegebenen CLI-Befehl an die UserApi.
+ *
+ * Ablauf: Der Parser zerlegt die Eingabe in ein Kommando und dessen Parameter,
+ * danach fuehrt ein Switch ueber die neun Kommandos die passende UserApi-
+ * Operation aus und druckt das Ergebnis. Alle Filter (Gruppenname,
+ * virtuelle Gruppe) aus dem zuvor gesetzten Sitzungs-Kontext uebernommen,
+ * nicht aus den Parametern - die CLI-Session traegt sie.
+ *
+ * Jeder Aufruf ist in einen try/catch gesetzt: eine fehlgeschlagene
+ * UserApi-Operation soll die Menueschleife nicht beenden, sondern als
+ * Fehlermeldung erscheinen. Der Handler wirft deshalb nach oben nichts.
+ *
+ * @param userDto    der angemeldete Benutzer, dessen Rechte die Kommandos steuern
+ * @param input      die rohe CLI-Eingabe
+ * @param parameters die bereits aufgeteilten Parameter der Eingabe
+ */
 void UserManagementCliComponent::onCommand(
         const UserDto &userDto, const std::string &input,
         const std::vector<std::string> &parameters) {

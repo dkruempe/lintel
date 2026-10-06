@@ -31,5 +31,7 @@ INSTALL(DIRECTORY include/Hypodermic
 include(CMakePackageConfigHelpers)
 write_basic_package_version_file(Hypodermic_config_version.cmake
         COMPATIBILITY SameMajorVersion)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Hypodermic_config_version.cmake ${CMAKE_CURRENT_BINARY_DIR}/Hypodermic_config_version.cmake
+# Achtung: die Datei war zweimal in derselben install(FILES)-Zeile gelistet.
+# Das ist harmlos, aber der Eintrag behauptete dadurch zwei Kopien.
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/Hypodermic_config_version.cmake
         DESTINATION lib/cmake/Hypodermic)

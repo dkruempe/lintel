@@ -1,6 +1,7 @@
 # C++ Base Library
 
 [![build](https://github.com/dkruempe/cpp-base-library/actions/workflows/ci.yml/badge.svg)](https://github.com/dkruempe/cpp-base-library/actions/workflows/ci.yml)
+[![docs](https://github.com/dkruempe/cpp-base-library/actions/workflows/doxygen.yml/badge.svg)](https://dkruempe.github.io/cpp-base-library/)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A modular and feature-rich C++ library designed to accelerate the development of modern, high-performance applications.
@@ -198,6 +199,20 @@ The certificates are deliberately not part of the repository (`.gitignore` ignor
 `cfg/bootstrap.xml` ships with SQLite as the default connection (`DEFAULT_SQLITE`, `~/temp.db`, `default="true"`). A leading `~` is expanded to the user's home directory, so the database file is created there and its schema and seed data are applied from `cfg/database/DEFAULT_SQLITE/`. No database server is required for `./bin/main`.
 
 PostgreSQL is the alternative: declare a `<DatabaseConnection>` with `type="PostgreSQL"` and mark it as the default; schema and seed data for it live in `cfg/database/DEFAULT_PSQL/`. `./bin/db` is the only example that talks to PostgreSQL directly, because it does not use the bootstrap configuration — it hard-codes host `127.0.0.1`, database `temp` and user `example_user` (the seed user from `cfg/database/*/data_schema_default_version_1.sql`) and expects you to replace the password placeholder in the source.
+
+## Documentation
+
+The full API reference is generated from the public headers with Doxygen and published on every push to `master`:
+
+**<https://dkruempe.github.io/cpp-base-library/>**
+
+The `Doxygen` workflow runs with `WARN_AS_ERROR`, so undocumented or malformed comments fail the build rather than accumulating. To generate the documentation locally:
+
+```bash
+doxygen Doxyfile   # output goes to build/doxygen/html
+```
+
+`Doxyfile` covers `src/include/base_library` — the public headers only. Implementation files, tests and examples are intentionally excluded.
 
 ## Dependencies
 
