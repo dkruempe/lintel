@@ -170,6 +170,24 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  secrets:
+    name: secret guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      # Blocking, and cheap (no compiler involved). This exists because
+      # `secret_scanning_push_protection` cannot be enabled for this repository
+      # via the API - every field in `security_and_analysis` is rejected with
+      # 422, even with admin rights (verified 2026-10-06). Until that is enabled
+      # in the UI under Settings -> Code security, this job is the guard.
+      - name: Check for plaintext credentials
+        run: ./scripts/check-secrets.sh --all
+
   format:
     name: clang-format
     runs-on: ubuntu-24.04

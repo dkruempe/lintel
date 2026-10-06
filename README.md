@@ -266,7 +266,9 @@ The PostgreSQL-backed tests need a running server (`docker compose up postgres`,
 
 ## Contributing
 
-The checks a change has to pass are documented in [AGENTS.md](AGENTS.md): build, `ctest --output-on-failure --label-regex unit`, `./scripts/check-format.sh <base-branch>` (blocking format gate) and `./scripts/check-tidy.sh <base-branch> build/tidy` (advisory). `CONTRIBUTING.md` and `SECURITY.md` are still on the roadmap.
+The checks a change has to pass are documented in [AGENTS.md](AGENTS.md): build, `ctest --output-on-failure --label-regex unit`, `./scripts/check-format.sh <base-branch>` (blocking format gate), `./scripts/check-secrets.sh` (blocking plaintext-credential guard) and `./scripts/check-tidy.sh <base-branch> build/tidy` (advisory).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution flow and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security issues are handled separately — see [SECURITY.md](SECURITY.md).
 
 ## License
 

@@ -39,7 +39,24 @@ Lokal dasselbe prüfen:
 ./scripts/check-format.sh master   # Format-Regression auf geänderten Dateien
 ./scripts/check-format.sh --all    # repo-weiter Drift-Report (Blockierend: --strict)
 ./scripts/check-tidy.sh master build/tidy   # braucht Non-Unity-/PCH-freies compile_commands.json
+./scripts/check-secrets.sh         # Klartext-Credentials (--staged / --all)
 ```
+
+## Secrets
+
+`secret_scanning_push_protection` lässt sich für dieses Repo **nicht per API aktivieren** –
+alle Felder in `security_and_analysis` werden mit `422` ablehnt, auch mit Admin-Rechten
+(verifiziert 06.10.2026). Solange das nicht über *Settings → Code security* nachgezogen ist,
+übernimmt `scripts/check-secrets.sh` (blockierender CI-Job `secrets`).
+
+Das Skript prüft **nicht** gegen eine Liste bekannter Geheimnisse, sondern in zwei Stufen:
+Konfigurationsformate (`.xml`/`.yml`/`.env`/…) bzw. PEM-Schlüsselblöcke, **und** einen
+Entropie-Test auf den Wert. reine Namenssuche ist unbrauchbar – das Repo hat Dutzende
+`const char *const PASSWORD = "password";`, das sind JSON-Schlüsselnamen.
+
+Keine Zugangsdaten committen. Passwörter in Config und Beispielen als `${VAR}` oder
+`<PLACEHOLDER>` schreiben. `cfg/database/*` und `cfg/certs/*` sind bewusst ausgenommen
+(dokumentierter Seed-Platzhalter bzw. gitignorierte Dev-Zertifikate).
 
 ## Code Style
 

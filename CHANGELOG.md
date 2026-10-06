@@ -8,6 +8,7 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 ## [Unreleased]
 
 ### Hinzugefügt
+- **Secret-Guard** (`scripts/check-secrets.sh`, blockierender CI-Job `secrets`): blockiert Klartext-Credentials im Arbeitsbaum. Ersatz für `secret_scanning_push_protection`, das sich für dieses Repo nicht per API aktivieren lässt (alle Felder in `security_and_analysis` werden mit 422 abgelehnt, auch mit Admin-Rechten). Prüft in zwei Stufen – Konfigurationsformate bzw. PEM-Schlüsselblöcke, **und** ein Entropie-Test auf den Wert; eine reine Namenssuche ist unbrauchbar, weil das Repo Dutzende `const char *const PASSWORD = "password";` als JSON-Schlüsselnamen hat.
 - README: Doxygen-Badge und Abschnitt „Documentation" mit der URL der veröffentlichten API-Referenz und dem lokalen Generierungskommando.
 - Offizielle OSS-Dokumente: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` sowie `CHANGELOG.md` (dieses Dokument).
 - README: CI-Status-Badge und MIT-Lizenz-Badge, Statushinweis für Pre-1.0/API-Stabilität sowie Hinweise zu Tests, PostgreSQL-Abhängigkeit und Zertifikaten (korrekt an CI angepasst).
