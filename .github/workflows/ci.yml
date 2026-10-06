@@ -170,6 +170,102 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  sanitizers:
+    name: sanitizers (ASan+UBSan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    # Advisory for now. Two known reasons it cannot be blocking yet:
+    #   - LSan is switched off (see below): the static spdlog registry,
+    #     boost::interprocess segments and the fork() in the signal test produce
+    #     leaks that are not bugs in this library.
+    #   - Budget: on a private repository the Actions minutes are limited
+    #     (2000/month), and this job costs roughly 8-10 minutes per run.
+    # Promote to blocking once a full run is green and LSan is investigated.
+    continue-on-error: true
+
+    env:
+      CC: clang-18
+      CXX: clang++-18
+      BUILD_TYPE: RelWithDebInfo
+      BUILD_DIR: build/build/RelWithDebInfo
+      CACHE_ID: sanitizers
+      CONAN_SYSREQUIRES_MODE: enabled
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Conan packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential cmake ninja-build pkg-config python3 python3-pip \
+            libpq-dev libsqlite3-dev libssl-dev
+
+      - name: Install Conan
+        run: pip3 install conan --break-system-packages --no-cache-dir
+
+      - name: Install Conan dependencies
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      - name: Configure CMake with sanitizers
+        run: |
+          cmake -S . -B ${{ env.BUILD_DIR }} \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/RelWithDebInfo/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_FLAGS="-fsanitize=address,undefined -fno-omit-frame-pointer" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+            -G Ninja
+
+      # The TLS integration test needs certs/server.crt + certs/server.key. Both are
+      # generated and git-ignored, so this job creates its own throwaway pair.
+      - name: Generate TLS test certificates
+        run: ./cfg/certs/generate_certs.sh
+
+      - name: Build
+        run: cmake --build ${{ env.BUILD_DIR }} --parallel $(nproc)
+
+      - name: Run tests
+        env:
+          # LSan off: the static spdlog registry, the boost::interprocess
+          # segments and the fork() in the signal test all look like leaks and
+          # would drown out a real finding. halt_on_error=1 makes ASan and
+          # UBSan stop at the first real error instead of continuing.
+          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+        run: |
+          cd ${{ env.BUILD_DIR }}
+          ctest --output-on-failure --label-regex unit
+
   secrets:
     name: secret guard
     runs-on: ubuntu-24.04
