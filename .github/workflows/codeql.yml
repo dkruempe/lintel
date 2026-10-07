@@ -14,24 +14,45 @@ permissions:
 
 jobs:
   analyze:
-    name: Analyze (cpp, security-and-quality)
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
+    name: Analyze (cpp, security-and-quality, ${{ matrix.mode }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
 
     strategy:
       fail-fast: false
       matrix:
-        # Default: fast build-mode 'none'. Full instrumented build is optional/experimental.
-        mode: [none]
+        # 'none'  - fast, no build. This is what produced the 33 open alerts.
+        # 'full'  - instrumented build, ~30 min warm. Advisory only for now.
+        include:
+          - mode: none
+            blocking: true
+          - mode: full
+            blocking: false
+
+    # 'full' is a 30-minute instrumented build. It must not turn master red
+    # while the two modes are being compared, but it must not be invisible
+    # either - a failed run that nobody reads is worse than a red one.
+    continue-on-error: ${{ !matrix.blocking }}
 
     env:
-      # Prepare compiler environment for optional full build (used only if mode == 'full')
       CC: gcc
       CXX: g++
+      BUILD_DIR: build/build/Release
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
+
+      # 'full' compiles the whole dependency graph from source (Boost, OpenSSL,
+      # libpq), so without this the cache is cold on every single run.
+      - name: Cache Conan packages
+        if: ${{ matrix.mode == 'full' }}
+        uses: actions/cache@v6
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-codeql-full-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-codeql-full-
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -48,29 +69,37 @@ jobs:
               - examples
               - tests
 
-      # Full instrumented build (optional, experimental):
-      # Activates deep analysis (macro/constexpr/headers across TUs) via Conan + CMake.
-      # Very expensive due to source-built deps (Boost/OpenSSL/libpq). Disabled by default.
-      - name: Set up build tools (Ninja)
+      # Full instrumented build: resolves macro/constexpr/template contexts
+      # across translation-unit boundaries. Without a compilation database
+      # CodeQL falls back to heuristic extraction, which is why 'none' reports
+      # findings at lines that do not contain the reported construct at all
+      # (see docs/code-scanning.md).
+      - name: Set up build tools
         if: ${{ matrix.mode == 'full' }}
         # Hard backstop above install-deps.sh's own budget. A throttled mirror
         # node must not be killed and restarted here (see AGENTS.md).
         timeout-minutes: 40
-        run: ./scripts/install-deps.sh ninja-build ccache
+        run: |
+          ./scripts/install-deps.sh \
+            build-essential cmake ninja-build ccache \
+            pkg-config python3 python3-pip \
+            libpq-dev libsqlite3-dev libssl-dev
 
       - name: Install dependencies with Conan (full build only)
         if: ${{ matrix.mode == 'full' }}
         run: |
           pipx install 'conan>=2.0,<3.0'
           conan profile detect --force
-          conan install . --output-folder=build --build=missing \
+          conan install . \
+            --output-folder=build \
+            --build=missing \
             -s build_type=Release \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
       - name: Configure CMake (full build only)
         if: ${{ matrix.mode == 'full' }}
         run: |
-          cmake -S . -B build/build/Release \
+          cmake -S . -B "$BUILD_DIR" \
             -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -78,8 +107,7 @@ jobs:
 
       - name: Build (full build only)
         if: ${{ matrix.mode == 'full' }}
-        run: |
-          cmake --build build/build/Release --parallel "$(nproc)"
+        run: cmake --build "$BUILD_DIR" --parallel "$(nproc)"
 
       - name: Perform CodeQL Analysis
         uses: github/codeql-action/analyze@v4
