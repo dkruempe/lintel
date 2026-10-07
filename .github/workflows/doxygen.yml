@@ -25,9 +25,10 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
 
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    # No job-level `environment:` block: its `url:` referenced a step output, and on a
+    # freshly created repository the job failed immediately with zero steps executed.
+    # deploy-pages reports the resulting URL on its own; the environment is created
+    # automatically on the first successful deployment.
 
     steps:
       - name: Checkout
