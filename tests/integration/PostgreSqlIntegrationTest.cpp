@@ -11,6 +11,8 @@
 
 #include <catch2/catch_all.hpp>
 
+#include <unistd.h>
+
 #include <atomic>
 #include <chrono>
 #include <cstdlib>
