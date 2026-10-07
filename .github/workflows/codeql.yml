@@ -21,17 +21,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 'none'  - fast, no build. This is what produced the 33 open alerts.
-        # 'full'  - instrumented build, ~30 min warm. Advisory only for now.
+        # 'none'    - fast, no build. This is what produced the 33 open alerts.
+        # 'manual'  - instrumented build (GitHub renamed this mode; 'full' is
+        #             rejected with "Supported build modes are: none, autobuild,
+        #             manual"). ~30 min warm. Advisory only for now.
         include:
           - mode: none
             blocking: true
-          - mode: full
+          - mode: manual
             blocking: false
 
-    # 'full' is a 30-minute instrumented build. It must not turn master red
-    # while the two modes are being compared, but it must not be invisible
-    # either - a failed run that nobody reads is worse than a red one.
+    # The instrumented build takes ~30 min. It must not turn master red while
+    # the two modes are being compared, but it must not be invisible either -
+    # a failed run that nobody reads is worse than a red one.
     continue-on-error: ${{ !matrix.blocking }}
 
     env:
@@ -43,16 +45,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v7
 
-      # 'full' compiles the whole dependency graph from source (Boost, OpenSSL,
+      # 'manual' compiles the whole dependency graph from source (Boost, OpenSSL,
       # libpq), so without this the cache is cold on every single run.
       - name: Cache Conan packages
-        if: ${{ matrix.mode == 'full' }}
+        if: ${{ matrix.mode == 'manual' }}
         uses: actions/cache@v6
         with:
           path: ~/.conan2
-          key: conan-${{ runner.os }}-codeql-full-${{ hashFiles('conanfile.txt') }}
+          key: conan-${{ runner.os }}-codeql-manual-${{ hashFiles('conanfile.txt') }}
           restore-keys: |
-            conan-${{ runner.os }}-codeql-full-
+            conan-${{ runner.os }}-codeql-manual-
 
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
@@ -75,7 +77,7 @@ jobs:
       # findings at lines that do not contain the reported construct at all
       # (see docs/code-scanning.md).
       - name: Set up build tools
-        if: ${{ matrix.mode == 'full' }}
+        if: ${{ matrix.mode == 'manual' }}
         # Hard backstop above install-deps.sh's own budget. A throttled mirror
         # node must not be killed and restarted here (see AGENTS.md).
         timeout-minutes: 40
@@ -85,8 +87,8 @@ jobs:
             pkg-config python3 python3-pip \
             libpq-dev libsqlite3-dev libssl-dev
 
-      - name: Install dependencies with Conan (full build only)
-        if: ${{ matrix.mode == 'full' }}
+      - name: Install dependencies with Conan (manual build only)
+        if: ${{ matrix.mode == 'manual' }}
         run: |
           pipx install 'conan>=2.0,<3.0'
           conan profile detect --force
@@ -96,8 +98,8 @@ jobs:
             -s build_type=Release \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
-      - name: Configure CMake (full build only)
-        if: ${{ matrix.mode == 'full' }}
+      - name: Configure CMake (manual build only)
+        if: ${{ matrix.mode == 'manual' }}
         run: |
           cmake -S . -B "$BUILD_DIR" \
             -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
@@ -105,8 +107,8 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -G Ninja
 
-      - name: Build (full build only)
-        if: ${{ matrix.mode == 'full' }}
+      - name: Build (manual build only)
+        if: ${{ matrix.mode == 'manual' }}
         run: cmake --build "$BUILD_DIR" --parallel "$(nproc)"
 
       - name: Perform CodeQL Analysis
