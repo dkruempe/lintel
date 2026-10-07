@@ -12,152 +12,145 @@
 /**
  * named pipe service for managing those kind of pipes in macOs and Linux
  */
-class NamedPipeService {
+class NamedPipeService
+{
 public:
-    explicit NamedPipeService(std::filesystem::path path,
-                              bool createParentDirs = false)
-            : m_path(std::move(path)) {
-        if (!exists(m_path.parent_path())) {
-            if (!createParentDirs) {
-                throw std::runtime_error("Parent directory doesn't exists => abort");
-            }
-            bool const ret = create_directories(m_path);
-            if (!ret) {
-                throw std::runtime_error("failed to create parent directories");
-            }
-        }
-        if (!exists(m_path)) {
-            mkfifo(m_path.c_str(), 0666);
-        }
-        if (!is_fifo(m_path)) {
-            throw std::runtime_error("file exists but is not an fifo file");
-        }
-        open();
+  explicit NamedPipeService(std::filesystem::path path, bool createParentDirs = false) : m_path(std::move(path))
+  {
+    if (!exists(m_path.parent_path())) {
+      if (!createParentDirs) { throw std::runtime_error("Parent directory doesn't exists => abort"); }
+      bool const ret = create_directories(m_path);
+      if (!ret) { throw std::runtime_error("failed to create parent directories"); }
     }
-
-    ~NamedPipeService() { close(); }
-
-    /**
-     * Write a message to the named pipe
-     *
-     * Message structure:
-     * STX|%016x|message|ETX
-     * @param message
-     */
-    void write(const std::string &message) const {
-        // 1. build message
-        std::stringstream ss;
-        ss << m_stx;
-        ss << std::setw(16) << std::setfill('0') << std::hex << message.length();
-        ss << message;
-        ss << m_etx;
-        std::string temp = ss.str();
-        if (::write(m_pipe_fd, temp.data(), temp.size()) < 0) {
-            throw std::system_error(errno, std::system_category(),
-                                    "Failed to write to named pipe");
-        }
+    if (!exists(m_path)) {
+      // 0600, not 0666: the pipe carries application messages and a
+      // world-writable FIFO lets any local user inject or read them.
+      mkfifo(m_path.c_str(), S_IRUSR | S_IWUSR);
     }
+    if (!is_fifo(m_path)) { throw std::runtime_error("file exists but is not an fifo file"); }
+    open();
+  }
 
-    /**
-     * read defined maximum of messages and return those
-     *
-     * @param maxMessages maximum size of messages
-     * @return messages
-     */
-    [[nodiscard]] std::vector<std::string> read(std::size_t maxMessages = 100) const
-    {
-      std::vector<std::string> messages;
-      while (messages.size() < maxMessages) {
-        std::vector<char> sizeVec(17);
-        ssize_t numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
-        if (numBytes == 0) { continue; }
-        if (numBytes < 0) {
-          if (errno == EAGAIN) {
-            // named pipe empty
-            return messages;
-          }
-          throw std::system_error(errno, std::system_category(), "Failed to read from named pipe");
+  ~NamedPipeService() { close(); }
+
+  /**
+   * Write a message to the named pipe
+   *
+   * Message structure:
+   * STX|%016x|message|ETX
+   * @param message
+   */
+  void write(const std::string &message) const
+  {
+    // 1. build message
+    std::stringstream ss;
+    ss << m_stx;
+    ss << std::setw(16) << std::setfill('0') << std::hex << message.length();
+    ss << message;
+    ss << m_etx;
+    std::string temp = ss.str();
+    if (::write(m_pipe_fd, temp.data(), temp.size()) < 0) {
+      throw std::system_error(errno, std::system_category(), "Failed to write to named pipe");
+    }
+  }
+
+  /**
+   * read defined maximum of messages and return those
+   *
+   * @param maxMessages maximum size of messages
+   * @return messages
+   */
+  [[nodiscard]] std::vector<std::string> read(std::size_t maxMessages = 100) const
+  {
+    std::vector<std::string> messages;
+    while (messages.size() < maxMessages) {
+      std::vector<char> sizeVec(17);
+      ssize_t numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
+      if (numBytes == 0) { continue; }
+      if (numBytes < 0) {
+        if (errno == EAGAIN) {
+          // named pipe empty
+          return messages;
         }
-        // erase STX
-        sizeVec.erase(sizeVec.begin());
-        std::string const sizeStr(sizeVec.data(), sizeVec.size());
-        std::size_t const size = static_cast<std::size_t>(std::strtol(sizeStr.c_str(), nullptr, 16)) + 1;
-        std::vector<char> tempVec(size);
-        numBytes = ::read(m_pipe_fd, tempVec.data(), tempVec.size());
-        if (numBytes < 0) { throw std::system_error(errno, std::system_category(), "Failed to read from named pipe"); }
-        tempVec.erase(tempVec.end() - 1);
-        messages.emplace_back(tempVec.data(), tempVec.size());
+        throw std::system_error(errno, std::system_category(), "Failed to read from named pipe");
       }
-      return messages;
+      // erase STX
+      sizeVec.erase(sizeVec.begin());
+      std::string const sizeStr(sizeVec.data(), sizeVec.size());
+      std::size_t const size = static_cast<std::size_t>(std::strtol(sizeStr.c_str(), nullptr, 16)) + 1;
+      std::vector<char> tempVec(size);
+      numBytes = ::read(m_pipe_fd, tempVec.data(), tempVec.size());
+      if (numBytes < 0) { throw std::system_error(errno, std::system_category(), "Failed to read from named pipe"); }
+      tempVec.erase(tempVec.end() - 1);
+      messages.emplace_back(tempVec.data(), tempVec.size());
     }
+    return messages;
+  }
 
-    /**
-     * reads total amount of messages in the named pipe and calls for each
-     * message the call back function onMessage
-     *
-     * @param onMessage call back function
-     */
-    void read(std::function<void(std::string)> &&onMessage) const {
-        while (true) {
-            std::vector<char> sizeVec(17);
-            ssize_t numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
-            if (numBytes == 0) {
-                continue;
-            }
-            if (numBytes < 0) {
-                if (errno == EAGAIN) {
-                    // named pipe empty
-                    return;
-                }
-                throw std::system_error(errno, std::system_category(),
-                                        "Failed to read from named pipe");
-            }
-            // erase STX
-            sizeVec.erase(sizeVec.begin());
-            std::string const sizeStr(sizeVec.data(), sizeVec.size());
-            std::size_t const size = static_cast<std::size_t>(std::strtol(sizeStr.c_str(), nullptr, 16)) + 1;
-            std::vector<char> tempVec(size);
-            numBytes = ::read(m_pipe_fd, tempVec.data(), tempVec.size());
-            if (numBytes < 0) {
-                throw std::system_error(errno, std::system_category(),
-                                        "Failed to read from named pipe");
-            }
-            tempVec.erase(tempVec.end() - 1);
-            onMessage(std::string(tempVec.data(), tempVec.size()));
+  /**
+   * reads total amount of messages in the named pipe and calls for each
+   * message the call back function onMessage
+   *
+   * @param onMessage call back function
+   */
+  void read(std::function<void(std::string)> &&onMessage) const
+  {
+    while (true) {
+      std::vector<char> sizeVec(17);
+      ssize_t numBytes = ::read(m_pipe_fd, sizeVec.data(), sizeVec.size());
+      if (numBytes == 0) { continue; }
+      if (numBytes < 0) {
+        if (errno == EAGAIN) {
+          // named pipe empty
+          return;
         }
+        throw std::system_error(errno, std::system_category(), "Failed to read from named pipe");
+      }
+      // erase STX
+      sizeVec.erase(sizeVec.begin());
+      std::string const sizeStr(sizeVec.data(), sizeVec.size());
+      std::size_t const size = static_cast<std::size_t>(std::strtol(sizeStr.c_str(), nullptr, 16)) + 1;
+      std::vector<char> tempVec(size);
+      numBytes = ::read(m_pipe_fd, tempVec.data(), tempVec.size());
+      if (numBytes < 0) { throw std::system_error(errno, std::system_category(), "Failed to read from named pipe"); }
+      tempVec.erase(tempVec.end() - 1);
+      onMessage(std::string(tempVec.data(), tempVec.size()));
     }
+  }
 
 private:
-    /**
-     * open named pipe for reading and writing
-     */
-    void open() {
-        m_pipe_fd = ::open(m_path.c_str(), O_RDWR | O_NONBLOCK);
-        if (m_pipe_fd < 0) {
-            throw std::system_error(errno, std::system_category(),
-                                    "Failed to open named pipe");
-        }
-    }
+  /**
+   * open named pipe for reading and writing
+   *
+   * The path may come from argv, so it is opened with O_NOFOLLOW: without it
+   * a symlink at that path would redirect the open() to an arbitrary file.
+   * O_NOFOLLOW only rejects a symlink as the final component, which is the
+   * case an attacker would plant.
+   */
+  void open()
+  {
+    m_pipe_fd = ::open(m_path.c_str(), O_RDWR | O_NONBLOCK | O_NOFOLLOW);
+    if (m_pipe_fd < 0) { throw std::system_error(errno, std::system_category(), "Failed to open named pipe"); }
+  }
 
-    /**
-     * close the named pipe
-     */
-    void close() {
-        if (m_pipe_fd >= 0) {
-            ::close(m_pipe_fd);
-            m_pipe_fd = -1;
-        }
+  /**
+   * close the named pipe
+   */
+  void close()
+  {
+    if (m_pipe_fd >= 0) {
+      ::close(m_pipe_fd);
+      m_pipe_fd = -1;
     }
+  }
 
-    std::filesystem::path m_path;
-    int m_pipe_fd{-1};
-    static constexpr char m_stx = '\x02';
-    static constexpr char m_etx = '\x03';
+  std::filesystem::path m_path;
+  int m_pipe_fd{ -1 };
+  static constexpr char m_stx = '\x02';
+  static constexpr char m_etx = '\x03';
 };
 
-void onMessage(const std::string &message) {
-    std::cout << "message: " << message << "\n";
-}
+void onMessage(const std::string &message) { std::cout << "message: " << message << "\n"; }
 
 /**
  * pipe path: first command line argument or a default inside the temporary
