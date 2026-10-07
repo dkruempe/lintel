@@ -14,6 +14,13 @@
  * The method is kept as the implementation of the pure interface
  * PropertyRepository::save(). Writing the file is documented as the goal in
  * FilePropertyRepository.h and not implemented yet.
+ *
+ * Status: known gap, not an oversight. The XML file is the *source* of the
+ * configured defaults, so writing runtime changes back into it would either
+ * mutate the checkout or produce a file that is never read again. Runtime
+ * changes belong to the mutable repositories further up the shadow chain
+ * (database, shared memory), which is why PropertyService filters this
+ * repository out via isMutable() before it ever calls save().
  */
 void FilePropertyRepository::save(std::shared_ptr<PropertyBase> property) {}
 
