@@ -8,6 +8,11 @@ on:
       - 'Doxyfile'
       - 'docs/**'
       - '.github/workflows/doxygen.yml'
+  # Deliberately no pull_request trigger: this workflow ends in deploy-pages,
+  # so a PR run would overwrite the published documentation with unreviewed
+  # content. Documentation changes are therefore only published once they are
+  # merged. Want the gate locally instead:
+  #   doxygen Doxyfile     # WARN_AS_ERROR is on, so it fails on any warning
   workflow_dispatch:
 
 concurrency:

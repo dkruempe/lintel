@@ -1,0 +1,249 @@
+/*
+ * Architecture overview for lintel.
+ *
+ * This is a hand-written page, not a header: it is the entry point a new user
+ * needs before the generated class reference makes sense. It is pulled into
+ * the Doxygen run via INPUT in Doxyfile and therefore shows up under
+ * "Related Pages" in the published HTML at https://dkruempe.github.io/lintel/.
+ *
+ * Style rules that apply here (WARN_AS_ERROR=YES, so a typo fails CI):
+ *   - use \page / \section / \subsection with a single-word id,
+ *   - every @ref target must name a symbol that Doxygen actually parsed,
+ *   - code fences use ```cpp / ```xml / ```bash.
+ */
+
+/**
+ * @page architecture Architecture
+ *
+ * @section arch_layers Layers
+ *
+ * `lintel` is split into two halves that are compiled into one library:
+ *
+ * - **`core`** - the engine. Process startup, dependency injection, lifecycle,
+ *   configuration, persistence abstraction, logging and plugins. Nothing in
+ *   `core` needs an optional transport or UI.
+ * - **`features`** - opt-in modules that plug into the engine. Each feature
+ *   registers its own types into the container and is enabled explicitly by
+ *   the application:
+ *
+ * | Feature | Header | What it adds |
+ * |---|---|---|
+ * | `PropertyFeature` | `lintel/features/property/PropertyFeature.h` | configuration properties, repositories, change notification |
+ * | `BaseFeature` | `lintel/features/base/BaseFeature.h` | user/groups/history services, shared memory, process control |
+ * | `CommandLineFeature` | `lintel/features/cli/CommandLineFeature.h` | interactive CLI, the reference client for the HTTP API |
+ * | `HttpFeature` | `lintel/features/http/HttpFeature.h` | cpp-httplib server and client, the HTTP API |
+ *
+ * The `features` split is a source-level boundary, not a link-time one: the
+ * exported CMake target is `lintel::lintel`, and an application pays only for
+ * what its own `addFeature<...>()` calls register at runtime.
+ *
+ * @section arch_bootstrap Bootstrap and lifecycle
+ *
+ * Every application starts through @ref StartupBuilder. `StartupBuilder::with(argc, argv)`
+ * is the factory, `addFeature<FEATURE>()` accumulates the feature set and
+ * `start()` runs the sequence. `start()` executes these phases in a fixed
+ * order, and the order is the contract:
+ *
+ * 1. **Type registration.** `Configuration`, `ProcessName` and
+ *    `EnvironmentConfiguration` are registered as container instances, then
+ *    every feature's `registerTypes(builder, configuration, processName)` runs.
+ *    Configuration is available at *registration* time on purpose: a feature
+ *    can then register a type only in the process the configuration names as
+ *    its owner (`BaseFeature` does exactly this for `HistoryService`).
+ * 2. **Logger.** `DECLARE_LOGGER(m_name, m_configuration)` after registration,
+ *    so log statements during later phases are routed.
+ * 3. **Signal mask.** `SIGINT`, `SIGCHLD` and `SIGTERM` are blocked via
+ *    `pthread_sigmask` and consumed later by a dedicated `sigwait` thread
+ *    instead of `std::signal`, which avoids the async-signal-safety problems of
+ *    handlers that touch C++ state.
+ * 4. **Container build.** `builder.build()` instantiates the object graph.
+ * 5. **Bootstrap plugins.** `BootstrapService::onStart()` runs them in
+ *    `BootstrapSequence` order: `SingleInstance`, `Database`, `MessageQueue`,
+ *    `VirtualGroups`, `SharedMemory`, `AdminUser`. The order is data
+ *    dependencies, not priority preference - the admin user cannot exist
+ *    before groups, and shared memory cannot be mirrored before the database
+ *    is seeded.
+ * 6. **Feature initialization.** Each feature's `initialize(container)` runs and
+ *    binds services to the now-resolved graph.
+ * 7. **Arguments.** `ProcessArgumentService::parseArguments()` consumes the
+ *    command line, which is why it happens after initialization and not in
+ *    phase 1.
+ * 8. **Awake.** `PersistableService::awake()` tells every registered
+ *    `PersistableBean` to reload its state from persistent storage.
+ * 9. **Service initialization.** `InitializeService::onInitialize()` calls
+ *    `onInitialize()` on every resolved @ref AbstractServiceInterface, in
+ *    reverse `shutdownPriorityOf()` order so that dependents come up before
+ *    their dependencies.
+ * 10. **Idle.** The builder waits on a condition variable until the signal
+ *     thread sets the stop flag, then joins it. The destructor joins as well,
+ *     so a `REQUIRE` failure that unwinds through a step cannot leave a
+ *     joinable `std::thread` behind and abort the process.
+ *
+ * Shutdown mirrors this through `onShutdown()` and `shutdownPriorityOf()`
+ * (`ShutdownPriority::PROCESS_SERVICE` tears down managed processes before
+ * `ShutdownPriority::DEFAULT` services).
+ *
+ * @section arch_di Dependency injection
+ *
+ * The container is Hypodermic (`external/Hypodermic/`, vendored because it is
+ * unmaintained since 2017). It is used through two interface methods rather
+ * than exposed in the API:
+ *
+ * - `FeatureInterface::registerTypes()` / `FeatureInterface::initialize()`
+ * - `BootstrapPlugin::onStart()` / `BootstrapPlugin::getPriority()`
+ *
+ * Public headers only mention `Hypodermic::Container` / `ContainerBuilder`
+ * through forward declarations where a signature needs it, so consumers are
+ * not forced to have Hypodermic's headers on their include path.
+ *
+ * @section arch_properties Properties
+ *
+ * The property system is the central configuration surface: services read
+ * their settings through it instead of parsing XML themselves.
+ *
+ * - `PropertyRepository` is the storage abstraction, implemented by
+ *    `FilePropertyRepository`, `DatabasePropertyRepository` and
+ *    `SharedMemoryPropertyRepository`.
+ * - Repositories form a *shadow chain*: a repository can declare itself a
+ *    shadow of another, which is how a shared-memory mirror stays in sync with
+ *    the database without either side knowing about the other's storage
+ *    details. This is why `SharedMemoryPropertyRepository` can serve processes
+ *    that must not touch a database at all.
+ * - `PropertyFactory::Create()` materializes a `PropertyBase` from its string
+ *    representation, using the recorded type name.
+ * - Changes are published on the event bus, so a subscriber learns about a
+ *    change without polling the repository.
+ *
+ * @section arch_persistence Persistence
+ *
+ * `db::Connection` is one class over both backends; the concrete choice is
+ * `db::ConnectionType` plus a connection entry from the bootstrap XML. Around
+ * it sit `db::Parameter` / `db::ParameterBuilder` / `db::PreparedStatement`
+ * (bind parameters), `db::Result`, `db::Cursor` (server-side cursors for
+ * PostgreSQL), `db::Transaction` and `db::Notify`.
+ *
+ * Values are bound as text through the generic bind, which means a caller is
+ * responsible for not passing plaintext secrets. Both password paths in the
+ * library (`Cryption::hashOf` on login and on change) hash before the value
+ * reaches this layer.
+ *
+ * @section arch_ipc Shared memory and the event bus
+ *
+ * Shared memory is `boost::interprocess` based and deliberately quarantined:
+ * `BoostSegmentAllocator` is the single adapter where `ShmSegmentAccessor`'s
+ * allocator interface meets boost, so the rest of the library - and all
+ * examples except the ones that create segments - stay boost-free. On top of
+ * it, `EventBus` provides broadcast to subscribers plus point-to-point events
+ * between processes.
+ *
+ * Cross-process access to a remapped segment is serialized by
+ * `SegmentSemaphoreGuard`, which acquires and releases the segment's named
+ * remap semaphore.
+ *
+ * @section arch_transports Transports
+ *
+ * The HTTP API (@ref HttpFeature) and the CLI (@ref CommandLineFeature) are
+ * both optional, and the CLI is deliberately the reference client for the HTTP
+ * API. The wire contract is `swagger.yaml` in the repository root; `swagger.md`
+ * is a generated mirror of it. Server behavior worth knowing:
+ *
+ * - `/health` and `/ready` are unauthenticated and always answer `200` with a
+ *    JSON status, so they are usable as container probes.
+ * - TLS is configured per `<HttpHost><Server>` in the bootstrap XML. With
+ *    `require_tls="true"` the server refuses to start without a certificate and
+ *    key, which keeps credentials from being served in clear text.
+ * - `trusted_proxies` lists the proxies whose `X-Forwarded-For` header is
+ *    believed; without it the header is ignored and the peer address is used.
+ *
+ * @section arch_extending Extension points
+ *
+ * The intended extension points, in the order a new subsystem usually needs
+ * them:
+ *
+ * 1. **A service** derives from `AbstractService` (which supplies the
+ *    `AbstractServiceInterface` lifecycle and property access) and registers
+ *    itself in a feature's `registerTypes()`.
+ * 2. **A bootstrap plugin** derives from @ref BootstrapPlugin and returns a
+ *    `BootstrapSequence` value, so it lands at the right point in phase 5.
+ * 3. **A new storage backend** implements `PropertyRepository`, or a
+ *    `db::ConnectionType` case for the persistence layer.
+ * 4. **A new transport** implements `FeatureInterface` and registers its own
+ *    components; nothing in `core` has to change.
+ *
+ * @section arch_build Build and integration
+ *
+ * Consumers use the installed CMake package:
+ *
+ * ```cmake
+ * find_package(lintel REQUIRED)
+ * target_link_libraries(my_app PRIVATE lintel::lintel)
+ * ```
+ *
+ * The package is relocatable - `INSTALL_INTERFACE` carries no build-machine
+ * absolute paths - so an installed tree can be moved. Dependencies come from
+ * Conan 2; `CONAN_SYSREQUIRES_MODE` is what lets `conan install` satisfy
+ * system requirements during CI.
+ *
+ * Platform support in practice: the code is POSIX-only (`sigwait`,
+ * `localtime_r`, named POSIX FIFOs in the examples). The CI matrix covers GCC
+ * and Clang on Ubuntu; macOS and Windows are not currently built in CI.
+ */
+
+/**
+ * @page architecture_conventions Conventions
+ *
+ * Conventions worth knowing before reading the headers or contributing.
+ *
+ * @section conv_headers Header hygiene
+ *
+ * Public headers under `src/include/lintel/` are the supported surface. The
+ * build is deliberately expensive to get wrong, so the rules are enforced:
+ *
+ * - `spdlog` does not appear in public headers. `LoggerService.h` forward
+ *   declares `fmt` types instead, which removed the spdlog dependency from
+ *   the include graph entirely.
+ * - Boost is limited to the shared-memory boundary described in
+ *   @ref architecture ("Quarantined boost").
+ * - `cpp-httplib` is confined to the HTTP feature; controllers depend on an
+ *   internal interface, and the implementation sits behind a pimpl so the
+ *   server type does not leak into public headers.
+ * - Forward declarations are preferred over includes for types that only
+ *   appear in a signature.
+ *
+ * The `gcc-debug-nonunity` CI entry exists specifically to protect these rules:
+ * a unity build silently supplies includes that a single translation unit
+ * would not have, so building non-unity in Debug is what actually proves header
+ * completeness.
+ *
+ * @section conv_namespaces Namespaces
+ *
+ * All public classes currently live in the **global** C++ namespace. Only the
+ * CMake export namespace is namespaced (`lintel::lintel`), so the include guard
+ * of a public header is `LINTEL_...`. Moving the classes into a `lintel::`
+ * namespace is a planned breaking change (see the CHANGELOG migration table
+ * once it lands); until then, a consumer with its own `Property` or `Result`
+ * class has to namespace-qualify deliberately.
+ *
+ * @section conv_errors Errors
+ *
+ * - Persistence failures throw `db::SQLException`; the message carries the
+ *   driver's own error text.
+ * - A `switch` over an enum is required to have a `default` branch that either
+ *   handles the case or throws. A fall-through out of a non-`void` function is
+ *   undefined behaviour, and CodeQL flagged exactly that once in this codebase.
+ * - Thread-unsafe C functions (`std::localtime`, `std::ctime`) are not used;
+ *   the `_r` variants write into caller-owned storage.
+ *
+ * @section conv_tests Tests
+ *
+ * The suite is Catch2 plus trompeloeil, built as the single `base_tests`
+ * binary. Two constraints that are easy to trip over:
+ *
+ * - New test files must be added to the `add_executable(base_tests ...)` list
+ *   in `tests/CMakeLists.txt`. There is no globbing, so a new file is
+ *   invisible until it is listed.
+ * - `ctest --label-regex unit` runs each test case as its own process (via
+ *   `catch_discover_tests`), which hides cross-test environment leakage that a
+ *   single-process run of `./bin/base_tests` does expose. Both are worth
+ *   running.
+ */

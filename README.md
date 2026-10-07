@@ -1,4 +1,4 @@
-# C++ Base Library
+# lintel
 
 [![build](https://github.com/dkruempe/lintel/actions/workflows/ci.yml/badge.svg)](https://github.com/dkruempe/lintel/actions/workflows/ci.yml)
 [![docs](https://github.com/dkruempe/lintel/actions/workflows/doxygen.yml/badge.svg)](https://dkruempe.github.io/lintel/)
@@ -13,6 +13,8 @@ A modular and feature-rich C++ library designed to accelerate the development of
 `lintel` provides a solid foundation for C++ projects by offering a collection of robust, reusable, and loosely-coupled components. The architecture is split into a powerful `core` engine and a set of optional `features`, allowing you to include only what you need.
 
 The library is designed with extensibility in mind, featuring a plugin system and service-oriented architecture that makes it easy to add custom functionality.
+
+**Start with the [architecture overview](https://dkruempe.github.io/lintel/architecture.html)** for the layer split, the ten-phase bootstrap sequence, dependency injection, the property and persistence abstractions, and the extension points. It is the fastest way to understand how the pieces fit together before reading the class reference.
 
 ## Core Features
 
@@ -206,13 +208,19 @@ The full API reference is generated from the public headers with Doxygen and pub
 
 **<https://dkruempe.github.io/lintel/>**
 
+| Page | What it covers |
+|---|---|
+| [Architecture](https://dkruempe.github.io/lintel/architecture.html) | The `core`/`features` split, the bootstrap sequence and its ordering contract, dependency injection, properties, persistence, shared memory, transports, extension points, integration with `find_package` |
+| [Conventions](https://dkruempe.github.io/lintel/architecture_conventions.html) | Header hygiene, namespaces, error handling, test constraints |
+| [Class reference](https://dkruempe.github.io/lintel/annotated.html) | Generated from the public headers |
+
 The `Doxygen` workflow runs with `WARN_AS_ERROR`, so undocumented or malformed comments fail the build rather than accumulating. To generate the documentation locally:
 
 ```bash
 doxygen Doxyfile   # output goes to build/doxygen/html
 ```
 
-`Doxyfile` covers `src/include/lintel` — the public headers only. Implementation files, tests and examples are intentionally excluded.
+`Doxyfile` takes `docs/architecture.dox` (the two hand-written pages above) plus `src/include/lintel` — the public headers only. Implementation files, tests and examples are intentionally excluded.
 
 ## Dependencies
 

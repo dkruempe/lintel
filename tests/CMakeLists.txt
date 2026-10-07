@@ -17,6 +17,7 @@ ADD_EXECUTABLE(base_tests
     services/PropertyServiceTest.cpp
     property/PropertyChangeTest.cpp
     integration/SQLiteIntegrationTest.cpp
+    integration/PostgreSqlIntegrationTest.cpp
     integration/ConfigIntegrationTest.cpp
     integration/HttpIntegrationTest.cpp
     integration/PropertySerializationTest.cpp

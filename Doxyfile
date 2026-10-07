@@ -9,7 +9,10 @@ CREATE_SUBDIRS         = NO
 ALLOW_UNICODE_NAMES    = NO
 
 # Input
-INPUT                  = src/include/lintel
+# The hand-written pages come first: they are the entry point a new user needs
+# before the generated class reference, and they link into it via @ref.
+INPUT                  = docs/architecture.dox \
+                         src/include/lintel
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =
