@@ -106,10 +106,16 @@ jobs:
             ccache-${{ runner.os }}-${{ env.CACHE_ID }}-
 
       # ── System-Dependencies ────────────────────────────────────────────
+      # scripts/install-deps.sh instead of a bare apt-get: retries the mirror,
+      # waits out the dpkg lock and fails after APT_BUDGET seconds instead of
+      # hanging until the job timeout.
       - name: Install system dependencies
+        # Hard backstop above install-deps.sh's own 30 min budget: cmake is
+        # ~11 MB and runners occasionally get a mirror throttled to ~12 kB/s,
+        # which takes ~16 min and must NOT be killed and restarted.
+        timeout-minutes: 40
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          ./scripts/install-deps.sh \
             build-essential cmake ninja-build ccache \
             pkg-config python3 python3-pip \
             libpq-dev libsqlite3-dev libssl-dev
@@ -219,9 +225,12 @@ jobs:
             conan-${{ runner.os }}-${{ env.CACHE_ID }}-
 
       - name: Install system dependencies
+        # Hard backstop above install-deps.sh's own 30 min budget: cmake is
+        # ~11 MB and runners occasionally get a mirror throttled to ~12 kB/s,
+        # which takes ~16 min and must NOT be killed and restarted.
+        timeout-minutes: 40
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          ./scripts/install-deps.sh \
             build-essential cmake ninja-build pkg-config python3 python3-pip \
             libpq-dev libsqlite3-dev libssl-dev
 
@@ -296,9 +305,11 @@ jobs:
           fetch-depth: 0
 
       - name: Install clang-format
+        # Hard backstop above install-deps.sh's own budget. This step needs only
+        # a few MB, and the job timeout is 15 min.
+        timeout-minutes: 12
         run: |
-          sudo apt-get update
-          sudo apt-get install -y clang-format-18
+          ./scripts/install-deps.sh clang-format-18
           clang-format-18 --version
 
       - name: Baseline ref
@@ -352,9 +363,12 @@ jobs:
             conan-${{ runner.os }}-tidy-
 
       - name: Install system dependencies
+        # Hard backstop above install-deps.sh's own 30 min budget: cmake is
+        # ~11 MB and runners occasionally get a mirror throttled to ~12 kB/s,
+        # which takes ~16 min and must NOT be killed and restarted.
+        timeout-minutes: 40
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          ./scripts/install-deps.sh \
             build-essential clang-tidy-18 cmake ninja-build \
             pkg-config python3 python3-pip \
             libpq-dev libsqlite3-dev libssl-dev

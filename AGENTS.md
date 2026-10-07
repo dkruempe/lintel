@@ -40,7 +40,29 @@ Check the same locally:
 ./scripts/check-format.sh --all    # repo-wide drift report (blocking: --strict)
 ./scripts/check-tidy.sh master build/tidy   # needs a compile_commands.json without Non-Unity and without PCH
 ./scripts/check-secrets.sh         # plaintext credentials (--staged / --all)
+./scripts/install-deps.sh build-essential cmake   # system packages, retrying (see below)
 ```
+
+## System packages in CI
+
+All workflows install packages via `scripts/install-deps.sh`, **never** with a bare
+`sudo apt-get update && sudo apt-get install -y …`. That form hangs: apt stalls on
+the hosted-runner mirrors (`azure.archive.ubuntu.com`, `packages.microsoft.com`) or on
+the dpkg lock of the image's `unattended-upgrades`, and the hang burns the whole job
+timeout (90 min) instead of failing.
+
+Measured on 2026-10-07: one runner got `azure.archive.ubuntu.com` at **~12 kB/s** and
+spent **16 min 45 s** on 14.3 MB (11.2 MB of it `cmake`), while the jobs next to it
+fetched the same bytes in 1 s. So the per-call cap is deliberately generous
+(`APT_TIMEOUT` 1200 s) — killing a slow-but-alive transfer and restarting it is
+strictly worse than waiting. Genuinely dead connections are caught much earlier by
+apt itself (`Acquire::*::Timeout`, `Acquire::Retries`).
+
+The script also checks `dpkg-query` first and skips `apt-get update` entirely when the
+image already ships everything, retries (`APT_RETRIES`), waits out / kills stale dpkg
+locks, runs non-interactively (`--force-confdef`/`--force-confold`), and verifies the
+result. `APT_BUDGET` (default 1800 s) caps the total; the workflow step adds
+`timeout-minutes: 40` as a hard backstop (12 min for the small format/doxygen steps).
 
 ## Secrets
 

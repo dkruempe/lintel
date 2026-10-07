@@ -105,9 +105,12 @@ jobs:
             ccache-${{ runner.os }}-gcc-release-
 
       - name: Install system dependencies
+        # Hard backstop above install-deps.sh's own 30 min budget: cmake is
+        # ~11 MB and runners occasionally get a mirror throttled to ~12 kB/s,
+        # which takes ~16 min and must NOT be killed and restarted.
+        timeout-minutes: 40
         run: |
-          sudo apt-get update
-          sudo apt-get install -y \
+          ./scripts/install-deps.sh \
             build-essential cmake ninja-build ccache \
             pkg-config python3 python3-pip \
             libpq-dev libsqlite3-dev libssl-dev

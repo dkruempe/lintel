@@ -53,9 +53,10 @@ jobs:
       # Very expensive due to source-built deps (Boost/OpenSSL/libpq). Disabled by default.
       - name: Set up build tools (Ninja)
         if: ${{ matrix.mode == 'full' }}
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y ninja-build ccache
+        # Hard backstop above install-deps.sh's own budget. A throttled mirror
+        # node must not be killed and restarted here (see AGENTS.md).
+        timeout-minutes: 40
+        run: ./scripts/install-deps.sh ninja-build ccache
 
       - name: Install dependencies with Conan (full build only)
         if: ${{ matrix.mode == 'full' }}

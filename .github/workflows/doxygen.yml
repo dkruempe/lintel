@@ -35,9 +35,11 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Install Doxygen
+        # Hard backstop above install-deps.sh's own budget. This step needs only
+        # a few MB, and the job timeout is 15 min.
+        timeout-minutes: 12
         run: |
-          sudo apt-get update
-          sudo apt-get install -y doxygen
+          ./scripts/install-deps.sh doxygen
           doxygen --version
 
       # Pages must already be enabled for the repository (build type
