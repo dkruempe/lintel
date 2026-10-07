@@ -278,6 +278,8 @@ The checks a change has to pass are documented in [AGENTS.md](AGENTS.md): build,
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full contribution flow and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md). Security issues are handled separately — see [SECURITY.md](SECURITY.md).
 
+[`docs/code-scanning.md`](docs/code-scanning.md) describes how the CodeQL setup works and how to triage an alert. The short version: check an alert's coordinates against the actual code before changing anything — with `build-mode: none` CodeQL has no compilation database and its line numbers are frequently fiction.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE). Third-party dependencies and their licenses are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
