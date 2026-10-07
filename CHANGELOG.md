@@ -43,6 +43,9 @@ und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/s
 - Sensitive Daten aus Repo entfernt (TLS-Private-Key, Klartext-Credentials). Meldeweg für Sicherheitslücken in `SECURITY.md` festgelegt (E-Mail statt öffentlichem Issue).
 - CodeQL-Scan für C++ aktiviert (`.github/workflows/codeql.yml`). Die drei Befunde mit Defekt-Charakter (fehlendes `return`, zwei `localtime`/`ctime`-Aufrufe) sind behoben; ein Befund (`cpp/cleartext-storage-database`) wurde als Fehlalarm triagiert – gespeichert wird ausschließlich der gehashte Passwortwert. Die Triage-Tabelle mit Fundstellen, Fixes und Gegenproben sowie die Aufschlüsselung der verbleibenden Stil-Hinweise wird nicht im Repo geführt.
 
+### Geändert
+- **Repository umgezogen** nach `https://github.com/dkruempe/lintel`. Grund ist nicht die Schönheit des Namens, sondern ein Sicherheitsproblem: Im alten Repo lieferten die vier `refs/pull/{1,3,4,5,6}` der gemergten Pull Requests ein Klartext-DB-Passwort aus, weil GitHub diese Refs an das Repository bindet. Ein neu angelegtes Repository hat keine Pull Requests und damit auch keine solchen Refs. Die umgeschriebene Historie wurde **vollständig** übernommen (kein Verwerfen der Commits) — nach dem `filter-repo`-Durchgang enthielt sie das Passwort nicht mehr, verifiziert über einen Objekt-Scan aller 4759 Blobs mit Positivkontrolle. Die alte Doku-Adresse lautet entsprechend jetzt `https://dkruempe.github.io/lintel/`.
+
 ### Entfernt
 - `TODO.md`, `ANALYSIS.md` und `ROADMAP.md` aus dem Repository entfernt. Sie enthielten betreiberinterne Arbeitsstände (u. a. offene Sicherheitsaktionen und Eskalationswege), die nicht Teil eines öffentlichen Repos sein sollten. Der Inhalt bleibt über die Git-Historie vollständig abrufbar (`git show <vorheriger-Commit>:ROADMAP.md`).
 
@@ -62,5 +65,5 @@ Erster Release-Tag `v0.1.0` (Commit `86b72f4`). Wesentliche Themen (aus Commit-H
 
 Die folgenden Commits nach diesem Tag (u. a. `LICENSE`, `THIRD_PARTY_NOTICES.md`, CI-Korrekturen, Sicherheits- und Doku-Audits) sind oben unter `[Unreleased]` erfasst.
 
-[Unreleased]: https://github.com/dkruempe/cpp-base-library/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/dkruempe/cpp-base-library/releases/tag/v0.1.0
+[Unreleased]: https://github.com/dkruempe/lintel/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/dkruempe/lintel/releases/tag/v0.1.0

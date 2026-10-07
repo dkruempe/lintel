@@ -14,7 +14,7 @@ Vielen Dank für dein Interesse an `cpp-base-library`! Wir akzeptieren Beiträge
 
 ## Entwicklungsworkflow
 
-1. Fork oder Clone des Repos (`https://github.com/dkruempe/cpp-base-library`)
+1. Fork oder Clone des Repos (`https://github.com/dkruempe/lintel`)
 2. Lokales Build- und Testsetup gemäß Build-Kommandos
 3. Änderungen in einem Feature-Branch vornehmen
 4. Format und Lint lokal prüfen
