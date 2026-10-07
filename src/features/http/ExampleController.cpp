@@ -1,4 +1,4 @@
-#include "base_library/features/http/ExampleController.h"
+#include "lintel/features/http/ExampleController.h"
 
 #include <utility>
 

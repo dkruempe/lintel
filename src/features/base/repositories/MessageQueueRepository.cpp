@@ -1,14 +1,14 @@
-#include "base_library/features/base/repositories/MessageQueueRepository.h"
+#include "lintel/features/base/repositories/MessageQueueRepository.h"
 
-#include <base_library/core/exceptions/SQLException.h>
-#include <base_library/core/services/LoggerService.h>
-#include <base_library/core/persistence/ConnectionType.h>
-#include <base_library/core/persistence/Connection.h>
-#include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
-#include <base_library/core/persistence/ParameterBuilder.h>
-#include <base_library/core/persistence/Transaction.h>
-#include <base_library/core/persistence/PreparedStatement.h>
-#include <base_library/features/base/configuration/MessageQueueEntry.h>
+#include <lintel/core/exceptions/SQLException.h>
+#include <lintel/core/services/LoggerService.h>
+#include <lintel/core/persistence/ConnectionType.h>
+#include <lintel/core/persistence/Connection.h>
+#include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
+#include <lintel/core/persistence/ParameterBuilder.h>
+#include <lintel/core/persistence/Transaction.h>
+#include <lintel/core/persistence/PreparedStatement.h>
+#include <lintel/features/base/configuration/MessageQueueEntry.h>
 #include <cstdint>
 #include <memory>
 #include <vector>

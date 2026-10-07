@@ -1,4 +1,4 @@
-#include <base_library/features/property/models/Property.h>
+#include <lintel/features/property/models/Property.h>
 
 #include <catch2/catch_all.hpp>
 

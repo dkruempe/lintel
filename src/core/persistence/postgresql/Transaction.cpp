@@ -1,6 +1,6 @@
-#include "base_library/core/persistence/postgresql/Transaction.h"
+#include "lintel/core/persistence/postgresql/Transaction.h"
 
-#include "base_library/core/persistence/Identifier.h"
+#include "lintel/core/persistence/Identifier.h"
 
 namespace postgresql {
     void Transaction::checkState(const std::shared_ptr<Result> &result) {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Reproducible compile-time measurement for cpp-base-library.
+# Reproducible compile-time measurement for lintel.
 # See ROADMAP.md section 4 (P2: "Mess-Skripte versionieren") and
 # docs/compile-time-measurements.md for the reference protocol.
 #
@@ -73,7 +73,7 @@ ccache -s
 
 # 6. Optional incremental step: touch one header, rebuild, and report the delta
 if [[ "$INCREMENTAL" == "1" ]]; then
-    touch src/include/base_library/core/utils/StringUtils.h
+    touch src/include/lintel/core/utils/StringUtils.h
     echo "== incremental rebuild after touching StringUtils.h =="
     echo "== host load before: $(load) (5min 10min 15min) =="
     START=$(date +%s.%N)

@@ -1,9 +1,9 @@
-#include "base_library/core/services/SharedMemoryService.h"
+#include "lintel/core/services/SharedMemoryService.h"
 
-#include <base_library/core/models/SharedMemorySegment.h>
-#include <base_library/core/services/ShmConstructors.h>
-#include <base_library/features/base/events/BoostSegmentAllocator.h>
-#include <base_library/features/base/models/SharedMemorySegmentInfo.h>
+#include <lintel/core/models/SharedMemorySegment.h>
+#include <lintel/core/services/ShmConstructors.h>
+#include <lintel/features/base/events/BoostSegmentAllocator.h>
+#include <lintel/features/base/models/SharedMemorySegmentInfo.h>
 
 SharedMemoryService::SharedMemoryService(
         const std::shared_ptr<SharedMemorySegmentManager>

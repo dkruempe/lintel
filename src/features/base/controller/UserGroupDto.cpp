@@ -1,6 +1,6 @@
-#include "base_library/features/base/controller/UserGroupDto.h"
+#include "lintel/features/base/controller/UserGroupDto.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 UserGroupDto::Shapes UserGroupDto::shape{};
 

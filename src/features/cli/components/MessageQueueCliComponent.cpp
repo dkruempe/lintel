@@ -1,6 +1,6 @@
-#include "base_library/features/cli/components/MessageQueueCliComponent.h"
+#include "lintel/features/cli/components/MessageQueueCliComponent.h"
 
-#include "base_library/core/utils/TableBuilder.h"
+#include "lintel/core/utils/TableBuilder.h"
 
 MessageQueueCliComponent::MessageQueueCliComponent(std::shared_ptr<MesssageQueueApi> messsageQueueApi)
   : CommandLineComponent(m_name, m_alias),

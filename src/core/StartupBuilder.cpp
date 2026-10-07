@@ -1,6 +1,6 @@
-#include "base_library/core/StartupBuilder.h"
+#include "lintel/core/StartupBuilder.h"
 
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
 
 #include <algorithm>
 #include <csignal>
@@ -8,20 +8,20 @@
 #include <thread>
 #include <utility>
 
-#include "base_library/features/Feature.h"
+#include "lintel/features/Feature.h"
 
 #include "Hypodermic/Container.h"
 #include "Hypodermic/ContainerBuilder.h"
 
-#include "base_library/core/services/BootstrapService.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/services/PersistableService.h"
-#include "base_library/features/base/configuration/Component.h"
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
-#include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/base/services/InitializeService.h"
-#include "base_library/features/base/services/ProcessArgumentService.h"
+#include "lintel/core/services/BootstrapService.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/services/PersistableService.h"
+#include "lintel/features/base/configuration/Component.h"
+#include "lintel/features/base/configuration/Configuration.h"
+#include "lintel/features/base/configuration/ConfigurationComponentBuilder.h"
+#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/features/base/services/InitializeService.h"
+#include "lintel/features/base/services/ProcessArgumentService.h"
 
 StartupBuilder::StartupBuilder(ProcessName &&name,
                                std::vector<std::string> &&arguments)
@@ -64,8 +64,8 @@ void StartupBuilder::withOutFeature(std::string_view nameOfFeature) {
 }
 
 void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment, std::string value) {
-  // std::move vermeidet die zweite Kopie: EnvironmentConfiguration::overrides
-  // nimmt den Wert selbst per value und bewegt ihn in seine Map.
+  // std::move avoids the second copy: EnvironmentConfiguration::overrides
+  // takes the value by value itself and moves it into its map.
     m_environmentConfiguration->overrides(environment, std::move(value));
 }
 

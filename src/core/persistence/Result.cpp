@@ -1,8 +1,8 @@
-#include "base_library/core/persistence/Result.h"
+#include "lintel/core/persistence/Result.h"
 
 #include <utility>
 
-#include "base_library/core/exceptions/SQLException.h"
+#include "lintel/core/exceptions/SQLException.h"
 
 namespace db {
     std::string Result::getValue(int row, int attribute) const {

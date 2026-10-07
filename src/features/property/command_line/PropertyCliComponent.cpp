@@ -1,7 +1,7 @@
-#include "base_library/features/property/command_line/PropertyCliComponent.h"
+#include "lintel/features/property/command_line/PropertyCliComponent.h"
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/TableBuilder.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/TableBuilder.h"
 
 PropertyCliComponent::PropertyCliComponent(
         std::shared_ptr<PropertyApi> propertyApi)

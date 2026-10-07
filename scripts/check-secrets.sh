@@ -1,37 +1,37 @@
 #!/usr/bin/env bash
 #
-# Secret-Guard: blockiert Klartext-Credentials im Arbeitsbaum.
+# Secret guard: blocks plaintext credentials in the working tree.
 #
-# Warum es das gibt: `secret_scanning_push_protection` lässt sich für dieses Repo
-# per API nicht aktivieren (alle Felder in `security_and_analysis` werden mit
-# 422 abgelehnt, auch bei Admin-Rechten - verifiziert 06.10.2026). Bis das über
-# die UI nachgezogen ist, übernimmt dieses Skript die Kontrolle.
+# Why this exists: `secret_scanning_push_protection` cannot be enabled for this
+# repo via API (all fields in `security_and_analysis` are rejected with 422,
+# even with admin rights - verified 06.10.2026). Until this has been added via
+# the UI, this script takes over the check.
 #
-# WICHTIG - Abgrenzung. Ein Secret-Detektor, der nur auf den Namen schaut,
-# produziert unbrauchbaren Lärm: In diesem Repo gibt es Dutzende Stellen wie
-# `const char *const PASSWORD = "password";` - das sind JSON-Schlüsselnamen, keine
-# Zugangsdaten. Ein erster Entwurf flaggte genau die und war unbrauchbar.
+# IMPORTANT - demarcation. A secret detector that only looks at the name
+# produces useless noise: in this repo there are dozens of places like
+# `const char *const PASSWORD = "password";` - those are JSON key names, not
+# credentials. A first draft flagged exactly those and was useless.
 #
-# Deshalb zwei Stufen, die beide erfüllt sein müssen:
+# Therefore two stages, both of which must be satisfied:
 #
-#   1. Kontext: nur Konfigurationsformate (.xml, .yml, .yaml, .env, .properties,
-#      .ini, .conf) und PEM-Schlüsselblöcke. C++-Dateien werden auf Schlüssel-
-#      material geprüft, nicht auf Attributwerte.
-#   2. Entropie: der Wert muss wie ein Credential aussehen - mindestens
-#      ZEICHEN_MIN Zeichen, mindestens eine Ziffer, und mindestens eine zusätzliche
-#      Zeichenklasse (Groß-/Kleinbuchstaben gemischt ODER Sonderzeichen). Das
-#      filtert Schlüsselnamen ("password", "old_password"), deutsche Wörter und
-#      leere Werte zuverlässig weg.
+#   1. Context: only config formats (.xml, .yml, .yaml, .env, .properties,
+#      .ini, .conf) and PEM key blocks. C++ files are checked for key
+#      material, not for attribute values.
+#   2. Entropy: the value must look like a credential - at least
+#      ZEICHEN_MIN characters, at least one digit, and at least one additional
+#      character class (mixed upper/lower case OR special characters). This
+#      reliably filters out key names ("password", "old_password"), german
+#      words and empty values.
 #
-# Als Platzhalter gelten: ${...}, REDACTED/PLACEHOLDER/CHANGEME/YOUR_,
-# Werte in spitzen Klammern, REPLACE_WITH_*, der Seed-Platzhalter und leere Werte.
+# Accepted placeholders are: ${...}, REDACTED/PLACEHOLDER/CHANGEME/YOUR_,
+# values in angle brackets, REPLACE_WITH_*, the seed placeholder and empty values.
 #
-# Aufruf:
-#   scripts/check-secrets.sh              # Arbeitsbaum (versioniert + untracked)
-#   scripts/check-secrets.sh --staged     # nur die für den Commit vorgemerkten
-#   scripts/check-secrets.sh --all        # nur versionierte Dateien
+# Usage:
+#   scripts/check-secrets.sh              # working tree (versioned + untracked)
+#   scripts/check-secrets.sh --staged     # only the ones staged for the commit
+#   scripts/check-secrets.sh --all        # only versioned files
 #
-# Rückgabewert: 0 = sauber, 1 = Fund, 2 = Aufruffehler
+# Return value: 0 = clean, 1 = finding, 2 = invocation error
 set -uo pipefail
 
 cd "$(git rev-parse --show-toplevel)" || exit 2
@@ -41,24 +41,24 @@ case "$MODE" in
   --staged) mapfile -t FILES < <(git diff --cached --name-only --diff-filter=ACM) ;;
   --all)    mapfile -t FILES < <(git ls-files) ;;
   "")       mapfile -t FILES < <(git ls-files --cached --others --exclude-standard) ;;
-  *)        echo "Aufruf: $0 [--staged|--all]" >&2; exit 2 ;;
+  *)        echo "Usage: $0 [--staged|--all]" >&2; exit 2 ;;
 esac
 
-[ "${#FILES[@]}" -gt 0 ] || { echo "keine Dateien zu prüfen"; exit 0; }
+[ "${#FILES[@]}" -gt 0 ] || { echo "no files to check"; exit 0; }
 
 ZEICHEN_MIN=8
 
-# Von der Prüfung ausgenommen. Jeder Ausschluss ist kommentiert - die
-# SKIP_DIRS_pruefen sichert das nicht ab, das ist eine bewusste Ausnahme.
+# Excluded from the check. Every exclusion is commented - the
+# SKIP_DIRS_pruefen does not cover that, it is a deliberate exception.
 skip_path() {
   case "$1" in
-    .git/*|build/*|bin/*)        return 0 ;;  # Build-Artefakte
-    external/*)                   return 0 ;;  # vendorter Fremdcode, kein Zugangsdatum
-    cfg/certs/*)                  return 0 ;;  # dev-Zertifikate, .gitignoriert
-    cfg/database/*)               return 0 ;;  # Seeds: Passwort ist dokumentierter
-                                             # Platzhalter REPLACE_WITH_..., siehe
-                                             # Kommentar im SQL. Die zugehoerige
-                                             # Seed-Historie ist ein eigener Punkt.
+    .git/*|build/*|bin/*)        return 0 ;;  # build artifacts
+    external/*)                   return 0 ;;  # vendored third-party code, no credential
+    cfg/certs/*)                  return 0 ;;  # dev certificates, gitignored
+    cfg/database/*)               return 0 ;;  # seeds: the password is a documented
+                                             # placeholder REPLACE_WITH_..., see the
+                                             # comment in the SQL. The corresponding
+                                             # seed history is a separate item.
     *)                            return 1 ;;
   esac
 }
@@ -76,7 +76,7 @@ is_placeholder() {
   return 1
 }
 
-# Entropie-Kriterium: laenge, Ziffer, und zusaetzliche Zeichenklasse.
+# Entropy criterion: length, digit, and additional character class.
 looks_like_credential() {
   local v="$1"
   [ "${#v}" -ge "$ZEICHEN_MIN" ] || return 1
@@ -95,20 +95,20 @@ is_config_file() {
 
 found=0
 
-echo "### Secret-Guard (Modus: ${MODE:-Arbeitsbaum})"
-echo "Dateien: ${#FILES[@]}"
+echo "### Secret guard (mode: ${MODE:-working tree})"
+echo "Files: ${#FILES[@]}"
 
 for f in "${FILES[@]}"; do
   skip_path "$f" && continue
   [ -f "$f" ] || continue
 
-  # 1) Schlüsselmaterial: gilt für alle Dateitypen
+  # 1) Key material: applies to all file types
   if grep -qE "^-----BEGIN [A-Z ]*PRIVATE KEY-----" "$f" 2>/dev/null; then
     found=1
-    echo "  FUND  $f: PEM-Private-Key im Arbeitsbaum"
+    echo "  FINDING  $f: PEM private key in the working tree"
   fi
 
-  # 2) Attributwerte: nur in Konfigurationsformaten
+  # 2) Attribute values: only in config formats
   is_config_file "$f" || continue
   while IFS= read -r line; do
     value="${line#*=}"
@@ -117,7 +117,7 @@ for f in "${FILES[@]}"; do
     is_placeholder "$value" && continue
     looks_like_credential "$value" || continue
     found=1
-    echo "  FUND  $f: möglicher Klartext-Credential"
+    echo "  FINDING  $f: possible plaintext credential"
     printf '        %s\n' "${line:0:110}"
   done < <(grep -nEi "(password|passwd|secret|api[_-]?key)[[:space:]]*[:=][[:space:]]*['\"]?[A-Za-z0-9!@#$%^&*_+.-]{8,}" "$f" 2>/dev/null)
 done
@@ -125,16 +125,16 @@ done
 echo
 if [ "$found" -ne 0 ]; then
   cat <<'MSG'
-**fail:** möglicher Klartext-Credential-Fund.
+**fail:** possible plaintext credential found.
 
-Was zu tun ist:
-  1. Wert entfernen und durch einen Platzhalter ersetzen (${...}, REDACTED, <...>).
-  2. Falls der Wert echt ist: sofort rotieren - er gilt ab jetzt als kompromittiert.
-  3. Aus der Git-Historie entfernen (git filter-repo). Die Rotation ist dabei der
-     wichtigere Schritt: ein Rewrite löscht nur die Spur, nicht das Zugangsdienst.
-  4. Ausnahmen gehören in skip_path() mit Begründung kommentiert, nicht stillschweigend.
+What to do:
+  1. Remove the value and replace it with a placeholder (${...}, REDACTED, <...>).
+  2. If the value is real: rotate it immediately - from now on it counts as compromised.
+  3. Remove it from the git history (git filter-repo). Rotation is the more
+     important step here: a rewrite only deletes the trace, not the access.
+  4. Exceptions belong in skip_path() commented with a justification, not silently.
 MSG
   exit 1
 fi
 
-echo "**pass:** keine Klartext-Credentials gefunden"
+echo "**pass:** no plaintext credentials found"

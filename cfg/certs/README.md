@@ -1,32 +1,32 @@
-# TLS-Zertifikate
+# TLS certificates
 
-Die Zertifikate in diesem Verzeichnis sind **lokal generierte Wegwerf-Zertifikate**
-und stehen absichtlich nicht im Repository – der private Schlüssel darf nicht
-versioniert werden (`.gitignore`: `*.key`, `*.crt`).
+The certificates in this directory are **locally generated throwaway certificates**
+and are intentionally not in the repository – the private key must not be
+versioned (`.gitignore`: `*.key`, `*.crt`).
 
-## Erzeugen
+## Generating
 
 ```bash
 ./cfg/certs/generate_certs.sh
 ```
 
-Erzeugt `server.crt` und `server.key` (self-signed, `CN=localhost`,
-`subjectAltName=DNS:localhost,IP:127.0.0.1`, 10 Jahre). Das Skript bricht ab,
-wenn die Dateien schon existieren; zum Neuerzeugen zuerst beide löschen.
+Creates `server.crt` and `server.key` (self-signed, `CN=localhost`,
+`subjectAltName=DNS:localhost,IP:127.0.0.1`, 10 years). The script aborts
+if the files already exist; to regenerate, delete both first.
 
-## Wofür
+## What they are for
 
-`cfg/bootstrap.xml` und `cfg/database`/`tests` verweisen relativ auf
-`certs/server.crt` und `certs/server.key`:
+`cfg/bootstrap.xml` and `cfg/database`/`tests` reference
+`certs/server.crt` and `certs/server.key` relatively:
 
-- `tests/integration/HttpIntegrationTest.cpp` („Client: uses SSL when TLS is
-  configured") **prüft beide Dateien mit `REQUIRE`** und startet einen
-  `httplib::SSLServer` damit. Ohne Zertifikate schlägt der Test fehl.
-- Deshalb erzeugen die CI-Workflows (`ci.yml`, `release.yml`) ihre eigenen
-  Wegwerf-Zertifikate, bevor sie bauen.
+- `tests/integration/HttpIntegrationTest.cpp` ("Client: uses SSL when TLS is
+  configured") **checks both files with `REQUIRE`** and starts an
+  `httplib::SSLServer` with them. Without certificates the test fails.
+- Therefore the CI workflows (`ci.yml`, `release.yml`) generate their own
+  throwaway certificates before they build.
 
-## Produktion
+## Production
 
-Für Produktion **keine** selbstsignierten Zertifikate verwenden, sondern echte
-Zertifikate ausstellen lassen und `cert_path`/`key_path` in der Konfiguration
-darauf zeigen lassen.
+For production do **not** use self-signed certificates, but have real
+certificates issued and point `cert_path`/`key_path` in the configuration
+at them.

@@ -1,18 +1,18 @@
-#include <base_library/core/utils/TypeName.h>
-#include <base_library/features/base/configuration/ConfigurationException.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/base/configuration/EventBusComponent.h>
-#include <base_library/features/base/configuration/EventBusEntry.h>
-#include <base_library/features/base/configuration/LoggerComponent.h>
-#include <base_library/features/base/configuration/LoggerConfiguration.h>
-#include <base_library/features/base/configuration/LoggerEntry.h>
-#include <base_library/features/base/configuration/LoggerPathConfiguration.h>
-#include <base_library/features/base/configuration/LoggerSinkConfiguration.h>
-#include <base_library/features/base/configuration/MessageQueueComponent.h>
-#include <base_library/features/base/configuration/MessageQueueEntry.h>
-#include <base_library/features/base/configuration/ProcessComponent.h>
-#include <base_library/features/base/configuration/ProcessEntry.h>
-#include <base_library/features/base/events/EventBus.h>
+#include <lintel/core/utils/TypeName.h>
+#include <lintel/features/base/configuration/ConfigurationException.h>
+#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/features/base/configuration/EventBusComponent.h>
+#include <lintel/features/base/configuration/EventBusEntry.h>
+#include <lintel/features/base/configuration/LoggerComponent.h>
+#include <lintel/features/base/configuration/LoggerConfiguration.h>
+#include <lintel/features/base/configuration/LoggerEntry.h>
+#include <lintel/features/base/configuration/LoggerPathConfiguration.h>
+#include <lintel/features/base/configuration/LoggerSinkConfiguration.h>
+#include <lintel/features/base/configuration/MessageQueueComponent.h>
+#include <lintel/features/base/configuration/MessageQueueEntry.h>
+#include <lintel/features/base/configuration/ProcessComponent.h>
+#include <lintel/features/base/configuration/ProcessEntry.h>
+#include <lintel/features/base/events/EventBus.h>
 
 #include <catch2/catch_all.hpp>
 

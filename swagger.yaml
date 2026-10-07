@@ -3,7 +3,7 @@ info:
   title: C++ Base Library API
   version: "0.1.0"
   description: |
-    REST API for the cpp-base-library.
+    REST API for the lintel.
     Authentication: obtain a bearer token via POST /user/login (HTTP Basic auth),
     then pass it as `Authorization: Bearer <token>` on subsequent requests.
 host: localhost:8080

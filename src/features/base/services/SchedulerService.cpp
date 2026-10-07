@@ -1,6 +1,6 @@
-#include "base_library/features/base/services/SchedulerService.h"
+#include "lintel/features/base/services/SchedulerService.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 void SchedulerService::clear() {
     std::lock_guard<std::mutex> lock(m_mutex);

@@ -1,15 +1,15 @@
-#include "base_library/features/base/configuration/ProcessComponent.h"
+#include "lintel/features/base/configuration/ProcessComponent.h"
 
 #include <chrono>
 #include <cstring>
 #include <stdexcept>
 #include <string>
 
-#include "base_library/core/utils/StringUtils.h"
-#include "base_library/core/utils/TypeName.h"
-#include "base_library/features/base/configuration/ConfigurationException.h"
-#include "base_library/features/base/configuration/ProcessEntry.h"
-#include "base_library/features/base/models/Process.h"
+#include "lintel/core/utils/StringUtils.h"
+#include "lintel/core/utils/TypeName.h"
+#include "lintel/features/base/configuration/ConfigurationException.h"
+#include "lintel/features/base/configuration/ProcessEntry.h"
+#include "lintel/features/base/models/Process.h"
 
 const ProcessComponent::Shapes ProcessComponent::m_shapes{};
 

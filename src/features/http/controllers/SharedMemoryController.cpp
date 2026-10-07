@@ -1,12 +1,12 @@
-#include "base_library/features/http/controllers/SharedMemoryController.h"
+#include "lintel/features/http/controllers/SharedMemoryController.h"
 
 #include <utility>
 
-#include "base_library/core/utils/MemorySize.h"
-#include "base_library/core/utils/RegexUtils.h"
-#include "base_library/features/base/controller/SharedMemoryRepositoriesDto.h"
-#include "base_library/features/base/controller/SharedMemorySegmentDto.h"
-#include "base_library/features/base/controller/SharedMemorySegmentsDto.h"
+#include "lintel/core/utils/MemorySize.h"
+#include "lintel/core/utils/RegexUtils.h"
+#include "lintel/features/base/controller/SharedMemoryRepositoriesDto.h"
+#include "lintel/features/base/controller/SharedMemorySegmentDto.h"
+#include "lintel/features/base/controller/SharedMemorySegmentsDto.h"
 
 SharedMemoryController::SharedMemoryController(const std::shared_ptr<IAuthService> &authServicie,
   std::shared_ptr<ISharedMemoryService> sharedMemoryService,

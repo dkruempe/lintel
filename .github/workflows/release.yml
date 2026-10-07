@@ -1,7 +1,7 @@
 name: Release
 
 # Tag-driven: v0.1.0, v0.2.0, ...
-# The tag must match BASE_LIBRARY_VERSION in the top-level CMakeLists.txt.
+# The tag must match LINTEL_VERSION in the top-level CMakeLists.txt.
 on:
   push:
     tags: ['v*']
@@ -80,10 +80,10 @@ jobs:
 
       - name: Tag must match the project version
         run: |
-          version="$(sed -n 's/^set(BASE_LIBRARY_VERSION "\([^"]*\)".*/\1/p' CMakeLists.txt)"
+          version="$(sed -n 's/^set(LINTEL_VERSION "\([^"]*\)".*/\1/p' CMakeLists.txt)"
           expected="${{ steps.tag.outputs.version }}"
           if [ "$version" != "$expected" ]; then
-            echo "::error::tag v$expected does not match BASE_LIBRARY_VERSION $version in CMakeLists.txt"
+            echo "::error::tag v$expected does not match LINTEL_VERSION $version in CMakeLists.txt"
             exit 1
           fi
           echo "version $version verified"
@@ -156,21 +156,21 @@ jobs:
           rm -rf artifact/cfg/certs artifact/cfg/.history
           cp swagger.yaml artifact/
           cp LICENSE artifact/ 2>/dev/null || echo "note: no LICENSE file yet"
-          version="$(sed -n 's/^set(BASE_LIBRARY_VERSION "\([^"]*\)".*/\1/p' CMakeLists.txt)"
+          version="$(sed -n 's/^set(LINTEL_VERSION "\([^"]*\)".*/\1/p' CMakeLists.txt)"
           git rev-parse --short HEAD > artifact/BUILD_COMMIT
-          printf 'base_library %s built from %s\n' "$version" "$(cat artifact/BUILD_COMMIT)" > artifact/NOTES.txt
-          tar -czf base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz -C artifact .
-          sha256sum base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz \
-            > base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256
+          printf 'lintel %s built from %s\n' "$version" "$(cat artifact/BUILD_COMMIT)" > artifact/NOTES.txt
+          tar -czf lintel-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz -C artifact .
+          sha256sum lintel-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz \
+            > lintel-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256
           ls -la
 
       - name: Upload release artifacts
         uses: actions/upload-artifact@v7
         with:
-          name: base_library-${{ steps.tag.outputs.version }}-linux-x86_64
+          name: lintel-${{ steps.tag.outputs.version }}-linux-x86_64
           path: |
-            base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz
-            base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256
+            lintel-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz
+            lintel-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256
             artifact/swagger.yaml
             artifact/NOTES.txt
           if-no-files-found: error
@@ -181,8 +181,8 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release create "${{ steps.tag.outputs.tag }}" \
-            base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz \
-            base_library-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256 \
+            lintel-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz \
+            lintel-${{ steps.tag.outputs.version }}-linux-x86_64.tar.gz.sha256 \
             artifact/swagger.yaml \
             --title "${{ steps.tag.outputs.tag }}" \
             --generate-notes

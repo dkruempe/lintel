@@ -1,6 +1,6 @@
-#include "base_library/features/property/configuration/PropertyRepositoryEntry.h"
+#include "lintel/features/property/configuration/PropertyRepositoryEntry.h"
 
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "lintel/features/property/models/PropertyRepositoryType.h"
 
 PropertyRepositoryEntry::PropertyRepositoryEntry(std::string_view component,
                                                  PropertyRepositoryType type,

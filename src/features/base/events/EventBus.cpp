@@ -1,6 +1,6 @@
-#include "base_library/features/base/events/EventBus.h"
+#include "lintel/features/base/events/EventBus.h"
 
-#include "base_library/features/base/events/ShmSegmentAccessor.h"
+#include "lintel/features/base/events/ShmSegmentAccessor.h"
 
 #include <chrono>
 #include <cstring>

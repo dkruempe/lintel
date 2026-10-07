@@ -1,15 +1,15 @@
-# Doxyfile for cpp-base-library
-# Version: see BASE_LIBRARY_VERSION in CMakeLists.txt (single source of truth)
+# Doxyfile for lintel
+# Version: see LINTEL_VERSION in CMakeLists.txt (single source of truth)
 # Cannot be derived automatically by this file alone without CMake; keep in sync.
 
-PROJECT_NAME           = "cpp-base-library"
+PROJECT_NAME           = "lintel"
 PROJECT_NUMBER         = "0.1.0"
 OUTPUT_DIRECTORY       = build/doxygen
 CREATE_SUBDIRS         = NO
 ALLOW_UNICODE_NAMES    = NO
 
 # Input
-INPUT                  = src/include/base_library
+INPUT                  = src/include/lintel
 RECURSIVE              = YES
 EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        =

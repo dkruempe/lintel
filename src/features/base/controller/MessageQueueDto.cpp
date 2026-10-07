@@ -1,9 +1,9 @@
-#include "base_library/features/base/controller/MessageQueueDto.h"
+#include "lintel/features/base/controller/MessageQueueDto.h"
 
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
+#include "lintel/features/base/configuration/MessageQueueEntry.h"
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/http/controllers/MessageQueueApi.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/http/controllers/MessageQueueApi.h"
 
 #include <rapidjson/stringbuffer.h>
 

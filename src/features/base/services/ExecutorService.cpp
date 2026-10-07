@@ -1,6 +1,6 @@
-#include "base_library/features/base/services/ExecutorService.h"
+#include "lintel/features/base/services/ExecutorService.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 void ExecutorService::run() {
     while (true) {

@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/SharedMemoryRepositoryDto.h"
+#include "lintel/features/base/controller/SharedMemoryRepositoryDto.h"
 
 SharedMemoryRepositoryDto::Shapes SharedMemoryRepositoryDto::m_shape{};
 

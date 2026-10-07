@@ -62,8 +62,9 @@ function(set_project_warnings project_name)
             -Wduplicated-branches # warn if if / else branches have duplicated code
             -Wlogical-op # warn about logical operations being used where bitwise were probably wanted
             -Wuseless-cast # warn if you perform a cast to the same type
-            -Wno-null-dereference # GCC-13 meldet in std::function (_M_empty) einen Fehlalarm, der erst durch -Werror
-            # blockiert; die Pruefung ist bei GCC zu fehleranfaellig (nicht in -Wall/-Wextra), Clang behaelt sie
+            -Wno-null-dereference # GCC 13 reports a false positive in std::function (_M_empty) that only
+            # -Werror turns into a failure; the check is too error-prone with GCC (not in -Wall/-Wextra),
+            # Clang keeps it
             )
 
     if (MSVC)

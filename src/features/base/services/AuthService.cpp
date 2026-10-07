@@ -1,4 +1,4 @@
-#include "base_library/features/base/services/AuthService.h"
+#include "lintel/features/base/services/AuthService.h"
 
 #include <date/date.h>
 
@@ -6,9 +6,9 @@
 #include <chrono>
 #include <vector>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/Cryption.h"
-#include "base_library/core/utils/UUID.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/Cryption.h"
+#include "lintel/core/utils/UUID.h"
 
 AuthService::AuthService(const std::shared_ptr<ProcessName> &processName,
                          std::shared_ptr<UserRepository> userRepository,

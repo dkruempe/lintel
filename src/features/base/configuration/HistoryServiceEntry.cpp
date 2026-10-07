@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/HistoryServiceEntry.h"
+#include "lintel/features/base/configuration/HistoryServiceEntry.h"
 
 #include <utility>
 

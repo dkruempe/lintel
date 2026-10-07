@@ -1,4 +1,4 @@
-#include "base_library/core/plugins/SharedMemoryBootstrapPlugin.h"
+#include "lintel/core/plugins/SharedMemoryBootstrapPlugin.h"
 
 #include <filesystem>
 #include <map>
@@ -10,14 +10,14 @@
 
 #include <boost/interprocess/managed_mapped_file.hpp>
 
-#include "base_library/core/models/BootstrapSequence.h"
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/ParameterBuilder.h"
-#include "base_library/core/persistence/PreparedStatement.h"
-#include "base_library/core/persistence/Statement.h"
-#include "base_library/core/persistence/Transaction.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/configuration/EventBusComponent.h"
+#include "lintel/core/models/BootstrapSequence.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/ParameterBuilder.h"
+#include "lintel/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/Statement.h"
+#include "lintel/core/persistence/Transaction.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/configuration/EventBusComponent.h"
 
 namespace {
     /** Smallest file size a valid (even fully shrunk) boost managed mapped

@@ -1,4 +1,4 @@
-#include "base_library/features/base/msg/Message.h"
+#include "lintel/features/base/msg/Message.h"
 
 #include <cstring>
 #include <algorithm>

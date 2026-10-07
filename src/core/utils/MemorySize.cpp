@@ -1,10 +1,10 @@
-#include "base_library/core/utils/MemorySize.h"
+#include "lintel/core/utils/MemorySize.h"
 
 #include <fmt/format.h>
 
 #include <limits>
 
-#include "base_library/core/utils/StringUtils.h"
+#include "lintel/core/utils/StringUtils.h"
 
 namespace {
 constexpr std::size_t kBytesPerKilo = 1000;

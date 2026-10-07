@@ -1,9 +1,9 @@
-#include "base_library/features/cli/models/Command.h"
+#include "lintel/features/cli/models/Command.h"
 
 #include <iomanip>
 #include <sstream>
 
-#include "base_library/core/utils/StringUtils.h"
+#include "lintel/core/utils/StringUtils.h"
 
 #include <numeric>
 

@@ -7,19 +7,19 @@
 #include "../mocks/MockAuthService.h"
 #include "../mocks/MockSharedMemorySegmentManager.h"
 #include "../mocks/MockSharedMemoryService.h"
-#include "base_library/core/models/SharedMemorySegment.h"
-#include "base_library/features/base/models/Group.h"
-#include "base_library/features/base/models/SharedMemorySegmentInfo.h"
-#include "base_library/features/base/models/User.h"
-#include "base_library/features/http/controllers/SharedMemoryController.h"
+#include "lintel/core/models/SharedMemorySegment.h"
+#include "lintel/features/base/models/Group.h"
+#include "lintel/features/base/models/SharedMemorySegmentInfo.h"
+#include "lintel/features/base/models/User.h"
+#include "lintel/features/http/controllers/SharedMemoryController.h"
 
 using namespace trompeloeil;
 
 namespace {
 
-// `k`-Präfix: in Unity-Builds teilen sich alle Test-Dateien einen anonymen
-// Namespace, ein generisches `adminGroup` verdeckt dort lokale Variablen
-// anderer Testdateien (Clang -Wshadow).
+// `k` prefix: in unity builds all test files share one anonymous namespace,
+// where a generic `adminGroup` would shadow local variables of other test
+// files (Clang -Wshadow).
 Group kAdminGroup{"Admin-Shm", {}, true};
 Group kUserGroup{"User-Shm", {}, true};
 

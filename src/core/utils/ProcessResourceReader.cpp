@@ -1,4 +1,4 @@
-#include "base_library/core/utils/ProcessResourceReader.h"
+#include "lintel/core/utils/ProcessResourceReader.h"
 
 #include <algorithm>
 

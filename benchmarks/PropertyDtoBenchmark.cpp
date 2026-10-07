@@ -4,9 +4,9 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
-#include "base_library/features/property/controller/PropertyDto.h"
-#include "base_library/features/property/controller/PropertiesDto.h"
-#include "base_library/features/property/models/Property.h"
+#include "lintel/features/property/controller/PropertyDto.h"
+#include "lintel/features/property/controller/PropertiesDto.h"
+#include "lintel/features/property/models/Property.h"
 
 static std::shared_ptr<PropertyBase> MakeTestProperty(int i) {
     return std::make_shared<Property<int>>(

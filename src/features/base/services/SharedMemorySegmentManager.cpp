@@ -1,11 +1,11 @@
-#include "base_library/features/base/services/SharedMemorySegmentManager.h"
+#include "lintel/features/base/services/SharedMemorySegmentManager.h"
 
 #include <regex>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/RegexUtils.h"
-#include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
-#include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/RegexUtils.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
 
 std::shared_ptr<SharedMemorySegment> SharedMemorySegmentManager::of(
         const std::string &sharedMemorySegmentName) {

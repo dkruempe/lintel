@@ -1,10 +1,10 @@
-#ifndef CPP_BASE_LIBRARY_MOCKSHAREDMEMORYSERVICE_H
-#define CPP_BASE_LIBRARY_MOCKSHAREDMEMORYSERVICE_H
+#ifndef LINTEL_MOCKSHAREDMEMORYSERVICE_H
+#define LINTEL_MOCKSHAREDMEMORYSERVICE_H
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/core/services/ISharedMemoryService.h"
-#include "base_library/features/base/models/SharedMemorySegmentInfo.h"
+#include "lintel/core/services/ISharedMemoryService.h"
+#include "lintel/features/base/models/SharedMemorySegmentInfo.h"
 
 class MockSharedMemoryService : public ISharedMemoryService {
 public:

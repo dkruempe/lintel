@@ -9,9 +9,9 @@
 
 #include <boost/interprocess/managed_mapped_file.hpp>
 
-#include "base_library/features/base/events/Event.h"
-#include "base_library/features/base/events/BoostSegmentAllocator.h"
-#include "base_library/features/base/events/EventBus.h"
+#include "lintel/features/base/events/Event.h"
+#include "lintel/features/base/events/BoostSegmentAllocator.h"
+#include "lintel/features/base/events/EventBus.h"
 
 #include <catch2/catch_all.hpp>
 

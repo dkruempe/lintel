@@ -1,4 +1,4 @@
-#include "base_library/core/persistence/Arguments.h"
+#include "lintel/core/persistence/Arguments.h"
 
 namespace db {
     void Arguments::add(Argument &argument) {

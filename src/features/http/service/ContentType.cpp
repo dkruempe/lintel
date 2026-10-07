@@ -1,4 +1,4 @@
-#include "base_library/features/http/service/ContentType.h"
+#include "lintel/features/http/service/ContentType.h"
 
 #include <algorithm>
 #include <cctype>

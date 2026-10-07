@@ -1,13 +1,13 @@
 #include <httplib.h>
 
-#include "base_library/features/property/controller/PropertyApi.h"
+#include "lintel/features/property/controller/PropertyApi.h"
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/http/service/HttpClientHelper.h"
-#include "base_library/features/http/service/HttpStatusCodes.h"
-#include "base_library/features/http/service/HttpUnauthorizedException.h"
-#include "base_library/features/property/controller/PropertiesDto.h"
-#include "base_library/features/property/controller/PropertyValueDto.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/http/service/HttpClientHelper.h"
+#include "lintel/features/http/service/HttpStatusCodes.h"
+#include "lintel/features/http/service/HttpUnauthorizedException.h"
+#include "lintel/features/property/controller/PropertiesDto.h"
+#include "lintel/features/property/controller/PropertyValueDto.h"
 
 std::vector<PropertyDto> PropertyApi::allOf(const std::string &processName,
                                             const std::string &className,

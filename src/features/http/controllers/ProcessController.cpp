@@ -1,10 +1,10 @@
-#include "base_library/features/http/controllers/ProcessController.h"
+#include "lintel/features/http/controllers/ProcessController.h"
 
-#include "base_library/core/services/ProcessService.h"
-#include "base_library/core/utils/RegexUtils.h"
-#include "base_library/features/base/controller/ProcessGroupsDto.h"
-#include "base_library/features/base/controller/ProcessInfosDto.h"
-#include "base_library/features/base/models/Process.h"
+#include "lintel/core/services/ProcessService.h"
+#include "lintel/core/utils/RegexUtils.h"
+#include "lintel/features/base/controller/ProcessGroupsDto.h"
+#include "lintel/features/base/controller/ProcessInfosDto.h"
+#include "lintel/features/base/models/Process.h"
 
 ProcessController::ProcessController(const std::shared_ptr<IAuthService> &authService,
   std::shared_ptr<ProcessService> processService)

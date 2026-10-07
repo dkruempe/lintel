@@ -59,7 +59,7 @@ ADD_EXECUTABLE(base_test_sleeper helpers/TestSleeper.cpp)
 target_compile_features(base_test_sleeper PRIVATE cxx_std_17)
 target_link_libraries(base_test_sleeper PRIVATE
     project_warnings
-    myproject_options
+    lintel_options
 )
 
 # Hand the test binary the exact path of the helper. CMake knows it, so no PATH lookup and no
@@ -70,15 +70,15 @@ target_compile_definitions(base_tests PRIVATE
     BASE_TEST_SLEEPER_BINARY="$<TARGET_FILE:base_test_sleeper>")
 
 target_link_libraries(base_tests PRIVATE
-    kruempelmann::base_library
+    lintel::lintel
     Catch2::Catch2WithMain
     trompeloeil::trompeloeil
     # Same warning set (incl. -Werror) as the library itself: `project_warnings` is
-    # linked PRIVATE into kruempelmann::base_library, so its INTERFACE options do
+    # linked PRIVATE into lintel::lintel, so its INTERFACE options do
     # not reach this target — tests were compiled with plain defaults and CI could
     # not fail on a warning here.
     project_warnings
-    myproject_options
+    lintel_options
 )
 
 # Auto-register each TEST_CASE / SECTION as a separate CTest test

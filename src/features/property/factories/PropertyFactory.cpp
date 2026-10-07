@@ -1,11 +1,11 @@
-#include "base_library/features/property/factories/PropertyFactory.h"
+#include "lintel/features/property/factories/PropertyFactory.h"
 
 #include <chrono>
 #include <cstdint>
 #include <string>
 
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/features/property/models/Property.h"
+#include "lintel/core/services/StringifyService.h"
+#include "lintel/features/property/models/Property.h"
 
 namespace {
 

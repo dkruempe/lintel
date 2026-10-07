@@ -1,4 +1,4 @@
-#include "base_library/features/http/configuration/HttpEntry.h"
+#include "lintel/features/http/configuration/HttpEntry.h"
 
 #include <utility>
 

@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-`cpp-base-library` itself is licensed under the MIT License; see [`LICENSE`](LICENSE).
+`lintel` itself is licensed under the MIT License; see [`LICENSE`](LICENSE).
 This document lists the third-party components that are redistributed as part of a build or
 release of this repository, together with their licenses.
 

@@ -10,7 +10,7 @@ A modular and feature-rich C++ library designed to accelerate the development of
 
 ## Overview
 
-`cpp-base-library` provides a solid foundation for C++ projects by offering a collection of robust, reusable, and loosely-coupled components. The architecture is split into a powerful `core` engine and a set of optional `features`, allowing you to include only what you need.
+`lintel` provides a solid foundation for C++ projects by offering a collection of robust, reusable, and loosely-coupled components. The architecture is split into a powerful `core` engine and a set of optional `features`, allowing you to include only what you need.
 
 The library is designed with extensibility in mind, featuring a plugin system and service-oriented architecture that makes it easy to add custom functionality.
 
@@ -89,7 +89,7 @@ The commands below are identical to the ones the CI pipeline runs (`Release`, GC
 1.  **Clone the repository:**
     ```bash
     git clone <repository-url>
-    cd cpp-base-library
+    cd lintel
     ```
 
 2.  **Install the dependencies with Conan:**
@@ -132,12 +132,12 @@ This minimal example shows how to bootstrap an application using `StartupBuilder
 
 1. Build the project as described above (binaries land in `bin/`).
 2. Generate local TLS test certificates once: `./cfg/certs/generate_certs.sh` (self-signed dev certs under `cfg/certs/`). The server requires a certificate/key when `require_tls="true"` in `cfg/bootstrap.xml`.
-3. By default, runtime configuration is loaded from `cfg/` (the repository's `cfg/bootstrap.xml`). The `CONFIG_DIRECTORY` environment variable can override this path if needed (see `src/include/base_library/config.h.in`).
+3. By default, runtime configuration is loaded from `cfg/` (the repository's `cfg/bootstrap.xml`). The `CONFIG_DIRECTORY` environment variable can override this path if needed (see `src/include/lintel/config.h.in`).
 
 ```cpp
-#include <base_library/core/StartupBuilder.h>
-#include <base_library/features/base/BaseFeature.h>
-#include <base_library/features/property/PropertyFeature.h>
+#include <lintel/core/StartupBuilder.h>
+#include <lintel/features/base/BaseFeature.h>
+#include <lintel/features/property/PropertyFeature.h>
 
 int main(int argc, char* argv[]) {
   auto builder = StartupBuilder::with(argc, argv);
@@ -178,7 +178,7 @@ Every example is built into `bin/` (`CMAKE_RUNTIME_OUTPUT_DIRECTORY` in the top-
 
 ### Configuration directory
 
-The `StartupBuilder`-based examples (`main`, `worker`) read their bootstrap XML from the directory named by the `CONFIG_DIRECTORY` environment variable. If that variable is not set, the path compiled into the binary is used: `CONFIG_DIRECTORY` is a macro generated into `base_library/config.h` from `src/include/base_library/config.h.in`, which CMake fills with `${PROJECT_SOURCE_DIR}/../cfg` — i.e. the `cfg/` directory of the checkout the binary was built in. The file inside that directory is `BOOTSTRAP_CONFIG_NAME` + `.xml`, where `BOOTSTRAP_CONFIG_NAME` defaults to `bootstrap`. The defaults therefore resolve to `<repo>/cfg/bootstrap.xml` (used by `main`) and `<repo>/cfg/bootstrap_worker.xml` (used by `worker`).
+The `StartupBuilder`-based examples (`main`, `worker`) read their bootstrap XML from the directory named by the `CONFIG_DIRECTORY` environment variable. If that variable is not set, the path compiled into the binary is used: `CONFIG_DIRECTORY` is a macro generated into `lintel/config.h` from `src/include/lintel/config.h.in`, which CMake fills with `${PROJECT_SOURCE_DIR}/../cfg` — i.e. the `cfg/` directory of the checkout the binary was built in. The file inside that directory is `BOOTSTRAP_CONFIG_NAME` + `.xml`, where `BOOTSTRAP_CONFIG_NAME` defaults to `bootstrap`. The defaults therefore resolve to `<repo>/cfg/bootstrap.xml` (used by `main`) and `<repo>/cfg/bootstrap_worker.xml` (used by `worker`).
 
 `ProcessService` starts every `<Process>` entry it finds in the loaded configuration. `cfg/bootstrap_worker.xml` has no `<Processes>` section, while `cfg/bootstrap.xml` declares two `../bin/worker` entries, so a manually started worker needs `BOOTSTRAP_CONFIG_NAME=bootstrap_worker` to avoid spawning workers itself. `main` sets that variable automatically for the processes it spawns.
 
@@ -212,7 +212,7 @@ The `Doxygen` workflow runs with `WARN_AS_ERROR`, so undocumented or malformed c
 doxygen Doxyfile   # output goes to build/doxygen/html
 ```
 
-`Doxyfile` covers `src/include/base_library` — the public headers only. Implementation files, tests and examples are intentionally excluded.
+`Doxyfile` covers `src/include/lintel` — the public headers only. Implementation files, tests and examples are intentionally excluded.
 
 ## Dependencies
 
@@ -236,7 +236,7 @@ This project uses [Conan](https://conan.io/) to manage the following external li
 
 Docker workflows are defined in [`docker-compose.yml`](docker-compose.yml). The following profiles and commands match the actual configuration:
 
-- **`dev` profile** (`service: dev`, image `cpp-base-library:dev`, target `base`, working dir `/workspace`): mounts the source (`.:/workspace`), caches Conan (`/root/.conan2`), build artifacts (`/workspace/build`), and ccache (`/root/.ccache`). On startup it runs `conan profile detect --force`, installs dependencies with Conan (Release), configures CMake using the generated toolchain, and builds the target in parallel. Note that this profile does not pass `-G Ninja`, so the container builds with CMake's default generator (Makefiles) even though `ninja-build` is installed; pass `-G Ninja` in `docker-compose.yml` if you want the CI generator.  
+- **`dev` profile** (`service: dev`, image `lintel:dev`, target `base`, working dir `/workspace`): mounts the source (`.:/workspace`), caches Conan (`/root/.conan2`), build artifacts (`/workspace/build`), and ccache (`/root/.ccache`). On startup it runs `conan profile detect --force`, installs dependencies with Conan (Release), configures CMake using the generated toolchain, and builds the target in parallel. Note that this profile does not pass `-G Ninja`, so the container builds with CMake's default generator (Makefiles) even though `ninja-build` is installed; pass `-G Ninja` in `docker-compose.yml` if you want the CI generator.  
   ```bash
   docker compose --profile dev up --build
   ```

@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/EventBusEntry.h"
+#include "lintel/features/base/configuration/EventBusEntry.h"
 
 EventBusEntry::EventBusEntry(const std::string_view &component,
                              std::string _eventBusName, std::string _segmentName,

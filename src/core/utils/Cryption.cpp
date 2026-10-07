@@ -1,4 +1,4 @@
-#include "base_library/core/utils/Cryption.h"
+#include "lintel/core/utils/Cryption.h"
 
 #include <fmt/format.h>
 #include <openssl/crypto.h>
@@ -14,7 +14,7 @@
 #include <string>
 #include <vector>
 
-#include "base_library/core/utils/StringUtils.h"
+#include "lintel/core/utils/StringUtils.h"
 
 namespace {
 constexpr std::uint32_t kPbkdf2Iterations = 120000;

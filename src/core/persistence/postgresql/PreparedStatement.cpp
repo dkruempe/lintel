@@ -1,8 +1,8 @@
-#include "base_library/core/persistence/postgresql/PreparedStatement.h"
+#include "lintel/core/persistence/postgresql/PreparedStatement.h"
 
 #include <algorithm>
 
-#include "base_library/core/persistence/Parameter.h"
+#include "lintel/core/persistence/Parameter.h"
 
 namespace postgresql {
     std::string PreparedStatement::initStatement(const std::string &tempStatement) {

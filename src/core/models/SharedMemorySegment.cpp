@@ -1,4 +1,4 @@
-#include "base_library/core/models/SharedMemorySegment.h"
+#include "lintel/core/models/SharedMemorySegment.h"
 
 #include <utility>
 

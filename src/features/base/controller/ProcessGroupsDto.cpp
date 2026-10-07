@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/ProcessGroupsDto.h"
+#include "lintel/features/base/controller/ProcessGroupsDto.h"
 
 #include <utility>
 

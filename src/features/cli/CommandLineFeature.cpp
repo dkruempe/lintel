@@ -1,18 +1,18 @@
-#include "base_library/features/cli/CommandLineFeature.h"
+#include "lintel/features/cli/CommandLineFeature.h"
 
 #include "Hypodermic/Container.h"
 #include "Hypodermic/ContainerBuilder.h"
 
-#include "base_library/features/cli/components/HistoryCliComponent.h"
-#include "base_library/features/cli/components/MessageQueueCliComponent.h"
-#include "base_library/features/cli/components/ProcessCliComponent.h"
-#include "base_library/features/cli/components/SharedMemoryCliComponent.h"
-#include "base_library/features/cli/components/UserManagementCliComponent.h"
-#include "base_library/features/cli/providers/AuthArgumentProvider.h"
-#include "base_library/features/cli/services/AuthCliService.h"
-#include "base_library/features/cli/services/InputService.h"
-#include "base_library/features/cli/services/TerminalService.h"
-#include "base_library/features/cli/utils/CommandLineUtils.h"
+#include "lintel/features/cli/components/HistoryCliComponent.h"
+#include "lintel/features/cli/components/MessageQueueCliComponent.h"
+#include "lintel/features/cli/components/ProcessCliComponent.h"
+#include "lintel/features/cli/components/SharedMemoryCliComponent.h"
+#include "lintel/features/cli/components/UserManagementCliComponent.h"
+#include "lintel/features/cli/providers/AuthArgumentProvider.h"
+#include "lintel/features/cli/services/AuthCliService.h"
+#include "lintel/features/cli/services/InputService.h"
+#include "lintel/features/cli/services/TerminalService.h"
+#include "lintel/features/cli/utils/CommandLineUtils.h"
 
 CommandLineFeature::CommandLineFeature(std::shared_ptr<Features> features) : Feature(Features::Cli, std::move(features))
 {}

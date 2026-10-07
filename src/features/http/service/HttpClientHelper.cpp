@@ -1,8 +1,8 @@
-#include "base_library/features/http/service/HttpClientHelper.h"
+#include "lintel/features/http/service/HttpClientHelper.h"
 
 #include <httplib.h>
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 namespace HttpClientHelper {
 

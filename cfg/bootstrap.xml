@@ -19,7 +19,7 @@
         <!-- path to logger directory; a leading "~" is expanded to $HOME
              (EnvironmentConfiguration::Home), missing directories are created
              because create_sub_dirs="true" -->
-        <Path path="~/log/cpp-base-library" create_sub_dirs="true"/>
+        <Path path="~/log/lintel" create_sub_dirs="true"/>
         <!-- Special template for logger -->
         <Logger process_name=".*" level="info" async="false">
             <!-- <LoggerSink type="ConsoleSink" level="trace"/> -->
@@ -45,7 +45,7 @@
     <!-- Database Connections Configuration -->
     <DatabaseConnections>
 	    <!--<DatabaseConnection name="DEFAULT_PSQL" user_name="example_user" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
-	    database_name="temp" type="PostgreSQL"/>--><!-- NOTE: Das alte Passwort steht in der Git-Historie und muss rotiert werden. ${ADMIN_PASSWORD} durch echtes Passwort ersetzen. -->
+	    database_name="temp" type="PostgreSQL"/>--><!-- NOTE: The old password is in the git history and must be rotated. Replace ${ADMIN_PASSWORD} with a real password. -->
         <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true"/>
     </DatabaseConnections>
 

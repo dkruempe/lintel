@@ -9,15 +9,15 @@
  * Run: ./bin/main  (needs CONFIG_DIRECTORY or the baked-in cfg/ path and
  * ./cfg/certs/generate_certs.sh, because bootstrap.xml requires TLS).
  */
-#include <base_library/core/StartupBuilder.h>
-#include <base_library/core/services/SharedMemoryService.h>
-#include <base_library/features/base/BaseFeature.h>
-#include <base_library/features/base/repositories/SharedMemoryRepository.h>
-#include <base_library/features/base/services/EventBusService.h>
-#include <base_library/features/cli/CommandLineFeature.h>
-#include <base_library/features/http/HttpFeature.h>
-#include <base_library/features/property/PropertyFeature.h>
-#include <base_library/features/property/services/PropertyService.h>
+#include <lintel/core/StartupBuilder.h>
+#include <lintel/core/services/SharedMemoryService.h>
+#include <lintel/features/base/BaseFeature.h>
+#include <lintel/features/base/repositories/SharedMemoryRepository.h>
+#include <lintel/features/base/services/EventBusService.h>
+#include <lintel/features/cli/CommandLineFeature.h>
+#include <lintel/features/http/HttpFeature.h>
+#include <lintel/features/property/PropertyFeature.h>
+#include <lintel/features/property/services/PropertyService.h>
 
 #include "Hypodermic/Container.h"
 #include "Hypodermic/ContainerBuilder.h"
@@ -33,8 +33,8 @@
  *  shm::String flavour of the DAO below. */
 struct ExampleRecordShape
 {
-  // constexpr char* statt std::string: die statische Initialisierung kann dann
-  // nicht werfen (clang-tidy cert-err58-cpp).
+  // constexpr char* instead of std::string: static initialization can then not
+  // throw (clang-tidy cert-err58-cpp).
   static constexpr const char *NAME = "name";
   static constexpr const char *ADDR = "addr";
   static constexpr const char *PLZ = "plz";
@@ -120,10 +120,10 @@ public:
     }
 };
 
-// Die implizit erzeugte Zuweisung kann bei shm::String theoretisch werfen
-// (bad_alloc). Im Beispiel werden die DTOs ausschliesslich einmalig befuellt und
-// danach nur gelesen/serialisiert - eine eigene operator= mit
-// noexcept-Signatur wuerde hier nur Falschheit dokumentieren.
+// The implicitly generated assignment can theoretically throw for shm::String
+// (bad_alloc). In this example the DTOs are filled exactly once and only read /
+// serialized afterwards - a dedicated operator= with noexcept signature would
+// only document a falsehood here.
 // NOLINTNEXTLINE(bugprone-exception-escape)
 struct TestDataDto {
     shm::String m_name;
@@ -280,8 +280,8 @@ public:
     void onMigrate(int32_t currentActiveVersion) override {}
 };
 
-// uint8_t als Basistyp: der Enum hat genau einen Wert, ein int waere 4 Byte
-// zu viel (clang-tidy performance-enum-size).
+// uint8_t as base type: the enum has exactly one value, an int would be 4 bytes
+// too much (clang-tidy performance-enum-size).
 enum TestEnum : std::uint8_t
 {
     Test

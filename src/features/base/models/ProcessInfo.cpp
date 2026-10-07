@@ -1,4 +1,4 @@
-#include "base_library/features/base/models/ProcessInfo.h"
+#include "lintel/features/base/models/ProcessInfo.h"
 
 ProcessInfo::ProcessInfo(std::shared_ptr<Process> process,
   pid_t id,

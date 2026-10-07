@@ -1,12 +1,12 @@
-#include <base_library/core/persistence/Connection.h>
-#include <base_library/core/persistence/Statement.h>
-#include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
-#include <base_library/features/base/configuration/Configuration.h>
-#include <base_library/features/base/configuration/DatabaseConnectionComponent.h>
-#include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/base/configuration/MessageQueueEntry.h>
-#include <base_library/features/base/repositories/MessageQueueRepository.h>
+#include <lintel/core/persistence/Connection.h>
+#include <lintel/core/persistence/Statement.h>
+#include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
+#include <lintel/features/base/configuration/Configuration.h>
+#include <lintel/features/base/configuration/DatabaseConnectionComponent.h>
+#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
+#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/features/base/configuration/MessageQueueEntry.h>
+#include <lintel/features/base/repositories/MessageQueueRepository.h>
 
 #include <catch2/catch_all.hpp>
 

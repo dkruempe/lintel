@@ -1,7 +1,7 @@
-#include "base_library/features/cli/components/HistoryCliComponent.h"
+#include "lintel/features/cli/components/HistoryCliComponent.h"
 
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/core/utils/TableBuilder.h"
+#include "lintel/core/services/StringifyService.h"
+#include "lintel/core/utils/TableBuilder.h"
 
 HistoryCliComponent::HistoryCliComponent(
         std::shared_ptr<HistoryApi> historyApi) : CommandLineComponent(n_name, m_alias),

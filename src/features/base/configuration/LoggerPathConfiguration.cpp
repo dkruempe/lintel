@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/LoggerPathConfiguration.h"
+#include "lintel/features/base/configuration/LoggerPathConfiguration.h"
 
 LoggerPathConfiguration::LoggerPathConfiguration(std::filesystem::path path,
                                                  bool createSubDirectories)

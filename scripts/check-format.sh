@@ -80,10 +80,45 @@ violation_count_file() {
         grep -c 'code should be clang-formatted'
 }
 
+# Resolves a working-tree path to the path it had in BASE_REF, honouring renames.
+# Without this a mass rename (e.g. moving the public include directory) makes every
+# moved file look brand new, so the gate counts its legacy violations as a regression.
+# Prints the BASE_REF path, or nothing if the file is genuinely new there.
+base_path_for() {
+    local file="$1"
+    if git cat-file -e "$BASE:$file" 2>/dev/null; then
+        printf '%s' "$file"
+        return 0
+    fi
+    if [ -n "${RENAME_MAP[$file]:-}" ]; then
+        printf '%s' "${RENAME_MAP[$file]}"
+        return 0
+    fi
+    return 1
+}
+
+# Maps every renamed path to the path it had in BASE_REF. Built once, because
+# `git diff --find-renames -- path` does not emit a rename when the pathspec
+# matches only one side of it.
+declare -A RENAME_MAP=()
+build_rename_map() {
+    # The literal words "from"/"to" in the diff output are keywords, not fields,
+    # so the line has to be split positionally on the keyword.
+    local _ keyword path from=""
+    while read -r _ keyword path; do
+        case "$keyword" in
+            from) from="$path" ;;
+            to)   [ -n "$from" ] && RENAME_MAP["$path"]="$from" && from="" ;;
+        esac
+    done < <(git diff --find-renames --diff-filter=R "$BASE" 2>/dev/null |
+             grep -E '^(rename from|rename to) ')
+}
+
 violation_count_for_ref() {
     # Prints the number of violations the given file has in BASE_REF (0 if absent).
-    if git cat-file -e "$BASE:$1" 2>/dev/null; then
-        git show "$BASE:$1" | violation_count_stdin "$1"
+    local base_path
+    if base_path=$(base_path_for "$1"); then
+        git show "$BASE:$base_path" | violation_count_stdin "$base_path"
     else
         printf '0'
     fi
@@ -156,9 +191,11 @@ fi
 
 # BASE..working tree (plus untracked files), so the same command also works
 # locally with uncommitted changes
+build_rename_map
+
 mapfile -t changed < <(
     {
-        git diff --name-only --diff-filter=ACMR "$BASE"
+        git diff --name-only --find-renames --diff-filter=ACMR "$BASE"
         git ls-files --others --exclude-standard
     } | sort -u
 )

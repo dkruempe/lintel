@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
+#include "lintel/features/base/configuration/MessageQueueEntry.h"
 
 MessageQueueEntry::MessageQueueEntry(const std::string_view &component,
                                      std::string _processName,

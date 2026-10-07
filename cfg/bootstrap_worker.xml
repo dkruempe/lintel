@@ -9,7 +9,7 @@
     <!-- Logging Configuration for worker processes -->
     <Loggers>
         <!-- same log directory as the main process; a leading "~" is expanded to $HOME -->
-        <Path path="~/log/cpp-base-library" create_sub_dirs="true"/>
+        <Path path="~/log/lintel" create_sub_dirs="true"/>
         <Logger process_name="worker" level="info" async="false">
             <LoggerSink type="RotatingFileSink" level="trace" size="5MB" max_files="10"/>
         </Logger>

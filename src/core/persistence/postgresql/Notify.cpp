@@ -1,10 +1,10 @@
-#include "base_library/core/persistence/postgresql/Notify.h"
+#include "lintel/core/persistence/postgresql/Notify.h"
 
 #include <string.h>
 
 #include <iostream>
 
-#include "base_library/core/persistence/Identifier.h"
+#include "lintel/core/persistence/Identifier.h"
 
 namespace postgresql {
     Notify::Notify(Connection &connection, std::string tableName,

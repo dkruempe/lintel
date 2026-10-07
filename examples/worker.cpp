@@ -8,19 +8,19 @@
 #include <unistd.h>
 #include <utility>
 
-#include <base_library/core/StartupBuilder.h>
-#include <base_library/core/services/AbstractService.h>
-#include <base_library/core/services/LoggerService.h>
-#include <base_library/features/Feature.h>
-#include <base_library/features/Features.h>
-#include <base_library/features/base/BaseFeature.h>
-#include <base_library/features/base/models/HistoryEntry.h>
-#include <base_library/features/base/models/ProcessName.h>
-#include <base_library/features/base/services/EventBusService.h>
-#include <base_library/features/base/services/IHistoryService.h>
-#include <base_library/features/property/PropertyFeature.h>
-#include <base_library/features/property/repositories/SharedMemoryPropertyRepository.h>
-#include <base_library/features/property/services/PropertyService.h>
+#include <lintel/core/StartupBuilder.h>
+#include <lintel/core/services/AbstractService.h>
+#include <lintel/core/services/LoggerService.h>
+#include <lintel/features/Feature.h>
+#include <lintel/features/Features.h>
+#include <lintel/features/base/BaseFeature.h>
+#include <lintel/features/base/models/HistoryEntry.h>
+#include <lintel/features/base/models/ProcessName.h>
+#include <lintel/features/base/services/EventBusService.h>
+#include <lintel/features/base/services/IHistoryService.h>
+#include <lintel/features/property/PropertyFeature.h>
+#include <lintel/features/property/repositories/SharedMemoryPropertyRepository.h>
+#include <lintel/features/property/services/PropertyService.h>
 
 #include "Hypodermic/Container.h"
 #include "Hypodermic/ContainerBuilder.h"

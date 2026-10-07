@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Single-core weight probe for public headers of cpp-base-library.
+# Single-core weight probe for public headers of lintel.
 # Mirrors how a consumer TU is compiled and reports the preprocessed size and a
 # -fsyntax-only compile time of a probe TU that includes the probed header.
 # Single-threaded by design so numbers are reproducible and the machine stays
@@ -16,7 +16,7 @@
 #
 # Flags (-I/-isystem/-D/-std) are extracted from the given build dir's
 # compile_commands.json. Unity builds have no per-TU LoggerService.cpp entry,
-# so the library TU (base_library.dir) with the widest include set is used as
+# so the library TU (lintel.dir) with the widest include set is used as
 # template. Nothing in the source tree is modified.
 set -euo pipefail
 
@@ -89,7 +89,7 @@ if not cmd:
     best, best_n = "", -1
     for e in db:
         n = e["command"].count("-isystem")
-        if "base_library.dir" in e["file"] and n > best_n:
+        if "lintel.dir" in e["file"] and n > best_n:
             best, best_n = e["file"], n
     if best:
         cmd = next(e["command"] for e in db if e["file"] == best)

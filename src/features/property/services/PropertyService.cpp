@@ -1,12 +1,12 @@
-#include "base_library/features/property/services/PropertyService.h"
+#include "lintel/features/property/services/PropertyService.h"
 
 #include <algorithm>
 #include <regex>
 #include <sstream>
 
-#include "base_library/features/property/exceptions/PropertyNotFoundException.h"
-#include "base_library/features/property/models/PropertyBase.h"
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "lintel/features/property/exceptions/PropertyNotFoundException.h"
+#include "lintel/features/property/models/PropertyBase.h"
+#include "lintel/features/property/models/PropertyRepositoryType.h"
 
 std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(
         const std::vector<std::shared_ptr<PropertyRepository>>

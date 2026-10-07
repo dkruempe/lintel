@@ -1,46 +1,46 @@
-# Sicherheitsrichtlinie (Security Policy)
+# Security Policy
 
-## Meldeweg
+## Reporting path
 
-Sicherheitslücken in `cpp-base-library` sollten **nicht** über öffentliche Issues gemeldet werden.
+Security vulnerabilities in `lintel` should **not** be reported via public issues.
 
-Melde sicherheitsrelevante Probleme bitte ausschließlich per E-Mail an:
+Please report security-relevant issues exclusively by email to:
 - example@example.com
 
-Bitte gib in deiner E-Mail folgende Informationen an (so vollständig wie möglich):
-- Beschreibung des Problems und potenzieller Auswirkung
-- Schritte zur Reproduktion (sofern nachvollziehbar)
-- Betroffene Version/Commit (z. B. Commit-Hash)
-- Mögliche Abhilfen (optional)
+Please include the following information in your email (as complete as possible):
+- description of the problem and potential impact
+- steps to reproduce (if reproducible)
+- affected version/commit (e.g. commit hash)
+- possible mitigations (optional)
 
-## Reaktionsfristen
+## Response times
 
-Wir bemühen uns um eine zeitnahe Prüfung gemeldeter Sicherheitsprobleme. Als realistische Richtwerte gelten:
-- Erstbestätigung (Receipt): innerhalb von **7 Werktagen**
-- Erste Bewertung (Impact/Validity): innerhalb von **14 Werktagen**
-- Festlegung/Nachverfolgung eines Fix-Plans: nach Bewertung, zeitnah entsprechend Kritikalität
+We aim for a timely review of reported security issues. The following are realistic targets:
+- initial acknowledgement (receipt): within **7 business days**
+- initial assessment (impact/validity): within **14 business days**
+- decision/follow-up on a fix plan: after the assessment, promptly according to criticality
 
-Diese Fristen sind eine realistische Zielvorgabe für dieses Projekt (pre-1.0); bei hoher Kritikalität wird versucht, schneller zu reagieren.
+These times are a realistic target for this project (pre-1.0); for high criticality we try to react faster.
 
-## Unterstützte Versionen
+## Supported versions
 
-Derzeit wird **nur** der aktuelle Entwicklungsstand auf `master` unterstützt. Es gibt kein stabiles Release mit langfristigem Support jenseits `v0.1.0` (pre-1.0-Status). Sicherheitsfixes werden bevorzugt auf `master` bereitgestellt.
+Currently **only** the current development state on `master` is supported. There is no stable release with long-term support beyond `v0.1.0` (pre-1.0 status). Security fixes are preferably provided on `master`.
 
-| Version | Unterstützt |
+| Version | Supported |
 |---------|------------|
-| `master` | Ja |
-| `v0.1.0` | Eingeschränkt (nur schwerwiegende, nachweisbare Lücken bei begrenzter Kapazität) |
-| Ältere Tags | Nein |
+| `master` | Yes |
+| `v0.1.0` | Limited (only severe, reproducible gaps, with limited capacity) |
+| Older tags | No |
 
-## Sicherheitsbestimmungen für Beiträge
+## Security rules for contributions
 
-- **Keine Secrets commiten:** Niemals private Schlüssel, Zertifikate mit privatem Schlüssel, Passwörter, Tokens, API-Keys oder sonstige sensible Daten ins Repository committen.
-- **TLS/Keys:** Private Schlüssel (`*.key`) werden über `.gitignore` ausgeschlossen. Dev-Zertifikate werden lokal generiert (siehe `cfg/certs/README.md`). Produktiv-Keys niemals im Repo ablegen.
-- **Passwörter/Klartext-Credentials:** Keine Klartext-Credentials in Code, Beispielen oder Konfiguration committen. Beispiele nutzen Platzhalter (z. B. `${ADMIN_PASSWORD}`).
-- **Abhängigkeiten:** Neue Abhängigkeiten sorgfältig prüfen. CI verwendet Conan 2 und baut reproduzierbar.
-- **Tests:** Sicherheitsrelevante Änderungen sollten nach Möglichkeit durch Tests abgedeckt werden, ohne dabei echte Secrets zu verwenden.
-- **Veröffentlichung:** Fixes für bestätigte Lücken werden in Commits auf `master` dokumentiert (kurz, faktenbasiert). Releases erfolgen über den Release-Workflow bei Tags (`v*`).
+- **Do not commit secrets:** never commit private keys, certificates with a private key, passwords, tokens, API keys or other sensitive data into the repository.
+- **TLS/keys:** private keys (`*.key`) are excluded via `.gitignore`. Dev certificates are generated locally (see `cfg/certs/README.md`). Never store production keys in the repo.
+- **Passwords/plaintext credentials:** do not commit plaintext credentials in code, examples or configuration. Examples use placeholders (e.g. `${ADMIN_PASSWORD}`).
+- **Dependencies:** review new dependencies carefully. CI uses Conan 2 and builds reproducibly.
+- **Tests:** security-relevant changes should be covered by tests where possible, without using real secrets.
+- **Releases:** fixes for confirmed gaps are documented in commits on `master` (short, fact-based). Releases are done via the release workflow on tags (`v*`).
 
-## Hinweis
+## Note
 
-Dieses Projekt ist in der Pre-1.0-Phase. Die Sicherheitsrichtlinie kann sich mit zunehmender Reife weiterentwickeln. Für Fragen zu sicherheitsrelevanten Aspekten nutze bitte den oben genannten E-Mail-Meldeweg.
+This project is in its pre-1.0 phase. The security policy may evolve further as the project matures. For questions on security-relevant aspects please use the email reporting path named above.

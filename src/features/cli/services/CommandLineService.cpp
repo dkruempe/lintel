@@ -1,4 +1,4 @@
-#include "base_library/features/cli/services/CommandLineService.h"
+#include "lintel/features/cli/services/CommandLineService.h"
 
 #include <cstdint>
 #include <date/tz.h>
@@ -7,11 +7,11 @@
 #include <csignal>
 #include <string>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/services/SignalService.h"
-#include "base_library/core/utils/StringUtils.h"
-#include "base_library/features/cli/models/CommandLineComponent.h"
-#include "base_library/features/cli/utils/CommandLineUtils.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/services/SignalService.h"
+#include "lintel/core/utils/StringUtils.h"
+#include "lintel/features/cli/models/CommandLineComponent.h"
+#include "lintel/features/cli/utils/CommandLineUtils.h"
 
 CommandLineService::CommandLineService(const std::vector<std::shared_ptr<CommandLineComponent>> &components,
   std::shared_ptr<AuthCliService> authCliService,

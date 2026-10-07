@@ -1,10 +1,10 @@
-#include "base_library/features/base/configuration/EventBusComponent.h"
+#include "lintel/features/base/configuration/EventBusComponent.h"
 
-#include <base_library/core/utils/TypeName.h>
-#include <base_library/features/base/configuration/ConfigurationException.h>
-#include <base_library/features/base/configuration/EventBusEntry.h>
-#include <base_library/features/base/events/EventBus.h>
 #include <cstring>
+#include <lintel/core/utils/TypeName.h>
+#include <lintel/features/base/configuration/ConfigurationException.h>
+#include <lintel/features/base/configuration/EventBusEntry.h>
+#include <lintel/features/base/events/EventBus.h>
 #include <tinyxml2.h>
 
 const EventBusComponent::Shapes EventBusComponent::shape{};

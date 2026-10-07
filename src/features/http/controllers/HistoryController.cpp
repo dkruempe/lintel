@@ -1,8 +1,8 @@
-#include "base_library/features/http/controllers/HistoryController.h"
+#include "lintel/features/http/controllers/HistoryController.h"
 
-#include "base_library/features/base/controller/HistoryDto.h"
-#include "base_library/features/base/controller/HistoryDtos.h"
-#include "base_library/features/http/service/HttpStatusCodes.h"
+#include "lintel/features/base/controller/HistoryDto.h"
+#include "lintel/features/base/controller/HistoryDtos.h"
+#include "lintel/features/http/service/HttpStatusCodes.h"
 
 void HistoryController::historyOfGet(const httplib::Request &request, httplib::Response &response,
                                      const ContentType &contentType, const std::optional<UserToken> &user) {
@@ -29,10 +29,10 @@ void HistoryController::historyOfGet(const httplib::Request &request, httplib::R
     }
 }
 
-// groupRepository wird nicht ausgewertet - die Gruppen werden in der
-// Initialisierungsliste hartcodiert (m_adminGroup/m_userGroup). Die Signatur
-// bleibt unveraendert, weil der Konstruktor vom DI-Container aufgeloest wird;
-// das Entfernen des Parameters waere ein Wiring- und API-Thema fuer sich.
+// groupRepository is not evaluated - the groups are hardcoded in the
+// member init list (m_adminGroup/m_userGroup). The signature stays unchanged
+// because the constructor is resolved by the DI container; removing the
+// parameter would be a wiring and API topic of its own.
 HistoryController::HistoryController(const std::shared_ptr<IAuthService> &authService,
                                      std::shared_ptr<GroupRepository> groupRepository,  // NOLINT(performance-unnecessary-value-param)
                                      std::shared_ptr<HistoryRepository> historyRepository)

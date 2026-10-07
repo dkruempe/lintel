@@ -1,6 +1,6 @@
-#include "base_library/features/cli/components/ProcessCliComponent.h"
+#include "lintel/features/cli/components/ProcessCliComponent.h"
 
-#include <base_library/core/utils/TableBuilder.h>
+#include <lintel/core/utils/TableBuilder.h>
 
 ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
   : CommandLineComponent(m_name, m_alias), m_processApi(std::move(processApi))

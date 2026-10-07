@@ -1,6 +1,6 @@
-#include "base_library/features/http/controllers/MessageQueueController.h"
+#include "lintel/features/http/controllers/MessageQueueController.h"
 
-#include "base_library/features/base/controller/MessageQueueDtos.h"
+#include "lintel/features/base/controller/MessageQueueDtos.h"
 
 MessageQueueController::MessageQueueController(const std::shared_ptr<IAuthService> &authService,
   std::shared_ptr<IMessageQueueRepository> messageQueueRepository,

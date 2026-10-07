@@ -1,12 +1,12 @@
-#ifndef CPP_BASE_LIBRARY_MOCKMESSAGEQUEUEREPOSITORY_H
-#define CPP_BASE_LIBRARY_MOCKMESSAGEQUEUEREPOSITORY_H
+#ifndef LINTEL_MOCKMESSAGEQUEUEREPOSITORY_H
+#define LINTEL_MOCKMESSAGEQUEUEREPOSITORY_H
 
 #include <catch2/trompeloeil.hpp>
 
 #include <optional>
 
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
-#include "base_library/features/base/repositories/IMessageQueueRepository.h"
+#include "lintel/features/base/configuration/MessageQueueEntry.h"
+#include "lintel/features/base/repositories/IMessageQueueRepository.h"
 
 class MockMessageQueueRepository : public IMessageQueueRepository {
 public:
@@ -18,4 +18,4 @@ public:
     MAKE_MOCK1(deleteOf, void(const std::vector<MessageQueueEntry> &), override);
 };
 
-#endif  // CPP_BASE_LIBRARY_MOCKMESSAGEQUEUEREPOSITORY_H
+#endif  // LINTEL_MOCKMESSAGEQUEUEREPOSITORY_H

@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/Entry.h"
+#include "lintel/features/base/configuration/Entry.h"
 
 Entry::Entry(std::string_view component) : m_component(component) {}
 

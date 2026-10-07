@@ -1,8 +1,8 @@
-#include "base_library/features/base/controller/HistoryDto.h"
+#include "lintel/features/base/controller/HistoryDto.h"
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/features/base/models/HistoryEntry.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/services/StringifyService.h"
+#include "lintel/features/base/models/HistoryEntry.h"
 
 HistoryDto::HistoryDto(const HistoryEntry &historyEntry) : m_processName(historyEntry.getProcessName()),
                                                            m_serviceName(historyEntry.getServiceName()),

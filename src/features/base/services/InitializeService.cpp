@@ -1,4 +1,4 @@
-#include "base_library/features/base/services/InitializeService.h"
+#include "lintel/features/base/services/InitializeService.h"
 
 InitializeService::InitializeService(
         const std::vector<std::shared_ptr<AbstractServiceInterface>>

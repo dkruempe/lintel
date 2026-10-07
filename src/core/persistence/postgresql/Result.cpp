@@ -1,5 +1,5 @@
 
-#include "base_library/core/persistence/postgresql/Result.h"
+#include "lintel/core/persistence/postgresql/Result.h"
 
 namespace postgresql {
     Result::Result(PGresult *res) : m_res(res) {

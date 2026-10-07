@@ -1,44 +1,44 @@
-#include "base_library/features/base/BaseFeature.h"
+#include "lintel/features/base/BaseFeature.h"
 
 #include "Hypodermic/Container.h"
 #include "Hypodermic/ContainerBuilder.h"
 
-#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
-#include "base_library/core/plugins/AdminUserBootstrapPlugin.h"
-#include "base_library/core/plugins/DatabaseBootstrapPlugin.h"
-#include "base_library/core/plugins/MessageQueueBootstrapPlugin.h"
-#include "base_library/core/plugins/SharedMemoryBootstrapPlugin.h"
-#include "base_library/core/plugins/SingleInstanceBootstrapPlugin.h"
-#include "base_library/core/plugins/VirtualGroupBootstrapPlugin.h"
-#include "base_library/core/services/BootstrapService.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/services/PersistableService.h"
-#include "base_library/core/services/ISharedMemoryService.h"
-#include "base_library/core/services/ProcessService.h"
-#include "base_library/core/services/SharedMemoryService.h"
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/configuration/HistoryComponent.h"
-#include "base_library/features/base/configuration/HistoryServiceEntry.h"
-#include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/base/provider/GroupProvider.h"
-#include "base_library/features/base/repositories/GroupRepository.h"
-#include "base_library/features/base/repositories/HistoryRepository.h"
-#include "base_library/features/base/repositories/MessageQueueRepository.h"
-#include "base_library/features/base/repositories/IMessageQueueRepository.h"
-#include "base_library/features/base/repositories/UserRepository.h"
-#include "base_library/features/base/services/AuthService.h"
-#include "base_library/features/base/services/EventBusService.h"
-#include "base_library/features/base/services/IAuthService.h"
-#include "base_library/features/base/services/IHistoryService.h"
-#include "base_library/features/base/services/ExecutorService.h"
-#include "base_library/features/base/services/HistoryService.h"
-#include "base_library/features/base/services/InitializeService.h"
-#include "base_library/features/base/services/MessageQueueService.h"
-#include "base_library/features/base/services/NoopHistoryService.h"
-#include "base_library/features/base/services/ProcessArgumentService.h"
-#include "base_library/features/base/services/SchedulerService.h"
-#include "base_library/features/base/services/ISharedMemorySegmentManager.h"
-#include "base_library/features/base/services/SharedMemorySegmentManager.h"
+#include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
+#include "lintel/core/plugins/AdminUserBootstrapPlugin.h"
+#include "lintel/core/plugins/DatabaseBootstrapPlugin.h"
+#include "lintel/core/plugins/MessageQueueBootstrapPlugin.h"
+#include "lintel/core/plugins/SharedMemoryBootstrapPlugin.h"
+#include "lintel/core/plugins/SingleInstanceBootstrapPlugin.h"
+#include "lintel/core/plugins/VirtualGroupBootstrapPlugin.h"
+#include "lintel/core/services/BootstrapService.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/services/PersistableService.h"
+#include "lintel/core/services/ISharedMemoryService.h"
+#include "lintel/core/services/ProcessService.h"
+#include "lintel/core/services/SharedMemoryService.h"
+#include "lintel/features/base/configuration/Configuration.h"
+#include "lintel/features/base/configuration/HistoryComponent.h"
+#include "lintel/features/base/configuration/HistoryServiceEntry.h"
+#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/features/base/provider/GroupProvider.h"
+#include "lintel/features/base/repositories/GroupRepository.h"
+#include "lintel/features/base/repositories/HistoryRepository.h"
+#include "lintel/features/base/repositories/MessageQueueRepository.h"
+#include "lintel/features/base/repositories/IMessageQueueRepository.h"
+#include "lintel/features/base/repositories/UserRepository.h"
+#include "lintel/features/base/services/AuthService.h"
+#include "lintel/features/base/services/EventBusService.h"
+#include "lintel/features/base/services/IAuthService.h"
+#include "lintel/features/base/services/IHistoryService.h"
+#include "lintel/features/base/services/ExecutorService.h"
+#include "lintel/features/base/services/HistoryService.h"
+#include "lintel/features/base/services/InitializeService.h"
+#include "lintel/features/base/services/MessageQueueService.h"
+#include "lintel/features/base/services/NoopHistoryService.h"
+#include "lintel/features/base/services/ProcessArgumentService.h"
+#include "lintel/features/base/services/SchedulerService.h"
+#include "lintel/features/base/services/ISharedMemorySegmentManager.h"
+#include "lintel/features/base/services/SharedMemorySegmentManager.h"
 
 BaseFeature::BaseFeature(std::shared_ptr<Features> features)
   : Feature(Features::Base, std::move(features)) {}
@@ -50,37 +50,36 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
 }
 
 /**
- * Registriert die Kern-Dienste im DI-Container.
+ * Registers the core services in the DI container.
  *
- * Der Verlauf im Wesentlichen:
- *   1. Prozessnamen ermitteln (leer, wenn kein ProcessName uebergeben wurde).
- *   2. HistoryService nur dort als echten Dienst registrieren, wo die
- *      Konfiguration diesen Prozess ausdruecklich als History-Owner benennt.
- *      Jeder andere Prozess bekommt eine NoopHistoryService-Instanz und
- *      fuehrt damit nie eine Historie.
- *   3. AuthService, SchedulerService, InitializeService und ExecutorService
- *      als Singleton bzw. Transienten registrieren.
+ * The flow in essence:
+ *   1. determine the process name (empty if no ProcessName was passed).
+ *   2. register HistoryService as a real service only where the configuration
+ *      names this process explicitly as History owner. Every other process gets
+ *      a NoopHistoryService instance and therefore never keeps a history.
+ *   3. register AuthService, SchedulerService, InitializeService and
+ *      ExecutorService as singletons resp. transients.
  *
- * Aufrufer ist StartupBuilder waehrend des Bootstraps; die null-Argument-
- * Ueberladung ruft diese Variante mit leeren Werten auf und landet damit
- * zwingend im Noop-Zweig.
+ * The caller is StartupBuilder during the bootstrap; the null-argument
+ * overload calls this variant with empty values and therefore always ends up
+ * in the noop branch.
  *
- * @param builder          der DI-Container-Builder des Prozesses
- * @param configuration    die geparste Anwendungskonfiguration, darf null sein
- * @param processName      der Prozessname des laufenden Prozesses, darf null sein
+ * @param builder          the DI container builder of the process
+ * @param configuration    the parsed application configuration, may be null
+ * @param processName      the process name of the running process, may be null
  */
 void BaseFeature::registerTypes(
         Hypodermic::ContainerBuilder &builder,
         const std::shared_ptr<Configuration> &configuration,
         const std::shared_ptr<ProcessName> &processName) {
-  // Leerer Prozessname, wenn die Komponente ohne ProcessName registriert wird - das
-  // passiert beim Testen der Komponente ohne Bootstrap.
+  // empty process name if the component is registered without a ProcessName -
+  // this happens when testing the component without bootstrap.
     const std::string processNameString =
             processName != nullptr ? processName->getProcessName() : "";
     bool hasHistoryConfig = false;
     bool isHistoryOwner = false;
-  // Nur die Prozesse, die die Konfiguration als History-Owner benennt, bekommen
-  // eine echte Historie. Alle anderen: Noop.
+  // only the processes the configuration names as History owner get a real
+  // history. All others: noop.
     if (configuration != nullptr) {
         auto historyEntries = configuration->configurationOf<HistoryComponent>();
         hasHistoryConfig = !historyEntries.empty();
@@ -93,9 +92,9 @@ void BaseFeature::registerTypes(
             }
         }
     }
-  // Zwei Faelle zu unterscheiden: Konfiguration vorhanden, aber dieser Prozess ist
-  // nicht der Owner. Dann wird der Dienst trotzdem registriert (die anderen Prozesse
-  // schreiben in die Historie), aber nur lesend - daher Noop fuer den Rest.
+  // two cases to distinguish: configuration present, but this process is not
+  // the owner. Then the service is still registered (the other processes write
+  // to the history), but read only - hence noop for the rest.
     if (hasHistoryConfig) {
         if (isHistoryOwner) {
             LOG_INFO("register HistoryService for process {} (owner)",
@@ -111,7 +110,7 @@ void BaseFeature::registerTypes(
                 .asSelf()
                 .singleInstance();
     } else {
-    // Keine History-Sektion in der Konfiguration: Noop fuer alle Prozesse.
+    // no history section in the configuration: noop for all processes.
         LOG_INFO("process {} has no history configuration -> "
                  "register NoopHistoryService",
                  processNameString.empty() ? "<unknown>" : processNameString);
@@ -120,13 +119,13 @@ void BaseFeature::registerTypes(
                 .asSelf()
                 .singleInstance();
     }
-  // Auth ist in jedem Prozess identisch und wird deshalb ohne Filter registriert.
+  // auth is identical in every process and is therefore registered without a filter.
     builder.registerType<AuthService>()
     .as<AbstractServiceInterface>()
     .as<IAuthService>()
     .asSelf()
     .singleInstance();
-  // Scheduler und Executor sind transiente Dienste, InitializeService der Einstiegspunkt.
+  // scheduler and executor are transient services, InitializeService the entry point.
   builder.registerType<SchedulerService>()
     .as<AbstractServiceInterface>()
     .asSelf()

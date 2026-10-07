@@ -1,13 +1,13 @@
-#include "base_library/features/cli/models/AbstractCommandLineMenu.h"
+#include "lintel/features/cli/models/AbstractCommandLineMenu.h"
 
 #include <algorithm>
 #include <iostream>
 #include <iterator>
 
-#include <base_library/core/utils/TableBuilder.h>
+#include <lintel/core/utils/TableBuilder.h>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/cli/models/CommandLineComponent.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/cli/models/CommandLineComponent.h"
 
 AbstractCommandLineMenu::AbstractCommandLineMenu(
   const std::vector<std::shared_ptr<CommandLineComponent> > &components)

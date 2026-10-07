@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/HistoryDtos.h"
+#include "lintel/features/base/controller/HistoryDtos.h"
 
 HistoryDto::Shapes HistoryDto::m_shape{};
 

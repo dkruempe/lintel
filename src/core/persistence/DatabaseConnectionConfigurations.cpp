@@ -1,10 +1,10 @@
-#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
+#include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 
 #include <algorithm>
 #include <map>
 
-#include "base_library/core/exceptions/SQLException.h"
-#include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
+#include "lintel/core/exceptions/SQLException.h"
+#include "lintel/features/base/configuration/DatabaseConnectionComponent.h"
 
 DatabaseConnectionConfigurations::DatabaseConnectionConfigurations(
         const std::shared_ptr<Configuration> &configuration)

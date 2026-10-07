@@ -1,9 +1,9 @@
-#include "base_library/features/base/services/ProcessArgumentService.h"
+#include "lintel/features/base/services/ProcessArgumentService.h"
 
 #include <iomanip>
 #include <sstream>
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 namespace {
 void flushCurrentArgument(

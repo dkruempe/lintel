@@ -1,4 +1,4 @@
-#include "base_library/core/persistence/Notify.h"
+#include "lintel/core/persistence/Notify.h"
 
 #include <utility>
 

@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/UserLoginDto.h"
+#include "lintel/features/base/controller/UserLoginDto.h"
 
 UserLoginDto::Shapes UserLoginDto::shape{};
 

@@ -1,4 +1,4 @@
-#include "base_library/core/persistence/Connection.h"
+#include "lintel/core/persistence/Connection.h"
 
 db::Connection::Connection(ConnectionType connectionType,
                            const std::string &connectionInfo)

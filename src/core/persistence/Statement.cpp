@@ -1,6 +1,6 @@
-#include "base_library/core/persistence/Statement.h"
+#include "lintel/core/persistence/Statement.h"
 
-#include "base_library/core/persistence/postgresql/Statement.h"
+#include "lintel/core/persistence/postgresql/Statement.h"
 
 namespace db {
     Statement::Statement(const Connection &connection) : m_connection(connection) {

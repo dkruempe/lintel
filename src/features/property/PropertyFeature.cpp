@@ -1,16 +1,16 @@
-#include "base_library/features/property/PropertyFeature.h"
+#include "lintel/features/property/PropertyFeature.h"
 
 #include "Hypodermic/Container.h"
 #include "Hypodermic/ContainerBuilder.h"
 
-#include "base_library/core/services/PersistableBean.h"
-#include "base_library/features/property/command_line/PropertyCliComponent.h"
-#include "base_library/features/property/controller/PropertyApi.h"
-#include "base_library/features/property/controller/PropertyController.h"
-#include "base_library/features/property/repositories/DatabasePropertyRepository.h"
-#include "base_library/features/property/repositories/FilePropertyRepository.h"
-#include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
-#include "base_library/features/property/strategies/XMLConfigSerializationStrategy.h"
+#include "lintel/core/services/PersistableBean.h"
+#include "lintel/features/property/command_line/PropertyCliComponent.h"
+#include "lintel/features/property/controller/PropertyApi.h"
+#include "lintel/features/property/controller/PropertyController.h"
+#include "lintel/features/property/repositories/DatabasePropertyRepository.h"
+#include "lintel/features/property/repositories/FilePropertyRepository.h"
+#include "lintel/features/property/repositories/SharedMemoryPropertyRepository.h"
+#include "lintel/features/property/strategies/XMLConfigSerializationStrategy.h"
 
 PropertyFeature::PropertyFeature(std::shared_ptr<Features> features) : Feature(Features::Property,
                                                                                std::move(features)) {}

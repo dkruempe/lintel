@@ -5,10 +5,10 @@
 #include <memory>
 
 #include "../mocks/MockUserApi.h"
-#include "base_library/features/cli/services/AuthCliService.h"
-#include "base_library/features/cli/services/IInputService.h"
-#include "base_library/features/cli/services/ITerminalService.h"
-#include "base_library/features/cli/utils/CommandLineUtils.h"
+#include "lintel/features/cli/services/AuthCliService.h"
+#include "lintel/features/cli/services/IInputService.h"
+#include "lintel/features/cli/services/ITerminalService.h"
+#include "lintel/features/cli/utils/CommandLineUtils.h"
 
 using namespace trompeloeil;
 

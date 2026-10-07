@@ -1,8 +1,8 @@
-#include <base_library/core/utils/StringUtils.h>
-#include <base_library/core/utils/UUID.h>
-#include <base_library/core/utils/MemorySize.h>
-#include <base_library/core/services/FileService.h>
-#include <base_library/core/utils/Cryption.h>
+#include <lintel/core/utils/StringUtils.h>
+#include <lintel/core/utils/UUID.h>
+#include <lintel/core/utils/MemorySize.h>
+#include <lintel/core/services/FileService.h>
+#include <lintel/core/utils/Cryption.h>
 
 #include <catch2/catch_all.hpp>
 

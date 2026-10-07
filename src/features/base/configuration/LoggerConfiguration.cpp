@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/LoggerConfiguration.h"
+#include "lintel/features/base/configuration/LoggerConfiguration.h"
 
 #include <utility>
 

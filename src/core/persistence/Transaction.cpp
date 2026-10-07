@@ -1,6 +1,6 @@
-#include "base_library/core/persistence/Transaction.h"
+#include "lintel/core/persistence/Transaction.h"
 
-#include "base_library/core/persistence/postgresql/Transaction.h"
+#include "lintel/core/persistence/postgresql/Transaction.h"
 
 namespace db {
     Transaction::Transaction(const Connection &connection)

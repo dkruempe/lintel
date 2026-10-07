@@ -1,4 +1,4 @@
-#include "base_library/core/plugins/AdminUserBootstrapPlugin.h"
+#include "lintel/core/plugins/AdminUserBootstrapPlugin.h"
 
 #include <chrono>
 #include <cstdlib>
@@ -6,14 +6,14 @@
 #include <string>
 #include <utility>
 
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/ParameterBuilder.h"
-#include "base_library/core/persistence/Result.h"
-#include "base_library/core/persistence/Statement.h"
-#include "base_library/core/persistence/Transaction.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/Cryption.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/ParameterBuilder.h"
+#include "lintel/core/persistence/Result.h"
+#include "lintel/core/persistence/Statement.h"
+#include "lintel/core/persistence/Transaction.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/Cryption.h"
+#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace {
 constexpr const char *kAdminUserNameEnv = "ADMIN_USERNAME";

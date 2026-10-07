@@ -1,19 +1,19 @@
-#include <base_library/core/persistence/Connection.h>
-#include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
-#include <base_library/core/persistence/Statement.h>
-#include <base_library/core/persistence/Transaction.h>
-#include <base_library/core/utils/Cryption.h>
-#include <base_library/core/utils/TypeName.h>
-#include <base_library/features/base/configuration/Configuration.h>
-#include <base_library/features/base/configuration/DatabaseConnectionComponent.h>
-#include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/base/models/ProcessName.h>
-#include <base_library/features/base/models/User.h>
-#include <base_library/features/base/repositories/GroupRepository.h>
-#include <base_library/features/base/repositories/UserRepository.h>
-#include <base_library/features/base/services/AuthService.h>
-#include <base_library/features/base/services/SchedulerService.h>
+#include <lintel/core/persistence/Connection.h>
+#include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
+#include <lintel/core/persistence/Statement.h>
+#include <lintel/core/persistence/Transaction.h>
+#include <lintel/core/utils/Cryption.h>
+#include <lintel/core/utils/TypeName.h>
+#include <lintel/features/base/configuration/Configuration.h>
+#include <lintel/features/base/configuration/DatabaseConnectionComponent.h>
+#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
+#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/features/base/models/ProcessName.h>
+#include <lintel/features/base/models/User.h>
+#include <lintel/features/base/repositories/GroupRepository.h>
+#include <lintel/features/base/repositories/UserRepository.h>
+#include <lintel/features/base/services/AuthService.h>
+#include <lintel/features/base/services/SchedulerService.h>
 
 #include <catch2/catch_all.hpp>
 

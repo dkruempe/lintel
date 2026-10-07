@@ -1,8 +1,8 @@
-#include "base_library/features/cli/components/SharedMemoryCliComponent.h"
+#include "lintel/features/cli/components/SharedMemoryCliComponent.h"
 
-#include <base_library/core/utils/MemorySize.h>
-#include <base_library/core/utils/StringUtils.h>
-#include <base_library/core/utils/TableBuilder.h>
+#include <lintel/core/utils/MemorySize.h>
+#include <lintel/core/utils/StringUtils.h>
+#include <lintel/core/utils/TableBuilder.h>
 #include <rapidjson/prettywriter.h>
 #include <fstream>
 

@@ -1,41 +1,38 @@
-#include "base_library/features/property/repositories/DatabasePropertyRepository.h"
+#include "lintel/features/property/repositories/DatabasePropertyRepository.h"
 
-#include <base_library/core/exceptions/SQLException.h>
+#include <lintel/core/exceptions/SQLException.h>
 
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
 #include <utility>
 
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/ConnectionType.h"
-#include "base_library/core/persistence/ParameterBuilder.h"
-#include "base_library/core/persistence/PreparedStatement.h"
-#include "base_library/core/persistence/Statement.h"
-#include "base_library/core/persistence/Transaction.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/StringUtils.h"
-#include "base_library/features/property/factories/PropertyFactory.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/ConnectionType.h"
+#include "lintel/core/persistence/ParameterBuilder.h"
+#include "lintel/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/Statement.h"
+#include "lintel/core/persistence/Transaction.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/StringUtils.h"
+#include "lintel/features/property/factories/PropertyFactory.h"
 
 /*
- * Bewusstes "Best Effort": Alle Methoden dieses Repositories unterdruecken
- * db::SQLException, protokollieren den Fehler und liefern ein leeres Ergebnis.
- * Begruendung:
+ * Deliberate "best effort": all methods of this repository swallow
+ * db::SQLException, log the error and return an empty result. Rationale:
  *
- * - Das Property-Repository ist eine reine Ueberschreibungsschicht. Die
- *   konfigurierten Defaults liefert FilePropertyRepository aus der XML-
- *   Konfiguration. Ein leeres Ergebnis bedeutet daher "Default beibehalten"
- *   und nicht "Daten verloren".
- * - PropertyService ruft awake(), save() und deleteOf() ohne Fehlerkanal auf
- *   (awake() in PropertyService::onAwake(), save() in getOrCreate(),
- *   deleteOf() in onAwake()). Eine weitergereichte Ausnahme wuerde den
- *   Prozessstart abbrechen, sobald die Datenbank kurzfristig nicht
- *   erreichbar ist.
- * - In PropertyService::changeStringValueOf() wird der Wert bereits vor dem
- *   Schreiben im Speicher gesetzt. Ein Propagieren liefe in HTTP 500, obwohl
- *   die Aenderung lokal wirksam ist, und wuerde publishChange() ueberspringen.
- * - Das entspricht dem Stil der uebrigen Repositories, siehe UserRepository
- *   (createOf/allOf/pageOf) und HistoryRepository::saveOf().
+ * - The property repository is a pure override layer. FilePropertyRepository
+ *   delivers the configured defaults from the XML configuration. An empty
+ *   result therefore means "keep the default", not "data lost".
+ * - PropertyService calls awake(), save() and deleteOf() without an error
+ *   channel (awake() in PropertyService::onAwake(), save() in getOrCreate(),
+ *   deleteOf() in onAwake()). A propagated exception would abort the process
+ *   startup as soon as the database is temporarily unreachable.
+ * - In PropertyService::changeStringValueOf() the value is already set in
+ *   memory before writing. Propagating would end up in HTTP 500 although the
+ *   change is effective locally, and would skip publishChange().
+ * - This matches the style of the other repositories, see UserRepository
+ *   (createOf/allOf/pageOf) and HistoryRepository::saveOf().
  */
 
 DatabasePropertyRepository::DatabasePropertyRepository(

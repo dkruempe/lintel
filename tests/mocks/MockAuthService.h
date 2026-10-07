@@ -1,9 +1,9 @@
-#ifndef CPP_BASE_LIBRARY_MOCKAUTHSERVICE_H
-#define CPP_BASE_LIBRARY_MOCKAUTHSERVICE_H
+#ifndef LINTEL_MOCKAUTHSERVICE_H
+#define LINTEL_MOCKAUTHSERVICE_H
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/features/base/services/IAuthService.h"
+#include "lintel/features/base/services/IAuthService.h"
 
 class MockAuthService : public IAuthService {
 public:
@@ -14,4 +14,4 @@ public:
     MAKE_MOCK1(revokeTokenOf, void(const std::string &), override);
 };
 
-#endif  // CPP_BASE_LIBRARY_MOCKAUTHSERVICE_H
+#endif  // LINTEL_MOCKAUTHSERVICE_H

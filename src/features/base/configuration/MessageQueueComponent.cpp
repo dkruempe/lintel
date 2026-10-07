@@ -1,8 +1,8 @@
-#include "base_library/features/base/configuration/MessageQueueComponent.h"
+#include "lintel/features/base/configuration/MessageQueueComponent.h"
 
-#include <base_library/core/utils/TypeName.h>
-#include <base_library/features/base/configuration/ConfigurationException.h>
-#include <base_library/features/base/configuration/MessageQueueEntry.h>
+#include <lintel/core/utils/TypeName.h>
+#include <lintel/features/base/configuration/ConfigurationException.h>
+#include <lintel/features/base/configuration/MessageQueueEntry.h>
 #include <tinyxml2.h>
 
 const MessageQueueComponent::Shapes MessageQueueComponent::shape{};

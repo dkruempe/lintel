@@ -1,6 +1,6 @@
-#include "base_library/core/persistence/sqlite3/PreparedStatement.h"
+#include "lintel/core/persistence/sqlite3/PreparedStatement.h"
 
-#include "base_library/core/exceptions/SQLException.h"
+#include "lintel/core/exceptions/SQLException.h"
 
 namespace sqlite {
     PreparedStatement::PreparedStatement(Connection &connection,

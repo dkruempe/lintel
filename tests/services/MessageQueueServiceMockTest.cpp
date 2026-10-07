@@ -4,12 +4,12 @@
 #include <memory>
 
 #include "../mocks/MockMessageQueueRepository.h"
-#include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
-#include "base_library/features/base/configuration/MessageQueueComponent.h"
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
-#include "base_library/features/base/services/MessageQueueService.h"
+#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/features/base/configuration/Configuration.h"
+#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
+#include "lintel/features/base/configuration/MessageQueueComponent.h"
+#include "lintel/features/base/configuration/MessageQueueEntry.h"
+#include "lintel/features/base/services/MessageQueueService.h"
 
 using namespace trompeloeil;
 

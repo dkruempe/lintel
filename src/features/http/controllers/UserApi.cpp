@@ -1,14 +1,14 @@
 #include <httplib.h>
 
-#include "base_library/features/http/controllers/UserApi.h"
+#include "lintel/features/http/controllers/UserApi.h"
 
-#include "base_library/features/base/controller/UserDto.h"
-#include "base_library/features/base/controller/UserGroupDto.h"
-#include "base_library/features/base/controller/UserNameDto.h"
-#include "base_library/features/base/controller/UserSessionsDto.h"
-#include "base_library/features/http/service/HttpClientHelper.h"
-#include "base_library/features/http/service/HttpStatusCodes.h"
-#include "base_library/features/http/service/HttpUnauthorizedException.h"
+#include "lintel/features/base/controller/UserDto.h"
+#include "lintel/features/base/controller/UserGroupDto.h"
+#include "lintel/features/base/controller/UserNameDto.h"
+#include "lintel/features/base/controller/UserSessionsDto.h"
+#include "lintel/features/http/service/HttpClientHelper.h"
+#include "lintel/features/http/service/HttpStatusCodes.h"
+#include "lintel/features/http/service/HttpUnauthorizedException.h"
 
 UserApi::UserApi(const std::shared_ptr<ClientProvider> &clientProvider)
         : m_client(clientProvider->provide()) {}

@@ -1,11 +1,11 @@
-#include "base_library/core/persistence/sqlite3/Connection.h"
+#include "lintel/core/persistence/sqlite3/Connection.h"
 
 #include <functional>
 #include <regex>
 
-#include "base_library/core/exceptions/SQLException.h"
-#include "base_library/core/utils/RegexUtils.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "lintel/core/exceptions/SQLException.h"
+#include "lintel/core/utils/RegexUtils.h"
+#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace {
 

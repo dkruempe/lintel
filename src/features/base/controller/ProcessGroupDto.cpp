@@ -1,6 +1,6 @@
-#include "base_library/features/base/controller/ProcessGroupDto.h"
+#include "lintel/features/base/controller/ProcessGroupDto.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 ProcessGroupDto::Shapes ProcessGroupDto::m_shape{};
 

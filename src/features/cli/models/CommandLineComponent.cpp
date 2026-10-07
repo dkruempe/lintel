@@ -1,4 +1,4 @@
-#include "base_library/features/cli/models/CommandLineComponent.h"
+#include "lintel/features/cli/models/CommandLineComponent.h"
 
 CommandLineComponent::CommandLineComponent(std::string_view name,
                                            std::string_view alias)

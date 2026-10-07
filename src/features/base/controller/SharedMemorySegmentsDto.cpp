@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/SharedMemorySegmentsDto.h"
+#include "lintel/features/base/controller/SharedMemorySegmentsDto.h"
 
 SharedMemorySegmentsDto::SharedMemorySegmentsDto(
         std::vector<SharedMemorySegmentDto> segments)

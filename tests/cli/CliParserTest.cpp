@@ -1,5 +1,5 @@
-#include <base_library/features/cli/models/CommandParser.h>
-#include <base_library/features/cli/models/Command.h>
+#include <lintel/features/cli/models/CommandParser.h>
+#include <lintel/features/cli/models/Command.h>
 
 #include <catch2/catch_all.hpp>
 

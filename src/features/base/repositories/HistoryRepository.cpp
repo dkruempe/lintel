@@ -1,13 +1,13 @@
-#include "base_library/core/persistence/Transaction.h"
-#include "base_library/features/base/repositories/HistoryRepository.h"
-#include "base_library/features/base/models/HistoryEntry.h"
-#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
-#include "base_library/core/persistence/ParameterBuilder.h"
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/exceptions/SQLException.h"
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/persistence/Transaction.h"
+#include "lintel/features/base/repositories/HistoryRepository.h"
+#include "lintel/features/base/models/HistoryEntry.h"
+#include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
+#include "lintel/core/persistence/ParameterBuilder.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/exceptions/SQLException.h"
+#include "lintel/core/services/LoggerService.h"
 
-#include "base_library/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/PreparedStatement.h"
 
 #include <chrono>
 #include <memory>

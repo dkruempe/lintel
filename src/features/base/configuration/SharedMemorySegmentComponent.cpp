@@ -1,9 +1,9 @@
-#include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
 
-#include <base_library/core/utils/TypeName.h>
-#include <base_library/features/base/configuration/ConfigurationException.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/base/configuration/SharedMemorySegmentEntry.h>
+#include <lintel/core/utils/TypeName.h>
+#include <lintel/features/base/configuration/ConfigurationException.h>
+#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/features/base/configuration/SharedMemorySegmentEntry.h>
 #include <tinyxml2.h>
 
 #include <filesystem>

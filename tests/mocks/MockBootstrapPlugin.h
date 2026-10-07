@@ -1,9 +1,9 @@
-#ifndef CPP_BASE_LIBRARY_MOCKBOOTSTRAPPLUGIN_H
-#define CPP_BASE_LIBRARY_MOCKBOOTSTRAPPLUGIN_H
+#ifndef LINTEL_MOCKBOOTSTRAPPLUGIN_H
+#define LINTEL_MOCKBOOTSTRAPPLUGIN_H
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/core/plugins/BootstrapPlugin.h"
+#include "lintel/core/plugins/BootstrapPlugin.h"
 
 class MockBootstrapPlugin : public BootstrapPlugin {
 public:
@@ -11,4 +11,4 @@ public:
     MAKE_MOCK0(getPriority, BootstrapSequence(), override);
 };
 
-#endif  // CPP_BASE_LIBRARY_MOCKBOOTSTRAPPLUGIN_H
+#endif  // LINTEL_MOCKBOOTSTRAPPLUGIN_H

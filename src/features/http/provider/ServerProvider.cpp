@@ -1,7 +1,7 @@
-#include "base_library/features/http/provider/ServerProvider.h"
+#include "lintel/features/http/provider/ServerProvider.h"
 
-#include "base_library/features/http/configuration/HttpComponent.h"
-#include "base_library/features/http/configuration/HttpEntry.h"
+#include "lintel/features/http/configuration/HttpComponent.h"
+#include "lintel/features/http/configuration/HttpEntry.h"
 
 ServerProvider::ServerProvider(
         const std::shared_ptr<Configuration> &configuration,

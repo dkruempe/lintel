@@ -1,9 +1,9 @@
-#ifndef CPP_BASE_LIBRARY_MOCKUSERAPI_H
-#define CPP_BASE_LIBRARY_MOCKUSERAPI_H
+#ifndef LINTEL_MOCKUSERAPI_H
+#define LINTEL_MOCKUSERAPI_H
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/features/http/controllers/UserApi.h"
+#include "lintel/features/http/controllers/UserApi.h"
 
 class MockUserApi : public UserApi {
 public:

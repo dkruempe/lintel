@@ -1,4 +1,4 @@
-#include "base_library/features/http/service/ClientIpResolver.h"
+#include "lintel/features/http/service/ClientIpResolver.h"
 
 #include <boost/asio/ip/address.hpp>
 #include <boost/asio/ip/network_v4.hpp>

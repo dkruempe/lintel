@@ -1,6 +1,6 @@
-#include "base_library/features/base/controller/ProcessInfosDto.h"
+#include "lintel/features/base/controller/ProcessInfosDto.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 const std::vector<ProcessInfoDto> &ProcessInfosDto::getProcessInfos() const { return m_processInfos; }
 

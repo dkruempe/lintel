@@ -1,69 +1,72 @@
 # Changelog
 
-Alle nennenswerten Änderungen an diesem Projekt werden in dieser Datei dokumentiert.
+All notable changes to this project are documented in this file.
 
-Das Format basiert auf [Keep a Changelog](https://keepachangelog.com/de/1.0.0/),
-und dieses Projekt orientiert sich an [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
-### Hinzugefügt
-- **Secret-Guard** (`scripts/check-secrets.sh`, blockierender CI-Job `secrets`): blockiert Klartext-Credentials im Arbeitsbaum. Ersatz für `secret_scanning_push_protection`, das sich für dieses Repo nicht per API aktivieren lässt (alle Felder in `security_and_analysis` werden mit 422 abgelehnt, auch mit Admin-Rechten). Prüft in zwei Stufen – Konfigurationsformate bzw. PEM-Schlüsselblöcke, **und** ein Entropie-Test auf den Wert; eine reine Namenssuche ist unbrauchbar, weil das Repo Dutzende `const char *const PASSWORD = "password";` als JSON-Schlüsselnamen hat.
-- README: Doxygen-Badge und Abschnitt „Documentation" mit der URL der veröffentlichten API-Referenz und dem lokalen Generierungskommando.
-- Offizielle OSS-Dokumente: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` sowie `CHANGELOG.md` (dieses Dokument).
-- README: CI-Status-Badge und MIT-Lizenz-Badge, Statushinweis für Pre-1.0/API-Stabilität sowie Hinweise zu Tests, PostgreSQL-Abhängigkeit und Zertifikaten (korrekt an CI angepasst).
-- **Funktionsfähiges CMake-Paket:** `find_package(base_library CONFIG)` findet das installierte Paket, `base_libraryConfig.cmake` (neu) mit `find_dependency`-Kette und Relokationsfähigkeit sowie `base_libraryConfigVersion.cmake` in kanonischem Namen. `LICENSE`, `README.md` und `swagger.yaml` werden mitinstalliert. Das installierte Paket funktioniert aus einem beliebigen Präfix – mit einem externen Gegenproben-Projekt geprüft.
-- README: Abschnitt „Examples" mit Tabelle aller Beispiele (was es zeigt, wie es startet), Erläuterung von `CONFIG_DIRECTORY` und `BOOTSTRAP_CONFIG_NAME`, TLS-Voraussetzungen und SQLite vs. PostgreSQL.
+### Added
+- **Secret guard** (`scripts/check-secrets.sh`, blocking CI job `secrets`): blocks plaintext credentials in the working tree. Replacement for `secret_scanning_push_protection`, which cannot be enabled for this repo via API (all fields in `security_and_analysis` are rejected with 422, even with admin rights). Checks in two stages – config formats resp. PEM key blocks, **and** an entropy test on the value; a pure name search is useless, because the repo has dozens of `const char *const PASSWORD = "password";` as JSON key names.
+- README: Doxygen badge and a "Documentation" section with the published API reference URL and the local generation command.
+- Official OSS documents: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, `SECURITY.md` as well as `CHANGELOG.md` (this document).
+- README: CI status badge and MIT license badge, a status note about pre-1.0/API stability as well as notes on tests, the PostgreSQL dependency and certificates (correctly aligned with CI).
+- **Working CMake package:** `find_package(base_library CONFIG)` finds the installed package, `base_libraryConfig.cmake` (new) with a `find_dependency` chain and relocatability as well as `base_libraryConfigVersion.cmake` in canonical naming. `LICENSE`, `README.md` and `swagger.yaml` are installed along with it. The installed package works from an arbitrary prefix – verified with an external counter-sample project.
+- README: "Examples" section with a table of all examples (what it shows, how to start it), an explanation of `CONFIG_DIRECTORY` and `BOOTSTRAP_CONFIG_NAME`, TLS prerequisites and SQLite vs. PostgreSQL.
 
-### Geändert
-- Build-Anleitung im README konsequent an CI (`.github/workflows/ci.yml`) und `AGENTS.md` ausgerichtet (Conan 2, Toolchain-Pfad unter `build/build/Release/generators/conan_toolchain.cmake`, Release-Build mit `ccache`, Ninja, Ausgabe nach `bin/`).
-- TLS-Zertifikate: Private Schlüssel (`server.key`) aus dem Repository entfernt, generierte Zertifikate über `.gitignore` ausgeschlossen; CI erzeugt Zertifikate selbst. Doku (`cfg/certs/README.md`) entsprechend angepasst.
-- Konfiguration und Beispiele: Parametrisierung von Pfaden (z. B. Named-Pipes, Konfiguration), Entfernung von Klartext-Passwörtern/Credentials und unnötigen Personendaten aus Beispielen/Konfiguration.
-- CI/Build: Anpassungen für GCC 13 (Debug/Unity), `-Wnull-dereference` nur für Clang, `BOOST_UUID_NO_SIMD` in Debug (GCC 13), `CCACHE_DIR` explizit gesetzt; Format- und Lint-Gates (advisory für Lint) dokumentiert.
-- **`ProcessController`: unbekannte Prozess-ID antwortet jetzt 404 statt 501.** 501 („Not Implemented") war semantisch falsch – die Ressource existiert nicht, statt dass die Funktionalität fehlt. Betrifft `stopProcessDelete`, `terminateProcessDelete`, `restartProcessPut`, `resetProcessPost` und `healthProcessGet`; `swagger.yaml` und `swagger.md` sind synchron angepasst. **Breaking Change** für Clients, die auf 501 geprüft haben.
-
-### Behoben
-- **Regressionstest korrigiert:** Der Test für `db::Argument::getValue<TYPE>()` erzeugte selbst undefiniertes Verhalten, indem er per `memcpy` einen Enumerator außerhalb der gültigen Range konstruierte. Das Laden eines ungültigen Enum-Werts ist in C++ UB, und der neue UBSan-Job hat genau das gemeldet. Der Test prüft jetzt die drei gültigen Connection-Types; der `default:`-Zweig in `getValue<TYPE>()` bleibt als Härtung, ist aber bewusst ungetestet und im Testkommentar begründet.
-- `db::Argument::getValue<TYPE>()`: bei einem unbekannten `ConnectionType` Verlassen die Funktion aus einem Non-`void`-Funktionsrumpf heraus (Undefined Behaviour). Sie wirft jetzt `db::SQLException`. Der `UNDEFINED`-, SQLite- und PostgreSQL-Pfad sind unverändert.
-- `Process::inActiveWindow()` und der `operator<<` in `examples/message_queue.cpp` nutzen nicht mehr die thread-unsicheren `std::localtime`/`std::ctime`, sondern `localtime_r` (kein geteilter statischer Puffer mehr). Zeitformat im Beispiel ist jetzt deterministisch (`%Y-%m-%d %H:%M:%S`) und ohne angehängten Newline.
-- Beispiele und öffentliche Header bereinigt: keine C-Casts über `void*` mehr im Message-Queue-Beispiel, fehlende Empfangsprüfung dort abgesichert, `getValue<TYPE>()` mit explizitem `default`-Zweig und die beiden `operator++(int)`-Iteratoren mit `const`-Rückgabetyp (`CERT DCL21-CPP`). Die vom CodeQL-Fix berührten Dateien sind frei von clang-tidy-Funden.
-- `INSTALL_INTERFACE` der Bibliothek enthält keine Build-Maschinen-Absolutpfade der Conan-Cache-Pfade mehr, Includes von `magic_enum`/`rapidjson` kommen über Targets statt über gebackene Pfade, und das private Target `project_warnings` landet nicht mehr im öffentlichen Export.
-- `BaseFeature::registerTypes` und `UserManagementCliComponent::onCommand` sind jetzt an der Definition dokumentiert (Ablauf, Randbedingungen, `@param`), nicht nur am Header – der Doxygen-Workflow prüft das als Gate, und CodeQLs `cpp/poorly-documented-function` zählt an der Definition.
-- Vier CodeQL-Alarme als Fehlalarm dismissed: drei `cpp/ambiguously-signed-bit-field` (die Regel liest den Scope-Operator `::` aus `boost::interprocess::named_semaphore` als Bitfeld-Deklaration – im gesamten `include`-Baum existiert kein einziges Bitfeld) und `cpp/cleartext-storage-database` (es wird der gehashte, nicht der im Klartext gespeicherte Passwortwert geschrieben). Damit meldet CodeQL **null** Warnungen; übrig sind nur Stil-Hinweise auf `note`-Ebene.
-- Doppelter `install(FILES)`-Eintrag im vendorten Hypodermic bereinigt (dieselbe Datei zweimal in einer Zeile gelistet).
+### Changed
+- Build instructions in the README consistently aligned with CI (`.github/workflows/ci.yml`) and `AGENTS.md` (Conan 2, toolchain path under `build/build/Release/generators/conan_toolchain.cmake`, release build with `ccache`, Ninja, output to `bin/`).
+- TLS certificates: private key (`server.key`) removed from the repository, generated certificates excluded via `.gitignore`; CI generates certificates itself. Doc (`cfg/certs/README.md`) adjusted accordingly.
+- Configuration and examples: path parametrization (e.g. named pipes, configuration), removal of plaintext passwords/credentials and unnecessary personal data from examples/configuration.
+- CI/build: adjustments for GCC 13 (Debug/unity), `-Wnull-dereference` only for Clang, `BOOST_UUID_NO_SIMD` in Debug (GCC 13), `CCACHE_DIR` set explicitly; format and lint gates (advisory for lint) documented.
+- **`ProcessController`: an unknown process ID now answers 404 instead of 501.** 501 ("Not Implemented") was semantically wrong – the resource does not exist rather than the functionality being missing. Affects `stopProcessDelete`, `terminateProcessDelete`, `restartProcessPut`, `resetProcessPost` and `healthProcessGet`; `swagger.yaml` and `swagger.md` were adjusted in sync. **Breaking change** for clients that checked for 501.
+- **Repository moved** to `https://github.com/dkruempe/lintel`. The reason is not the beauty of the name but a security problem: in the old repo the four `refs/pull/{1,3,4,5,6}` of the merged pull requests delivered a plaintext DB password, because GitHub binds these refs to the repository. A newly created repository has no pull requests and therefore no such refs. The rewritten history was adopted **completely** (no discarding of the commits) — after the `filter-repo` pass it no longer contained the password, verified via an object scan of all 4759 blobs with a positive control. The old documentation URL is accordingly now `https://dkruempe.github.io/lintel/`.
+- **Internal rename to `lintel`.** The public include directory moved from `src/include/base_library/` to `src/include/lintel/`, so includes read `#include <lintel/core/StartupBuilder.h>`. Include guards renamed from `CPP_BASE_LIBRARY_*` / `CPP_SYSTEM_LIBRARY_*` / `CPP_BASIC_LIBRARIES_*` to `LINTEL_*`. The CMake export namespace `kruempelmann::` became `lintel::`, the CMake project `cpp-base-library` and the placeholder API `myproject_*` / `MYPROJECT_*` became `lintel_*` / `LINTEL_*`, and the package is now `find_package(lintel)` with `lintelConfig.cmake` / `lintelTargets.cmake`. **No breaking change for the CMake target name of the library itself**, which was already `base_library` and remains the source-level target; the visible change is the export namespace and the include path.
+- **The repository is now entirely in English.** All German comments, Doxygen blocks, documentation, CMake comments and script messages were translated. Verified by a repository-wide grep for German function words across every tracked file, which returns nothing.
 
 
-- Property-Repositories: die bislang nur als`LOG_ERROR("{}", exception.what())` protokollierten Fehler nennen jetzt die konkrete Operation, die Prozess-ID und die Anzahl der Properties. Das bewusste „Best Effort"-Verhalten ist im Dateikopf begründet.
-- Leere Zweige in `SharedMemoryPropertyRepository.h` (`cpp/empty-block`) auf ihre positive Bedingung umgestellt; `FilePropertyRepository::save()` und `SharedMemoryPropertyRepository::onMigrate()` sind als bewusste No-Op dokumentiert.
+### Fixed
+- `scripts/check-format.sh` understands renamed files. A mass rename (such as moving the public include directory) previously made every moved file look brand new, so its legacy violations were counted as a regression and the gate failed. The gate now maps a renamed path to its old path and compares against that. Without this, 204 unchanged files were reported as regressions.
+- Include order in `EventBusComponent.cpp`: `<cstring>` sorted incorrectly after the include-path rename.
+- **Regression test corrected:** the test for `db::Argument::getValue<TYPE>()` itself created undefined behavior by constructing an enumerator outside the valid range via `memcpy`. Loading an invalid enum value is UB in C++, and the new UBSan job reported exactly that. The test now checks the three valid connection types; the `default:` branch in `getValue<TYPE>()` remains as hardening, but is deliberately untested and justified in the test comment.
+- `db::Argument::getValue<TYPE>()`: with an unknown `ConnectionType` the function left a non-`void` function body (undefined behavior). It now throws `db::SQLException`. The `UNDEFINED`, SQLite and PostgreSQL paths are unchanged.
+- `Process::inActiveWindow()` and the `operator<<` in `examples/message_queue.cpp` no longer use the thread-unsafe `std::localtime`/`std::ctime`, but `localtime_r` (no shared static buffer anymore). The time format in the example is now deterministic (`%Y-%m-%d %H:%M:%S`) and without an appended newline.
+- Examples and public headers cleaned up: no C casts over `void*` anymore in the message queue example, missing receive check secured there, `getValue<TYPE>()` with an explicit `default` branch and the two `operator++(int)` iterators with `const` return type (`CERT DCL21-CPP`). The files touched by the CodeQL fix are free of clang-tidy findings.
+- The library's `INSTALL_INTERFACE` no longer contains build-machine absolute paths of the Conan cache paths, includes of `magic_enum`/`rapidjson` come via targets instead of baked paths, and the private target `project_warnings` no longer ends up in the public export.
+- `BaseFeature::registerTypes` and `UserManagementCliComponent::onCommand` are now documented at the definition (flow, edge cases, `@param`), not only at the header – the Doxygen workflow checks this as a gate, and CodeQL's `cpp/poorly-documented-function` counts at the definition.
+- Four CodeQL alarms dismissed as false positives: three `cpp/ambiguously-signed-bit-field` (the rule reads the scope operator `::` from `boost::interprocess::named_semaphore` as a bitfield declaration – there is not a single bitfield anywhere in the entire `include` tree) and `cpp/cleartext-storage-database` (the hashed, not the plaintext-stored password value is written). CodeQL therefore reports **zero** warnings; only style notes on `note` level remain.
+- Duplicate `install(FILES)` entry in the vendored Hypodermic cleaned up (same file listed twice in one line).
 
-### Bekannte Lücken
-- Die 404-Umstellung in `ProcessController` ist nicht durch Tests abgedeckt. Grund: `ProcessController` nimmt den konkreten `ProcessService` statt eines Interfaces, dessen Konstruktor über `PropertyRegistration` eine vollwertige Bootstrap-Umgebung braucht. Ein `IProcessService`-Interface wäre ein API-Bruch und ist für die Namespace-/API-Phase vorgemerkt.
 
-### Sicherheitsrelevant
-- Sensitive Daten aus Repo entfernt (TLS-Private-Key, Klartext-Credentials). Meldeweg für Sicherheitslücken in `SECURITY.md` festgelegt (E-Mail statt öffentlichem Issue).
-- CodeQL-Scan für C++ aktiviert (`.github/workflows/codeql.yml`). Die drei Befunde mit Defekt-Charakter (fehlendes `return`, zwei `localtime`/`ctime`-Aufrufe) sind behoben; ein Befund (`cpp/cleartext-storage-database`) wurde als Fehlalarm triagiert – gespeichert wird ausschließlich der gehashte Passwortwert. Die Triage-Tabelle mit Fundstellen, Fixes und Gegenproben sowie die Aufschlüsselung der verbleibenden Stil-Hinweise wird nicht im Repo geführt.
+- Property repositories: errors that were previously only logged as `LOG_ERROR("{}", exception.what())` now name the concrete operation, the process ID and the number of properties. The deliberate "best effort" behavior is justified in the file header.
+- Empty branches in `SharedMemoryPropertyRepository.h` (`cpp/empty-block`) switched to their positive condition; `FilePropertyRepository::save()` and `SharedMemoryPropertyRepository::onMigrate()` are documented as deliberate no-ops.
 
-### Geändert
-- **Repository umgezogen** nach `https://github.com/dkruempe/lintel`. Grund ist nicht die Schönheit des Namens, sondern ein Sicherheitsproblem: Im alten Repo lieferten die vier `refs/pull/{1,3,4,5,6}` der gemergten Pull Requests ein Klartext-DB-Passwort aus, weil GitHub diese Refs an das Repository bindet. Ein neu angelegtes Repository hat keine Pull Requests und damit auch keine solchen Refs. Die umgeschriebene Historie wurde **vollständig** übernommen (kein Verwerfen der Commits) — nach dem `filter-repo`-Durchgang enthielt sie das Passwort nicht mehr, verifiziert über einen Objekt-Scan aller 4759 Blobs mit Positivkontrolle. Die alte Doku-Adresse lautet entsprechend jetzt `https://dkruempe.github.io/lintel/`.
+### Known gaps
+- The 404 switch in `ProcessController` is not covered by tests. Reason: `ProcessController` takes the concrete `ProcessService` instead of an interface whose constructor needs a complete bootstrap environment via `PropertyRegistration`. An `IProcessService` interface would be an API break and is noted for the namespace/API phase.
 
-### Entfernt
-- `TODO.md`, `ANALYSIS.md` und `ROADMAP.md` aus dem Repository entfernt. Sie enthielten betreiberinterne Arbeitsstände (u. a. offene Sicherheitsaktionen und Eskalationswege), die nicht Teil eines öffentlichen Repos sein sollten. Der Inhalt bleibt über die Git-Historie vollständig abrufbar (`git show <vorheriger-Commit>:ROADMAP.md`).
+### Security
+- Sensitive data removed from the repo (TLS private key, plaintext credentials). Reporting path for security vulnerabilities defined in `SECURITY.md` (email instead of a public issue).
+- CodeQL scan for C++ enabled (`.github/workflows/codeql.yml`). The three findings with defect character (missing `return`, two `localtime`/`ctime` calls) are fixed; one finding (`cpp/cleartext-storage-database`) was triaged as a false positive – exclusively the hashed password value is stored. The triage table with findings, fixes and counter-checks as well as the breakdown of the remaining style notes is not kept in the repo.
 
-### Entwicklererfahrung
-- Testabschnitt auf `ctest --output-on-failure --label-regex unit` umgestellt; Hinweis auf explizite Testliste in `tests/CMakeLists.txt` ergänzt.
-- Formatprüf-Skript (`scripts/check-format.sh`) und clang-tidy-Skript (`scripts/check-tidy.sh`) werden in Doku referenziert.
-- Regressionstest für den `ConnectionType`-Fehlerpfad in `db::Argument::getValue<TYPE>()` ergänzt.
-- Die von den CodeQL-Fixes berührten Dateien wurden vollständig `clang-format`iert, damit das Format-Regressions-Gate grün bleibt.
+### Removed
+- `TODO.md`, `ANALYSIS.md` and `ROADMAP.md` removed from the repository. They contained operator-internal work states (among other things open security actions and escalation paths) that should not be part of a public repo. The content remains fully retrievable via the git history (`git show <previous-commit>:ROADMAP.md`).
+
+### Developer experience
+- Test section switched to `ctest --output-on-failure --label-regex unit`; note about the explicit test list in `tests/CMakeLists.txt` added.
+- Format check script (`scripts/check-format.sh`) and clang-tidy script (`scripts/check-tidy.sh`) are referenced in the documentation.
+- Regression test for the `ConnectionType` error path in `db::Argument::getValue<TYPE>()` added.
+- The files touched by the CodeQL fixes were fully `clang-format`ted so that the format regression gate stays green.
 
 ## [0.1.0] - 2026-10-03
 
-Erster Release-Tag `v0.1.0` (Commit `86b72f4`). Wesentliche Themen (aus Commit-Historie):
-- CI-End-to-End: Trigger auf `master`, Matrix GCC/Clang, Format-Gate, Release-Workflow.
-- Build-System: CMake 3.16+, Conan 2, Ninja, Unity-Builds, PCH, Compiler-Warnings mit `-Werror`.
-- Core-Bibliothek (`kruempelmann::base_library`), Features (HTTP via cpp-httplib, CLI, Property, Persistence PostgreSQL/SQLite), vendored DI (Hypodermic).
-- Tests (Catch2 + trompeloeil), Beispiele, Konfiguration (`cfg/`), Docker-Profile.
+First release tag `v0.1.0` (commit `86b72f4`). Main topics (from the commit history):
+- CI end-to-end: trigger on `master`, GCC/Clang matrix, format gate, release workflow.
+- Build system: CMake 3.16+, Conan 2, Ninja, unity builds, PCH, compiler warnings with `-Werror`.
+- Core library (`kruempelmann::base_library`), features (HTTP via cpp-httplib, CLI, property, persistence PostgreSQL/SQLite), vendored DI (Hypodermic).
+- Tests (Catch2 + trompeloeil), examples, configuration (`cfg/`), Docker profiles.
 
-Die folgenden Commits nach diesem Tag (u. a. `LICENSE`, `THIRD_PARTY_NOTICES.md`, CI-Korrekturen, Sicherheits- und Doku-Audits) sind oben unter `[Unreleased]` erfasst.
+The commits following this tag (among other things `LICENSE`, `THIRD_PARTY_NOTICES.md`, CI fixes, security and doc audits) are recorded above under `[Unreleased]`.
 
 [Unreleased]: https://github.com/dkruempe/lintel/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/dkruempe/lintel/releases/tag/v0.1.0

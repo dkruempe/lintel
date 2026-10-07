@@ -1,7 +1,7 @@
-#include <base_library/core/persistence/Connection.h>
-#include <base_library/core/persistence/Statement.h>
-#include <base_library/core/persistence/ParameterBuilder.h>
-#include <base_library/core/persistence/Transaction.h>
+#include <lintel/core/persistence/Connection.h>
+#include <lintel/core/persistence/Statement.h>
+#include <lintel/core/persistence/ParameterBuilder.h>
+#include <lintel/core/persistence/Transaction.h>
 
 #include <catch2/catch_all.hpp>
 

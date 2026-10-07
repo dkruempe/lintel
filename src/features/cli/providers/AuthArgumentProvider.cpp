@@ -1,6 +1,6 @@
-#include "base_library/features/cli/providers/AuthArgumentProvider.h"
+#include "lintel/features/cli/providers/AuthArgumentProvider.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 AuthArgumentProvider::AuthArgumentProvider() : ArgumentProvider(init()) {
     LOG_TRACE("call constructor");

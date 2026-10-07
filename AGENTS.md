@@ -26,52 +26,52 @@ Binaries output to `bin/`.
 
 ## CI (`.github/workflows/`)
 
-| Workflow | Trigger | Inhalt |
+| Workflow | Trigger | Content |
 |----------|---------|--------|
-| `ci.yml` → `build` | push/PR auf `master`, `workflow_dispatch` | Matrix `gcc-release` (Gate), `clang-release`, `gcc-debug-nonunity` (Debug + Non-Unity in einem Lauf) |
-| `ci.yml` → `format` | dito | **blockierend**: geänderte Dateien dürfen keine neuen `clang-format`-Verstöße enthalten; zusätzlich repo-weiter Drift-Report (nur informativ) |
-| `ci.yml` → `lint` | dito | `clang-tidy` auf geänderten Dateien (`src/`, ohne `tests/`/`external/`), aktuell `continue-on-error` |
-| `release.yml` | Tag `v*`, `workflow_dispatch` (dry-run) | Version prüfen → Release-Build → `ctest` → Tarball mit `bin/`, `cfg/` (ohne `certs/`), `swagger.yaml` → `gh release create` |
+| `ci.yml` → `build` | push/PR to `master`, `workflow_dispatch` | matrix `gcc-release` (gate), `clang-release`, `gcc-debug-nonunity` (Debug + Non-Unity in one run) |
+| `ci.yml` → `format` | same | **blocking**: changed files must not contain new `clang-format` violations; additionally repo-wide drift report (informational only) |
+| `ci.yml` → `lint` | same | `clang-tidy` on changed files (`src/`, without `tests/`/`external/`), currently `continue-on-error` |
+| `release.yml` | tag `v*`, `workflow_dispatch` (dry-run) | check version → release build → `ctest` → tarball with `bin/`, `cfg/` (without `certs/`), `swagger.yaml` → `gh release create` |
 
-Lokal dasselbe prüfen:
+Check the same locally:
 
 ```bash
-./scripts/check-format.sh master   # Format-Regression auf geänderten Dateien
-./scripts/check-format.sh --all    # repo-weiter Drift-Report (Blockierend: --strict)
-./scripts/check-tidy.sh master build/tidy   # braucht Non-Unity-/PCH-freies compile_commands.json
-./scripts/check-secrets.sh         # Klartext-Credentials (--staged / --all)
+./scripts/check-format.sh master   # format regression on changed files
+./scripts/check-format.sh --all    # repo-wide drift report (blocking: --strict)
+./scripts/check-tidy.sh master build/tidy   # needs a compile_commands.json without Non-Unity and without PCH
+./scripts/check-secrets.sh         # plaintext credentials (--staged / --all)
 ```
 
 ## Secrets
 
-`secret_scanning_push_protection` lässt sich für dieses Repo **nicht per API aktivieren** –
-alle Felder in `security_and_analysis` werden mit `422` ablehnt, auch mit Admin-Rechten
-(verifiziert 06.10.2026). Solange das nicht über *Settings → Code security* nachgezogen ist,
-übernimmt `scripts/check-secrets.sh` (blockierender CI-Job `secrets`).
+`secret_scanning_push_protection` **cannot be enabled via API** for this repo –
+all fields in `security_and_analysis` are rejected with `422`, even with admin rights
+(verified 06.10.2026). As long as this has not been added via *Settings → Code security*,
+`scripts/check-secrets.sh` takes over (blocking CI job `secrets`).
 
-Das Skript prüft **nicht** gegen eine Liste bekannter Geheimnisse, sondern in zwei Stufen:
-Konfigurationsformate (`.xml`/`.yml`/`.env`/…) bzw. PEM-Schlüsselblöcke, **und** einen
-Entropie-Test auf den Wert. reine Namenssuche ist unbrauchbar – das Repo hat Dutzende
-`const char *const PASSWORD = "password";`, das sind JSON-Schlüsselnamen.
+The script does **not** check against a list of known secrets, but in two stages:
+configuration formats (`.xml`/`.yml`/`.env`/…) resp. PEM key blocks, **and** an
+entropy test on the value. Pure name search is useless – the repo has dozens of
+`const char *const PASSWORD = "password";`, those are JSON key names.
 
-Keine Zugangsdaten committen. Passwörter in Config und Beispielen als `${VAR}` oder
-`<PLACEHOLDER>` schreiben. `cfg/database/*` und `cfg/certs/*` sind bewusst ausgenommen
-(dokumentierter Seed-Platzhalter bzw. gitignorierte Dev-Zertifikate).
+Do not commit credentials. Write passwords in config and examples as `${VAR}` or
+`<PLACEHOLDER>`. `cfg/database/*` and `cfg/certs/*` are deliberately excluded
+(documented seed placeholder resp. git-ignored dev certificates).
 
 ## Code Style
 
-- **Formatting**: `clang-format` — 120-col limit, 2-space indent, custom brace wrapping. Run `clang-format -i` on changed files. CI (`format`-Job) vergleicht Verstöße gegen den Base-Commit: geänderte Dateien dürfen **keine neuen** Verstöße enthalten (Legacy-Verstöße sind toleriert).
-- **Warnings**: `-Werror` is ON by default (`myproject_WARNINGS_AS_ERRORS`). Fix all warnings before committing.
-- **clang-tidy**: Off by default. Enable with `-DMYPROJECT_ENABLE_CLANG_TIDY=ON`. Header filter: `.*base_library/.*`.
+- **Formatting**: `clang-format` — 120-col limit, 2-space indent, custom brace wrapping. Run `clang-format -i` on changed files. CI (`format` job) compares violations against the base commit: changed files must **not** contain **new** violations (legacy violations are tolerated).
+- **Warnings**: `-Werror` is ON by default (`lintel_WARNINGS_AS_ERRORS`). Fix all warnings before committing.
+- **clang-tidy**: Off by default. Enable with `-DLINTEL_ENABLE_CLANG_TIDY=ON`. Header filter: `.*lintel/.*`.
 - **Unity builds**: ON by default (`ENABLE_UNITY_BUILD`). Can mask include-order bugs — disable to test `#include` completeness.
 
 ## Architecture
 
-`base_library` is a CMake library (`kruempelmann::base_library`).
+`lintel` is a CMake library (`lintel::lintel`).
 
 - **`src/core/`** — StartupBuilder, DI wiring, persistence abstraction (PostgreSQL + SQLite), logging, services, plugins.
 - **`src/features/`** — Optional modules: `http/` (cpp-httplib server/client), `cli/`, `property/` (XML/file/DB/SHM config), `base/` (auth, processes, message queues, event bus, shared memory).
-- **`src/include/base_library/`** — Public headers. `config.h` is generated from `config.h.in` by CMake.
+- **`src/include/lintel/`** — Public headers. `config.h` is generated from `config.h.in` by CMake.
 - **`external/Hypodermic/`** — Vendored DI framework.
 - **`cfg/`** — Runtime XML config (`bootstrap.xml`, `bootstrap_worker.xml`). `CONFIG_DIRECTORY` env var overrides path.
 - **`examples/`** — Reference apps showing how to wire StartupBuilder.
@@ -85,7 +85,7 @@ Keine Zugangsdaten committen. Passwörter in Config und Beispielen als `${VAR}` 
 - **PostgreSQL tests**: Require a running Postgres. Use `docker compose up postgres` (user/pass/db: test/test/test on port 5432).
 - **TLS certs**: Self-signed dev certs in `cfg/certs/`. Regenerate with `./cfg/certs/generate_certs.sh`. Referenced by `cfg/bootstrap.xml`.
 - **PCH**: Precompiled headers are ON by default (`ENABLE_PCH`). New stdlib headers needed by source files should be added to the PCH list in `src/CMakeLists.txt`.
-- **`config.h.in`**: CMake substitutes `PROJECT_PATH`, `CONFIG_DIRECTORY`, `BOOTSTRAP_CONFIG_NAME`, `MSG_QUEUE_NAME_SIZE`, `MSG_QUUEUE_CONTENT_SIZE` (note typo in original). Build touches `src/include/base_library/config.h`.
+- **`config.h.in`**: CMake substitutes `PROJECT_PATH`, `CONFIG_DIRECTORY`, `BOOTSTRAP_CONFIG_NAME`, `MSG_QUEUE_NAME_SIZE`, `MSG_QUUEUE_CONTENT_SIZE` (note typo in original). Build touches `src/include/lintel/config.h`.
 - **Docker dev**: `docker compose --profile dev run dev` mounts source + builds inside container.
-- **Debug + GCC**: Boost.UUIDs SSE2-Pfad nutzt `_mm_slli_si128`; bei `-O0` inlined GCC 13 das Intrinsic nicht mehr und bricht mit `the last argument must be an 8-bit immediate` ab. `src/CMakeLists.txt` definiert für `CONFIG:Debug` deshalb `BOOST_UUID_NO_SIMD`.
-- **`-Wnull-dereference`**: nur für Clang aktiv (siehe `cmake/CompilerWarnings.cmake`). GCC 13 meldet in `std::function::_M_empty()` einen Fehlalarm, der mit `-Werror` den Release-Build stoppt.
+- **Debug + GCC**: the Boost.UUIDs SSE2 path uses `_mm_slli_si128`; at `-O0` GCC 13 no longer inlines the intrinsic and fails with `the last argument must be an 8-bit immediate`. `src/CMakeLists.txt` therefore defines `BOOST_UUID_NO_SIMD` for `CONFIG:Debug`.
+- **`-Wnull-dereference`**: active for Clang only (see `cmake/CompilerWarnings.cmake`). GCC 13 reports a false positive in `std::function::_M_empty()` that stops the Release build via `-Werror`.

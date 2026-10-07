@@ -1,11 +1,11 @@
-#include "base_library/features/property/configuration/PropertyComponent.h"
+#include "lintel/features/property/configuration/PropertyComponent.h"
 
-#include <base_library/features/base/configuration/ConfigurationException.h>
+#include <lintel/features/base/configuration/ConfigurationException.h>
 
-#include "base_library/core/utils/TypeName.h"
-#include "base_library/features/property/configuration/PropertyEntry.h"
-#include "base_library/features/property/factories/PropertyFactory.h"
-#include "base_library/features/property/models/PropertyRepositoryType.h"
+#include "lintel/core/utils/TypeName.h"
+#include "lintel/features/property/configuration/PropertyEntry.h"
+#include "lintel/features/property/factories/PropertyFactory.h"
+#include "lintel/features/property/models/PropertyRepositoryType.h"
 
 PropertyComponent::Shapes PropertyComponent::shape{};
 

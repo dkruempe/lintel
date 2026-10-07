@@ -1,13 +1,13 @@
 #include <httplib.h>
 
-#include "base_library/features/http/controllers/ProcessApi.h"
+#include "lintel/features/http/controllers/ProcessApi.h"
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/controller/ProcessGroupsDto.h"
-#include "base_library/features/base/controller/ProcessInfosDto.h"
-#include "base_library/features/http/service/HttpClientHelper.h"
-#include "base_library/features/http/service/HttpStatusCodes.h"
-#include "base_library/features/http/service/HttpUnauthorizedException.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/controller/ProcessGroupsDto.h"
+#include "lintel/features/base/controller/ProcessInfosDto.h"
+#include "lintel/features/http/service/HttpClientHelper.h"
+#include "lintel/features/http/service/HttpStatusCodes.h"
+#include "lintel/features/http/service/HttpUnauthorizedException.h"
 
 ProcessApi::ProcessApi(const std::shared_ptr<ClientProvider> &clientProvicer) : m_client(clientProvicer->provide()) {}
 

@@ -1,12 +1,12 @@
 #include <httplib.h>
 
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/http/service/Client.h>
-#include <base_library/features/http/service/ContentType.h>
-#include <base_library/features/http/service/HttpStatusCodes.h>
-#include <base_library/features/http/service/Server.h>
-#include <base_library/features/http/configuration/ServerConfiguration.h>
-#include <base_library/features/http/configuration/ClientConfiguration.h>
+#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/features/http/service/Client.h>
+#include <lintel/features/http/service/ContentType.h>
+#include <lintel/features/http/service/HttpStatusCodes.h>
+#include <lintel/features/http/service/Server.h>
+#include <lintel/features/http/configuration/ServerConfiguration.h>
+#include <lintel/features/http/configuration/ClientConfiguration.h>
 
 #include <catch2/catch_all.hpp>
 
@@ -31,7 +31,7 @@ constexpr std::chrono::milliseconds kStartupTimeout{ 5000 };
 
 /** Ask the kernel for a free TCP port on 127.0.0.1.
  *
- * `base_library::Server` takes the port in its ServerConfiguration and calls `bind_to_port()`
+ * `lintel::Server` takes the port in its ServerConfiguration and calls `bind_to_port()`
  * itself, so it cannot use `httplib::bind_to_any_port()` - the port has to be known before the
  * object exists. Binding port 0 lets the kernel choose one and `getsockname()` reads it back. The
  * socket is closed right away, so there is a narrow window in which another process could take the

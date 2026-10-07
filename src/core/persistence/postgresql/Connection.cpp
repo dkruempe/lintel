@@ -1,4 +1,4 @@
-#include "base_library/core/persistence/postgresql/Connection.h"
+#include "lintel/core/persistence/postgresql/Connection.h"
 
 namespace postgresql {
     [[nodiscard]] std::shared_ptr<Result> Connection::execute(

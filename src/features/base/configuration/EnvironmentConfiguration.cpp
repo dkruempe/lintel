@@ -1,12 +1,12 @@
-#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
+#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
 #include <optional>
 
-#include "base_library/config.h"
-#include "base_library/core/utils/StringUtils.h"
+#include "lintel/config.h"
+#include "lintel/core/utils/StringUtils.h"
 
 EnvironmentConfiguration::EnvironmentConfiguration() {
     // BootstarpConfigName

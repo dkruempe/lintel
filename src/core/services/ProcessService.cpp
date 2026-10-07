@@ -1,6 +1,6 @@
-#include "base_library/core/services/ProcessService.h"
+#include "lintel/core/services/ProcessService.h"
 
-#include <base_library/features/base/configuration/ProcessEntry.h>
+#include <lintel/features/base/configuration/ProcessEntry.h>
 
 #include <boost/process/v1/child.hpp>
 #include <boost/process/v1/env.hpp>
@@ -13,13 +13,13 @@
 #include <stdexcept>
 #include <thread>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/services/SignalService.h"
-#include "base_library/core/utils/RegexUtils.h"
-#include "base_library/features/base/configuration/ProcessComponent.h"
-#include "base_library/features/base/controller/ProcessGroupDto.h"
-#include "base_library/features/base/models/ProcessGroup.h"
-#include "base_library/features/base/models/ProcessInfo.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/services/SignalService.h"
+#include "lintel/core/utils/RegexUtils.h"
+#include "lintel/features/base/configuration/ProcessComponent.h"
+#include "lintel/features/base/controller/ProcessGroupDto.h"
+#include "lintel/features/base/models/ProcessGroup.h"
+#include "lintel/features/base/models/ProcessInfo.h"
 
 ProcessService::ProcessService(std::shared_ptr<ProcessName> processName,
   std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,

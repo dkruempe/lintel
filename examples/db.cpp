@@ -1,18 +1,18 @@
-#include "base_library/core/persistence/ConnectionType.h"
+#include "lintel/core/persistence/ConnectionType.h"
 #include <vector>
 #include <memory>
 #include <string>
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/ParameterBuilder.h"
-#include "base_library/core/persistence/PreparedStatement.h"
-#include "base_library/core/persistence/Result.h"
-#include "base_library/features/base/models/HistoryEntry.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/ParameterBuilder.h"
+#include "lintel/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/Result.h"
+#include "lintel/features/base/models/HistoryEntry.h"
 
 int main(int argc, char *argv[])
 {
-  // Passwort-Platzhalter: hier ein eigenes Passwort eintragen.
-  // Das alte Passwort steht in der Git-Historie und muss rotiert werden.
+  // Password placeholder: enter your own password here.
+  // The old password is in the git history and must be rotated.
   std::shared_ptr<DatabaseConnectionEntry> databaseConnectionEntry = std::make_shared<DatabaseConnectionEntry>("test",
     "127.0.0.1",
     "example_user",

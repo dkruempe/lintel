@@ -4,12 +4,12 @@
 #include <string>
 #include <vector>
 
-#include "base_library/core/persistence/sqlite3/Connection.h"
-#include "base_library/core/persistence/sqlite3/PreparedStatement.h"
-#include "base_library/core/persistence/sqlite3/Statement.h"
-#include "base_library/core/persistence/sqlite3/Transaction.h"
+#include "lintel/core/persistence/sqlite3/Connection.h"
+#include "lintel/core/persistence/sqlite3/PreparedStatement.h"
+#include "lintel/core/persistence/sqlite3/Statement.h"
+#include "lintel/core/persistence/sqlite3/Transaction.h"
 
-static const char *kBenchDbPath = "/tmp/bench_base_library.db";
+static const char *kBenchDbPath = "/tmp/bench_lintel.db";
 
 static void RemoveBenchDb() { std::remove(kBenchDbPath); }
 

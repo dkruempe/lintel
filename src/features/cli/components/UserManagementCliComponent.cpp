@@ -1,9 +1,9 @@
-#include "base_library/features/cli/components/UserManagementCliComponent.h"
+#include "lintel/features/cli/components/UserManagementCliComponent.h"
 
-#include <base_library/core/utils/TableBuilder.h>
+#include <lintel/core/utils/TableBuilder.h>
 
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/core/utils/Cryption.h"
+#include "lintel/core/services/StringifyService.h"
+#include "lintel/core/utils/Cryption.h"
 
 UserManagementCliComponent::UserManagementCliComponent(
         std::shared_ptr<UserApi> userApi)
@@ -73,21 +73,21 @@ UserManagementCliComponent::UserManagementCliComponent(
 }
 
 /**
- * Dispatcht einen eingegebenen CLI-Befehl an die UserApi.
+ * Dispatches an entered CLI command to the UserApi.
  *
- * Ablauf: Der Parser zerlegt die Eingabe in ein Kommando und dessen Parameter,
- * danach fuehrt ein Switch ueber die neun Kommandos die passende UserApi-
- * Operation aus und druckt das Ergebnis. Alle Filter (Gruppenname,
- * virtuelle Gruppe) aus dem zuvor gesetzten Sitzungs-Kontext uebernommen,
- * nicht aus den Parametern - die CLI-Session traegt sie.
+ * Flow: the parser splits the input into a command and its parameters, then a
+ * switch over the nine commands executes the matching UserApi operation and
+ * prints the result. All filters (group name, virtual group) are taken from the
+ * previously set session context, not from the parameters - the CLI session
+ * carries them.
  *
- * Jeder Aufruf ist in einen try/catch gesetzt: eine fehlgeschlagene
- * UserApi-Operation soll die Menueschleife nicht beenden, sondern als
- * Fehlermeldung erscheinen. Der Handler wirft deshalb nach oben nichts.
+ * Every call is wrapped in a try/catch: a failed UserApi operation should not
+ * end the menu loop but show up as an error message. The handler therefore
+ * does not throw upwards.
  *
- * @param userDto    der angemeldete Benutzer, dessen Rechte die Kommandos steuern
- * @param input      die rohe CLI-Eingabe
- * @param parameters die bereits aufgeteilten Parameter der Eingabe
+ * @param userDto    the logged in user whose rights control the commands
+ * @param input      the raw CLI input
+ * @param parameters the already split parameters of the input
  */
 void UserManagementCliComponent::onCommand(
         const UserDto &userDto, const std::string &input,
@@ -95,7 +95,7 @@ void UserManagementCliComponent::onCommand(
     try {
         Commands command = m_commandParser.parse(input, parameters);
         switch (command) {
-      // Gruppen: Filter stammen aus dem Sitzungs-Kontext, nicht aus den Parametern.
+      // groups: filters come from the session context, not from the parameters.
             case AllGroups:
                 if (!m_groupName.has_value() && !m_isVirtualGroup.has_value()) {
                     printGroups(m_userApi->allOf());
@@ -108,7 +108,7 @@ void UserManagementCliComponent::onCommand(
                             m_userApi->allOf(m_groupName.value(), m_isVirtualGroup.value()));
                 }
                 break;
-      // Benutzer: dito, gleiche vier Filterkombinationen.
+      // users: same, the same four filter combinations.
             case AllUsers: {
                 if (m_userName.has_value()) {
                     printUsers(m_userApi->allUsersOf(m_userName.value()));
@@ -117,8 +117,8 @@ void UserManagementCliComponent::onCommand(
                 }
                 break;
             }
-      // Anlegen: Name, EMail, Passwort und Gruppen kommen aus den Parametern,
-      // das Passwort wird base64-kodiert uebergeben.
+      // create: name, e-mail, password and groups come from the parameters,
+      // the password is passed base64-encoded.
             case AddUser: {
                 if (!m_firstName.has_value() || !m_lastName.has_value() ||
                     !m_eMail.has_value() || !m_userName.has_value() ||
@@ -134,7 +134,7 @@ void UserManagementCliComponent::onCommand(
                 m_userApi->createOf(userDtoNew);
                 break;
             }
-      // Aendern: wie Anlegen, aber mit der Zielkennung aus dem Parameter.
+      // update: like create, but with the target identifier from the parameter.
             case UpdateUser: {
                 if (!m_userName.has_value()) {
                     std::cerr << "ERROR: please set username\n";
@@ -151,7 +151,7 @@ void UserManagementCliComponent::onCommand(
                 m_userApi->updateOf(m_userName.value(), groupAdds, groupRemoves);
                 break;
             }
-      // Loeschen: verlangt eine Bestaetigung, sonst keine Aktion.
+      // delete: requires a confirmation, otherwise no action.
             case RemoveUser: {
                 if (!m_userName.has_value()) {
                     std::cout << "ERROR: Please add username as value\n";
@@ -162,7 +162,7 @@ void UserManagementCliComponent::onCommand(
                 m_userApi->deleteOf(userRemoves);
                 break;
             }
-      // Passwortwechsel: altes und neues Passwort aus den Parametern.
+      // password change: old and new password from the parameters.
             case ChangePassword: {
                 if (!m_userName.has_value() || !m_newPassword.has_value()) {
                     std::cerr << "ERROR: please set username and new password\n";
@@ -177,11 +177,11 @@ void UserManagementCliComponent::onCommand(
                 }
                 break;
             }
-      // Sitzungen: nur anzeigen, keine Parameter.
+      // sessions: display only, no parameters.
             case ShowSessions:
                 printSessions(m_userApi->sessionsOf());
                 break;
-      // Sitzung widerrufen: die Session-ID ist der erste Parameter.
+      // revoke session: the session id is the first parameter.
             case RevokeSession: {
                 if (!m_sessionId.has_value()) {
                     std::cerr << "ERROR: please set the session id\n";

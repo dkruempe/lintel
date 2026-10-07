@@ -1,11 +1,11 @@
-#include "base_library/features/base/configuration/LoggerComponent.h"
+#include "lintel/features/base/configuration/LoggerComponent.h"
 
 #include <memory>
 
-#include "base_library/core/utils/TypeName.h"
-#include "base_library/features/base/configuration/ConfigurationException.h"
-#include "base_library/features/base/configuration/LoggerEntry.h"
-#include "base_library/features/base/configuration/LoggerPathConfiguration.h"
+#include "lintel/core/utils/TypeName.h"
+#include "lintel/features/base/configuration/ConfigurationException.h"
+#include "lintel/features/base/configuration/LoggerEntry.h"
+#include "lintel/features/base/configuration/LoggerPathConfiguration.h"
 
 const LoggerComponent::Shapes LoggerComponent::shape{};
 

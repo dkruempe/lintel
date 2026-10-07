@@ -1,4 +1,4 @@
-#include "base_library/features/http/service/ClientIpResolver.h"
+#include "lintel/features/http/service/ClientIpResolver.h"
 
 #include <catch2/catch_all.hpp>
 

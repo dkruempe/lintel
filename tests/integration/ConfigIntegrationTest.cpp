@@ -1,11 +1,11 @@
-#include <base_library/features/base/configuration/Component.h>
-#include <base_library/features/base/configuration/Configuration.h>
-#include <base_library/features/base/configuration/ConfigurationComponentBuilder.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
-#include <base_library/features/http/configuration/HttpComponent.h>
-#include <base_library/features/http/configuration/HttpEntry.h>
-#include <base_library/core/utils/TypeName.h>
+#include <lintel/features/base/configuration/Component.h>
+#include <lintel/features/base/configuration/Configuration.h>
+#include <lintel/features/base/configuration/ConfigurationComponentBuilder.h>
+#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
+#include <lintel/features/http/configuration/HttpComponent.h>
+#include <lintel/features/http/configuration/HttpEntry.h>
+#include <lintel/core/utils/TypeName.h>
 
 #include <catch2/catch_all.hpp>
 

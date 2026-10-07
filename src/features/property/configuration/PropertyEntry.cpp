@@ -1,4 +1,4 @@
-#include "base_library/features/property/configuration/PropertyEntry.h"
+#include "lintel/features/property/configuration/PropertyEntry.h"
 
 std::shared_ptr<PropertyBase> &PropertyEntry::getProperty() {
     return m_property;

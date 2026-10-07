@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/LoggerSinkConfiguration.h"
+#include "lintel/features/base/configuration/LoggerSinkConfiguration.h"
 
 LoggerSinkConfiguration::LoggerSinkConfiguration(
         LoggerSinkConfiguration::LoggerSinkType type, std::string level,

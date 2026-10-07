@@ -1,6 +1,6 @@
-#include "base_library/features/property/controller/PropertyValueDto.h"
+#include "lintel/features/property/controller/PropertyValueDto.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 PropertyValueDto::Shapes PropertyValueDto::m_shapes{};
 

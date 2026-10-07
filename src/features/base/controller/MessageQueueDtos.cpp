@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/MessageQueueDtos.h"
+#include "lintel/features/base/controller/MessageQueueDtos.h"
 
 MessageQueueDtos::MessageQueueDtos(const std::vector<std::pair<MessageQueueEntry, int32_t> > &messageQueueDtos)
     : m_messageQueueDtos(build(messageQueueDtos)) {

@@ -1,9 +1,9 @@
-#ifndef CPP_BASE_LIBRARY_MOCKTERMINALSERVICE_H
-#define CPP_BASE_LIBRARY_MOCKTERMINALSERVICE_H
+#ifndef LINTEL_MOCKTERMINALSERVICE_H
+#define LINTEL_MOCKTERMINALSERVICE_H
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/features/cli/services/ITerminalService.h"
+#include "lintel/features/cli/services/ITerminalService.h"
 
 class MockTerminalService : public ITerminalService {
 public:

@@ -1,6 +1,6 @@
-#include "base_library/core/persistence/sqlite3/Transaction.h"
+#include "lintel/core/persistence/sqlite3/Transaction.h"
 
-#include "base_library/core/persistence/Identifier.h"
+#include "lintel/core/persistence/Identifier.h"
 
 namespace sqlite {
     Transaction::Transaction(const Connection &tempConnection)

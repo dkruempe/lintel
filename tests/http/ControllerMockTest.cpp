@@ -4,8 +4,8 @@
 #include <utility>
 
 #include "../mocks/MockAuthService.h"
-#include "base_library/features/http/ExampleController.h"
-#include "base_library/features/http/service/Controller.h"
+#include "lintel/features/http/ExampleController.h"
+#include "lintel/features/http/service/Controller.h"
 
 using namespace trompeloeil;
 

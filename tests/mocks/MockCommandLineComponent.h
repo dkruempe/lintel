@@ -1,10 +1,10 @@
-#ifndef CPP_BASE_LIBRARY_MOCKCOMMANDLINECOMPONENT_H
-#define CPP_BASE_LIBRARY_MOCKCOMMANDLINECOMPONENT_H
+#ifndef LINTEL_MOCKCOMMANDLINECOMPONENT_H
+#define LINTEL_MOCKCOMMANDLINECOMPONENT_H
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/features/base/controller/UserDto.h"
-#include "base_library/features/cli/models/CommandLineComponent.h"
+#include "lintel/features/base/controller/UserDto.h"
+#include "lintel/features/cli/models/CommandLineComponent.h"
 
 class MockCommandLineComponent : public CommandLineComponent {
 public:
@@ -20,4 +20,4 @@ public:
     MAKE_MOCK0(menuEntriesOf, std::set<std::string>(), override);
 };
 
-#endif  // CPP_BASE_LIBRARY_MOCKCOMMANDLINECOMPONENT_H
+#endif  // LINTEL_MOCKCOMMANDLINECOMPONENT_H

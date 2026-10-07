@@ -1,5 +1,5 @@
-#include "base_library/core/utils/UUID.h"
-#include "base_library/features/base/models/HistoryEntry.h"
+#include "lintel/core/utils/UUID.h"
+#include "lintel/features/base/models/HistoryEntry.h"
 
 HistoryEntry::HistoryEntry(
         std::string processName, std::string serviceName, std::string label,

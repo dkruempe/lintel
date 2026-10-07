@@ -1,7 +1,7 @@
-#include "base_library/features/base/controller/ProcessInfoDto.h"
+#include "lintel/features/base/controller/ProcessInfoDto.h"
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/models/ProcessInfo.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/models/ProcessInfo.h"
 
 ProcessInfoDto::Shapes ProcessInfoDto::m_shape{};
 

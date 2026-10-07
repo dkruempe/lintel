@@ -1,11 +1,11 @@
-#include "base_library/features/base/services/EventBusService.h"
+#include "lintel/features/base/services/EventBusService.h"
 
 #include <stdexcept>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/services/ShmConstructors.h"
-#include "base_library/features/base/configuration/EventBusComponent.h"
-#include "base_library/features/base/events/ShmSegmentAccessor.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/services/ShmConstructors.h"
+#include "lintel/features/base/configuration/EventBusComponent.h"
+#include "lintel/features/base/events/ShmSegmentAccessor.h"
 
 EventBusService::EventBusService(
         const std::shared_ptr<Configuration> &configuration,

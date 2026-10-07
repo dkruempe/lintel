@@ -1,4 +1,4 @@
-#include "base_library/core/persistence/sqlite3/Statement.h"
+#include "lintel/core/persistence/sqlite3/Statement.h"
 
 namespace sqlite {
     Statement::Statement(Connection &connection) : m_connection(connection) {}

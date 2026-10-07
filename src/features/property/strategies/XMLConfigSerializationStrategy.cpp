@@ -1,12 +1,12 @@
-#include "base_library/features/property/strategies/XMLConfigSerializationStrategy.h"
+#include "lintel/features/property/strategies/XMLConfigSerializationStrategy.h"
 
 #include <tinyxml2.h>
 
 #include <vector>
 
-#include "base_library/core/services/FileService.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/property/factories/PropertyFactory.h"
+#include "lintel/core/services/FileService.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/property/factories/PropertyFactory.h"
 
 #define CONFIG_ROOT "Properties"
 #define ELEMENT_NAME "name"

@@ -1,10 +1,10 @@
-#include "base_library/features/cli/services/AuthCliService.h"
+#include "lintel/features/cli/services/AuthCliService.h"
 
-#include <base_library/core/services/SignalService.h>
+#include <lintel/core/services/SignalService.h>
 
 #include <utility>
 
-#include "base_library/features/cli/utils/CommandLineUtils.h"
+#include "lintel/features/cli/utils/CommandLineUtils.h"
 
 AuthCliService::AuthCliService(
         std::shared_ptr<UserApi> userApi,

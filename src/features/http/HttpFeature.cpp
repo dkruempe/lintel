@@ -1,20 +1,20 @@
-#include "base_library/features/http/HttpFeature.h"
+#include "lintel/features/http/HttpFeature.h"
 
 #include "Hypodermic/Container.h"
 #include "Hypodermic/ContainerBuilder.h"
 
-#include "base_library/features/http/controllers/HistoryApi.h"
-#include "base_library/features/http/controllers/HistoryController.h"
-#include "base_library/features/http/controllers/MessageQueueApi.h"
-#include "base_library/features/http/controllers/MessageQueueController.h"
-#include "base_library/features/http/controllers/ProcessApi.h"
-#include "base_library/features/http/controllers/ProcessController.h"
-#include "base_library/features/http/controllers/SharedMemoryApi.h"
-#include "base_library/features/http/controllers/SharedMemoryController.h"
-#include "base_library/features/http/controllers/UserApi.h"
-#include "base_library/features/http/controllers/UserController.h"
-#include "base_library/features/http/provider/ClientProvider.h"
-#include "base_library/features/http/service/Controller.h"
+#include "lintel/features/http/controllers/HistoryApi.h"
+#include "lintel/features/http/controllers/HistoryController.h"
+#include "lintel/features/http/controllers/MessageQueueApi.h"
+#include "lintel/features/http/controllers/MessageQueueController.h"
+#include "lintel/features/http/controllers/ProcessApi.h"
+#include "lintel/features/http/controllers/ProcessController.h"
+#include "lintel/features/http/controllers/SharedMemoryApi.h"
+#include "lintel/features/http/controllers/SharedMemoryController.h"
+#include "lintel/features/http/controllers/UserApi.h"
+#include "lintel/features/http/controllers/UserController.h"
+#include "lintel/features/http/provider/ClientProvider.h"
+#include "lintel/features/http/service/Controller.h"
 
 HttpFeature::HttpFeature(std::shared_ptr<Features> features) : Feature(Features::Http, std::move(features)) {}
 

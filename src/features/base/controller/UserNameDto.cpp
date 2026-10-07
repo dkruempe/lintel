@@ -1,6 +1,6 @@
-#include "base_library/features/base/controller/UserNameDto.h"
+#include "lintel/features/base/controller/UserNameDto.h"
 
-#include "base_library/features/base/controller/UserDto.h"
+#include "lintel/features/base/controller/UserDto.h"
 
 UserNameDto::Shapes UserNameDto::shape{};
 

@@ -1,6 +1,6 @@
-#include "base_library/features/base/controller/SharedMemorySegmentDto.h"
+#include "lintel/features/base/controller/SharedMemorySegmentDto.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 SharedMemorySegmentDto::Shapes SharedMemorySegmentDto::m_shape{};
 

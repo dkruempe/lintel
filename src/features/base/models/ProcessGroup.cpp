@@ -1,4 +1,4 @@
-#include "base_library/features/base/models/ProcessGroup.h"
+#include "lintel/features/base/models/ProcessGroup.h"
 
 ProcessGroup::ProcessGroup(std::string name, std::vector<Process> processes)
         : m_name(std::move(name)), m_processes(std::move(processes)) {}

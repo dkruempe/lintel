@@ -1,11 +1,11 @@
-#include "base_library/core/plugins/VirtualGroupBootstrapPlugin.h"
+#include "lintel/core/plugins/VirtualGroupBootstrapPlugin.h"
 
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/PreparedStatement.h"
-#include "base_library/core/persistence/Transaction.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/StringUtils.h"
-#include "base_library/features/base/provider/GroupProvider.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/Transaction.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/StringUtils.h"
+#include "lintel/features/base/provider/GroupProvider.h"
 
 VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
         const std::shared_ptr<DatabaseConnectionConfigurations>

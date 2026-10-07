@@ -1,4 +1,4 @@
-#include "base_library/features/base/controller/UserSessionsDto.h"
+#include "lintel/features/base/controller/UserSessionsDto.h"
 
 UserSessionsDto::UserSessionsDto(std::vector<UserSessionDto> sessions)
         : m_sessions(std::move(sessions)) {}

@@ -1,4 +1,4 @@
-#include "base_library/features/base/msg/MessageQueueCore.h"
+#include "lintel/features/base/msg/MessageQueueCore.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/interprocess/creation_tags.hpp>

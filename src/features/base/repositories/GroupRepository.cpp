@@ -1,14 +1,14 @@
-#include "base_library/features/base/repositories/GroupRepository.h"
+#include "lintel/features/base/repositories/GroupRepository.h"
 
 #include <regex>
 #include <utility>
 
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/PreparedStatement.h"
-#include "base_library/core/persistence/Result.h"
-#include "base_library/core/persistence/Statement.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/RegexUtils.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/Result.h"
+#include "lintel/core/persistence/Statement.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/RegexUtils.h"
 
 GroupRepository::GroupRepository(
         std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)

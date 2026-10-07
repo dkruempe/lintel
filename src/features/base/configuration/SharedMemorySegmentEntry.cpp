@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
 
 #include <utility>
 

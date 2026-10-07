@@ -19,7 +19,7 @@ services:
     build:
       context: .
       target: base
-    image: cpp-base-library:dev
+    image: lintel:dev
     profiles:
       - dev
     environment:

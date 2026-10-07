@@ -1,4 +1,4 @@
-#include "base_library/core/services/PersistableService.h"
+#include "lintel/core/services/PersistableService.h"
 
 PersistableService::PersistableService(
         std::vector<std::shared_ptr<PersistableBean>> persistableBeans)

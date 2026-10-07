@@ -1,6 +1,6 @@
-#include "base_library/features/base/controller/GroupDto.h"
+#include "lintel/features/base/controller/GroupDto.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 const GroupDto::Shapes GroupDto::shape{};
 

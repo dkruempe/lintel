@@ -1,6 +1,6 @@
-#include "base_library/features/base/controller/UserTokenDto.h"
+#include "lintel/features/base/controller/UserTokenDto.h"
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 UserTokenDto::Shapes UserTokenDto::shape{};
 

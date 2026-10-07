@@ -1,12 +1,12 @@
 #include <httplib.h>
 
-#include "base_library/features/http/controllers/MessageQueueApi.h"
+#include "lintel/features/http/controllers/MessageQueueApi.h"
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/controller/MessageQueueDtos.h"
-#include "base_library/features/http/service/HttpClientHelper.h"
-#include "base_library/features/http/service/HttpStatusCodes.h"
-#include "base_library/features/http/service/HttpUnauthorizedException.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/controller/MessageQueueDtos.h"
+#include "lintel/features/http/service/HttpClientHelper.h"
+#include "lintel/features/http/service/HttpStatusCodes.h"
+#include "lintel/features/http/service/HttpUnauthorizedException.h"
 
 MesssageQueueApi::MesssageQueueApi(const std::shared_ptr<ClientProvider> &clientProvider)
   : m_client(clientProvider->provide()) {}

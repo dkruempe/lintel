@@ -1,17 +1,17 @@
-#include "base_library/features/base/configuration/ConfigurationComponentBuilder.h"
+#include "lintel/features/base/configuration/ConfigurationComponentBuilder.h"
 
 #include <memory>
 
-#include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
-#include "base_library/features/base/configuration/EventBusComponent.h"
-#include "base_library/features/base/configuration/HistoryComponent.h"
-#include "base_library/features/base/configuration/LoggerComponent.h"
-#include "base_library/features/base/configuration/MessageQueueComponent.h"
-#include "base_library/features/base/configuration/ProcessComponent.h"
-#include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
-#include "base_library/features/http/configuration/HttpComponent.h"
-#include "base_library/features/property/configuration/PropertyComponent.h"
-#include "base_library/features/property/configuration/PropertyRepositoryComponent.h"
+#include "lintel/features/base/configuration/DatabaseConnectionComponent.h"
+#include "lintel/features/base/configuration/EventBusComponent.h"
+#include "lintel/features/base/configuration/HistoryComponent.h"
+#include "lintel/features/base/configuration/LoggerComponent.h"
+#include "lintel/features/base/configuration/MessageQueueComponent.h"
+#include "lintel/features/base/configuration/ProcessComponent.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
+#include "lintel/features/http/configuration/HttpComponent.h"
+#include "lintel/features/property/configuration/PropertyComponent.h"
+#include "lintel/features/property/configuration/PropertyRepositoryComponent.h"
 
 ConfigurationComponentBuilder::ConfigurationComponentBuilder(
         const std::shared_ptr<EnvironmentConfiguration> &environmentConfiguration) {

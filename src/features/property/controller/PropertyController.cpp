@@ -1,13 +1,13 @@
-#include "base_library/features/property/controller/PropertyController.h"
-#include "base_library/core/models/JsonSerializable.h"
+#include "lintel/features/property/controller/PropertyController.h"
+#include "lintel/core/models/JsonSerializable.h"
 #include <fmt/core.h>
 
 #include <optional>
 #include <utility>
 
-#include "base_library/features/http/service/HttpStatusCodes.h"
-#include "base_library/features/property/controller/PropertiesDto.h"
-#include "base_library/features/property/controller/PropertyValueDto.h"
+#include "lintel/features/http/service/HttpStatusCodes.h"
+#include "lintel/features/property/controller/PropertiesDto.h"
+#include "lintel/features/property/controller/PropertyValueDto.h"
 
 PropertyController::PropertyController(
         std::shared_ptr<PropertyService> propertyService,

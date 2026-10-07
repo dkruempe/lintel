@@ -1,6 +1,6 @@
-#include "base_library/core/persistence/Cursor.h"
+#include "lintel/core/persistence/Cursor.h"
 
-#include "base_library/core/persistence/postgresql/Statement.h"
+#include "lintel/core/persistence/postgresql/Statement.h"
 
 namespace db {
 

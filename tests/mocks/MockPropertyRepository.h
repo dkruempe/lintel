@@ -1,9 +1,9 @@
-#ifndef CPP_BASE_LIBRARY_MOCKPROPERTYREPOSITORY_H
-#define CPP_BASE_LIBRARY_MOCKPROPERTYREPOSITORY_H
+#ifndef LINTEL_MOCKPROPERTYREPOSITORY_H
+#define LINTEL_MOCKPROPERTYREPOSITORY_H
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/features/property/repositories/PropertyRepository.h"
+#include "lintel/features/property/repositories/PropertyRepository.h"
 
 class MockPropertyRepository : public PropertyRepository {
 public:
@@ -17,4 +17,4 @@ public:
     MAKE_MOCK4(allOf, std::vector<std::shared_ptr<PropertyBase>>(const std::string &, const std::string &, const std::string &, const std::string &), override);
 };
 
-#endif  // CPP_BASE_LIBRARY_MOCKPROPERTYREPOSITORY_H
+#endif  // LINTEL_MOCKPROPERTYREPOSITORY_H

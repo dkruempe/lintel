@@ -1,0 +1,112 @@
+#ifndef LINTEL_POSTGRES_CONNECTION_H
+#define LINTEL_POSTGRES_CONNECTION_H
+
+#include <libpq-fe.h>
+
+#include <memory>
+#include <string>
+#include <vector>
+
+#include "lintel/core/exceptions/SQLException.h"
+#include "lintel/core/persistence/Parameter.h"
+#include "lintel/core/persistence/postgresql/Result.h"
+#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
+
+namespace postgresql {
+    class Transaction;
+
+    class Statement;
+
+    class PreparedStatement;
+
+    class Notify;
+
+    class Cursor;
+
+    /**
+     * PostgreSQL database connection wrapping a PGconn handle.
+     */
+    class Connection {
+    private:
+        PGconn *m_conn;
+        std::string m_connInfo;
+
+        friend class Transaction;
+
+        friend class Statement;
+
+        friend class PreparedStatement;
+
+        friend class Notify;
+
+        friend class Cursor;
+
+        /**
+         * Executes a plain SQL statement.
+         * @param statement the SQL statement
+         * @return shared pointer to the result
+         */
+        std::shared_ptr<Result> execute(
+                const std::string &statement) const;
+
+        /**
+         * Executes a parameterized SQL statement.
+         * @param statement the SQL statement with placeholders
+         * @param parameters the parameters to bind
+         * @return shared pointer to the result
+         */
+        [[nodiscard]] std::shared_ptr<Result> executeParameters(
+                const std::string &statement, const db::Parameters &parameters) const;
+
+        /**
+         * Prepares a named statement for repeated execution.
+         * @param statementName the name for the prepared statement
+         * @param query the SQL query
+         * @param nParams the number of parameters
+         * @return shared pointer to the result
+         */
+        [[nodiscard]] std::shared_ptr<Result> prepareStatement(
+                const std::string &statementName, const std::string &query,
+                int32_t nParams) const;
+
+        /**
+         * Executes a previously prepared statement.
+         * @param statementName the name of the prepared statement
+         * @param query the SQL query
+         * @param nParams the number of parameters
+         * @param parameters the parameters to bind
+         * @return shared pointer to the result
+         */
+        [[nodiscard]] std::shared_ptr<Result> executePreparedStatement(
+                const std::string &statementName, const std::string &query,
+                int32_t nParams, const db::Parameters &parameters) const;
+
+        /** @return the last error message from the PostgreSQL connection */
+        [[nodiscard]] std::string getErrorMessage() const;
+
+        /** Builds a libpq connection string from a configuration entry. */
+        [[nodiscard]] static std::string buildConnInfo(
+                const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+
+    public:
+        /**
+         * Constructs a PostgreSQL connection from a connection string.
+         * @param connectionInfo the PostgreSQL connection string
+         */
+        explicit Connection(const std::string &connectionInfo);
+
+        /**
+         * Constructs a PostgreSQL connection from a configuration entry.
+         * @param connectionEntry the database connection configuration entry
+         */
+        explicit Connection(
+                const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+
+        Connection(Connection &connection) = delete;
+
+        /** Destructor, closes the connection. */
+        ~Connection();
+    };
+}  // namespace postgresql
+
+#endif  // LINTEL_POSTGRES_CONNECTION_H

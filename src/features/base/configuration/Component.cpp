@@ -1,8 +1,8 @@
-#include "base_library/features/base/configuration/Component.h"
+#include "lintel/features/base/configuration/Component.h"
 
-#include <base_library/core/utils/MemorySize.h>
+#include <lintel/core/utils/MemorySize.h>
 
-#include <base_library/core/utils/StringUtils.h>
+#include <lintel/core/utils/StringUtils.h>
 
 #include <limits>
 #include <utility>

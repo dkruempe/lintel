@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0025 NEW)
-if(NOT DEFINED BASE_LIBRARY_VERSION)
-    set(BASE_LIBRARY_VERSION "0.1.0")
+if(NOT DEFINED LINTEL_VERSION)
+    set(LINTEL_VERSION "0.1.0")
 endif()
-project(base_library VERSION ${BASE_LIBRARY_VERSION})
+project(lintel VERSION ${LINTEL_VERSION})
 set(CMAKE_MACOSX_RPATH OFF)
 set(CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
@@ -31,11 +31,11 @@ set(VERSION_MINOR ${PROJECT_VERSION_MINOR})
 set(VERSION_PATCH ${PROJECT_VERSION_PATCH})
 
 configure_file(
-        ${PROJECT_SOURCE_DIR}/include/base_library/config.h.in
-        ${PROJECT_SOURCE_DIR}/include/base_library/config.h)
+        ${PROJECT_SOURCE_DIR}/include/lintel/config.h.in
+        ${PROJECT_SOURCE_DIR}/include/lintel/config.h)
 
 # dependencies
-if (NOT TARGET kruempelmann::Hypodermic)
+if (NOT TARGET lintel::Hypodermic)
     find_package(Hypodermic REQUIRED)
 endif ()
 
@@ -54,258 +54,258 @@ find_package(Threads REQUIRED)
 
 # build
 set(headers
-    include/base_library/config.h
+    include/lintel/config.h
     # core - exceptions
-    include/base_library/core/exceptions/ConfigShmSegmentNotFound.h
-    include/base_library/core/exceptions/FileServiceFileExists.h
-    include/base_library/core/exceptions/FileServiceIsNotFileException.h
-    include/base_library/core/exceptions/LoggerServiceNotInitialized.h
-    include/base_library/core/exceptions/ShmSegmentNotFound.h
-    include/base_library/core/exceptions/SQLException.h
+    include/lintel/core/exceptions/ConfigShmSegmentNotFound.h
+    include/lintel/core/exceptions/FileServiceFileExists.h
+    include/lintel/core/exceptions/FileServiceIsNotFileException.h
+    include/lintel/core/exceptions/LoggerServiceNotInitialized.h
+    include/lintel/core/exceptions/ShmSegmentNotFound.h
+    include/lintel/core/exceptions/SQLException.h
     # core - models
-    include/base_library/core/models/BootstrapSequence.h
-    include/base_library/core/models/JsonSerializable.h
-    include/base_library/core/models/SharedMemorySegment.h
-    include/base_library/core/models/ShutdownPriority.h
+    include/lintel/core/models/BootstrapSequence.h
+    include/lintel/core/models/JsonSerializable.h
+    include/lintel/core/models/SharedMemorySegment.h
+    include/lintel/core/models/ShutdownPriority.h
     # core - persistence
-    include/base_library/core/persistence/Arguments.h
-    include/base_library/core/persistence/Connection.h
-    include/base_library/core/persistence/ConnectionType.h
-    include/base_library/core/persistence/Cursor.h
-    include/base_library/core/persistence/DatabaseConnectionConfigurations.h
-    include/base_library/core/persistence/Identifier.h
-    include/base_library/core/persistence/Notify.h
-    include/base_library/core/persistence/Parameter.h
-    include/base_library/core/persistence/ParameterBuilder.h
-    include/base_library/core/persistence/PreparedStatement.h
-    include/base_library/core/persistence/Result.h
-    include/base_library/core/persistence/Serialization.h
-    include/base_library/core/persistence/Statement.h
-    include/base_library/core/persistence/Transaction.h
+    include/lintel/core/persistence/Arguments.h
+    include/lintel/core/persistence/Connection.h
+    include/lintel/core/persistence/ConnectionType.h
+    include/lintel/core/persistence/Cursor.h
+    include/lintel/core/persistence/DatabaseConnectionConfigurations.h
+    include/lintel/core/persistence/Identifier.h
+    include/lintel/core/persistence/Notify.h
+    include/lintel/core/persistence/Parameter.h
+    include/lintel/core/persistence/ParameterBuilder.h
+    include/lintel/core/persistence/PreparedStatement.h
+    include/lintel/core/persistence/Result.h
+    include/lintel/core/persistence/Serialization.h
+    include/lintel/core/persistence/Statement.h
+    include/lintel/core/persistence/Transaction.h
     # core - persistence - postgresql
-    include/base_library/core/persistence/postgresql/Connection.h
-    include/base_library/core/persistence/postgresql/Cursor.h
-    include/base_library/core/persistence/postgresql/Notify.h
-    include/base_library/core/persistence/postgresql/PreparedStatement.h
-    include/base_library/core/persistence/postgresql/Result.h
-    include/base_library/core/persistence/postgresql/Serialization.h
-    include/base_library/core/persistence/postgresql/Statement.h
-    include/base_library/core/persistence/postgresql/Transaction.h
+    include/lintel/core/persistence/postgresql/Connection.h
+    include/lintel/core/persistence/postgresql/Cursor.h
+    include/lintel/core/persistence/postgresql/Notify.h
+    include/lintel/core/persistence/postgresql/PreparedStatement.h
+    include/lintel/core/persistence/postgresql/Result.h
+    include/lintel/core/persistence/postgresql/Serialization.h
+    include/lintel/core/persistence/postgresql/Statement.h
+    include/lintel/core/persistence/postgresql/Transaction.h
     # core - persistence - sqlite3
-    include/base_library/core/persistence/sqlite3/Connection.h
-    include/base_library/core/persistence/sqlite3/Cursor.h
-    include/base_library/core/persistence/sqlite3/Notify.h
-    include/base_library/core/persistence/sqlite3/PreparedStatement.h
-    include/base_library/core/persistence/sqlite3/Result.h
-    include/base_library/core/persistence/sqlite3/Serialization.h
-    include/base_library/core/persistence/sqlite3/Statement.h
-    include/base_library/core/persistence/sqlite3/Transaction.h
+    include/lintel/core/persistence/sqlite3/Connection.h
+    include/lintel/core/persistence/sqlite3/Cursor.h
+    include/lintel/core/persistence/sqlite3/Notify.h
+    include/lintel/core/persistence/sqlite3/PreparedStatement.h
+    include/lintel/core/persistence/sqlite3/Result.h
+    include/lintel/core/persistence/sqlite3/Serialization.h
+    include/lintel/core/persistence/sqlite3/Statement.h
+    include/lintel/core/persistence/sqlite3/Transaction.h
     # core - plugins
-    include/base_library/core/plugins/AdminUserBootstrapPlugin.h
-    include/base_library/core/plugins/BootstrapPlugin.h
-    include/base_library/core/plugins/DatabaseBootstrapPlugin.h
-    include/base_library/core/plugins/MessageQueueBootstrapPlugin.h
-    include/base_library/core/plugins/SharedMemoryBootstrapPlugin.h
-    include/base_library/core/plugins/SingleInstanceBootstrapPlugin.h
-    include/base_library/core/plugins/VirtualGroupBootstrapPlugin.h
+    include/lintel/core/plugins/AdminUserBootstrapPlugin.h
+    include/lintel/core/plugins/BootstrapPlugin.h
+    include/lintel/core/plugins/DatabaseBootstrapPlugin.h
+    include/lintel/core/plugins/MessageQueueBootstrapPlugin.h
+    include/lintel/core/plugins/SharedMemoryBootstrapPlugin.h
+    include/lintel/core/plugins/SingleInstanceBootstrapPlugin.h
+    include/lintel/core/plugins/VirtualGroupBootstrapPlugin.h
     # core - services
-    include/base_library/core/services/AbstractService.h
-    include/base_library/core/services/BootstrapService.h
-    include/base_library/core/services/DirectoryService.h
-    include/base_library/core/services/FileService.h
-    include/base_library/core/services/LoggerService.h
-    include/base_library/core/services/PersistableBean.h
-    include/base_library/core/services/PersistableService.h
-    include/base_library/core/services/ProcessService.h
-    include/base_library/core/services/ISharedMemoryService.h
-    include/base_library/core/services/PropertyRegistration.h
-    include/base_library/core/services/SharedMemoryService.h
-    include/base_library/core/services/ShmConstructors.h
-    include/base_library/core/services/SignalService.h
-    include/base_library/core/services/StopWatchService.h
-    include/base_library/core/services/StringifyService.h
-    include/base_library/core/StartupBuilder.h
+    include/lintel/core/services/AbstractService.h
+    include/lintel/core/services/BootstrapService.h
+    include/lintel/core/services/DirectoryService.h
+    include/lintel/core/services/FileService.h
+    include/lintel/core/services/LoggerService.h
+    include/lintel/core/services/PersistableBean.h
+    include/lintel/core/services/PersistableService.h
+    include/lintel/core/services/ProcessService.h
+    include/lintel/core/services/ISharedMemoryService.h
+    include/lintel/core/services/PropertyRegistration.h
+    include/lintel/core/services/SharedMemoryService.h
+    include/lintel/core/services/ShmConstructors.h
+    include/lintel/core/services/SignalService.h
+    include/lintel/core/services/StopWatchService.h
+    include/lintel/core/services/StringifyService.h
+    include/lintel/core/StartupBuilder.h
     # core - utils
-    include/base_library/core/utils/Cryption.h
-    include/base_library/core/utils/MemorySize.h
-    include/base_library/core/utils/ProcessResourceReader.h
-    include/base_library/core/utils/RegexUtils.h
-    include/base_library/core/utils/StringUtils.h
-    include/base_library/core/utils/TableBuilder.h
-    include/base_library/core/utils/TypeName.h
-    include/base_library/core/utils/UUID.h
-    include/base_library/core/utils/Argument.h
+    include/lintel/core/utils/Cryption.h
+    include/lintel/core/utils/MemorySize.h
+    include/lintel/core/utils/ProcessResourceReader.h
+    include/lintel/core/utils/RegexUtils.h
+    include/lintel/core/utils/StringUtils.h
+    include/lintel/core/utils/TableBuilder.h
+    include/lintel/core/utils/TypeName.h
+    include/lintel/core/utils/UUID.h
+    include/lintel/core/utils/Argument.h
     # features - base
-    include/base_library/features/base/BaseFeature.h
+    include/lintel/features/base/BaseFeature.h
     # features - base - configuration
-    include/base_library/features/base/configuration/Component.h
-    include/base_library/features/base/configuration/Configuration.h
-    include/base_library/features/base/configuration/ConfigurationComponentBuilder.h
-    include/base_library/features/base/configuration/ConfigurationException.h
-    include/base_library/features/base/configuration/DatabaseConnectionComponent.h
-    include/base_library/features/base/configuration/DatabaseConnectionEntry.h
-    include/base_library/features/base/configuration/Entry.h
-    include/base_library/features/base/configuration/EnvironmentConfiguration.h
-    include/base_library/features/base/configuration/LoggerComponent.h
-    include/base_library/features/base/configuration/LoggerConfiguration.h
-    include/base_library/features/base/configuration/LoggerEntry.h
-    include/base_library/features/base/configuration/LoggerPathConfiguration.h
-    include/base_library/features/base/configuration/LoggerSinkConfiguration.h
-    include/base_library/features/base/configuration/MessageQueueComponent.h
-    include/base_library/features/base/configuration/MessageQueueEntry.h
-    include/base_library/features/base/configuration/HistoryComponent.h
-    include/base_library/features/base/configuration/HistoryServiceEntry.h
-    include/base_library/features/base/configuration/EventBusComponent.h
-    include/base_library/features/base/configuration/EventBusEntry.h
-    include/base_library/features/base/configuration/ProcessComponent.h
-    include/base_library/features/base/configuration/ProcessEntry.h
-    include/base_library/features/base/configuration/SharedMemorySegmentComponent.h
-    include/base_library/features/base/configuration/SharedMemorySegmentEntry.h
+    include/lintel/features/base/configuration/Component.h
+    include/lintel/features/base/configuration/Configuration.h
+    include/lintel/features/base/configuration/ConfigurationComponentBuilder.h
+    include/lintel/features/base/configuration/ConfigurationException.h
+    include/lintel/features/base/configuration/DatabaseConnectionComponent.h
+    include/lintel/features/base/configuration/DatabaseConnectionEntry.h
+    include/lintel/features/base/configuration/Entry.h
+    include/lintel/features/base/configuration/EnvironmentConfiguration.h
+    include/lintel/features/base/configuration/LoggerComponent.h
+    include/lintel/features/base/configuration/LoggerConfiguration.h
+    include/lintel/features/base/configuration/LoggerEntry.h
+    include/lintel/features/base/configuration/LoggerPathConfiguration.h
+    include/lintel/features/base/configuration/LoggerSinkConfiguration.h
+    include/lintel/features/base/configuration/MessageQueueComponent.h
+    include/lintel/features/base/configuration/MessageQueueEntry.h
+    include/lintel/features/base/configuration/HistoryComponent.h
+    include/lintel/features/base/configuration/HistoryServiceEntry.h
+    include/lintel/features/base/configuration/EventBusComponent.h
+    include/lintel/features/base/configuration/EventBusEntry.h
+    include/lintel/features/base/configuration/ProcessComponent.h
+    include/lintel/features/base/configuration/ProcessEntry.h
+    include/lintel/features/base/configuration/SharedMemorySegmentComponent.h
+    include/lintel/features/base/configuration/SharedMemorySegmentEntry.h
     # features - base - controller
-    include/base_library/features/base/controller/GroupDto.h
-    include/base_library/features/base/controller/HistoryDto.h
-    include/base_library/features/base/controller/HistoryDtos.h
-    include/base_library/features/base/controller/MessageQueueDto.h
-    include/base_library/features/base/controller/MessageQueueDtos.h
-    include/base_library/features/base/controller/ProcessGroupDto.h
-    include/base_library/features/base/controller/ProcessGroupsDto.h
-    include/base_library/features/base/controller/ProcessInfoDto.h
-    include/base_library/features/base/controller/ProcessInfosDto.h
-    include/base_library/features/base/controller/SharedMemoryRepositoryDto.h
-    include/base_library/features/base/controller/SharedMemoryRepositoriesDto.h
-    include/base_library/features/base/controller/SharedMemorySegmentDto.h
-    include/base_library/features/base/controller/SharedMemorySegmentsDto.h
-    include/base_library/features/base/controller/UserDto.h
-    include/base_library/features/base/controller/UserGroupDto.h
-    include/base_library/features/base/controller/UserLoginDto.h
-    include/base_library/features/base/controller/UserNameDto.h
-    include/base_library/features/base/controller/UserPasswordChangeDto.h
-    include/base_library/features/base/controller/UserSessionDto.h
-    include/base_library/features/base/controller/UserSessionsDto.h
-    include/base_library/features/base/controller/UserTokenDto.h
+    include/lintel/features/base/controller/GroupDto.h
+    include/lintel/features/base/controller/HistoryDto.h
+    include/lintel/features/base/controller/HistoryDtos.h
+    include/lintel/features/base/controller/MessageQueueDto.h
+    include/lintel/features/base/controller/MessageQueueDtos.h
+    include/lintel/features/base/controller/ProcessGroupDto.h
+    include/lintel/features/base/controller/ProcessGroupsDto.h
+    include/lintel/features/base/controller/ProcessInfoDto.h
+    include/lintel/features/base/controller/ProcessInfosDto.h
+    include/lintel/features/base/controller/SharedMemoryRepositoryDto.h
+    include/lintel/features/base/controller/SharedMemoryRepositoriesDto.h
+    include/lintel/features/base/controller/SharedMemorySegmentDto.h
+    include/lintel/features/base/controller/SharedMemorySegmentsDto.h
+    include/lintel/features/base/controller/UserDto.h
+    include/lintel/features/base/controller/UserGroupDto.h
+    include/lintel/features/base/controller/UserLoginDto.h
+    include/lintel/features/base/controller/UserNameDto.h
+    include/lintel/features/base/controller/UserPasswordChangeDto.h
+    include/lintel/features/base/controller/UserSessionDto.h
+    include/lintel/features/base/controller/UserSessionsDto.h
+    include/lintel/features/base/controller/UserTokenDto.h
     # features - base - models
-    include/base_library/features/base/models/Group.h
-    include/base_library/features/base/models/HistoryEntry.h
-    include/base_library/features/base/models/Process.h
-    include/base_library/features/base/models/ProcessGroup.h
-    include/base_library/features/base/models/ProcessInfo.h
-    include/base_library/features/base/models/ProcessName.h
-    include/base_library/features/base/models/SharedMemorySegmentInfo.h
-    include/base_library/features/base/models/User.h
+    include/lintel/features/base/models/Group.h
+    include/lintel/features/base/models/HistoryEntry.h
+    include/lintel/features/base/models/Process.h
+    include/lintel/features/base/models/ProcessGroup.h
+    include/lintel/features/base/models/ProcessInfo.h
+    include/lintel/features/base/models/ProcessName.h
+    include/lintel/features/base/models/SharedMemorySegmentInfo.h
+    include/lintel/features/base/models/User.h
     # features - base - msg
-    include/base_library/features/base/msg/Message.h
-    include/base_library/features/base/msg/MessageQueue.h
-    include/base_library/features/base/msg/MessageQueueCore.h
-    include/base_library/features/base/msg/MessageQueues.h
+    include/lintel/features/base/msg/Message.h
+    include/lintel/features/base/msg/MessageQueue.h
+    include/lintel/features/base/msg/MessageQueueCore.h
+    include/lintel/features/base/msg/MessageQueues.h
     # features - base - events
-    include/base_library/features/base/events/Event.h
-    include/base_library/features/base/events/EventBus.h
-    include/base_library/features/base/events/BoostSegmentAllocator.h
-    include/base_library/features/base/events/ShmSegmentAccessor.h
+    include/lintel/features/base/events/Event.h
+    include/lintel/features/base/events/EventBus.h
+    include/lintel/features/base/events/BoostSegmentAllocator.h
+    include/lintel/features/base/events/ShmSegmentAccessor.h
     # features - base - provider
-    include/base_library/features/base/provider/GroupProvider.h
+    include/lintel/features/base/provider/GroupProvider.h
     # features - base - repositories
-    include/base_library/features/base/repositories/GroupRepository.h
-    include/base_library/features/base/repositories/HistoryRepository.h
-    include/base_library/features/base/repositories/IMessageQueueRepository.h
-    include/base_library/features/base/repositories/MessageQueueRepository.h
-    include/base_library/features/base/repositories/SharedMemoryRepository.h
-    include/base_library/features/base/repositories/UserRepository.h
+    include/lintel/features/base/repositories/GroupRepository.h
+    include/lintel/features/base/repositories/HistoryRepository.h
+    include/lintel/features/base/repositories/IMessageQueueRepository.h
+    include/lintel/features/base/repositories/MessageQueueRepository.h
+    include/lintel/features/base/repositories/SharedMemoryRepository.h
+    include/lintel/features/base/repositories/UserRepository.h
     # features - base - services
-    include/base_library/features/base/services/AuthService.h
-    include/base_library/features/base/services/ExecutorService.h
-    include/base_library/features/base/services/HistoryService.h
-    include/base_library/features/base/services/IAuthService.h
-    include/base_library/features/base/services/IHistoryService.h
-    include/base_library/features/base/services/InitializeService.h
-    include/base_library/features/base/services/ISharedMemorySegmentManager.h
-    include/base_library/features/base/services/MessageQueueService.h
-    include/base_library/features/base/services/EventBusService.h
-    include/base_library/features/base/services/NoopHistoryService.h
-    include/base_library/features/base/services/ProcessArgumentService.h
-    include/base_library/features/base/services/SchedulerService.h
-    include/base_library/features/base/services/SharedMemorySegmentManager.h
+    include/lintel/features/base/services/AuthService.h
+    include/lintel/features/base/services/ExecutorService.h
+    include/lintel/features/base/services/HistoryService.h
+    include/lintel/features/base/services/IAuthService.h
+    include/lintel/features/base/services/IHistoryService.h
+    include/lintel/features/base/services/InitializeService.h
+    include/lintel/features/base/services/ISharedMemorySegmentManager.h
+    include/lintel/features/base/services/MessageQueueService.h
+    include/lintel/features/base/services/EventBusService.h
+    include/lintel/features/base/services/NoopHistoryService.h
+    include/lintel/features/base/services/ProcessArgumentService.h
+    include/lintel/features/base/services/SchedulerService.h
+    include/lintel/features/base/services/SharedMemorySegmentManager.h
     # features - cli
-    include/base_library/features/cli/CommandLineFeature.h
-    include/base_library/features/cli/CliTypes.h
-    include/base_library/features/cli/models/AbstractCommandLineMenu.h
-    include/base_library/features/cli/models/Command.h
-    include/base_library/features/cli/models/CommandHistoryEntry.h
-    include/base_library/features/cli/models/CommandLineComponent.h
-    include/base_library/features/cli/models/CommandParser.h
-    include/base_library/features/cli/providers/AuthArgumentProvider.h
-    include/base_library/features/cli/services/AuthCliService.h
-    include/base_library/features/cli/services/CommandLineHistoryService.h
-    include/base_library/features/cli/services/CommandLineService.h
-    include/base_library/features/cli/services/IInputService.h
-    include/base_library/features/cli/services/ITerminalService.h
-    include/base_library/features/cli/services/InputService.h
-    include/base_library/features/cli/services/TerminalService.h
-    include/base_library/features/cli/utils/CommandLineUtils.h
-    include/base_library/features/cli/components/HistoryCliComponent.h
-    include/base_library/features/cli/components/MessageQueueCliComponent.h
-    include/base_library/features/cli/components/ProcessCliComponent.h
-    include/base_library/features/cli/components/SharedMemoryCliComponent.h
-    include/base_library/features/cli/components/UserManagementCliComponent.h
+    include/lintel/features/cli/CommandLineFeature.h
+    include/lintel/features/cli/CliTypes.h
+    include/lintel/features/cli/models/AbstractCommandLineMenu.h
+    include/lintel/features/cli/models/Command.h
+    include/lintel/features/cli/models/CommandHistoryEntry.h
+    include/lintel/features/cli/models/CommandLineComponent.h
+    include/lintel/features/cli/models/CommandParser.h
+    include/lintel/features/cli/providers/AuthArgumentProvider.h
+    include/lintel/features/cli/services/AuthCliService.h
+    include/lintel/features/cli/services/CommandLineHistoryService.h
+    include/lintel/features/cli/services/CommandLineService.h
+    include/lintel/features/cli/services/IInputService.h
+    include/lintel/features/cli/services/ITerminalService.h
+    include/lintel/features/cli/services/InputService.h
+    include/lintel/features/cli/services/TerminalService.h
+    include/lintel/features/cli/utils/CommandLineUtils.h
+    include/lintel/features/cli/components/HistoryCliComponent.h
+    include/lintel/features/cli/components/MessageQueueCliComponent.h
+    include/lintel/features/cli/components/ProcessCliComponent.h
+    include/lintel/features/cli/components/SharedMemoryCliComponent.h
+    include/lintel/features/cli/components/UserManagementCliComponent.h
     # features - common
-    include/base_library/features/Feature.h
-    include/base_library/features/Features.h
+    include/lintel/features/Feature.h
+    include/lintel/features/Features.h
     # features - http
-    include/base_library/features/http/HttpFeature.h
-    include/base_library/features/http/ExampleController.h
-    include/base_library/features/http/configuration/ClientConfiguration.h
-    include/base_library/features/http/configuration/HttpComponent.h
-    include/base_library/features/http/configuration/HttpEntry.h
-    include/base_library/features/http/configuration/ServerConfiguration.h
-    include/base_library/features/http/provider/ClientProvider.h
-    include/base_library/features/http/provider/ServerProvider.h
-    include/base_library/features/http/service/Client.h
-    include/base_library/features/http/service/ClientIpResolver.h
-    include/base_library/features/http/service/ContentType.h
-    include/base_library/features/http/service/Controller.h
-    include/base_library/features/http/service/HttpStatusCodes.h
-    include/base_library/features/http/service/HttpBadRequestException.h
-    include/base_library/features/http/service/HttpUnauthorizedException.h
-    include/base_library/features/http/service/HttpClientHelper.h
-    include/base_library/features/http/service/Server.h
-    include/base_library/features/http/controllers/HistoryApi.h
-    include/base_library/features/http/controllers/HistoryController.h
-    include/base_library/features/http/controllers/MessageQueueApi.h
-    include/base_library/features/http/controllers/MessageQueueController.h
-    include/base_library/features/http/controllers/ProcessApi.h
-    include/base_library/features/http/controllers/ProcessController.h
-    include/base_library/features/http/controllers/SharedMemoryApi.h
-    include/base_library/features/http/controllers/SharedMemoryController.h
-    include/base_library/features/http/controllers/UserApi.h
-    include/base_library/features/http/controllers/UserController.h
+    include/lintel/features/http/HttpFeature.h
+    include/lintel/features/http/ExampleController.h
+    include/lintel/features/http/configuration/ClientConfiguration.h
+    include/lintel/features/http/configuration/HttpComponent.h
+    include/lintel/features/http/configuration/HttpEntry.h
+    include/lintel/features/http/configuration/ServerConfiguration.h
+    include/lintel/features/http/provider/ClientProvider.h
+    include/lintel/features/http/provider/ServerProvider.h
+    include/lintel/features/http/service/Client.h
+    include/lintel/features/http/service/ClientIpResolver.h
+    include/lintel/features/http/service/ContentType.h
+    include/lintel/features/http/service/Controller.h
+    include/lintel/features/http/service/HttpStatusCodes.h
+    include/lintel/features/http/service/HttpBadRequestException.h
+    include/lintel/features/http/service/HttpUnauthorizedException.h
+    include/lintel/features/http/service/HttpClientHelper.h
+    include/lintel/features/http/service/Server.h
+    include/lintel/features/http/controllers/HistoryApi.h
+    include/lintel/features/http/controllers/HistoryController.h
+    include/lintel/features/http/controllers/MessageQueueApi.h
+    include/lintel/features/http/controllers/MessageQueueController.h
+    include/lintel/features/http/controllers/ProcessApi.h
+    include/lintel/features/http/controllers/ProcessController.h
+    include/lintel/features/http/controllers/SharedMemoryApi.h
+    include/lintel/features/http/controllers/SharedMemoryController.h
+    include/lintel/features/http/controllers/UserApi.h
+    include/lintel/features/http/controllers/UserController.h
     # features - property
-    include/base_library/features/property/PropertyFeature.h
-    include/base_library/features/property/command_line/PropertyCliComponent.h
-    include/base_library/features/property/configuration/PropertyComponent.h
-    include/base_library/features/property/configuration/PropertyEntry.h
-    include/base_library/features/property/configuration/PropertyRepositoryComponent.h
-    include/base_library/features/property/configuration/PropertyRepositoryEntry.h
-    include/base_library/features/property/controller/PropertiesDto.h
-    include/base_library/features/property/controller/PropertyApi.h
-    include/base_library/features/property/controller/PropertyController.h
-    include/base_library/features/property/controller/PropertyDto.h
-    include/base_library/features/property/controller/PropertyValueDto.h
-    include/base_library/features/property/events/PropertyChange.h
-    include/base_library/features/property/exceptions/PropertyNoRuntimeChangeSupported.h
-    include/base_library/features/property/exceptions/PropertyNotFoundException.h
-    include/base_library/features/property/factories/PropertyFactory.h
-    include/base_library/features/property/models/DataStorage.h
-    include/base_library/features/property/models/Property.h
-    include/base_library/features/property/models/PropertyBase.h
-    include/base_library/features/property/models/PropertyRepositoryType.h
-    include/base_library/features/property/models/PropertyValueStorage.h
-    include/base_library/features/property/repositories/DatabasePropertyRepository.h
-    include/base_library/features/property/repositories/FilePropertyRepository.h
-    include/base_library/features/property/repositories/PropertyRepository.h
-    include/base_library/features/property/repositories/SharedMemoryPropertyRepository.h
-    include/base_library/features/property/services/PropertyService.h
-    include/base_library/features/property/strategies/ConfigSerializationStrategy.h
-    include/base_library/features/property/strategies/XMLConfigSerializationStrategy.h
+    include/lintel/features/property/PropertyFeature.h
+    include/lintel/features/property/command_line/PropertyCliComponent.h
+    include/lintel/features/property/configuration/PropertyComponent.h
+    include/lintel/features/property/configuration/PropertyEntry.h
+    include/lintel/features/property/configuration/PropertyRepositoryComponent.h
+    include/lintel/features/property/configuration/PropertyRepositoryEntry.h
+    include/lintel/features/property/controller/PropertiesDto.h
+    include/lintel/features/property/controller/PropertyApi.h
+    include/lintel/features/property/controller/PropertyController.h
+    include/lintel/features/property/controller/PropertyDto.h
+    include/lintel/features/property/controller/PropertyValueDto.h
+    include/lintel/features/property/events/PropertyChange.h
+    include/lintel/features/property/exceptions/PropertyNoRuntimeChangeSupported.h
+    include/lintel/features/property/exceptions/PropertyNotFoundException.h
+    include/lintel/features/property/factories/PropertyFactory.h
+    include/lintel/features/property/models/DataStorage.h
+    include/lintel/features/property/models/Property.h
+    include/lintel/features/property/models/PropertyBase.h
+    include/lintel/features/property/models/PropertyRepositoryType.h
+    include/lintel/features/property/models/PropertyValueStorage.h
+    include/lintel/features/property/repositories/DatabasePropertyRepository.h
+    include/lintel/features/property/repositories/FilePropertyRepository.h
+    include/lintel/features/property/repositories/PropertyRepository.h
+    include/lintel/features/property/repositories/SharedMemoryPropertyRepository.h
+    include/lintel/features/property/services/PropertyService.h
+    include/lintel/features/property/strategies/ConfigSerializationStrategy.h
+    include/lintel/features/property/strategies/XMLConfigSerializationStrategy.h
 )
 
 set(sources
@@ -508,51 +508,54 @@ set(sources
     features/base/services/EventBusService.cpp
 )
 
-add_library(base_library ${headers} ${sources})
+add_library(lintel ${headers} ${sources})
 # Hypodermic includes: propagated via target_link_libraries for vendored target,
 # explicit variable for find_package fallback
-if (NOT TARGET kruempelmann::Hypodermic)
+if (NOT TARGET lintel::Hypodermic)
     set(HYPODERMIC_INCLUDE_DIRS_VAR ${Hypodermic_INCLUDE_DIRS})
 else ()
     set(HYPODERMIC_INCLUDE_DIRS_VAR "")
 endif ()
 
-target_compile_features(base_library PUBLIC cxx_std_17)
-# Include-Verzeichnisse: alles, was dauerhaft noetig ist, kommt als verlinktes Target aus
-# target_link_libraries() weiter unten. Deshalb stehen hier nur die Include-Pfade, die es
-# wirklich nur zum Bauen braucht (Hypodermic aus find_package, eigene Header). Die
-# *_INCLUDE_DIRS-Variablen zeigen auf den Conan-Cache der Build-Maschine und waeren im
-# installierten Export toter Ballast - genau davor warnt das alte
-# $<INSTALL_INTERFACE:${OpenSSL_INCLUDES};...>. Die Include-Pfade der Abhaengigkeiten
-# kommen stattdessen ueber deren Targets im Consumer-Baum, der Export bleibt relokabel.
-# Das eigene include-Verzeichnis der installierten Bibliothek ist praefix-relativ.
-target_include_directories(base_library
+target_compile_features(lintel PUBLIC cxx_std_17)
+# Include directories: everything needed permanently is passed on as a linked target in
+# target_link_libraries() further down. So only the include paths that are really needed
+# just for building are listed here (Hypodermic from find_package, own headers). The
+# *_INCLUDE_DIRS variables point into the Conan cache of the build machine and would be
+# dead weight in the installed export - exactly what the old
+# $<INSTALL_INTERFACE:${OpenSSL_INCLUDES};...> warns about. The include paths of the
+# dependencies arrive via their targets in the consumer tree instead, which keeps the
+# export relocatable. The include directory of the installed library itself is
+# prefix-relative.
+target_include_directories(lintel
         SYSTEM PUBLIC
         "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${HYPODERMIC_INCLUDE_DIRS_VAR};${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
 )
 
-# magic_enum und rapidjson sind ueber oeffentliche Header Teil der Schnittstelle und werden
-# deshalb als Targets gelinkt (rapidjson ersetzt dabei das vorherige, in Debug geloeste
-# ${rapidjson_LIBRARIES_DEBUG}, das im Release-Export leer war).
-# project_warnings ist ein reines Build-Target des Projekts (CompilerWarnings.cmake). Als
-# PRIVATE verlinkte Abhaengigkeit einer statischen Bibliothek landet es als
-# $<LINK_ONLY:project_warnings> im Export und muesste dort mitexportiert werden. Das
-# $<BUILD_INTERFACE:...> nimmt es aus dem Install-Export heraus, behaelt aber die Flags im
-# Build-Baum - deshalb gehoert project_warnings nicht in den Export.
-target_link_libraries(base_library PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
+# magic_enum and rapidjson are part of the interface through public headers and are
+# therefore linked as targets (rapidjson thereby replaces the previous
+# ${rapidjson_LIBRARIES_DEBUG} that was resolved in Debug only and was empty in the
+# release export).
+# project_warnings is a pure build target of this project (CompilerWarnings.cmake). As a
+# PRIVATE linked dependency of a static library it ends up as $<LINK_ONLY:project_warnings>
+# in the export and would have to be exported along with it. The $<BUILD_INTERFACE:...>
+# removes it from the install export but keeps the flags in the build tree - so
+# project_warnings does not belong into the export.
+target_link_libraries(lintel PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
         Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib rapidjson magic_enum::magic_enum date::date
-        spdlog::spdlog_header_only kruempelmann::Hypodermic Boost::boost Boost::headers Boost::filesystem
+        spdlog::spdlog_header_only lintel::Hypodermic Boost::boost Boost::headers Boost::filesystem
         PRIVATE $<BUILD_INTERFACE:project_warnings>)
 
-# Boost.UUID formatiert UUIDs per SSE2-Intrinsics. Ohne Optimierung (-O0) inlined GCC 13 das Intrinsic
-# _mm_slli_si128 nicht mehr, der Backend-Aufruf mit variablem Shift erzeugt dann aber einen harten Fehler
-# ("the last argument must be an 8-bit immediate"). In Debug-Builds den generischen Boost-Pfad verwenden.
-target_compile_definitions(base_library PRIVATE $<$<CONFIG:Debug>:BOOST_UUID_NO_SIMD>)
+# Boost.UUID formats UUIDs via SSE2 intrinsics. Without optimization (-O0) GCC 13 no longer
+# inlines the _mm_slli_si128 intrinsic, but the backend call with a variable shift then
+# produces a hard error ("the last argument must be an 8-bit immediate"). Use the generic
+# Boost path in debug builds.
+target_compile_definitions(lintel PRIVATE $<$<CONFIG:Debug>:BOOST_UUID_NO_SIMD>)
 
 option(ENABLE_PCH "Enable precompiled headers" ON)
 if(ENABLE_PCH)
-    target_precompile_headers(base_library PRIVATE
+    target_precompile_headers(lintel PRIVATE
         <algorithm>
         <atomic>
         <chrono>
@@ -582,55 +585,55 @@ if(ENABLE_PCH)
     )
 endif()
 
-add_library(kruempelmann::base_library ALIAS base_library)
+add_library(lintel::lintel ALIAS lintel)
 
-# --- Installation und CMake-Paket ------------------------------------------------
-# In diesem Verzeichnis zeigt PROJECT_SOURCE_DIR auf src/ (das project() weiter oben setzt
-# es neu), die Repo-Wurzel liegt eine Ebene hoeher - wie schon bei CONFIG_DIRECTORY oben.
-set(BASE_LIBRARY_SOURCE_ROOT "${PROJECT_SOURCE_DIR}/..")
+# --- Installation and CMake package ---------------------------------------------
+# In this directory PROJECT_SOURCE_DIR points to src/ (the project() call above
+# resets it), the repo root is one level up - same as for CONFIG_DIRECTORY above.
+set(LINTEL_SOURCE_ROOT "${PROJECT_SOURCE_DIR}/..")
 
-# Zielordner aus GNUInstallDirs (im Top-Level eingebunden). Config-, Versions- und
-# Targets-Datei muessen im selben Verzeichnis liegen: base_libraryConfig.cmake laedt die
-# Targets-Datei ueber ${CMAKE_CURRENT_LIST_DIR}, und CMake rechnet relative
-# INSTALL_INTERFACE-Eintraege relativ dazu auf.
-set(BASE_LIBRARY_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/base_library")
-set(BASE_LIBRARY_DOCS_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/doc/base_library")
+# Target folder from GNUInstallDirs (included at top level). Config, version and
+# targets file must live in the same directory: lintelConfig.cmake loads the
+# targets file via ${CMAKE_CURRENT_LIST_DIR}, and CMake resolves relative
+# INSTALL_INTERFACE entries against it.
+set(LINTEL_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/lintel")
+set(LINTEL_DOCS_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/doc/lintel")
 
-# Nur base_library wird exportiert, project_warnings nicht (siehe Kommentar bei
-# target_link_libraries). Das include-Verzeichnis steckt bereits im
-# $<INSTALL_INTERFACE:...> der Include-Verzeichnisse, deshalb hier kein INCLUDES DESTINATION.
-install(TARGETS base_library
-        EXPORT base_library_targets
+# Only lintel is exported, project_warnings is not (see the comment at
+# target_link_libraries). The include directory is already part of the
+# $<INSTALL_INTERFACE:...> of the include directories, so no INCLUDES DESTINATION here.
+install(TARGETS lintel
+        EXPORT lintelTargets
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(DIRECTORY include/base_library
+install(DIRECTORY include/lintel
         DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
-# NAMESPACE kruempelmann:: passt zum Alias, mit dem die Bibliothek im Build-Baum verwendet
-# wird - der importierte Name lautet also kruempelmann::base_library.
-install(EXPORT base_library_targets
-        DESTINATION ${BASE_LIBRARY_CMAKE_INSTALL_DIR}
-        FILE base_libraryTargets.cmake
-        NAMESPACE kruempelmann::)
+# NAMESPACE lintel:: matches the alias the library is used with in the build
+# tree - so the imported name is lintel::lintel.
+install(EXPORT lintelTargets
+        DESTINATION ${LINTEL_CMAKE_INSTALL_DIR}
+        FILE lintelTargets.cmake
+        NAMESPACE lintel::)
 
-# Paketkonfiguration. @PACKAGE_INIT@ in der Vorlage macht sie relokabel, die
-# find_dependency()-Aufrufe fuer die Abhaengigkeiten aus dem oeffentlichen Export stehen
-# ebenfalls dort. Die Versionsdatei muss base_libraryConfigVersion.cmake heissen - nur dann
-# findet find_package(base_library <version>) die Versionsinformation.
+# Package configuration. @PACKAGE_INIT@ in the template makes it relocatable, and the
+# find_dependency() calls for the dependencies from the public export live there as well.
+# The version file has to be named lintelConfigVersion.cmake - only then
+# find_package(lintel <version>) finds the version information.
 configure_package_config_file(
-        ${BASE_LIBRARY_SOURCE_ROOT}/cmake/base_libraryConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/base_libraryConfig.cmake
-        INSTALL_DESTINATION ${BASE_LIBRARY_CMAKE_INSTALL_DIR})
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/base_libraryConfigVersion.cmake
+        ${LINTEL_SOURCE_ROOT}/cmake/lintelConfig.cmake.in
+        ${CMAKE_CURRENT_BINARY_DIR}/lintelConfig.cmake
+        INSTALL_DESTINATION ${LINTEL_CMAKE_INSTALL_DIR})
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/lintelConfigVersion.cmake
         COMPATIBILITY SameMajorVersion)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/base_libraryConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/base_libraryConfigVersion.cmake
-        DESTINATION ${BASE_LIBRARY_CMAKE_INSTALL_DIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lintelConfig.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/lintelConfigVersion.cmake
+        DESTINATION ${LINTEL_CMAKE_INSTALL_DIR})
 
-# Lizenz und Doku gehoeren mit ins Paket - die Lizenzpflicht laeuft sonst nicht mit.
-install(FILES ${BASE_LIBRARY_SOURCE_ROOT}/LICENSE
-        ${BASE_LIBRARY_SOURCE_ROOT}/README.md
-        ${BASE_LIBRARY_SOURCE_ROOT}/swagger.yaml
-        DESTINATION ${BASE_LIBRARY_DOCS_INSTALL_DIR})
+# License and docs belong into the package as well - otherwise the license obligation does not travel with it.
+install(FILES ${LINTEL_SOURCE_ROOT}/LICENSE
+        ${LINTEL_SOURCE_ROOT}/README.md
+        ${LINTEL_SOURCE_ROOT}/swagger.yaml
+        DESTINATION ${LINTEL_DOCS_INSTALL_DIR})

@@ -1,14 +1,14 @@
-#include "base_library/features/http/configuration/HttpComponent.h"
+#include "lintel/features/http/configuration/HttpComponent.h"
 
-#include <base_library/core/utils/TypeName.h>
-#include <base_library/core/utils/StringUtils.h>
-#include <base_library/features/base/configuration/ConfigurationException.h>
+#include <lintel/core/utils/TypeName.h>
+#include <lintel/core/utils/StringUtils.h>
+#include <lintel/features/base/configuration/ConfigurationException.h>
 
 #include <filesystem>
 
 #include <algorithm>
 
-#include "base_library/features/http/configuration/HttpEntry.h"
+#include "lintel/features/http/configuration/HttpEntry.h"
 
 HttpComponent::Shapes HttpComponent::shape{};
 

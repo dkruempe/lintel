@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/LoggerEntry.h"
+#include "lintel/features/base/configuration/LoggerEntry.h"
 
 LoggerEntry::LoggerEntry(
         std::string_view component,

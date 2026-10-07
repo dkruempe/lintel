@@ -1,13 +1,13 @@
-#include "base_library/core/plugins/DatabaseBootstrapPlugin.h"
+#include "lintel/core/plugins/DatabaseBootstrapPlugin.h"
 
-#include <base_library/core/persistence/ConnectionType.h>
+#include <lintel/core/persistence/ConnectionType.h>
 
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/Statement.h"
-#include "base_library/core/persistence/Transaction.h"
-#include "base_library/core/services/FileService.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/StringUtils.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/Statement.h"
+#include "lintel/core/persistence/Transaction.h"
+#include "lintel/core/services/FileService.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/StringUtils.h"
 
 void DatabaseBootstrapPlugin::onStart() {
     for (const auto &connectionEntry: m_connectionConfigurations->allOf()) {

@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 #include <utility>
 

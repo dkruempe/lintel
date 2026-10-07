@@ -1,6 +1,6 @@
 #include <benchmark/benchmark.h>
 
-#include "base_library/core/utils/RegexUtils.h"
+#include "lintel/core/utils/RegexUtils.h"
 
 static void BM_ValidatePattern_Simple(benchmark::State &state) {
     for (auto _ : state) {

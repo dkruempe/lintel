@@ -1,9 +1,9 @@
-#include "base_library/core/persistence/sqlite3/Cursor.h"
+#include "lintel/core/persistence/sqlite3/Cursor.h"
 
 #include <algorithm>
 
-#include "base_library/core/exceptions/SQLException.h"
-#include "base_library/core/persistence/sqlite3/Connection.h"
+#include "lintel/core/exceptions/SQLException.h"
+#include "lintel/core/persistence/sqlite3/Connection.h"
 
 namespace {
     db::Arguments convertRow(sqlite3_stmt *stmt) {

@@ -1,4 +1,4 @@
-#include "base_library/core/persistence/sqlite3/Notify.h"
+#include "lintel/core/persistence/sqlite3/Notify.h"
 
 #include <utility>
 

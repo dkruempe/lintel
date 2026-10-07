@@ -1,4 +1,4 @@
-#include <base_library/core/services/DirectoryService.h>
+#include <lintel/core/services/DirectoryService.h>
 
 DirectoryService::DirectoryService(std::filesystem::path path)
         : m_path(std::move(path)) {}

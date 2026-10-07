@@ -1,4 +1,4 @@
-#include "base_library/core/utils/StringUtils.h"
+#include "lintel/core/utils/StringUtils.h"
 
 #include <boost/algorithm/string/replace.hpp>
 #include <sstream>

@@ -1,14 +1,14 @@
-#include <base_library/core/persistence/Connection.h>
-#include <base_library/core/persistence/DatabaseConnectionConfigurations.h>
-#include <base_library/core/persistence/Statement.h>
-#include <base_library/features/base/configuration/Configuration.h>
-#include <base_library/features/base/configuration/DatabaseConnectionComponent.h>
-#include <base_library/features/base/configuration/DatabaseConnectionEntry.h>
-#include <base_library/features/base/configuration/EnvironmentConfiguration.h>
-#include <base_library/features/base/models/Group.h>
-#include <base_library/features/base/models/User.h>
-#include <base_library/features/base/repositories/GroupRepository.h>
-#include <base_library/features/base/repositories/UserRepository.h>
+#include <lintel/core/persistence/Connection.h>
+#include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
+#include <lintel/core/persistence/Statement.h>
+#include <lintel/features/base/configuration/Configuration.h>
+#include <lintel/features/base/configuration/DatabaseConnectionComponent.h>
+#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
+#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/features/base/models/Group.h>
+#include <lintel/features/base/models/User.h>
+#include <lintel/features/base/repositories/GroupRepository.h>
+#include <lintel/features/base/repositories/UserRepository.h>
 
 #include <catch2/catch_all.hpp>
 

@@ -1,7 +1,7 @@
-#include "base_library/core/services/FileService.h"
+#include "lintel/core/services/FileService.h"
 
-#include "base_library/core/exceptions/FileServiceFileExists.h"
-#include "base_library/core/exceptions/FileServiceIsNotFileException.h"
+#include "lintel/core/exceptions/FileServiceFileExists.h"
+#include "lintel/core/exceptions/FileServiceIsNotFileException.h"
 #include <boost/next_prior.hpp>
 #include <streambuf>
 

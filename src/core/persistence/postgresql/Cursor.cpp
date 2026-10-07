@@ -1,7 +1,7 @@
-#include "base_library/core/persistence/postgresql/Cursor.h"
+#include "lintel/core/persistence/postgresql/Cursor.h"
 
-#include "base_library/core/exceptions/SQLException.h"
-#include "base_library/core/persistence/postgresql/Connection.h"
+#include "lintel/core/exceptions/SQLException.h"
+#include "lintel/core/persistence/postgresql/Connection.h"
 
 namespace {
     db::Arguments convertRow(const PGresult *res) {

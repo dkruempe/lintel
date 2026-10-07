@@ -6,18 +6,18 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#include "base_library/core/models/SharedMemorySegment.h"
-#include "base_library/core/persistence/ConnectionType.h"
-#include "base_library/core/persistence/DatabaseConnectionConfigurations.h"
-#include "base_library/core/plugins/SingleInstanceBootstrapPlugin.h"
-#include "base_library/core/utils/TypeName.h"
-#include "base_library/features/base/configuration/Configuration.h"
-#include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
-#include "base_library/features/base/configuration/EnvironmentConfiguration.h"
-#include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
-#include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
-#include "base_library/features/base/models/ProcessName.h"
+#include "lintel/core/models/SharedMemorySegment.h"
+#include "lintel/core/persistence/ConnectionType.h"
+#include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
+#include "lintel/core/plugins/SingleInstanceBootstrapPlugin.h"
+#include "lintel/core/utils/TypeName.h"
+#include "lintel/features/base/configuration/Configuration.h"
+#include "lintel/features/base/configuration/DatabaseConnectionComponent.h"
+#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
+#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
+#include "lintel/features/base/models/ProcessName.h"
 
 #include <catch2/catch_all.hpp>
 

@@ -1,11 +1,11 @@
-#include "base_library/features/cli/services/CommandLineHistoryService.h"
-#include "base_library/config.h"
-#include "base_library/core/exceptions/FileServiceIsNotFileException.h"
-#include "base_library/core/services/FileService.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/core/utils/StringUtils.h"
+#include "lintel/features/cli/services/CommandLineHistoryService.h"
+#include "lintel/config.h"
+#include "lintel/core/exceptions/FileServiceIsNotFileException.h"
+#include "lintel/core/services/FileService.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/StringUtils.h"
 
-#include "base_library/features/cli/models/CommandHistoryEntry.h"
+#include "lintel/features/cli/models/CommandHistoryEntry.h"
 #include <cstddef>
 #include <filesystem>
 #include <fstream>

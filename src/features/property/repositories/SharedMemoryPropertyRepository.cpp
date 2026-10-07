@@ -1,6 +1,6 @@
-#include "base_library/features/property/repositories/SharedMemoryPropertyRepository.h"
+#include "lintel/features/property/repositories/SharedMemoryPropertyRepository.h"
 
-#include <base_library/features/property/models/PropertyRepositoryType.h>
+#include <lintel/features/property/models/PropertyRepositoryType.h>
 
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
@@ -8,7 +8,7 @@
 #include <boost/interprocess/sync/sharable_lock.hpp>
 #include <regex>
 
-#include "base_library/features/property/factories/PropertyFactory.h"
+#include "lintel/features/property/factories/PropertyFactory.h"
 
 PropertyDataDao::Shapes PropertyDataDao::m_shape{};
 
@@ -100,11 +100,11 @@ SharedMemoryPropertyRepository::awake() {
 }
 
 std::vector<std::shared_ptr<PropertyBase>>
-  // Vier gleich typisierte Parameter sind Teil der reinen
-  // PropertyRepository-Schnittstelle; die Reihenfolge entspricht der
-  // Prozess/Property-Hierarchie und wird von allen Implementierungen und
-  // Aufrufern geteilt. Eine Aenderung waere ein Breaking Change der Schnittstelle.
-  // clang-format erwartet hier keinen Umbruch, deshalb NOLINT statt Umbruch.
+  // four identically typed parameters are part of the pure
+  // PropertyRepository interface; the order follows the
+  // process/property hierarchy and is shared by all implementations and
+  // callers. A change would be a breaking change of the interface.
+  // clang-format does not expect a line break here, hence NOLINT instead of a break.
   // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 SharedMemoryPropertyRepository::allOf(const std::string &processName,
                                       const std::string &className,
@@ -166,12 +166,12 @@ void SharedMemoryPropertyRepository::deleteOf(
 }
 
 /**
- * Bewusstes No-Op: es gibt nichts zu migrieren. SharedMemoryBootstrapPlugin
- * vergleicht in onStart() ausschliesslich currentVersion und currentDataSize und
- * wirft bei einer Abweichung. Es gibt keinen Aufrufer von onMigrate() im Repo
- * (src/ und tests/), m_version bleibt konstant 0 und getSize() unveraendert.
- * Die Methode bleibt als Implementierung des reinen Interfaces OnMigrate.
- * @param currentActiveVersion im Shared Memory hinterlegte Version, ungenutzt
+ * Deliberate no-op: there is nothing to migrate. SharedMemoryBootstrapPlugin
+ * compares only currentVersion and currentDataSize in onStart() and throws on
+ * a mismatch. There is no caller of onMigrate() in the repo
+ * (src/ and tests/), m_version stays constant at 0 and getSize() unchanged.
+ * The method is kept as the implementation of the pure interface OnMigrate.
+ * @param currentActiveVersion version stored in the Shared Memory, unused
  */
 void SharedMemoryPropertyRepository::onMigrate(int32_t currentActiveVersion) {}
 

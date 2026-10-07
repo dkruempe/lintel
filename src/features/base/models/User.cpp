@@ -1,4 +1,4 @@
-#include "base_library/features/base/models/User.h"
+#include "lintel/features/base/models/User.h"
 
 #include <utility>
 

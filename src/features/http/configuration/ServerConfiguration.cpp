@@ -1,4 +1,4 @@
-#include "base_library/features/http/configuration/ServerConfiguration.h"
+#include "lintel/features/http/configuration/ServerConfiguration.h"
 
 ServerConfiguration::ServerConfiguration(
         std::string host, const int32_t port,

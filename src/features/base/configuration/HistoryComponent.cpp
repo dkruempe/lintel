@@ -1,12 +1,12 @@
-#include "base_library/features/base/configuration/HistoryComponent.h"
+#include "lintel/features/base/configuration/HistoryComponent.h"
 
 #include <cstring>
 
-#include <base_library/core/utils/TypeName.h>
+#include <lintel/core/utils/TypeName.h>
 #include <tinyxml2.h>
 
-#include "base_library/features/base/configuration/ConfigurationException.h"
-#include "base_library/features/base/configuration/HistoryServiceEntry.h"
+#include "lintel/features/base/configuration/ConfigurationException.h"
+#include "lintel/features/base/configuration/HistoryServiceEntry.h"
 
 const HistoryComponent::Shapes HistoryComponent::shape{};
 

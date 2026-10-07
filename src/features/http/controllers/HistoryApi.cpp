@@ -1,12 +1,12 @@
 #include <httplib.h>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/http/controllers/HistoryApi.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/http/controllers/HistoryApi.h"
 
-#include "base_library/features/base/controller/HistoryDtos.h"
-#include "base_library/features/http/service/HttpClientHelper.h"
-#include "base_library/features/http/service/HttpStatusCodes.h"
-#include "base_library/features/http/service/HttpUnauthorizedException.h"
+#include "lintel/features/base/controller/HistoryDtos.h"
+#include "lintel/features/http/service/HttpClientHelper.h"
+#include "lintel/features/http/service/HttpStatusCodes.h"
+#include "lintel/features/http/service/HttpUnauthorizedException.h"
 
 HistoryApi::HistoryApi(const std::shared_ptr<ClientProvider> &clientProvicer)
         : m_client(clientProvicer->provide()) {

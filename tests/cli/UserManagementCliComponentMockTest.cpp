@@ -5,7 +5,7 @@
 #include <sstream>
 
 #include "../mocks/MockUserApi.h"
-#include "base_library/features/cli/components/UserManagementCliComponent.h"
+#include "lintel/features/cli/components/UserManagementCliComponent.h"
 
 using namespace trompeloeil;
 

@@ -4,9 +4,9 @@
 #include <memory>
 #include <string>
 
-#include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/base/msg/Message.h"
-#include "base_library/features/base/msg/MessageQueue.h"
+#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/features/base/msg/Message.h"
+#include "lintel/features/base/msg/MessageQueue.h"
 
 namespace {
     std::string uniqueQueueName() {

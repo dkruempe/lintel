@@ -1,12 +1,12 @@
-#include "base_library/features/base/services/MessageQueueService.h"
+#include "lintel/features/base/services/MessageQueueService.h"
 
-#include "base_library/features/base/configuration/MessageQueueComponent.h"
-#include "base_library/features/base/configuration/MessageQueueEntry.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/msg/MessageQueue.h"
-#include "base_library/features/base/repositories/MessageQueueRepository.h"
-#include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/base/configuration/Configuration.h"
+#include "lintel/features/base/configuration/MessageQueueComponent.h"
+#include "lintel/features/base/configuration/MessageQueueEntry.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/msg/MessageQueue.h"
+#include "lintel/features/base/repositories/MessageQueueRepository.h"
+#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/features/base/configuration/Configuration.h"
 #include <map>
 #include <memory>
 #include <utility>

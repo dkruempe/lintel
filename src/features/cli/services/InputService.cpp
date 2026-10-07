@@ -1,6 +1,6 @@
-#include "base_library/features/cli/services/InputService.h"
+#include "lintel/features/cli/services/InputService.h"
 
-#include "base_library/features/cli/CliTypes.h"
+#include "lintel/features/cli/CliTypes.h"
 
 #include <csignal>
 #include <cstdlib>
@@ -10,7 +10,7 @@
 #include <iostream>
 #include <utility>
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 namespace {
     termios g_originalTermios{};

@@ -4,12 +4,12 @@
 #include <filesystem>
 #include <string>
 
-#include "base_library/config.h"
-#include "base_library/core/services/StringifyService.h"
-#include "base_library/features/base/models/ProcessName.h"
-#include "base_library/features/cli/models/CommandHistoryEntry.h"
-#include "base_library/features/cli/services/CommandLineHistoryService.h"
-#include "base_library/features/property/models/Property.h"
+#include "lintel/config.h"
+#include "lintel/core/services/StringifyService.h"
+#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/features/cli/models/CommandHistoryEntry.h"
+#include "lintel/features/cli/services/CommandLineHistoryService.h"
+#include "lintel/features/property/models/Property.h"
 
 namespace {
 

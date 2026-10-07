@@ -1,4 +1,4 @@
-#include "base_library/core/persistence/sqlite3/Result.h"
+#include "lintel/core/persistence/sqlite3/Result.h"
 
 namespace sqlite {
     std::string Result::getValue(int row, int attribute) {

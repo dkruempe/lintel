@@ -1,5 +1,5 @@
-#include <base_library/core/services/PropertyRegistration.h>
-#include <base_library/features/property/services/PropertyService.h>
+#include <lintel/core/services/PropertyRegistration.h>
+#include <lintel/features/property/services/PropertyService.h>
 
 #include <catch2/catch_all.hpp>
 
@@ -34,7 +34,7 @@ public:
         LOAD_PROPERTIES();
     }
 
-    DEFINE_PROPERTY(string, std::string, "Ich bin eine Test Property", "", true);
+    DEFINE_PROPERTY(string, std::string, "I am a test property", "", true);
     DEFINE_PROPERTY(enable, bool, false, "", true);
 };
 

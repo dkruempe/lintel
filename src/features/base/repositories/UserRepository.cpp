@@ -1,4 +1,4 @@
-#include "base_library/features/base/repositories/UserRepository.h"
+#include "lintel/features/base/repositories/UserRepository.h"
 
 #include <date/date.h>
 
@@ -7,11 +7,11 @@
 #include <exception>
 #include <utility>
 
-#include "base_library/core/persistence/Connection.h"
-#include "base_library/core/persistence/PreparedStatement.h"
-#include "base_library/core/persistence/Statement.h"
-#include "base_library/core/persistence/Transaction.h"
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/Statement.h"
+#include "lintel/core/persistence/Transaction.h"
+#include "lintel/core/services/LoggerService.h"
 
 namespace {
 

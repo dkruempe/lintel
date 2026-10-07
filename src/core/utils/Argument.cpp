@@ -1,8 +1,8 @@
-#include "base_library/core/utils/Argument.h"
+#include "lintel/core/utils/Argument.h"
 
 #include <sstream>
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 const std::vector<Argument> &ArgumentProvider::provide() const {
     return m_arguments;

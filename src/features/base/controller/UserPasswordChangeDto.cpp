@@ -1,8 +1,8 @@
-#include "base_library/features/base/controller/UserPasswordChangeDto.h"
+#include "lintel/features/base/controller/UserPasswordChangeDto.h"
 
 #include <utility>
 
-#include "base_library/core/services/LoggerService.h"
+#include "lintel/core/services/LoggerService.h"
 
 UserPasswordChangeDto::Shapes UserPasswordChangeDto::shape{};
 

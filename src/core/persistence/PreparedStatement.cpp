@@ -1,7 +1,7 @@
-#include "base_library/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/PreparedStatement.h"
 
-#include "base_library/core/persistence/Result.h"
-#include "base_library/core/persistence/postgresql/PreparedStatement.h"
+#include "lintel/core/persistence/Result.h"
+#include "lintel/core/persistence/postgresql/PreparedStatement.h"
 
 namespace db {
     PreparedStatement::PreparedStatement(const Connection &connection,

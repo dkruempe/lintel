@@ -1,15 +1,15 @@
-#include "base_library/features/base/configuration/DatabaseConnectionComponent.h"
+#include "lintel/features/base/configuration/DatabaseConnectionComponent.h"
 
-#include <base_library/core/persistence/Connection.h>
+#include <lintel/core/persistence/Connection.h>
 #include <tinyxml2.h>
 
 #include <iostream>
 #include <memory>
 
-#include "base_library/core/persistence/ConnectionType.h"
-#include "base_library/core/utils/TypeName.h"
-#include "base_library/features/base/configuration/ConfigurationException.h"
-#include "base_library/features/base/configuration/DatabaseConnectionEntry.h"
+#include "lintel/core/persistence/ConnectionType.h"
+#include "lintel/core/utils/TypeName.h"
+#include "lintel/features/base/configuration/ConfigurationException.h"
+#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 const DatabaseConnectionComponent::Shapes DatabaseConnectionComponent::shape{};
 

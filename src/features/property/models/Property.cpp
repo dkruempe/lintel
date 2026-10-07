@@ -1,4 +1,4 @@
-#include "base_library/features/property/models/Property.h"
+#include "lintel/features/property/models/Property.h"
 
 template class Property<int8_t>;
 template class Property<int16_t>;

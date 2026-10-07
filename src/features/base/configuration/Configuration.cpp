@@ -1,13 +1,13 @@
-#include "base_library/features/base/configuration/Configuration.h"
+#include "lintel/features/base/configuration/Configuration.h"
 
 #include <tinyxml2.h>
 
 #include <algorithm>
 #include <utility>
 
-#include "base_library/config.h"
-#include "base_library/core/services/FileService.h"
-#include "base_library/features/base/configuration/ConfigurationException.h"
+#include "lintel/config.h"
+#include "lintel/core/services/FileService.h"
+#include "lintel/features/base/configuration/ConfigurationException.h"
 
 Configuration::Configuration(
         const std::vector<std::shared_ptr<Component>> &components,

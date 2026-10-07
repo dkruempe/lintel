@@ -1,4 +1,4 @@
-#include "base_library/features/base/configuration/ProcessEntry.h"
+#include "lintel/features/base/configuration/ProcessEntry.h"
 
 ProcessEntry::ProcessEntry(std::string_view component,
                            std::shared_ptr<Process> process)

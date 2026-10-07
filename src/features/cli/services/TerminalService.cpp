@@ -1,4 +1,4 @@
-#include "base_library/features/cli/services/TerminalService.h"
+#include "lintel/features/cli/services/TerminalService.h"
 
 #include <iostream>
 

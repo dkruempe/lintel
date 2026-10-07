@@ -1,4 +1,4 @@
-#include "base_library/features/property/controller/PropertiesDto.h"
+#include "lintel/features/property/controller/PropertiesDto.h"
 #include <algorithm>
 #include <rapidjson/document.h>
 

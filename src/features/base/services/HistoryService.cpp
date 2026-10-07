@@ -1,6 +1,6 @@
-#include "base_library/features/base/services/HistoryService.h"
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/msg/MessageQueues.h"
+#include "lintel/features/base/services/HistoryService.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/msg/MessageQueues.h"
 
 #include <algorithm>
 

@@ -1,4 +1,4 @@
-#include "base_library/core/plugins/SingleInstanceBootstrapPlugin.h"
+#include "lintel/core/plugins/SingleInstanceBootstrapPlugin.h"
 
 #include <boost/interprocess/exceptions.hpp>
 #include <boost/interprocess/sync/file_lock.hpp>
@@ -7,9 +7,9 @@
 #include <fstream>
 #include <stdexcept>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/base/configuration/SharedMemorySegmentComponent.h"
-#include "base_library/features/base/configuration/SharedMemorySegmentEntry.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
+#include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
 
 /** Operating system file lock of the single instance plugin. */
 class SingleInstanceBootstrapPlugin::Lock {

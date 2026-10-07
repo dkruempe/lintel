@@ -1,9 +1,9 @@
-#ifndef CPP_BASE_LIBRARY_MOCKSHAREDMEMORYSEGMENTMANAGER_H
-#define CPP_BASE_LIBRARY_MOCKSHAREDMEMORYSEGMENTMANAGER_H
+#ifndef LINTEL_MOCKSHAREDMEMORYSEGMENTMANAGER_H
+#define LINTEL_MOCKSHAREDMEMORYSEGMENTMANAGER_H
 
 #include <catch2/trompeloeil.hpp>
 
-#include "base_library/features/base/services/ISharedMemorySegmentManager.h"
+#include "lintel/features/base/services/ISharedMemorySegmentManager.h"
 
 class MockSharedMemorySegmentManager : public ISharedMemorySegmentManager {
 public:

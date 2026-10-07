@@ -13,7 +13,7 @@ target_compile_features(Hypodermic INTERFACE cxx_std_11)
 target_include_directories(Hypodermic SYSTEM INTERFACE
         "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
         "$<INSTALL_INTERFACE:include>")
-add_library(kruempelmann::Hypodermic ALIAS Hypodermic)
+add_library(lintel::Hypodermic ALIAS Hypodermic)
 INSTALL(TARGETS Hypodermic
         EXPORT Hypodermic_targets
         LIBRARY DESTINATION lib
@@ -23,7 +23,7 @@ INSTALL(TARGETS Hypodermic
 INSTALL(EXPORT Hypodermic_targets
         DESTINATION lib/cmake/Hypodermic
         FILE Hypodermic_targets.cmake
-        NAMESPACE kruempelmann::)
+        NAMESPACE lintel::)
 INSTALL(DIRECTORY include/Hypodermic
         DESTINATION include)
 

@@ -1,13 +1,13 @@
-#include "base_library/features/http/service/Server.h"
+#include "lintel/features/http/service/Server.h"
 
 #include <httplib.h>
 
 #include <stdexcept>
 
-#include "base_library/core/services/LoggerService.h"
-#include "base_library/features/http/service/ContentType.h"
-#include "base_library/features/http/service/Controller.h"
-#include "base_library/features/http/service/HttpStatusCodes.h"
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/http/service/ContentType.h"
+#include "lintel/features/http/service/Controller.h"
+#include "lintel/features/http/service/HttpStatusCodes.h"
 
 namespace {
 /** Body of the liveness (health) response */

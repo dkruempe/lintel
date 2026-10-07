@@ -1,8 +1,8 @@
-#include <base_library/core/exceptions/SQLException.h>
-#include <base_library/core/persistence/Arguments.h>
-#include <base_library/core/persistence/Connection.h>
-#include <base_library/core/persistence/Cursor.h>
-#include <base_library/core/persistence/Statement.h>
+#include <lintel/core/exceptions/SQLException.h>
+#include <lintel/core/persistence/Arguments.h>
+#include <lintel/core/persistence/Connection.h>
+#include <lintel/core/persistence/Cursor.h>
+#include <lintel/core/persistence/Statement.h>
 
 #include <catch2/catch_all.hpp>
 
