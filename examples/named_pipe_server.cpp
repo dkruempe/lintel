@@ -129,6 +129,13 @@ private:
    */
   void open()
   {
+    // codeql[cpp/path-injection] The path is argv[1], i.e. the caller's own
+    // choice, and this is an example rather than a privileged service. The taint
+    // is real but the impact is the caller attacking themselves. The two
+    // measures that do matter are in place: O_NOFOLLOW above, so a planted
+    // symlink cannot redirect the open() to another file, and 0600 on mkfifo
+    // above, so no other local user can reach the pipe. The rule has no
+    // sanitizer for O_NOFOLLOW, so it keeps reporting the taint regardless.
     m_pipe_fd = ::open(m_path.c_str(), O_RDWR | O_NONBLOCK | O_NOFOLLOW);
     if (m_pipe_fd < 0) { throw std::system_error(errno, std::system_category(), "Failed to open named pipe"); }
   }

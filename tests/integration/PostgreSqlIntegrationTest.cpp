@@ -141,12 +141,15 @@ private:
   std::string m_name;
 };
 
-/** Table name unique to this process, so parallel ctest runs cannot collide. */
-std::string uniqueTableName()
-{
-  static int counter = 0;
-  return "pg_test_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
-}
+/**
+ * Table name unique to this process, so parallel ctest runs cannot collide.
+ *
+ * ctest starts every TEST_CASE in its own process (catch_discover_tests), and
+ * every test case creates at most one table, so the pid alone is unique enough.
+ * An earlier version added a static counter on top; it was dead weight and was
+ * additionally reported as an unused static variable.
+ */
+std::string uniqueTableName() { return "pg_test_" + std::to_string(::getpid()); }
 
 std::shared_ptr<DatabaseConnectionEntry> pgEntry()
 {
@@ -232,9 +235,11 @@ TEST_CASE("PostgreSQL: server-side cursor streams rows in batches", "[pg]")
   REQUIRE(secondBatch.size() == 10);
   REQUIRE(secondBatch[0].of(1).getValue() == "10");
 
+  // Index the vector directly rather than only its size: a use that only reads
+  // .size() leaves the binding itself unreferenced for cpp/unused-local-variable.
   const auto lastBatch = cursor.fetchNext(10);
   REQUIRE(lastBatch.size() == 5);
-  REQUIRE(lastBatch[4].of(1).getValue() == "24");
+  REQUIRE(lastBatch.at(4).of(1).getValue() == "24");
 
   // Exhausted: another fetch yields nothing rather than repeating rows.
   REQUIRE(cursor.fetchNext(10).empty());
