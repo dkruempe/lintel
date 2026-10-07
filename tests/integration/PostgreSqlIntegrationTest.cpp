@@ -237,11 +237,9 @@ TEST_CASE("PostgreSQL: server-side cursor streams rows in batches", "[pg]")
   REQUIRE(secondBatch.size() == 10);
   REQUIRE(secondBatch[0].of(1).getValue() == "10");
 
-  // Index the vector directly rather than only its size: a use that only reads
-  // .size() leaves the binding itself unreferenced for cpp/unused-local-variable.
-  const auto lastBatch = cursor.fetchNext(10);
-  REQUIRE(lastBatch.size() == 5);
-  REQUIRE(lastBatch.at(4).of(1).getValue() == "24");
+  const auto finalBatch = cursor.fetchNext(10);
+  REQUIRE(finalBatch.size() == 5);
+  REQUIRE(finalBatch[4].of(1).getValue() == "24");
 
   // Exhausted: another fetch yields nothing rather than repeating rows.
   REQUIRE(cursor.fetchNext(10).empty());

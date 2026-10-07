@@ -82,6 +82,18 @@ That is why `benchmarks/` is in `paths-ignore` rather than dismissed per alert:
 dismissing ~30 alerts on every run is work that never finishes. The same applies
 to `build/`.
 
+### Open alerts are a lagging indicator
+
+`paths-ignore` takes effect for the alerts of the *next* run. The existing
+alerts keep their `open` state - nothing re-triages them. So after adding an
+exclusion, the count only falls once a run has completed against the new config,
+and until then the old findings are still listed.
+
+That is also true in the other direction: an alert dismissed today is re-created
+by the next run, because dismissal is per-commit. An alert that keeps
+reappearing is a signal to fix the *category* - a `paths-ignore` entry or a
+source-level `// codeql[...]` suppression - not to dismiss it again.
+
 ## Known false-positive classes
 
 These recur and are safe to dismiss with a short comment, provided the line
@@ -118,7 +130,7 @@ the section above.
 |---|---|---|
 | Before `manual` (`build-mode: none` only) | 33 | 1 high, 32 note - mostly phantom coordinates |
 | After the first `manual` run | 300 | 285 `unused-static-function` (Catch2), 90 `include-non-header` (generated `build/**` files), 1 high, 14 note |
-| After triage | 0 findings | - |
+| After triage | 0 real findings | - |
 
 Two things worth reading off this table.
 
@@ -140,6 +152,9 @@ the config used a `paths` key, which does not restrict what CodeQL scans. The
 Excluded directories are not dismissed alert by alert: they are simply not
 scanned, which is the point of `paths-ignore`. Dismissing each one would recreate
 exactly the background noise the setting avoids.
+
+The one real finding of the whole batch was
+`cpp/path-injection` in `examples/named_pipe_server.cpp` — see below.
 
 ## Reproducing the analysis locally
 
