@@ -200,7 +200,7 @@ void ProcessCliComponent::printCommandList(std::set<std::string> menuAlias)
 
 void ProcessCliComponent::onShowMenu() { std::cout << "No subMenu available\n"; }
 
-bool ProcessCliComponent::onMenu(const std::string & /*component*/) { return true; }
+bool ProcessCliComponent::onMenu(const std::string & /*component*/) { return false; }
 
 void ProcessCliComponent::onHelp() { m_commandParser.printHelp(getName(), getAlias(), m_description); }
 

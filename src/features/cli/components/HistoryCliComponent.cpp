@@ -53,7 +53,7 @@ void HistoryCliComponent::onHelp() {
 
 
 bool HistoryCliComponent::onMenu(const std::string &component) {
-    return true;
+    return false;
 }
 
 void HistoryCliComponent::onShowMenu() {

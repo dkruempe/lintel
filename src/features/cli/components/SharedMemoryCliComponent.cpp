@@ -178,7 +178,7 @@ void SharedMemoryCliComponent::onShowMenu() {
 }
 
 bool SharedMemoryCliComponent::onMenu(const std::string & /*component*/) {
-    return true;
+    return false;
 }
 
 void SharedMemoryCliComponent::onHelp() {

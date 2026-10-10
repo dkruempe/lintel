@@ -46,7 +46,7 @@ void MessageQueueCliComponent::printMessageQueues(const std::vector<MessageQueue
 
 void MessageQueueCliComponent::onHelp() { m_commandParser.printHelp(getName(), getAlias(), m_description); }
 
-bool MessageQueueCliComponent::onMenu(const std::string &component) { return true; }
+bool MessageQueueCliComponent::onMenu(const std::string &component) { return false; }
 
 void MessageQueueCliComponent::onShowMenu() { std::cout << "No submenu available!\n"; }
 

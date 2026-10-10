@@ -204,10 +204,10 @@ void UserManagementCliComponent::onHelp() {
     m_commandParser.printHelp(getName(), getAlias(), m_description);
 }
 
-void UserManagementCliComponent::onShowMenu() {}
+void UserManagementCliComponent::onShowMenu() { std::cout << "No submenu available!\n"; }
 
 bool UserManagementCliComponent::onMenu(const std::string &component) {
-    return true;
+    return false;
 }
 
 bool UserManagementCliComponent::onExit() { return true; }
