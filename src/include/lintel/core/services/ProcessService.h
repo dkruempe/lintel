@@ -21,11 +21,18 @@
 #include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/services/IHistoryService.h"
 
+#include <boost/process/v1/detail/config.hpp>
+
+// boost::process::v1 is an inline namespace only for BOOST_PROCESS_VERSION == 1 and a plain nested
+// namespace otherwise - see BOOST_PROCESS_V1_INLINE in boost/process/v1/detail/config.hpp. A
+// hardcoded "inline" here therefore only compiles while this header happens to be seen before any
+// boost/process header; the reverse order (which every consumer that spawns a process itself will
+// have) fails with "inline namespace must be specified at initial definition". config.hpp is the
+// cheap header that defines the macro, so forward declaring through it keeps the child type
+// incomplete - no boost/process/child.hpp in every translation unit that sees ProcessService.h.
 namespace boost::process {
-inline namespace v1 {
-class child;
-}
-}
+BOOST_PROCESS_V1_INLINE namespace v1 { class child; }
+}// namespace boost::process
 
 /** Service for managing process execution, monitoring, and process groups. */
 class ProcessService : public PropertyRegistration<ProcessService>
