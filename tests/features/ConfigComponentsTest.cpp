@@ -18,8 +18,10 @@
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 
+#include <cstdio>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <sstream>
 
 TEST_CASE("LoggerComponent: parse Logger with ConsoleSink")
@@ -139,6 +141,54 @@ TEST_CASE("LoggerComponent: parse Path")
 
   auto pathConfig = loggerEntry->getLoggerPathConfiguration();
   REQUIRE(pathConfig->isCreateSubDirectories());
+}
+
+// An empty path attribute is rejected instead of being accepted as "current directory". Accepting
+// it would hand every process the very same log directory.
+TEST_CASE("LoggerComponent: throw on empty Path path attribute")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  ScopedEnvironmentVariable home{ "HOME", "/tmp" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+
+  LoggerComponent component(envConfig);
+
+  std::string xml = R"(<Loggers>
+        <Path path="" create_sub_dirs="true"/>
+    </Loggers>)";
+
+  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_WITH(
+    component.parse(xml, "test.xml", 0), Catch::Matchers::ContainsSubstring("path is empty or is not a directory"));
+}
+
+// Second half of the same guard: an existing path that is not a directory is rejected as well.
+TEST_CASE("LoggerComponent: throw when Path is a regular file")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  ScopedEnvironmentVariable home{ "HOME", "/tmp" };
+  static int counter = 0;
+  const std::filesystem::path logFile =
+    std::filesystem::temp_directory_path() / ("logger_path_not_a_dir_" + std::to_string(counter++) + ".log");
+  {
+    std::ofstream file(logFile);
+    REQUIRE(file.good());
+  }
+
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+
+  LoggerComponent component(envConfig);
+
+  std::string xml = R"(<Loggers>
+        <Path path=")"
+                    + logFile.string() + R"(" create_sub_dirs="false"/>
+    </Loggers>)";
+
+  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_WITH(
+    component.parse(xml, "test.xml", 0), Catch::Matchers::ContainsSubstring("path is empty or is not a directory"));
+
+  std::remove(logFile.c_str());
 }
 
 TEST_CASE("LoggerComponent: parse empty child returns empty")
@@ -529,4 +579,27 @@ TEST_CASE("EventBusComponent: throw on missing segment")
         <EventBus name="main"/>
     </EventBuses>)";
   REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+}
+
+// overrides(Path, "") is a no-op on purpose: splitting an empty PATH would drop the whole search
+// path, so every later pathOf() lookup would silently fail to find anything.
+TEST_CASE("EnvironmentConfiguration: empty Path override is ignored")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  ScopedEnvironmentVariable path{ "PATH", "/tmp/env_path_one:/tmp/env_path_two" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  REQUIRE(envConfig->pathsOf().size() == 2);
+
+  envConfig->overrides(EnvironmentConfiguration::Environment::Path, "");
+
+  REQUIRE(envConfig->pathsOf().size() == 2);
+  REQUIRE(envConfig->pathsOf()[0] == "/tmp/env_path_one");
+  REQUIRE(envConfig->pathsOf()[1] == "/tmp/env_path_two");
+  REQUIRE(envConfig->of(EnvironmentConfiguration::Environment::Path) == "/tmp/env_path_one:/tmp/env_path_two");
+
+  // A non-empty value still replaces the search path, so the case above is not a general no-op.
+  envConfig->overrides(EnvironmentConfiguration::Environment::Path, "/tmp/env_path_three");
+  REQUIRE(envConfig->pathsOf().size() == 1);
+  REQUIRE(envConfig->pathsOf()[0] == "/tmp/env_path_three");
+  REQUIRE(envConfig->of(EnvironmentConfiguration::Environment::Path) == "/tmp/env_path_three");
 }

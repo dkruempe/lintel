@@ -14,9 +14,19 @@ TEST_CASE("Controller: ExampleController can be constructed with mock AuthServic
     REQUIRE_NOTHROW(ExampleController(mockAuth));
 }
 
-TEST_CASE("Controller: can construct ExampleController with mock AuthService") {
-    auto mockAuth = std::make_shared<MockAuthService>();
-    ExampleController controller(mockAuth);
+// Construction only wires the handler; the auth service is consulted once a request is dispatched.
+// Asserting that keeps this case apart from the nothrow check above and stops it from degenerating
+// into an assertion-free smoke test.
+TEST_CASE("Controller: can construct ExampleController with mock AuthService")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  int authCalls = 0;
+  ALLOW_CALL(*mockAuth, onAccessOf(_)).LR_RETURN(std::nullopt).LR_SIDE_EFFECT(++authCalls);
+  ALLOW_CALL(*mockAuth, onLoginOf(_)).LR_RETURN(std::nullopt).LR_SIDE_EFFECT(++authCalls);
+
+  ExampleController controller(mockAuth);
+
+  REQUIRE(authCalls == 0);
 }
 
 namespace {

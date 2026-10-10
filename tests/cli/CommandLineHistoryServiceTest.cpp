@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <string>
 
+#include <unistd.h>
+
 #include "lintel/config.h"
 #include "lintel/core/services/StringifyService.h"
 #include "lintel/features/base/models/ProcessName.h"
@@ -13,7 +15,11 @@
 
 namespace {
 
-const char *const TEST_HISTORY_FILE = ".commandline_history_test.history";
+// catch_discover_tests gives every test case its own process, so the history file name must carry the
+// PID: a fixed name would let concurrently running cases overwrite and delete each other's history.
+std::string historyFileName() { return ".commandline_history_test_" + std::to_string(::getpid()) + ".history"; }
+
+std::filesystem::path historyFilePath() { return std::filesystem::path(CONFIG_DIRECTORY) / historyFileName(); }
 
 // date::sys_time<Duration> is defined as std::chrono::time_point<std::chrono::system_clock, Duration>;
 // spelling it out keeps this helper free of the third-party namespace.
@@ -29,11 +35,11 @@ MicrosecondSysTime now()
 struct HistoryFileCleanup {
     HistoryFileCleanup()
     {
-        std::filesystem::remove(std::filesystem::path(CONFIG_DIRECTORY) / TEST_HISTORY_FILE);
+        std::filesystem::remove(historyFilePath());
     }
     ~HistoryFileCleanup()
     {
-        std::filesystem::remove(std::filesystem::path(CONFIG_DIRECTORY) / TEST_HISTORY_FILE);
+        std::filesystem::remove(historyFilePath());
     }
 } g_historyFileCleanup;
 
@@ -68,7 +74,7 @@ TEST_CASE("CommandLineHistoryService: previousOf returns newest first and clamps
 {
     auto processName = std::make_shared<ProcessName>("test-process");
     TestCommandLineHistoryService service(processName);
-    service.setHistoryFileName(TEST_HISTORY_FILE);
+    service.setHistoryFileName(historyFileName());
 
     service.addEntries({"cmd1", "cmd2", "cmd3"}, "Root");
 
@@ -83,7 +89,7 @@ TEST_CASE("CommandLineHistoryService: nextOf returns oldest first and clamps at 
 {
     auto processName = std::make_shared<ProcessName>("test-process");
     TestCommandLineHistoryService service(processName);
-    service.setHistoryFileName(TEST_HISTORY_FILE);
+    service.setHistoryFileName(historyFileName());
 
     service.addEntries({"cmd1", "cmd2", "cmd3"}, "Root");
 
@@ -98,7 +104,7 @@ TEST_CASE("CommandLineHistoryService: down past the end then up must not access 
 {
     auto processName = std::make_shared<ProcessName>("test-process");
     TestCommandLineHistoryService service(processName);
-    service.setHistoryFileName(TEST_HISTORY_FILE);
+    service.setHistoryFileName(historyFileName());
 
     service.addEntries({"cmd1", "cmd2", "cmd3"}, "Root");
 
@@ -111,15 +117,13 @@ TEST_CASE("CommandLineHistoryService: down past the end then up must not access 
     // reading out of bounds (previously caused a bad_alloc)
     for (int i = 0; i < 20; i++) {
         auto previous = service.previousOf("Root");
-        if (previous.has_value()) {
-            REQUIRE((previous->getCommand() == "cmd3" || previous->getCommand() == "cmd2" ||
-                     previous->getCommand() == "cmd1"));
-        }
         auto next = service.nextOf("Root");
-        if (next.has_value()) {
-            REQUIRE((next->getCommand() == "cmd1" || next->getCommand() == "cmd2" ||
-                     next->getCommand() == "cmd3"));
-        }
+        const bool validPrevious = !previous.has_value() || previous->getCommand() == "cmd3"
+                                   || previous->getCommand() == "cmd2" || previous->getCommand() == "cmd1";
+        const bool validNext = !next.has_value() || next->getCommand() == "cmd1" || next->getCommand() == "cmd2"
+                               || next->getCommand() == "cmd3";
+        REQUIRE(validPrevious);
+        REQUIRE(validNext);
     }
 }
 
@@ -127,7 +131,7 @@ TEST_CASE("CommandLineHistoryService: up and down alternate without invalid posi
 {
     auto processName = std::make_shared<ProcessName>("test-process");
     TestCommandLineHistoryService service(processName);
-    service.setHistoryFileName(TEST_HISTORY_FILE);
+    service.setHistoryFileName(historyFileName());
 
     service.addEntries({"cmd1", "cmd2", "cmd3"}, "Root");
 
@@ -152,7 +156,7 @@ TEST_CASE("CommandLineHistoryService: menu entries are filtered")
 {
     auto processName = std::make_shared<ProcessName>("test-process");
     TestCommandLineHistoryService service(processName);
-    service.setHistoryFileName(TEST_HISTORY_FILE);
+    service.setHistoryFileName(historyFileName());
 
     service.addEntries({"root_cmd1"}, "Root");
     service.addEntries({"user_cmd"}, "UserManagement");
@@ -171,7 +175,7 @@ TEST_CASE("CommandLineHistoryService: startsWith finds the newest matching entry
 {
     auto processName = std::make_shared<ProcessName>("test-process");
     TestCommandLineHistoryService service(processName);
-    service.setHistoryFileName(TEST_HISTORY_FILE);
+    service.setHistoryFileName(historyFileName());
 
     service.addEntries({"user_add", "show_users", "user_delete"}, "Root");
     service.addEntries({"user_sessions"}, "UserManagement");
@@ -185,7 +189,7 @@ TEST_CASE("CommandLineHistoryService: startsWith matches the oldest single entry
 {
     auto processName = std::make_shared<ProcessName>("test-process");
     TestCommandLineHistoryService service(processName);
-    service.setHistoryFileName(TEST_HISTORY_FILE);
+    service.setHistoryFileName(historyFileName());
 
     service.addEntries({"abc"}, "Root");
 

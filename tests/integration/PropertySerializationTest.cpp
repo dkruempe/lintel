@@ -6,6 +6,9 @@
 
 #include <filesystem>
 #include <fstream>
+#include <string>
+
+#include <unistd.h>
 
 TEST_CASE("XMLConfigSerializationStrategy: serialize properties to XML") {
     XMLConfigSerializationStrategy strategy;
@@ -99,10 +102,12 @@ TEST_CASE("XMLConfigSerializationStrategy: roundtrip int32_t") {
     REQUIRE(typed->getValue() == 42);
 }
 
+// The temp file name carries the PID: catch_discover_tests runs every test case in its own process,
+// so a fixed name would let parallel cases write and delete each other's file.
 TEST_CASE("XMLConfigSerializationStrategy: deserialize from file") {
     XMLConfigSerializationStrategy strategy;
 
-    auto tmpPath = std::filesystem::temp_directory_path() / "test_props_XXXXXX.xml";
+    auto tmpPath = std::filesystem::temp_directory_path() / ("test_props_" + std::to_string(::getpid()) + ".xml");
     std::string tmpStr = tmpPath.string();
     {
         std::string xml = R"(<?xml version="1.0" encoding="utf-8"?>

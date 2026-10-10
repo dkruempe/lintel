@@ -13,25 +13,43 @@ include(Catch)
 # All tests in a single binary — one link instead of 27.
 ADD_EXECUTABLE(base_tests
     models/PropertyTest.cpp
+    models/JsonSerializableTest.cpp
     factories/PropertyFactoryTest.cpp
-    services/PropertyServiceTest.cpp
     property/PropertyChangeTest.cpp
+    property/PropertyDataDtoSizeTest.cpp
+    property/FilePropertyRepositoryTest.cpp
+    property/DatabasePropertyRepositoryTest.cpp
+    services/PropertyServiceTest.cpp
+    services/SchedulerServiceTest.cpp
+    services/ExecutorServiceTest.cpp
+    core/LoggerServiceTest.cpp
     integration/SQLiteIntegrationTest.cpp
     integration/PostgreSqlIntegrationTest.cpp
     integration/ConfigIntegrationTest.cpp
     integration/HttpIntegrationTest.cpp
+    integration/HttpComponentPathTest.cpp
     integration/PropertySerializationTest.cpp
     core/CoreUtilsTest.cpp
     core/CursorTest.cpp
     core/RegexUtilsTest.cpp
+    core/StartupBuilderTest.cpp
     features/ConfigComponentsTest.cpp
     features/HistoryComponentTest.cpp
     features/HistoryServiceGatingTest.cpp
+    features/SharedMemorySegmentComponentTest.cpp
     external/HypodermicSignalTest.cpp
     events/EventBusTest.cpp
+    plugins/AdminUserBootstrapPluginTest.cpp
+    plugins/DatabaseBootstrapPluginTest.cpp
+    plugins/MessageQueueBootstrapPluginTest.cpp
+    plugins/VirtualGroupBootstrapPluginTest.cpp
     plugins/SharedMemoryBootstrapPluginTest.cpp
     plugins/SingleInstanceBootstrapPluginTest.cpp
     cli/CliParserTest.cpp
+    cli/HistoryCliComponentTest.cpp
+    cli/MessageQueueCliComponentTest.cpp
+    cli/ProcessCliComponentTest.cpp
+    cli/SharedMemoryCliComponentTest.cpp
     services/BootstrapServiceMockTest.cpp
     services/AuthServiceTest.cpp
     services/MessageQueueServiceMockTest.cpp
@@ -43,10 +61,15 @@ ADD_EXECUTABLE(base_tests
     http/ControllerMockTest.cpp
     http/ClientIpResolverTest.cpp
     http/SharedMemoryControllerMockTest.cpp
+    http/HistoryControllerTest.cpp
+    http/MessageQueueControllerTest.cpp
+    http/UserControllerTest.cpp
+    http/ProcessControllerTest.cpp
     services/ProcessServiceTest.cpp
     repositories/UserGroupRepositoryTest.cpp
     repositories/UserRepositoryPagingTest.cpp
     repositories/MessageQueueRepositoryPagingTest.cpp
+    repositories/MessageQueueRepositoryFilterTest.cpp
 )
 # Split the single-test-binary unity batch so multiple cores in CI actually get used
 set_target_properties(base_tests PROPERTIES UNITY_BUILD_BATCH_SIZE 8)

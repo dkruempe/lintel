@@ -17,15 +17,17 @@
 #include <string>
 #include <vector>
 
+#include <unistd.h>
+
 #include "../helpers/ScopedEnvironmentVariable.h"
 
 namespace {
 
 std::string kUserPagingDb() {
     static int counter = 0;
-    return (std::filesystem::temp_directory_path() /
-            ("user_paging_test_" + std::to_string(counter++) + ".db"))
-            .string();
+    return (std::filesystem::temp_directory_path()
+            / ("user_paging_test_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".db"))
+      .string();
 }
 
 // m_configDirectory must be the first member: members initialize in declaration order, so the guard

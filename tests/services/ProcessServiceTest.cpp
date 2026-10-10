@@ -427,7 +427,8 @@ TEST_CASE("ProcessResourceReader reads own process resources", "[process_service
   REQUIRE(data.valid);
   REQUIRE(data.uptime.count() >= 0);
   // without a previous sample the CPU percent is left unset
-  if (data.cpuPercent.has_value()) { REQUIRE(data.cpuPercent.value() >= 0.0); }
+  const bool cpuPercentUsable = !data.cpuPercent.has_value() || data.cpuPercent.value() >= 0.0;
+  REQUIRE(cpuPercentUsable);
 #else
   SKIP("ProcessResourceReader only fully supported on Linux here");
 #endif

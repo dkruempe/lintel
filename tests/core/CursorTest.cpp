@@ -10,13 +10,15 @@
 #include <string>
 #include <vector>
 
+#include <unistd.h>
+
 namespace {
 
 std::string kCursorTestDb() {
     static int counter = 0;
-    return (std::filesystem::temp_directory_path() /
-            ("cursor_test_" + std::to_string(counter++) + ".db"))
-            .string();
+    return (std::filesystem::temp_directory_path()
+            / ("cursor_test_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".db"))
+      .string();
 }
 
 struct CursorFixture {

@@ -47,6 +47,19 @@ TEST_CASE("BootstrapService: calls plugins in priority order") {
 }
 
 TEST_CASE("BootstrapService: no plugins does nothing") {
-    BootstrapService service({});
-    service.onStart();
+  // An empty plugin list gives onStart() nothing to sort and nothing to start, and the service
+  // keeps its list private - so the no-op is asserted through the only channel it can act on:
+  // a plugin that exists in the process but is not part of this service must stay untouched,
+  // and the caller must still own its list afterwards.
+  auto foreignPlugin = std::make_shared<MockBootstrapPlugin>();
+  ALLOW_CALL(*foreignPlugin, getPriority()).LR_RETURN(BootstrapSequence::Database);
+  FORBID_CALL(*foreignPlugin, onStart());
+
+  std::vector<std::shared_ptr<BootstrapPlugin>> callerPlugins{ foreignPlugin };
+
+  BootstrapService service({});
+  service.onStart();
+
+  REQUIRE(callerPlugins.size() == 1);
+  REQUIRE(callerPlugins.front() == foreignPlugin);
 }

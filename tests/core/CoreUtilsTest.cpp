@@ -1,13 +1,28 @@
-#include <lintel/core/utils/StringUtils.h>
-#include <lintel/core/utils/UUID.h>
-#include <lintel/core/utils/MemorySize.h>
 #include <lintel/core/services/FileService.h>
 #include <lintel/core/utils/Cryption.h>
+#include <lintel/core/utils/MemorySize.h>
+#include <lintel/core/utils/StringUtils.h>
+#include <lintel/core/utils/UUID.h>
 
 #include <catch2/catch_all.hpp>
 
 #include <filesystem>
 #include <regex>
+#include <string>
+
+#include <unistd.h>
+
+namespace {
+
+// catch_discover_tests runs every test case in its own process, so the temp file name needs the PID:
+// a fixed name would make parallel cases write and delete each other's files.
+std::string kTempFileName(const std::string &tag)
+{
+  static int counter = 0;
+  return tag + "_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".txt";
+}
+
+}  // namespace
 
 TEST_CASE("StringUtils: split") {
     auto tokens = StringUtils::split("a,b,c", ',');
@@ -130,7 +145,7 @@ TEST_CASE("MemorySize: roundtrip serialize deserialize integer value") {
 }
 
 TEST_CASE("FileService: write and read file") {
-    auto tmpPath = std::filesystem::temp_directory_path() / "fileservice_test.txt";
+    auto tmpPath = std::filesystem::temp_directory_path() / kTempFileName("fileservice_test");
     {
         FileService file(tmpPath);
         file.writeToFile("hello world");
@@ -140,14 +155,14 @@ TEST_CASE("FileService: write and read file") {
         REQUIRE(file.exists());
         REQUIRE(file.isFile());
         REQUIRE(file.readFile() == "hello world");
-        REQUIRE(file.getName() == "fileservice_test.txt");
+        REQUIRE(file.getName() == tmpPath.filename().string());
         file.deleteFile();
     }
     REQUIRE_FALSE(std::filesystem::exists(tmpPath));
 }
 
 TEST_CASE("FileService: writeToFile overwrite") {
-    auto tmpPath = std::filesystem::temp_directory_path() / "fileservice_overwrite.txt";
+    auto tmpPath = std::filesystem::temp_directory_path() / kTempFileName("fileservice_overwrite");
     {
         FileService file(tmpPath);
         file.writeToFile("first");
@@ -161,7 +176,7 @@ TEST_CASE("FileService: writeToFile overwrite") {
 }
 
 TEST_CASE("FileService: getSize") {
-    auto tmpPath = std::filesystem::temp_directory_path() / "fileservice_size.txt";
+    auto tmpPath = std::filesystem::temp_directory_path() / kTempFileName("fileservice_size");
     {
         FileService file(tmpPath);
         file.writeToFile("12345");
@@ -171,13 +186,13 @@ TEST_CASE("FileService: getSize") {
 }
 
 TEST_CASE("FileService: exists returns false for non-existent") {
-    auto tmpPath = std::filesystem::temp_directory_path() / "nonexistent_file_xyz.txt";
+    auto tmpPath = std::filesystem::temp_directory_path() / kTempFileName("nonexistent_file");
     FileService file(tmpPath);
     REQUIRE_FALSE(file.exists());
 }
 
 TEST_CASE("FileService: getPath returns correct path") {
-    auto tmpPath = std::filesystem::temp_directory_path() / "fileservice_path.txt";
+    auto tmpPath = std::filesystem::temp_directory_path() / kTempFileName("fileservice_path");
     FileService file(tmpPath);
     REQUIRE(file.getPath() == tmpPath);
 }
