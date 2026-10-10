@@ -27,7 +27,8 @@
  * These tests are tagged `[pg]` and skipped when no server answers on
  * PGHOST/PGPORT (default 127.0.0.1:5432). In CI the `postgres:17` service
  * provides it with user/password/db `test`/`test`/`test`, matching
- * docker-compose.yml.
+ * docker-compose.yml, and LINTEL_REQUIRE_PG=1 turns "server absent" from a
+ * skip into a failure - see requirePg() below for why.
  *
  * Why they exist: `db::Connection` dispatches every call to either the
  * PostgreSQL or the SQLite implementation behind one interface, and the SQLite
@@ -62,12 +63,29 @@ std::string pgConnInfo()
   return info;
 }
 
+/** True when the suite must treat a missing server as a failure instead of a skip. */
+bool pgRequired()
+{
+  const char *required = std::getenv("LINTEL_REQUIRE_PG");
+  return required != nullptr && std::string(required) == "1";
+}
+
 /**
  * Skips the current test case unless a PostgreSQL server answers.
  *
- * Skipping (rather than failing) is the right call: the suite must stay green
- * for a contributor without a local server, and the alternative would make
- * `ctest` useless outside CI. The `[pg]` label keeps these tests selectable.
+ * Skipping (rather than failing) is the right call for a local run: the suite
+ * must stay green for a contributor without a local server, and the
+ * alternative would make `ctest` useless outside CI. The `[pg]` tag keeps
+ * these tests selectable.
+ *
+ * The unconditional SKIP is a hole in CI, though. `catch_discover_tests`
+ * translates a Catch2 SKIP into ctest's exit code 4 and
+ * `SKIP_RETURN_CODE 4`, so a broken or missing `postgres` service in the
+ * workflow would turn all ten `[pg]` tests into "Skipped" and leave the job
+ * green - the PostgreSQL backend would silently go untested again, which is
+ * the exact state this file was written to end. LINTEL_REQUIRE_PG=1 (set by
+ * the build, sanitizer and release jobs) inverts that: unreachable server
+ * fails, so a service that does not come up is reported instead of ignored.
  *
  * Every test case must call this *before* anything else that touches the
  * server, including the PgTable fixture - otherwise the fixture's own
@@ -78,7 +96,11 @@ void requirePg()
   try {
     // Constructed and immediately destroyed: this is a reachability probe.
     db::Connection probe(db::ConnectionType::PostgreSQL, pgConnInfo());
-  } catch (const std::exception &) {
+  } catch (const std::exception &exception) {
+    if (pgRequired()) {
+      FAIL("LINTEL_REQUIRE_PG=1 but no PostgreSQL server is reachable - the CI service is broken: "
+           + std::string(exception.what()));
+    }
     SKIP("no PostgreSQL server reachable - start one with 'docker compose up postgres'");
   }
 }

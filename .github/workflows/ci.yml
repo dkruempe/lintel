@@ -161,6 +161,11 @@ jobs:
       # ── Tests ──────────────────────────────────────────────────────────
       - name: Run tests
         working-directory: ${{ env.BUILD_DIR }}
+        env:
+          # A missing postgres service must fail the job, not turn the ten
+          # [pg] tests into ctest skips - see requirePg() in
+          # tests/integration/PostgreSqlIntegrationTest.cpp.
+          LINTEL_REQUIRE_PG: "1"
         run: ctest --output-on-failure --label-regex unit
 
       # ── ccache hit rate ───────────────────────────────────────────────
@@ -271,6 +276,8 @@ jobs:
           # UBSan stop at the first real error instead of continuing.
           ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+          # Same reason as in the build job - see requirePg().
+          LINTEL_REQUIRE_PG: "1"
         run: |
           cd ${{ env.BUILD_DIR }}
           ctest --output-on-failure --label-regex unit

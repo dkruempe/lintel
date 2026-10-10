@@ -146,6 +146,9 @@ jobs:
 
       - name: Run tests
         working-directory: ${{ env.BUILD_DIR }}
+        env:
+          # Same reason as in ci.yml - see requirePg().
+          LINTEL_REQUIRE_PG: "1"
         run: ctest --output-on-failure --label-regex unit
 
       # Binaries end up in ./bin (CMAKE_RUNTIME_OUTPUT_DIRECTORY), the example
