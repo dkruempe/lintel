@@ -43,6 +43,21 @@
 BaseFeature::BaseFeature(std::shared_ptr<Features> features)
   : Feature(Features::Base, std::move(features)) {}
 
+/**
+ * Deliberate no-op: the base feature has nothing to resolve from the container.
+ *
+ * `Feature::initialize` is the post-resolution hook a feature uses to pull its
+ * own services out of the container (see e.g. `HttpFeature`/`CliFeature`,
+ * which resolve their components here). The base feature only *registers*
+ * services - it contributes no component that needs a resolved instance - so
+ * there is nothing to look up. Registering happens earlier in
+ * `registerTypes()`, resolving happens in the DI container itself.
+ *
+ * The method exists because the hook is pure virtual in `Feature`; overriding
+ * it with an empty body is the documented way of saying "this feature has no
+ * initialization step", the same contract `NoopHistoryService` uses for the
+ * services it replaces.
+ */
 void BaseFeature::initialize(std::shared_ptr<Hypodermic::Container> container) {}
 
 void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) {
