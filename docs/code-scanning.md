@@ -94,6 +94,40 @@ by the next run, because dismissal is per-commit. An alert that keeps
 reappearing is a signal to fix the *category* - a `paths-ignore` entry or a
 source-level `// codeql[...]` suppression - not to dismiss it again.
 
+### The `query-filters` exclusions
+
+Three quality queries are excluded repo-wide in `codeql.yml`:
+
+```yaml
+query-filters:
+  - exclude:
+      id: cpp/unused-static-function
+  - exclude:
+      id: cpp/unused-local-variable
+  - exclude:
+      id: cpp/unused-static-variable
+```
+
+`query-filters` is the category fix for the two mechanisms that produce every
+one of these alerts, neither of which is a defect:
+
+- Catch2's `TEST_CASE` and Google Benchmark's `BENCHMARK()` emit a static
+  function *plus* a static registrar that references it. CodeQL does not score
+  that reference as a use, so every test case - and every helper that only a
+  test case calls - is reported as an unused static function. `paths-ignore` on
+  `tests/` would stop the whole directory from being scanned; excluding the
+  query keeps every other query running there.
+- A parameter pack forwarded straight into a variadic helper (`std::forward`,
+  `std::make_format_args`) is not seen as a read, so `args` in
+  `SchedulerService`, `ExecutorService` and `LoggerService` is reported as an
+  unused local/static variable even though dropping it would not compile.
+
+These exclusions are safe because the compiler already covers every real case:
+`-Wall -Wunused` with `-Werror` (`cmake/CompilerWarnings.cmake`) turns a
+genuinely unused static function or variable into a build failure. A real defect
+therefore cannot reach a CodeQL alert, only the macro/template false positives
+described above.
+
 ## Known false-positive classes
 
 These recur and are safe to dismiss with a short comment, provided the line
