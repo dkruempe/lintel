@@ -113,7 +113,6 @@ public:
   template<typename... Args>
   void log(const char *file, int line, const char *function, LogLevel lvl, std::string_view message, Args &&...args)
   {
-    (void)sizeof...(args);
     logImpl(file, line, function, lvl, message, std::make_format_args(args...));
   }
 };
