@@ -7,6 +7,7 @@
 #include <mutex>
 #include <queue>
 #include <thread>
+#include <type_traits>
 
 /**
  * A simple thread pool executor that queues and executes tasks asynchronously.
@@ -43,18 +44,18 @@ public:
      * @return a future that will hold the result
      */
     template<class F, class... Args>
-    std::future<typename std::result_of<
-            typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
+    std::future<typename std::invoke_result<typename std::decay<F>::type,
+            typename std::decay<Args>::type...>::type>
     execute(F &&f, Args &&...args);
 };
 
 template<class F, class... Args>
-std::future<typename std::result_of<
-        typename std::decay<F>::type(typename std::decay<Args>::type...)>::type>
+std::future<typename std::invoke_result<typename std::decay<F>::type,
+        typename std::decay<Args>::type...>::type>
 ExecutorService::execute(F &&f, Args &&...args) {
     auto func = std::make_shared<
-            std::packaged_task<typename std::result_of<typename std::decay<F>::type(
-                    typename std::decay<Args>::type...)>::type()>>(
+            std::packaged_task<typename std::invoke_result<typename std::decay<F>::type,
+                    typename std::decay<Args>::type...>::type()>>(
             std::bind(std::forward<F>(f), std::forward<Args>(args)...));
     auto future = func->get_future();
     {
