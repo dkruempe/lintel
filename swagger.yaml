@@ -1,7 +1,7 @@
 swagger: "2.0"
 info:
   title: C++ Base Library API
-  version: "0.1.0"
+  version: "0.2.0"
   description: |
     REST API for the lintel.
     Authentication: obtain a bearer token via POST /user/login (HTTP Basic auth),

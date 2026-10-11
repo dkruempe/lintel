@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-11
+
 ### Added
 - **Secret guard** (`scripts/check-secrets.sh`, blocking CI job `secrets`): blocks plaintext credentials in the working tree. Replacement for `secret_scanning_push_protection`, which cannot be enabled for this repo via API (all fields in `security_and_analysis` are rejected with 422, even with admin rights). Checks in two stages – config formats resp. PEM key blocks, **and** an entropy test on the value; a pure name search is useless, because the repo has dozens of `const char *const PASSWORD = "password";` as JSON key names.
 - README: Doxygen badge and a "Documentation" section with the published API reference URL and the local generation command.
@@ -16,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - README: "Examples" section with a table of all examples (what it shows, how to start it), an explanation of `CONFIG_DIRECTORY` and `BOOTSTRAP_CONFIG_NAME`, TLS prerequisites and SQLite vs. PostgreSQL.
 
 ### Changed
+- **The project now requires C++20 (breaking for consumers still on C++17).** The library, tests, benchmarks and examples set `target_compile_features(... cxx_std_20)` and `.clang-format` uses `Standard: c++20`. GCC 14 / libstdc++ 14 is the new minimum, because `std::chrono::parse` (used for timestamp deserialization) does not exist in libstdc++ 13; CI builds with `gcc-14`/`g++-14` (the Clang jobs rely on libstdc++ 14 as well).
+- **The `date` library (Howard Hinnant) was removed.** Timestamps now use `std::chrono::parse` and `std::format`; the dependency is gone from `conanfile.txt`, the CMake config and the build files.
+- **`fmt` was replaced by `std::format`.** Every `fmt::` call site uses `std::format`, and `LoggerService` erases its format arguments with `std::make_format_args`/`std::vformat`, exposing `std::format_args`/`std::string_view` in its public header. `find_package(fmt)` and the `<fmt/base.h>` PCH entry were dropped; `fmt` now reaches the build only transitively through spdlog.
 - Build instructions in the README consistently aligned with CI (`.github/workflows/ci.yml`) and `AGENTS.md` (Conan 2, toolchain path under `build/build/Release/generators/conan_toolchain.cmake`, release build with `ccache`, Ninja, output to `bin/`).
 - TLS certificates: private key (`server.key`) removed from the repository, generated certificates excluded via `.gitignore`; CI generates certificates itself. Doc (`cfg/certs/README.md`) adjusted accordingly.
 - Configuration and examples: path parametrization (e.g. named pipes, configuration), removal of plaintext passwords/credentials and unnecessary personal data from examples/configuration.
@@ -27,6 +32,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 ### Fixed
+- **`CommandLineService::onPrompt()` called an unqualified `format(...)`.** It only compiled because `using namespace date;` leaked a `format` name into scope; removing the `date` library surfaced the bug. It now calls `std::format("{:%FT%TZ}", std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()))`.
 - **Public header `ProcessService.h` only compiled in one include order.** It forward-declared `boost::process::v1` with a hardcoded `inline namespace`, but boost makes `v1` an inline namespace only for `BOOST_PROCESS_VERSION == 1` and a plain nested namespace otherwise. Every consumer that includes a boost/process header before `ProcessService.h` — i.e. any code that starts a process itself — failed with *"inline namespace must be specified at initial definition"*. The declaration now goes through `BOOST_PROCESS_V1_INLINE` from `boost/process/v1/detail/config.hpp`, so both include orders compile. `child` stays an incomplete type, so no boost/process header is pulled into every TU.
 - **Every CLI component answered an unknown prompt line with silence.** `CommandLineComponent::onMenu()` returns "handled"; `CommandLineService` prints *"Invalid command"* for `false`. All five components returned `true` unconditionally, so a typo at the prompt produced no output and no error at all. They now return `false`, and the contract is documented at the interface.
 - `UserManagementCliComponent::onShowMenu()` printed nothing, while all four peers print a "no submenu available" line. It now prints the same line.
@@ -56,9 +62,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CodeQL scan for C++ enabled (`.github/workflows/codeql.yml`). The three findings with defect character (missing `return`, two `localtime`/`ctime` calls) are fixed; one finding (`cpp/cleartext-storage-database`) was triaged as a false positive – exclusively the hashed password value is stored. The triage table with findings, fixes and counter-checks as well as the breakdown of the remaining style notes is not kept in the repo.
 
 ### Removed
+- `zlib` dropped from the direct `[requires]` of `conanfile.txt`; it is still pulled in transitively (libpq, OpenSSL, cpp-httplib, Boost).
 - `TODO.md`, `ANALYSIS.md` and `ROADMAP.md` removed from the repository. They contained operator-internal work states (among other things open security actions and escalation paths) that should not be part of a public repo. The content remains fully retrievable via the git history (`git show <previous-commit>:ROADMAP.md`).
 
 ### Developer experience
+- **The (advisory) clang-tidy job is green.** All findings were resolved instead of suppressed: the `Kind` and `LogLevel` enums use `std::uint8_t`, the empty catch blocks in `ProcessService` acknowledge their exception via `(void)ex`, unchecked optionals go through local references, `sscanf` in `Cryption` became `std::from_chars`, and the swappable-parameter warning in `MemorySize` is justified with a `NOLINT`. `Cryption.cpp` was reformatted to the project style (whitespace only).
 - **Test coverage of the previously untested modules (364 → 652 test cases, 2643 assertions).** New tests for the four untested bootstrap plugins (`AdminUser`, `Database`, `MessageQueue`, `VirtualGroup`), `LoggerService`, `StartupBuilder`, the four untested CLI components, the four HTTP controllers, `SchedulerService`, `ExecutorService` and the `Database`/`File` property repositories. The `ProcessController` 404 gap listed above is closed without an API change: `ProcessService` turns out to be constructible from four plain values, so all six 404 branches are covered.
 - **Missing regression tests for the documented past bugs.** Added: `MessageQueueRepository::allOf()` regex-to-column binding (the sibling of the already-covered `pageOf()`), the empty-path guards of `HttpComponent`, `LoggerComponent` and `SharedMemorySegmentComponent` plus `EnvironmentConfiguration`'s empty override, `PropertyDataDto::getSize()`, and `JsonSerializable::deserialize` with a non-object/non-array body — `HttpBadRequestException` previously appeared nowhere in the suite.
 - **The last places where a test could pass while the code was broken are gone.** A `REQUIRE` nested in a conditional in `CommandLineHistoryServiceTest.cpp` (which asserted nothing if the accessor always returned `nullopt`) and one in `ProcessServiceTest.cpp` are now unconditional; two test cases without any assertion got one; the PostgreSQL suite no longer skips silently in CI.
@@ -80,5 +88,6 @@ First release tag `v0.1.0` (commit `86b72f4`). Main topics (from the commit hist
 
 The commits following this tag (among other things `LICENSE`, `THIRD_PARTY_NOTICES.md`, CI fixes, security and doc audits) are recorded above under `[Unreleased]`.
 
-[Unreleased]: https://github.com/dkruempe/lintel/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/dkruempe/lintel/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/dkruempe/lintel/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/dkruempe/lintel/releases/tag/v0.1.0

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-set(LINTEL_VERSION "0.1.0" CACHE STRING "Release version of lintel (SemVer)")
+set(LINTEL_VERSION "0.2.0" CACHE STRING "Release version of lintel (SemVer)")
 project(lintel VERSION ${LINTEL_VERSION})
 
 # Single source of truth for the version number: LINTEL_VERSION above. src/include/lintel/config.h
