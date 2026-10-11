@@ -6,7 +6,7 @@ Thank you for your interest in `lintel`! We accept contributions in the form of 
 
 ## Prerequisites
 
-- C++17-compatible compiler (CI tests GCC 13 and Clang 18)
+- C++20-compatible compiler (CI tests GCC 14 and Clang 18; GCC 14 / libstdc++ 14 is required for `std::chrono::parse`)
 - CMake 3.16+
 - Conan 2
 - Ninja

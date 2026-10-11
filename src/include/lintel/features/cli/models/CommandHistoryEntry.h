@@ -1,7 +1,7 @@
 #ifndef COMMANDHISTORYENTRY_H
 #define COMMANDHISTORYENTRY_H
 
-#include <date/date.h>
+#include <chrono>
 #include <ostream>
 #include <string>
 
@@ -11,7 +11,7 @@ class CommandHistoryEntry
 private:
   std::string m_command;
   std::string m_userName;
-  date::sys_time<std::chrono::microseconds> m_executedTimestamp;
+  std::chrono::sys_time<std::chrono::microseconds> m_executedTimestamp;
   std::string m_menu;
 
 public:
@@ -21,8 +21,9 @@ public:
    *  @param menu the menu context */
   CommandHistoryEntry(const std::string &command,
     const std::string &user_name,
-    const date::sys_time<std::chrono::microseconds> &executed_timestamp, const std::string &menu)
-    : m_command(command), m_userName(user_name), m_executedTimestamp(executed_timestamp),m_menu(menu)
+    const std::chrono::sys_time<std::chrono::microseconds> &executed_timestamp,
+    const std::string &menu)
+    : m_command(command), m_userName(user_name), m_executedTimestamp(executed_timestamp), m_menu(menu)
   {}
 
   /** @return the executed command */
@@ -30,17 +31,19 @@ public:
   /** @return the user name */
   [[nodiscard]] std::string getUserName() const { return m_userName; }
   /** @return the execution timestamp */
-  [[nodiscard]] date::sys_time<std::chrono::microseconds> getExecutedTimestamp() const { return m_executedTimestamp; }
+  [[nodiscard]] std::chrono::sys_time<std::chrono::microseconds> getExecutedTimestamp() const
+  {
+    return m_executedTimestamp;
+  }
   /** @return the menu context */
   [[nodiscard]] std::string getMenu() const { return m_menu; }
 
   /** @return entry serialized as CSV line */
   [[nodiscard]] std::string asCsvEntry() const
   {
-    return StringifyService<date::sys_time<std::chrono::microseconds>>::serializeToString(m_executedTimestamp) + ";"
-           + m_userName + ";" + m_command +  ";" + m_menu;
+    return StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(m_executedTimestamp)
+           + ";" + m_userName + ";" + m_command + ";" + m_menu;
   }
-
 
   friend bool operator==(const CommandHistoryEntry &lhs, const CommandHistoryEntry &rhs)
   {

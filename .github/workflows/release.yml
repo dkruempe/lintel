@@ -24,6 +24,8 @@ permissions:
   contents: write
 
 env:
+  CC: gcc-14
+  CXX: g++-14
   BUILD_TYPE: Release
   CONAN_SYSREQUIRES_MODE: enabled
   CCACHE_BASEDIR: ${{ github.workspace }}
@@ -111,7 +113,7 @@ jobs:
         timeout-minutes: 40
         run: |
           ./scripts/install-deps.sh \
-            build-essential cmake ninja-build ccache \
+            build-essential g++-14 cmake ninja-build ccache \
             pkg-config python3 python3-pip \
             libpq-dev libsqlite3-dev libssl-dev
 

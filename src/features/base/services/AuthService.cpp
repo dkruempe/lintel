@@ -1,7 +1,5 @@
 #include "lintel/features/base/services/AuthService.h"
 
-#include <date/date.h>
-
 #include <boost/asio/ip/address.hpp>
 #include <chrono>
 #include <vector>
@@ -173,9 +171,8 @@ void AuthService::revokeTokenOf(const std::string &id) {
 }
 
 void AuthService::onCheck() {
-    date::sys_time<std::chrono::microseconds> now =
-            std::chrono::time_point_cast<std::chrono::microseconds>(
-                    std::chrono::system_clock::now());
+  std::chrono::sys_time<std::chrono::microseconds> now =
+    std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now());
   {
     std::vector<std::string> toBeRemoved;
     std::lock_guard<std::mutex> lock(m_mutex);

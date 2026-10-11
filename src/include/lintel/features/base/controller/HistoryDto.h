@@ -1,8 +1,8 @@
 #ifndef HISTORYDTO_H
 #define HISTORYDTO_H
 
+#include <chrono>
 #include <string>
-#include <date/date.h>
 
 #include "lintel/core/models/JsonSerializable.h"
 #include "lintel/features/base/models/HistoryEntry.h"
@@ -20,7 +20,7 @@ class HistoryDto : public JsonSerializable {
     /** The UUID */
     std::string m_uuid;
     /** The creation timestamp */
-    date::sys_time<std::chrono::microseconds> m_createdTimestamp;
+    std::chrono::sys_time<std::chrono::microseconds> m_createdTimestamp;
 
     /** JSON field name constants */
     static struct Shapes {
@@ -72,8 +72,9 @@ public:
 
     /** Get the creation timestamp
      * @return The timestamp */
-    [[nodiscard]] date::sys_time<std::chrono::microseconds> getCreatedTimestamp() const {
-        return m_createdTimestamp;
+    [[nodiscard]] std::chrono::sys_time<std::chrono::microseconds> getCreatedTimestamp() const
+    {
+      return m_createdTimestamp;
     }
 
     /** Serialize to JSON

@@ -264,8 +264,7 @@ public:
             m_version, std::string{UUID}) {
         if (getVector().empty()) {
           for (std::size_t i = 0; i < kArraySize; i++) {
-            // Plain aggregate init: designated initializers are C++20 and only
-            // compiled as a GNU extension under -std=c++17 (-Wpedantic).
+            // Plain aggregate init (field order matches TestDataDto's declaration).
             TestDataDto dto{ shm::constructString(
                                *m_sharedMemoryService, getSharedMemorySegment(), "Example User"),
               shm::constructString(*m_sharedMemoryService, getSharedMemorySegment(), "Musterstraße 1"),

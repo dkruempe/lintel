@@ -48,7 +48,6 @@ find_package(httplib REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Boost 1.75.0 COMPONENTS system filesystem REQUIRED)
 find_package(RapidJSON REQUIRED)
-find_package(date REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(Threads REQUIRED)
 
@@ -517,7 +516,7 @@ else ()
     set(HYPODERMIC_INCLUDE_DIRS_VAR "")
 endif ()
 
-target_compile_features(lintel PUBLIC cxx_std_17)
+target_compile_features(lintel PUBLIC cxx_std_20)
 # Include directories: everything needed permanently is passed on as a linked target in
 # target_link_libraries() further down. So only the include paths that are really needed
 # just for building are listed here (Hypodermic from find_package, own headers). The
@@ -543,7 +542,7 @@ target_include_directories(lintel
 # removes it from the install export but keeps the flags in the build tree - so
 # project_warnings does not belong into the export.
 target_link_libraries(lintel PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
-        Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib rapidjson magic_enum::magic_enum date::date
+        Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib rapidjson magic_enum::magic_enum
         spdlog::spdlog_header_only lintel::Hypodermic Boost::boost Boost::headers Boost::filesystem
         PRIVATE $<BUILD_INTERFACE:project_warnings>)
 

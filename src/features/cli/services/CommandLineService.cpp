@@ -1,7 +1,6 @@
 #include "lintel/features/cli/services/CommandLineService.h"
 
 #include <cstdint>
-#include <date/tz.h>
 
 #include <chrono>
 #include <csignal>
@@ -77,7 +76,7 @@ void CommandLineService::onComponentCommand(const std::string &input, const std:
     int32_t counter = 0;
     for (const auto &entry : entries) {
       std::cout << ++counter << ": " << entry.getUserName() << "-"
-                << StringifyService<date::sys_time<std::chrono::microseconds>>::serializeToString(
+                << StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(
                      entry.getExecutedTimestamp())
                 << "-" << entry.getCommand() << "\n";
     }
@@ -116,15 +115,13 @@ std::string CommandLineService::menuNameOf()
   return m_menu.currentOf()->getName().data();
 }
 
-
 void CommandLineService::onPrompt()
 {
   // timestamp MENU %
   std::string_view const currentMenu = m_menu.currentOf() == nullptr ? "MAIN" : m_menu.currentOf()->getName();
   using namespace std;
   using namespace std::chrono;
-  using namespace date;
-  std::cout << format("%FT%TZ", floor<seconds>(system_clock::now())) << " " << currentMenu << " % ";
+  std::cout << std::format("{:%FT%TZ}", floor<seconds>(system_clock::now())) << " " << currentMenu << " % ";
   if (!m_terminalService->getLine().empty()) { std::cout << m_terminalService->getLine(); }
 }
 
@@ -327,7 +324,7 @@ void CommandLineService::onCommand(const std::string &input, const std::vector<s
     int32_t counter = 0;
     for (const auto &entry : entries) {
       std::cout << ++counter << ": " << entry.getUserName() << "-"
-                << StringifyService<date::sys_time<std::chrono::microseconds>>::serializeToString(
+                << StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(
                      entry.getExecutedTimestamp())
                 << "-" << entry.getCommand() << "\n";
     }

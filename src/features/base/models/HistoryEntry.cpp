@@ -1,16 +1,15 @@
-#include "lintel/core/utils/UUID.h"
 #include "lintel/features/base/models/HistoryEntry.h"
+#include "lintel/core/utils/UUID.h"
+#include <chrono>
 
-HistoryEntry::HistoryEntry(
-        std::string processName, std::string serviceName, std::string label,
-        std::string text,
-        const date::sys_time<std::chrono::microseconds> &createdTimestamp)
-        : m_processName(std::move(processName)),
-          m_serviceName(std::move(serviceName)),
-          m_label(std::move(label)),
-          m_text(std::move(text)),
-          m_uuid(UUID::generate()),
-          m_createdTimestamp(createdTimestamp) {}
+HistoryEntry::HistoryEntry(std::string processName,
+  std::string serviceName,
+  std::string label,
+  std::string text,
+  const std::chrono::sys_time<std::chrono::microseconds> &createdTimestamp)
+  : m_processName(std::move(processName)), m_serviceName(std::move(serviceName)), m_label(std::move(label)),
+    m_text(std::move(text)), m_uuid(UUID::generate()), m_createdTimestamp(createdTimestamp)
+{}
 
 HistoryEntry::HistoryEntry(const AbstractServiceInterface &service,
                            std::string label, std::string text)
@@ -21,9 +20,9 @@ HistoryEntry::HistoryEntry(const AbstractServiceInterface &service,
           m_uuid(UUID::generate()),
           m_createdTimestamp(std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now())) {}
 
-const date::sys_time<std::chrono::microseconds>
-&HistoryEntry::getCreatedTimestamp() const {
-    return m_createdTimestamp;
+const std::chrono::sys_time<std::chrono::microseconds> &HistoryEntry::getCreatedTimestamp() const
+{
+  return m_createdTimestamp;
 }
 
 const std::string &HistoryEntry::getLabel() const { return m_label; }

@@ -1,6 +1,7 @@
 #ifndef LINTEL_USERDTO_H
 #define LINTEL_USERDTO_H
 
+#include <chrono>
 #include <memory>
 #include <optional>
 
@@ -27,7 +28,7 @@ private:
     /** The password (optional, used for creation only) */
     std::optional<std::string> m_password = std::nullopt;
     /** The account creation timestamp */
-    date::sys_time<std::chrono::microseconds> m_createdTimestamp;
+    std::chrono::sys_time<std::chrono::microseconds> m_createdTimestamp;
     /** The groups this user belongs to */
     std::shared_ptr<GroupsDto> m_groups;
 
@@ -75,8 +76,7 @@ public:
 
     /** Get the account creation timestamp
      * @return The timestamp */
-    [[nodiscard]] const date::sys_time<std::chrono::microseconds>
-    &getCreatedTimestamp() const;
+    [[nodiscard]] const std::chrono::sys_time<std::chrono::microseconds> &getCreatedTimestamp() const;
 
     /** Get the password (only used for creating a user)
      * @return Optional password string */

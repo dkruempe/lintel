@@ -4,6 +4,7 @@
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 #include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 #include "lintel/features/base/models/HistoryEntry.h"
+#include <chrono>
 
 /**
  * Repository for persisting and querying HistoryEntry records in the database.
@@ -64,7 +65,7 @@ public:
      * Delete all entries older than the given timestamp.
      * @param timestamp cutoff timestamp
      */
-    void cleanAllOlderThan(date::sys_time<std::chrono::microseconds> timestamp) const;
+    void cleanAllOlderThan(std::chrono::sys_time<std::chrono::microseconds> timestamp) const;
 
     /**
      * Constructor.

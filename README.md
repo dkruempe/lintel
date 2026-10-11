@@ -77,7 +77,7 @@ This writes `cfg/certs/server.crt` and `cfg/certs/server.key` (SAN: `localhost`,
 
 ### Prerequisites
 
-- C++17 (or newer) compatible compiler (CI uses GCC 13 and Clang 18)
+- C++20 (or newer) compatible compiler (CI uses GCC 14 and Clang 18; GCC 14 is required for `std::chrono::parse`, i.e. libstdc++ 14)
 - [CMake](https://cmake.org/) (version 3.16 or newer)
 - [Conan](https://conan.io/) version 2 (C/C++ Package Manager)
 - [Ninja](https://ninja-build.org/) (the generator used by CI)

@@ -1,8 +1,8 @@
 #ifndef LINTEL_POSTGRES_SERIALIZATION_H
 #define LINTEL_POSTGRES_SERIALIZATION_H
 
-#include <date/date.h>
-
+#include <chrono>
+#include <format>
 #include <string>
 #include <type_traits>
 
@@ -75,32 +75,27 @@ class Serialization<bool> {
   static bool deserialize(const std::string &value) { return value == "t"; }
 };
 
-    IMPLEMENT_SERIALIZE(
-            date::sys_time<std::chrono::microseconds>,
-            [](const date::sys_time<std::chrono::microseconds> &time) -> std::string {
-                std::string createdTimestamp = date::format("%Y-%m-%d %H:%M:%S%Ez", time);
-                std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
-                return createdTimestamp;
-            },
-            [](const std::string &timeString)
-                    -> date::sys_time<std::chrono::microseconds> {
-                std::stringstream ss(timeString);
-                date::sys_time<std::chrono::microseconds> lt;
-                ss >> date::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
-                return lt;
-             })
+IMPLEMENT_SERIALIZE(
+  std::chrono::sys_time<std::chrono::microseconds>,
+  [](const std::chrono::sys_time<std::chrono::microseconds> &time) -> std::string {
+    std::string createdTimestamp = std::format("{:%Y-%m-%d %H:%M:%S%Ez}", time);
+    std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
+    return createdTimestamp;
+  },
+  [](const std::string &timeString) -> std::chrono::sys_time<std::chrono::microseconds> {
+    std::stringstream ss(timeString);
+    std::chrono::sys_time<std::chrono::microseconds> lt;
+    ss >> std::chrono::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
+    return lt;
+  })
 
-    // Only activated when std::size_t is distinct from all fixed-width integer types
-    // (full specializations above take precedence over this partial specialization)
-    template<typename T>
-    class Serialization<T, std::enable_if_t<std::is_same_v<T, std::size_t>>> {
-    public:
-        static std::string serialize(const T& value) {
-            return std::to_string(value);
-        }
-        static T deserialize(const std::string& value) {
-            return static_cast<T>(std::stoul(value));
-        }
+// Only activated when std::size_t is distinct from all fixed-width integer types
+// (full specializations above take precedence over this partial specialization)
+template<typename T> class Serialization<T, std::enable_if_t<std::is_same_v<T, std::size_t>>>
+{
+public:
+  static std::string serialize(const T &value) { return std::to_string(value); }
+  static T deserialize(const std::string &value) { return static_cast<T>(std::stoul(value)); }
     };
 }  // namespace postgresql
 

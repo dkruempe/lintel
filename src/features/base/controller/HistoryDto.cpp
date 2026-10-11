@@ -1,4 +1,5 @@
 #include "lintel/features/base/controller/HistoryDto.h"
+#include <chrono>
 
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/StringifyService.h"
@@ -32,8 +33,8 @@ void HistoryDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) c
     // CREATED_TIMESTAMP
     writer->String(m_shape.CREATED_TIMESTAMP);
     writer->String(
-        StringifyService<date::sys_time<std::chrono::microseconds> >::serializeToString(
-            m_createdTimestamp).c_str());
+      StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(m_createdTimestamp)
+        .c_str());
     writer->EndObject();
 }
 
@@ -70,8 +71,8 @@ bool HistoryDto::deserialize(const rapidjson::Value &obj) {
         LOG_ERROR("{} not defined in json serialization", m_shape.UUID);
     }
     if (obj.HasMember(m_shape.CREATED_TIMESTAMP)) {
-        m_createdTimestamp = StringifyService<date::sys_time<std::chrono::microseconds> >::deserializeFromString(
-            obj[m_shape.CREATED_TIMESTAMP].GetString());
+      m_createdTimestamp = StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(
+        obj[m_shape.CREATED_TIMESTAMP].GetString());
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serialization", m_shape.CREATED_TIMESTAMP);

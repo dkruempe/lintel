@@ -1,8 +1,6 @@
 #ifndef LINTEL_USERSESSIONDTO_H
 #define LINTEL_USERSESSIONDTO_H
 
-#include <date/date.h>
-
 #include <chrono>
 #include <string>
 #include <vector>
@@ -20,7 +18,7 @@ private:
     /** The user name the session belongs to */
     std::string m_userName;
     /** The last access timestamp */
-    date::sys_time<std::chrono::microseconds> m_lastAccessTimestamps;
+    std::chrono::sys_time<std::chrono::microseconds> m_lastAccessTimestamps;
 
     /** JSON field name constants */
     static struct Shapes {
@@ -59,8 +57,7 @@ public:
 
     /** Get the last access timestamp
      * @return the last access timestamp */
-    [[nodiscard]] const date::sys_time<std::chrono::microseconds>
-    &getLastAccessTimestamps() const;
+    [[nodiscard]] const std::chrono::sys_time<std::chrono::microseconds> &getLastAccessTimestamps() const;
 
     /** Serialize to JSON
      * @param writer the rapidjson writer */

@@ -22,7 +22,6 @@
 #include <lintel/features/http/service/ContentType.h>
 #include <lintel/features/http/service/HttpStatusCodes.h>
 
-
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
@@ -61,9 +60,10 @@ UserToken hcTokenOf(const User &user, const std::string &id)
   };
 }
 
-date::sys_time<std::chrono::microseconds> hcTimestampOf(int seconds)
+std::chrono::sys_time<std::chrono::microseconds> hcTimestampOf(int seconds)
 {
-  return date::sys_time<std::chrono::microseconds>{ std::chrono::microseconds{ std::chrono::seconds{ seconds } } };
+  return std::chrono::sys_time<std::chrono::microseconds>{ std::chrono::microseconds{
+    std::chrono::seconds{ seconds } } };
 }
 
 /** @return the Authorization header that carries the given bearer token */
@@ -125,7 +125,6 @@ struct HistoryControllerFixture
                 CONSTRAINT history_PK PRIMARY KEY (process_name, service_name, label, inserted_timestamp)
             );
         )");
-
 
     m_envConfig = std::make_shared<EnvironmentConfiguration>();
     m_configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, m_envConfig);

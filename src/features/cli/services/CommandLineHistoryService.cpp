@@ -4,6 +4,7 @@
 #include "lintel/core/services/FileService.h"
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/utils/StringUtils.h"
+#include <chrono>
 
 #include "lintel/features/cli/models/CommandHistoryEntry.h"
 #include <cstddef>
@@ -95,7 +96,6 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::startsWith(std::st
   return std::nullopt;
 }
 
-
 void CommandLineHistoryService::historizeOf(CommandHistoryEntry commandHistoryEntry)
 {
   std::filesystem::path path(
@@ -118,7 +118,6 @@ void CommandLineHistoryService::historizeOf(CommandHistoryEntry commandHistoryEn
   m_position = std::make_optional(m_history.size() + 1);
 }
 
-
 std::vector<CommandHistoryEntry> CommandLineHistoryService::internalAllOf()
 {
   std::filesystem::path path(
@@ -130,7 +129,8 @@ std::vector<CommandHistoryEntry> CommandLineHistoryService::internalAllOf()
     while (!stream.isEndOfFile()) {
       std::string line = stream.getLine();
       std::vector<std::string> entries = StringUtils::split(line, ';');
-      auto timestamp = StringifyService<date::sys_time<std::chrono::microseconds>>::deserializeFromString(entries[0]);
+      auto timestamp =
+        StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(entries[0]);
       std::string userName = entries[1];
       std::string command = entries[2];
       std::string menu = entries[3];
@@ -147,6 +147,5 @@ void CommandLineHistoryService::onInitialize()
 {
   m_history = internalAllOf();
 }
-
 
 std::vector<CommandHistoryEntry> CommandLineHistoryService::allOf() { return m_history; }

@@ -1,5 +1,6 @@
 
 #include "lintel/features/base/controller/UserSessionDto.h"
+#include <chrono>
 
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/StringifyService.h"
@@ -18,7 +19,7 @@ const std::string &UserSessionDto::getIpAddress() const { return m_ipAddress; }
 
 const std::string &UserSessionDto::getUserName() const { return m_userName; }
 
-const date::sys_time<std::chrono::microseconds> &UserSessionDto::getLastAccessTimestamps() const
+const std::chrono::sys_time<std::chrono::microseconds> &UserSessionDto::getLastAccessTimestamps() const
 { return m_lastAccessTimestamps; }
 
 std::vector<UserSessionDto> UserSessionDto::listOf(const std::vector<UserToken> &tokens)
@@ -46,7 +47,8 @@ void UserSessionDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *write
   // LAST_ACCESS
   writer->String(shape.LAST_ACCESS);
   writer->String(
-    StringifyService<date::sys_time<std::chrono::microseconds>>::serializeToString(m_lastAccessTimestamps).c_str());
+    StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(m_lastAccessTimestamps)
+      .c_str());
   writer->EndObject();
 }
 
@@ -76,7 +78,7 @@ bool UserSessionDto::deserialize(const rapidjson::Value &obj)
   }
   // LAST_ACCESS
   if (obj.HasMember(shape.LAST_ACCESS)) {
-    m_lastAccessTimestamps = StringifyService<date::sys_time<std::chrono::microseconds>>::deserializeFromString(
+    m_lastAccessTimestamps = StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(
       obj[shape.LAST_ACCESS].GetString());
   } else {
     LOG_ERROR("{} not defined in json serialization", shape.LAST_ACCESS);

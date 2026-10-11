@@ -9,7 +9,7 @@ add_executable(base_benchmarks
     SqliteBenchmark.cpp
     PropertyDtoBenchmark.cpp
 )
-target_compile_features(base_benchmarks PUBLIC cxx_std_17)
+target_compile_features(base_benchmarks PUBLIC cxx_std_20)
 target_link_libraries(base_benchmarks PRIVATE
     lintel::lintel
     benchmark::benchmark_main

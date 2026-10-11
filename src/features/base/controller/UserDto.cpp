@@ -1,4 +1,5 @@
 #include "lintel/features/base/controller/UserDto.h"
+#include <chrono>
 
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/StringifyService.h"
@@ -13,9 +14,9 @@ const std::string &UserDto::getEMail() const { return m_eMail; }
 
 const std::string &UserDto::getUserName() const { return m_userName; }
 
-const date::sys_time<std::chrono::microseconds> &UserDto::getCreatedTimestamp()
-const {
-    return m_createdTimestamp;
+const std::chrono::sys_time<std::chrono::microseconds> &UserDto::getCreatedTimestamp() const
+{
+  return m_createdTimestamp;
 }
 
 UserDto::UserDto(const User &user, std::string id)
@@ -58,9 +59,9 @@ void UserDto::serialize(
     }
     // CREATED_TIMESTAMP
     writer->String(shape.CREATED_TIMESTAMP);
-    writer->String(StringifyService<date::sys_time<std::chrono::microseconds>>::
-                   serializeToString(getCreatedTimestamp())
-                           .c_str());
+    writer->String(
+      StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(getCreatedTimestamp())
+        .c_str());
     // GROUPS
     if (m_groups != nullptr) {
         writer->String(shape.GROUPS);
@@ -118,10 +119,8 @@ bool UserDto::deserialize(const rapidjson::Value &obj) {
     }
     // CREATED_TIMESTAMP
     if (obj.HasMember(shape.CREATED_TIMESTAMP)) {
-        m_createdTimestamp =
-                StringifyService<date::sys_time<std::chrono::microseconds>>::
-                deserializeFromString(
-                        obj[shape.CREATED_TIMESTAMP].GetString());
+      m_createdTimestamp = StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(
+        obj[shape.CREATED_TIMESTAMP].GetString());
     } else {
         success = false;
         LOG_ERROR("{} not defined in json serializatioon", shape.CREATED_TIMESTAMP);

@@ -1,7 +1,5 @@
 #include "lintel/features/base/repositories/UserRepository.h"
 
-#include <date/date.h>
-
 #include <algorithm>
 #include <chrono>
 #include <exception>
@@ -28,7 +26,7 @@ void appendUsersOf(db::Result &result,
     std::string lastLastName;
     std::string lastPassword;
     std::string lastEMail;
-    date::sys_time<std::chrono::microseconds> lastCreatedTimestamp;
+    std::chrono::sys_time<std::chrono::microseconds> lastCreatedTimestamp;
     std::vector<std::string> lastGroupNames;
     auto flush = [&]() {
         std::vector<Group> groups;
@@ -50,8 +48,7 @@ void appendUsersOf(db::Result &result,
         std::string lastName = iter.of(2).getValue();
         std::string eMail = iter.of(3).getValue();
         std::string password = iter.of(4).getValue();
-        auto createdTimestamp =
-                iter.of(5).getValue<date::sys_time<std::chrono::microseconds>>();
+        auto createdTimestamp = iter.of(5).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
         std::string userName = iter.of(6).getValue();
         if (lastUserName != userName && !lastUserName.empty()) {
             flush();
@@ -107,8 +104,7 @@ std::optional<User> UserRepository::of(const std::string &userName) {
     std::string lastName = userArg.of(2).getValue();
     std::string email = userArg.of(3).getValue();
     std::string password = userArg.of(4).getValue();
-    auto createdTimestamp =
-            userArg.of(5).getValue<date::sys_time<std::chrono::microseconds>>();
+    auto createdTimestamp = userArg.of(5).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
 
     std::vector<Group> groups;
     for (auto &iter: result) {

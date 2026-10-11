@@ -1,8 +1,7 @@
 #ifndef LINTEL_HISTORYENTRY_H
 #define LINTEL_HISTORYENTRY_H
 
-#include <date/date.h>
-
+#include <chrono>
 #include <string>
 #include <utility>
 
@@ -24,7 +23,7 @@ private:
   std::string m_label;
   std::string m_text;
   std::string m_uuid;
-  date::sys_time<std::chrono::microseconds> m_createdTimestamp;
+  std::chrono::sys_time<std::chrono::microseconds> m_createdTimestamp;
 
 public:
   /**
@@ -39,7 +38,7 @@ public:
     std::string serviceName,
     std::string label,
     std::string text,
-    const date::sys_time<std::chrono::microseconds> &createdTimestamp);
+    const std::chrono::sys_time<std::chrono::microseconds> &createdTimestamp);
 
   /**
    * Constructor inferring process and service name from an AbstractServiceInterface.
@@ -65,7 +64,7 @@ public:
   [[nodiscard]] const std::string &getUuid() const;
 
   /** @return creation timestamp */
-  [[nodiscard]] const date::sys_time<std::chrono::microseconds> &getCreatedTimestamp() const;
+  [[nodiscard]] const std::chrono::sys_time<std::chrono::microseconds> &getCreatedTimestamp() const;
 
   /** @return true if entries are equal */
   bool operator==(const HistoryEntry &rhs) const;

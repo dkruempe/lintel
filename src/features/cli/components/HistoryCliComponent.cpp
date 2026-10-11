@@ -1,4 +1,5 @@
 #include "lintel/features/cli/components/HistoryCliComponent.h"
+#include <chrono>
 
 #include "lintel/core/services/StringifyService.h"
 #include "lintel/core/utils/TableBuilder.h"
@@ -34,23 +35,21 @@ void HistoryCliComponent::printHistories(const std::vector<HistoryDto> &historie
     builder.add({"No.", "Process", "Service", "Label", "Text", "UUID", "Created Timestamp"});
     std::size_t iter = 0;
     for (const auto &history: histories) {
-        builder.add({
-                            std::to_string(++iter), history.getProcessName(), history.getServiceName(),
-                            history.getLabel(),
-                            history.getText(),
-                            history.getUuid(),
-                            StringifyService<date::sys_time<std::chrono::microseconds> >::serializeToString(
-                                    history.getCreatedTimestamp())
-                    });
+      builder.add({ std::to_string(++iter),
+        history.getProcessName(),
+        history.getServiceName(),
+        history.getLabel(),
+        history.getText(),
+        history.getUuid(),
+        StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(
+          history.getCreatedTimestamp()) });
     }
     std::cout << builder.build() << "\n";
 }
 
-
 void HistoryCliComponent::onHelp() {
     m_commandParser.printHelp(getName(), getAlias(), m_description);
 }
-
 
 bool HistoryCliComponent::onMenu(const std::string &component) {
     return false;
@@ -60,16 +59,13 @@ void HistoryCliComponent::onShowMenu() {
     std::cout << "No submenu available!\n";
 }
 
-
 bool HistoryCliComponent::onExit() {
     return true;
 }
 
-
 void HistoryCliComponent::printCommandList(std::set<std::string> menuAlias) {
     m_commandParser.printCommandList(menuAlias);
 }
-
 
 std::vector<std::string> HistoryCliComponent::allCommandsOf() {
     return m_commandParser.allCommandsOf();

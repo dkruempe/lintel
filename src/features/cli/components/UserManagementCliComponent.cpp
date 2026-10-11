@@ -1,4 +1,5 @@
 #include "lintel/features/cli/components/UserManagementCliComponent.h"
+#include <chrono>
 
 #include <lintel/core/utils/TableBuilder.h>
 
@@ -270,12 +271,11 @@ void UserManagementCliComponent::printSessions(
     builder.add({"No.", "Id", "IP Address", "Last Access"});
     std::size_t iter = 0;
     for (const auto &session: sessions) {
-        builder.add({std::to_string(++iter), session.getId(),
-                     session.getIpAddress(),
-                     StringifyService<date::sys_time<
-                             std::chrono::microseconds>>::
-                             serializeToString(
-                                     session.getLastAccessTimestamps())});
+      builder.add({ std::to_string(++iter),
+        session.getId(),
+        session.getIpAddress(),
+        StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(
+          session.getLastAccessTimestamps()) });
     }
     std::cout << builder.build() << "\n";
 }

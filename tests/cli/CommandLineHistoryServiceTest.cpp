@@ -21,7 +21,7 @@ std::string historyFileName() { return ".commandline_history_test_" + std::to_st
 
 std::filesystem::path historyFilePath() { return std::filesystem::path(CONFIG_DIRECTORY) / historyFileName(); }
 
-// date::sys_time<Duration> is defined as std::chrono::time_point<std::chrono::system_clock, Duration>;
+// std::chrono::sys_time<Duration> is defined as std::chrono::time_point<std::chrono::system_clock, Duration>;
 // spelling it out keeps this helper free of the third-party namespace.
 using MicrosecondSysTime = std::chrono::time_point<std::chrono::system_clock, std::chrono::microseconds>;
 

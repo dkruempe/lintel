@@ -1,8 +1,6 @@
 #ifndef LINTEL_IAUTHSERVICE_H
 #define LINTEL_IAUTHSERVICE_H
 
-#include <date/date.h>
-
 #include <chrono>
 #include <memory>
 #include <optional>
@@ -28,7 +26,7 @@ struct UserTokenLogin {
 struct UserToken {
     std::string m_ipAddress;                     /**< Client IP address */
     std::string m_id;                            /**< Token ID */
-    date::sys_time<std::chrono::microseconds> m_lastAccessTimestamps; /**< Last access time */
+    std::chrono::sys_time<std::chrono::microseconds> m_lastAccessTimestamps; /**< Last access time */
     User m_user;                                 /**< The authenticated user */
 };
 

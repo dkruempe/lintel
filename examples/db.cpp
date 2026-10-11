@@ -1,13 +1,14 @@
-#include "lintel/core/persistence/ConnectionType.h"
-#include <vector>
-#include <memory>
-#include <string>
-#include "lintel/core/services/LoggerService.h"
 #include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/ConnectionType.h"
 #include "lintel/core/persistence/ParameterBuilder.h"
 #include "lintel/core/persistence/PreparedStatement.h"
 #include "lintel/core/persistence/Result.h"
+#include "lintel/core/services/LoggerService.h"
 #include "lintel/features/base/models/HistoryEntry.h"
+#include <chrono>
+#include <memory>
+#include <string>
+#include <vector>
 
 int main(int argc, char *argv[])
 {
@@ -47,7 +48,7 @@ int main(int argc, char *argv[])
     const std::string serviceNameTemp = item.of(1).getValue();
     const std::string labelTemp = item.of(2).getValue();
     const std::string text = item.of(3).getValue();
-    auto createdTimestamp = item.of(4).getValue<date::sys_time<std::chrono::microseconds>>();
+    auto createdTimestamp = item.of(4).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
     const HistoryEntry entry(processNameTemp, serviceNameTemp, labelTemp, text, createdTimestamp);
     entries.push_back(entry);
   }

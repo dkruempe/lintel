@@ -39,8 +39,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf() const {
         const std::string serviceName = item.of(1).getValue();
         const std::string label = item.of(2).getValue();
         const std::string text = item.of(3).getValue();
-        auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        auto createdTimestamp = item.of(4).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
         const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
@@ -68,8 +67,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
         const std::string processName = item.of(0).getValue();
         const std::string serviceName = item.of(1).getValue();
         const std::string text = item.of(3).getValue();
-        auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        auto createdTimestamp = item.of(4).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
         const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
@@ -120,8 +118,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(const std::string &processNam
         const std::string serviceNameTemp = item.of(1).getValue();
         const std::string labelTemp = item.of(2).getValue();
         const std::string text = item.of(3).getValue();
-        auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        auto createdTimestamp = item.of(4).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
         const HistoryEntry entry(processNameTemp, serviceNameTemp, labelTemp, text, createdTimestamp);
         entries.push_back(entry);
     }
@@ -150,8 +147,7 @@ std::vector<HistoryEntry> HistoryRepository::allOf(
     for (auto &item: result) {
         const std::string label = item.of(2).getValue();
         const std::string text = item.of(3).getValue();
-        auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        auto createdTimestamp = item.of(4).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
         const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
@@ -179,8 +175,7 @@ std::vector<HistoryEntry> HistoryRepository::allOfProcess(
         const std::string serviceName = item.of(1).getValue();
         const std::string label = item.of(2).getValue();
         const std::string text = item.of(3).getValue();
-        auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        auto createdTimestamp = item.of(4).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
         const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
@@ -208,8 +203,7 @@ std::vector<HistoryEntry> HistoryRepository::allOfService(
         const std::string processName = item.of(0).getValue();
         const std::string label = item.of(2).getValue();
         const std::string text = item.of(3).getValue();
-        auto createdTimestamp =
-                item.of(4).getValue<date::sys_time<std::chrono::microseconds> >();
+        auto createdTimestamp = item.of(4).getValue<std::chrono::sys_time<std::chrono::microseconds>>();
         const HistoryEntry entry(processName, serviceName, label, text, createdTimestamp);
         entries.push_back(entry);
     }
@@ -249,17 +243,18 @@ void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) const
     }
 }
 
-void HistoryRepository::cleanAllOlderThan(
-        date::sys_time<std::chrono::microseconds> timestamp) const {
-    const db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
-    db::PreparedStatement preparedStatement(connection, R"(
+void HistoryRepository::cleanAllOlderThan(std::chrono::sys_time<std::chrono::microseconds> timestamp) const
+{
+  const db::Connection connection(m_connectionEntry);
+  db::Transaction transaction(connection);
+  db::PreparedStatement preparedStatement(connection,
+    R"(
     delete from history
     where created_timestamp < ?
   )",
-                                            "history_cleanup");
-    db::ParameterBuilder builder(m_connectionEntry);
-    builder.add(timestamp);
-    preparedStatement.execute(builder);
-    transaction.commit();
+    "history_cleanup");
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(timestamp);
+  preparedStatement.execute(builder);
+  transaction.commit();
 }

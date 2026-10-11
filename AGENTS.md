@@ -2,7 +2,12 @@
 
 ## Build & Test Commands
 
-CI is the source of truth (`.github/workflows/ci.yml`). C++17, CMake 3.16+, Conan 2, Ninja.
+CI is the source of truth (`.github/workflows/ci.yml`). C++20, CMake 3.16+, Conan 2, Ninja.
+
+The GCC jobs run **gcc-14** and CI's Clang uses libstdc++ 14 (Clang auto-selects the
+newest GCC installation, which on ubuntu-24.04 is 14). GCC 14 / libstdc++ 14 is the
+minimum, because `std::chrono::parse` (used for timestamp deserialization) does not
+exist in libstdc++ 13. Clang jobs therefore rely on the runner's GCC 14 being present.
 
 ```bash
 # 1. Conan dependencies
