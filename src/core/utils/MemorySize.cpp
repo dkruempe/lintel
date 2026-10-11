@@ -13,6 +13,9 @@ constexpr std::size_t kBytesPerTera = 1000000000000;
 constexpr std::size_t kBytesPerPeta = 1000000000000000;
 
 /** Parses a numeric prefix and validates it, optionally scaling it by a multiplier. */
+// Anonymous-namespace helper: the two string parameters have distinct roles (full input for the
+// error message vs. the numeric part to parse) and every call site passes them in this order.
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 std::size_t parseAndScale(const std::string &input, const std::string &prefix,
                           std::size_t multiplier) {
     std::size_t pos = 0;

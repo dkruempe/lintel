@@ -11,8 +11,8 @@
  * std::make_format_args and forwards them to the non-template logImpl(), so
  * formatting and spdlog are compiled once instead of at every call site.
  */
+#include <cstdint>
 #include <format>
-
 #include <memory>
 #include <mutex>
 #include <string_view>
@@ -29,7 +29,7 @@ class logger;
  * Log levels used by LoggerService and the LOG_* macros.
  * The values intentionally match spdlog::level::level_enum.
  */
-enum class LogLevel : int { trace = 0, debug = 1, info = 2, warn = 3, error = 4, critical = 5, off = 6 };
+enum class LogLevel : std::uint8_t { trace = 0, debug = 1, info = 2, warn = 3, error = 4, critical = 5, off = 6 };
 
 /** Source location function name for the LOG_* macros, equivalent to spdlog's SPDLOG_FUNCTION. */
 #ifndef LINTEL_FUNCTION

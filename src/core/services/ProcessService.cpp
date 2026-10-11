@@ -7,6 +7,7 @@
 #include <boost/process/v1/environment.hpp>
 #include <boost/process/v1/io.hpp>
 #include <chrono>
+#include <cstdint>
 #include <format>
 #include <memory>
 #include <mutex>
@@ -230,7 +231,7 @@ void ProcessService::monitorProcess()
     std::chrono::steady_clock::time_point lastRestartTime{};
     std::optional<ProcessResourceData> resourceSample;
     std::chrono::steady_clock::time_point lastNotifyTime{};
-    enum Kind { None, Sample, Restart, Spawn, Finalize } kind = None;
+    enum Kind : std::uint8_t { None, Sample, Restart, Spawn, Finalize } kind = None;
   };
 
   std::vector<Action> actions;
@@ -381,8 +382,9 @@ void ProcessService::monitorProcess()
       // only finalize once
       try {
         exec.setPromiseValue(result.exitCode);
-      } catch (const std::exception &) {
-        // promise already fulfilled
+      } catch (const std::exception &ex) {
+        // promise already fulfilled: monitorProcess won the race
+        (void)ex;
       }
       exec.getProcess()->onStop();
       DEFINE_HISTORY_ENTRY(historyEntry,
@@ -441,13 +443,12 @@ void ProcessService::sampleResources(const std::string &id, ProcessExecutes &pro
   processExecutes.setResourceSample(newSample);
   if (!newSample.valid) { return; }
 
-  bool reachedCpu = false, reachedMemory = false;
-  if (processExecutes.getProcess()->getCpuNotify().has_value() && newSample.cpuPercent.has_value()) {
-    reachedCpu = newSample.cpuPercent.value() >= processExecutes.getProcess()->getCpuNotify().value();
-  }
-  if (processExecutes.getProcess()->getMemoryNotify().has_value() && newSample.memoryBytes.has_value()) {
-    reachedMemory = newSample.memoryBytes.value() >= processExecutes.getProcess()->getMemoryNotify().value();
-  }
+  const auto &cpuNotify = processExecutes.getProcess()->getCpuNotify();
+  const auto &memoryNotify = processExecutes.getProcess()->getMemoryNotify();
+  bool reachedCpu =
+    cpuNotify.has_value() && newSample.cpuPercent.has_value() && newSample.cpuPercent.value() >= cpuNotify.value();
+  bool reachedMemory = memoryNotify.has_value() && newSample.memoryBytes.has_value()
+                       && newSample.memoryBytes.value() >= memoryNotify.value();
   if (!reachedCpu && !reachedMemory) { return; }
   // rate-limit notify to once per monitor period
   const auto now = std::chrono::steady_clock::now();
@@ -599,8 +600,9 @@ bool ProcessService::stopOf(const Process &process)
     if (found->second.getChild() != processExecutes.getChild()) { return false; }
     try {
       found->second.setPromiseValue(processExecutes.getChild()->exit_code());
-    } catch (const std::exception &) {
-      // promise already fulfilled
+    } catch (const std::exception &ex) {
+      // promise already fulfilled: monitorProcess won the race
+      (void)ex;
     }
     found->second.getProcess()->onStop();
     m_processes.erase(found);
@@ -657,8 +659,9 @@ void ProcessService::terminateOf(const Process &process)
     if (found == m_processes.end()) { return; }
     try {
       found->second.setPromiseValue(exitCode);
-    } catch (const std::exception &) {
-      // promise already fulfilled
+    } catch (const std::exception &ex) {
+      // promise already fulfilled: monitorProcess won the race
+      (void)ex;
     }
     m_processes.erase(found);
   }
@@ -692,8 +695,9 @@ void ProcessService::detachOf(const Process &process)
     // inform about success exit bc. no further monitoring
     try {
       processExecutes.setPromiseValue(EXIT_SUCCESS);
-    } catch (const std::exception &) {
-      // promise already fulfilled
+    } catch (const std::exception &ex) {
+      // promise already fulfilled: monitorProcess won the race
+      (void)ex;
     }
     m_processes.erase(found);
   }
