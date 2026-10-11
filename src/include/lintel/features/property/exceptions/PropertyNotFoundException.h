@@ -1,9 +1,8 @@
 #ifndef LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
 #define LOGGING_PROPERTYNOTFOUNDEXCEPTION_H
 
-#include <fmt/format.h>
-
 #include <exception>
+#include <format>
 #include <string>
 
 /** Exception thrown when a requested property is not found */
@@ -28,7 +27,7 @@ public:
               m_instanceName(instanceName),
               m_className(className),
               m_processName(processName),
-              m_message(fmt::format("Property<> with name: {} instanceName: {} "
+              m_message(std::format("Property<> with name: {} instanceName: {} "
                                     "className: {} processName: {} not found",
                                     name, instanceName, className, processName)) {}
 

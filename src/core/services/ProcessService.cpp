@@ -7,6 +7,7 @@
 #include <boost/process/v1/environment.hpp>
 #include <boost/process/v1/io.hpp>
 #include <chrono>
+#include <format>
 #include <memory>
 #include <mutex>
 #include <regex>
@@ -182,7 +183,7 @@ std::optional<std::future<int>> ProcessService::startOf(const Process &process)
   }
   LOG_INFO("{}/{} started", process.getId(), process.getPath().filename().string());
   DEFINE_HISTORY_ENTRY(
-    historyEntry, "PROCESS", fmt::format("{}/{} started", process.getId(), process.getPath().filename().string()));
+    historyEntry, "PROCESS", std::format("{}/{} started", process.getId(), process.getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
   process.onStart();
   return std::make_optional<std::future<int>>(std::move(future));
@@ -292,7 +293,7 @@ void ProcessService::monitorProcess()
           action.consecutiveFailures);
         DEFINE_HISTORY_ENTRY(historyEntry,
           "PROCESS",
-          fmt::format("{}/{} moved to failed state after {} fast failures",
+          std::format("{}/{} moved to failed state after {} fast failures",
             action.process->getId(),
             action.process->getPath().filename().string(),
             action.consecutiveFailures));
@@ -368,7 +369,7 @@ void ProcessService::monitorProcess()
       exec.getProcess()->onRestart();
       DEFINE_HISTORY_ENTRY(historyEntry,
         "PROCESS",
-        fmt::format(
+        std::format(
           "{}/{} process restarted", exec.getProcess()->getId(), exec.getProcess()->getPath().filename().string()));
       m_historyService->historizeOf({ historyEntry });
       LOG_INFO("{}/{} process restarted", exec.getProcess()->getId(), exec.getProcess()->getPath().filename().string());
@@ -386,7 +387,7 @@ void ProcessService::monitorProcess()
       exec.getProcess()->onStop();
       DEFINE_HISTORY_ENTRY(historyEntry,
         "PROCESS",
-        fmt::format(
+        std::format(
           "{}/{} process stopped", exec.getProcess()->getId(), exec.getProcess()->getPath().filename().string()));
       m_historyService->historizeOf({ historyEntry });
       LOG_INFO("{}/{} process stopped", exec.getProcess()->getId(), exec.getProcess()->getPath().filename().string());
@@ -456,7 +457,7 @@ void ProcessService::sampleResources(const std::string &id, ProcessExecutes &pro
     LOG_WARN("{} resources exceeded thresholds: cpu={} mem={}", id, reachedCpu, reachedMemory);
     DEFINE_HISTORY_ENTRY(historyEntry,
       "PROCESS",
-      fmt::format("{}/{} resource threshold exceeded (cpu={} mem={})",
+      std::format("{}/{} resource threshold exceeded (cpu={} mem={})",
         processExecutes.getProcess()->getId(),
         processExecutes.getProcess()->getPath().filename().string(),
         reachedCpu,
@@ -519,7 +520,7 @@ void ProcessService::monitorProcessGroups()
       "{}/{} recovered from failed state", recovery.process->getId(), recovery.process->getPath().filename().string());
     DEFINE_HISTORY_ENTRY(historyEntry,
       "PROCESS",
-      fmt::format("{}/{} recovered from failed state",
+      std::format("{}/{} recovered from failed state",
         recovery.process->getId(),
         recovery.process->getPath().filename().string()));
     m_historyService->historizeOf({ historyEntry });
@@ -606,7 +607,7 @@ bool ProcessService::stopOf(const Process &process)
   }
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
-    fmt::format("{}/{} process stopped",
+    std::format("{}/{} process stopped",
       processExecutes.getProcess()->getId(),
       processExecutes.getProcess()->getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
@@ -632,7 +633,7 @@ void ProcessService::restartOf(const Process &process)
     found->second.markRestart();
   }
   DEFINE_HISTORY_ENTRY(
-    historyEntry, "PROCESS", fmt::format("{}/{} restarted", process.getId(), process.getPath().filename().string()));
+    historyEntry, "PROCESS", std::format("{}/{} restarted", process.getId(), process.getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
 }
 
@@ -664,7 +665,7 @@ void ProcessService::terminateOf(const Process &process)
   processExecutes.getProcess()->onTerminate();
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
-    fmt::format("{}/{} process terminated", process.getId(), process.getPath().filename().string()));
+    std::format("{}/{} process terminated", process.getId(), process.getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
 }
 
@@ -698,7 +699,7 @@ void ProcessService::detachOf(const Process &process)
   }
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
-    fmt::format("{}/{} process detached",
+    std::format("{}/{} process detached",
       processExecutes.getProcess()->getId(),
       processExecutes.getProcess()->getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
@@ -722,7 +723,7 @@ void ProcessService::resetOf(const Process &process)
   LOG_INFO("{}/{} reset restarts and failure state", process.getId(), process.getPath().filename().string());
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
-    fmt::format("{}/{} reset restarts and failure state", process.getId(), process.getPath().filename().string()));
+    std::format("{}/{} reset restarts and failure state", process.getId(), process.getPath().filename().string()));
   m_historyService->historizeOf({ historyEntry });
 }
 
@@ -743,7 +744,7 @@ void ProcessService::startOf(const ProcessGroup &processGroup)
   }
   for (const auto &process : processGroup.getProcesses()) { startOf(process); }
   DEFINE_HISTORY_ENTRY(
-    historyEntry, "PROCESS", fmt::format("{}/{} processGroup started", processGroup.getId(), processGroup.getName()));
+    historyEntry, "PROCESS", std::format("{}/{} processGroup started", processGroup.getId(), processGroup.getName()));
   m_historyService->historizeOf({ historyEntry });
 }
 
@@ -768,7 +769,7 @@ bool ProcessService::stopOf(const ProcessGroup &processGroup)
     m_processGroups.erase(processGroup.getId());
   }
   DEFINE_HISTORY_ENTRY(
-    historyEntry, "PROCESS", fmt::format("{}/{} processGroup stopped", processGroup.getId(), processGroup.getName()));
+    historyEntry, "PROCESS", std::format("{}/{} processGroup stopped", processGroup.getId(), processGroup.getName()));
   m_historyService->historizeOf({ historyEntry });
   return success;
 }
@@ -780,7 +781,7 @@ void ProcessService::restartOf(const ProcessGroup &processGroup)
   if (!success) { terminateOf(processGroup); }
   startOf(processGroup);
   DEFINE_HISTORY_ENTRY(
-    historyEntry, "PROCESS", fmt::format("{}/{} restarted", processGroup.getId(), processGroup.getName()));
+    historyEntry, "PROCESS", std::format("{}/{} restarted", processGroup.getId(), processGroup.getName()));
   m_historyService->historizeOf({ historyEntry });
 }
 
@@ -797,7 +798,7 @@ void ProcessService::terminateOf(const ProcessGroup &processGroup)
   for (const auto &process : processGroup.getProcesses()) { terminateOf(process); }
   DEFINE_HISTORY_ENTRY(historyEntry,
     "PROCESS",
-    fmt::format("{}/{} processGroup terminated", processGroup.getId(), processGroup.getName()));
+    std::format("{}/{} processGroup terminated", processGroup.getId(), processGroup.getName()));
   m_historyService->historizeOf({ historyEntry });
   m_processGroups.erase(processGroup.getId());
 }
@@ -816,7 +817,7 @@ void ProcessService::detachOf(const ProcessGroup &processGroup)
   for (const auto &process : processGroup.getProcesses()) { detachOf(process); }
   m_processGroups.erase(processGroup.getId());
   DEFINE_HISTORY_ENTRY(
-    historyEntry, "PROCESS", fmt::format("{}/{} detached", processGroup.getId(), processGroup.getName()));
+    historyEntry, "PROCESS", std::format("{}/{} detached", processGroup.getId(), processGroup.getName()));
   m_historyService->historizeOf({ historyEntry });
 }
 ProcessInfo ProcessService::currentOf()

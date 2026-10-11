@@ -1,9 +1,8 @@
 #pragma once
 
-#include <fmt/format.h>
-
 #include <exception>
 #include <filesystem>
+#include <format>
 
 /** Exception thrown when a path is expected to be a file but is not */
 class FileServiceIsNotFileException : public std::exception {
@@ -15,7 +14,7 @@ public:
     /** @param path the path that is not a file */
     explicit FileServiceIsNotFileException(const std::filesystem::path &path)
             : m_path(path),
-              m_message(fmt::format("No Operation possible bc. {} is not a file",
+              m_message(std::format("No Operation possible bc. {} is not a file",
                                     path.string())) {}
 
     [[nodiscard]] const char *what() const noexcept override {

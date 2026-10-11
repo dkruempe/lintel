@@ -1,9 +1,8 @@
 #pragma once
 
-#include <fmt/format.h>
-
 #include <exception>
 #include <filesystem>
+#include <format>
 
 /** Exception thrown when an operation cannot proceed because a file already exists */
 class FileServiceFileExists : public std::exception {
@@ -15,7 +14,7 @@ public:
     /** @param path the path of the existing file */
     explicit FileServiceFileExists(const std::filesystem::path &path)
             : m_path(path),
-              m_message(fmt::format("No Operation possible bc. {} exists",
+              m_message(std::format("No Operation possible bc. {} exists",
                                     path.string())) {}
 
     [[nodiscard]] const char *what() const noexcept override {

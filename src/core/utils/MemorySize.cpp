@@ -1,7 +1,6 @@
 #include "lintel/core/utils/MemorySize.h"
 
-#include <fmt/format.h>
-
+#include <format>
 #include <limits>
 
 #include "lintel/core/utils/StringUtils.h"
@@ -86,6 +85,6 @@ std::string MemorySize::serialize(std::size_t byte) {
 }
 
 std::string MemorySize::toString(double value) {
-    std::string temp = fmt::format("{}", value);
+    std::string temp = std::format("{}", value);
     return temp;
 }

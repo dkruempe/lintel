@@ -1,7 +1,7 @@
 #include "lintel/features/property/controller/PropertyController.h"
 #include "lintel/core/models/JsonSerializable.h"
-#include <fmt/core.h>
 
+#include <format>
 #include <optional>
 #include <utility>
 
@@ -116,7 +116,7 @@ void PropertyController::updatePropertyPut(
             m_propertyService->changeStringValueOf(property,
                                                    propertyValueDto.getValue());
             DEFINE_HISTORY_ENTRY2(historyEntry, "PROPERTY",
-                                  fmt::format("User: {}, changed {} -> {}", userToken->m_user.getUserName(),
+                                  std::format("User: {}, changed {} -> {}", userToken->m_user.getUserName(),
                                               oldValue, newValue),
                                   m_historyService->getProcessName(),
                                   "PropertyController");

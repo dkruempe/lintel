@@ -4,17 +4,18 @@
 /**
  * LoggerService class for easier logging in process itself
  *
- * This public header parses only <fmt/base.h>. spdlog is hidden behind a
+ * This public header parses only <format>. spdlog is hidden behind a
  * forward declaration and stays in LoggerService.cpp.
- * The variadic log() applies fmt's template-elimination idea
- * (fmt::format -> fmt::vformat): the template only boxes its arguments with
- * fmt::make_format_args and forwards them to the non-template logImpl(), so
+ * The variadic log() applies std::format's template-elimination idea
+ * (std::format -> std::vformat): the template only boxes its arguments with
+ * std::make_format_args and forwards them to the non-template logImpl(), so
  * formatting and spdlog are compiled once instead of at every call site.
  */
-#include <fmt/base.h>
+#include <format>
 
 #include <memory>
 #include <mutex>
+#include <string_view>
 
 class Configuration;
 #include "lintel/features/base/models/ProcessName.h"
@@ -61,8 +62,8 @@ private:
     int line,
     const char *function,
     LogLevel lvl,
-    fmt::string_view message,
-    fmt::format_args args);
+    std::string_view message,
+    std::format_args args);
 
   static std::unique_ptr<LoggerService> m_instance;
   static std::mutex m_instanceMutex;
@@ -100,7 +101,7 @@ public:
   static void initSingleton2();
 
   /** Log a formatted message at the given level with source location.
-   * Template-eliminated: boxes the arguments (fmt::make_format_args) and defers all formatting
+   * Template-eliminated: boxes the arguments (std::make_format_args) and defers all formatting
    * to the non-template logImpl() in LoggerService.cpp.
    * @tparam Args the argument types
    * @param file     the source file name
@@ -110,9 +111,9 @@ public:
    * @param message  the format string
    * @param args     the format arguments */
   template<typename... Args>
-  void log(const char *file, int line, const char *function, LogLevel lvl, fmt::string_view message, Args &&...args)
+  void log(const char *file, int line, const char *function, LogLevel lvl, std::string_view message, Args &&...args)
   {
-    logImpl(file, line, function, lvl, message, fmt::make_format_args(args...));
+    logImpl(file, line, function, lvl, message, std::make_format_args(args...));
   }
 };
 

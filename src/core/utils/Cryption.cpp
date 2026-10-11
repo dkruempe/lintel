@@ -1,6 +1,6 @@
 #include "lintel/core/utils/Cryption.h"
 
-#include <fmt/format.h>
+#include <format>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
@@ -25,7 +25,7 @@ constexpr const char *kPbkdf2Prefix = "$pbkdf2-sha512$";
 void appendHex(std::string &out, const unsigned char *data,
                std::size_t length) {
     for (std::size_t i = 0; i < length; i++) {
-        out += fmt::format("{:02x}", static_cast<int>(data[i]));
+        out += std::format("{:02x}", static_cast<int>(data[i]));
     }
 }
 
@@ -179,7 +179,7 @@ std::string Cryption::hashOfSha512(const std::string &text) {
     std::string tokens;
     auto *bufferPtr = static_cast<unsigned char *>(buffer);
     for (unsigned int i = 0; i < length; i++) {
-        tokens += fmt::format("{:02x}", static_cast<int>(bufferPtr[i]));
+        tokens += std::format("{:02x}", static_cast<int>(bufferPtr[i]));
     }
 
     return tokens;

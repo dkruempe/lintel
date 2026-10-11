@@ -1,8 +1,7 @@
 #pragma once
 
-#include <fmt/format.h>
-
 #include <exception>
+#include <format>
 #include <string>
 #include <utility>
 
@@ -21,7 +20,7 @@ public:
     explicit PropertyNoRuntimeChangeSupported(
             std::shared_ptr<PropertyBase> tempProperty)
             : m_property(std::move(tempProperty)),
-              m_message(fmt::format("{} no runtime change allowed",
+              m_message(std::format("{} no runtime change allowed",
                                     m_property->toString())) {}
 
     [[nodiscard]] const char *what() const noexcept override {

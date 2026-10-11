@@ -2,7 +2,6 @@
 
 #include <spdlog/sinks/daily_file_sink.h>
 #include "lintel/features/base/configuration/Configuration.h"
-#include <fmt/format.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/sinks/tcp_sink.h>
@@ -250,8 +249,8 @@ void LoggerService::logImpl(const char *file,
                             int line,
                             const char *function,
                             LogLevel lvl,
-                            fmt::string_view message,
-                            fmt::format_args args) {
+                            std::string_view message,
+                            std::format_args args) {
     if (m_logger == nullptr) {
         return;
     }
@@ -261,12 +260,12 @@ void LoggerService::logImpl(const char *file,
     }
     std::string text;
     try {
-        text = fmt::vformat(message, args);
+        text = std::vformat(message, args);
     } catch (const std::exception &ex) {
-        text = fmt::format("log formatting failed: {} [{}:{}]",
+        text = std::format("log formatting failed: {} [{}:{}]",
                            ex.what(), file, line);
     }
     m_logger->log(spdlog::source_loc{file, line, function},
                   level,
-                  fmt::string_view(text));
+                  std::string_view(text));
 }

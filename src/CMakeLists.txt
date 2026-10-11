@@ -39,7 +39,6 @@ if (NOT TARGET lintel::Hypodermic)
     find_package(Hypodermic REQUIRED)
 endif ()
 
-find_package(fmt REQUIRED)
 find_package(tinyxml2 REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(magic_enum REQUIRED)
@@ -541,7 +540,7 @@ target_include_directories(lintel
 # in the export and would have to be exported along with it. The $<BUILD_INTERFACE:...>
 # removes it from the install export but keeps the flags in the build tree - so
 # project_warnings does not belong into the export.
-target_link_libraries(lintel PUBLIC fmt::fmt-header-only tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
+target_link_libraries(lintel PUBLIC tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
         Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib rapidjson magic_enum::magic_enum
         spdlog::spdlog_header_only lintel::Hypodermic Boost::boost Boost::headers Boost::filesystem
         PRIVATE $<BUILD_INTERFACE:project_warnings>)
@@ -580,7 +579,6 @@ if(ENABLE_PCH)
         <type_traits>
         <utility>
         <vector>
-        <fmt/base.h>
     )
 endif()
 
