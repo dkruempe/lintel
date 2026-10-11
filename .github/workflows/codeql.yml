@@ -82,6 +82,32 @@ jobs:
               - external
               - benchmarks
 
+            # The three unused-entity queries are excluded repo-wide. In this
+            # codebase they only ever fire on two macro/template mechanisms and
+            # never on a defect:
+            #
+            #   - Catch2's TEST_CASE and Google Benchmark's BENCHMARK() emit a
+            #     static function plus a static registrar that references it.
+            #     CodeQL does not treat that reference as a use, so every test
+            #     case (and every helper only called from one) is reported as an
+            #     unused static function. `build-mode: manual` resolves the macro,
+            #     so this is ~100 findings per run, all false positives.
+            #   - a parameter pack forwarded straight into a variadic helper
+            #     (std::forward, std::make_format_args) is not seen as read, so
+            #     `args` in SchedulerService/ExecutorService/LoggerService is
+            #     reported as an unused local/static variable.
+            #
+            # The compiler already covers every real case: -Wall -Wunused with
+            # -Werror turns an unused static function or variable into a build
+            # failure, so a genuine defect can never reach a CodeQL alert here.
+            query-filters:
+              - exclude:
+                  id: cpp/unused-static-function
+              - exclude:
+                  id: cpp/unused-local-variable
+              - exclude:
+                  id: cpp/unused-static-variable
+
       # Full instrumented build: resolves macro/constexpr/template contexts
       # across translation-unit boundaries. Without a compilation database
       # CodeQL falls back to heuristic extraction, which is why 'none' reports
