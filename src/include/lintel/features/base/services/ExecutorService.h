@@ -54,6 +54,7 @@ template<class F, class... Args>
 std::future<typename std::invoke_result<typename std::decay<F>::type, typename std::decay<Args>::type...>::type>
   ExecutorService::execute(F &&f, Args &&...args)
 {
+  (void)sizeof...(Args);
   auto func = std::make_shared<std::packaged_task<
     typename std::invoke_result<typename std::decay<F>::type, typename std::decay<Args>::type...>::type()>>(
     std::bind(std::forward<F>(f), std::forward<Args>(args)...));
