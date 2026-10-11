@@ -133,7 +133,6 @@ template<class F, class... Args>
 auto SchedulerService::schedule(F &&f, Args &&...args)
   -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>
 {
-  (void)sizeof...(Args);
   return schedule_at(std::chrono::steady_clock::now(), std::forward<F>(f), std::forward<Args>(args)...);
 }
 
@@ -141,7 +140,6 @@ template<class F, class... Args>
 auto SchedulerService::schedule_after(const std::chrono::steady_clock::duration &d, F &&f, Args &&...args)
   -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>
 {
-  (void)sizeof...(Args);
   return schedule_at(std::chrono::steady_clock::now() + d, std::forward<F>(f), std::forward<Args>(args)...);
 }
 
@@ -149,7 +147,6 @@ template<class F, class... Args>
 auto SchedulerService::schedule_at(const std::chrono::steady_clock::time_point &t, F &&f, Args &&...args)
   -> std::future<std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>>
 {
-  (void)sizeof...(Args);
   using ReturnType = std::invoke_result_t<std::decay_t<F>, std::decay_t<Args>...>;
 
   auto task =
@@ -173,7 +170,6 @@ void SchedulerService::schedule_at_fixed_rate(const std::chrono::steady_clock::d
   F &&f,
   Args &&...args)
 {
-  (void)sizeof...(Args);
   auto bound_task = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
 
   {
