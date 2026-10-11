@@ -10,7 +10,6 @@ cpp-httplib/0.47.0
 openssl/3.6.3
 boost/1.91.0
 rapidjson/cci.20250205
-zlib/1.3.2
 benchmark/1.9.5
 
 [generators]
