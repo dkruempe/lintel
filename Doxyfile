@@ -3,7 +3,7 @@
 # Cannot be derived automatically by this file alone without CMake; keep in sync.
 
 PROJECT_NAME           = "lintel"
-PROJECT_NUMBER         = "0.1.0"
+PROJECT_NUMBER         = "0.2.0"
 OUTPUT_DIRECTORY       = build/doxygen
 CREATE_SUBDIRS         = NO
 ALLOW_UNICODE_NAMES    = NO
