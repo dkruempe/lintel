@@ -1,7 +1,7 @@
 #ifndef COMMANDLINEHISTORYSERVICE_H
 #define COMMANDLINEHISTORYSERVICE_H
-#include "lintel/core/services/PropertyRegistration.h"
 #include "lintel/core/services/FileService.h"
+#include "lintel/core/services/PropertyRegistration.h"
 #include "lintel/features/cli/models/CommandHistoryEntry.h"
 #include <optional>
 
@@ -49,7 +49,7 @@ public:
    * historizes the last entered command in the local file
    * @param commandHistoryEntry history entry
    */
-  void historizeOf(CommandHistoryEntry commandHistoryEntry);
+  void historizeOf(const CommandHistoryEntry &commandHistoryEntry);
 
   void onInitialize() override;
 };

@@ -12,6 +12,9 @@ class InputService : public IInputService
 private:
   termios newt{};
 
+  /** Reads and decodes the rest of an ANSI escape sequence (after ESC). */
+  KeyEvent readEscapeSequence();
+
 public:
   InputService();
 

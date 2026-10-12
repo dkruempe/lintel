@@ -38,7 +38,7 @@ public:
     std::string groupName,
     std::string groupId,
     bool exitCodeValid = true,
-    std::optional<ProcessResourceData> resourceData = std::nullopt);
+    const std::optional<ProcessResourceData> &resourceData = std::nullopt);
 
   /** @return process definition */
   [[nodiscard]] const std::shared_ptr<Process> &getProcess() const;

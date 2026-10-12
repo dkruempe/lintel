@@ -7,10 +7,10 @@ ProcessInfo::ProcessInfo(std::shared_ptr<Process> process,
   std::string groupName,
   std::string groupId,
   bool exitCodeValid,
-  std::optional<ProcessResourceData> resourceData)
+  const std::optional<ProcessResourceData> &resourceData)
   : m_process(std::move(process)), m_id(id), m_isRunning(isRunning), m_exitCode(exitCode),
     m_exitCodeValid(exitCodeValid), m_groupName(std::move(groupName)), m_groupId(std::move(groupId)),
-    m_resourceData(std::move(resourceData))
+    m_resourceData(resourceData)
 {}
 
 const std::shared_ptr<Process> &ProcessInfo::getProcess() const { return m_process; }

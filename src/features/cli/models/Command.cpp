@@ -8,7 +8,8 @@
 #include <numeric>
 
 Command::Command(std::string command, std::string description)
-  : m_command(std::move(command)), m_description(std::move(description)) {}
+  : m_command(std::move(command)), m_description(std::move(description))
+{}
 
 Command &Command::addArgument(const std::vector<std::string> &flags,
   Command::Value value,
@@ -21,10 +22,8 @@ Command &Command::addArgument(const std::vector<std::string> &flags,
   return *this;
 }
 
-Command &Command::addArgument(const std::vector<std::string> &&flags,
-  Value defaultValue,
-  std::string help,
-  bool optional)
+Command &
+  Command::addArgument(const std::vector<std::string> &&flags, Value defaultValue, std::string help, bool optional)
 {
   Argument argument{ flags, defaultValue, std::move(help), optional };
   for (const auto &flag : flags) { m_argumentsMap.insert({ flag, argument }); }
@@ -48,10 +47,8 @@ void Command::printHelp(std::ostream &os) const
   uint32_t maxFlagLength = 0;
 
   for (auto const &argument : m_arguments) {
-    uint32_t flagLength = std::accumulate(argument.m_flags.begin(),
-      argument.m_flags.end(),
-      0U,
-      [](uint32_t sum, const std::string &flag) {
+    uint32_t flagLength =
+      std::accumulate(argument.m_flags.begin(), argument.m_flags.end(), 0U, [](uint32_t sum, const std::string &flag) {
         // Plus comma and space.
         return sum + static_cast<uint32_t>(flag.size()) + 2;
       });
@@ -66,8 +63,7 @@ void Command::printHelp(std::ostream &os) const
     // Remove last comma and space and add padding according to the
     // longest flags in order to align the help messages.
     std::stringstream sstr;
-    sstr << std::left << std::setw(static_cast<int>(maxFlagLength))
-      << flags.substr(0, flags.size() - 2);
+    sstr << std::left << std::setw(static_cast<int>(maxFlagLength)) << flags.substr(0, flags.size() - 2);
 
     // Print the help for each argument. This is a bit more involved
     // since we do line wrapping for long descriptions.
@@ -82,33 +78,34 @@ void Command::printHelp(std::ostream &os) const
       if (lineWidth > 60) {
         os << m_tab << sstr.str() << '\n';
         sstr = std::stringstream();
-        sstr << std::left << std::setw(static_cast<int>(maxFlagLength - 1))
-          << " ";
+        sstr << std::left << std::setw(static_cast<int>(maxFlagLength - 1)) << " ";
         lineWidth = 0;
       }
     }
   }
 }
 
-void Command::resetOptionals() const {
+void Command::resetOptionals() const
+{
   for (auto &argument : m_arguments) {
     if (std::holds_alternative<std::optional<std::string> *>(argument.m_value)) {
       *std::get<std::optional<std::string> *>(argument.m_value) = std::nullopt;
     } else if (std::holds_alternative<std::optional<bool> *>(argument.m_value)) {
       *std::get<std::optional<bool> *>(argument.m_value) = std::nullopt;
-    } else if (std::holds_alternative<std::optional<float> *>(
-      argument.m_value)) { *std::get<std::optional<float> *>(argument.m_value) = std::nullopt; } else if (
-      std::holds_alternative<std::optional<double> *>(
-        argument.m_value)) { *std::get<std::optional<double> *>(argument.m_value) = std::nullopt; } else if (
-      std::holds_alternative<std::optional<uint32_t> *>(
-        argument.m_value)) { *std::get<std::optional<uint32_t> *>(argument.m_value) = std::nullopt; } else if (
-      std::holds_alternative<std::optional<int32_t> *>(
-        argument.m_value)) { *std::get<std::optional<int32_t> *>(argument.m_value) = std::nullopt; }
+    } else if (std::holds_alternative<std::optional<float> *>(argument.m_value)) {
+      *std::get<std::optional<float> *>(argument.m_value) = std::nullopt;
+    } else if (std::holds_alternative<std::optional<double> *>(argument.m_value)) {
+      *std::get<std::optional<double> *>(argument.m_value) = std::nullopt;
+    } else if (std::holds_alternative<std::optional<uint32_t> *>(argument.m_value)) {
+      *std::get<std::optional<uint32_t> *>(argument.m_value) = std::nullopt;
+    } else if (std::holds_alternative<std::optional<int32_t> *>(argument.m_value)) {
+      *std::get<std::optional<int32_t> *>(argument.m_value) = std::nullopt;
+    }
   }
 }
 
-void Command::parseValueFromStream(const std::string &value,
-                                   const Value &m_value) {
+void Command::parseValueFromStream(const std::string &value, const Value &m_value)
+{
   std::visit(
     [&value](auto &&arg) {
       using T = std::decay_t<decltype(arg)>;
@@ -154,13 +151,13 @@ void Command::parseValueFromStream(const std::string &value,
     m_value);
 }
 
-void Command::parse(const std::string &command,
-  const std::vector<std::string> &flags) const
+void Command::parse(const std::string &command, const std::vector<std::string> &flags) const
 {
   resetOptionals();
   std::vector<Argument> argumentsVec;
   // Skip the first argument (name of the program).
-  for (std::size_t i = 0; i < flags.size(); i++) {
+  std::size_t i = 0;
+  while (i < flags.size()) {
     // First we have to identify wether the value is separated by a space
     // or a '='.
     std::string flag(flags[i]);
@@ -182,8 +179,8 @@ void Command::parse(const std::string &command,
 
     auto found = m_argumentsMap.find(flag);
     if (found == m_argumentsMap.end()) {
-      std::cerr << "Ignoring unknown command line argument \"" << flag << "\"."
-        << '\n';
+      std::cerr << "Ignoring unknown command line argument \"" << flag << "\"." << '\n';
+      ++i;
       continue;
     }
     const Argument &argument = found->second;
@@ -195,23 +192,20 @@ void Command::parse(const std::string &command,
       *std::get<bool *>(argument.m_value) = (value != "false");
     } else if (std::holds_alternative<std::optional<bool> *>(argument.m_value)) {
       if (!value.empty() && value != "true" && value != "false") { valueIsSeparate = false; }
-      *std::get<std::optional<bool> *>(argument.m_value) =
-        std::make_optional(value != "false");
+      *std::get<std::optional<bool> *>(argument.m_value) = std::make_optional(value != "false");
     }
     // In all other cases there must be a value.
     else if (value.empty()) {
       throw std::runtime_error(
         "Failed to parse command line arguments: "
-        "Missing value for argument \"" +
-        flag + "\"!");
+        "Missing value for argument \""
+        + flag + "\"!");
     }
     // For a std::string, we take the entire value.
     else if (std::holds_alternative<std::string *>(argument.m_value)) {
       *std::get<std::string *>(argument.m_value) = value;
-    } else if (std::holds_alternative<std::optional<std::string> *>(
-      argument.m_value)) {
-      *std::get<std::optional<std::string> *>(argument.m_value) =
-        std::make_optional(value);
+    } else if (std::holds_alternative<std::optional<std::string> *>(argument.m_value)) {
+      *std::get<std::optional<std::string> *>(argument.m_value) = std::make_optional(value);
     } else {
       parseValueFromStream(value, argument.m_value);
     }
@@ -220,6 +214,7 @@ void Command::parse(const std::string &command,
 
     // If the value was separated, we have to advance our index once more.
     if (valueIsSeparate) { ++i; }
+    ++i;
   }
 }
 
