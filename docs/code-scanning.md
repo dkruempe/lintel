@@ -135,21 +135,24 @@ config. Alerts from a category that no longer exists (for example the removed
 
 ## The cleartext-storage alert
 
-`cpp/cleartext-storage-database` at
-`src/core/persistence/sqlite3/Connection.cpp:239` is correct about the sink and
-wrong about the value.
+`cpp/cleartext-storage-database` used to fire from the string-concatenating
+`INSERT` in `tests/plugins/AdminUserBootstrapPluginTest.cpp` (`insertUser`). The
+rule treats a parameter named `password` as a sensitive source and follows it
+into the `sqlite3_exec` sink of `Connection::execute` once the value is spliced
+into the SQL text. The production path (`UserRepository::changePasswordOf`) is
+not flagged: it routes the value through `db::ParameterBuilder`, which the taint
+tracking does not follow, and every call path hashes before storage
+(`Cryption::hashOf` in `AuthService.cpp` and `UserController.cpp`), a step the
+rule does not model.
 
-`sqlite3_bind_text` binds `param` from `UserRepository::changePasswordOf`. Both
-call paths hash before the value gets here - `Cryption::hashOf` in
-`AuthService.cpp:94` (hash upgrade at login) and in `UserController.cpp:458`
-(password change) - and `Cryption::verifyOf` compares via the same hash. The
-rule does not model the hashing step, so it cannot see it in the data-flow
-graph.
-
-Whether the *stored* form should be encrypted anyway is a deployment decision
-(SQLCipher, volume encryption), not something a library bind site can decide, so
-it is not a code fix here. Dismissed rather than suppressed, for the reason in
-the section above.
+The fixture was a test-only false positive, and it was fixed at its source
+rather than dismissed again: `insertUser` now uses `db::ParameterBuilder` with
+`?` placeholders instead of building the statement by concatenation, exactly the
+way the production repositories do. That removes the flagged flow without
+silencing the rule, so a real cleartext write would still be reported. Dismissing
+would only have brought it back on the next run (see above); a repo-wide
+`query-filters` exclusion would have disabled a security rule for the whole
+codebase.
 
 ## Alert counts
 
@@ -158,6 +161,7 @@ the section above.
 | `build-mode: none` only | 33 | 1 high, 32 note - mostly phantom coordinates |
 | First `manual` run (broken build, 0 results) | 300 | stale: 285 `unused-static-function` (Catch2), 90 `include-non-header` (unity amalgamations) |
 | After query-filters + unity off | ~10 real findings | 4 `large-parameter`, 3 `loop-variable-changed`, 1 `long-switch`, 1 `array-in-interface`, 1 `cleartext-storage-database` (FP) |
+| After A2 (`lintel::di`) + parameterized test | 0 | only suppressed findings remain |
 
 The ~10 remaining notes are real and were fixed in code rather than dismissed:
 the `large-parameter` call sites pass by `const &`, the `loop-variable-changed`

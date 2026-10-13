@@ -99,6 +99,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`ADD_HANDLER_METHOD` defaulted `Content-Type: application/json` only for GET**, so a
   PUT/POST/DELETE with a JSON body but no explicit header was answered 403. The default now
   applies to all verbs; swagger documents the behaviour and tests pin it.
+- **Code scanning `cpp/cleartext-storage-database` false positive.** The repeated alert was
+  removed at its source: the `AdminUserBootstrapPluginTest` fixture now inserts through
+  `db::ParameterBuilder` with `?` placeholders instead of splicing a `password` variable into the
+  SQL text, so the rule no longer follows a test value into `sqlite3_exec`.
 
 ## [0.2.0] - 2026-10-11
 

@@ -15,6 +15,7 @@
 #include "lintel/core/persistence/Connection.h"
 #include "lintel/core/persistence/ConnectionType.h"
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
+#include "lintel/core/persistence/ParameterBuilder.h"
 #include "lintel/core/persistence/Result.h"
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/utils/Cryption.h"
@@ -129,10 +130,17 @@ namespace {
     {
       db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
       db::Statement statement(connection);
+      db::ParameterBuilder builder(connectionConfigurations->ofDefault());
+      builder.add(std::string("First"))
+        .add(std::string("Last"))
+        .add(std::string("mail@test.com"))
+        .add(userName)
+        .add(password)
+        .add(std::string("2021-01-01 00:00:00.000000+0000"));
       statement.execute(
-        "insert into users(first_name, last_name, e_mail, user_name, password, "
-        "created_timestamp) values ('First', 'Last', 'mail@test.com', '"
-        + userName + "', '" + password + "', '2021-01-01 00:00:00.000000+0000')");
+        "insert into users(first_name, last_name, e_mail, user_name, password, created_timestamp) "
+        "values (?, ?, ?, ?, ?, ?)",
+        builder);
     }
 
     /** @return value of the single column of the first row of the query, "" if there is none */
