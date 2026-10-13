@@ -5,6 +5,7 @@
 #include "lintel/features/base/services/IAuthService.h"
 #include "lintel/features/http/service/Controller.h"
 
+namespace lintel {
 /** HTTP controller for process lifecycle management */
 class ProcessController : public Controller
 {
@@ -33,4 +34,5 @@ public:
   ProcessController(const std::shared_ptr<IAuthService> &authService, std::shared_ptr<ProcessService> processService);
 };
 
+}// namespace lintel
 #endif// LINTEL_PROCESSCONTROLLER_H

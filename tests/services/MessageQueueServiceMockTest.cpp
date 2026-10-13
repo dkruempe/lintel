@@ -4,44 +4,46 @@
 #include <memory>
 
 #include "../mocks/MockMessageQueueRepository.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/configuration/Configuration.h"
 #include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 #include "lintel/features/base/configuration/MessageQueueComponent.h"
 #include "lintel/features/base/configuration/MessageQueueEntry.h"
+#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/services/MessageQueueService.h"
 
+namespace lintel {
 using namespace trompeloeil;
 
 namespace {
-    std::shared_ptr<Configuration> createTestConfiguration() {
-        auto envConfig = std::make_shared<EnvironmentConfiguration>();
-        envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/nonexistent_config_dir");
-        envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
-        return std::make_shared<Configuration>(
-            std::vector<std::shared_ptr<Component>>{}, envConfig);
-    }
+  std::shared_ptr<Configuration> createTestConfiguration()
+  {
+    auto envConfig = std::make_shared<EnvironmentConfiguration>();
+    envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/nonexistent_config_dir");
+    envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
+    return std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+  }
+}// namespace
+
+TEST_CASE("MessageQueueService: can be constructed without db access")
+{
+  auto mockRepo = std::make_shared<MockMessageQueueRepository>();
+  auto processName = std::make_shared<ProcessName>("testProcess");
+  auto configuration = createTestConfiguration();
+
+  ALLOW_CALL(*mockRepo, allOf(".*", ".*")).LR_RETURN(std::vector<MessageQueueEntry>{});
+
+  REQUIRE_NOTHROW(MessageQueueService(configuration, processName, mockRepo));
 }
 
-TEST_CASE("MessageQueueService: can be constructed without db access") {
-    auto mockRepo = std::make_shared<MockMessageQueueRepository>();
-    auto processName = std::make_shared<ProcessName>("testProcess");
-    auto configuration = createTestConfiguration();
+TEST_CASE("MessageQueueService: repository is queried on onInitialize")
+{
+  auto mockRepo = std::make_shared<MockMessageQueueRepository>();
+  auto processName = std::make_shared<ProcessName>("testProcess");
+  auto configuration = createTestConfiguration();
 
-    ALLOW_CALL(*mockRepo, allOf(".*", ".*"))
-        .LR_RETURN(std::vector<MessageQueueEntry>{});
+  REQUIRE_CALL(*mockRepo, allOf(".*", ".*")).LR_RETURN(std::vector<MessageQueueEntry>{});
 
-    REQUIRE_NOTHROW(MessageQueueService(configuration, processName, mockRepo));
+  MessageQueueService service(configuration, processName, mockRepo);
+  service.onInitialize();
 }
-
-TEST_CASE("MessageQueueService: repository is queried on onInitialize") {
-    auto mockRepo = std::make_shared<MockMessageQueueRepository>();
-    auto processName = std::make_shared<ProcessName>("testProcess");
-    auto configuration = createTestConfiguration();
-
-    REQUIRE_CALL(*mockRepo, allOf(".*", ".*"))
-        .LR_RETURN(std::vector<MessageQueueEntry>{});
-
-    MessageQueueService service(configuration, processName, mockRepo);
-    service.onInitialize();
-}
+}// namespace lintel

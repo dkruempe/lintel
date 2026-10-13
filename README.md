@@ -142,15 +142,15 @@ This minimal example shows how to bootstrap an application using `StartupBuilder
 #include <lintel/features/property/PropertyFeature.h>
 
 int main(int argc, char* argv[]) {
-  auto builder = StartupBuilder::with(argc, argv);
-  builder->addFeature<PropertyFeature>();
-  builder->addFeature<BaseFeature>();
+  auto builder = lintel::StartupBuilder::with(argc, argv);
+  builder->addFeature<lintel::PropertyFeature>();
+  builder->addFeature<lintel::BaseFeature>();
   builder->start();
   return 0;
 }
 ```
 
-What this does: `StartupBuilder::with(argc, argv)` initializes the core, `addFeature<PropertyFeature>()` enables configuration/property support, `addFeature<BaseFeature>()` adds base services, and `start()` runs the application using the bootstrap configuration from `cfg/bootstrap.xml`. If TLS is enabled in that configuration, valid certificate/key files must exist under `cfg/certs/` (or the overridden `CONFIG_DIRECTORY`).
+What this does: `lintel::StartupBuilder::with(argc, argv)` initializes the core, `addFeature<lintel::PropertyFeature>()` enables configuration/property support, `addFeature<lintel::BaseFeature>()` adds base services, and `start()` runs the application using the bootstrap configuration from `cfg/bootstrap.xml`. If TLS is enabled in that configuration, valid certificate/key files must exist under `cfg/certs/` (or the overridden `CONFIG_DIRECTORY`).
 
 ## Usage
 

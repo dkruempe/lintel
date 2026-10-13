@@ -19,6 +19,7 @@
 #include "lintel/features/base/services/SchedulerService.h"
 #include "lintel/features/base/services/SharedMemorySegmentManager.h"
 
+namespace lintel {
 /** Allocated state of a mapped shared memory segment. Defined in
  *  ShmConstructors.h, because it exposes the boost interprocess types. */
 class SharedMemorySegmentHandle;
@@ -108,4 +109,5 @@ public:
   ShmSegmentAccessor getSegmentAccessor(const std::shared_ptr<SharedMemorySegment> &segment);
 };
 
+}// namespace lintel
 #endif// LINTEL_SHAREDMEMORYSERVICE_H

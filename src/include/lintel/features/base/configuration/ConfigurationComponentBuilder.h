@@ -7,30 +7,32 @@
 #include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 
 
+namespace lintel {
 /** Builder for assembling configuration parsing components */
-class ConfigurationComponentBuilder {
+class ConfigurationComponentBuilder
+{
 private:
-    /** The collection of components being built */
-    std::vector<std::shared_ptr<Component>> m_components;
+  /** The collection of components being built */
+  std::vector<std::shared_ptr<Component>> m_components;
 
 public:
-    /** Construct a builder with the given environment configuration
-     * @param environmentConfiguration The environment configuration */
-    ConfigurationComponentBuilder(const std::shared_ptr<EnvironmentConfiguration>
-                                  &environmentConfiguration);
+  /** Construct a builder with the given environment configuration
+   * @param environmentConfiguration The environment configuration */
+  ConfigurationComponentBuilder(const std::shared_ptr<EnvironmentConfiguration> &environmentConfiguration);
 
-    /** Destructor */
-    ~ConfigurationComponentBuilder() = default;
+  /** Destructor */
+  ~ConfigurationComponentBuilder() = default;
 
-    /** Add a component via move semantics
-     * @param component The component to add */
-    void add(std::shared_ptr<Component> &&component);
+  /** Add a component via move semantics
+   * @param component The component to add */
+  void add(std::shared_ptr<Component> &&component);
 
-    /** Add a component via copy
-     * @param component The component to add */
-    void add(const std::shared_ptr<Component> &component);
+  /** Add a component via copy
+   * @param component The component to add */
+  void add(const std::shared_ptr<Component> &component);
 
-    /** Build and return the component collection
-     * @return Reference to the vector of components */
-    [[nodiscard]] const std::vector<std::shared_ptr<Component>> &build();
+  /** Build and return the component collection
+   * @return Reference to the vector of components */
+  [[nodiscard]] const std::vector<std::shared_ptr<Component>> &build();
 };
+}// namespace lintel

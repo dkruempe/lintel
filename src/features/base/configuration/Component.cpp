@@ -7,11 +7,10 @@
 #include <limits>
 #include <utility>
 
-Component::Component(std::string configRoot)
-        : m_configRoot(std::move(configRoot)) {}
+namespace lintel {
+Component::Component(std::string configRoot) : m_configRoot(std::move(configRoot)) {}
 
 const std::string &Component::getConfigRoot() const { return m_configRoot; }
 
-std::size_t Component::convertToBytes(const std::string &size) {
-    return MemorySize::deserialize(size);
-}
+std::size_t Component::convertToBytes(const std::string &size) { return MemorySize::deserialize(size); }
+}// namespace lintel

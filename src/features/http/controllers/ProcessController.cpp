@@ -6,6 +6,7 @@
 #include "lintel/features/base/controller/ProcessInfosDto.h"
 #include "lintel/features/base/models/Process.h"
 
+namespace lintel {
 ProcessController::ProcessController(const std::shared_ptr<IAuthService> &authService,
   std::shared_ptr<ProcessService> processService)
   : Controller(authService), m_processService(std::move(processService)), m_adminGroup("Admin-Process", {}, true),
@@ -287,3 +288,4 @@ void ProcessController::healthProcessGet(const httplib::Request &request,
     response.set_content("", contentType.getName());
   }
 }
+}// namespace lintel

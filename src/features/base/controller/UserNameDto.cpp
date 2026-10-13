@@ -2,15 +2,14 @@
 
 #include "lintel/features/base/controller/UserDto.h"
 
+namespace lintel {
 UserNameDto::Shapes UserNameDto::shape{};
 
-UserNameDto::UserNameDto(std::string userName)
-  : m_userName(std::move(userName)) {}
+UserNameDto::UserNameDto(std::string userName) : m_userName(std::move(userName)) {}
 
 const std::string &UserNameDto::getUserName() const { return m_userName; }
 
-void UserNameDto::serialize(
-  rapidjson::Writer<rapidjson::StringBuffer> *writer) const
+void UserNameDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const
 {
   writer->StartObject();
   // USERNAME
@@ -23,47 +22,41 @@ bool UserNameDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // USERNAME
-  if (obj.HasMember(shape.USER_NAME)) { m_userName = obj[shape.USER_NAME].GetString(); } else {
+  if (obj.HasMember(shape.USER_NAME)) {
+    m_userName = obj[shape.USER_NAME].GetString();
+  } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", shape.USER_NAME);
   }
   return success;
 }
 
-UserNameDto::UserNameDto(const User &user)
-  : m_userName(user.getUserName()) {}
+UserNameDto::UserNameDto(const User &user) : m_userName(user.getUserName()) {}
 
-UserNamesDto::UserNamesDto(const std::vector<std::string> &userNames)
-  : m_userNames(init(userNames)) {}
+UserNamesDto::UserNamesDto(const std::vector<std::string> &userNames) : m_userNames(init(userNames)) {}
 
 std::vector<UserNameDto> UserNamesDto::init(const std::vector<User> &users)
 {
   std::vector<UserNameDto> userNames;
   userNames.reserve(users.size());
-  std::transform(users.begin(),
-    users.end(),
-    std::back_inserter(userNames),
-    [](const User &user) { return UserNameDto(user); });
+  std::transform(
+    users.begin(), users.end(), std::back_inserter(userNames), [](const User &user) { return UserNameDto(user); });
   return userNames;
 }
 
-std::vector<UserNameDto> UserNamesDto::init(
-  const std::vector<std::string> &users)
+std::vector<UserNameDto> UserNamesDto::init(const std::vector<std::string> &users)
 {
   std::vector<UserNameDto> userNames;
   userNames.reserve(users.size());
-  std::transform(users.begin(),
-    users.end(),
-    std::back_inserter(userNames),
-    [](const std::string &user) -> UserNameDto { return UserNameDto(user); });
+  std::transform(users.begin(), users.end(), std::back_inserter(userNames), [](const std::string &user) -> UserNameDto {
+    return UserNameDto(user);
+  });
   return userNames;
 }
 
-UserNamesDto::UserNamesDto(const std::vector<User> &users)
-  : m_userNames(init(users)) {}
+UserNamesDto::UserNamesDto(const std::vector<User> &users) : m_userNames(init(users)) {}
 
-void UserNamesDto::serialize(
-  rapidjson::Writer<rapidjson::StringBuffer> *writer) const
+void UserNamesDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const
 {
   writer->StartArray();
   for (const auto &user : m_userNames) { user.serialize(writer); }
@@ -82,3 +75,4 @@ bool UserNamesDto::deserialize(const rapidjson::Value &obj)
 }
 
 const std::vector<UserNameDto> &UserNamesDto::getUserNames() const { return m_userNames; }
+}// namespace lintel

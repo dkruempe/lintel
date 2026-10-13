@@ -5,6 +5,7 @@
 #include "lintel/features/base/controller/ProcessInfoDto.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 /** API client for process management via HTTP */
 class ProcessApi
 {
@@ -41,4 +42,5 @@ public:
   std::optional<ProcessInfoDto> healthOf(const std::string &id);
 };
 
+}// namespace lintel
 #endif// LINTEL_PROCESSAPI_H

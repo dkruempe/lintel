@@ -10,6 +10,7 @@
 #include "lintel/features/property/models/DataStorage.h"
 #include "lintel/features/property/models/PropertyRepositoryType.h"
 
+namespace lintel {
 class PropertyBase;
 
 /** Abstract base class for property repositories */
@@ -116,4 +117,5 @@ public:
   }
 };
 
+}// namespace lintel
 #endif// LOGGING_PROPERTYREPOSITORY_H

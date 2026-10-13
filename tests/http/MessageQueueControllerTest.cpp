@@ -27,129 +27,130 @@
 #include "../mocks/MockAuthService.h"
 #include "../mocks/MockMessageQueueRepository.h"
 
+namespace lintel {
 using namespace trompeloeil;
 
 namespace {
 
-// `mqc` prefix: unity builds merge several test files into one translation unit
-// and share one anonymous namespace, so a generic `adminGroup` or `fixture`
-// would collide (and shadow local variables, Clang -Wshadow).
-constexpr std::chrono::milliseconds mqcStartupTimeout{ 5000 };
-constexpr char mqcTokenAdmin[] = "messagequeue-token-admin";
-constexpr char mqcTokenOutsider[] = "messagequeue-token-outsider";
+  // `mqc` prefix: unity builds merge several test files into one translation unit
+  // and share one anonymous namespace, so a generic `adminGroup` or `fixture`
+  // would collide (and shadow local variables, Clang -Wshadow).
+  constexpr std::chrono::milliseconds mqcStartupTimeout{ 5000 };
+  constexpr char mqcTokenAdmin[] = "messagequeue-token-admin";
+  constexpr char mqcTokenOutsider[] = "messagequeue-token-outsider";
 
-Group mqcAdminGroup{ "Admin-MessageQueue", {}, true };
-Group mqcUserGroup{ "User-MessageQueue", {}, true };
+  Group mqcAdminGroup{ "Admin-MessageQueue", {}, true };
+  Group mqcUserGroup{ "User-MessageQueue", {}, true };
 
-User mqcAdmin("Queue", "Admin", User::Male, "queue-admin@test.com", "queueAdmin", "", { mqcAdminGroup });
-Group mqcUnrelatedGroup{ "Some-Other-Group", {}, true };
-User mqcOutsider("Queue", "Outsider", User::Male, "queue-out@test.com", "queueOut", "", { mqcUnrelatedGroup });
+  User mqcAdmin("Queue", "Admin", User::Male, "queue-admin@test.com", "queueAdmin", "", { mqcAdminGroup });
+  Group mqcUnrelatedGroup{ "Some-Other-Group", {}, true };
+  User mqcOutsider("Queue", "Outsider", User::Male, "queue-out@test.com", "queueOut", "", { mqcUnrelatedGroup });
 
-UserToken mqcTokenOf(const User &user, const std::string &id)
-{
-  return UserToken{
-    "127.0.0.1", id, std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()), user
-  };
-}
-
-/** @return a message queue configuration entry */
-MessageQueueEntry mqcEntry(const std::string &process, const std::string &queue, int32_t maxMessages)
-{
-  return MessageQueueEntry("MessageQueues", process, queue, maxMessages);
-}
-
-/** @return the Authorization header that carries the given bearer token */
-httplib::Headers mqcAuthHeaders(const char *token)
-{
-  return httplib::Headers{ { "Authorization", std::string("Bearer ") + token } };
-}
-
-/**
- * The ADD_HANDLER_METHODs of MessageQueueController live in the private section,
- * so the only reachable entry point is Controller::registerMethods(). The
- * controller is therefore driven through a real httplib server, exactly as in
- * production.
- *
- * MessageQueueService is a concrete class, but it is cheap to build (no
- * PropertyRegistration, no database) and numberMessagesOf() of an unknown queue
- * reports 0 without creating a named queue, so the real service is used here.
- * The queue names are unique per test so that a stray shared memory queue of
- * another test case cannot change the message count.
- */
-struct MessageQueueControllerFixture
-{
-  // must stay the first member: it has to be set before the EnvironmentConfiguration below reads it
-  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_mqc_test_cfg" };
-  std::shared_ptr<EnvironmentConfiguration> m_envConfig;
-  std::shared_ptr<Configuration> m_configuration;
-  std::shared_ptr<ProcessName> m_processName;
-  std::shared_ptr<MockMessageQueueRepository> m_repository;
-  std::shared_ptr<MessageQueueService> m_messageQueueService;
-  std::shared_ptr<MockAuthService> m_authService;
-  std::shared_ptr<httplib::Server> m_server = std::make_shared<httplib::Server>();
-  std::thread m_serverThread;
-  int m_port = -1;
-  std::unique_ptr<httplib::Client> m_client;
-
-  MessageQueueControllerFixture()
+  UserToken mqcTokenOf(const User &user, const std::string &id)
   {
-    m_envConfig = std::make_shared<EnvironmentConfiguration>();
-    m_configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, m_envConfig);
-    m_processName = std::make_shared<ProcessName>("messageQueueControllerTest");
-    m_repository = std::make_shared<MockMessageQueueRepository>();
-    m_messageQueueService = std::make_shared<MessageQueueService>(m_configuration, m_processName, m_repository);
-    m_authService = std::make_shared<MockAuthService>();
+    return UserToken{
+      "127.0.0.1", id, std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()), user
+    };
   }
 
-  ~MessageQueueControllerFixture()
+  /** @return a message queue configuration entry */
+  MessageQueueEntry mqcEntry(const std::string &process, const std::string &queue, int32_t maxMessages)
   {
-    if (m_server != nullptr) { m_server->stop(); }
-    if (m_serverThread.joinable()) { m_serverThread.join(); }
+    return MessageQueueEntry("MessageQueues", process, queue, maxMessages);
   }
 
-  MessageQueueControllerFixture(const MessageQueueControllerFixture &) = delete;
-  MessageQueueControllerFixture &operator=(const MessageQueueControllerFixture &) = delete;
-
-  MessageQueueController makeController() const
+  /** @return the Authorization header that carries the given bearer token */
+  httplib::Headers mqcAuthHeaders(const char *token)
   {
-    return MessageQueueController(m_authService, m_repository, m_messageQueueService);
+    return httplib::Headers{ { "Authorization", std::string("Bearer ") + token } };
   }
 
-  /** Register the routes of the controller, bind an ephemeral port and serve */
-  void startServing(Controller &controller)
+  /**
+   * The ADD_HANDLER_METHODs of MessageQueueController live in the private section,
+   * so the only reachable entry point is Controller::registerMethods(). The
+   * controller is therefore driven through a real httplib server, exactly as in
+   * production.
+   *
+   * MessageQueueService is a concrete class, but it is cheap to build (no
+   * PropertyRegistration, no database) and numberMessagesOf() of an unknown queue
+   * reports 0 without creating a named queue, so the real service is used here.
+   * The queue names are unique per test so that a stray shared memory queue of
+   * another test case cannot change the message count.
+   */
+  struct MessageQueueControllerFixture
   {
-    controller.registerMethods(m_server);
-    m_port = m_server->bind_to_any_port("127.0.0.1");
-    if (m_port <= 0) { return; }
-    m_serverThread = std::thread([this] { m_server->listen_after_bind(); });
-    const auto deadline = std::chrono::steady_clock::now() + mqcStartupTimeout;
-    while (!m_server->is_running() && std::chrono::steady_clock::now() < deadline) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    // must stay the first member: it has to be set before the EnvironmentConfiguration below reads it
+    ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_mqc_test_cfg" };
+    std::shared_ptr<EnvironmentConfiguration> m_envConfig;
+    std::shared_ptr<Configuration> m_configuration;
+    std::shared_ptr<ProcessName> m_processName;
+    std::shared_ptr<MockMessageQueueRepository> m_repository;
+    std::shared_ptr<MessageQueueService> m_messageQueueService;
+    std::shared_ptr<MockAuthService> m_authService;
+    std::shared_ptr<httplib::Server> m_server = std::make_shared<httplib::Server>();
+    std::thread m_serverThread;
+    int m_port = -1;
+    std::unique_ptr<httplib::Client> m_client;
+
+    MessageQueueControllerFixture()
+    {
+      m_envConfig = std::make_shared<EnvironmentConfiguration>();
+      m_configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, m_envConfig);
+      m_processName = std::make_shared<ProcessName>("messageQueueControllerTest");
+      m_repository = std::make_shared<MockMessageQueueRepository>();
+      m_messageQueueService = std::make_shared<MessageQueueService>(m_configuration, m_processName, m_repository);
+      m_authService = std::make_shared<MockAuthService>();
     }
-    if (!m_server->is_running()) { return; }
-    m_client = std::make_unique<httplib::Client>("127.0.0.1", m_port);
-    m_client->set_connection_timeout(std::chrono::seconds(5));
-    m_client->set_read_timeout(std::chrono::seconds(5));
-  }
 
-  bool isReady() const { return m_client != nullptr && m_server->is_running(); }
+    ~MessageQueueControllerFixture()
+    {
+      if (m_server != nullptr) { m_server->stop(); }
+      if (m_serverThread.joinable()) { m_serverThread.join(); }
+    }
 
-  /** @return the plain (non paged) array produced by the controller, parsed back */
-  std::vector<MessageQueueDto> parseArray(const std::string &json) const
-  {
-    MessageQueueDtos parsed;
-    parsed.deserialize(json);
-    return parsed.getMessageQueueDtos();
-  }
+    MessageQueueControllerFixture(const MessageQueueControllerFixture &) = delete;
+    MessageQueueControllerFixture &operator=(const MessageQueueControllerFixture &) = delete;
 
-  /** @return the paging envelope produced by the controller, parsed back */
-  MessageQueuesPageDto parseEnvelope(const std::string &json) const
-  {
-    MessageQueuesPageDto parsed;
-    parsed.deserialize(json);
-    return parsed;
-  }
-};
+    MessageQueueController makeController() const
+    {
+      return MessageQueueController(m_authService, m_repository, m_messageQueueService);
+    }
+
+    /** Register the routes of the controller, bind an ephemeral port and serve */
+    void startServing(Controller &controller)
+    {
+      controller.registerMethods(m_server);
+      m_port = m_server->bind_to_any_port("127.0.0.1");
+      if (m_port <= 0) { return; }
+      m_serverThread = std::thread([this] { m_server->listen_after_bind(); });
+      const auto deadline = std::chrono::steady_clock::now() + mqcStartupTimeout;
+      while (!m_server->is_running() && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+      if (!m_server->is_running()) { return; }
+      m_client = std::make_unique<httplib::Client>("127.0.0.1", m_port);
+      m_client->set_connection_timeout(std::chrono::seconds(5));
+      m_client->set_read_timeout(std::chrono::seconds(5));
+    }
+
+    bool isReady() const { return m_client != nullptr && m_server->is_running(); }
+
+    /** @return the plain (non paged) array produced by the controller, parsed back */
+    std::vector<MessageQueueDto> parseArray(const std::string &json) const
+    {
+      MessageQueueDtos parsed;
+      parsed.deserialize(json);
+      return parsed.getMessageQueueDtos();
+    }
+
+    /** @return the paging envelope produced by the controller, parsed back */
+    MessageQueuesPageDto parseEnvelope(const std::string &json) const
+    {
+      MessageQueuesPageDto parsed;
+      parsed.deserialize(json);
+      return parsed;
+    }
+  };
 
 }// namespace
 
@@ -364,3 +365,4 @@ TEST_CASE("MessageQueueController::messageQueueOfGet accepts a user of the User-
   REQUIRE(response->status == 200);
   REQUIRE(fixture.parseArray(response->body).size() == 1);
 }
+}// namespace lintel

@@ -11,6 +11,7 @@
 
 #include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 
+namespace lintel {
 class AbstractServiceInterface;
 class Component;
 class Configuration;
@@ -19,10 +20,12 @@ class FeatureInterface;
 class Features;
 class ProcessName;
 
+}// namespace lintel
 namespace Hypodermic {
 class Container;
 }
 
+namespace lintel {
 /** Builder for application startup lifecycle, managing features, configuration, and signal handling. */
 class StartupBuilder
 {
@@ -86,4 +89,5 @@ public:
   void start();
 };
 
+}// namespace lintel
 #endif// LINTEL_STARTUPBUILDER_H

@@ -19,33 +19,34 @@
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 
+namespace lintel {
 namespace {
 
-std::string kMqFilterDb()
-{
-  static int counter = 0;
-  return (std::filesystem::temp_directory_path() / ("mq_filter_test_" + std::to_string(counter++) + ".db")).string();
-}
-
-// m_configDirectory must be the first member: members initialize in declaration order, so the guard
-// sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration, and it is
-// destroyed last - after the test case is done with it.
-struct MessageQueueFilterFixture
-{
-  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_mq_filter_cfg" };
-  std::string m_dbPath;
-  std::shared_ptr<EnvironmentConfiguration> envConfig;
-  std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
-  std::shared_ptr<MessageQueueRepository> repository;
-
-  MessageQueueFilterFixture() : m_dbPath(kMqFilterDb())
+  std::string kMqFilterDb()
   {
-    std::remove(m_dbPath.c_str());
+    static int counter = 0;
+    return (std::filesystem::temp_directory_path() / ("mq_filter_test_" + std::to_string(counter++) + ".db")).string();
+  }
 
-    db::Connection connection(db::ConnectionType::SQLite, m_dbPath);
-    db::Statement statement(connection);
-    statement.execute(R"(
+  // m_configDirectory must be the first member: members initialize in declaration order, so the guard
+  // sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration, and it is
+  // destroyed last - after the test case is done with it.
+  struct MessageQueueFilterFixture
+  {
+    ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_mq_filter_cfg" };
+    std::string m_dbPath;
+    std::shared_ptr<EnvironmentConfiguration> envConfig;
+    std::shared_ptr<Configuration> configuration;
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
+    std::shared_ptr<MessageQueueRepository> repository;
+
+    MessageQueueFilterFixture() : m_dbPath(kMqFilterDb())
+    {
+      std::remove(m_dbPath.c_str());
+
+      db::Connection connection(db::ConnectionType::SQLite, m_dbPath);
+      db::Statement statement(connection);
+      statement.execute(R"(
             CREATE TABLE message_queues (
                 name text NOT NULL,
                 process_name text NOT NULL,
@@ -54,29 +55,29 @@ struct MessageQueueFilterFixture
             );
         )");
 
-    envConfig = std::make_shared<EnvironmentConfiguration>();
-    configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
-    auto entry = std::make_shared<DatabaseConnectionEntry>(
-      type_name<DatabaseConnectionComponent>(), m_dbPath, "", "", db::ConnectionType::SQLite, "default", 0, "", true);
-    configuration->setEntries(std::vector<std::shared_ptr<Entry>>{ entry });
-    connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
-    repository = std::make_shared<MessageQueueRepository>(connectionConfigurations);
-  }
+      envConfig = std::make_shared<EnvironmentConfiguration>();
+      configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+      auto entry = std::make_shared<DatabaseConnectionEntry>(
+        type_name<DatabaseConnectionComponent>(), m_dbPath, "", "", db::ConnectionType::SQLite, "default", 0, "", true);
+      configuration->setEntries(std::vector<std::shared_ptr<Entry>>{ entry });
+      connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
+      repository = std::make_shared<MessageQueueRepository>(connectionConfigurations);
+    }
 
-  ~MessageQueueFilterFixture() { std::remove(m_dbPath.c_str()); }
+    ~MessageQueueFilterFixture() { std::remove(m_dbPath.c_str()); }
 
-  void insertQueue(const std::string &process, const std::string &queue, int32_t maxMessages = 10)
+    void insertQueue(const std::string &process, const std::string &queue, int32_t maxMessages = 10)
+    {
+      repository->insertOf({ MessageQueueEntry("test", process, queue, maxMessages) });
+    }
+  };
+
+  std::set<std::string> queueNamesOf(const std::vector<MessageQueueEntry> &entries)
   {
-    repository->insertOf({ MessageQueueEntry("test", process, queue, maxMessages) });
+    std::set<std::string> names;
+    for (const auto &entry : entries) { names.insert(entry.get_message_queue_name()); }
+    return names;
   }
-};
-
-std::set<std::string> queueNamesOf(const std::vector<MessageQueueEntry> &entries)
-{
-  std::set<std::string> names;
-  for (const auto &entry : entries) { names.insert(entry.get_message_queue_name()); }
-  return names;
-}
 
 }// namespace
 
@@ -175,3 +176,4 @@ TEST_CASE("MessageQueueRepository::allMessageQueueNameOf matches the queue name 
   REQUIRE_THROWS_AS(fixture.repository->allMessageQueueNameOf("proc1"), db::SQLException);
   REQUIRE_THROWS_AS(fixture.repository->allMessageQueueNameOf("nothing_.*"), db::SQLException);
 }
+}// namespace lintel

@@ -3,18 +3,21 @@
 
 #include <string>
 
+namespace lintel {
 /** Utility class for generating universally unique identifiers (UUIDs). */
-class UUID {
+class UUID
+{
 public:
-    UUID() = delete;
+  UUID() = delete;
 
-    UUID(UUID &) = delete;
+  UUID(UUID &) = delete;
 
-    UUID(UUID &&) = delete;
+  UUID(UUID &&) = delete;
 
-    /** Generate a new UUID string.
-     * @return a UUID string (e.g. "550e8400-e29b-41d4-a716-446655440000") */
-    static std::string generate();
+  /** Generate a new UUID string.
+   * @return a UUID string (e.g. "550e8400-e29b-41d4-a716-446655440000") */
+  static std::string generate();
 };
 
-#endif  // LINTEL_UUID_H
+}// namespace lintel
+#endif// LINTEL_UUID_H

@@ -23,6 +23,7 @@
 #include "lintel/features/base/models/ProcessGroup.h"
 #include "lintel/features/base/models/ProcessInfo.h"
 
+namespace lintel {
 ProcessService::ProcessService(std::shared_ptr<ProcessName> processName,
   std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,
   std::shared_ptr<Configuration> configuration,
@@ -873,3 +874,4 @@ std::optional<std::shared_ptr<Process>> ProcessService::of(const std::string &id
   if (found == m_processes.end()) { return std::nullopt; }
   return std::make_optional(found->second.getProcess());
 }
+}// namespace lintel

@@ -4,23 +4,23 @@
 #include <cstddef>
 #include <memory>
 
+namespace lintel {
 class SharedMemorySegment;
 class SharedMemorySegmentInfo;
 
-class ISharedMemoryService {
+class ISharedMemoryService
+{
 public:
-    virtual ~ISharedMemoryService() = default;
+  virtual ~ISharedMemoryService() = default;
 
-    virtual SharedMemorySegmentInfo showStateOf(
-            const std::shared_ptr<SharedMemorySegment> &segment) const = 0;
+  virtual SharedMemorySegmentInfo showStateOf(const std::shared_ptr<SharedMemorySegment> &segment) const = 0;
 
-    virtual void growOf(const std::shared_ptr<SharedMemorySegment> &segment,
-                        std::size_t grow) = 0;
+  virtual void growOf(const std::shared_ptr<SharedMemorySegment> &segment, std::size_t grow) = 0;
 
-    virtual void shrinkOf(
-            const std::shared_ptr<SharedMemorySegment> &segment) = 0;
+  virtual void shrinkOf(const std::shared_ptr<SharedMemorySegment> &segment) = 0;
 
-    virtual void onInitialize() = 0;
+  virtual void onInitialize() = 0;
 };
 
+}// namespace lintel
 #endif

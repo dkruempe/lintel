@@ -9,15 +9,15 @@
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/features/cli/models/CommandLineComponent.h"
 
-AbstractCommandLineMenu::AbstractCommandLineMenu(
-  const std::vector<std::shared_ptr<CommandLineComponent> > &components)
-  : m_components(components), m_componentMap(build(components)) {}
+namespace lintel {
+AbstractCommandLineMenu::AbstractCommandLineMenu(const std::vector<std::shared_ptr<CommandLineComponent>> &components)
+  : m_components(components), m_componentMap(build(components))
+{}
 
-std::map<std::string_view, std::shared_ptr<CommandLineComponent> >
-  AbstractCommandLineMenu::build(
-    const std::vector<std::shared_ptr<CommandLineComponent> > &components)
+std::map<std::string_view, std::shared_ptr<CommandLineComponent>> AbstractCommandLineMenu::build(
+  const std::vector<std::shared_ptr<CommandLineComponent>> &components)
 {
-  std::map<std::string_view, std::shared_ptr<CommandLineComponent> > map;
+  std::map<std::string_view, std::shared_ptr<CommandLineComponent>> map;
   for (const auto &menuEntry : components) {
     map.insert({ menuEntry->getName(), menuEntry });
     map.insert({ menuEntry->getAlias(), menuEntry });
@@ -35,8 +35,7 @@ void AbstractCommandLineMenu::onShowMenu()
   TableBuilder<3> builder;
   builder.add({ "Index", "Menu Name", "Menu Alias" });
   for (auto &component : m_components) {
-    builder.add({ std::to_string(++index), std::string(component->getName()),
-                  std::string(component->getAlias()) });
+    builder.add({ std::to_string(++index), std::string(component->getName()), std::string(component->getAlias()) });
   }
   std::cout << builder.build() << "\n";
 }
@@ -58,8 +57,7 @@ bool AbstractCommandLineMenu::onExit()
   return success;
 }
 
-void AbstractCommandLineMenu::onCommand(
-  const UserDto &userDto,
+void AbstractCommandLineMenu::onCommand(const UserDto &userDto,
   const std::string &command,
   const std::vector<std::string> &parameters)
 {
@@ -73,8 +71,7 @@ void AbstractCommandLineMenu::onHelp()
   m_current->onHelp();
 }
 
-const std::shared_ptr<CommandLineComponent>
-  &AbstractCommandLineMenu::currentOf() { return m_current; }
+const std::shared_ptr<CommandLineComponent> &AbstractCommandLineMenu::currentOf() { return m_current; }
 
 std::vector<std::string> AbstractCommandLineMenu::allCommandsOf()
 {
@@ -83,10 +80,8 @@ std::vector<std::string> AbstractCommandLineMenu::allCommandsOf()
   std::vector<std::string> temp(tempSet.begin(), tempSet.end());
   if (m_current == nullptr) { return temp; }
   std::vector<std::string> commands = m_current->allCommandsOf();
-  std::transform(commands.begin(),
-    commands.end(),
-    std::back_inserter(temp),
-    [](const std::string &command) { return command; });
+  std::transform(
+    commands.begin(), commands.end(), std::back_inserter(temp), [](const std::string &command) { return command; });
   temp.emplace_back("exit");
   return temp;
 }
@@ -105,3 +100,4 @@ void AbstractCommandLineMenu::printCommandList()
   auto temp = allMenuEntriesOf();
   m_current->printCommandList(temp);
 }
+}// namespace lintel

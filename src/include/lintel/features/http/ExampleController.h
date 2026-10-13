@@ -1,16 +1,19 @@
 #ifndef LINTEL_EXAMPLECONTROLLER_H
 #define LINTEL_EXAMPLECONTROLLER_H
 
-#include "lintel/features/http/service/Controller.h"
 #include "lintel/features/http/service/ContentType.h"
+#include "lintel/features/http/service/Controller.h"
 
+namespace lintel {
 /** Example controller demonstrating the HTTP handler registration pattern */
-class ExampleController : public Controller {
+class ExampleController : public Controller
+{
 private:
-    ADD_HANDLER_METHOD("/hello", Get, hello);
+  ADD_HANDLER_METHOD("/hello", Get, hello);
 
 public:
-    explicit ExampleController(std::shared_ptr<IAuthService> authService);
+  explicit ExampleController(std::shared_ptr<IAuthService> authService);
 };
 
-#endif  // LINTEL_EXAMPLECONTROLLER_H
+}// namespace lintel
+#endif// LINTEL_EXAMPLECONTROLLER_H

@@ -42,90 +42,91 @@
 #include "../helpers/ScopedEnvironmentVariable.h"
 #include "../mocks/MockAuthService.h"
 
+namespace lintel {
 using namespace trompeloeil;
 
 namespace {
 
-// `uc` prefix: unity builds merge several test files into one translation unit
-// and share one anonymous namespace, so a generic `adminGroup` or `fixture`
-// would collide (and shadow local variables, Clang -Wshadow).
-constexpr std::chrono::milliseconds ucStartupTimeout{ 5000 };
-constexpr char ucTokenAdmin[] = "user-token-admin";
-constexpr char ucTokenPlain[] = "user-token-plain";
-constexpr char ucTokenOutsider[] = "user-token-outsider";
-constexpr char ucSessionOwn[] = "user-session-own";
-constexpr char ucSessionForeign[] = "user-session-foreign";
+  // `uc` prefix: unity builds merge several test files into one translation unit
+  // and share one anonymous namespace, so a generic `adminGroup` or `fixture`
+  // would collide (and shadow local variables, Clang -Wshadow).
+  constexpr std::chrono::milliseconds ucStartupTimeout{ 5000 };
+  constexpr char ucTokenAdmin[] = "user-token-admin";
+  constexpr char ucTokenPlain[] = "user-token-plain";
+  constexpr char ucTokenOutsider[] = "user-token-outsider";
+  constexpr char ucSessionOwn[] = "user-session-own";
+  constexpr char ucSessionForeign[] = "user-session-foreign";
 
-Group ucAdminGroup{ "Admin-User", {}, true };
-Group ucUserGroup{ "User-User", {}, true };
-Group ucUnrelatedGroup{ "Some-Other-Group", {}, true };
+  Group ucAdminGroup{ "Admin-User", {}, true };
+  Group ucUserGroup{ "User-User", {}, true };
+  Group ucUnrelatedGroup{ "Some-Other-Group", {}, true };
 
-// the two roles the controller distinguishes, plus a group-less bystander
-User ucAdminUser("Ada", "Admin", User::Female, "admin@uc.test", "ucAdmin", "storedHash", { ucAdminGroup });
-User ucPlainUser("Peri", "Plain", User::Male, "plain@uc.test", "ucPlain", "storedHash", { ucUserGroup });
-User ucOutsiderUser("Otto", "Other", User::Male, "out@uc.test", "ucOutsider", "storedHash", { ucUnrelatedGroup });
+  // the two roles the controller distinguishes, plus a group-less bystander
+  User ucAdminUser("Ada", "Admin", User::Female, "admin@uc.test", "ucAdmin", "storedHash", { ucAdminGroup });
+  User ucPlainUser("Peri", "Plain", User::Male, "plain@uc.test", "ucPlain", "storedHash", { ucUserGroup });
+  User ucOutsiderUser("Otto", "Other", User::Male, "out@uc.test", "ucOutsider", "storedHash", { ucUnrelatedGroup });
 
-UserToken ucTokenOf(const User &user, const std::string &id)
-{
-  return UserToken{
-    "127.0.0.1", id, std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()), user
-  };
-}
-
-/** @return the Authorization header that carries the given bearer token */
-httplib::Headers ucAuthHeaders(const char *token)
-{
-  return httplib::Headers{ { "Authorization", std::string("Bearer ") + token } };
-}
-
-/** @return the Authorization header for HTTP Basic auth */
-httplib::Headers ucBasicHeaders(const std::string &userName, const std::string &password)
-{
-  return httplib::Headers{ { "Authorization", "Basic " + Cryption::encodeBase64(userName + ":" + password) } };
-}
-
-std::string ucNowSerialized()
-{
-  return StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(
-    std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()));
-}
-
-/**
- * The ADD_HANDLER_METHODs of UserController live in the private section, so the
- * only reachable entry point is Controller::registerMethods(). The controller is
- * therefore driven through a real httplib server, exactly as in production.
- *
- * UserController takes the concrete GroupRepository and UserRepository, so the
- * data paths need a real SQLite database behind them; the auth service stays a
- * mock because it owns token state that would otherwise leak between tests.
- */
-struct UserControllerFixture
-{
-  // must stay the first member: it has to be set before the EnvironmentConfiguration below reads it
-  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_user_controller_test_cfg" };
-  std::string m_dbPath;
-  std::shared_ptr<EnvironmentConfiguration> m_envConfig;
-  std::shared_ptr<Configuration> m_configuration;
-  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
-  std::shared_ptr<GroupRepository> m_groupRepository;
-  std::shared_ptr<UserRepository> m_userRepository;
-  std::shared_ptr<MockAuthService> m_authService;
-  std::shared_ptr<httplib::Server> m_server = std::make_shared<httplib::Server>();
-  std::thread m_serverThread;
-  int m_port = -1;
-  std::unique_ptr<httplib::Client> m_client;
-
-  UserControllerFixture()
+  UserToken ucTokenOf(const User &user, const std::string &id)
   {
-    static int counter = 0;
-    m_dbPath = (std::filesystem::temp_directory_path()
-                / ("user_controller_test_" + std::to_string(::getpid()) + "_" + std::to_string(++counter) + ".db"))
-                 .string();
-    std::remove(m_dbPath.c_str());
+    return UserToken{
+      "127.0.0.1", id, std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()), user
+    };
+  }
 
-    db::Connection connection(db::ConnectionType::SQLite, m_dbPath);
-    db::Statement statement(connection);
-    statement.execute(R"(
+  /** @return the Authorization header that carries the given bearer token */
+  httplib::Headers ucAuthHeaders(const char *token)
+  {
+    return httplib::Headers{ { "Authorization", std::string("Bearer ") + token } };
+  }
+
+  /** @return the Authorization header for HTTP Basic auth */
+  httplib::Headers ucBasicHeaders(const std::string &userName, const std::string &password)
+  {
+    return httplib::Headers{ { "Authorization", "Basic " + Cryption::encodeBase64(userName + ":" + password) } };
+  }
+
+  std::string ucNowSerialized()
+  {
+    return StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::serializeToString(
+      std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()));
+  }
+
+  /**
+   * The ADD_HANDLER_METHODs of UserController live in the private section, so the
+   * only reachable entry point is Controller::registerMethods(). The controller is
+   * therefore driven through a real httplib server, exactly as in production.
+   *
+   * UserController takes the concrete GroupRepository and UserRepository, so the
+   * data paths need a real SQLite database behind them; the auth service stays a
+   * mock because it owns token state that would otherwise leak between tests.
+   */
+  struct UserControllerFixture
+  {
+    // must stay the first member: it has to be set before the EnvironmentConfiguration below reads it
+    ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_user_controller_test_cfg" };
+    std::string m_dbPath;
+    std::shared_ptr<EnvironmentConfiguration> m_envConfig;
+    std::shared_ptr<Configuration> m_configuration;
+    std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+    std::shared_ptr<GroupRepository> m_groupRepository;
+    std::shared_ptr<UserRepository> m_userRepository;
+    std::shared_ptr<MockAuthService> m_authService;
+    std::shared_ptr<httplib::Server> m_server = std::make_shared<httplib::Server>();
+    std::thread m_serverThread;
+    int m_port = -1;
+    std::unique_ptr<httplib::Client> m_client;
+
+    UserControllerFixture()
+    {
+      static int counter = 0;
+      m_dbPath = (std::filesystem::temp_directory_path()
+                  / ("user_controller_test_" + std::to_string(::getpid()) + "_" + std::to_string(++counter) + ".db"))
+                   .string();
+      std::remove(m_dbPath.c_str());
+
+      db::Connection connection(db::ConnectionType::SQLite, m_dbPath);
+      db::Statement statement(connection);
+      statement.execute(R"(
             CREATE TABLE users (
                 first_name TEXT NOT NULL,
                 last_name TEXT NOT NULL,
@@ -136,21 +137,21 @@ struct UserControllerFixture
                 CONSTRAINT user_pk PRIMARY KEY (user_name)
             );
         )");
-    statement.execute(R"(
+      statement.execute(R"(
             CREATE TABLE groups (
                 name text NOT NULL,
                 virtual bool NOT NULL,
                 CONSTRAINT group_pk PRIMARY KEY (name)
             );
         )");
-    statement.execute(R"(
+      statement.execute(R"(
             CREATE TABLE user_groups_relation (
                 user_name text NOT NULL,
                 group_name text NOT NULL,
                 CONSTRAINT user_groups_pk PRIMARY KEY (user_name, group_name)
             );
         )");
-    statement.execute(R"(
+      statement.execute(R"(
             CREATE TABLE group_groups_relation (
                 group_name text NOT NULL,
                 base_group_name text NOT NULL,
@@ -158,106 +159,107 @@ struct UserControllerFixture
             );
         )");
 
-    m_envConfig = std::make_shared<EnvironmentConfiguration>();
-    m_configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, m_envConfig);
-    auto entry = std::make_shared<DatabaseConnectionEntry>(
-      type_name<DatabaseConnectionComponent>(), m_dbPath, "", "", db::ConnectionType::SQLite, "default", 0, "", true);
-    m_configuration->setEntries(std::vector<std::shared_ptr<Entry>>{ entry });
-    m_connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(m_configuration);
-    m_groupRepository = std::make_shared<GroupRepository>(m_connectionConfigurations);
-    m_userRepository = std::make_shared<UserRepository>(m_connectionConfigurations, m_groupRepository);
-    m_authService = std::make_shared<MockAuthService>();
+      m_envConfig = std::make_shared<EnvironmentConfiguration>();
+      m_configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, m_envConfig);
+      auto entry = std::make_shared<DatabaseConnectionEntry>(
+        type_name<DatabaseConnectionComponent>(), m_dbPath, "", "", db::ConnectionType::SQLite, "default", 0, "", true);
+      m_configuration->setEntries(std::vector<std::shared_ptr<Entry>>{ entry });
+      m_connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(m_configuration);
+      m_groupRepository = std::make_shared<GroupRepository>(m_connectionConfigurations);
+      m_userRepository = std::make_shared<UserRepository>(m_connectionConfigurations, m_groupRepository);
+      m_authService = std::make_shared<MockAuthService>();
 
-    // Seed the groups directly and load the cache exactly once: GroupRepository::createOf() inserts
-    // into the cache itself, so a following onAwake() would double every group in allOf().
+      // Seed the groups directly and load the cache exactly once: GroupRepository::createOf() inserts
+      // into the cache itself, so a following onAwake() would double every group in allOf().
+      {
+        db::Connection seedConnection(db::ConnectionType::SQLite, m_dbPath);
+        db::Statement seedStatement(seedConnection);
+        auto connectionEntry = m_connectionConfigurations->ofDefault();
+        seedStatement.execute("insert into groups(name, virtual) values(?, ?)",
+          db::ParameterBuilder(connectionEntry).add(std::string("ucAdmins")).add(false));
+        seedStatement.execute("insert into groups(name, virtual) values(?, ?)",
+          db::ParameterBuilder(connectionEntry).add(std::string("ucUsers")).add(false));
+      }
+      m_groupRepository->onAwake();
+    }
+
+    ~UserControllerFixture()
     {
-      db::Connection seedConnection(db::ConnectionType::SQLite, m_dbPath);
-      db::Statement seedStatement(seedConnection);
-      auto connectionEntry = m_connectionConfigurations->ofDefault();
-      seedStatement.execute("insert into groups(name, virtual) values(?, ?)",
-        db::ParameterBuilder(connectionEntry).add(std::string("ucAdmins")).add(false));
-      seedStatement.execute("insert into groups(name, virtual) values(?, ?)",
-        db::ParameterBuilder(connectionEntry).add(std::string("ucUsers")).add(false));
+      if (m_server != nullptr) { m_server->stop(); }
+      if (m_serverThread.joinable()) { m_serverThread.join(); }
+      std::remove(m_dbPath.c_str());
     }
-    m_groupRepository->onAwake();
-  }
 
-  ~UserControllerFixture()
-  {
-    if (m_server != nullptr) { m_server->stop(); }
-    if (m_serverThread.joinable()) { m_serverThread.join(); }
-    std::remove(m_dbPath.c_str());
-  }
+    UserControllerFixture(const UserControllerFixture &) = delete;
+    UserControllerFixture &operator=(const UserControllerFixture &) = delete;
 
-  UserControllerFixture(const UserControllerFixture &) = delete;
-  UserControllerFixture &operator=(const UserControllerFixture &) = delete;
-
-  /** Create a persisted user with the given password hash */
-  void
-    seedUser(const std::string &userName, const std::string &hash = "ucSeedHash", const std::vector<Group> &groups = {})
-  {
-    m_userRepository->createOf(User("Seeded", "User", User::Male, userName + "@uc.test", userName, hash, groups));
-  }
-
-  UserController makeController() const { return UserController(m_authService, m_groupRepository, m_userRepository); }
-
-  /** Register the routes of the controller, bind an ephemeral port and serve */
-  void startServing(Controller &controller)
-  {
-    controller.registerMethods(m_server);
-    m_port = m_server->bind_to_any_port("127.0.0.1");
-    if (m_port <= 0) { return; }
-    m_serverThread = std::thread([this] { m_server->listen_after_bind(); });
-    const auto deadline = std::chrono::steady_clock::now() + ucStartupTimeout;
-    while (!m_server->is_running() && std::chrono::steady_clock::now() < deadline) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    /** Create a persisted user with the given password hash */
+    void seedUser(const std::string &userName,
+      const std::string &hash = "ucSeedHash",
+      const std::vector<Group> &groups = {})
+    {
+      m_userRepository->createOf(User("Seeded", "User", User::Male, userName + "@uc.test", userName, hash, groups));
     }
-    if (!m_server->is_running()) { return; }
-    m_client = std::make_unique<httplib::Client>("127.0.0.1", m_port);
-    m_client->set_connection_timeout(std::chrono::seconds(10));
-    m_client->set_read_timeout(std::chrono::seconds(10));
-  }
 
-  bool isReady() const { return m_client != nullptr && m_server->is_running(); }
+    UserController makeController() const { return UserController(m_authService, m_groupRepository, m_userRepository); }
 
-  /** @return the group array produced by the controller, parsed back */
-  std::vector<GroupDto> parseGroups(const std::string &json) const
+    /** Register the routes of the controller, bind an ephemeral port and serve */
+    void startServing(Controller &controller)
+    {
+      controller.registerMethods(m_server);
+      m_port = m_server->bind_to_any_port("127.0.0.1");
+      if (m_port <= 0) { return; }
+      m_serverThread = std::thread([this] { m_server->listen_after_bind(); });
+      const auto deadline = std::chrono::steady_clock::now() + ucStartupTimeout;
+      while (!m_server->is_running() && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+      if (!m_server->is_running()) { return; }
+      m_client = std::make_unique<httplib::Client>("127.0.0.1", m_port);
+      m_client->set_connection_timeout(std::chrono::seconds(10));
+      m_client->set_read_timeout(std::chrono::seconds(10));
+    }
+
+    bool isReady() const { return m_client != nullptr && m_server->is_running(); }
+
+    /** @return the group array produced by the controller, parsed back */
+    std::vector<GroupDto> parseGroups(const std::string &json) const
+    {
+      rapidjson::Document document;
+      document.Parse(json.c_str());
+      GroupsDto parsed;
+      parsed.deserialize(document);
+      return parsed.getGroups();
+    }
+
+    /** @return the user array produced by the controller, parsed back */
+    std::vector<UserDto> parseUsers(const std::string &json) const
+    {
+      rapidjson::Document document;
+      document.Parse(json.c_str());
+      UsersDto parsed;
+      parsed.deserialize(document);
+      return parsed.getUsers();
+    }
+
+    /** @return the paging envelope produced by the controller, parsed back */
+    UsersPageDto parseUserEnvelope(const std::string &json) const
+    {
+      rapidjson::Document document;
+      document.Parse(json.c_str());
+      UsersPageDto parsed;
+      parsed.deserialize(document);
+      return parsed;
+    }
+  };
+
+  /** @return the request body of POST /user/add */
+  std::string ucAddUserBody(const std::string &userName, const std::string &plainPassword)
   {
-    rapidjson::Document document;
-    document.Parse(json.c_str());
-    GroupsDto parsed;
-    parsed.deserialize(document);
-    return parsed.getGroups();
+    return std::string{ R"({"first_name":"New","last_name":"User","email":")" } + userName + "@uc.test"
+           + R"(","user_name":")" + userName + R"(","sex":"male","password":")" + Cryption::encodeBase64(plainPassword)
+           + R"(","created_timestamp":")" + ucNowSerialized() + R"("})";
   }
-
-  /** @return the user array produced by the controller, parsed back */
-  std::vector<UserDto> parseUsers(const std::string &json) const
-  {
-    rapidjson::Document document;
-    document.Parse(json.c_str());
-    UsersDto parsed;
-    parsed.deserialize(document);
-    return parsed.getUsers();
-  }
-
-  /** @return the paging envelope produced by the controller, parsed back */
-  UsersPageDto parseUserEnvelope(const std::string &json) const
-  {
-    rapidjson::Document document;
-    document.Parse(json.c_str());
-    UsersPageDto parsed;
-    parsed.deserialize(document);
-    return parsed;
-  }
-};
-
-/** @return the request body of POST /user/add */
-std::string ucAddUserBody(const std::string &userName, const std::string &plainPassword)
-{
-  return std::string{ R"({"first_name":"New","last_name":"User","email":")" } + userName + "@uc.test"
-         + R"(","user_name":")" + userName + R"(","sex":"male","password":")" + Cryption::encodeBase64(plainPassword)
-         + R"(","created_timestamp":")" + ucNowSerialized() + R"("})";
-}
 
 }// namespace
 
@@ -1146,3 +1148,4 @@ TEST_CASE("UserController::revokeSessionOf lets an admin revoke a foreign sessio
   REQUIRE(response->status == 200);
   REQUIRE(response->body.empty());
 }
+}// namespace lintel

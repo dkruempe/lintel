@@ -1,5 +1,6 @@
 #include "lintel/features/base/models/ProcessInfo.h"
 
+namespace lintel {
 ProcessInfo::ProcessInfo(std::shared_ptr<Process> process,
   pid_t id,
   bool isRunning,
@@ -22,3 +23,4 @@ std::string ProcessInfo::getGroupName() const { return m_groupName; }
 std::string ProcessInfo::getGroupId() const { return m_groupId; }
 
 const std::optional<ProcessResourceData> &ProcessInfo::getResourceData() const { return m_resourceData; }
+}// namespace lintel

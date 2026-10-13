@@ -9,6 +9,7 @@
 #include "lintel/config.h"
 #include "lintel/core/utils/StringUtils.h"
 
+namespace lintel {
 EnvironmentConfiguration::EnvironmentConfiguration()
 {
   // BootstarpConfigName
@@ -124,3 +125,4 @@ std::string EnvironmentConfiguration::expand(const std::string &value)
   }
   return result;
 }
+}// namespace lintel

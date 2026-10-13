@@ -12,17 +12,18 @@
 
 #include "lintel/core/services/LoggerService.h"
 
+namespace lintel {
 namespace {
-termios g_originalTermios{};
+  termios g_originalTermios{};
 
-void restoreTerminal()
-{
-  if (g_originalTermios.c_cflag != 0) { tcsetattr(STDIN_FILENO, TCSANOW, &g_originalTermios); }
-}
+  void restoreTerminal()
+  {
+    if (g_originalTermios.c_cflag != 0) { tcsetattr(STDIN_FILENO, TCSANOW, &g_originalTermios); }
+  }
 
-bool g_sigusr1Registered = false;
+  bool g_sigusr1Registered = false;
 
-extern "C" void sigusr1Handler(int /*sig*/) {}
+  extern "C" void sigusr1Handler(int /*sig*/) {}
 }// namespace
 
 KeyEvent InputService::onRead()
@@ -110,3 +111,4 @@ InputService::InputService() : newt()
 }
 
 InputService::~InputService() { restoreTerminal(); }
+}// namespace lintel

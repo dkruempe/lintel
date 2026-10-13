@@ -8,6 +8,7 @@
 #include "lintel/features/base/configuration/LoggerConfiguration.h"
 #include "lintel/features/base/configuration/LoggerPathConfiguration.h"
 
+namespace lintel {
 /** Configuration entry for a logger or logger path */
 class LoggerEntry : public Entry
 {
@@ -45,4 +46,5 @@ public:
   [[nodiscard]] const std::shared_ptr<LoggerPathConfiguration> &getLoggerPathConfiguration() const;
 };
 
+}// namespace lintel
 #endif// LINTEL_LOGGERENTRY_H

@@ -4,6 +4,7 @@
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/ipc/message_queue.hpp>
 
+namespace lintel {
 struct MessageQueueCore::Impl
 {
   boost::interprocess::message_queue m_messageQueue;
@@ -73,3 +74,4 @@ bool MessageQueueCore::tryReceiveOf(void *message, std::size_t size)
   unsigned int priority;
   return m_impl->m_messageQueue.try_receive(message, size, recvSize, priority);
 }
+}// namespace lintel

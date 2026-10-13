@@ -39,7 +39,7 @@
  *
  * @section arch_bootstrap Bootstrap and lifecycle
  *
- * Every application starts through @ref StartupBuilder. `StartupBuilder::with(argc, argv)`
+ * Every application starts through @ref lintel::StartupBuilder. `StartupBuilder::with(argc, argv)`
  * is the factory, `addFeature<FEATURE>()` accumulates the feature set and
  * `start()` runs the sequence. `start()` executes these phases in a fixed
  * order, and the order is the contract:
@@ -71,7 +71,7 @@
  * 8. **Awake.** `PersistableService::awake()` tells every registered
  *    `PersistableBean` to reload its state from persistent storage.
  * 9. **Service initialization.** `InitializeService::onInitialize()` calls
- *    `onInitialize()` on every resolved @ref AbstractServiceInterface, in
+ *    `onInitialize()` on every resolved @ref lintel::AbstractServiceInterface, in
  *    reverse `shutdownPriorityOf()` order so that dependents come up before
  *    their dependencies.
  * 10. **Idle.** The builder waits on a condition variable until the signal
@@ -149,7 +149,7 @@
  *
  * @section arch_transports Transports
  *
- * The HTTP API (@ref HttpFeature) and the CLI (@ref CommandLineFeature) are
+ * The HTTP API (@ref lintel::HttpFeature) and the CLI (@ref lintel::CommandLineFeature) are
  * both optional, and the CLI is deliberately the reference client for the HTTP
  * API. The wire contract is `swagger.yaml` in the repository root; `swagger.md`
  * is a generated mirror of it. Server behavior worth knowing:
@@ -170,7 +170,7 @@
  * 1. **A service** derives from `AbstractService` (which supplies the
  *    `AbstractServiceInterface` lifecycle and property access) and registers
  *    itself in a feature's `registerTypes()`.
- * 2. **A bootstrap plugin** derives from @ref BootstrapPlugin and returns a
+ * 2. **A bootstrap plugin** derives from @ref lintel::BootstrapPlugin and returns a
  *    `BootstrapSequence` value, so it lands at the right point in phase 5.
  * 3. **A new storage backend** implements `PropertyRepository`, or a
  *    `db::ConnectionType` case for the persistence layer.
@@ -224,12 +224,13 @@
  *
  * @section conv_namespaces Namespaces
  *
- * All public classes currently live in the **global** C++ namespace. Only the
- * CMake export namespace is namespaced (`lintel::lintel`), so the include guard
- * of a public header is `LINTEL_...`. Moving the classes into a `lintel::`
- * namespace is a planned breaking change (see the CHANGELOG migration table
- * once it lands); until then, a consumer with its own `Property` or `Result`
- * class has to namespace-qualify deliberately.
+ * All public classes and free functions live in the `lintel` namespace, with
+ * the persistence layer nested one level deeper in `lintel::db`, so a consumer
+ * with its own `Property` or `Result` class is not forced to namespace-qualify
+ * deliberately. The CMake export namespace is `lintel::lintel` and the include
+ * guard of a public header is `LINTEL_...`, so the library name appears in all
+ * three places. This was a deliberate breaking change; the CHANGELOG migration
+ * table lists the former global names next to their `lintel::` counterparts.
  *
  * @section conv_errors Errors
  *

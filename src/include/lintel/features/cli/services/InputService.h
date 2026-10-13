@@ -6,6 +6,7 @@
 #include <termios.h>
 #include <unistd.h>
 
+namespace lintel {
 /** Reads raw terminal input by configuring the terminal to non-canonical mode */
 class InputService : public IInputService
 {
@@ -23,4 +24,5 @@ public:
   KeyEvent onRead() override;
 };
 
+}// namespace lintel
 #endif// LINTEL_INPUTSERVICE_H

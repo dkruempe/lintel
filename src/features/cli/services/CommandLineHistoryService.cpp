@@ -12,6 +12,7 @@
 #include <fstream>
 #include <string>
 
+namespace lintel {
 CommandLineHistoryService::CommandLineHistoryService(const std::shared_ptr<ProcessName> &processName)
   : PropertyRegistration(processName->getProcessName()), m_position(std::nullopt)
 {
@@ -124,3 +125,4 @@ std::vector<CommandHistoryEntry> CommandLineHistoryService::internalAllOf()
 void CommandLineHistoryService::onInitialize() { m_history = internalAllOf(); }
 
 std::vector<CommandHistoryEntry> CommandLineHistoryService::allOf() { return m_history; }
+}// namespace lintel

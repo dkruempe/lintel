@@ -34,6 +34,7 @@ namespace boost::process {
 BOOST_PROCESS_V1_INLINE namespace v1 { class child; }
 }// namespace boost::process
 
+namespace lintel {
 /** Service for managing process execution, monitoring, and process groups. */
 class ProcessService : public PropertyRegistration<ProcessService>
 {
@@ -288,4 +289,5 @@ public:
   void onInitialize() override;
 };
 
+}// namespace lintel
 #endif// LINTEL_PROCESSSERVICE_H

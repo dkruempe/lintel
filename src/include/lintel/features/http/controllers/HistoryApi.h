@@ -4,6 +4,7 @@
 #include "lintel/features/base/controller/HistoryDto.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 /** API client for retrieving history data from the HTTP service */
 class HistoryApi
 {
@@ -18,9 +19,9 @@ public:
    * @param label label filter
    * @return list of matching history DTOs
    */
-  std::vector<HistoryDto> allOf(const std::string &processName,
-    const std::string &serviceName,
-    const std::string &label);
+  std::vector<HistoryDto>
+    allOf(const std::string &processName, const std::string &serviceName, const std::string &label);
 };
 
-#endif //HISTORYAPI_H
+}// namespace lintel
+#endif// HISTORYAPI_H

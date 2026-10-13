@@ -39,6 +39,7 @@ using ContentReceiver = std::function<bool(const char *data, size_t data_length)
 
 }// namespace httplib
 
+namespace lintel {
 /** HTTP client wrapper supporting SSL, authentication, and common HTTP methods */
 class Client
 {
@@ -216,4 +217,5 @@ public:
     const char *contentType) const;
 };
 
+}// namespace lintel
 #endif// HTTP_LIBRARY_CLIENT_H

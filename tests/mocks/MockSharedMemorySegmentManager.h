@@ -5,10 +5,13 @@
 
 #include "lintel/features/base/services/ISharedMemorySegmentManager.h"
 
-class MockSharedMemorySegmentManager : public ISharedMemorySegmentManager {
+namespace lintel {
+class MockSharedMemorySegmentManager : public ISharedMemorySegmentManager
+{
 public:
-    MAKE_MOCK1(of, std::shared_ptr<SharedMemorySegment>(const std::string &), override);
-    MAKE_MOCK1(allOf, std::vector<std::shared_ptr<SharedMemorySegment>>(const std::string &), override);
+  MAKE_MOCK1(of, std::shared_ptr<SharedMemorySegment>(const std::string &), override);
+  MAKE_MOCK1(allOf, std::vector<std::shared_ptr<SharedMemorySegment>>(const std::string &), override);
 };
 
+}// namespace lintel
 #endif

@@ -8,8 +8,10 @@
 #include "lintel/features/http/service/HttpStatusCodes.h"
 #include "lintel/features/http/service/HttpUnauthorizedException.h"
 
+namespace lintel {
 MesssageQueueApi::MesssageQueueApi(const std::shared_ptr<ClientProvider> &clientProvider)
-  : m_client(clientProvider->provide()) {}
+  : m_client(clientProvider->provide())
+{}
 
 std::vector<MessageQueueDto> MesssageQueueApi::allOf(const std::string &processName,
   const std::string &messageQueueName)
@@ -17,9 +19,7 @@ std::vector<MessageQueueDto> MesssageQueueApi::allOf(const std::string &processN
   httplib::Headers headers{};
   headers.insert({ "Content-Type", "application/json" });
   const auto &result = m_client->get("/messageQueue/" + processName + "/" + messageQueueName, headers);
-  if (!HttpClientHelper::hasResponse(result)) {
-    return {};
-  }
+  if (!HttpClientHelper::hasResponse(result)) { return {}; }
   HttpStatusCodes const status(result->status);
   switch (status) {
   case HttpStatusCodes::Unauthorized:
@@ -30,9 +30,12 @@ std::vector<MessageQueueDto> MesssageQueueApi::allOf(const std::string &processN
     return {};
   }
   MessageQueueDtos messageQueueDtos;
-  try { messageQueueDtos.deserialize(result->body); } catch (std::exception &exception) {
+  try {
+    messageQueueDtos.deserialize(result->body);
+  } catch (std::exception &exception) {
     LOG_ERROR("{}", exception.what());
     return {};
   }
   return messageQueueDtos.getMessageQueueDtos();
 }
+}// namespace lintel

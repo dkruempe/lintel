@@ -10,6 +10,7 @@
 #include "lintel/core/utils/TypeName.h"
 #include "lintel/features/Features.h"
 
+namespace lintel {
 class Configuration;
 class ProcessName;
 
@@ -17,11 +18,13 @@ class ProcessName;
 // signatures below, so an incomplete type is enough. Implementations of
 // registerTypes()/initialize() include "Hypodermic/ContainerBuilder.h" and
 // "Hypodermic/Container.h" themselves.
+}// namespace lintel
 namespace Hypodermic {
 class Container;
 class ContainerBuilder;
 }// namespace Hypodermic
 
+namespace lintel {
 /** Interface for all feature implementations */
 class FeatureInterface
 {
@@ -95,4 +98,5 @@ public:
   std::string_view getName() { return m_name; }
 };
 
+}// namespace lintel
 #endif// LINTEL_FEATURE_H

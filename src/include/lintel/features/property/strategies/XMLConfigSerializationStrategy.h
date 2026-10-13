@@ -3,17 +3,18 @@
 
 #include "ConfigSerializationStrategy.h"
 
+namespace lintel {
 /** Strategy for serializing/deserializing properties to/from XML format */
-class XMLConfigSerializationStrategy : public ConfigSerializationStrategy {
+class XMLConfigSerializationStrategy : public ConfigSerializationStrategy
+{
 public:
-    std::string serialize(
-            std::vector<std::shared_ptr<PropertyBase>> properties) override;
+  std::string serialize(std::vector<std::shared_ptr<PropertyBase>> properties) override;
 
-    std::vector<std::shared_ptr<PropertyBase>> deserialize(
-            const std::string &fileName, const std::string &content) override;
+  std::vector<std::shared_ptr<PropertyBase>> deserialize(const std::string &fileName,
+    const std::string &content) override;
 
-    std::vector<std::shared_ptr<PropertyBase>> deserialize(
-            const std::filesystem::path &path) override;
+  std::vector<std::shared_ptr<PropertyBase>> deserialize(const std::filesystem::path &path) override;
 };
 
-#endif  // LOGGING_XMLCONFIGSERIALIZATIONSTRATEGY_H
+}// namespace lintel
+#endif// LOGGING_XMLCONFIGSERIALIZATIONSTRATEGY_H

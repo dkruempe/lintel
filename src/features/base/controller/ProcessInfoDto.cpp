@@ -3,6 +3,7 @@
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/features/base/models/ProcessInfo.h"
 
+namespace lintel {
 ProcessInfoDto::Shapes ProcessInfoDto::m_shape{};
 
 ProcessInfoDto::ProcessInfoDto(const ProcessInfo &processInfo)
@@ -221,3 +222,4 @@ bool ProcessInfoDto::deserialize(const rapidjson::Value &obj)
   }
   return success;
 }
+}// namespace lintel

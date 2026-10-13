@@ -3,25 +3,28 @@
 
 #include <string>
 
+namespace lintel {
 /** Utility for converting memory sizes between human-readable strings and byte counts. */
-class MemorySize {
+class MemorySize
+{
 private:
-    static std::string toString(double value);
+  static std::string toString(double value);
 
 public:
-    /**
-     * deserialize memory size typically to byte as integer value
-     * @param size as string
-     * @return size as byte integer
-     */
-    static std::size_t deserialize(const std::string &size);
+  /**
+   * deserialize memory size typically to byte as integer value
+   * @param size as string
+   * @return size as byte integer
+   */
+  static std::size_t deserialize(const std::string &size);
 
-    /**
-     * converts byte to memory size string
-     * @param byte as byte integer
-     * @return size as string
-     */
-    static std::string serialize(std::size_t byte);
+  /**
+   * converts byte to memory size string
+   * @param byte as byte integer
+   * @return size as string
+   */
+  static std::string serialize(std::size_t byte);
 };
 
-#endif  // LINTEL_MEMORYSIZE_H
+}// namespace lintel
+#endif// LINTEL_MEMORYSIZE_H

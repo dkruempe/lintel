@@ -6,28 +6,34 @@
 
 #include "lintel/features/property/models/PropertyBase.h"
 
+namespace lintel {
 /** Factory for creating PropertyBase instances from string-typed values */
-class PropertyFactory {
+class PropertyFactory
+{
 public:
-    PropertyFactory() = delete;
+  PropertyFactory() = delete;
 
-    /**
-     * Create a property from its string representation
-     * @param name property name
-     * @param instanceName instance name
-     * @param className class name
-     * @param processName process name
-     * @param type the property type string
-     * @param value the value as string
-     * @param description property description
-     * @param runtime whether runtime changes are supported
-     * @return the created property
-     */
-    static std::shared_ptr<PropertyBase> Create(
-            const std::string &name, const std::string &instanceName,
-            const std::string &className, const std::string &processName,
-            const std::string &type, const std::string &value,
-            const std::string &description, bool runtime);
+  /**
+   * Create a property from its string representation
+   * @param name property name
+   * @param instanceName instance name
+   * @param className class name
+   * @param processName process name
+   * @param type the property type string
+   * @param value the value as string
+   * @param description property description
+   * @param runtime whether runtime changes are supported
+   * @return the created property
+   */
+  static std::shared_ptr<PropertyBase> Create(const std::string &name,
+    const std::string &instanceName,
+    const std::string &className,
+    const std::string &processName,
+    const std::string &type,
+    const std::string &value,
+    const std::string &description,
+    bool runtime);
 };
 
-#endif  // LOGGING_PROPERTYFACTORY_H
+}// namespace lintel
+#endif// LOGGING_PROPERTYFACTORY_H

@@ -6,6 +6,7 @@
 #include "lintel/core/services/StringifyService.h"
 #include <algorithm>
 
+namespace lintel {
 UserSessionDto::Shapes UserSessionDto::shape{};
 
 UserSessionDto::UserSessionDto(const UserToken &userToken)
@@ -20,7 +21,9 @@ const std::string &UserSessionDto::getIpAddress() const { return m_ipAddress; }
 const std::string &UserSessionDto::getUserName() const { return m_userName; }
 
 const std::chrono::sys_time<std::chrono::microseconds> &UserSessionDto::getLastAccessTimestamps() const
-{ return m_lastAccessTimestamps; }
+{
+  return m_lastAccessTimestamps;
+}
 
 std::vector<UserSessionDto> UserSessionDto::listOf(const std::vector<UserToken> &tokens)
 {
@@ -86,3 +89,4 @@ bool UserSessionDto::deserialize(const rapidjson::Value &obj)
   }
   return success;
 }
+}// namespace lintel

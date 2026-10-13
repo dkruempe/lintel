@@ -10,6 +10,7 @@
 #include "lintel/core/utils/ProcessResourceReader.h"
 #include "lintel/features/base/models/ProcessInfo.h"
 
+namespace lintel {
 /** DTO representing detailed process information */
 class ProcessInfoDto : public JsonSerializable
 {
@@ -151,4 +152,5 @@ public:
   bool deserialize(const rapidjson::Value &obj) override;
 };
 
+}// namespace lintel
 #endif// LINTEL_PROCESSINFODTO_H

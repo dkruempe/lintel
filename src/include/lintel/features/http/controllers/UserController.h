@@ -1,54 +1,55 @@
 #ifndef LINTEL_USERCONTROLLER_H
 #define LINTEL_USERCONTROLLER_H
 
-#include "lintel/features/base/repositories/UserRepository.h"
 #include "lintel/features/base/repositories/GroupRepository.h"
+#include "lintel/features/base/repositories/UserRepository.h"
 #include "lintel/features/base/services/IAuthService.h"
-#include "lintel/features/http/service/Controller.h"
 #include "lintel/features/http/service/ContentType.h"
+#include "lintel/features/http/service/Controller.h"
 
+namespace lintel {
 /** HTTP controller for user authentication and management */
-class UserController : public Controller {
+class UserController : public Controller
+{
 private:
-    std::shared_ptr<GroupRepository> m_groupRepository;
-    std::shared_ptr<UserRepository> m_userRepository;
-    Group m_adminUser;
-    Group m_userUser;
+  std::shared_ptr<GroupRepository> m_groupRepository;
+  std::shared_ptr<UserRepository> m_userRepository;
+  Group m_adminUser;
+  Group m_userUser;
 
-    ADD_HANDLER_METHOD("/user/login", Post, loginOf);
+  ADD_HANDLER_METHOD("/user/login", Post, loginOf);
 
-    ADD_HANDLER_METHOD("/user/logout", Delete, logoutOf);
+  ADD_HANDLER_METHOD("/user/logout", Delete, logoutOf);
 
-    ADD_HANDLER_METHOD("/user/state", Get, loginStateOf);
+  ADD_HANDLER_METHOD("/user/state", Get, loginStateOf);
 
-    ADD_HANDLER_METHOD(R"(/user/groups)", Get, allGroupsOf);
+  ADD_HANDLER_METHOD(R"(/user/groups)", Get, allGroupsOf);
 
-    ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+))", Get,
-                       allGroupsOfGroupNameOrIsVirtualGroup);
+  ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+))", Get, allGroupsOfGroupNameOrIsVirtualGroup);
 
-    ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+)/([^\/]+))", Get,
-                       allGroupsOfGroupNameAndIsVirtualGroup);
+  ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+)/([^\/]+))", Get, allGroupsOfGroupNameAndIsVirtualGroup);
 
-    ADD_HANDLER_METHOD(R"(/user/users)", Get, allUsersOf);
+  ADD_HANDLER_METHOD(R"(/user/users)", Get, allUsersOf);
 
-    ADD_HANDLER_METHOD(R"(/user/users/([^\/]+))", Get, allUsersOfUserName);
+  ADD_HANDLER_METHOD(R"(/user/users/([^\/]+))", Get, allUsersOfUserName);
 
-    ADD_HANDLER_METHOD("/user/add", Post, addUser);
+  ADD_HANDLER_METHOD("/user/add", Post, addUser);
 
-    ADD_HANDLER_METHOD("/user/update", Put, updateUser);
+  ADD_HANDLER_METHOD("/user/update", Put, updateUser);
 
-    ADD_HANDLER_METHOD("/user/password", Put, changePasswordOf);
+  ADD_HANDLER_METHOD("/user/password", Put, changePasswordOf);
 
-    ADD_HANDLER_METHOD(R"(/user/sessions)", Get, allSessionsOf);
+  ADD_HANDLER_METHOD(R"(/user/sessions)", Get, allSessionsOf);
 
-    ADD_HANDLER_METHOD(R"(/user/sessions/([^\/]+))", Delete, revokeSessionOf);
+  ADD_HANDLER_METHOD(R"(/user/sessions/([^\/]+))", Delete, revokeSessionOf);
 
-    ADD_HANDLER_METHOD("/user/delete", Delete, deleteUser);
+  ADD_HANDLER_METHOD("/user/delete", Delete, deleteUser);
 
 public:
-    explicit UserController(const std::shared_ptr<IAuthService> &authService,
-                            std::shared_ptr<GroupRepository> groupRepository,
-                            std::shared_ptr<UserRepository> userRepository);
+  explicit UserController(const std::shared_ptr<IAuthService> &authService,
+    std::shared_ptr<GroupRepository> groupRepository,
+    std::shared_ptr<UserRepository> userRepository);
 };
 
-#endif  // LINTEL_USERCONTROLLER_H
+}// namespace lintel
+#endif// LINTEL_USERCONTROLLER_H

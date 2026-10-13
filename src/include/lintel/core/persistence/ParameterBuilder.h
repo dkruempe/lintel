@@ -7,45 +7,45 @@
 
 #include "lintel/core/persistence/Serialization.h"
 
+namespace lintel {
 namespace db {
+  /**
+   * Builder for constructing a list of serialized parameter strings from typed values.
+   */
+  class ParameterBuilder
+  {
+  private:
+    std::vector<std::string> m_parameters;
+    std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
+
+  public:
     /**
-     * Builder for constructing a list of serialized parameter strings from typed values.
+     * Constructs a ParameterBuilder with the given connection entry for serialization.
+     * @param connectionEntry the database connection configuration entry
      */
-    class ParameterBuilder {
-    private:
-        std::vector<std::string> m_parameters;
-        std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
+    explicit ParameterBuilder(std::shared_ptr<DatabaseConnectionEntry> connectionEntry)
+      : m_connectionEntry(std::move(connectionEntry))
+    {}
 
-    public:
-        /**
-         * Constructs a ParameterBuilder with the given connection entry for serialization.
-         * @param connectionEntry the database connection configuration entry
-         */
-        explicit ParameterBuilder(
-                std::shared_ptr<DatabaseConnectionEntry> connectionEntry)
-                : m_connectionEntry(std::move(connectionEntry)) {}
+    /**
+     * Adds a typed parameter value, serializing it for the configured connection type.
+     * @tparam T the parameter type
+     * @param t the parameter value
+     * @return reference to this builder for chaining
+     */
+    template<typename T> ParameterBuilder &add(T t)
+    {
+      m_parameters.push_back(db::Serialization<T>::serialize(t, m_connectionEntry));
+      return *this;
+    }
 
-        /**
-         * Adds a typed parameter value, serializing it for the configured connection type.
-         * @tparam T the parameter type
-         * @param t the parameter value
-         * @return reference to this builder for chaining
-         */
-        template<typename T>
-        ParameterBuilder &add(T t) {
-            m_parameters.push_back(
-                    db::Serialization<T>::serialize(t, m_connectionEntry));
-            return *this;
-        }
+    /** @return the list of serialized parameter strings */
+    [[nodiscard]] const std::vector<std::string> &build() const { return m_parameters; }
 
-        /** @return the list of serialized parameter strings */
-        [[nodiscard]] const std::vector<std::string> &build() const {
-            return m_parameters;
-        }
+    /** Clears all accumulated parameters. */
+    void clear() { m_parameters.clear(); }
+  };
+}// namespace db
 
-        /** Clears all accumulated parameters. */
-        void clear() { m_parameters.clear(); }
-    };
-}  // namespace db
-
-#endif  // LINTEL_PARAMETERBUILDER_H
+}// namespace lintel
+#endif// LINTEL_PARAMETERBUILDER_H

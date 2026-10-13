@@ -17,6 +17,7 @@
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 
+namespace lintel {
 TEST_CASE("Component: getConfigRoot returns configured root name")
 {
   class TestComponent : public Component
@@ -370,3 +371,4 @@ TEST_CASE("Configuration: malformed XML throws ConfigurationException")
     Configuration(builder.build(), std::make_shared<EnvironmentConfiguration>()), ConfigurationException);
   std::filesystem::remove_all("/tmp/test_cfg_expand_bad");
 }
+}// namespace lintel

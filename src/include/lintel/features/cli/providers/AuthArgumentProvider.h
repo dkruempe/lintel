@@ -3,20 +3,23 @@
 
 #include "lintel/core/utils/Argument.h"
 
+namespace lintel {
 /** Provides authentication-related command-line arguments (e.g. --username) */
-class AuthArgumentProvider : public ArgumentProvider {
+class AuthArgumentProvider : public ArgumentProvider
+{
 private:
-    // -u --username
-    std::optional<std::string> m_userName;
+  // -u --username
+  std::optional<std::string> m_userName;
 
 public:
-    AuthArgumentProvider();
+  AuthArgumentProvider();
 
-    /** Initialize and return the supported arguments */
-    std::vector<Argument> init();
+  /** Initialize and return the supported arguments */
+  std::vector<Argument> init();
 
-    /** @return the parsed username, if provided */
-    std::optional<std::string> getUserName();
+  /** @return the parsed username, if provided */
+  std::optional<std::string> getUserName();
 };
 
-#endif  // LINTEL_AUTHARGUMENTPROVIDER_H
+}// namespace lintel
+#endif// LINTEL_AUTHARGUMENTPROVIDER_H

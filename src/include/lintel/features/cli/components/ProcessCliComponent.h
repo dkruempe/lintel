@@ -5,6 +5,7 @@
 #include "lintel/features/cli/models/CommandParser.h"
 #include "lintel/features/http/controllers/ProcessApi.h"
 
+namespace lintel {
 /** CLI component for process management (list, start, stop, terminate processes) */
 class ProcessCliComponent : public CommandLineComponent
 {
@@ -64,4 +65,5 @@ public:
   std::vector<std::string> allCommandsOf() override;
 };
 
+}// namespace lintel
 #endif// LINTEL_PROCESSCLICOMPONENT_H

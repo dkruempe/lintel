@@ -5,9 +5,12 @@
 
 #include "lintel/core/services/PersistableBean.h"
 
-class MockPersistableBean : public PersistableBean {
+namespace lintel {
+class MockPersistableBean : public PersistableBean
+{
 public:
-    MAKE_MOCK0(onAwake, void(), override);
+  MAKE_MOCK0(onAwake, void(), override);
 };
 
-#endif  // LINTEL_MOCKPERSISTABLEBEAN_H
+}// namespace lintel
+#endif// LINTEL_MOCKPERSISTABLEBEAN_H

@@ -12,6 +12,7 @@
 
 #include <utility>
 
+namespace lintel {
 /**
  * MessageQueue wrapper class for boost::interprocess::message
  * - wraps boost::interprocess::message_queue class
@@ -150,4 +151,5 @@ public:
   bool operator!=(const MessageQueue &rhs) const { return !(*this == rhs); }
 };
 
+}// namespace lintel
 #endif// LINTEL_MESSAGEQUEUE_H

@@ -3,6 +3,7 @@
 
 #include <cstddef>
 
+namespace lintel {
 /**
  * Typed access to the allocator of a shared memory segment.
  *
@@ -55,4 +56,5 @@ private:
   Allocator *m_allocator;
 };
 
+}// namespace lintel
 #endif// LINTEL_SHMSEGMENTACCESSOR_H

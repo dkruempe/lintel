@@ -27,76 +27,77 @@
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 
+namespace lintel {
 namespace {
 
-// `dpr` prefix: unity builds merge several test files into one translation unit
-// and share one anonymous namespace, so a generic `configuration` or `repository`
-// would collide (and shadow local variables, Clang -Wshadow).
-std::string dprDatabasePath()
-{
-  static int counter = 0;
-  return (
-    std::filesystem::temp_directory_path()
-    / ("database_property_repository_test_" + std::to_string(::getpid()) + "_" + std::to_string(++counter) + ".db"))
-    .string();
-}
-
-/**
- * Real SQLite property repository.
- *
- * The fixture can be broken on purpose (breakConnection()): the database path is
- * then occupied by a directory, so sqlite3_open fails and every repository method
- * hits the db::SQLException it is documented to swallow.
- */
-struct DatabasePropertyRepositoryFixture
-{
-  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_dpr_test_cfg" };
-  std::string m_dbPath;
-  std::shared_ptr<EnvironmentConfiguration> m_envConfig;
-  std::shared_ptr<Configuration> m_configuration;
-  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
-  std::shared_ptr<ProcessName> m_processName;
-  std::shared_ptr<DatabasePropertyRepository> m_repository;
-  bool m_broken = false;
-
-  DatabasePropertyRepositoryFixture()
+  // `dpr` prefix: unity builds merge several test files into one translation unit
+  // and share one anonymous namespace, so a generic `configuration` or `repository`
+  // would collide (and shadow local variables, Clang -Wshadow).
+  std::string dprDatabasePath()
   {
-    m_dbPath = dprDatabasePath();
-    std::remove(m_dbPath.c_str());
-    std::error_code removeError;
-    std::filesystem::remove_all(m_dbPath, removeError);
-    createPropertyTable(m_dbPath);
-
-    m_envConfig = std::make_shared<EnvironmentConfiguration>();
-    m_configuration =
-      std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{ std::make_shared<PropertyComponent>(),
-                                        std::make_shared<PropertyRepositoryComponent>() },
-        m_envConfig);
-    auto connectionEntry = std::make_shared<DatabaseConnectionEntry>(
-      type_name<DatabaseConnectionComponent>(), m_dbPath, "", "", db::ConnectionType::SQLite, "default", 0, "", true);
-    m_configuration->setEntries(std::vector<std::shared_ptr<Entry>>{ connectionEntry });
-    m_connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(m_configuration);
-    m_processName = std::make_shared<ProcessName>("dprProcess");
-    m_repository =
-      std::make_shared<DatabasePropertyRepository>(m_connectionConfigurations, m_configuration, m_processName);
+    static int counter = 0;
+    return (
+      std::filesystem::temp_directory_path()
+      / ("database_property_repository_test_" + std::to_string(::getpid()) + "_" + std::to_string(++counter) + ".db"))
+      .string();
   }
 
-  ~DatabasePropertyRepositoryFixture()
+  /**
+   * Real SQLite property repository.
+   *
+   * The fixture can be broken on purpose (breakConnection()): the database path is
+   * then occupied by a directory, so sqlite3_open fails and every repository method
+   * hits the db::SQLException it is documented to swallow.
+   */
+  struct DatabasePropertyRepositoryFixture
   {
-    std::remove(m_dbPath.c_str());
-    std::error_code error;
-    std::filesystem::remove_all(m_dbPath, error);
-  }
+    ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_dpr_test_cfg" };
+    std::string m_dbPath;
+    std::shared_ptr<EnvironmentConfiguration> m_envConfig;
+    std::shared_ptr<Configuration> m_configuration;
+    std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+    std::shared_ptr<ProcessName> m_processName;
+    std::shared_ptr<DatabasePropertyRepository> m_repository;
+    bool m_broken = false;
 
-  DatabasePropertyRepositoryFixture(const DatabasePropertyRepositoryFixture &) = delete;
-  DatabasePropertyRepositoryFixture &operator=(const DatabasePropertyRepositoryFixture &) = delete;
+    DatabasePropertyRepositoryFixture()
+    {
+      m_dbPath = dprDatabasePath();
+      std::remove(m_dbPath.c_str());
+      std::error_code removeError;
+      std::filesystem::remove_all(m_dbPath, removeError);
+      createPropertyTable(m_dbPath);
 
-  /** Create the property table of cfg/database/DEFAULT_SQLITE/init_schema_default_version_1.sql */
-  static void createPropertyTable(const std::string &path)
-  {
-    db::Connection connection(db::ConnectionType::SQLite, path);
-    db::Statement statement(connection);
-    statement.execute(R"(
+      m_envConfig = std::make_shared<EnvironmentConfiguration>();
+      m_configuration =
+        std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{ std::make_shared<PropertyComponent>(),
+                                          std::make_shared<PropertyRepositoryComponent>() },
+          m_envConfig);
+      auto connectionEntry = std::make_shared<DatabaseConnectionEntry>(
+        type_name<DatabaseConnectionComponent>(), m_dbPath, "", "", db::ConnectionType::SQLite, "default", 0, "", true);
+      m_configuration->setEntries(std::vector<std::shared_ptr<Entry>>{ connectionEntry });
+      m_connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(m_configuration);
+      m_processName = std::make_shared<ProcessName>("dprProcess");
+      m_repository =
+        std::make_shared<DatabasePropertyRepository>(m_connectionConfigurations, m_configuration, m_processName);
+    }
+
+    ~DatabasePropertyRepositoryFixture()
+    {
+      std::remove(m_dbPath.c_str());
+      std::error_code error;
+      std::filesystem::remove_all(m_dbPath, error);
+    }
+
+    DatabasePropertyRepositoryFixture(const DatabasePropertyRepositoryFixture &) = delete;
+    DatabasePropertyRepositoryFixture &operator=(const DatabasePropertyRepositoryFixture &) = delete;
+
+    /** Create the property table of cfg/database/DEFAULT_SQLITE/init_schema_default_version_1.sql */
+    static void createPropertyTable(const std::string &path)
+    {
+      db::Connection connection(db::ConnectionType::SQLite, path);
+      db::Statement statement(connection);
+      statement.execute(R"(
             CREATE TABLE property (
                 name          TEXT NOT NULL,
                 instance_name TEXT NOT NULL,
@@ -107,31 +108,31 @@ struct DatabasePropertyRepositoryFixture
                 CONSTRAINT property_PK PRIMARY KEY (name, instance_name, class_name, process_name)
             );
         )");
-  }
+    }
 
-  /** Make every following database operation fail with a db::SQLException */
-  void breakConnection()
-  {
-    std::remove(m_dbPath.c_str());
-    std::error_code error;
-    std::filesystem::remove_all(m_dbPath, error);
-    std::filesystem::create_directories(m_dbPath, error);
-    REQUIRE(!error);
-    m_broken = true;
-  }
+    /** Make every following database operation fail with a db::SQLException */
+    void breakConnection()
+    {
+      std::remove(m_dbPath.c_str());
+      std::error_code error;
+      std::filesystem::remove_all(m_dbPath, error);
+      std::filesystem::create_directories(m_dbPath, error);
+      REQUIRE(!error);
+      m_broken = true;
+    }
 
-  bool isBroken() const { return m_broken; }
+    bool isBroken() const { return m_broken; }
 
-  /** @return a property of this process, created in memory only */
-  std::shared_ptr<PropertyBase> makeProperty(const std::string &name,
-    const std::string &instance,
-    const std::string &className,
-    const std::string &processName,
-    int32_t value) const
-  {
-    return std::make_shared<Property<int32_t>>(name, instance, className, processName, value, "", true);
-  }
-};
+    /** @return a property of this process, created in memory only */
+    std::shared_ptr<PropertyBase> makeProperty(const std::string &name,
+      const std::string &instance,
+      const std::string &className,
+      const std::string &processName,
+      int32_t value) const
+    {
+      return std::make_shared<Property<int32_t>>(name, instance, className, processName, value, "", true);
+    }
+  };
 
 }// namespace
 
@@ -317,3 +318,4 @@ TEST_CASE("DatabasePropertyRepository recovers as soon as the connection works a
   REQUIRE(stored.size() == 1);
   REQUIRE(stored[0]->toString() == "5");
 }
+}// namespace lintel

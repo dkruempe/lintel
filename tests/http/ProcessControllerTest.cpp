@@ -32,199 +32,201 @@
 #include "../helpers/ScopedEnvironmentVariable.h"
 #include "../mocks/MockAuthService.h"
 
+namespace lintel {
 using namespace trompeloeil;
 
 namespace {
 
-// `pc` prefix: unity builds merge several test files into one translation unit
-// and share one anonymous namespace, so a generic `adminGroup` or `fixture`
-// would collide (and shadow local variables, Clang -Wshadow).
-constexpr std::chrono::milliseconds pcStartupTimeout{ 5000 };
-constexpr char pcTokenAdmin[] = "process-token-admin";
-constexpr char pcTokenPlain[] = "process-token-plain";
-constexpr char pcTokenOutsider[] = "process-token-outsider";
-constexpr char pcUnknownProcessId[] = "pc-process-that-does-not-exist";
+  // `pc` prefix: unity builds merge several test files into one translation unit
+  // and share one anonymous namespace, so a generic `adminGroup` or `fixture`
+  // would collide (and shadow local variables, Clang -Wshadow).
+  constexpr std::chrono::milliseconds pcStartupTimeout{ 5000 };
+  constexpr char pcTokenAdmin[] = "process-token-admin";
+  constexpr char pcTokenPlain[] = "process-token-plain";
+  constexpr char pcTokenOutsider[] = "process-token-outsider";
+  constexpr char pcUnknownProcessId[] = "pc-process-that-does-not-exist";
 
 #ifdef BASE_TEST_SLEEPER_BINARY
-constexpr bool kPcHasSleeperPath = true;
+  constexpr bool kPcHasSleeperPath = true;
 #else
-constexpr bool kPcHasSleeperPath = false;
+  constexpr bool kPcHasSleeperPath = false;
 #endif
 
-Group pcAdminGroup{ "Admin-Process", {}, true };
-Group pcUserGroup{ "User-Process", {}, true };
-Group pcUnrelatedGroup{ "Some-Other-Group", {}, true };
+  Group pcAdminGroup{ "Admin-Process", {}, true };
+  Group pcUserGroup{ "User-Process", {}, true };
+  Group pcUnrelatedGroup{ "Some-Other-Group", {}, true };
 
-User pcAdminUser("Proc", "Admin", User::Female, "admin@pc.test", "pcAdmin", "", { pcAdminGroup });
-User pcPlainUser("Proc", "Plain", User::Male, "plain@pc.test", "pcPlain", "", { pcUserGroup });
-User pcOutsiderUser("Proc", "Outsider", User::Male, "out@pc.test", "pcOutsider", "", { pcUnrelatedGroup });
+  User pcAdminUser("Proc", "Admin", User::Female, "admin@pc.test", "pcAdmin", "", { pcAdminGroup });
+  User pcPlainUser("Proc", "Plain", User::Male, "plain@pc.test", "pcPlain", "", { pcUserGroup });
+  User pcOutsiderUser("Proc", "Outsider", User::Male, "out@pc.test", "pcOutsider", "", { pcUnrelatedGroup });
 
-UserToken pcTokenOf(const User &user, const std::string &id)
-{
-  return UserToken{
-    "127.0.0.1", id, std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()), user
-  };
-}
-
-/** @return the Authorization header that carries the given bearer token */
-httplib::Headers pcAuthHeaders(const char *token)
-{
-  return httplib::Headers{ { "Authorization", std::string("Bearer ") + token } };
-}
-
-/**
- * @return Authorization plus an explicit Content-Type
- *
- * The ADD_HANDLER_METHOD wrapper only defaults Content-Type to application/json
- * for GET. Every other method reads the header exactly as sent, so even a DELETE
- * without a body has to declare application/json - otherwise the controller
- * answers 403 ("wrong content type") before it ever looks at the process id.
- */
-httplib::Headers pcAuthJsonHeaders(const char *token)
-{
-  return httplib::Headers{ { "Authorization", std::string("Bearer ") + token },
-    { "Content-Type", "application/json" } };
-}
-
-/**
- * Locate the stand-in for the system `sleep` utility that is built next to the
- * test binary (target `base_test_sleeper`). CMake passes its exact path in, so
- * there is nothing to look up at run time; the current directory and the system
- * `sleep` are only fallbacks.
- * @return path of the sleeper, or an empty string if nothing usable exists */
-std::string pcFindSleeperBinary()
-{
-  if constexpr (kPcHasSleeperPath) {
-    const std::filesystem::path helper{ BASE_TEST_SLEEPER_BINARY };
-    std::error_code error;
-    if (std::filesystem::is_regular_file(helper, error)) { return helper.string(); }
-  }
-  std::error_code error;
-  const auto workingDirectory = std::filesystem::current_path(error);
-  if (!error) {
-    const auto candidate = workingDirectory / "base_test_sleeper";
-    std::error_code candidateError;
-    if (std::filesystem::is_regular_file(candidate, candidateError)) { return candidate.string(); }
-  }
-  const auto systemSleep = std::filesystem::path("/bin/sleep");
-  std::error_code sleepError;
-  if (std::filesystem::is_regular_file(systemSleep, sleepError)) { return systemSleep.string(); }
-  return {};
-}
-
-/** @return a ProcessInfoDto request body for POST /process/start */
-std::string pcStartBody(const std::string &path, const std::vector<std::string> &args)
-{
-  std::string body = R"({"id":"","path":")" + path + R"(","args":[)";
-  for (std::size_t i = 0; i < args.size(); i++) {
-    if (i > 0) { body += ","; }
-    body += R"({"arg":")" + args[i] + R"("})";
-  }
-  body += R"(],"auto_restart":false,"restarts":0,"max_restarts":0,"process_id":0,)"
-          R"("runs":false,"exit_code":0,"exit_code_valid":false,)"
-          R"("group_name":"","group_id":""})";
-  return body;
-}
-
-/**
- * ProcessController takes the concrete ProcessService, which the CHANGELOG
- * listed as the reason the 404 switch was untested. That is not a real blocker:
- * ProcessService is constructible from four plain values (process name,
- * environment configuration, configuration, history service) - no complete
- * bootstrap environment and no database are needed, exactly as
- * tests/services/ProcessServiceTest.cpp shows. The tests below therefore use a
- * real ProcessService and close the known gap without touching the API.
- *
- * The ADD_HANDLER_METHODs live in the private section, so the controller is
- * driven through a real httplib server, as in production.
- *
- * onInitialize() is deliberately not called: the monitor thread is not needed
- * for the endpoints under test and would race with the assertions. The
- * ProcessService destructor stops and terminates every remaining child, so no
- * process outlives a test case.
- */
-struct ProcessControllerFixture
-{
-  // must stay the first member: it has to be set before the EnvironmentConfiguration below reads it
-  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_process_controller_test_cfg" };
-  std::string m_selfPath;
-  std::shared_ptr<EnvironmentConfiguration> m_envConfig;
-  std::shared_ptr<Configuration> m_configuration;
-  std::shared_ptr<ProcessName> m_processName;
-  std::shared_ptr<NoopHistoryService> m_historyService;
-  std::shared_ptr<ProcessService> m_processService;
-  std::shared_ptr<MockAuthService> m_authService;
-  std::shared_ptr<httplib::Server> m_server = std::make_shared<httplib::Server>();
-  std::thread m_serverThread;
-  int m_port = -1;
-  std::unique_ptr<httplib::Client> m_client;
-
-  ProcessControllerFixture()
+  UserToken pcTokenOf(const User &user, const std::string &id)
   {
-    static int counter = 0;
-    m_selfPath = (std::filesystem::temp_directory_path()
-                  / ("pc-controller-self-" + std::to_string(::getpid()) + "-" + std::to_string(++counter)))
-                   .string();
-
-    m_envConfig = std::make_shared<EnvironmentConfiguration>();
-    m_configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, m_envConfig);
-    m_processName = std::make_shared<ProcessName>(m_selfPath);
-    m_historyService = std::make_shared<NoopHistoryService>(m_processName);
-    m_processService = std::make_shared<ProcessService>(m_processName, m_envConfig, m_configuration, m_historyService);
-    m_authService = std::make_shared<MockAuthService>();
+    return UserToken{
+      "127.0.0.1", id, std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()), user
+    };
   }
 
-  ~ProcessControllerFixture()
+  /** @return the Authorization header that carries the given bearer token */
+  httplib::Headers pcAuthHeaders(const char *token)
   {
-    if (m_server != nullptr) { m_server->stop(); }
-    if (m_serverThread.joinable()) { m_serverThread.join(); }
+    return httplib::Headers{ { "Authorization", std::string("Bearer ") + token } };
   }
 
-  ProcessControllerFixture(const ProcessControllerFixture &) = delete;
-  ProcessControllerFixture &operator=(const ProcessControllerFixture &) = delete;
-
-  ProcessController makeController() const { return ProcessController(m_authService, m_processService); }
-
-  /** Register the routes of the controller, bind an ephemeral port and serve */
-  void startServing(Controller &controller)
+  /**
+   * @return Authorization plus an explicit Content-Type
+   *
+   * The ADD_HANDLER_METHOD wrapper only defaults Content-Type to application/json
+   * for GET. Every other method reads the header exactly as sent, so even a DELETE
+   * without a body has to declare application/json - otherwise the controller
+   * answers 403 ("wrong content type") before it ever looks at the process id.
+   */
+  httplib::Headers pcAuthJsonHeaders(const char *token)
   {
-    controller.registerMethods(m_server);
-    m_port = m_server->bind_to_any_port("127.0.0.1");
-    if (m_port <= 0) { return; }
-    m_serverThread = std::thread([this] { m_server->listen_after_bind(); });
-    const auto deadline = std::chrono::steady_clock::now() + pcStartupTimeout;
-    while (!m_server->is_running() && std::chrono::steady_clock::now() < deadline) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    return httplib::Headers{ { "Authorization", std::string("Bearer ") + token },
+      { "Content-Type", "application/json" } };
+  }
+
+  /**
+   * Locate the stand-in for the system `sleep` utility that is built next to the
+   * test binary (target `base_test_sleeper`). CMake passes its exact path in, so
+   * there is nothing to look up at run time; the current directory and the system
+   * `sleep` are only fallbacks.
+   * @return path of the sleeper, or an empty string if nothing usable exists */
+  std::string pcFindSleeperBinary()
+  {
+    if constexpr (kPcHasSleeperPath) {
+      const std::filesystem::path helper{ BASE_TEST_SLEEPER_BINARY };
+      std::error_code error;
+      if (std::filesystem::is_regular_file(helper, error)) { return helper.string(); }
     }
-    if (!m_server->is_running()) { return; }
-    m_client = std::make_unique<httplib::Client>("127.0.0.1", m_port);
-    m_client->set_connection_timeout(std::chrono::seconds(10));
-    m_client->set_read_timeout(std::chrono::seconds(10));
+    std::error_code error;
+    const auto workingDirectory = std::filesystem::current_path(error);
+    if (!error) {
+      const auto candidate = workingDirectory / "base_test_sleeper";
+      std::error_code candidateError;
+      if (std::filesystem::is_regular_file(candidate, candidateError)) { return candidate.string(); }
+    }
+    const auto systemSleep = std::filesystem::path("/bin/sleep");
+    std::error_code sleepError;
+    if (std::filesystem::is_regular_file(systemSleep, sleepError)) { return systemSleep.string(); }
+    return {};
   }
 
-  bool isReady() const { return m_client != nullptr && m_server->is_running(); }
-
-  /** @return the file name of the process this service considers to be itself */
-  std::string selfName() const { return m_processName->getProcessName(); }
-
-  /** @return the process infos produced by the controller, parsed back */
-  std::vector<ProcessInfoDto> parseProcessInfos(const std::string &json) const
+  /** @return a ProcessInfoDto request body for POST /process/start */
+  std::string pcStartBody(const std::string &path, const std::vector<std::string> &args)
   {
-    rapidjson::Document document;
-    document.Parse(json.c_str());
-    ProcessInfosDto parsed;
-    parsed.deserialize(document);
-    return parsed.getProcessInfos();
+    std::string body = R"({"id":"","path":")" + path + R"(","args":[)";
+    for (std::size_t i = 0; i < args.size(); i++) {
+      if (i > 0) { body += ","; }
+      body += R"({"arg":")" + args[i] + R"("})";
+    }
+    body += R"(],"auto_restart":false,"restarts":0,"max_restarts":0,"process_id":0,)"
+            R"("runs":false,"exit_code":0,"exit_code_valid":false,)"
+            R"("group_name":"","group_id":""})";
+    return body;
   }
 
-  /** @return the process groups produced by the controller, parsed back */
-  std::vector<ProcessGroupDto> parseProcessGroups(const std::string &json) const
+  /**
+   * ProcessController takes the concrete ProcessService, which the CHANGELOG
+   * listed as the reason the 404 switch was untested. That is not a real blocker:
+   * ProcessService is constructible from four plain values (process name,
+   * environment configuration, configuration, history service) - no complete
+   * bootstrap environment and no database are needed, exactly as
+   * tests/services/ProcessServiceTest.cpp shows. The tests below therefore use a
+   * real ProcessService and close the known gap without touching the API.
+   *
+   * The ADD_HANDLER_METHODs live in the private section, so the controller is
+   * driven through a real httplib server, as in production.
+   *
+   * onInitialize() is deliberately not called: the monitor thread is not needed
+   * for the endpoints under test and would race with the assertions. The
+   * ProcessService destructor stops and terminates every remaining child, so no
+   * process outlives a test case.
+   */
+  struct ProcessControllerFixture
   {
-    ProcessGroupsDto parsed;
-    parsed.deserialize(json);
-    return parsed.getProcessGroups();
-  }
-};
+    // must stay the first member: it has to be set before the EnvironmentConfiguration below reads it
+    ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_process_controller_test_cfg" };
+    std::string m_selfPath;
+    std::shared_ptr<EnvironmentConfiguration> m_envConfig;
+    std::shared_ptr<Configuration> m_configuration;
+    std::shared_ptr<ProcessName> m_processName;
+    std::shared_ptr<NoopHistoryService> m_historyService;
+    std::shared_ptr<ProcessService> m_processService;
+    std::shared_ptr<MockAuthService> m_authService;
+    std::shared_ptr<httplib::Server> m_server = std::make_shared<httplib::Server>();
+    std::thread m_serverThread;
+    int m_port = -1;
+    std::unique_ptr<httplib::Client> m_client;
+
+    ProcessControllerFixture()
+    {
+      static int counter = 0;
+      m_selfPath = (std::filesystem::temp_directory_path()
+                    / ("pc-controller-self-" + std::to_string(::getpid()) + "-" + std::to_string(++counter)))
+                     .string();
+
+      m_envConfig = std::make_shared<EnvironmentConfiguration>();
+      m_configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, m_envConfig);
+      m_processName = std::make_shared<ProcessName>(m_selfPath);
+      m_historyService = std::make_shared<NoopHistoryService>(m_processName);
+      m_processService =
+        std::make_shared<ProcessService>(m_processName, m_envConfig, m_configuration, m_historyService);
+      m_authService = std::make_shared<MockAuthService>();
+    }
+
+    ~ProcessControllerFixture()
+    {
+      if (m_server != nullptr) { m_server->stop(); }
+      if (m_serverThread.joinable()) { m_serverThread.join(); }
+    }
+
+    ProcessControllerFixture(const ProcessControllerFixture &) = delete;
+    ProcessControllerFixture &operator=(const ProcessControllerFixture &) = delete;
+
+    ProcessController makeController() const { return ProcessController(m_authService, m_processService); }
+
+    /** Register the routes of the controller, bind an ephemeral port and serve */
+    void startServing(Controller &controller)
+    {
+      controller.registerMethods(m_server);
+      m_port = m_server->bind_to_any_port("127.0.0.1");
+      if (m_port <= 0) { return; }
+      m_serverThread = std::thread([this] { m_server->listen_after_bind(); });
+      const auto deadline = std::chrono::steady_clock::now() + pcStartupTimeout;
+      while (!m_server->is_running() && std::chrono::steady_clock::now() < deadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+      if (!m_server->is_running()) { return; }
+      m_client = std::make_unique<httplib::Client>("127.0.0.1", m_port);
+      m_client->set_connection_timeout(std::chrono::seconds(10));
+      m_client->set_read_timeout(std::chrono::seconds(10));
+    }
+
+    bool isReady() const { return m_client != nullptr && m_server->is_running(); }
+
+    /** @return the file name of the process this service considers to be itself */
+    std::string selfName() const { return m_processName->getProcessName(); }
+
+    /** @return the process infos produced by the controller, parsed back */
+    std::vector<ProcessInfoDto> parseProcessInfos(const std::string &json) const
+    {
+      rapidjson::Document document;
+      document.Parse(json.c_str());
+      ProcessInfosDto parsed;
+      parsed.deserialize(document);
+      return parsed.getProcessInfos();
+    }
+
+    /** @return the process groups produced by the controller, parsed back */
+    std::vector<ProcessGroupDto> parseProcessGroups(const std::string &json) const
+    {
+      ProcessGroupsDto parsed;
+      parsed.deserialize(json);
+      return parsed.getProcessGroups();
+    }
+  };
 
 }// namespace
 
@@ -897,3 +899,4 @@ TEST_CASE("ProcessController::terminateProcessDelete accepts request without Con
   REQUIRE(terminated != nullptr);
   REQUIRE(terminated->status == 200);
 }
+}// namespace lintel

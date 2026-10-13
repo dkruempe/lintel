@@ -3,19 +3,22 @@
 
 #include "lintel/core/models/BootstrapSequence.h"
 
+namespace lintel {
 /** Base class for bootstrap plugins that are executed during application startup. */
-class BootstrapPlugin {
+class BootstrapPlugin
+{
 public:
-    BootstrapPlugin() = default;
+  BootstrapPlugin() = default;
 
-    virtual ~BootstrapPlugin() = default;
+  virtual ~BootstrapPlugin() = default;
 
-    /** Called when the bootstrap plugin should execute its initialization logic. */
-    virtual void onStart() = 0;
+  /** Called when the bootstrap plugin should execute its initialization logic. */
+  virtual void onStart() = 0;
 
-    /** Returns the execution priority of this bootstrap plugin.
-     * @return the priority determining the order of plugin execution */
-    virtual BootstrapSequence getPriority() = 0;
+  /** Returns the execution priority of this bootstrap plugin.
+   * @return the priority determining the order of plugin execution */
+  virtual BootstrapSequence getPriority() = 0;
 };
 
-#endif  // LINTEL_BOOTSTRAPPLUGIN_H
+}// namespace lintel
+#endif// LINTEL_BOOTSTRAPPLUGIN_H

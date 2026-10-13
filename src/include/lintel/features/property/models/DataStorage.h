@@ -7,39 +7,42 @@
 
 #include "PropertyRepositoryType.h"
 
+namespace lintel {
 /** Describes where a property's data is stored (repository type + extra info) */
-class DataStorage {
+class DataStorage
+{
 private:
-    PropertyRepositoryType m_type = PropertyRepositoryType::DEFAULT;
-    std::string m_extraInformation;
+  PropertyRepositoryType m_type = PropertyRepositoryType::DEFAULT;
+  std::string m_extraInformation;
 
 public:
-    /** @param type repository type
-     *  @param extraInformation additional storage info */
-    DataStorage(const PropertyRepositoryType &type, std::string extraInformation)
-            : m_type(type), m_extraInformation(std::move(extraInformation)) {}
+  /** @param type repository type
+   *  @param extraInformation additional storage info */
+  DataStorage(const PropertyRepositoryType &type, std::string extraInformation)
+    : m_type(type), m_extraInformation(std::move(extraInformation))
+  {}
 
-    DataStorage() = default;
+  DataStorage() = default;
 
-    /** @return the repository type */
-    [[nodiscard]] const PropertyRepositoryType &getType() const { return m_type; }
+  /** @return the repository type */
+  [[nodiscard]] const PropertyRepositoryType &getType() const { return m_type; }
 
-    /** @return extra information about the storage */
-    [[nodiscard]] const std::string &getExtraInformation() const {
-        return m_extraInformation;
-    }
+  /** @return extra information about the storage */
+  [[nodiscard]] const std::string &getExtraInformation() const { return m_extraInformation; }
 
-    friend std::ostream &operator<<(std::ostream &os,
-                                    const DataStorage &storage) {
-        os << storage.m_type << "(" << storage.m_extraInformation << ")";
-        return os;
-    }
+  friend std::ostream &operator<<(std::ostream &os, const DataStorage &storage)
+  {
+    os << storage.m_type << "(" << storage.m_extraInformation << ")";
+    return os;
+  }
 
-    operator std::string() const {
-        std::ostringstream out;
-        out << *this;
-        return out.str();
-    }
+  operator std::string() const
+  {
+    std::ostringstream out;
+    out << *this;
+    return out.str();
+  }
 };
 
-#endif  // PLC_DATASTORAGE_H
+}// namespace lintel
+#endif// PLC_DATASTORAGE_H

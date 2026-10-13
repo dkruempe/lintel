@@ -9,6 +9,7 @@
 
 #include "lintel/features/http/service/Client.h"
 
+namespace lintel {
 class UserDto;
 
 /** Abstract base class for all CLI components (menus/screens) */
@@ -73,4 +74,5 @@ public:
   virtual std::vector<std::string> allCommandsOf() = 0;
 };
 
+}// namespace lintel
 #endif// LINTEL_COMMANDLINECOMPONENT_H

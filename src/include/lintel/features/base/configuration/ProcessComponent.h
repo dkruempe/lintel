@@ -6,6 +6,7 @@
 #include "lintel/features/base/configuration/Component.h"
 #include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 
+namespace lintel {
 /** Component for parsing process and process group configurations from XML */
 class ProcessComponent : public Component
 {
@@ -60,4 +61,5 @@ public:
     parse(const std::string &content, const std::string &fileName, int32_t lineOffset) override;
 };
 
+}// namespace lintel
 #endif// LINTEL_PROCESSCOMPONENT_H

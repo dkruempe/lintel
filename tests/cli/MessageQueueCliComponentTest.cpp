@@ -24,122 +24,125 @@
 #include "lintel/features/http/configuration/HttpEntry.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 namespace {
 
-/** RAII redirector for `std::cout`, restored on destruction even when a REQUIRE throws. */
-class mqCliCoutCapture
-{
-public:
-  mqCliCoutCapture() : m_oldBuffer(std::cout.rdbuf(m_stream.rdbuf())) {}
-
-  ~mqCliCoutCapture() { std::cout.rdbuf(m_oldBuffer); }
-
-  mqCliCoutCapture(const mqCliCoutCapture &) = delete;
-  mqCliCoutCapture &operator=(const mqCliCoutCapture &) = delete;
-
-  [[nodiscard]] std::string str() const { return m_stream.str(); }
-
-private:
-  std::ostringstream m_stream;
-  std::streambuf *m_oldBuffer;
-};
-
-/** RAII redirector for `std::cerr`, used for the error paths of onCommand(). */
-class mqCliCerrCapture
-{
-public:
-  mqCliCerrCapture() : m_oldBuffer(std::cerr.rdbuf(m_stream.rdbuf())) {}
-
-  ~mqCliCerrCapture() { std::cerr.rdbuf(m_oldBuffer); }
-
-  mqCliCerrCapture(const mqCliCerrCapture &) = delete;
-  mqCliCerrCapture &operator=(const mqCliCerrCapture &) = delete;
-
-  [[nodiscard]] std::string str() const { return m_stream.str(); }
-
-private:
-  std::ostringstream m_stream;
-  std::streambuf *m_oldBuffer;
-};
-
-/**
- * `MesssageQueueApi` has no virtual seam, so the component is driven against a loopback HTTP
- * server that records every request and answers with a canned body.
- */
-class mqCliBackend
-{
-public:
-  mqCliBackend()
+  /** RAII redirector for `std::cout`, restored on destruction even when a REQUIRE throws. */
+  class mqCliCoutCapture
   {
-    m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
-      paths.push_back(request.path);
-      methods.emplace_back(request.method);
-      response.set_content(m_responseBody, "application/json");
-      return httplib::Server::HandlerResponse::Handled;
-    });
-    m_port = m_server.bind_to_any_port("127.0.0.1");
-    m_thread = std::thread([this]() { m_server.listen_after_bind(); });
-    // Server::stop() is a no-op until the accept loop is up. Without this wait a
-    // backend that is created and destroyed without a single request leaves the
-    // accept loop blocked in accept() and the join in the destructor never returns.
-    const auto mqCliDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    while (!m_server.is_running() && std::chrono::steady_clock::now() < mqCliDeadline) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  public:
+    mqCliCoutCapture() : m_oldBuffer(std::cout.rdbuf(m_stream.rdbuf())) {}
+
+    ~mqCliCoutCapture() { std::cout.rdbuf(m_oldBuffer); }
+
+    mqCliCoutCapture(const mqCliCoutCapture &) = delete;
+    mqCliCoutCapture &operator=(const mqCliCoutCapture &) = delete;
+
+    [[nodiscard]] std::string str() const { return m_stream.str(); }
+
+  private:
+    std::ostringstream m_stream;
+    std::streambuf *m_oldBuffer;
+  };
+
+  /** RAII redirector for `std::cerr`, used for the error paths of onCommand(). */
+  class mqCliCerrCapture
+  {
+  public:
+    mqCliCerrCapture() : m_oldBuffer(std::cerr.rdbuf(m_stream.rdbuf())) {}
+
+    ~mqCliCerrCapture() { std::cerr.rdbuf(m_oldBuffer); }
+
+    mqCliCerrCapture(const mqCliCerrCapture &) = delete;
+    mqCliCerrCapture &operator=(const mqCliCerrCapture &) = delete;
+
+    [[nodiscard]] std::string str() const { return m_stream.str(); }
+
+  private:
+    std::ostringstream m_stream;
+    std::streambuf *m_oldBuffer;
+  };
+
+  /**
+   * `MesssageQueueApi` has no virtual seam, so the component is driven against a loopback HTTP
+   * server that records every request and answers with a canned body.
+   */
+  class mqCliBackend
+  {
+  public:
+    mqCliBackend()
+    {
+      m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
+        paths.push_back(request.path);
+        methods.emplace_back(request.method);
+        response.set_content(m_responseBody, "application/json");
+        return httplib::Server::HandlerResponse::Handled;
+      });
+      m_port = m_server.bind_to_any_port("127.0.0.1");
+      m_thread = std::thread([this]() { m_server.listen_after_bind(); });
+      // Server::stop() is a no-op until the accept loop is up. Without this wait a
+      // backend that is created and destroyed without a single request leaves the
+      // accept loop blocked in accept() and the join in the destructor never returns.
+      const auto mqCliDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+      while (!m_server.is_running() && std::chrono::steady_clock::now() < mqCliDeadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
     }
-  }
 
-  ~mqCliBackend()
+    ~mqCliBackend()
+    {
+      m_server.stop();
+      if (m_thread.joinable()) { m_thread.join(); }
+    }
+
+    mqCliBackend(const mqCliBackend &) = delete;
+    mqCliBackend &operator=(const mqCliBackend &) = delete;
+
+    void answerWith(const std::string &body) { m_responseBody = body; }
+
+    [[nodiscard]] int port() const { return m_port; }
+
+    /** @return true once the accept loop is up, so stop() can shut the server down */
+    [[nodiscard]] bool running() const { return m_server.is_running(); }
+
+    std::vector<std::string> paths;
+    std::vector<std::string> methods;
+
+  private:
+    httplib::Server m_server;
+    std::thread m_thread;
+    int m_port{ -1 };
+    std::string m_responseBody{ "[]" };
+  };
+
+  /** Client provider whose only client entry points at the loopback backend. */
+  std::shared_ptr<ClientProvider> mqCliProviderOf(int port)
   {
-    m_server.stop();
-    if (m_thread.joinable()) { m_thread.join(); }
+    static const std::string kMqCliAbsentConfigDir = "/nonexistent/lintel-mq-cli-test-config";
+    auto environment = std::make_shared<EnvironmentConfiguration>();
+    environment->overrides(EnvironmentConfiguration::ConfigDirectory, kMqCliAbsentConfigDir);
+    auto clientConfiguration = std::make_shared<ClientConfiguration>("127.0.0.1",
+      port,
+      std::chrono::milliseconds(2000),
+      std::chrono::milliseconds(2000),
+      std::chrono::milliseconds(2000));
+    std::vector<std::shared_ptr<Entry>> entries{ std::make_shared<HttpEntry>(
+      type_name<HttpComponent>(), clientConfiguration) };
+    auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
+    configuration->setEntries(entries);
+    return std::make_shared<ClientProvider>(configuration);
   }
 
-  mqCliBackend(const mqCliBackend &) = delete;
-  mqCliBackend &operator=(const mqCliBackend &) = delete;
-
-  void answerWith(const std::string &body) { m_responseBody = body; }
-
-  [[nodiscard]] int port() const { return m_port; }
-
-  /** @return true once the accept loop is up, so stop() can shut the server down */
-  [[nodiscard]] bool running() const { return m_server.is_running(); }
-
-  std::vector<std::string> paths;
-  std::vector<std::string> methods;
-
-private:
-  httplib::Server m_server;
-  std::thread m_thread;
-  int m_port{ -1 };
-  std::string m_responseBody{ "[]" };
-};
-
-/** Client provider whose only client entry points at the loopback backend. */
-std::shared_ptr<ClientProvider> mqCliProviderOf(int port)
-{
-  static const std::string kMqCliAbsentConfigDir = "/nonexistent/lintel-mq-cli-test-config";
-  auto environment = std::make_shared<EnvironmentConfiguration>();
-  environment->overrides(EnvironmentConfiguration::ConfigDirectory, kMqCliAbsentConfigDir);
-  auto clientConfiguration = std::make_shared<ClientConfiguration>("127.0.0.1",
-    port,
-    std::chrono::milliseconds(2000),
-    std::chrono::milliseconds(2000),
-    std::chrono::milliseconds(2000));
-  std::vector<std::shared_ptr<Entry>> entries{ std::make_shared<HttpEntry>(
-    type_name<HttpComponent>(), clientConfiguration) };
-  auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
-  configuration->setEntries(entries);
-  return std::make_shared<ClientProvider>(configuration);
-}
-
-/** @return the JSON body MessageQueueController would send for one queue */
-std::string
-  mqCliOneQueueBody(const std::string &processName, const std::string &queueName, int32_t maxMessages, int32_t messages)
-{
-  MessageQueueEntry mqCliEntry("MessageQueueComponent", processName, queueName, maxMessages);
-  MessageQueueDtos mqCliDtos(std::vector<std::pair<MessageQueueEntry, int32_t>>{ { mqCliEntry, messages } });
-  return mqCliDtos.JsonSerializable::serialize();
-}
+  /** @return the JSON body MessageQueueController would send for one queue */
+  std::string mqCliOneQueueBody(const std::string &processName,
+    const std::string &queueName,
+    int32_t maxMessages,
+    int32_t messages)
+  {
+    MessageQueueEntry mqCliEntry("MessageQueueComponent", processName, queueName, maxMessages);
+    MessageQueueDtos mqCliDtos(std::vector<std::pair<MessageQueueEntry, int32_t>>{ { mqCliEntry, messages } });
+    return mqCliDtos.JsonSerializable::serialize();
+  }
 
 }// namespace
 
@@ -354,3 +357,4 @@ TEST_CASE("MessageQueueCliComponent: show_message_queues without a value for -p 
   REQUIRE(mqCliServer.paths.empty());
   REQUIRE(mqCliReported.find("ERROR") != std::string::npos);
 }
+}// namespace lintel

@@ -3,6 +3,7 @@
 #include "lintel/core/utils/ProcessResourceReader.h"
 #include "lintel/features/base/models/Process.h"
 
+namespace lintel {
 /**
  * Runtime information about a running process including its PID, status,
  * group membership and (optional) resource usage.
@@ -64,3 +65,4 @@ public:
   /** @return process resource data, if readable on this platform */
   [[nodiscard]] const std::optional<ProcessResourceData> &getResourceData() const;
 };
+}// namespace lintel

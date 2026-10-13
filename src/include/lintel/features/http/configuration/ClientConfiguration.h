@@ -6,63 +6,66 @@
 #include <ostream>
 #include <string>
 
+namespace lintel {
 /** Configuration for an HTTP client (host, port, timeouts, TLS) */
-class ClientConfiguration {
+class ClientConfiguration
+{
 private:
-    const std::string m_host;
-    const int32_t m_port;
-    std::chrono::milliseconds m_readTimeOut;
-    std::chrono::milliseconds m_writeTimeOut;
-    std::chrono::milliseconds m_connectionTimeout;
-    std::filesystem::path m_certFile;
-    std::filesystem::path m_keyFile;
-    std::filesystem::path m_caCertFile;
+  const std::string m_host;
+  const int32_t m_port;
+  std::chrono::milliseconds m_readTimeOut;
+  std::chrono::milliseconds m_writeTimeOut;
+  std::chrono::milliseconds m_connectionTimeout;
+  std::filesystem::path m_certFile;
+  std::filesystem::path m_keyFile;
+  std::filesystem::path m_caCertFile;
 
 public:
-    /** @param host remote host
-     *  @param port remote port
-     *  @param readTimeOut read timeout
-     *  @param writeTimeOut write timeout
-     *  @param connectionTimeout connection timeout
-     *  @param certFile optional TLS certificate file
-     *  @param keyFile optional TLS key file
-     *  @param caCertFile optional TLS CA certificate file used to verify
-     *         the server certificate */
-    ClientConfiguration(std::string host, int32_t port,
-                        std::chrono::milliseconds readTimeOut,
-                        std::chrono::milliseconds writeTimeOut,
-                        std::chrono::milliseconds connectionTimeout,
-                        std::filesystem::path certFile = "",
-                        std::filesystem::path keyFile = "",
-                        std::filesystem::path caCertFile = "");
+  /** @param host remote host
+   *  @param port remote port
+   *  @param readTimeOut read timeout
+   *  @param writeTimeOut write timeout
+   *  @param connectionTimeout connection timeout
+   *  @param certFile optional TLS certificate file
+   *  @param keyFile optional TLS key file
+   *  @param caCertFile optional TLS CA certificate file used to verify
+   *         the server certificate */
+  ClientConfiguration(std::string host,
+    int32_t port,
+    std::chrono::milliseconds readTimeOut,
+    std::chrono::milliseconds writeTimeOut,
+    std::chrono::milliseconds connectionTimeout,
+    std::filesystem::path certFile = "",
+    std::filesystem::path keyFile = "",
+    std::filesystem::path caCertFile = "");
 
-    /** @return the host address */
-    [[nodiscard]] const std::string &getHost() const;
+  /** @return the host address */
+  [[nodiscard]] const std::string &getHost() const;
 
-    /** @return the port number */
-    [[nodiscard]] constexpr int32_t getPort() const { return m_port; }
+  /** @return the port number */
+  [[nodiscard]] constexpr int32_t getPort() const { return m_port; }
 
-    /** @return the read timeout */
-    [[nodiscard]] const std::chrono::milliseconds &getReadTimeOut() const;
+  /** @return the read timeout */
+  [[nodiscard]] const std::chrono::milliseconds &getReadTimeOut() const;
 
-    /** @return the write timeout */
-    [[nodiscard]] const std::chrono::milliseconds &getWriteTimeOut() const;
+  /** @return the write timeout */
+  [[nodiscard]] const std::chrono::milliseconds &getWriteTimeOut() const;
 
-    /** @return the connection timeout */
-    [[nodiscard]] const std::chrono::milliseconds &getConnectionTimeout() const;
+  /** @return the connection timeout */
+  [[nodiscard]] const std::chrono::milliseconds &getConnectionTimeout() const;
 
-    /** @return the TLS certificate file path */
-    [[nodiscard]] const std::filesystem::path &getCertFile() const;
+  /** @return the TLS certificate file path */
+  [[nodiscard]] const std::filesystem::path &getCertFile() const;
 
-    /** @return the TLS key file path */
-    [[nodiscard]] const std::filesystem::path &getKeyFile() const;
+  /** @return the TLS key file path */
+  [[nodiscard]] const std::filesystem::path &getKeyFile() const;
 
-    /** @return the TLS CA certificate file path */
-    [[nodiscard]] const std::filesystem::path &getCaCertFile() const;
+  /** @return the TLS CA certificate file path */
+  [[nodiscard]] const std::filesystem::path &getCaCertFile() const;
 
-    /** Print configuration to stream */
-    friend std::ostream &operator<<(std::ostream &os,
-                                    const ClientConfiguration &configuration);
+  /** Print configuration to stream */
+  friend std::ostream &operator<<(std::ostream &os, const ClientConfiguration &configuration);
 };
 
-#endif  // HTTP_LIBRARY_CLIENTCONFIGURATION_H
+}// namespace lintel
+#endif// HTTP_LIBRARY_CLIENTCONFIGURATION_H

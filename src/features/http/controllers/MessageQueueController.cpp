@@ -2,14 +2,14 @@
 
 #include "lintel/features/base/controller/MessageQueueDtos.h"
 
+namespace lintel {
 MessageQueueController::MessageQueueController(const std::shared_ptr<IAuthService> &authService,
   std::shared_ptr<IMessageQueueRepository> messageQueueRepository,
   std::shared_ptr<MessageQueueService> messageQueueService)
-  : Controller(authService),
-    m_messageQueueRepository(std::move(messageQueueRepository)),
-    m_messageQueueService(std::move(messageQueueService)),
-    m_adminGroup("Admin-MessageQueue", {}, true),
-    m_userGroup("User-MessageQueue", {}, true) {
+  : Controller(authService), m_messageQueueRepository(std::move(messageQueueRepository)),
+    m_messageQueueService(std::move(messageQueueService)), m_adminGroup("Admin-MessageQueue", {}, true),
+    m_userGroup("User-MessageQueue", {}, true)
+{
   add(m_adminGroup);
   add(m_userGroup);
 }
@@ -17,7 +17,8 @@ MessageQueueController::MessageQueueController(const std::shared_ptr<IAuthServic
 void MessageQueueController::messageQueueOfGet(const httplib::Request &request,
   httplib::Response &response,
   const ContentType &contentType,
-  const std::optional<UserToken> &user) {
+  const std::optional<UserToken> &user)
+{
   if (!user.has_value()) {
     response.status = HttpStatusCodes::Unauthorized;
     response.set_content("", contentType.getName());
@@ -33,16 +34,18 @@ void MessageQueueController::messageQueueOfGet(const httplib::Request &request,
   if (contentType == ContentType::ApplicationJson) {
     PagingParams paging = pagingParamsOf(request);
     if (paging.m_enabled) {
-      Page<MessageQueueEntry> page = m_messageQueueRepository->pageOf(
-          processName, messageQueueName, paging.m_after, paging.m_limit);
+      Page<MessageQueueEntry> page =
+        m_messageQueueRepository->pageOf(processName, messageQueueName, paging.m_after, paging.m_limit);
       MessageQueuesPageDto messageQueuesPageDto(page);
       response.set_content(messageQueuesPageDto.JsonSerializable::serialize(), contentType.getName());
       return;
     }
     std::vector<MessageQueueEntry> entries = m_messageQueueRepository->allOf(processName, messageQueueName);
-    std::vector<std::pair<MessageQueueEntry, int32_t> > messageQueueInformation;
+    std::vector<std::pair<MessageQueueEntry, int32_t>> messageQueueInformation;
     messageQueueInformation.reserve(entries.size());
-    for (const auto &entry : entries) { messageQueueInformation.push_back(m_messageQueueService->numberMessagesOf(entry)); }
+    for (const auto &entry : entries) {
+      messageQueueInformation.push_back(m_messageQueueService->numberMessagesOf(entry));
+    }
     MessageQueueDtos messageQueueDtos(messageQueueInformation);
     response.set_content(messageQueueDtos.JsonSerializable::serialize(), contentType.getName());
   } else {
@@ -50,3 +53,4 @@ void MessageQueueController::messageQueueOfGet(const httplib::Request &request,
     response.set_content("", contentType.getName());
   }
 }
+}// namespace lintel

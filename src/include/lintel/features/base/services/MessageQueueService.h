@@ -1,11 +1,11 @@
 #ifndef LINTEL_MESSAGEQUEUESERVICE_H
 #define LINTEL_MESSAGEQUEUESERVICE_H
 
-#include <map>
-#include <string>
-#include <memory>
 #include "lintel/features/base/configuration/MessageQueueEntry.h"
 #include "lintel/features/base/repositories/IMessageQueueRepository.h"
+#include <map>
+#include <memory>
+#include <string>
 
 #include "lintel/core/services/AbstractService.h"
 #include "lintel/features/base/configuration/Configuration.h"
@@ -13,6 +13,7 @@
 #include "lintel/features/base/msg/Message.h"
 #include "lintel/features/base/msg/MessageQueue.h"
 
+namespace lintel {
 /**
  * Service that manages creation, retrieval, and lifecycle of MessageQueue instances.
  */
@@ -21,11 +22,11 @@ class MessageQueueService : public AbstractService<MessageQueueService>
 private:
   std::shared_ptr<ProcessName> m_processName;
   std::shared_ptr<IMessageQueueRepository> m_messageQueueRepository;
-  std::map<std::string, std::shared_ptr<MessageQueueEntry> > m_configurationMap;
-  std::map<std::string, std::shared_ptr<MessageQueue<Message> > > m_messageQueues{};
+  std::map<std::string, std::shared_ptr<MessageQueueEntry>> m_configurationMap;
+  std::map<std::string, std::shared_ptr<MessageQueue<Message>>> m_messageQueues{};
 
-  static std::map<std::string, std::shared_ptr<MessageQueueEntry> >
-    init(const std::shared_ptr<Configuration> &configuration);
+  static std::map<std::string, std::shared_ptr<MessageQueueEntry>> init(
+    const std::shared_ptr<Configuration> &configuration);
 
 public:
   /**
@@ -43,7 +44,7 @@ public:
    * @param name of message queue
    * @return message queue instance
    */
-  std::unique_ptr<MessageQueue<Message> > of(const std::string &name);
+  std::unique_ptr<MessageQueue<Message>> of(const std::string &name);
 
   /**
    * Get the number of messages for a given queue entry.
@@ -55,7 +56,7 @@ public:
   void onInitialize() override;
 
   void onShutdown() override {}
-
 };
 
-#endif  // LINTEL_MESSAGEQUEUESERVICE_H
+}// namespace lintel
+#endif// LINTEL_MESSAGEQUEUESERVICE_H

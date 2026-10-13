@@ -29,124 +29,125 @@
  * the same queue name. That is what the "changed max_messages" test pins.
  */
 
+namespace lintel {
 namespace {
 
-/** Repository stub that records what the plugin asked it to do. */
-class MqBootstrapRepositoryStub : public IMessageQueueRepository
-{
-public:
-  /** rows the stub reports for allProcessNameOf() */
-  std::vector<MessageQueueEntry> existing;
-  /** entries passed to insertOf() */
-  std::vector<MessageQueueEntry> inserted;
-  /** entries passed to deleteOf() */
-  std::vector<MessageQueueEntry> deleted;
-  /** number of allProcessNameOf() calls */
-  int allProcessNameOfCalls = 0;
-  /** process name of the last allProcessNameOf() call */
-  std::string lastProcessName;
-
-  MessageQueueEntry allMessageQueueNameOf(const std::string &) override
+  /** Repository stub that records what the plugin asked it to do. */
+  class MqBootstrapRepositoryStub : public IMessageQueueRepository
   {
-    return MessageQueueEntry(type_name<MessageQueueComponent>(), "", "", 0);
-  }
+  public:
+    /** rows the stub reports for allProcessNameOf() */
+    std::vector<MessageQueueEntry> existing;
+    /** entries passed to insertOf() */
+    std::vector<MessageQueueEntry> inserted;
+    /** entries passed to deleteOf() */
+    std::vector<MessageQueueEntry> deleted;
+    /** number of allProcessNameOf() calls */
+    int allProcessNameOfCalls = 0;
+    /** process name of the last allProcessNameOf() call */
+    std::string lastProcessName;
 
-  std::vector<MessageQueueEntry> allOf(const std::string &, const std::string &) override { return {}; }
-
-  Page<MessageQueueEntry>
-    pageOf(const std::string &, const std::string &, const std::optional<std::string> &, std::size_t) override
-  {
-    return Page<MessageQueueEntry>({}, false, std::nullopt);
-  }
-
-  std::vector<MessageQueueEntry> allProcessNameOf(const std::string &processName) override
-  {
-    ++allProcessNameOfCalls;
-    lastProcessName = processName;
-    return existing;
-  }
-
-  void insertOf(const std::vector<MessageQueueEntry> &entries) override
-  {
-    // MessageQueueEntry has const members, so it is copyable but not assignable
-    for (const auto &entry : entries) { inserted.push_back(entry); }
-  }
-
-  void deleteOf(const std::vector<MessageQueueEntry> &entries) override
-  {
-    for (const auto &entry : entries) { deleted.push_back(entry); }
-  }
-
-  /** rows the next allProcessNameOf() call shall report
-   * @param rows the rows of the message_queues table of the current process */
-  void setRows(const std::vector<MessageQueueEntry> &rows)
-  {
-    for (const auto &row : rows) { existing.push_back(row); }
-  }
-};
-
-std::shared_ptr<MessageQueueEntry>
-  mqBootstrapQueue(const std::string &process, const std::string &queue, int32_t maxMessages)
-{
-  return std::make_shared<MessageQueueEntry>(type_name<MessageQueueComponent>(), process, queue, maxMessages);
-}
-
-/** @return the queue names of the given entries, in the order they were passed */
-std::vector<std::string> mqBootstrapNames(const std::vector<MessageQueueEntry> &entries)
-{
-  std::vector<std::string> names;
-  for (const auto &entry : entries) { names.push_back(entry.get_message_queue_name()); }
-  return names;
-}
-
-struct MqBootstrapFixture
-{
-  std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
-  std::shared_ptr<MqBootstrapRepositoryStub> repository;
-  std::shared_ptr<ProcessName> processName;
-  std::shared_ptr<MessageQueueBootstrapPlugin> plugin;
-
-  explicit MqBootstrapFixture(const std::string &process = "main",
-    bool withDefaultConnection = true,
-    const std::vector<std::shared_ptr<MessageQueueEntry>> &queues = {})
-  {
-    std::vector<std::shared_ptr<Entry>> entries;
-    if (withDefaultConnection) {
-      entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
-        ":memory:",
-        "",
-        "",
-        db::ConnectionType::SQLite,
-        "default",
-        -1,
-        "",
-        true));
-    } else {
-      // an entry exists, but none of them is marked as the default connection
-      entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
-        ":memory:",
-        "",
-        "",
-        db::ConnectionType::SQLite,
-        "not_default",
-        -1,
-        "",
-        false));
+    MessageQueueEntry allMessageQueueNameOf(const std::string &) override
+    {
+      return MessageQueueEntry(type_name<MessageQueueComponent>(), "", "", 0);
     }
-    for (const auto &queue : queues) { entries.push_back(queue); }
-    auto envConfig = std::make_shared<EnvironmentConfiguration>();
-    envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_mq_bootstrap_cfg");
-    envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
-    configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
-    configuration->setEntries(entries);
-    connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
-    repository = std::make_shared<MqBootstrapRepositoryStub>();
-    processName = std::make_shared<ProcessName>(process);
-    plugin =
-      std::make_shared<MessageQueueBootstrapPlugin>(connectionConfigurations, configuration, repository, processName);
+
+    std::vector<MessageQueueEntry> allOf(const std::string &, const std::string &) override { return {}; }
+
+    Page<MessageQueueEntry>
+      pageOf(const std::string &, const std::string &, const std::optional<std::string> &, std::size_t) override
+    {
+      return Page<MessageQueueEntry>({}, false, std::nullopt);
+    }
+
+    std::vector<MessageQueueEntry> allProcessNameOf(const std::string &processName) override
+    {
+      ++allProcessNameOfCalls;
+      lastProcessName = processName;
+      return existing;
+    }
+
+    void insertOf(const std::vector<MessageQueueEntry> &entries) override
+    {
+      // MessageQueueEntry has const members, so it is copyable but not assignable
+      for (const auto &entry : entries) { inserted.push_back(entry); }
+    }
+
+    void deleteOf(const std::vector<MessageQueueEntry> &entries) override
+    {
+      for (const auto &entry : entries) { deleted.push_back(entry); }
+    }
+
+    /** rows the next allProcessNameOf() call shall report
+     * @param rows the rows of the message_queues table of the current process */
+    void setRows(const std::vector<MessageQueueEntry> &rows)
+    {
+      for (const auto &row : rows) { existing.push_back(row); }
+    }
+  };
+
+  std::shared_ptr<MessageQueueEntry>
+    mqBootstrapQueue(const std::string &process, const std::string &queue, int32_t maxMessages)
+  {
+    return std::make_shared<MessageQueueEntry>(type_name<MessageQueueComponent>(), process, queue, maxMessages);
   }
-};
+
+  /** @return the queue names of the given entries, in the order they were passed */
+  std::vector<std::string> mqBootstrapNames(const std::vector<MessageQueueEntry> &entries)
+  {
+    std::vector<std::string> names;
+    for (const auto &entry : entries) { names.push_back(entry.get_message_queue_name()); }
+    return names;
+  }
+
+  struct MqBootstrapFixture
+  {
+    std::shared_ptr<Configuration> configuration;
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
+    std::shared_ptr<MqBootstrapRepositoryStub> repository;
+    std::shared_ptr<ProcessName> processName;
+    std::shared_ptr<MessageQueueBootstrapPlugin> plugin;
+
+    explicit MqBootstrapFixture(const std::string &process = "main",
+      bool withDefaultConnection = true,
+      const std::vector<std::shared_ptr<MessageQueueEntry>> &queues = {})
+    {
+      std::vector<std::shared_ptr<Entry>> entries;
+      if (withDefaultConnection) {
+        entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+          ":memory:",
+          "",
+          "",
+          db::ConnectionType::SQLite,
+          "default",
+          -1,
+          "",
+          true));
+      } else {
+        // an entry exists, but none of them is marked as the default connection
+        entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+          ":memory:",
+          "",
+          "",
+          db::ConnectionType::SQLite,
+          "not_default",
+          -1,
+          "",
+          false));
+      }
+      for (const auto &queue : queues) { entries.push_back(queue); }
+      auto envConfig = std::make_shared<EnvironmentConfiguration>();
+      envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_mq_bootstrap_cfg");
+      envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
+      configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+      configuration->setEntries(entries);
+      connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
+      repository = std::make_shared<MqBootstrapRepositoryStub>();
+      processName = std::make_shared<ProcessName>(process);
+      plugin =
+        std::make_shared<MessageQueueBootstrapPlugin>(connectionConfigurations, configuration, repository, processName);
+    }
+  };
 
 }// namespace
 
@@ -283,3 +284,4 @@ TEST_CASE("MessageQueueBootstrapPlugin: a mixed configuration inserts replaces a
   REQUIRE(fixture.repository->inserted[0].get_max_messages() == 99);
   REQUIRE(fixture.repository->deleted[0].get_max_messages() == 1);
 }
+}// namespace lintel

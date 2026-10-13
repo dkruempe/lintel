@@ -2,15 +2,15 @@
 
 #include "lintel/core/services/LoggerService.h"
 
+namespace lintel {
 const GroupDto::Shapes GroupDto::shape{};
 
 GroupDto::GroupDto(const Group &group)
-  : m_groupName(group.getGroupName()),
-    m_groups(GroupsDto(group.getGroups()).getGroups()),
-    m_isVirtual(group.isVirtual()) {}
+  : m_groupName(group.getGroupName()), m_groups(GroupsDto(group.getGroups()).getGroups()),
+    m_isVirtual(group.isVirtual())
+{}
 
-void GroupDto::serialize(
-  rapidjson::Writer<rapidjson::StringBuffer> *writer) const
+void GroupDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const
 {
   writer->StartObject();
   // GROUP_NAME
@@ -31,11 +31,15 @@ void GroupDto::serialize(
 bool GroupDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(shape.GROUP_NAME)) { m_groupName = obj[shape.GROUP_NAME].GetString(); } else {
+  if (obj.HasMember(shape.GROUP_NAME)) {
+    m_groupName = obj[shape.GROUP_NAME].GetString();
+  } else {
     success = false;
     LOG_ERROR("deserialization of {} failed", shape.GROUP_NAME);
   }
-  if (obj.HasMember(shape.VIRTUAL)) { m_isVirtual = obj[shape.VIRTUAL].GetBool(); } else {
+  if (obj.HasMember(shape.VIRTUAL)) {
+    m_isVirtual = obj[shape.VIRTUAL].GetBool();
+  } else {
     success = false;
     LOG_ERROR("deserialization of {} failed", shape.VIRTUAL);
   }
@@ -53,22 +57,18 @@ bool GroupDto::isVirtual() const { return m_isVirtual; }
 
 const std::vector<GroupDto> &GroupDto::getSubGroups() const { return m_groups; }
 
-GroupsDto::GroupsDto(const std::vector<Group> &groups)
-  : m_groups(init(groups)) {}
+GroupsDto::GroupsDto(const std::vector<Group> &groups) : m_groups(init(groups)) {}
 
 std::vector<GroupDto> GroupsDto::init(const std::vector<Group> &groups)
 {
   std::vector<GroupDto> groupDtos;
   groupDtos.reserve(groups.size());
-  std::transform(groups.begin(),
-    groups.end(),
-    std::back_inserter(groupDtos),
-    [](const Group &group) { return GroupDto(group); });
+  std::transform(
+    groups.begin(), groups.end(), std::back_inserter(groupDtos), [](const Group &group) { return GroupDto(group); });
   return groupDtos;
 }
 
-void GroupsDto::serialize(
-  rapidjson::Writer<rapidjson::StringBuffer> *writer) const
+void GroupsDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const
 {
   writer->StartArray();
   for (const auto &item : m_groups) { item.serialize(writer); }
@@ -88,5 +88,5 @@ bool GroupsDto::deserialize(const rapidjson::Value &obj)
 
 const std::vector<GroupDto> &GroupsDto::getGroups() const { return m_groups; }
 
-GroupsDto::GroupsDto(std::vector<GroupDto> groups)
-  : m_groups(std::move(groups)) {}
+GroupsDto::GroupsDto(std::vector<GroupDto> groups) : m_groups(std::move(groups)) {}
+}// namespace lintel

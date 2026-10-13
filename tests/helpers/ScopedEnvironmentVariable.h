@@ -38,6 +38,7 @@
  * Declare it as the first member - members initialize in declaration order, so it then runs before
  * the constructor body and is destroyed after everything that still reads the variable.
  */
+namespace lintel {
 class ScopedEnvironmentVariable
 {
 public:
@@ -83,4 +84,5 @@ private:
   std::optional<std::string> m_previousValue;
 };
 
+}// namespace lintel
 #endif// LINTEL_SCOPEDENVIRONMENTVARIABLE_H

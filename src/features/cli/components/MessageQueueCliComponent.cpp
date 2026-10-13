@@ -2,15 +2,14 @@
 
 #include "lintel/core/utils/TableBuilder.h"
 
+namespace lintel {
 MessageQueueCliComponent::MessageQueueCliComponent(std::shared_ptr<MesssageQueueApi> messsageQueueApi)
-  : CommandLineComponent(m_name, m_alias),
-    m_messageQueueApi(std::move(messsageQueueApi))
+  : CommandLineComponent(m_name, m_alias), m_messageQueueApi(std::move(messsageQueueApi))
 {
   m_commandParser.addCommand(
-    Command("show_message_queues", "Show all message queues").addArgument({ "--process-name", "-p" },
-      &m_processName,
-      "Process Name of the message queue owner")
-    .addArgument({ "--message-queue-name", "-mq" }, &m_messageQueueName, "Name of message queue itself"),
+    Command("show_message_queues", "Show all message queues")
+      .addArgument({ "--process-name", "-p" }, &m_processName, "Process Name of the message queue owner")
+      .addArgument({ "--message-queue-name", "-mq" }, &m_messageQueueName, "Name of message queue itself"),
     ShowMessageQueues);
 }
 
@@ -27,7 +26,9 @@ void MessageQueueCliComponent::onCommand(const UserDto &userDto,
       auto messageQueues = m_messageQueueApi->allOf(processNameTemp, messageQueueNameTemp);
       printMessageQueues(messageQueues);
     }
-  } catch (const std::exception &exception) { std::cerr << "ERROR: " << exception.what() << "\n"; }
+  } catch (const std::exception &exception) {
+    std::cerr << "ERROR: " << exception.what() << "\n";
+  }
 }
 
 void MessageQueueCliComponent::printMessageQueues(const std::vector<MessageQueueDto> &messageQueueDtos)
@@ -36,9 +37,11 @@ void MessageQueueCliComponent::printMessageQueues(const std::vector<MessageQueue
   builder.add({ "No.", "ProcessName", "MessageQueueName", "MaxMessages", "Messages" });
   std::size_t iter = 0;
   for (const auto &messageQueue : messageQueueDtos) {
-    builder.add({
-      std::to_string(++iter), messageQueue.getProcess(), messageQueue.getName(),
-      std::to_string(messageQueue.getMaxMessages()), std::to_string(messageQueue.getMessages()) });
+    builder.add({ std::to_string(++iter),
+      messageQueue.getProcess(),
+      messageQueue.getName(),
+      std::to_string(messageQueue.getMaxMessages()),
+      std::to_string(messageQueue.getMessages()) });
   }
   std::cout << builder.build() << "\n";
 }
@@ -58,3 +61,4 @@ void MessageQueueCliComponent::printCommandList(std::set<std::string> menuAlias)
 }
 
 std::vector<std::string> MessageQueueCliComponent::allCommandsOf() { return m_commandParser.allCommandsOf(); }
+}// namespace lintel

@@ -9,129 +9,134 @@
 #include <utility>
 #include <vector>
 
+namespace lintel {
 /**
  * class for wrapping general operations with a normal file
  */
-class FileService {
+class FileService
+{
 private:
-    std::filesystem::path m_path;
+  std::filesystem::path m_path;
 
 public:
-    /**
-     * class for stream operations with file
-     * -> reading line by line a file
-     */
-    class Stream {
-    private:
-        std::ifstream m_file;      // stream for operations
-        bool m_endOfFile = false;  // marks if end of file is reached
-        std::string m_nextLine = "";
+  /**
+   * class for stream operations with file
+   * -> reading line by line a file
+   */
+  class Stream
+  {
+  private:
+    std::ifstream m_file;// stream for operations
+    bool m_endOfFile = false;// marks if end of file is reached
+    std::string m_nextLine = "";
 
-    public:
-        /**
-         * constructor
-         * @param path of file
-         */
-        explicit Stream(const std::filesystem::path &path);
-
-        /**
-         * true if end of file
-         * @return end of file
-         */
-        bool isEndOfFile() const;
-
-        /**
-         * returns read line of file
-         * @return line
-         */
-        std::string getLine();
-    };
-
+  public:
     /**
      * constructor
      * @param path of file
      */
-    explicit FileService(std::filesystem::path path);
+    explicit Stream(const std::filesystem::path &path);
 
     /**
-     * Checks if the given path is a regular file.
-     * @return true if the path is a regular file
+     * true if end of file
+     * @return end of file
      */
-    bool isFile();
+    bool isEndOfFile() const;
 
     /**
-     * Checks if the given path exists and is a regular file.
-     * @return true if the path exists and is a file
+     * returns read line of file
+     * @return line
      */
-    bool exists();
+    std::string getLine();
+  };
 
-    /**
-     * Returns the size of the file in bytes.
-     * @return the file size in bytes
-     */
-    std::size_t getSize();
+  /**
+   * constructor
+   * @param path of file
+   */
+  explicit FileService(std::filesystem::path path);
 
-    /**
-     * delete file
-     */
-    void deleteFile();
+  /**
+   * Checks if the given path is a regular file.
+   * @return true if the path is a regular file
+   */
+  bool isFile();
 
-    /**
-     * reads whole file in total (not good for big files)
-     * @return content of whole file in one string
-     */
-    std::string readFile();
+  /**
+   * Checks if the given path exists and is a regular file.
+   * @return true if the path exists and is a file
+   */
+  bool exists();
 
-    /**
-     * returns name of file
-     * @return name of file
-     */
-    std::string getName();
+  /**
+   * Returns the size of the file in bytes.
+   * @return the file size in bytes
+   */
+  std::size_t getSize();
 
-    /**
-     * returns given path of file
-     * @return path of file
-     */
-    std::filesystem::path getPath();
+  /**
+   * delete file
+   */
+  void deleteFile();
 
-    /**
-     * @param content to be written in file
-     * @param overwrite replace existing content instead of appending
-     */
-    void writeToFile(const std::string &content, bool overwrite = false);
+  /**
+   * reads whole file in total (not good for big files)
+   * @return content of whole file in one string
+   */
+  std::string readFile();
 
-    /**
-     * Creates an empty file with the given size.
-     * @param sizeOfFile the size to allocate for the new file
-     */
-    void createFile(std::size_t sizeOfFile);
+  /**
+   * returns name of file
+   * @return name of file
+   */
+  std::string getName();
 
-    /**
-     * creates symlink of file to given path
-     * @param to path where to create the sysmlink
-     */
-    void createSymlinkTo(const std::filesystem::path &to);
+  /**
+   * returns given path of file
+   * @return path of file
+   */
+  std::filesystem::path getPath();
 
-    /**
-     * searches matching string of file via FileService::Stream
-     * @param regex for searching matching strings
-     * @return list of matching lines in right sequence
-     */
-    std::vector<std::string> matches(const std::regex &regex);
+  /**
+   * @param content to be written in file
+   * @param overwrite replace existing content instead of appending
+   */
+  void writeToFile(const std::string &content, bool overwrite = false);
 
-    /**
-     * creates FileService::Stream for file
-     * @return stream
-     */
-    FileService::Stream createStream();
+  /**
+   * Creates an empty file with the given size.
+   * @param sizeOfFile the size to allocate for the new file
+   */
+  void createFile(std::size_t sizeOfFile);
 
-    /**
-     * to string method
-     */
-    friend std::ostream &operator<<(std::ostream &os, const FileService &file) {
-        os << "path: " << file.m_path;
-        return os;
-    }
+  /**
+   * creates symlink of file to given path
+   * @param to path where to create the sysmlink
+   */
+  void createSymlinkTo(const std::filesystem::path &to);
+
+  /**
+   * searches matching string of file via FileService::Stream
+   * @param regex for searching matching strings
+   * @return list of matching lines in right sequence
+   */
+  std::vector<std::string> matches(const std::regex &regex);
+
+  /**
+   * creates FileService::Stream for file
+   * @return stream
+   */
+  FileService::Stream createStream();
+
+  /**
+   * to string method
+   */
+  friend std::ostream &operator<<(std::ostream &os, const FileService &file)
+  {
+    os << "path: " << file.m_path;
+    return os;
+  }
 };
 
-#endif  // LOGGING_FILE_H
+}// namespace lintel
+#endif// LOGGING_FILE_H

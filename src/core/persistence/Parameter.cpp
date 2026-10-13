@@ -2,52 +2,47 @@
 
 #include <utility>
 
+namespace lintel {
 namespace db {
-    Parameter::Parameter(std::string value) : m_value(std::move(value)) {}
+  Parameter::Parameter(std::string value) : m_value(std::move(value)) {}
 
-    const std::string &Parameter::getValue() const { return m_value; }
+  const std::string &Parameter::getValue() const { return m_value; }
 
-    std::size_t Parameter::getLength() const { return m_value.size(); }
+  std::size_t Parameter::getLength() const { return m_value.size(); }
 
-    Parameter Parameter::with(const std::string &value) { return Parameter(value); }
+  Parameter Parameter::with(const std::string &value) { return Parameter(value); }
 
-    std::vector<Parameter> Parameters::init(
-            const std::vector<std::string> &params) {
-        std::vector<Parameter> temp;
-        temp.reserve(params.size());
-        for (auto &param: params) {
-            temp.push_back(Parameter::with(param));
-        }
-        return temp;
-    }
+  std::vector<Parameter> Parameters::init(const std::vector<std::string> &params)
+  {
+    std::vector<Parameter> temp;
+    temp.reserve(params.size());
+    for (auto &param : params) { temp.push_back(Parameter::with(param)); }
+    return temp;
+  }
 
-    Parameters::Parameters(const std::vector<std::string> &params)
-            : m_params(init(params)) {}
+  Parameters::Parameters(const std::vector<std::string> &params) : m_params(init(params)) {}
 
-    Parameters::Parameters(std::vector<Parameter> params)
-            : m_params(std::move(params)) {}
+  Parameters::Parameters(std::vector<Parameter> params) : m_params(std::move(params)) {}
 
-    std::vector<const char *> Parameters::getParameters() const {
-        std::vector<const char *> temp;
-        for (auto &iter: m_params) {
-            temp.push_back(iter.getValue().c_str());
-        }
-        return temp;
-    }
+  std::vector<const char *> Parameters::getParameters() const
+  {
+    std::vector<const char *> temp;
+    for (auto &iter : m_params) { temp.push_back(iter.getValue().c_str()); }
+    return temp;
+  }
 
-    std::vector<int32_t> Parameters::getParametersLengths() const {
-        std::vector<int32_t> temp;
-        for (auto &iter: m_params) {
-            temp.push_back(static_cast<int32_t>(iter.getLength()));
-        }
-        return temp;
-    }
+  std::vector<int32_t> Parameters::getParametersLengths() const
+  {
+    std::vector<int32_t> temp;
+    for (auto &iter : m_params) { temp.push_back(static_cast<int32_t>(iter.getLength())); }
+    return temp;
+  }
 
-    std::vector<int32_t> Parameters::getParametersTypes() const {
-        std::vector<int32_t> temp;
-        for (auto &iter: m_params) {
-            temp.push_back(iter.getFormatId());
-        }
-        return temp;
-    }
-}  // namespace db
+  std::vector<int32_t> Parameters::getParametersTypes() const
+  {
+    std::vector<int32_t> temp;
+    for (auto &iter : m_params) { temp.push_back(iter.getFormatId()); }
+    return temp;
+  }
+}// namespace db
+}// namespace lintel

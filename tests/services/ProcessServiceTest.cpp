@@ -31,67 +31,70 @@
 #define kHasSleeperPath false
 #endif
 
+namespace lintel {
 namespace {
 
-/** Locate a program that sleeps for a given number of seconds.
- *
- * The helper built next to the test binary (target `base_test_sleeper`, see tests/CMakeLists.txt)
- * wins: CMake passes its exact path in, so there is nothing to find at run time. Only if that file
- * is missing does this fall back to a sibling in the current working directory and finally to the
- * system `sleep` via PATH.
- *
- * @return path of the sleeper, or an empty string if no usable binary exists */
-std::string findSleepBinary()
-{
-  if constexpr (kHasSleeperPath) {
-    const std::filesystem::path helper{ BASE_TEST_SLEEPER_BINARY };
-    std::error_code error;
-    if (std::filesystem::is_regular_file(helper, error)) { return helper.string(); }
-  }
-  std::error_code error;
-  const auto workingDirectory = std::filesystem::current_path(error);
-  if (!error) {
-    const auto candidate = workingDirectory / "base_test_sleeper";
-    if (std::filesystem::is_regular_file(candidate, error)) { return candidate.string(); }
-  }
-  const auto systemSleep = boost::process::v1::search_path("sleep");
-  if (!systemSleep.empty()) { return systemSleep.string(); }
-  return {};
-}
-
-// m_configDirectory must be the first member: members initialize in declaration order, so the guard
-// sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration, and it is
-// destroyed last - after the test case is done with it.
-struct ProcessServiceFixture
-{
-  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_ps_test_cfg" };
-  std::shared_ptr<ProcessName> processName;
-  std::shared_ptr<EnvironmentConfiguration> envConfig;
-  std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<NoopHistoryService> historyService;
-  std::string sleepBinary;
-
-  ProcessServiceFixture()
+  /** Locate a program that sleeps for a given number of seconds.
+   *
+   * The helper built next to the test binary (target `base_test_sleeper`, see tests/CMakeLists.txt)
+   * wins: CMake passes its exact path in, so there is nothing to find at run time. Only if that file
+   * is missing does this fall back to a sibling in the current working directory and finally to the
+   * system `sleep` via PATH.
+   *
+   * @return path of the sleeper, or an empty string if no usable binary exists */
+  std::string findSleepBinary()
   {
-    sleepBinary = findSleepBinary();
-    if (sleepBinary.empty()) {
-      // Not a SKIP: the helper binary is built together with the tests, so a missing one means the
-      // build tree is broken. A SKIP here would turn a broken build into 16 test cases that quietly
-      // stop testing anything - the exact silent hole this replaced.
-      FAIL("no sleeper binary found - expected base_test_sleeper (target) or a system 'sleep' in PATH");
+    if constexpr (kHasSleeperPath) {
+      const std::filesystem::path helper{ BASE_TEST_SLEEPER_BINARY };
+      std::error_code error;
+      if (std::filesystem::is_regular_file(helper, error)) { return helper.string(); }
     }
-    processName = std::make_shared<ProcessName>(sleepBinary);
-    envConfig = std::make_shared<EnvironmentConfiguration>();
-    configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
-    historyService = std::make_shared<NoopHistoryService>(processName);
+    std::error_code error;
+    const auto workingDirectory = std::filesystem::current_path(error);
+    if (!error) {
+      const auto candidate = workingDirectory / "base_test_sleeper";
+      if (std::filesystem::is_regular_file(candidate, error)) { return candidate.string(); }
+    }
+    const auto systemSleep = boost::process::v1::search_path("sleep");
+    if (!systemSleep.empty()) { return systemSleep.string(); }
+    return {};
   }
 
-  std::shared_ptr<ProcessService> createService()
-  { return std::make_shared<ProcessService>(processName, envConfig, configuration, historyService); }
+  // m_configDirectory must be the first member: members initialize in declaration order, so the guard
+  // sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration, and it is
+  // destroyed last - after the test case is done with it.
+  struct ProcessServiceFixture
+  {
+    ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_ps_test_cfg" };
+    std::shared_ptr<ProcessName> processName;
+    std::shared_ptr<EnvironmentConfiguration> envConfig;
+    std::shared_ptr<Configuration> configuration;
+    std::shared_ptr<NoopHistoryService> historyService;
+    std::string sleepBinary;
 
-  /** @return a sleeper child process that outlives any test using it */
-  Process makeSleepProcess() const { return Process(sleepBinary, { "600" }); }
-};
+    ProcessServiceFixture()
+    {
+      sleepBinary = findSleepBinary();
+      if (sleepBinary.empty()) {
+        // Not a SKIP: the helper binary is built together with the tests, so a missing one means the
+        // build tree is broken. A SKIP here would turn a broken build into 16 test cases that quietly
+        // stop testing anything - the exact silent hole this replaced.
+        FAIL("no sleeper binary found - expected base_test_sleeper (target) or a system 'sleep' in PATH");
+      }
+      processName = std::make_shared<ProcessName>(sleepBinary);
+      envConfig = std::make_shared<EnvironmentConfiguration>();
+      configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+      historyService = std::make_shared<NoopHistoryService>(processName);
+    }
+
+    std::shared_ptr<ProcessService> createService()
+    {
+      return std::make_shared<ProcessService>(processName, envConfig, configuration, historyService);
+    }
+
+    /** @return a sleeper child process that outlives any test using it */
+    Process makeSleepProcess() const { return Process(sleepBinary, { "600" }); }
+  };
 
 }// namespace
 
@@ -433,3 +436,4 @@ TEST_CASE("ProcessResourceReader reads own process resources", "[process_service
   SKIP("ProcessResourceReader only fully supported on Linux here");
 #endif
 }
+}// namespace lintel

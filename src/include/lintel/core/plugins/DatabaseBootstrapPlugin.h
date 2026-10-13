@@ -10,6 +10,7 @@
 #include "lintel/core/persistence/Result.h"
 #include "lintel/core/plugins/BootstrapPlugin.h"
 
+namespace lintel {
 /**
  * DatabaseBootstrapPlugin:
  *
@@ -40,62 +41,60 @@
  *
  * We'll first init the current version and then execute the data include.
  */
-class DatabaseBootstrapPlugin : public BootstrapPlugin {
+class DatabaseBootstrapPlugin : public BootstrapPlugin
+{
 private:
-    struct FileInformation {
-        std::string m_schemaName;
-        int32_t m_version;
-        std::filesystem::path m_filePath;
-        bool m_isInitFile;
-    };
-    std::filesystem::path m_configPath =
-            std::string(CONFIG_DIRECTORY) +
-            std::filesystem::path::preferred_separator + "database";
-    std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
+  struct FileInformation
+  {
+    std::string m_schemaName;
+    int32_t m_version;
+    std::filesystem::path m_filePath;
+    bool m_isInitFile;
+  };
+  std::filesystem::path m_configPath =
+    std::string(CONFIG_DIRECTORY) + std::filesystem::path::preferred_separator + "database";
+  std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
 
-    static constexpr std::string_view m_createSchemaVersion =
-            R"(CREATE TABLE schema_version (name TEXT NOT NULL PRIMARY KEY,version BIGINT NOT NULL);)";
+  static constexpr std::string_view m_createSchemaVersion =
+    R"(CREATE TABLE schema_version (name TEXT NOT NULL PRIMARY KEY,version BIGINT NOT NULL);)";
 
-    static std::optional<db::Result> hasSchemaVersionTable(
-            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+  static std::optional<db::Result> hasSchemaVersionTable(
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
-    static void createSchemaVersionTable(
-            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+  static void createSchemaVersionTable(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
-    static void initDatabase(
-            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
-            const std::map<std::string, std::vector<FileInformation>> &initFiles,
-            const std::map<std::string, int32_t> &schemaVersions);
+  static void initDatabase(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
+    const std::map<std::string, std::vector<FileInformation>> &initFiles,
+    const std::map<std::string, int32_t> &schemaVersions);
 
-    static void updateSchemaVersion(
-            const db::Connection &connection,
-            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
-            const std::string &schemaName, int32_t schemaVersion, bool insert = true);
+  static void updateSchemaVersion(const db::Connection &connection,
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
+    const std::string &schemaName,
+    int32_t schemaVersion,
+    bool insert = true);
 
-    static void executeInitFile(
-            db::Connection &connection,
-            const FileInformation &item,
-            const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
-            int32_t &currentSchemaVersion);
+  static void executeInitFile(db::Connection &connection,
+    const FileInformation &item,
+    const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry,
+    int32_t &currentSchemaVersion);
 
-    static std::string schemaNameOf(const std::string &fileName);
+  static std::string schemaNameOf(const std::string &fileName);
 
-    static int32_t versionOf(const std::string &fileName);
+  static int32_t versionOf(const std::string &fileName);
 
-    void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+  void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
 public:
-    /** Construct a DatabaseBootstrapPlugin with the given database connection configurations.
-     * @param connectionConfigurations the database connection configurations */
-    explicit DatabaseBootstrapPlugin(
-            std::shared_ptr<DatabaseConnectionConfigurations>
-            connectionConfigurations);
+  /** Construct a DatabaseBootstrapPlugin with the given database connection configurations.
+   * @param connectionConfigurations the database connection configurations */
+  explicit DatabaseBootstrapPlugin(std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations);
 
-    /** Execute database schema initialization and data loading. */
-    void onStart() override;
+  /** Execute database schema initialization and data loading. */
+  void onStart() override;
 
-    /** Returns the priority for ordering this plugin in the bootstrap sequence. */
-    BootstrapSequence getPriority() override;
+  /** Returns the priority for ordering this plugin in the bootstrap sequence. */
+  BootstrapSequence getPriority() override;
 };
 
-#endif  // LINTEL_DATABASEBOOTSTRAPPLUGIN_H
+}// namespace lintel
+#endif// LINTEL_DATABASEBOOTSTRAPPLUGIN_H

@@ -3,14 +3,15 @@
 
 #include <exception>
 
+namespace lintel {
 /** Exception thrown when a user is not authorized to access a resource */
-class HttpUnauthorizedException : public std::exception {
+class HttpUnauthorizedException : public std::exception
+{
 public:
-    HttpUnauthorizedException() = default;
+  HttpUnauthorizedException() = default;
 
-    [[nodiscard]] const char *what() const noexcept override {
-        return "Unauthorized Access to called procedure!";
-    }
+  [[nodiscard]] const char *what() const noexcept override { return "Unauthorized Access to called procedure!"; }
 };
 
-#endif  // LINTEL_HTTPUNAUTHORIZEDEXCEPTION_H
+}// namespace lintel
+#endif// LINTEL_HTTPUNAUTHORIZEDEXCEPTION_H

@@ -29,172 +29,173 @@
 #include "lintel/features/http/configuration/HttpEntry.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 namespace {
 
-/** RAII redirector for `std::cout`, restored on destruction even when a REQUIRE throws. */
-class procCliCoutCapture
-{
-public:
-  procCliCoutCapture() : m_oldBuffer(std::cout.rdbuf(m_stream.rdbuf())) {}
-
-  ~procCliCoutCapture() { std::cout.rdbuf(m_oldBuffer); }
-
-  procCliCoutCapture(const procCliCoutCapture &) = delete;
-  procCliCoutCapture &operator=(const procCliCoutCapture &) = delete;
-
-  [[nodiscard]] std::string str() const { return m_stream.str(); }
-
-private:
-  std::ostringstream m_stream;
-  std::streambuf *m_oldBuffer;
-};
-
-/** RAII redirector for `std::cerr`, used for the error paths of onCommand(). */
-class procCliCerrCapture
-{
-public:
-  procCliCerrCapture() : m_oldBuffer(std::cerr.rdbuf(m_stream.rdbuf())) {}
-
-  ~procCliCerrCapture() { std::cerr.rdbuf(m_oldBuffer); }
-
-  procCliCerrCapture(const procCliCerrCapture &) = delete;
-  procCliCerrCapture &operator=(const procCliCerrCapture &) = delete;
-
-  [[nodiscard]] std::string str() const { return m_stream.str(); }
-
-private:
-  std::ostringstream m_stream;
-  std::streambuf *m_oldBuffer;
-};
-
-/**
- * `ProcessApi` has no virtual seam, so the component is driven against a loopback HTTP server
- * that records method, path and body of every request and answers with a canned body.
- */
-class procCliBackend
-{
-public:
-  procCliBackend()
+  /** RAII redirector for `std::cout`, restored on destruction even when a REQUIRE throws. */
+  class procCliCoutCapture
   {
-    m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
-      paths.push_back(request.path);
-      methods.emplace_back(request.method);
-      bodies.emplace_back();
-      if (request.method == "POST" || request.method == "PUT") {
-        // the request body is only read once a route matched, so let routing
-        // continue and let the catch-all handlers below serve the answer
-        return httplib::Server::HandlerResponse::Unhandled;
+  public:
+    procCliCoutCapture() : m_oldBuffer(std::cout.rdbuf(m_stream.rdbuf())) {}
+
+    ~procCliCoutCapture() { std::cout.rdbuf(m_oldBuffer); }
+
+    procCliCoutCapture(const procCliCoutCapture &) = delete;
+    procCliCoutCapture &operator=(const procCliCoutCapture &) = delete;
+
+    [[nodiscard]] std::string str() const { return m_stream.str(); }
+
+  private:
+    std::ostringstream m_stream;
+    std::streambuf *m_oldBuffer;
+  };
+
+  /** RAII redirector for `std::cerr`, used for the error paths of onCommand(). */
+  class procCliCerrCapture
+  {
+  public:
+    procCliCerrCapture() : m_oldBuffer(std::cerr.rdbuf(m_stream.rdbuf())) {}
+
+    ~procCliCerrCapture() { std::cerr.rdbuf(m_oldBuffer); }
+
+    procCliCerrCapture(const procCliCerrCapture &) = delete;
+    procCliCerrCapture &operator=(const procCliCerrCapture &) = delete;
+
+    [[nodiscard]] std::string str() const { return m_stream.str(); }
+
+  private:
+    std::ostringstream m_stream;
+    std::streambuf *m_oldBuffer;
+  };
+
+  /**
+   * `ProcessApi` has no virtual seam, so the component is driven against a loopback HTTP server
+   * that records method, path and body of every request and answers with a canned body.
+   */
+  class procCliBackend
+  {
+  public:
+    procCliBackend()
+    {
+      m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
+        paths.push_back(request.path);
+        methods.emplace_back(request.method);
+        bodies.emplace_back();
+        if (request.method == "POST" || request.method == "PUT") {
+          // the request body is only read once a route matched, so let routing
+          // continue and let the catch-all handlers below serve the answer
+          return httplib::Server::HandlerResponse::Unhandled;
+        }
+        response.status = m_responseStatus;
+        response.set_content(m_responseBody, "application/json");
+        return httplib::Server::HandlerResponse::Handled;
+      });
+      const auto procCliAnswer = [this](const httplib::Request &request, httplib::Response &response) {
+        if (!bodies.empty()) { bodies.back() = request.body; }
+        response.status = m_responseStatus;
+        response.set_content(m_responseBody, "application/json");
+      };
+      m_server.Post(R"(.*)", procCliAnswer);
+      m_server.Put(R"(.*)", procCliAnswer);
+      m_port = m_server.bind_to_any_port("127.0.0.1");
+      m_thread = std::thread([this]() { m_server.listen_after_bind(); });
+      // Server::stop() is a no-op until the accept loop is up. Without this wait a
+      // backend that is created and destroyed without a single request leaves the
+      // accept loop blocked in accept() and the join in the destructor never returns.
+      const auto procCliDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+      while (!m_server.is_running() && std::chrono::steady_clock::now() < procCliDeadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
       }
-      response.status = m_responseStatus;
-      response.set_content(m_responseBody, "application/json");
-      return httplib::Server::HandlerResponse::Handled;
-    });
-    const auto procCliAnswer = [this](const httplib::Request &request, httplib::Response &response) {
-      if (!bodies.empty()) { bodies.back() = request.body; }
-      response.status = m_responseStatus;
-      response.set_content(m_responseBody, "application/json");
-    };
-    m_server.Post(R"(.*)", procCliAnswer);
-    m_server.Put(R"(.*)", procCliAnswer);
-    m_port = m_server.bind_to_any_port("127.0.0.1");
-    m_thread = std::thread([this]() { m_server.listen_after_bind(); });
-    // Server::stop() is a no-op until the accept loop is up. Without this wait a
-    // backend that is created and destroyed without a single request leaves the
-    // accept loop blocked in accept() and the join in the destructor never returns.
-    const auto procCliDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    while (!m_server.is_running() && std::chrono::steady_clock::now() < procCliDeadline) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-  }
 
-  ~procCliBackend()
+    ~procCliBackend()
+    {
+      m_server.stop();
+      if (m_thread.joinable()) { m_thread.join(); }
+    }
+
+    procCliBackend(const procCliBackend &) = delete;
+    procCliBackend &operator=(const procCliBackend &) = delete;
+
+    void answerWith(const std::string &body)
+    {
+      m_responseBody = body;
+      m_responseStatus = 200;
+    }
+
+    void answerWithStatus(int status, const std::string &body)
+    {
+      m_responseBody = body;
+      m_responseStatus = status;
+    }
+
+    [[nodiscard]] int port() const { return m_port; }
+
+    /** @return true once the accept loop is up, so stop() can shut the server down */
+    [[nodiscard]] bool running() const { return m_server.is_running(); }
+
+    std::vector<std::string> paths;
+    std::vector<std::string> methods;
+    std::vector<std::string> bodies;
+
+  private:
+    httplib::Server m_server;
+    std::thread m_thread;
+    int m_port{ -1 };
+    std::string m_responseBody{ "[]" };
+    int m_responseStatus{ 200 };
+  };
+
+  /** Client provider whose only client entry points at the loopback backend. */
+  std::shared_ptr<ClientProvider> procCliProviderOf(int port)
   {
-    m_server.stop();
-    if (m_thread.joinable()) { m_thread.join(); }
+    static const std::string kProcCliAbsentConfigDir = "/nonexistent/lintel-proc-cli-test-config";
+    auto environment = std::make_shared<EnvironmentConfiguration>();
+    environment->overrides(EnvironmentConfiguration::ConfigDirectory, kProcCliAbsentConfigDir);
+    auto clientConfiguration = std::make_shared<ClientConfiguration>("127.0.0.1",
+      port,
+      std::chrono::milliseconds(2000),
+      std::chrono::milliseconds(2000),
+      std::chrono::milliseconds(2000));
+    std::vector<std::shared_ptr<Entry>> entries{ std::make_shared<HttpEntry>(
+      type_name<HttpComponent>(), clientConfiguration) };
+    auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
+    configuration->setEntries(entries);
+    return std::make_shared<ClientProvider>(configuration);
   }
 
-  procCliBackend(const procCliBackend &) = delete;
-  procCliBackend &operator=(const procCliBackend &) = delete;
-
-  void answerWith(const std::string &body)
+  /** @return the JSON body ProcessController would send for a list of processes */
+  std::string procCliOneProcessBody(const std::string &executable,
+    const std::string &groupName,
+    const std::string &groupId,
+    pid_t systemPid)
   {
-    m_responseBody = body;
-    m_responseStatus = 200;
+    auto procCliProcess = std::make_shared<Process>(std::filesystem::path(executable), std::vector<std::string>{});
+    ProcessInfo procCliInfo(procCliProcess, systemPid, true, 0, groupName, groupId);
+    ProcessInfosDto procCliDtos(std::vector<ProcessInfo>{ procCliInfo });
+    return procCliDtos.JsonSerializable::serialize();
   }
 
-  void answerWithStatus(int status, const std::string &body)
+  /** @return the JSON body of the process-group endpoint */
+  std::string procCliOneGroupBody(const std::string &groupName)
   {
-    m_responseBody = body;
-    m_responseStatus = status;
+    ProcessGroup procCliGroup(groupName, std::vector<Process>{});
+    ProcessGroupDto procCliGroupDto(std::make_shared<ProcessGroup>(procCliGroup), std::vector<ProcessInfo>{});
+    ProcessGroupsDto procCliGroupsDto(std::vector<ProcessGroupDto>{ procCliGroupDto });
+    return procCliGroupsDto.JsonSerializable::serialize();
   }
 
-  [[nodiscard]] int port() const { return m_port; }
-
-  /** @return true once the accept loop is up, so stop() can shut the server down */
-  [[nodiscard]] bool running() const { return m_server.is_running(); }
-
-  std::vector<std::string> paths;
-  std::vector<std::string> methods;
-  std::vector<std::string> bodies;
-
-private:
-  httplib::Server m_server;
-  std::thread m_thread;
-  int m_port{ -1 };
-  std::string m_responseBody{ "[]" };
-  int m_responseStatus{ 200 };
-};
-
-/** Client provider whose only client entry points at the loopback backend. */
-std::shared_ptr<ClientProvider> procCliProviderOf(int port)
-{
-  static const std::string kProcCliAbsentConfigDir = "/nonexistent/lintel-proc-cli-test-config";
-  auto environment = std::make_shared<EnvironmentConfiguration>();
-  environment->overrides(EnvironmentConfiguration::ConfigDirectory, kProcCliAbsentConfigDir);
-  auto clientConfiguration = std::make_shared<ClientConfiguration>("127.0.0.1",
-    port,
-    std::chrono::milliseconds(2000),
-    std::chrono::milliseconds(2000),
-    std::chrono::milliseconds(2000));
-  std::vector<std::shared_ptr<Entry>> entries{ std::make_shared<HttpEntry>(
-    type_name<HttpComponent>(), clientConfiguration) };
-  auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
-  configuration->setEntries(entries);
-  return std::make_shared<ClientProvider>(configuration);
-}
-
-/** @return the JSON body ProcessController would send for a list of processes */
-std::string procCliOneProcessBody(const std::string &executable,
-  const std::string &groupName,
-  const std::string &groupId,
-  pid_t systemPid)
-{
-  auto procCliProcess = std::make_shared<Process>(std::filesystem::path(executable), std::vector<std::string>{});
-  ProcessInfo procCliInfo(procCliProcess, systemPid, true, 0, groupName, groupId);
-  ProcessInfosDto procCliDtos(std::vector<ProcessInfo>{ procCliInfo });
-  return procCliDtos.JsonSerializable::serialize();
-}
-
-/** @return the JSON body of the process-group endpoint */
-std::string procCliOneGroupBody(const std::string &groupName)
-{
-  ProcessGroup procCliGroup(groupName, std::vector<Process>{});
-  ProcessGroupDto procCliGroupDto(std::make_shared<ProcessGroup>(procCliGroup), std::vector<ProcessInfo>{});
-  ProcessGroupsDto procCliGroupsDto(std::vector<ProcessGroupDto>{ procCliGroupDto });
-  return procCliGroupsDto.JsonSerializable::serialize();
-}
-
-/** @return the JSON body of the health endpoint for a single process */
-std::string procCliHealthBody(const std::string &executable,
-  const std::string &groupName,
-  const std::string &groupId,
-  pid_t systemPid)
-{
-  auto procCliProcess = std::make_shared<Process>(std::filesystem::path(executable), std::vector<std::string>{});
-  ProcessInfo procCliInfo(procCliProcess, systemPid, true, 0, groupName, groupId);
-  ProcessInfoDto procCliInfoDto(procCliInfo);
-  return procCliInfoDto.JsonSerializable::serialize();
-}
+  /** @return the JSON body of the health endpoint for a single process */
+  std::string procCliHealthBody(const std::string &executable,
+    const std::string &groupName,
+    const std::string &groupId,
+    pid_t systemPid)
+  {
+    auto procCliProcess = std::make_shared<Process>(std::filesystem::path(executable), std::vector<std::string>{});
+    ProcessInfo procCliInfo(procCliProcess, systemPid, true, 0, groupName, groupId);
+    ProcessInfoDto procCliInfoDto(procCliInfo);
+    return procCliInfoDto.JsonSerializable::serialize();
+  }
 
 }// namespace
 
@@ -600,3 +601,4 @@ TEST_CASE("ProcessCliComponent: show_processes without a value for -p prints an 
   REQUIRE(procCliServer.paths.empty());
   REQUIRE(procCliReported.find("ERROR") != std::string::npos);
 }
+}// namespace lintel

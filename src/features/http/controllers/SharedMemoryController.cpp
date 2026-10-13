@@ -8,6 +8,7 @@
 #include "lintel/features/base/controller/SharedMemorySegmentDto.h"
 #include "lintel/features/base/controller/SharedMemorySegmentsDto.h"
 
+namespace lintel {
 SharedMemoryController::SharedMemoryController(const std::shared_ptr<IAuthService> &authServicie,
   std::shared_ptr<ISharedMemoryService> sharedMemoryService,
   std::shared_ptr<ISharedMemorySegmentManager> sharedMemorySegmentManager,
@@ -222,3 +223,4 @@ void SharedMemoryController::growSegmentOfPut(const httplib::Request &request,
     response.set_content("", contentType.getName());
   }
 }
+}// namespace lintel

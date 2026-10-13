@@ -23,6 +23,7 @@
 #include "lintel/features/base/services/InitializeService.h"
 #include "lintel/features/base/services/ProcessArgumentService.h"
 
+namespace lintel {
 StartupBuilder::StartupBuilder(ProcessName &&name, std::vector<std::string> &&arguments)
   : m_name(std::make_shared<ProcessName>(std::move(name))), m_arguments(std::move(arguments)),
     m_environmentConfiguration(std::make_shared<EnvironmentConfiguration>()),
@@ -167,3 +168,4 @@ void StartupBuilder::onShutdown()
 }
 
 void StartupBuilder::disableBootstrapService() { m_bootStrapServiceActive = false; }
+}// namespace lintel

@@ -4,22 +4,23 @@
 #include <exception>
 #include <string>
 
+namespace lintel {
 namespace db {
-    /** Exception thrown on SQL/database errors */
-    class SQLException : public std::exception {
-    private:
-        std::string m_message;
+  /** Exception thrown on SQL/database errors */
+  class SQLException : public std::exception
+  {
+  private:
+    std::string m_message;
 
-    public:
-        SQLException() = delete;
+  public:
+    SQLException() = delete;
 
-        /** @param message description of the SQL error */
-        explicit SQLException(std::string message) : m_message(std::move(message)) {}
+    /** @param message description of the SQL error */
+    explicit SQLException(std::string message) : m_message(std::move(message)) {}
 
-        [[nodiscard]] const char *what() const noexcept override {
-            return m_message.c_str();
-        }
-    };
-}  // namespace db
+    [[nodiscard]] const char *what() const noexcept override { return m_message.c_str(); }
+  };
+}// namespace db
 
-#endif  // LINTEL_SQLEXCEPTION_H
+}// namespace lintel
+#endif// LINTEL_SQLEXCEPTION_H

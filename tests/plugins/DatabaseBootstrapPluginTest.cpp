@@ -31,164 +31,166 @@
  * ignored" behaviour is pinned by its own test case.
  */
 
+namespace lintel {
 namespace {
 
-std::string dbpUnique(const std::string &tag)
-{
-  static unsigned int counter = 0;
-  return "dbp_" + tag + "_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
-}
+  std::string dbpUnique(const std::string &tag)
+  {
+    static unsigned int counter = 0;
+    return "dbp_" + tag + "_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
+  }
 
-std::filesystem::path dbpDatabaseRoot() { return std::filesystem::path(CONFIG_DIRECTORY) / "database"; }
+  std::filesystem::path dbpDatabaseRoot() { return std::filesystem::path(CONFIG_DIRECTORY) / "database"; }
 
-/** Fresh, empty SQLite database file below the temporary directory. */
-std::filesystem::path dbpFreshDatabase(const std::string &tag)
-{
-  const auto path = std::filesystem::temp_directory_path() / (dbpUnique(tag) + ".db");
-  std::filesystem::remove(path);
-  return path;
-}
+  /** Fresh, empty SQLite database file below the temporary directory. */
+  std::filesystem::path dbpFreshDatabase(const std::string &tag)
+  {
+    const auto path = std::filesystem::temp_directory_path() / (dbpUnique(tag) + ".db");
+    std::filesystem::remove(path);
+    return path;
+  }
 
-/** Create <CONFIG_DIRECTORY>/database/<name> and return it. */
-std::filesystem::path dbpCreateSqlDirectory(const std::string &name)
-{
-  const auto path = dbpDatabaseRoot() / name;
-  std::filesystem::remove_all(path);
-  std::filesystem::create_directories(path);
-  return path;
-}
+  /** Create <CONFIG_DIRECTORY>/database/<name> and return it. */
+  std::filesystem::path dbpCreateSqlDirectory(const std::string &name)
+  {
+    const auto path = dbpDatabaseRoot() / name;
+    std::filesystem::remove_all(path);
+    std::filesystem::create_directories(path);
+    return path;
+  }
 
-void dbpWriteFile(const std::filesystem::path &directory, const std::string &fileName, const std::string &content)
-{
-  std::ofstream file(directory / fileName);
-  file << content;
-}
+  void dbpWriteFile(const std::filesystem::path &directory, const std::string &fileName, const std::string &content)
+  {
+    std::ofstream file(directory / fileName);
+    file << content;
+  }
 
-/** @return the single scalar of a query, "" if the query returned no row */
-std::string dbpScalar(const std::filesystem::path &databaseFile, const std::string &query)
-{
-  db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
-  db::Statement statement(connection);
-  db::Result result = statement.execute(query);
-  if (result.getSize() == 0) { return ""; }
-  return result.getValue(0, 0);
-}
-
-/** @return the number of rows the query returns */
-int dbpCount(const std::filesystem::path &databaseFile, const std::string &query)
-{
-  const std::string value = dbpScalar(databaseFile, "select count(*) from (" + query + ")");
-  return value.empty() ? -1 : std::stoi(value);
-}
-
-/** @return true if the table exists, i.e. the query does not fail */
-bool dbpTableExists(const std::filesystem::path &databaseFile, const std::string &table)
-{
-  try {
+  /** @return the single scalar of a query, "" if the query returned no row */
+  std::string dbpScalar(const std::filesystem::path &databaseFile, const std::string &query)
+  {
     db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
     db::Statement statement(connection);
-    statement.execute("select * from " + table + " where 1 = 0");
-    return true;
-  } catch (const db::SQLException &) {
-    return false;
+    db::Result result = statement.execute(query);
+    if (result.getSize() == 0) { return ""; }
+    return result.getValue(0, 0);
   }
-}
 
-/** @return the recorded schema version, -1 if the schema is not recorded */
-int dbpSchemaVersion(const std::filesystem::path &databaseFile, const std::string &schema)
-{
-  const std::string value = dbpScalar(databaseFile, "select version from schema_version where name = '" + schema + "'");
-  return value.empty() ? -1 : std::stoi(value);
-}
-
-/**
- * Fixture with one SQLite connection entry.
- *
- * - shippedConfigName: use an existing directory of the configuration tree (e.g. "DEFAULT_SQLITE")
- *   and do not touch it. The plugin then works on files that are part of the repository.
- * - otherwise: create an empty, uniquely named directory below <CONFIG_DIRECTORY>/database and
- *   remove it again in the destructor.
- * - configDirectory: value handed to EnvironmentConfiguration, only relevant for the test that
- *   pins that the plugin ignores it.
- */
-struct DbpFixture
-{
-  std::string connectionName;
-  std::filesystem::path databaseFile;
-  std::filesystem::path sqlDirectory;
-  std::vector<std::shared_ptr<Entry>> entries;
-  std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
-  std::shared_ptr<DatabaseBootstrapPlugin> plugin;
-
-  explicit DbpFixture(const std::string &tag,
-    const std::string &shippedConfigName = {},
-    const std::filesystem::path &configDirectory = {})
-    : connectionName(shippedConfigName.empty() ? dbpUnique(tag) : shippedConfigName),
-      databaseFile(dbpFreshDatabase(tag))
+  /** @return the number of rows the query returns */
+  int dbpCount(const std::filesystem::path &databaseFile, const std::string &query)
   {
-    if (shippedConfigName.empty()) { sqlDirectory = dbpCreateSqlDirectory(connectionName); }
-    std::filesystem::path configDir =
-      configDirectory.empty() ? std::filesystem::path("/tmp/nonexistent_dbp_cfg") / dbpUnique(tag) : configDirectory;
-    auto envConfig = std::make_shared<EnvironmentConfiguration>();
-    envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, configDir.string());
-    envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, dbpUnique("bootstrap"));
-    entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
-      databaseFile.string(),
-      "",
-      "",
-      db::ConnectionType::SQLite,
-      connectionName,
-      -1,
-      "",
-      true));
-    build();
+    const std::string value = dbpScalar(databaseFile, "select count(*) from (" + query + ")");
+    return value.empty() ? -1 : std::stoi(value);
   }
 
-  ~DbpFixture()
+  /** @return true if the table exists, i.e. the query does not fail */
+  bool dbpTableExists(const std::filesystem::path &databaseFile, const std::string &table)
   {
-    if (!sqlDirectory.empty()) { std::filesystem::remove_all(sqlDirectory); }
-    std::filesystem::remove(databaseFile);
+    try {
+      db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
+      db::Statement statement(connection);
+      statement.execute("select * from " + table + " where 1 = 0");
+      return true;
+    } catch (const db::SQLException &) {
+      return false;
+    }
   }
 
-  DbpFixture(const DbpFixture &) = delete;
-  DbpFixture &operator=(const DbpFixture &) = delete;
-
-  /** Add a second connection and rebuild the plugin.
-   * @param name connection name, also the name of its SQL directory
-   * @param connectionFile SQLite file the connection points to
-   * @param isDefault whether the entry is marked as the default connection */
-  void addConnection(const std::string &name, const std::string &connectionFile, bool isDefault)
+  /** @return the recorded schema version, -1 if the schema is not recorded */
+  int dbpSchemaVersion(const std::filesystem::path &databaseFile, const std::string &schema)
   {
-    entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
-      connectionFile,
-      "",
-      "",
-      db::ConnectionType::SQLite,
-      name,
-      -1,
-      "",
-      isDefault));
-    build();
+    const std::string value =
+      dbpScalar(databaseFile, "select version from schema_version where name = '" + schema + "'");
+    return value.empty() ? -1 : std::stoi(value);
   }
 
-  void writeFile(const std::string &fileName, const std::string &content)
+  /**
+   * Fixture with one SQLite connection entry.
+   *
+   * - shippedConfigName: use an existing directory of the configuration tree (e.g. "DEFAULT_SQLITE")
+   *   and do not touch it. The plugin then works on files that are part of the repository.
+   * - otherwise: create an empty, uniquely named directory below <CONFIG_DIRECTORY>/database and
+   *   remove it again in the destructor.
+   * - configDirectory: value handed to EnvironmentConfiguration, only relevant for the test that
+   *   pins that the plugin ignores it.
+   */
+  struct DbpFixture
   {
-    dbpWriteFile(sqlDirectory, fileName, content);
-  }
+    std::string connectionName;
+    std::filesystem::path databaseFile;
+    std::filesystem::path sqlDirectory;
+    std::vector<std::shared_ptr<Entry>> entries;
+    std::shared_ptr<Configuration> configuration;
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
+    std::shared_ptr<DatabaseBootstrapPlugin> plugin;
 
-private:
-  void build()
-  {
-    auto envConfig = std::make_shared<EnvironmentConfiguration>();
-    envConfig->overrides(
-      EnvironmentConfiguration::ConfigDirectory, std::filesystem::path("/tmp/nonexistent_dbp_cfg").string());
-    configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
-    configuration->setEntries(entries);
-    connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
-    plugin = std::make_shared<DatabaseBootstrapPlugin>(connectionConfigurations);
-  }
-};
+    explicit DbpFixture(const std::string &tag,
+      const std::string &shippedConfigName = {},
+      const std::filesystem::path &configDirectory = {})
+      : connectionName(shippedConfigName.empty() ? dbpUnique(tag) : shippedConfigName),
+        databaseFile(dbpFreshDatabase(tag))
+    {
+      if (shippedConfigName.empty()) { sqlDirectory = dbpCreateSqlDirectory(connectionName); }
+      std::filesystem::path configDir =
+        configDirectory.empty() ? std::filesystem::path("/tmp/nonexistent_dbp_cfg") / dbpUnique(tag) : configDirectory;
+      auto envConfig = std::make_shared<EnvironmentConfiguration>();
+      envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, configDir.string());
+      envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, dbpUnique("bootstrap"));
+      entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+        databaseFile.string(),
+        "",
+        "",
+        db::ConnectionType::SQLite,
+        connectionName,
+        -1,
+        "",
+        true));
+      build();
+    }
+
+    ~DbpFixture()
+    {
+      if (!sqlDirectory.empty()) { std::filesystem::remove_all(sqlDirectory); }
+      std::filesystem::remove(databaseFile);
+    }
+
+    DbpFixture(const DbpFixture &) = delete;
+    DbpFixture &operator=(const DbpFixture &) = delete;
+
+    /** Add a second connection and rebuild the plugin.
+     * @param name connection name, also the name of its SQL directory
+     * @param connectionFile SQLite file the connection points to
+     * @param isDefault whether the entry is marked as the default connection */
+    void addConnection(const std::string &name, const std::string &connectionFile, bool isDefault)
+    {
+      entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+        connectionFile,
+        "",
+        "",
+        db::ConnectionType::SQLite,
+        name,
+        -1,
+        "",
+        isDefault));
+      build();
+    }
+
+    void writeFile(const std::string &fileName, const std::string &content)
+    {
+      dbpWriteFile(sqlDirectory, fileName, content);
+    }
+
+  private:
+    void build()
+    {
+      auto envConfig = std::make_shared<EnvironmentConfiguration>();
+      envConfig->overrides(
+        EnvironmentConfiguration::ConfigDirectory, std::filesystem::path("/tmp/nonexistent_dbp_cfg").string());
+      configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+      configuration->setEntries(entries);
+      connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
+      plugin = std::make_shared<DatabaseBootstrapPlugin>(connectionConfigurations);
+    }
+  };
 
 }// namespace
 
@@ -378,3 +380,4 @@ TEST_CASE("DatabaseBootstrapPlugin: the sql directory ignores the environment co
 
   std::filesystem::remove_all(configDir);
 }
+}// namespace lintel

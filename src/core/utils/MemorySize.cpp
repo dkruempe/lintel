@@ -5,89 +5,70 @@
 
 #include "lintel/core/utils/StringUtils.h"
 
+namespace lintel {
 namespace {
-constexpr std::size_t kBytesPerKilo = 1000;
-constexpr std::size_t kBytesPerMega = 1000000;
-constexpr std::size_t kBytesPerGiga = 1000000000;
-constexpr std::size_t kBytesPerTera = 1000000000000;
-constexpr std::size_t kBytesPerPeta = 1000000000000000;
+  constexpr std::size_t kBytesPerKilo = 1000;
+  constexpr std::size_t kBytesPerMega = 1000000;
+  constexpr std::size_t kBytesPerGiga = 1000000000;
+  constexpr std::size_t kBytesPerTera = 1000000000000;
+  constexpr std::size_t kBytesPerPeta = 1000000000000000;
 
-/** Parses a numeric prefix and validates it, optionally scaling it by a multiplier. */
-// Anonymous-namespace helper: the two string parameters have distinct roles (full input for the
-// error message vs. the numeric part to parse) and every call site passes them in this order.
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-std::size_t parseAndScale(const std::string &input, const std::string &prefix,
-                          std::size_t multiplier) {
+  /** Parses a numeric prefix and validates it, optionally scaling it by a multiplier. */
+  // Anonymous-namespace helper: the two string parameters have distinct roles (full input for the
+  // error message vs. the numeric part to parse) and every call site passes them in this order.
+  // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
+  std::size_t parseAndScale(const std::string &input, const std::string &prefix, std::size_t multiplier)
+  {
     std::size_t pos = 0;
     unsigned long value = 0;
     try {
-        value = std::stoul(prefix, &pos);
+      value = std::stoul(prefix, &pos);
     } catch (const std::exception &) {
-        throw std::invalid_argument("invalid memory size: '" + input + "'");
+      throw std::invalid_argument("invalid memory size: '" + input + "'");
     }
-    if (pos != prefix.size()) {
-        throw std::invalid_argument("invalid memory size: '" + input + "'");
-    }
+    if (pos != prefix.size()) { throw std::invalid_argument("invalid memory size: '" + input + "'"); }
     if (value > (std::numeric_limits<std::size_t>::max() / multiplier)) {
-        throw std::invalid_argument("memory size overflow: '" + input + "'");
+      throw std::invalid_argument("memory size overflow: '" + input + "'");
     }
     return static_cast<std::size_t>(value) * multiplier;
-}
-}  // namespace
+  }
+}// namespace
 
-std::size_t MemorySize::deserialize(const std::string &size) {
-    bool isByte = StringUtils::endsWith(size, "B");
-    bool isKiloByte = StringUtils::endsWith(size, "kB");
-    bool isMegaByte = StringUtils::endsWith(size, "MB");
-    bool isGigaByte = StringUtils::endsWith(size, "GB");
-    bool isTeraByte = StringUtils::endsWith(size, "TB");
-    bool isPetaByte = StringUtils::endsWith(size, "PB");
-    if (isKiloByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerKilo);
-    }
-    if (isMegaByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerMega);
-    }
-    if (isGigaByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerGiga);
-    }
-    if (isTeraByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerTera);
-    }
-    if (isPetaByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerPeta);
-    }
-    if (isByte) {
-        return parseAndScale(size, size.substr(0, size.length() - 1), 1);
-    }
-    return parseAndScale(size, size, 1);
+std::size_t MemorySize::deserialize(const std::string &size)
+{
+  bool isByte = StringUtils::endsWith(size, "B");
+  bool isKiloByte = StringUtils::endsWith(size, "kB");
+  bool isMegaByte = StringUtils::endsWith(size, "MB");
+  bool isGigaByte = StringUtils::endsWith(size, "GB");
+  bool isTeraByte = StringUtils::endsWith(size, "TB");
+  bool isPetaByte = StringUtils::endsWith(size, "PB");
+  if (isKiloByte) { return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerKilo); }
+  if (isMegaByte) { return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerMega); }
+  if (isGigaByte) { return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerGiga); }
+  if (isTeraByte) { return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerTera); }
+  if (isPetaByte) { return parseAndScale(size, size.substr(0, size.length() - 2), kBytesPerPeta); }
+  if (isByte) { return parseAndScale(size, size.substr(0, size.length() - 1), 1); }
+  return parseAndScale(size, size, 1);
 }
 
-std::string MemorySize::serialize(std::size_t byte) {
-    double petaByte = static_cast<double>(byte) / kBytesPerPeta;
-    double teraByte = static_cast<double>(byte) / kBytesPerTera;
-    double gigaByte = static_cast<double>(byte) / kBytesPerGiga;
-    double megaByte = static_cast<double>(byte) / kBytesPerMega;
-    double kiloByte = static_cast<double>(byte) / kBytesPerKilo;
-    if (petaByte > 1) {
-        return toString(petaByte) + "PB";
-    }
-    if (teraByte > 1) {
-        return toString(teraByte) + "TB";
-    }
-    if (gigaByte > 1) {
-        return toString(gigaByte) + "GB";
-    }
-    if (megaByte > 1) {
-        return toString(megaByte) + "MB";
-    }
-    if (kiloByte > 1) {
-        return toString(kiloByte) + "KB";
-    }
-    return std::to_string(byte) + "B";
+std::string MemorySize::serialize(std::size_t byte)
+{
+  double petaByte = static_cast<double>(byte) / kBytesPerPeta;
+  double teraByte = static_cast<double>(byte) / kBytesPerTera;
+  double gigaByte = static_cast<double>(byte) / kBytesPerGiga;
+  double megaByte = static_cast<double>(byte) / kBytesPerMega;
+  double kiloByte = static_cast<double>(byte) / kBytesPerKilo;
+  if (petaByte > 1) { return toString(petaByte) + "PB"; }
+  if (teraByte > 1) { return toString(teraByte) + "TB"; }
+  if (gigaByte > 1) { return toString(gigaByte) + "GB"; }
+  if (megaByte > 1) { return toString(megaByte) + "MB"; }
+  if (kiloByte > 1) { return toString(kiloByte) + "KB"; }
+  return std::to_string(byte) + "B";
 }
 
-std::string MemorySize::toString(double value) {
-    std::string temp = std::format("{}", value);
-    return temp;
+std::string MemorySize::toString(double value)
+{
+  std::string temp = std::format("{}", value);
+  return temp;
 }
+}// namespace lintel

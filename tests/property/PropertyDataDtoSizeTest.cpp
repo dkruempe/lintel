@@ -18,52 +18,53 @@
 #include <memory>
 #include <string>
 
+namespace lintel {
 namespace {
 
-std::filesystem::path uniquePropertySizeShmPath()
-{
-  static std::uint64_t counter = 0;
-  return std::filesystem::temp_directory_path()
-         / ("property_size_test_" + std::to_string(getpid()) + "_" + std::to_string(counter++) + ".bin");
-}
-
-/** Wires a real shared memory property repository over a unique segment. Named apart from the
- *  identically shaped fixture in PropertyChangeTest.cpp so the two can share a unity chunk. */
-struct PropertySizeRepositoryFixture
-{
-  std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<ProcessName> processName;
-  std::shared_ptr<SchedulerService> scheduler;
-  std::shared_ptr<SharedMemorySegmentManager> segmentManager;
-  std::shared_ptr<SharedMemoryService> sharedMemoryService;
-  std::shared_ptr<SharedMemoryPropertyRepository> repository;
-  std::filesystem::path path;
-
-  PropertySizeRepositoryFixture() : path(uniquePropertySizeShmPath())
+  std::filesystem::path uniquePropertySizeShmPath()
   {
-    auto environmentConfiguration = std::make_shared<EnvironmentConfiguration>();
-    environmentConfiguration->overrides(
-      EnvironmentConfiguration::ConfigDirectory, std::filesystem::temp_directory_path().string() + "/nonexistent");
-    configuration =
-      std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, std::move(environmentConfiguration));
-    configuration->setEntries({ std::make_shared<SharedMemorySegmentEntry>(type_name<SharedMemorySegmentComponent>(),
-      std::make_shared<SharedMemorySegment>(path, "shm_property", 5 * 1024 * 1024)) });
-    processName = std::make_shared<ProcessName>("testProcess");
-    scheduler = std::make_shared<SchedulerService>(processName);
-    segmentManager = std::make_shared<SharedMemorySegmentManager>(configuration);
-    sharedMemoryService = std::make_shared<SharedMemoryService>(segmentManager, scheduler, processName);
-    repository =
-      std::make_shared<SharedMemoryPropertyRepository>(sharedMemoryService, segmentManager, configuration, processName);
+    static std::uint64_t counter = 0;
+    return std::filesystem::temp_directory_path()
+           / ("property_size_test_" + std::to_string(getpid()) + "_" + std::to_string(counter++) + ".bin");
   }
 
-  ~PropertySizeRepositoryFixture()
+  /** Wires a real shared memory property repository over a unique segment. Named apart from the
+   *  identically shaped fixture in PropertyChangeTest.cpp so the two can share a unity chunk. */
+  struct PropertySizeRepositoryFixture
   {
-    repository.reset();
-    sharedMemoryService.reset();
-    segmentManager.reset();
-    std::filesystem::remove(path);
-  }
-};
+    std::shared_ptr<Configuration> configuration;
+    std::shared_ptr<ProcessName> processName;
+    std::shared_ptr<SchedulerService> scheduler;
+    std::shared_ptr<SharedMemorySegmentManager> segmentManager;
+    std::shared_ptr<SharedMemoryService> sharedMemoryService;
+    std::shared_ptr<SharedMemoryPropertyRepository> repository;
+    std::filesystem::path path;
+
+    PropertySizeRepositoryFixture() : path(uniquePropertySizeShmPath())
+    {
+      auto environmentConfiguration = std::make_shared<EnvironmentConfiguration>();
+      environmentConfiguration->overrides(
+        EnvironmentConfiguration::ConfigDirectory, std::filesystem::temp_directory_path().string() + "/nonexistent");
+      configuration =
+        std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, std::move(environmentConfiguration));
+      configuration->setEntries({ std::make_shared<SharedMemorySegmentEntry>(type_name<SharedMemorySegmentComponent>(),
+        std::make_shared<SharedMemorySegment>(path, "shm_property", 5 * 1024 * 1024)) });
+      processName = std::make_shared<ProcessName>("testProcess");
+      scheduler = std::make_shared<SchedulerService>(processName);
+      segmentManager = std::make_shared<SharedMemorySegmentManager>(configuration);
+      sharedMemoryService = std::make_shared<SharedMemoryService>(segmentManager, scheduler, processName);
+      repository = std::make_shared<SharedMemoryPropertyRepository>(
+        sharedMemoryService, segmentManager, configuration, processName);
+    }
+
+    ~PropertySizeRepositoryFixture()
+    {
+      repository.reset();
+      sharedMemoryService.reset();
+      segmentManager.reset();
+      std::filesystem::remove(path);
+    }
+  };
 
 }// namespace
 
@@ -90,3 +91,4 @@ TEST_CASE("PropertyDataDto::getSize matches the mapped element size")
   REQUIRE(fixture.repository->getSizeOfData() == static_cast<std::size_t>(PropertyDataDto::getSize()));
   REQUIRE(fixture.repository->getSizeOfData() == sizeof(PropertyDataDto));
 }
+}// namespace lintel

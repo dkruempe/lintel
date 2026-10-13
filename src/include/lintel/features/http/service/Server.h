@@ -6,6 +6,7 @@
 
 #include "lintel/features/http/configuration/ServerConfiguration.h"
 
+namespace lintel {
 class Controller;
 
 /** HTTP server that manages controller registration and runs in a background thread */
@@ -23,4 +24,5 @@ public:
   ~Server();
 };
 
+}// namespace lintel
 #endif// HTTP_LIBRARY_SERVER_H

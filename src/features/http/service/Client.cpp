@@ -4,30 +4,31 @@
 
 #include "lintel/core/services/LoggerService.h"
 
+namespace lintel {
 namespace {
 
-/** Build an SSL client from configuration */
-std::shared_ptr<httplib::SSLClient> buildSslClient(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
-{
-  std::shared_ptr<httplib::SSLClient> sslClient;
-  if (!clientConfiguration->getCertFile().empty() && !clientConfiguration->getKeyFile().empty()) {
-    sslClient = std::make_shared<httplib::SSLClient>(clientConfiguration->getHost(),
-      clientConfiguration->getPort(),
-      clientConfiguration->getCertFile(),
-      clientConfiguration->getKeyFile());
-  } else if (!clientConfiguration->getCaCertFile().empty()) {
-    sslClient = std::make_shared<httplib::SSLClient>(clientConfiguration->getHost(), clientConfiguration->getPort());
-  } else {
-    LOG_WARN(
-      "HTTP client running without TLS; credentials are transmitted "
-      "in clear text. Configure cert/key files for production use.");
-    return nullptr;
+  /** Build an SSL client from configuration */
+  std::shared_ptr<httplib::SSLClient> buildSslClient(const std::shared_ptr<ClientConfiguration> &clientConfiguration)
+  {
+    std::shared_ptr<httplib::SSLClient> sslClient;
+    if (!clientConfiguration->getCertFile().empty() && !clientConfiguration->getKeyFile().empty()) {
+      sslClient = std::make_shared<httplib::SSLClient>(clientConfiguration->getHost(),
+        clientConfiguration->getPort(),
+        clientConfiguration->getCertFile(),
+        clientConfiguration->getKeyFile());
+    } else if (!clientConfiguration->getCaCertFile().empty()) {
+      sslClient = std::make_shared<httplib::SSLClient>(clientConfiguration->getHost(), clientConfiguration->getPort());
+    } else {
+      LOG_WARN(
+        "HTTP client running without TLS; credentials are transmitted "
+        "in clear text. Configure cert/key files for production use.");
+      return nullptr;
+    }
+    if (!clientConfiguration->getCaCertFile().empty()) {
+      sslClient->set_ca_cert_path(clientConfiguration->getCaCertFile().string());
+    }
+    return sslClient;
   }
-  if (!clientConfiguration->getCaCertFile().empty()) {
-    sslClient->set_ca_cert_path(clientConfiguration->getCaCertFile().string());
-  }
-  return sslClient;
-}
 }// namespace
 
 struct Client::Impl
@@ -426,3 +427,4 @@ void Client::setBearerTokenAuth(const std::string &token) const
   }
   if (m_impl->sslClient != nullptr) { m_impl->sslClient->set_bearer_token_auth(token); }
 }
+}// namespace lintel

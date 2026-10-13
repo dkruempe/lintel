@@ -11,6 +11,7 @@
 
 #include "lintel/core/utils/UUID.h"
 
+namespace lintel {
 /**
  * Represents a managed process with lifecycle callbacks, auto-restart capability
  * and configurable automation policy (backoff, rate limit, periodic restart,
@@ -191,4 +192,5 @@ public:
   void onFinish() const;
 };
 
+}// namespace lintel
 #endif// LINTEL_PROCESS_H

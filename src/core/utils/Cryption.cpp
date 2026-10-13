@@ -17,77 +17,78 @@
 
 #include "lintel/core/utils/StringUtils.h"
 
+namespace lintel {
 namespace {
-constexpr std::uint32_t kPbkdf2Iterations = 120000;
-constexpr std::size_t kSaltSize = 16;
-constexpr std::size_t kDerivedSize = 64;
-constexpr const char *kPbkdf2Prefix = "$pbkdf2-sha512$";
+  constexpr std::uint32_t kPbkdf2Iterations = 120000;
+  constexpr std::size_t kSaltSize = 16;
+  constexpr std::size_t kDerivedSize = 64;
+  constexpr const char *kPbkdf2Prefix = "$pbkdf2-sha512$";
 
-void appendHex(std::string &out, const unsigned char *data, std::size_t length)
-{
-  for (std::size_t i = 0; i < length; i++) { out += std::format("{:02x}", static_cast<int>(data[i])); }
-}
-
-std::string hashWithSalt(const std::string &password, const unsigned char *salt, std::size_t saltSize)
-{
-  unsigned char derived[kDerivedSize];
-  if (PKCS5_PBKDF2_HMAC(password.c_str(),
-        static_cast<int>(password.size()),
-        salt,
-        static_cast<int>(saltSize),
-        kPbkdf2Iterations,
-        EVP_sha512(),
-        kDerivedSize,
-        derived)
-      != 1) {
-    throw std::runtime_error("Failed to derive key");
+  void appendHex(std::string &out, const unsigned char *data, std::size_t length)
+  {
+    for (std::size_t i = 0; i < length; i++) { out += std::format("{:02x}", static_cast<int>(data[i])); }
   }
-  std::string tokens = kPbkdf2Prefix;
-  tokens += std::to_string(kPbkdf2Iterations);
-  tokens += "$";
-  appendHex(tokens, salt, saltSize);
-  tokens += "$";
-  appendHex(tokens, derived, kDerivedSize);
-  return tokens;
-}
 
-bool constantTimeEquals(const std::string &a, const std::string &b)
-{
-  if (a.size() != b.size()) { return false; }
-  if (a.empty()) { return true; }
-  return CRYPTO_memcmp(a.data(), b.data(), a.size()) == 0;
-}
-
-std::vector<std::string> splitOnDollar(const std::string &value)
-{
-  std::vector<std::string> parts;
-  std::size_t start = 0;
-  while (start <= value.size()) {
-    std::size_t pos = value.find('$', start);
-    if (pos == std::string::npos) {
-      parts.push_back(value.substr(start));
-      break;
+  std::string hashWithSalt(const std::string &password, const unsigned char *salt, std::size_t saltSize)
+  {
+    unsigned char derived[kDerivedSize];
+    if (PKCS5_PBKDF2_HMAC(password.c_str(),
+          static_cast<int>(password.size()),
+          salt,
+          static_cast<int>(saltSize),
+          kPbkdf2Iterations,
+          EVP_sha512(),
+          kDerivedSize,
+          derived)
+        != 1) {
+      throw std::runtime_error("Failed to derive key");
     }
-    parts.push_back(value.substr(start, pos - start));
-    start = pos + 1;
+    std::string tokens = kPbkdf2Prefix;
+    tokens += std::to_string(kPbkdf2Iterations);
+    tokens += "$";
+    appendHex(tokens, salt, saltSize);
+    tokens += "$";
+    appendHex(tokens, derived, kDerivedSize);
+    return tokens;
   }
-  return parts;
-}
 
-std::vector<unsigned char> hexToBytes(const std::string &hex)
-{
-  std::vector<unsigned char> bytes;
-  if (hex.size() % 2 != 0) { return bytes; }
-  bytes.reserve(hex.size() / 2);
-  for (std::size_t i = 0; i < hex.size(); i += 2) {
-    const std::string pair = hex.substr(i, 2);
-    unsigned int byte = 0;
-    const auto [ptr, ec] = std::from_chars(pair.data(), pair.data() + pair.size(), byte, 16);
-    if (ec != std::errc{} || ptr != pair.data() + pair.size()) { return {}; }
-    bytes.push_back(static_cast<unsigned char>(byte));
+  bool constantTimeEquals(const std::string &a, const std::string &b)
+  {
+    if (a.size() != b.size()) { return false; }
+    if (a.empty()) { return true; }
+    return CRYPTO_memcmp(a.data(), b.data(), a.size()) == 0;
   }
-  return bytes;
-}
+
+  std::vector<std::string> splitOnDollar(const std::string &value)
+  {
+    std::vector<std::string> parts;
+    std::size_t start = 0;
+    while (start <= value.size()) {
+      std::size_t pos = value.find('$', start);
+      if (pos == std::string::npos) {
+        parts.push_back(value.substr(start));
+        break;
+      }
+      parts.push_back(value.substr(start, pos - start));
+      start = pos + 1;
+    }
+    return parts;
+  }
+
+  std::vector<unsigned char> hexToBytes(const std::string &hex)
+  {
+    std::vector<unsigned char> bytes;
+    if (hex.size() % 2 != 0) { return bytes; }
+    bytes.reserve(hex.size() / 2);
+    for (std::size_t i = 0; i < hex.size(); i += 2) {
+      const std::string pair = hex.substr(i, 2);
+      unsigned int byte = 0;
+      const auto [ptr, ec] = std::from_chars(pair.data(), pair.data() + pair.size(), byte, 16);
+      if (ec != std::errc{} || ptr != pair.data() + pair.size()) { return {}; }
+      bytes.push_back(static_cast<unsigned char>(byte));
+    }
+    return bytes;
+  }
 }// namespace
 
 Cryption::Cryption() = default;
@@ -238,3 +239,4 @@ std::string Cryption::encodeBase64(const std::string &in)
 
   return out;
 }
+}// namespace lintel

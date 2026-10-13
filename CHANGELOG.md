@@ -22,6 +22,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the runtime image), plus explicit development-safety warnings in `docker-compose.yml` and the
   README about published `test/test` PostgreSQL credentials and non-production TLS.
 
+### Changed
+- **The public API moved into `namespace lintel` (breaking).** Every public class, free
+  function, enum and macro expansion that used to live in the global C++ namespace is now
+  qualified with `lintel::`; the persistence layer sits one level deeper in `lintel::db` and the
+  shared-memory string helpers in `lintel::shm` (with `lintel::postgresql` / `lintel::sqlite` for
+  the backend details). Include paths and include guards are unchanged (`#include <lintel/...>`,
+  `LINTEL_*`). The generated `config.h` (version macros and the message-queue constants) stays at
+  global scope. Consumers must qualify the names they use:
+
+  | Before (global) | After |
+  |---|---|
+  | `StartupBuilder` | `lintel::StartupBuilder` |
+  | `Features`, `Feature<T>` | `lintel::Features`, `lintel::Feature<T>` |
+  | `Property`, `PropertyService`, `PropertyFeature` | `lintel::Property`, `lintel::PropertyService`, `lintel::PropertyFeature` |
+  | `EventBus`, `EventBusService`, `Event<T>` | `lintel::EventBus`, `lintel::EventBusService`, `lintel::Event<T>` |
+  | `type_name<T>()` | `lintel::type_name<T>()` |
+  | `db::Connection`, `db::Result`, `db::SQLException` | `lintel::db::Connection`, `lintel::db::Result`, `lintel::db::SQLException` |
+  | `shm::String`, `shm::constructString` | `lintel::shm::String`, `lintel::shm::constructString` |
+
+  This was a one-time hard cut **without** a `using`-directive transition window (see `ROADMAP.md` A1). A new blocking CI job `namespace` (`scripts/check-namespace.sh`) fails if a public header declares its own names at global scope again.
+
 ### Fixed
 - **`DatabasePropertyRepository::allOf()`** default `instanceName` was `".*0"` instead of `".*"`,
   so every call omitting the instance filter returned nothing (`LIKE '%0'`). Fixed the default;

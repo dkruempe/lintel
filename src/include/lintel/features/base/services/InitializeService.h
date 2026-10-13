@@ -6,24 +6,25 @@
 
 #include "lintel/core/services/AbstractService.h"
 
+namespace lintel {
 /**
  * Service that triggers initialization on a collection of AbstractServiceInterface implementations.
  */
-class InitializeService {
+class InitializeService
+{
 private:
-    std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
+  std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
 
 public:
-    /**
-     * Constructor.
-     * @param abstractServices services to initialize
-     */
-    explicit InitializeService(
-            const std::vector<std::shared_ptr<AbstractServiceInterface>>
-            &abstractServices);
+  /**
+   * Constructor.
+   * @param abstractServices services to initialize
+   */
+  explicit InitializeService(const std::vector<std::shared_ptr<AbstractServiceInterface>> &abstractServices);
 
-    /** Call onInitialize() on all registered services. */
-    void onInitialize();
+  /** Call onInitialize() on all registered services. */
+  void onInitialize();
 };
 
-#endif  // PLC_INITIALIZESERVICE_H
+}// namespace lintel
+#endif// PLC_INITIALIZESERVICE_H

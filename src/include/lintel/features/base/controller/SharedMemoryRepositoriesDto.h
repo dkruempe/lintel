@@ -6,6 +6,7 @@
 #include "lintel/core/models/JsonSerializable.h"
 #include "lintel/features/base/controller/SharedMemoryRepositoryDto.h"
 
+namespace lintel {
 /** DTO representing a collection of shared memory repositories */
 class SharedMemoryRepositoriesDto : public JsonSerializable
 {
@@ -34,4 +35,5 @@ public:
   void deserialize(const std::string &json) override;
 };
 
+}// namespace lintel
 #endif// LINTEL_SHAREDMEMORYREPOSITORIESDTO_H

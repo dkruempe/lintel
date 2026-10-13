@@ -2,6 +2,7 @@
 
 #include <ctime>
 
+namespace lintel {
 Process::Process(std::filesystem::path path, std::vector<std::string> args, std::string configName)
   : m_path(std::move(path)), m_args(std::move(args)), m_configName(std::move(configName))
 {}
@@ -150,3 +151,4 @@ std::optional<double> Process::getCpuNotify() const { return m_cpuNotify; }
 void Process::setMemoryNotify(std::optional<uint64_t> memoryNotify) { m_memoryNotify = memoryNotify; }
 
 std::optional<uint64_t> Process::getMemoryNotify() const { return m_memoryNotify; }
+}// namespace lintel

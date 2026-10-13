@@ -4,7 +4,7 @@
 /**
  * LoggerService class for easier logging in process itself
  *
- * This public header parses only <format>. spdlog is hidden behind a
+ * This public header parses only &lt;format&gt;. spdlog is hidden behind a
  * forward declaration and stays in LoggerService.cpp.
  * The variadic log() applies std::format's template-elimination idea
  * (std::format -> std::vformat): the template only boxes its arguments with
@@ -17,7 +17,9 @@
 #include <mutex>
 #include <string_view>
 
+namespace lintel {
 class Configuration;
+}// namespace lintel
 #include "lintel/features/base/models/ProcessName.h"
 
 namespace spdlog {
@@ -25,6 +27,7 @@ namespace spdlog {
 class logger;
 }// namespace spdlog
 
+namespace lintel {
 /**
  * Log levels used by LoggerService and the LOG_* macros.
  * The values intentionally match spdlog::level::level_enum.
@@ -117,17 +120,19 @@ public:
   }
 };
 
-#define DECLARE_LOGGER(processName, configuration) LoggerService::getOrCreate(processName, configuration)
+#define DECLARE_LOGGER(processName, configuration) lintel::LoggerService::getOrCreate(processName, configuration)
 #define LOG_INFO(message, ...) \
-  LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, LogLevel::info, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::info, message, ##__VA_ARGS__)
 #define LOG_DEBUG(message, ...) \
-  LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, LogLevel::debug, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::debug, message, ##__VA_ARGS__)
 #define LOG_TRACE(message, ...) \
-  LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, LogLevel::trace, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::trace, message, ##__VA_ARGS__)
 #define LOG_ERROR(message, ...) \
-  LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, LogLevel::error, message, ##__VA_ARGS__)
-#define LOG_FATAL(message, ...) \
-  LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, LogLevel::critical, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::error, message, ##__VA_ARGS__)
+#define LOG_FATAL(message, ...)     \
+  lintel::LoggerService::get().log( \
+    __FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::critical, message, ##__VA_ARGS__)
 #define LOG_WARN(message, ...) \
-  LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, LogLevel::warn, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::warn, message, ##__VA_ARGS__)
+}// namespace lintel
 #endif// LOGGING_LOGGER_H

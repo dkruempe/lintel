@@ -11,36 +11,39 @@
 
 #endif
 
+namespace lintel {
 /** Utility class for terminal mode manipulation (echo, canonical mode) */
-class CommandLineUtils {
+class CommandLineUtils
+{
 private:
-    bool m_isCanonicalMode = false;
-    bool m_isEchoDisabled = false;
+  bool m_isCanonicalMode = false;
+  bool m_isEchoDisabled = false;
 
 public:
-    /** Disable input echo for password entry */
-    void disableOfInputEcho();
+  /** Disable input echo for password entry */
+  void disableOfInputEcho();
 
-    /** Re-enable input echo */
-    void enableOfInputEcho();
+  /** Re-enable input echo */
+  void enableOfInputEcho();
 
-    /** Clear the terminal screen */
-    static void clear();
+  /** Clear the terminal screen */
+  static void clear();
 
-    /** Ring the terminal bell */
-    static void beep();
+  /** Ring the terminal bell */
+  static void beep();
 
-    /** Disable canonical (line-buffered) input mode */
-    void disableOfCanonicalMode();
+  /** Disable canonical (line-buffered) input mode */
+  void disableOfCanonicalMode();
 
-    /** Re-enable canonical input mode */
-    void enableOfCanonicalMode();
+  /** Re-enable canonical input mode */
+  void enableOfCanonicalMode();
 
-    /** @return true if canonical mode is active */
-    bool isCanonicalMode() const;
+  /** @return true if canonical mode is active */
+  bool isCanonicalMode() const;
 
-    /** @return true if echo is enabled */
-    bool isEchoMode() const;
+  /** @return true if echo is enabled */
+  bool isEchoMode() const;
 };
 
-#endif  // LINTEL_COMMANDLINEUTILS_H
+}// namespace lintel
+#endif// LINTEL_COMMANDLINEUTILS_H

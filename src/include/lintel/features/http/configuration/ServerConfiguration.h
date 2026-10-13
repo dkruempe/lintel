@@ -7,71 +7,71 @@
 #include <string>
 #include <vector>
 
+namespace lintel {
 /** Configuration for an HTTP server (host, port, timeouts, TLS) */
-class ServerConfiguration {
+class ServerConfiguration
+{
 private:
-    const std::string m_host;
-    const int32_t m_port;
-    std::chrono::milliseconds m_readTimeOut;
-    std::chrono::milliseconds m_writeTimeOut;
-    std::chrono::milliseconds m_idleInterval;
-    std::filesystem::path m_certFile;
-    std::filesystem::path m_keyFile;
-    bool m_requireTls;
-    std::vector<std::string> m_trustedProxies;
+  const std::string m_host;
+  const int32_t m_port;
+  std::chrono::milliseconds m_readTimeOut;
+  std::chrono::milliseconds m_writeTimeOut;
+  std::chrono::milliseconds m_idleInterval;
+  std::filesystem::path m_certFile;
+  std::filesystem::path m_keyFile;
+  bool m_requireTls;
+  std::vector<std::string> m_trustedProxies;
 
 public:
-    /** @param host bind address
-     *  @param port listen port
-     *  @param readTimeOut read timeout (default 0 = no timeout)
-     *  @param writeTimeOut write timeout
-     *  @param idleInterval idle connection timeout
-     *  @param certFile TLS certificate file path
-     *  @param keyFile TLS key file path
-     *  @param requireTls refuse to start if TLS is not configured
-     *  @param trustedProxies IPs/CIDRs allowed to forward X-Forwarded-For */
-    ServerConfiguration(std::string host, int32_t port,
-                        const std::chrono::milliseconds &readTimeOut =
-                        std::chrono::milliseconds(0),
-                        const std::chrono::milliseconds &writeTimeOut =
-                        std::chrono::milliseconds(0),
-                        const std::chrono::milliseconds &idleInterval =
-                        std::chrono::milliseconds(0),
-                        std::filesystem::path certFile = "",
-                        std::filesystem::path keyFile = "",
-                        bool requireTls = false,
-                        std::vector<std::string> trustedProxies = {});
+  /** @param host bind address
+   *  @param port listen port
+   *  @param readTimeOut read timeout (default 0 = no timeout)
+   *  @param writeTimeOut write timeout
+   *  @param idleInterval idle connection timeout
+   *  @param certFile TLS certificate file path
+   *  @param keyFile TLS key file path
+   *  @param requireTls refuse to start if TLS is not configured
+   *  @param trustedProxies IPs/CIDRs allowed to forward X-Forwarded-For */
+  ServerConfiguration(std::string host,
+    int32_t port,
+    const std::chrono::milliseconds &readTimeOut = std::chrono::milliseconds(0),
+    const std::chrono::milliseconds &writeTimeOut = std::chrono::milliseconds(0),
+    const std::chrono::milliseconds &idleInterval = std::chrono::milliseconds(0),
+    std::filesystem::path certFile = "",
+    std::filesystem::path keyFile = "",
+    bool requireTls = false,
+    std::vector<std::string> trustedProxies = {});
 
-    /** @return the bind host */
-    [[nodiscard]] const std::string &getHost() const;
+  /** @return the bind host */
+  [[nodiscard]] const std::string &getHost() const;
 
-    /** @return the listen port */
-    [[nodiscard]] constexpr int32_t getPort() const { return m_port; }
+  /** @return the listen port */
+  [[nodiscard]] constexpr int32_t getPort() const { return m_port; }
 
-    /** @return the read timeout */
-    [[nodiscard]] const std::chrono::milliseconds &getReadTimeOut() const;
+  /** @return the read timeout */
+  [[nodiscard]] const std::chrono::milliseconds &getReadTimeOut() const;
 
-    /** @return the write timeout */
-    [[nodiscard]] const std::chrono::milliseconds &getWriteTimeOut() const;
+  /** @return the write timeout */
+  [[nodiscard]] const std::chrono::milliseconds &getWriteTimeOut() const;
 
-    /** @return the idle interval */
-    [[nodiscard]] const std::chrono::milliseconds &getIdleInterval() const;
+  /** @return the idle interval */
+  [[nodiscard]] const std::chrono::milliseconds &getIdleInterval() const;
 
-    /** @return the TLS certificate file path */
-    [[nodiscard]] const std::filesystem::path &getCertFile() const;
+  /** @return the TLS certificate file path */
+  [[nodiscard]] const std::filesystem::path &getCertFile() const;
 
-    /** @return the TLS key file path */
-    [[nodiscard]] const std::filesystem::path &getKeyFile() const;
+  /** @return the TLS key file path */
+  [[nodiscard]] const std::filesystem::path &getKeyFile() const;
 
-    /** @return true if the server must not start without TLS */
-    [[nodiscard]] constexpr bool isTlsRequired() const { return m_requireTls; }
+  /** @return true if the server must not start without TLS */
+  [[nodiscard]] constexpr bool isTlsRequired() const { return m_requireTls; }
 
-    /** @return IPs/CIDRs trusted to forward X-Forwarded-For */
-    [[nodiscard]] const std::vector<std::string> &getTrustedProxies() const;
+  /** @return IPs/CIDRs trusted to forward X-Forwarded-For */
+  [[nodiscard]] const std::vector<std::string> &getTrustedProxies() const;
 
-    /** Print configuration to stream */
-    friend std::ostream &operator<<(std::ostream &os,
-                                    const ServerConfiguration &configuration);
+  /** Print configuration to stream */
+  friend std::ostream &operator<<(std::ostream &os, const ServerConfiguration &configuration);
 };
 
-#endif  // HTTP_LIBRARY_SERVERCONFIGURATION_H
+}// namespace lintel
+#endif// HTTP_LIBRARY_SERVERCONFIGURATION_H

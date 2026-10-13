@@ -486,6 +486,21 @@ jobs:
       - name: Check for plaintext credentials
         run: ./scripts/check-secrets.sh --all
 
+  namespace:
+    name: namespace guard
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Blocking, and cheap (no compiler involved). The public API moved into
+      # `namespace lintel` (A1 migration); this guard fails when a header
+      # declares its own names at global scope again, which would reintroduce
+      # the collisions the migration removed. The generated `config.h` is exempt.
+      - name: Check public header namespaces
+        run: ./scripts/check-namespace.sh
+
   format:
     name: clang-format
     runs-on: ubuntu-24.04

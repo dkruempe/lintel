@@ -2,25 +2,22 @@
 
 #include "lintel/core/services/LoggerService.h"
 
+namespace lintel {
 const std::vector<ProcessInfoDto> &ProcessInfosDto::getProcessInfos() const { return m_processInfos; }
 
-ProcessInfosDto::ProcessInfosDto(const std::vector<ProcessInfo> &processInfos)
-  : m_processInfos(build(processInfos)) {}
+ProcessInfosDto::ProcessInfosDto(const std::vector<ProcessInfo> &processInfos) : m_processInfos(build(processInfos)) {}
 
-std::vector<ProcessInfoDto> ProcessInfosDto::build(
-  const std::vector<ProcessInfo> &processInfos)
+std::vector<ProcessInfoDto> ProcessInfosDto::build(const std::vector<ProcessInfo> &processInfos)
 {
   std::vector<ProcessInfoDto> temp;
   temp.reserve(processInfos.size());
-  std::transform(processInfos.begin(),
-    processInfos.end(),
-    std::back_inserter(temp),
-    [](const ProcessInfo &p) { return ProcessInfoDto(p); });
+  std::transform(processInfos.begin(), processInfos.end(), std::back_inserter(temp), [](const ProcessInfo &p) {
+    return ProcessInfoDto(p);
+  });
   return temp;
 }
 
-void ProcessInfosDto::serialize(
-  rapidjson::Writer<rapidjson::StringBuffer> *writer) const
+void ProcessInfosDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const
 {
   writer->StartArray();
   for (const auto &iter : m_processInfos) { iter.serialize(writer); }
@@ -36,3 +33,4 @@ bool ProcessInfosDto::deserialize(const rapidjson::Value &obj)
   }
   return true;
 }
+}// namespace lintel

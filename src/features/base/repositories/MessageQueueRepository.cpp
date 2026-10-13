@@ -1,22 +1,23 @@
 #include "lintel/features/base/repositories/MessageQueueRepository.h"
 
+#include <cstdint>
 #include <lintel/core/exceptions/SQLException.h>
-#include <lintel/core/services/LoggerService.h>
-#include <lintel/core/persistence/ConnectionType.h>
 #include <lintel/core/persistence/Connection.h>
+#include <lintel/core/persistence/ConnectionType.h>
 #include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
 #include <lintel/core/persistence/ParameterBuilder.h>
-#include <lintel/core/persistence/Transaction.h>
 #include <lintel/core/persistence/PreparedStatement.h>
+#include <lintel/core/persistence/Transaction.h>
+#include <lintel/core/services/LoggerService.h>
 #include <lintel/features/base/configuration/MessageQueueEntry.h>
-#include <cstdint>
 #include <memory>
 #include <vector>
 
+namespace lintel {
 MessageQueueRepository::MessageQueueRepository(
   const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations)
-  : m_connectionConfigurations(connectionConfigurations),
-    m_connectionEntry(connectionConfigurations->ofDefault()) {}
+  : m_connectionConfigurations(connectionConfigurations), m_connectionEntry(connectionConfigurations->ofDefault())
+{}
 
 void MessageQueueRepository::insertOf(const std::vector<MessageQueueEntry> &entries)
 {
@@ -39,9 +40,8 @@ void MessageQueueRepository::deleteOf(const std::vector<MessageQueueEntry> &entr
 {
   const db::Connection connection(m_connectionEntry);
   db::Transaction transaction(connection);
-  db::PreparedStatement preparedStatement(connection,
-    "delete from message_queues where name = ?",
-    "delte_message_queues");
+  db::PreparedStatement preparedStatement(
+    connection, "delete from message_queues where name = ?", "delte_message_queues");
   for (const auto &item : entries) {
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(item.get_message_queue_name());
@@ -86,10 +86,8 @@ std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &
   builder.add(processName);
   auto result = preparedStatement.execute(builder);
   for (const auto &iter : result) {
-    auto messageQueueEntry = MessageQueueEntry("",
-      iter.of(1).getValue<std::string>(),
-      iter.of(0).getValue<std::string>(),
-      iter.of(2).getValue<int32_t>());
+    auto messageQueueEntry = MessageQueueEntry(
+      "", iter.of(1).getValue<std::string>(), iter.of(0).getValue<std::string>(), iter.of(2).getValue<int32_t>());
     entries.push_back(messageQueueEntry);
   }
   return entries;
@@ -100,9 +98,7 @@ Page<MessageQueueEntry> MessageQueueRepository::pageOf(const std::string &proces
   const std::optional<std::string> &afterName,
   std::size_t limit)
 {
-  if (limit == 0) {
-    return Page<MessageQueueEntry>({}, false, std::nullopt);
-  }
+  if (limit == 0) { return Page<MessageQueueEntry>({}, false, std::nullopt); }
   if (m_connectionEntry == nullptr) {
     LOG_INFO("no default database connection - skip message queue sync from database");
     return Page<MessageQueueEntry>({}, false, std::nullopt);
@@ -142,8 +138,7 @@ Page<MessageQueueEntry> MessageQueueRepository::pageOf(const std::string &proces
   auto result = preparedStatement.execute(builder);
   std::vector<MessageQueueEntry> entries;
   const bool hasMore = static_cast<std::size_t>(result.getSize()) > limit;
-  const std::size_t pageSize =
-      hasMore ? limit : static_cast<std::size_t>(result.getSize());
+  const std::size_t pageSize = hasMore ? limit : static_cast<std::size_t>(result.getSize());
   for (std::size_t i = 0; i < pageSize; i++) {
     entries.push_back(MessageQueueEntry("",
       result.of(i).of(1).getValue<std::string>(),
@@ -151,9 +146,7 @@ Page<MessageQueueEntry> MessageQueueRepository::pageOf(const std::string &proces
       result.of(i).of(2).getValue<int32_t>()));
   }
   std::optional<std::string> nextAfter = std::nullopt;
-  if (hasMore && !entries.empty()) {
-    nextAfter = entries.back().get_message_queue_name();
-  }
+  if (hasMore && !entries.empty()) { nextAfter = entries.back().get_message_queue_name(); }
   return Page<MessageQueueEntry>(std::move(entries), hasMore, nextAfter);
 }
 
@@ -171,10 +164,8 @@ std::vector<MessageQueueEntry> MessageQueueRepository::allProcessNameOf(const st
   builder.add(processName);
   auto result = preparedStatement.execute(builder);
   for (const auto &iter : result) {
-    auto messageQueueEntry = MessageQueueEntry("",
-      iter.of(1).getValue<std::string>(),
-      iter.of(0).getValue<std::string>(),
-      iter.of(2).getValue<int32_t>());
+    auto messageQueueEntry = MessageQueueEntry(
+      "", iter.of(1).getValue<std::string>(), iter.of(0).getValue<std::string>(), iter.of(2).getValue<int32_t>());
     entries.push_back(messageQueueEntry);
   }
   return entries;
@@ -208,13 +199,11 @@ MessageQueueEntry MessageQueueRepository::allMessageQueueNameOf(const std::strin
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(name);
   auto result = preparedStatement.execute(builder);
-  if (result.getSize() <= 0) {
-    throw db::SQLException("message queue with name pattern '" + name +
-                           "' not found");
-  }
+  if (result.getSize() <= 0) { throw db::SQLException("message queue with name pattern '" + name + "' not found"); }
   MessageQueueEntry messageQueueEntry("",
     result.of(0).of(1).getValue<std::string>(),
     result.of(0).of(0).getValue<std::string>(),
     result.of(0).of(2).getValue<int32_t>());
   return messageQueueEntry;
 }
+}// namespace lintel

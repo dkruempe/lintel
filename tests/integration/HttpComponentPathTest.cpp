@@ -12,6 +12,7 @@
 // still gets joined, and every "no TLS" deployment would be pointed at the directory itself
 // ("/tmp/example_cfg/") instead of at "no certificate at all".
 
+namespace lintel {
 TEST_CASE("HttpComponent: absent cert/key/ca paths stay empty with a config directory set")
 {
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
@@ -76,3 +77,4 @@ TEST_CASE("HttpComponent: a set cert path is still resolved against the config d
   REQUIRE(serverEntry->getServerConfiguration()->getCertFile() == "/tmp/example_cfg/certs/server.crt");
   REQUIRE(serverEntry->getServerConfiguration()->getKeyFile() == "/tmp/example_cfg/certs/server.key");
 }
+}// namespace lintel

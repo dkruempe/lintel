@@ -11,29 +11,30 @@
 #include "lintel/features/base/configuration/ProcessEntry.h"
 #include "lintel/features/base/models/Process.h"
 
+namespace lintel {
 const ProcessComponent::Shapes ProcessComponent::m_shapes{};
 
 namespace {
 
-std::chrono::milliseconds parseDurationMs(const char *value, const char *attribute)
-{
-  if (value == nullptr) { return std::chrono::milliseconds(0); }
-  try {
-    return std::chrono::milliseconds(std::stoll(value));
-  } catch (const std::exception &) {
-    throw ConfigurationException(std::string(attribute), "invalid millisecond value: " + std::string(value), 0);
+  std::chrono::milliseconds parseDurationMs(const char *value, const char *attribute)
+  {
+    if (value == nullptr) { return std::chrono::milliseconds(0); }
+    try {
+      return std::chrono::milliseconds(std::stoll(value));
+    } catch (const std::exception &) {
+      throw ConfigurationException(std::string(attribute), "invalid millisecond value: " + std::string(value), 0);
+    }
   }
-}
 
-int parseOptionalInt(const char *value, int fallback)
-{
-  if (value == nullptr) { return fallback; }
-  try {
-    return std::stoi(value);
-  } catch (const std::exception &) {
-    return fallback;
+  int parseOptionalInt(const char *value, int fallback)
+  {
+    if (value == nullptr) { return fallback; }
+    try {
+      return std::stoi(value);
+    } catch (const std::exception &) {
+      return fallback;
+    }
   }
-}
 
 }// namespace
 
@@ -149,3 +150,4 @@ std::shared_ptr<Entry> ProcessComponent::parseProcessGroup(tinyxml2::XMLElement 
   std::shared_ptr<ProcessGroup> processGroup = std::make_shared<ProcessGroup>(groupName, entries);
   return std::make_shared<ProcessEntry>(type_name<ProcessComponent>(), processGroup);
 }
+}// namespace lintel

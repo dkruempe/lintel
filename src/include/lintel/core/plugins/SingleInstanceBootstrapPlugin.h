@@ -9,6 +9,7 @@
 #include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 #include "lintel/features/base/models/ProcessName.h"
 
+namespace lintel {
 /**
  * Bootstrap plugin that guarantees that a process with a database connection
  * (the server) only runs once.
@@ -23,41 +24,41 @@
  * Processes without a default database connection (e.g. worker processes)
  * are intentionally not restricted and skip the lock entirely.
  */
-class SingleInstanceBootstrapPlugin : public BootstrapPlugin {
+class SingleInstanceBootstrapPlugin : public BootstrapPlugin
+{
 private:
-    /** Boost typed operating system file lock. Defined in the implementation
-     *  file to keep boost out of this header; the plugin holds it for its
-     *  whole lifetime so a second instance detects the conflict. */
-    class Lock;
+  /** Boost typed operating system file lock. Defined in the implementation
+   *  file to keep boost out of this header; the plugin holds it for its
+   *  whole lifetime so a second instance detects the conflict. */
+  class Lock;
 
-    std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
-    std::shared_ptr<Configuration> m_configuration;
-    std::shared_ptr<ProcessName> m_processName;
-    std::unique_ptr<Lock> m_fileLock;
+  std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
+  std::shared_ptr<Configuration> m_configuration;
+  std::shared_ptr<ProcessName> m_processName;
+  std::unique_ptr<Lock> m_fileLock;
 
-    /** Resolve the lock file path and acquire the exclusive lock.
-     * @throws std::runtime_error if another instance is already running */
-    void acquireLock();
+  /** Resolve the lock file path and acquire the exclusive lock.
+   * @throws std::runtime_error if another instance is already running */
+  void acquireLock();
 
 public:
-    /** Construct a SingleInstanceBootstrapPlugin.
-     * @param connectionConfigurations database connection configurations
-     * @param configuration application configuration containing the shared
-     *        memory path used for the lock file location
-     * @param processName the process name of the running process */
-    SingleInstanceBootstrapPlugin(
-            const std::shared_ptr<DatabaseConnectionConfigurations>
-            &connectionConfigurations,
-            std::shared_ptr<Configuration> configuration,
-            std::shared_ptr<ProcessName> processName);
+  /** Construct a SingleInstanceBootstrapPlugin.
+   * @param connectionConfigurations database connection configurations
+   * @param configuration application configuration containing the shared
+   *        memory path used for the lock file location
+   * @param processName the process name of the running process */
+  SingleInstanceBootstrapPlugin(const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
+    std::shared_ptr<Configuration> configuration,
+    std::shared_ptr<ProcessName> processName);
 
-    ~SingleInstanceBootstrapPlugin() override;
+  ~SingleInstanceBootstrapPlugin() override;
 
-    /** Acquire the single instance lock unless no database connection exists. */
-    void onStart() override;
+  /** Acquire the single instance lock unless no database connection exists. */
+  void onStart() override;
 
-    /** Returns the priority for ordering this plugin in the bootstrap sequence. */
-    BootstrapSequence getPriority() override;
+  /** Returns the priority for ordering this plugin in the bootstrap sequence. */
+  BootstrapSequence getPriority() override;
 };
 
-#endif  // LINTEL_SINGLEINSTANCEBOOTSTRAPPLUGIN_H
+}// namespace lintel
+#endif// LINTEL_SINGLEINSTANCEBOOTSTRAPPLUGIN_H

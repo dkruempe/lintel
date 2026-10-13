@@ -12,45 +12,46 @@
 #include <thread>
 #include <vector>
 
+namespace lintel {
 namespace {
 
-/** Deadline used whenever a test waits for a scheduled task to complete. */
-constexpr std::chrono::seconds kSchedSvcDeadline{ 5 };
+  /** Deadline used whenever a test waits for a scheduled task to complete. */
+  constexpr std::chrono::seconds kSchedSvcDeadline{ 5 };
 
-/** Long enough to prove "this task must not run" without wasting test time. */
-constexpr std::chrono::milliseconds kSchedSvcQuiet{ 150 };
+  /** Long enough to prove "this task must not run" without wasting test time. */
+  constexpr std::chrono::milliseconds kSchedSvcQuiet{ 150 };
 
-/**
- * Owns a `SchedulerService`. `start()` has to be called explicitly by the tests that need the
- * worker threads; the destructor shuts the service down so no thread outlives the test case.
- */
-class schedSvcFixture
-{
-public:
-  schedSvcFixture()
-    : m_processName(std::make_shared<ProcessName>("scheduler-service-test")),
-      m_scheduler(std::make_shared<SchedulerService>(m_processName))
-  {}
+  /**
+   * Owns a `SchedulerService`. `start()` has to be called explicitly by the tests that need the
+   * worker threads; the destructor shuts the service down so no thread outlives the test case.
+   */
+  class schedSvcFixture
+  {
+  public:
+    schedSvcFixture()
+      : m_processName(std::make_shared<ProcessName>("scheduler-service-test")),
+        m_scheduler(std::make_shared<SchedulerService>(m_processName))
+    {}
 
-  ~schedSvcFixture() { m_scheduler->onShutdown(); }
+    ~schedSvcFixture() { m_scheduler->onShutdown(); }
 
-  schedSvcFixture(const schedSvcFixture &) = delete;
-  schedSvcFixture &operator=(const schedSvcFixture &) = delete;
+    schedSvcFixture(const schedSvcFixture &) = delete;
+    schedSvcFixture &operator=(const schedSvcFixture &) = delete;
 
-  /** Start the worker threads (the shipped default is 40 per instance) */
-  void start() { m_scheduler->onInitialize(); }
+    /** Start the worker threads (the shipped default is 40 per instance) */
+    void start() { m_scheduler->onInitialize(); }
 
-  [[nodiscard]] SchedulerService &scheduler() { return *m_scheduler; }
+    [[nodiscard]] SchedulerService &scheduler() { return *m_scheduler; }
 
-  std::shared_ptr<ProcessName> m_processName;
-  std::shared_ptr<SchedulerService> m_scheduler;
-};
+    std::shared_ptr<ProcessName> m_processName;
+    std::shared_ptr<SchedulerService> m_scheduler;
+  };
 
-/** @return true if the value became reachable before the deadline */
-template<typename T> bool schedSvcAwaited(const std::future<T> &future)
-{
-  return future.wait_for(kSchedSvcDeadline) == std::future_status::ready;
-}
+  /** @return true if the value became reachable before the deadline */
+  template<typename T> bool schedSvcAwaited(const std::future<T> &future)
+  {
+    return future.wait_for(kSchedSvcDeadline) == std::future_status::ready;
+  }
 
 }// namespace
 
@@ -260,3 +261,4 @@ TEST_CASE("SchedulerService: a task that throws a non standard exception is cont
   REQUIRE(schedSvcAwaited(schedSvcFollowing));
   REQUIRE(schedSvcRan.load());
 }
+}// namespace lintel

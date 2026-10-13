@@ -21,133 +21,134 @@
 #include "lintel/features/http/configuration/HttpEntry.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 namespace {
 
-/** RAII redirector for `std::cout`, restored on destruction even when a REQUIRE throws. */
-class shmCliCoutCapture
-{
-public:
-  shmCliCoutCapture() : m_oldBuffer(std::cout.rdbuf(m_stream.rdbuf())) {}
-
-  ~shmCliCoutCapture() { std::cout.rdbuf(m_oldBuffer); }
-
-  shmCliCoutCapture(const shmCliCoutCapture &) = delete;
-  shmCliCoutCapture &operator=(const shmCliCoutCapture &) = delete;
-
-  [[nodiscard]] std::string str() const { return m_stream.str(); }
-
-private:
-  std::ostringstream m_stream;
-  std::streambuf *m_oldBuffer;
-};
-
-/** RAII redirector for `std::cerr`, used for the error paths of onCommand(). */
-class shmCliCerrCapture
-{
-public:
-  shmCliCerrCapture() : m_oldBuffer(std::cerr.rdbuf(m_stream.rdbuf())) {}
-
-  ~shmCliCerrCapture() { std::cerr.rdbuf(m_oldBuffer); }
-
-  shmCliCerrCapture(const shmCliCerrCapture &) = delete;
-  shmCliCerrCapture &operator=(const shmCliCerrCapture &) = delete;
-
-  [[nodiscard]] std::string str() const { return m_stream.str(); }
-
-private:
-  std::ostringstream m_stream;
-  std::streambuf *m_oldBuffer;
-};
-
-/**
- * `SharedMemoryApi` has no virtual seam, so the component is driven against a loopback HTTP
- * server that records method and path of every request and answers with a canned body.
- */
-class shmCliBackend
-{
-public:
-  shmCliBackend()
+  /** RAII redirector for `std::cout`, restored on destruction even when a REQUIRE throws. */
+  class shmCliCoutCapture
   {
-    m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
-      paths.push_back(request.path);
-      methods.emplace_back(request.method);
-      response.set_content(m_responseBody, "application/json");
-      return httplib::Server::HandlerResponse::Handled;
-    });
-    m_port = m_server.bind_to_any_port("127.0.0.1");
-    m_thread = std::thread([this]() { m_server.listen_after_bind(); });
-    // Server::stop() is a no-op until the accept loop is up. Without this wait a
-    // backend that is created and destroyed without a single request leaves the
-    // accept loop blocked in accept() and the join in the destructor never returns.
-    const auto shmCliDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    while (!m_server.is_running() && std::chrono::steady_clock::now() < shmCliDeadline) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  public:
+    shmCliCoutCapture() : m_oldBuffer(std::cout.rdbuf(m_stream.rdbuf())) {}
+
+    ~shmCliCoutCapture() { std::cout.rdbuf(m_oldBuffer); }
+
+    shmCliCoutCapture(const shmCliCoutCapture &) = delete;
+    shmCliCoutCapture &operator=(const shmCliCoutCapture &) = delete;
+
+    [[nodiscard]] std::string str() const { return m_stream.str(); }
+
+  private:
+    std::ostringstream m_stream;
+    std::streambuf *m_oldBuffer;
+  };
+
+  /** RAII redirector for `std::cerr`, used for the error paths of onCommand(). */
+  class shmCliCerrCapture
+  {
+  public:
+    shmCliCerrCapture() : m_oldBuffer(std::cerr.rdbuf(m_stream.rdbuf())) {}
+
+    ~shmCliCerrCapture() { std::cerr.rdbuf(m_oldBuffer); }
+
+    shmCliCerrCapture(const shmCliCerrCapture &) = delete;
+    shmCliCerrCapture &operator=(const shmCliCerrCapture &) = delete;
+
+    [[nodiscard]] std::string str() const { return m_stream.str(); }
+
+  private:
+    std::ostringstream m_stream;
+    std::streambuf *m_oldBuffer;
+  };
+
+  /**
+   * `SharedMemoryApi` has no virtual seam, so the component is driven against a loopback HTTP
+   * server that records method and path of every request and answers with a canned body.
+   */
+  class shmCliBackend
+  {
+  public:
+    shmCliBackend()
+    {
+      m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
+        paths.push_back(request.path);
+        methods.emplace_back(request.method);
+        response.set_content(m_responseBody, "application/json");
+        return httplib::Server::HandlerResponse::Handled;
+      });
+      m_port = m_server.bind_to_any_port("127.0.0.1");
+      m_thread = std::thread([this]() { m_server.listen_after_bind(); });
+      // Server::stop() is a no-op until the accept loop is up. Without this wait a
+      // backend that is created and destroyed without a single request leaves the
+      // accept loop blocked in accept() and the join in the destructor never returns.
+      const auto shmCliDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+      while (!m_server.is_running() && std::chrono::steady_clock::now() < shmCliDeadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
     }
-  }
 
-  ~shmCliBackend()
+    ~shmCliBackend()
+    {
+      m_server.stop();
+      if (m_thread.joinable()) { m_thread.join(); }
+    }
+
+    shmCliBackend(const shmCliBackend &) = delete;
+    shmCliBackend &operator=(const shmCliBackend &) = delete;
+
+    void answerWith(const std::string &body) { m_responseBody = body; }
+
+    [[nodiscard]] int port() const { return m_port; }
+
+    /** @return true once the accept loop is up, so stop() can shut the server down */
+    [[nodiscard]] bool running() const { return m_server.is_running(); }
+
+    std::vector<std::string> paths;
+    std::vector<std::string> methods;
+
+  private:
+    httplib::Server m_server;
+    std::thread m_thread;
+    int m_port{ -1 };
+    std::string m_responseBody{ "[]" };
+  };
+
+  /** Client provider whose only client entry points at the loopback backend. */
+  std::shared_ptr<ClientProvider> shmCliProviderOf(int port)
   {
-    m_server.stop();
-    if (m_thread.joinable()) { m_thread.join(); }
+    static const std::string kShmCliAbsentConfigDir = "/nonexistent/lintel-shm-cli-test-config";
+    auto environment = std::make_shared<EnvironmentConfiguration>();
+    environment->overrides(EnvironmentConfiguration::ConfigDirectory, kShmCliAbsentConfigDir);
+    auto clientConfiguration = std::make_shared<ClientConfiguration>("127.0.0.1",
+      port,
+      std::chrono::milliseconds(2000),
+      std::chrono::milliseconds(2000),
+      std::chrono::milliseconds(2000));
+    std::vector<std::shared_ptr<Entry>> entries{ std::make_shared<HttpEntry>(
+      type_name<HttpComponent>(), clientConfiguration) };
+    auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
+    configuration->setEntries(entries);
+    return std::make_shared<ClientProvider>(configuration);
   }
 
-  shmCliBackend(const shmCliBackend &) = delete;
-  shmCliBackend &operator=(const shmCliBackend &) = delete;
+  /** @return a segment payload in the wire format of SharedMemorySegmentDto */
+  std::string
+    shmCliOneSegmentBody(const std::string &name, const std::string &sizeInByte, const std::string &currentSizeInByte)
+  {
+    return std::string("[{\"path\":\"/dev/shm/") + name + "\",\"name\":\"" + name + "\",\"size\":\"" + sizeInByte
+           + "\",\"auto_extend\":false,\"auto_extend_size\":\"0\"," + "\"max_size\":\"" + sizeInByte
+           + "\",\"sanity\":true,\"current_size\":\"" + currentSizeInByte
+           + "\",\"free_size\":\"0\",\"named_objects\":\"3\"," + "\"unique_objects\":\"4\"}]";
+  }
 
-  void answerWith(const std::string &body) { m_responseBody = body; }
-
-  [[nodiscard]] int port() const { return m_port; }
-
-  /** @return true once the accept loop is up, so stop() can shut the server down */
-  [[nodiscard]] bool running() const { return m_server.is_running(); }
-
-  std::vector<std::string> paths;
-  std::vector<std::string> methods;
-
-private:
-  httplib::Server m_server;
-  std::thread m_thread;
-  int m_port{ -1 };
-  std::string m_responseBody{ "[]" };
-};
-
-/** Client provider whose only client entry points at the loopback backend. */
-std::shared_ptr<ClientProvider> shmCliProviderOf(int port)
-{
-  static const std::string kShmCliAbsentConfigDir = "/nonexistent/lintel-shm-cli-test-config";
-  auto environment = std::make_shared<EnvironmentConfiguration>();
-  environment->overrides(EnvironmentConfiguration::ConfigDirectory, kShmCliAbsentConfigDir);
-  auto clientConfiguration = std::make_shared<ClientConfiguration>("127.0.0.1",
-    port,
-    std::chrono::milliseconds(2000),
-    std::chrono::milliseconds(2000),
-    std::chrono::milliseconds(2000));
-  std::vector<std::shared_ptr<Entry>> entries{ std::make_shared<HttpEntry>(
-    type_name<HttpComponent>(), clientConfiguration) };
-  auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
-  configuration->setEntries(entries);
-  return std::make_shared<ClientProvider>(configuration);
-}
-
-/** @return a segment payload in the wire format of SharedMemorySegmentDto */
-std::string
-  shmCliOneSegmentBody(const std::string &name, const std::string &sizeInByte, const std::string &currentSizeInByte)
-{
-  return std::string("[{\"path\":\"/dev/shm/") + name + "\",\"name\":\"" + name + "\",\"size\":\"" + sizeInByte
-         + "\",\"auto_extend\":false,\"auto_extend_size\":\"0\"," + "\"max_size\":\"" + sizeInByte
-         + "\",\"sanity\":true,\"current_size\":\"" + currentSizeInByte
-         + "\",\"free_size\":\"0\",\"named_objects\":\"3\"," + "\"unique_objects\":\"4\"}]";
-}
-
-/** @return a repository payload in the wire format of SharedMemoryRepositoryDto */
-std::string shmCliOneRepositoryBody(const std::string &uuid,
-  const std::string &name,
-  const std::string &segmentName,
-  const std::string &sizeInByte)
-{
-  return std::string("[{\"uuid\":\"") + uuid + "\",\"name\":\"" + name + "\",\"segment_name\":\"" + segmentName
-         + "\",\"type\":\"Map\",\"size\":\"" + sizeInByte + "\",\"version\":7}]";
-}
+  /** @return a repository payload in the wire format of SharedMemoryRepositoryDto */
+  std::string shmCliOneRepositoryBody(const std::string &uuid,
+    const std::string &name,
+    const std::string &segmentName,
+    const std::string &sizeInByte)
+  {
+    return std::string("[{\"uuid\":\"") + uuid + "\",\"name\":\"" + name + "\",\"segment_name\":\"" + segmentName
+           + "\",\"type\":\"Map\",\"size\":\"" + sizeInByte + "\",\"version\":7}]";
+  }
 
 }// namespace
 
@@ -496,3 +497,4 @@ TEST_CASE("SharedMemoryCliComponent: show_segments without a value for -s prints
   REQUIRE(shmCliServer.paths.empty());
   REQUIRE(shmCliReported.find("ERROR") != std::string::npos);
 }
+}// namespace lintel

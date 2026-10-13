@@ -24,6 +24,7 @@
 #include <fstream>
 #include <sstream>
 
+namespace lintel {
 TEST_CASE("LoggerComponent: parse Logger with ConsoleSink")
 {
   ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
@@ -603,3 +604,4 @@ TEST_CASE("EnvironmentConfiguration: empty Path override is ignored")
   REQUIRE(envConfig->pathsOf()[0] == "/tmp/env_path_three");
   REQUIRE(envConfig->of(EnvironmentConfiguration::Environment::Path) == "/tmp/env_path_three");
 }
+}// namespace lintel

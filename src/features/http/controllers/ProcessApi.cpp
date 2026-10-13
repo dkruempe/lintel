@@ -9,6 +9,7 @@
 #include "lintel/features/http/service/HttpStatusCodes.h"
 #include "lintel/features/http/service/HttpUnauthorizedException.h"
 
+namespace lintel {
 ProcessApi::ProcessApi(const std::shared_ptr<ClientProvider> &clientProvicer) : m_client(clientProvicer->provide()) {}
 
 std::vector<ProcessInfoDto> ProcessApi::allOf(const std::string &processName)
@@ -188,3 +189,4 @@ std::optional<ProcessInfoDto> ProcessApi::healthOf(const std::string &id)
     return std::nullopt;
   }
 }
+}// namespace lintel

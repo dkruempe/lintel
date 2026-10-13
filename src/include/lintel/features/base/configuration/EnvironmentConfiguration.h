@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+namespace lintel {
 /** Provides environment-specific configuration values and file path resolution */
 class EnvironmentConfiguration
 {
@@ -66,3 +67,4 @@ public:
    */
   static std::string expand(const std::string &value);
 };
+}// namespace lintel

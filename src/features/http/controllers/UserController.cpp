@@ -15,6 +15,7 @@
 #include "lintel/features/base/controller/UserTokenDto.h"
 #include "lintel/features/http/service/HttpStatusCodes.h"
 
+namespace lintel {
 void UserController::loginOfPost(const httplib::Request &request,
   httplib::Response &response,
   const ContentType &contentType,
@@ -481,3 +482,4 @@ void UserController::loginStateOfGet(const httplib::Request &request,
   response.status = HttpStatusCodes::OK;
   response.set_content("", contentType.getName());
 }
+}// namespace lintel

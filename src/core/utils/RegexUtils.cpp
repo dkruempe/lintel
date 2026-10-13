@@ -2,18 +2,19 @@
 
 #include <regex>
 
+namespace lintel {
 namespace {
 
-std::size_t countWildcardRuns(const std::string &pattern)
-{
-  std::size_t count = 0;
-  for (std::size_t i = 0; i + 1 < pattern.size(); i++) {
-    if (pattern[i] == '.') {
-      if (pattern[i + 1] == '*' || pattern[i + 1] == '+') { count++; }
+  std::size_t countWildcardRuns(const std::string &pattern)
+  {
+    std::size_t count = 0;
+    for (std::size_t i = 0; i + 1 < pattern.size(); i++) {
+      if (pattern[i] == '.') {
+        if (pattern[i + 1] == '*' || pattern[i + 1] == '+') { count++; }
+      }
     }
+    return count;
   }
-  return count;
-}
 
 }// namespace
 
@@ -95,3 +96,4 @@ bool RegexUtils::hasNestedQuantifier(const std::string &pattern)
   }
   return false;
 }
+}// namespace lintel

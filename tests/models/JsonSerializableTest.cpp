@@ -16,6 +16,7 @@
 // nor an array. Those requests reach a controller with a body the DTO can never read, so the
 // rejection has to happen before the value is dispatched - HttpBadRequestException is what the
 // HTTP layer turns into a 400 instead of a 500.
+namespace lintel {
 TEST_CASE("JsonSerializable::deserialize rejects bodies that are neither object nor array")
 {
   const std::vector<std::string> rejectedBodies = {
@@ -54,3 +55,4 @@ TEST_CASE("JsonSerializable::deserialize accepts a JSON object")
   REQUIRE_NOTHROW(serializable.deserialize(std::string("{}")));
   REQUIRE(groups.getGroups().empty());
 }
+}// namespace lintel

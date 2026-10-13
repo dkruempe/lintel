@@ -1,38 +1,36 @@
 #include "lintel/features/base/services/MessageQueueService.h"
 
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/configuration/Configuration.h"
 #include "lintel/features/base/configuration/MessageQueueComponent.h"
 #include "lintel/features/base/configuration/MessageQueueEntry.h"
-#include "lintel/core/services/LoggerService.h"
+#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/msg/MessageQueue.h"
 #include "lintel/features/base/repositories/MessageQueueRepository.h"
-#include "lintel/features/base/models/ProcessName.h"
-#include "lintel/features/base/configuration/Configuration.h"
 #include <map>
 #include <memory>
 #include <utility>
 
+namespace lintel {
 namespace {
-std::string messageQueueKey(const MessageQueueEntry &entry) {
+  std::string messageQueueKey(const MessageQueueEntry &entry)
+  {
     return entry.get_process_name() + "/" + entry.get_message_queue_name();
-}
-}  // namespace
+  }
+}// namespace
 
-MessageQueueService::MessageQueueService(
-  const std::shared_ptr<Configuration> &configuration,
+MessageQueueService::MessageQueueService(const std::shared_ptr<Configuration> &configuration,
   std::shared_ptr<ProcessName> processName,
   std::shared_ptr<IMessageQueueRepository> messageQueueRepository)
-  : AbstractService<MessageQueueService>(processName->getProcessName()),
-    m_processName(std::move(processName)),
-    m_messageQueueRepository(std::move(messageQueueRepository)),
-    m_configurationMap(init(configuration))
-{
-}
+  : AbstractService<MessageQueueService>(processName->getProcessName()), m_processName(std::move(processName)),
+    m_messageQueueRepository(std::move(messageQueueRepository)), m_configurationMap(init(configuration))
+{}
 
-std::map<std::string, std::shared_ptr<MessageQueueEntry> >
-  MessageQueueService::init(const std::shared_ptr<Configuration> &configuration)
+std::map<std::string, std::shared_ptr<MessageQueueEntry>> MessageQueueService::init(
+  const std::shared_ptr<Configuration> &configuration)
 {
   auto confs = configuration->configurationOf<MessageQueueComponent>();
-  std::map<std::string, std::shared_ptr<MessageQueueEntry> > map;
+  std::map<std::string, std::shared_ptr<MessageQueueEntry>> map;
   for (const auto &iter : confs) {
     auto messageQueueConf = std::static_pointer_cast<MessageQueueEntry>(iter);
     const std::string index = messageQueueConf->get_message_queue_name();
@@ -42,13 +40,12 @@ std::map<std::string, std::shared_ptr<MessageQueueEntry> >
   return map;
 }
 
-void MessageQueueService::onInitialize() {
+void MessageQueueService::onInitialize()
+{
   for (const auto &iter : m_messageQueueRepository->allOf(".*", ".*")) {
     m_messageQueues.insert({ messageQueueKey(iter),
-                             std::make_shared<MessageQueue<Message> >(iter.get_process_name(),
-                               iter.get_message_queue_name(),
-                               iter.get_max_messages(),
-                               m_processName) });
+      std::make_shared<MessageQueue<Message>>(
+        iter.get_process_name(), iter.get_message_queue_name(), iter.get_max_messages(), m_processName) });
   }
 }
 
@@ -61,8 +58,7 @@ std::pair<MessageQueueEntry, int32_t> MessageQueueService::numberMessagesOf(cons
   return { entry, MessageQueueCore::numberMessagesOfIfExistsOf(entry.get_message_queue_name()) };
 }
 
-std::unique_ptr<MessageQueue<Message> > MessageQueueService::of(
-  const std::string &name)
+std::unique_ptr<MessageQueue<Message>> MessageQueueService::of(const std::string &name)
 {
 
   auto found = m_configurationMap.find(name);
@@ -71,8 +67,7 @@ std::unique_ptr<MessageQueue<Message> > MessageQueueService::of(
     throw std::runtime_error("no message queue found for " + name);
   }
   auto entry = found->second;
-  return std::make_unique<MessageQueue<Message> >(entry->get_process_name(),
-    entry->get_message_queue_name(),
-    entry->get_max_messages(),
-    m_processName);
+  return std::make_unique<MessageQueue<Message>>(
+    entry->get_process_name(), entry->get_message_queue_name(), entry->get_max_messages(), m_processName);
 }
+}// namespace lintel

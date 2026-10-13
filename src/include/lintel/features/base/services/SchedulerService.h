@@ -11,6 +11,7 @@
 
 #include "lintel/core/services/PropertyRegistration.h"
 
+namespace lintel {
 /**
  * Service for scheduling and executing tasks at specified times or at fixed rates.
  */
@@ -181,4 +182,5 @@ void SchedulerService::schedule_at_fixed_rate(const std::chrono::steady_clock::d
   m_conditionVariable.notify_one();
 }
 
+}// namespace lintel
 #endif// LOGGING_SCHEDULERSERVICE_H

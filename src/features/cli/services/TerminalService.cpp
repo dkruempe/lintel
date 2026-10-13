@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+namespace lintel {
 void TerminalService::log(const std::string &text)
 {
   if (!m_hideChars) { std::cout << std::string(m_position, '\b') << text << std::flush; }
@@ -139,3 +140,4 @@ const std::string &TerminalService::getLine() { return m_currentLine; }
 void TerminalService::enableHideChars() { m_hideChars = true; }
 
 void TerminalService::disableHideChars() { m_hideChars = false; }
+}// namespace lintel

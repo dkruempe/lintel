@@ -25,25 +25,26 @@
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 
+namespace lintel {
 namespace {
 
-// `fpr` prefix: unity builds merge several test files into one translation unit
-// and share one anonymous namespace, so a generic `configuration` or `repository`
-// would collide (and shadow local variables, Clang -Wshadow).
-constexpr char fprBootstrapName[] = "fpr_bootstrap";
+  // `fpr` prefix: unity builds merge several test files into one translation unit
+  // and share one anonymous namespace, so a generic `configuration` or `repository`
+  // would collide (and shadow local variables, Clang -Wshadow).
+  constexpr char fprBootstrapName[] = "fpr_bootstrap";
 
-std::string fprConfigDirectory()
-{
-  static int counter = 0;
-  return (std::filesystem::temp_directory_path()
-          / ("file_property_repository_test_" + std::to_string(::getpid()) + "_" + std::to_string(++counter)))
-    .string();
-}
+  std::string fprConfigDirectory()
+  {
+    static int counter = 0;
+    return (std::filesystem::temp_directory_path()
+            / ("file_property_repository_test_" + std::to_string(::getpid()) + "_" + std::to_string(++counter)))
+      .string();
+  }
 
-/** @return the XML configuration used by every test case in this file */
-std::string fprBootstrapXml()
-{
-  return R"(<Configuration>
+  /** @return the XML configuration used by every test case in this file */
+  std::string fprBootstrapXml()
+  {
+    return R"(<Configuration>
     <PropertyRepositories>
         <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="false"/>
     </PropertyRepositories>
@@ -53,56 +54,57 @@ std::string fprBootstrapXml()
         <Property name="fprForeign" type="int32_t" value="7" process="otherProcess" class="FprService" instance="__DEFAULT"/>
     </Properties>
 </Configuration>)";
-}
-
-/** @return the whole XML file of a configuration directory, read back */
-std::string fprReadBootstrap(const std::string &directory)
-{
-  const std::filesystem::path file = std::filesystem::path(directory) / (std::string(fprBootstrapName) + ".xml");
-  std::ifstream stream(file);
-  std::stringstream buffer;
-  buffer << stream.rdbuf();
-  return buffer.str();
-}
-
-void fprWriteBootstrap(const std::string &directory, const std::string &content)
-{
-  const std::filesystem::path file = std::filesystem::path(directory) / (std::string(fprBootstrapName) + ".xml");
-  // the stream has to be closed before the file is read back
-  {
-    std::ofstream stream(file);
-    stream << content;
-  }
-}
-
-/** Removes the temporary configuration directory of one test case */
-struct FprConfigDirectoryGuard
-{
-  std::string m_directory;
-
-  explicit FprConfigDirectoryGuard(std::string directory) : m_directory(std::move(directory))
-  {
-    std::error_code error;
-    std::filesystem::create_directories(m_directory, error);
-    REQUIRE(!error);
   }
 
-  ~FprConfigDirectoryGuard()
+  /** @return the whole XML file of a configuration directory, read back */
+  std::string fprReadBootstrap(const std::string &directory)
   {
-    std::error_code error;
-    std::filesystem::remove_all(m_directory, error);
+    const std::filesystem::path file = std::filesystem::path(directory) / (std::string(fprBootstrapName) + ".xml");
+    std::ifstream stream(file);
+    std::stringstream buffer;
+    buffer << stream.rdbuf();
+    return buffer.str();
   }
 
-  FprConfigDirectoryGuard(const FprConfigDirectoryGuard &) = delete;
-  FprConfigDirectoryGuard &operator=(const FprConfigDirectoryGuard &) = delete;
-};
+  void fprWriteBootstrap(const std::string &directory, const std::string &content)
+  {
+    const std::filesystem::path file = std::filesystem::path(directory) / (std::string(fprBootstrapName) + ".xml");
+    // the stream has to be closed before the file is read back
+    {
+      std::ofstream stream(file);
+      stream << content;
+    }
+  }
 
-std::shared_ptr<Configuration> fprConfiguration(const std::shared_ptr<EnvironmentConfiguration> &envConfig)
-{
-  return std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{ std::make_shared<PropertyComponent>(),
-                                           std::make_shared<PropertyRepositoryComponent>() },
-    envConfig);
-}
+  /** Removes the temporary configuration directory of one test case */
+  struct FprConfigDirectoryGuard
+  {
+    std::string m_directory;
+
+    explicit FprConfigDirectoryGuard(std::string directory) : m_directory(std::move(directory))
+    {
+      std::error_code error;
+      std::filesystem::create_directories(m_directory, error);
+      REQUIRE(!error);
+    }
+
+    ~FprConfigDirectoryGuard()
+    {
+      std::error_code error;
+      std::filesystem::remove_all(m_directory, error);
+    }
+
+    FprConfigDirectoryGuard(const FprConfigDirectoryGuard &) = delete;
+    FprConfigDirectoryGuard &operator=(const FprConfigDirectoryGuard &) = delete;
+  };
+
+  std::shared_ptr<Configuration> fprConfiguration(const std::shared_ptr<EnvironmentConfiguration> &envConfig)
+  {
+    return std::make_shared<Configuration>(
+      std::vector<std::shared_ptr<Component>>{
+        std::make_shared<PropertyComponent>(), std::make_shared<PropertyRepositoryComponent>() },
+      envConfig);
+  }
 
 }// namespace
 
@@ -289,3 +291,4 @@ TEST_CASE("FilePropertyRepository is disabled when no FILE_REPOSITORY entry is c
   // the configured defaults are still delivered
   REQUIRE(repository.awake().size() == 1);
 }
+}// namespace lintel

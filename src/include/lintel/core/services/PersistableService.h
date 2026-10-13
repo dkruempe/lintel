@@ -6,19 +6,21 @@
 
 #include "lintel/core/services/PersistableBean.h"
 
+namespace lintel {
 /** Service that manages persistable beans and notifies them to reload their state. */
-class PersistableService {
+class PersistableService
+{
 private:
-    std::vector<std::shared_ptr<PersistableBean>> m_persistableBeans;
+  std::vector<std::shared_ptr<PersistableBean>> m_persistableBeans;
 
 public:
-    /** Construct a PersistableService with a list of persistable beans.
-     * @param persistableBeans the beans to manage */
-    explicit PersistableService(
-            std::vector<std::shared_ptr<PersistableBean>> persistableBeans);
+  /** Construct a PersistableService with a list of persistable beans.
+   * @param persistableBeans the beans to manage */
+  explicit PersistableService(std::vector<std::shared_ptr<PersistableBean>> persistableBeans);
 
-    /** Notify all managed beans to reload their state from persistent storage. */
-    void awake();
+  /** Notify all managed beans to reload their state from persistent storage. */
+  void awake();
 };
 
-#endif  // LINTEL_PERSISTABLESERVICE_H
+}// namespace lintel
+#endif// LINTEL_PERSISTABLESERVICE_H

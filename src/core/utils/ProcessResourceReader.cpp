@@ -11,14 +11,14 @@
 #include <string>
 #endif
 
+namespace lintel {
 namespace {
 
-constexpr double kClockTicksPerSecond = 100.0;
+  constexpr double kClockTicksPerSecond = 100.0;
 
 }// namespace
 
-ProcessResourceData ProcessResourceReader::readOf(pid_t pid,
-  const std::optional<ProcessResourceData> &previous)
+ProcessResourceData ProcessResourceReader::readOf(pid_t pid, const std::optional<ProcessResourceData> &previous)
 {
   ProcessResourceData data;
   if (pid < 0) { return data; }
@@ -98,3 +98,4 @@ ProcessResourceData ProcessResourceReader::readOf(pid_t pid,
   }
   return data;
 }
+}// namespace lintel

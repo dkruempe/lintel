@@ -37,149 +37,150 @@
  * covered here (server-side cursors, LISTEN/NOTIFY, real transactions).
  */
 
+namespace lintel {
 namespace {
 
-/** Connection string built from the environment, empty when unset. */
-std::string pgConnInfo()
-{
-  const char *host = std::getenv("PGHOST");
-  const char *port = std::getenv("PGPORT");
-  const char *user = std::getenv("PGUSER");
-  const char *password = std::getenv("PGPASSWORD");
-  const char *database = std::getenv("PGDATABASE");
-
-  // PGDATABASE alone is enough to opt in; the rest falls back to the CI
-  // service credentials so a bare `PGDATABASE=x ctest` also works.
-  std::string info = "hostaddr=";
-  info += (host != nullptr && *host != '\0') ? host : "127.0.0.1";
-  info += " port=";
-  info += (port != nullptr && *port != '\0') ? port : "5432";
-  info += " user=";
-  info += (user != nullptr && *user != '\0') ? user : "test";
-  info += " password=";
-  info += (password != nullptr && *password != '\0') ? password : "test";
-  info += " dbname=";
-  info += (database != nullptr && *database != '\0') ? database : "test";
-  return info;
-}
-
-/** True when the suite must treat a missing server as a failure instead of a skip. */
-bool pgRequired()
-{
-  const char *required = std::getenv("LINTEL_REQUIRE_PG");
-  return required != nullptr && std::string(required) == "1";
-}
-
-/**
- * Skips the current test case unless a PostgreSQL server answers.
- *
- * Skipping (rather than failing) is the right call for a local run: the suite
- * must stay green for a contributor without a local server, and the
- * alternative would make `ctest` useless outside CI. The `[pg]` tag keeps
- * these tests selectable.
- *
- * The unconditional SKIP is a hole in CI, though. `catch_discover_tests`
- * translates a Catch2 SKIP into ctest's exit code 4 and
- * `SKIP_RETURN_CODE 4`, so a broken or missing `postgres` service in the
- * workflow would turn all ten `[pg]` tests into "Skipped" and leave the job
- * green - the PostgreSQL backend would silently go untested again, which is
- * the exact state this file was written to end. LINTEL_REQUIRE_PG=1 (set by
- * the build, sanitizer and release jobs) inverts that: unreachable server
- * fails, so a service that does not come up is reported instead of ignored.
- *
- * Every test case must call this *before* anything else that touches the
- * server, including the PgTable fixture - otherwise the fixture's own
- * connection throws first and the test fails instead of skipping.
- */
-void requirePg()
-{
-  try {
-    // Constructed and immediately destroyed: this is a reachability probe.
-    db::Connection probe(db::ConnectionType::PostgreSQL, pgConnInfo());
-  } catch (const std::exception &exception) {
-    if (pgRequired()) {
-      FAIL("LINTEL_REQUIRE_PG=1 but no PostgreSQL server is reachable - the CI service is broken: "
-           + std::string(exception.what()));
-    }
-    SKIP("no PostgreSQL server reachable - start one with 'docker compose up postgres'");
-  }
-}
-
-/** Opens a PostgreSQL connection. Call requirePg() first. */
-db::Connection connectPg() { return db::Connection(db::ConnectionType::PostgreSQL, pgConnInfo()); }
-
-/** RAII helper: drops the test table when the fixture goes out of scope. */
-struct PgTable
-{
-  explicit PgTable(std::string name) : m_name(std::move(name))
+  /** Connection string built from the environment, empty when unset. */
+  std::string pgConnInfo()
   {
-    requirePg();
-    drop();
-    db::Connection connection(db::ConnectionType::PostgreSQL, pgConnInfo());
-    db::Statement statement(connection);
-    statement.execute(
-      "create table " + m_name + " (id serial primary key, name text not null, value integer not null)");
+    const char *host = std::getenv("PGHOST");
+    const char *port = std::getenv("PGPORT");
+    const char *user = std::getenv("PGUSER");
+    const char *password = std::getenv("PGPASSWORD");
+    const char *database = std::getenv("PGDATABASE");
+
+    // PGDATABASE alone is enough to opt in; the rest falls back to the CI
+    // service credentials so a bare `PGDATABASE=x ctest` also works.
+    std::string info = "hostaddr=";
+    info += (host != nullptr && *host != '\0') ? host : "127.0.0.1";
+    info += " port=";
+    info += (port != nullptr && *port != '\0') ? port : "5432";
+    info += " user=";
+    info += (user != nullptr && *user != '\0') ? user : "test";
+    info += " password=";
+    info += (password != nullptr && *password != '\0') ? password : "test";
+    info += " dbname=";
+    info += (database != nullptr && *database != '\0') ? database : "test";
+    return info;
   }
 
-  ~PgTable()
+  /** True when the suite must treat a missing server as a failure instead of a skip. */
+  bool pgRequired()
+  {
+    const char *required = std::getenv("LINTEL_REQUIRE_PG");
+    return required != nullptr && std::string(required) == "1";
+  }
+
+  /**
+   * Skips the current test case unless a PostgreSQL server answers.
+   *
+   * Skipping (rather than failing) is the right call for a local run: the suite
+   * must stay green for a contributor without a local server, and the
+   * alternative would make `ctest` useless outside CI. The `[pg]` tag keeps
+   * these tests selectable.
+   *
+   * The unconditional SKIP is a hole in CI, though. `catch_discover_tests`
+   * translates a Catch2 SKIP into ctest's exit code 4 and
+   * `SKIP_RETURN_CODE 4`, so a broken or missing `postgres` service in the
+   * workflow would turn all ten `[pg]` tests into "Skipped" and leave the job
+   * green - the PostgreSQL backend would silently go untested again, which is
+   * the exact state this file was written to end. LINTEL_REQUIRE_PG=1 (set by
+   * the build, sanitizer and release jobs) inverts that: unreachable server
+   * fails, so a service that does not come up is reported instead of ignored.
+   *
+   * Every test case must call this *before* anything else that touches the
+   * server, including the PgTable fixture - otherwise the fixture's own
+   * connection throws first and the test fails instead of skipping.
+   */
+  void requirePg()
   {
     try {
-      drop();
-    } catch (...) {
-      // A destructor must not throw; a leftover table is harmless
-      // because the name carries the pid, so the next run cannot collide.
+      // Constructed and immediately destroyed: this is a reachability probe.
+      db::Connection probe(db::ConnectionType::PostgreSQL, pgConnInfo());
+    } catch (const std::exception &exception) {
+      if (pgRequired()) {
+        FAIL("LINTEL_REQUIRE_PG=1 but no PostgreSQL server is reachable - the CI service is broken: "
+             + std::string(exception.what()));
+      }
+      SKIP("no PostgreSQL server reachable - start one with 'docker compose up postgres'");
     }
   }
 
-  PgTable(const PgTable &) = delete;
-  PgTable &operator=(const PgTable &) = delete;
+  /** Opens a PostgreSQL connection. Call requirePg() first. */
+  db::Connection connectPg() { return db::Connection(db::ConnectionType::PostgreSQL, pgConnInfo()); }
 
-  [[nodiscard]] const std::string &name() const { return m_name; }
-
-  void insert(const std::string &name, int value)
+  /** RAII helper: drops the test table when the fixture goes out of scope. */
+  struct PgTable
   {
-    db::Connection connection(db::ConnectionType::PostgreSQL, pgConnInfo());
-    db::Statement statement(connection);
-    db::ParameterBuilder builder(std::make_shared<DatabaseConnectionEntry>(
-      "pg_test", "", "test", "test", db::ConnectionType::PostgreSQL, "pg_test", 5432, "test", true));
-    builder.add(name).add(value);
-    statement.execute("insert into " + m_name + " (name, value) values (?, ?)", builder);
-  }
+    explicit PgTable(std::string name) : m_name(std::move(name))
+    {
+      requirePg();
+      drop();
+      db::Connection connection(db::ConnectionType::PostgreSQL, pgConnInfo());
+      db::Statement statement(connection);
+      statement.execute(
+        "create table " + m_name + " (id serial primary key, name text not null, value integer not null)");
+    }
 
-  [[nodiscard]] int countRows()
+    ~PgTable()
+    {
+      try {
+        drop();
+      } catch (...) {
+        // A destructor must not throw; a leftover table is harmless
+        // because the name carries the pid, so the next run cannot collide.
+      }
+    }
+
+    PgTable(const PgTable &) = delete;
+    PgTable &operator=(const PgTable &) = delete;
+
+    [[nodiscard]] const std::string &name() const { return m_name; }
+
+    void insert(const std::string &name, int value)
+    {
+      db::Connection connection(db::ConnectionType::PostgreSQL, pgConnInfo());
+      db::Statement statement(connection);
+      db::ParameterBuilder builder(std::make_shared<DatabaseConnectionEntry>(
+        "pg_test", "", "test", "test", db::ConnectionType::PostgreSQL, "pg_test", 5432, "test", true));
+      builder.add(name).add(value);
+      statement.execute("insert into " + m_name + " (name, value) values (?, ?)", builder);
+    }
+
+    [[nodiscard]] int countRows()
+    {
+      db::Connection connection(db::ConnectionType::PostgreSQL, pgConnInfo());
+      db::Statement statement(connection);
+      db::Result result = statement.execute("select count(*) from " + m_name);
+      return std::stoi(result.getValue(0, 0));
+    }
+
+  private:
+    void drop()
+    {
+      db::Connection connection(db::ConnectionType::PostgreSQL, pgConnInfo());
+      db::Statement statement(connection);
+      statement.execute("drop table if exists " + m_name);
+    }
+
+    std::string m_name;
+  };
+
+  /**
+   * Table name unique to this process, so parallel ctest runs cannot collide.
+   *
+   * ctest starts every TEST_CASE in its own process (catch_discover_tests), and
+   * every test case creates at most one table, so the pid alone is unique enough.
+   * An earlier version added a static counter on top; it was dead weight and was
+   * additionally reported as an unused static variable.
+   */
+  std::string uniqueTableName() { return "pg_test_" + std::to_string(::getpid()); }
+
+  std::shared_ptr<DatabaseConnectionEntry> pgEntry()
   {
-    db::Connection connection(db::ConnectionType::PostgreSQL, pgConnInfo());
-    db::Statement statement(connection);
-    db::Result result = statement.execute("select count(*) from " + m_name);
-    return std::stoi(result.getValue(0, 0));
+    return std::make_shared<DatabaseConnectionEntry>(
+      "pg_test", "", "test", "test", db::ConnectionType::PostgreSQL, "pg_test", 5432, "test", true);
   }
-
-private:
-  void drop()
-  {
-    db::Connection connection(db::ConnectionType::PostgreSQL, pgConnInfo());
-    db::Statement statement(connection);
-    statement.execute("drop table if exists " + m_name);
-  }
-
-  std::string m_name;
-};
-
-/**
- * Table name unique to this process, so parallel ctest runs cannot collide.
- *
- * ctest starts every TEST_CASE in its own process (catch_discover_tests), and
- * every test case creates at most one table, so the pid alone is unique enough.
- * An earlier version added a static counter on top; it was dead weight and was
- * additionally reported as an unused static variable.
- */
-std::string uniqueTableName() { return "pg_test_" + std::to_string(::getpid()); }
-
-std::shared_ptr<DatabaseConnectionEntry> pgEntry()
-{
-  return std::make_shared<DatabaseConnectionEntry>(
-    "pg_test", "", "test", "test", db::ConnectionType::PostgreSQL, "pg_test", 5432, "test", true);
-}
 
 }// namespace
 
@@ -391,3 +392,4 @@ TEST_CASE("PostgreSQL: notify delivers to a listening connection", "[pg]")
   for (int i = 0; i < 50 && !received.load(); i++) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
   REQUIRE(received.load());
 }
+}// namespace lintel

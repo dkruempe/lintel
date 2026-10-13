@@ -5,6 +5,7 @@
 
 #include <string>
 
+namespace lintel {
 /** Interface for terminal display and line editing */
 class ITerminalService
 {
@@ -24,4 +25,5 @@ public:
   virtual void disableHideChars() = 0;
 };
 
+}// namespace lintel
 #endif

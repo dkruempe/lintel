@@ -2,6 +2,7 @@
 
 #include <lintel/core/utils/TableBuilder.h>
 
+namespace lintel {
 ProcessCliComponent::ProcessCliComponent(std::shared_ptr<ProcessApi> processApi)
   : CommandLineComponent(m_name, m_alias), m_processApi(std::move(processApi))
 {
@@ -196,7 +197,9 @@ void ProcessCliComponent::printProcessDetails(const ProcessInfoDto &processInfo)
 }
 
 void ProcessCliComponent::printCommandList(std::set<std::string> menuAlias)
-{ m_commandParser.printCommandList(menuAlias); }
+{
+  m_commandParser.printCommandList(menuAlias);
+}
 
 void ProcessCliComponent::onShowMenu() { std::cout << "No subMenu available\n"; }
 
@@ -205,3 +208,4 @@ bool ProcessCliComponent::onMenu(const std::string & /*component*/) { return fal
 void ProcessCliComponent::onHelp() { m_commandParser.printHelp(getName(), getAlias(), m_description); }
 
 std::vector<std::string> ProcessCliComponent::allCommandsOf() { return m_commandParser.allCommandsOf(); }
+}// namespace lintel

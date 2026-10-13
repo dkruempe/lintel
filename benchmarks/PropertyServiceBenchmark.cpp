@@ -13,45 +13,46 @@
 #include "lintel/features/property/configuration/PropertyRepositoryEntry.h"
 #include "lintel/features/property/services/PropertyService.h"
 
+namespace lintel {
 namespace {
 
-constexpr const char *kName = "benchmark_property";
-constexpr const char *kInstanceName = "benchmark_instance";
-constexpr const char *kClassName = "BenchmarkClass";
-constexpr const char *kProcessName = "benchmark_process";
+  constexpr const char *kName = "benchmark_property";
+  constexpr const char *kInstanceName = "benchmark_instance";
+  constexpr const char *kClassName = "BenchmarkClass";
+  constexpr const char *kProcessName = "benchmark_process";
 
-/**
- * Minimal enabled+mutable repository. Without one, PropertyService logs an error
- * on every write, which would dominate the measured set hotpath.
- */
-class BenchPropertyRepository : public PropertyRepository
-{
-public:
-  using PropertyRepository::PropertyRepository;
+  /**
+   * Minimal enabled+mutable repository. Without one, PropertyService logs an error
+   * on every write, which would dominate the measured set hotpath.
+   */
+  class BenchPropertyRepository : public PropertyRepository
+  {
+  public:
+    using PropertyRepository::PropertyRepository;
 
-  DataStorage getDataStorage() override { return DataStorage(getType(), "benchmark"); }
+    DataStorage getDataStorage() override { return DataStorage(getType(), "benchmark"); }
 
-  void save(const std::vector<std::shared_ptr<PropertyBase>> &) override {}
+    void save(const std::vector<std::shared_ptr<PropertyBase>> &) override {}
 
-  void save(std::shared_ptr<PropertyBase>) override {}
+    void save(std::shared_ptr<PropertyBase>) override {}
 
-  std::vector<std::shared_ptr<PropertyBase>> awake() override { return {}; }
-};
+    std::vector<std::shared_ptr<PropertyBase>> awake() override { return {}; }
+  };
 
-std::shared_ptr<PropertyService> makeService()
-{
-  // Point Configuration at a directory without a bootstrap.xml, otherwise it
-  // would parse the real cfg/ (and fail: the benchmark has no components).
-  ::setenv("CONFIG_DIRECTORY", "/tmp/lintel_benchmark_nonexistent_cfg", 1);
-  auto environment = std::make_shared<EnvironmentConfiguration>();
-  auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
-  auto entry = std::make_shared<PropertyRepositoryEntry>(
-    type_name<PropertyRepositoryComponent>(), PropertyRepositoryType::DEFAULT, true, false);
-  configuration->setEntries({ entry });
-  auto repository = std::make_shared<BenchPropertyRepository>(PropertyRepositoryType::DEFAULT, configuration);
-  return std::make_shared<PropertyService>(std::vector<std::shared_ptr<PropertyRepository>>{ repository },
-    std::vector<std::shared_ptr<AbstractServiceInterface>>{});
-}
+  std::shared_ptr<PropertyService> makeService()
+  {
+    // Point Configuration at a directory without a bootstrap.xml, otherwise it
+    // would parse the real cfg/ (and fail: the benchmark has no components).
+    ::setenv("CONFIG_DIRECTORY", "/tmp/lintel_benchmark_nonexistent_cfg", 1);
+    auto environment = std::make_shared<EnvironmentConfiguration>();
+    auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
+    auto entry = std::make_shared<PropertyRepositoryEntry>(
+      type_name<PropertyRepositoryComponent>(), PropertyRepositoryType::DEFAULT, true, false);
+    configuration->setEntries({ entry });
+    auto repository = std::make_shared<BenchPropertyRepository>(PropertyRepositoryType::DEFAULT, configuration);
+    return std::make_shared<PropertyService>(std::vector<std::shared_ptr<PropertyRepository>>{ repository },
+      std::vector<std::shared_ptr<AbstractServiceInterface>>{});
+  }
 
 }// namespace
 
@@ -101,3 +102,4 @@ static void BM_PropertyService_AllOf(benchmark::State &state)
   }
 }
 BENCHMARK(BM_PropertyService_AllOf);
+}// namespace lintel

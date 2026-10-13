@@ -2,6 +2,7 @@
 #include "lintel/core/utils/UUID.h"
 #include <chrono>
 
+namespace lintel {
 HistoryEntry::HistoryEntry(std::string processName,
   std::string serviceName,
   std::string label,
@@ -11,14 +12,11 @@ HistoryEntry::HistoryEntry(std::string processName,
     m_text(std::move(text)), m_uuid(UUID::generate()), m_createdTimestamp(createdTimestamp)
 {}
 
-HistoryEntry::HistoryEntry(const AbstractServiceInterface &service,
-                           std::string label, std::string text)
-        : m_processName(service.getProcessName()),
-          m_serviceName(std::string(service.getClassName())),
-          m_label(std::move(label)),
-          m_text(std::move(text)),
-          m_uuid(UUID::generate()),
-          m_createdTimestamp(std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now())) {}
+HistoryEntry::HistoryEntry(const AbstractServiceInterface &service, std::string label, std::string text)
+  : m_processName(service.getProcessName()), m_serviceName(std::string(service.getClassName())),
+    m_label(std::move(label)), m_text(std::move(text)), m_uuid(UUID::generate()),
+    m_createdTimestamp(std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()))
+{}
 
 const std::chrono::sys_time<std::chrono::microseconds> &HistoryEntry::getCreatedTimestamp() const
 {
@@ -27,26 +25,19 @@ const std::chrono::sys_time<std::chrono::microseconds> &HistoryEntry::getCreated
 
 const std::string &HistoryEntry::getLabel() const { return m_label; }
 
-const std::string &HistoryEntry::getProcessName() const {
-    return m_processName;
-}
+const std::string &HistoryEntry::getProcessName() const { return m_processName; }
 
-const std::string &HistoryEntry::getServiceName() const {
-    return m_serviceName;
-}
+const std::string &HistoryEntry::getServiceName() const { return m_serviceName; }
 
-const std::string &HistoryEntry::getUuid() const {
-    return m_uuid;
-}
+const std::string &HistoryEntry::getUuid() const { return m_uuid; }
 
 const std::string &HistoryEntry::getText() const { return m_text; }
 
-bool HistoryEntry::operator==(const HistoryEntry &rhs) const {
-    return m_processName == rhs.m_processName &&
-           m_serviceName == rhs.m_serviceName && m_label == rhs.m_label &&
-           m_text == rhs.m_text && m_createdTimestamp == rhs.m_createdTimestamp && m_uuid == rhs.m_uuid;
+bool HistoryEntry::operator==(const HistoryEntry &rhs) const
+{
+  return m_processName == rhs.m_processName && m_serviceName == rhs.m_serviceName && m_label == rhs.m_label
+         && m_text == rhs.m_text && m_createdTimestamp == rhs.m_createdTimestamp && m_uuid == rhs.m_uuid;
 }
 
-bool HistoryEntry::operator!=(const HistoryEntry &rhs) const {
-    return !(rhs == *this);
-}
+bool HistoryEntry::operator!=(const HistoryEntry &rhs) const { return !(rhs == *this); }
+}// namespace lintel

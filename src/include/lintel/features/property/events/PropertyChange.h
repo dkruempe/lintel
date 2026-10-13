@@ -10,6 +10,7 @@
 #include "lintel/features/base/events/Event.h"
 #include "lintel/features/property/models/PropertyBase.h"
 
+namespace lintel {
 /**
  * Fixed-size change notification for a property, exchanged over the EventBus.
  *
@@ -22,66 +23,65 @@
  * a locked source (e.g. the shared memory repository) instead of using the
  * truncated string; a truncated change is never applied with a wrong value.
  */
-struct PropertyChange {
-    /** Buffer size for each identifier part. */
-    static constexpr std::size_t PART_SIZE = 32;
-    /** Buffer size for the serialized value string (including terminator). */
-    static constexpr std::size_t VALUE_SIZE =
-            Event::CONTENT_SIZE - 4 * PART_SIZE - 1;
-    /** Maximum length of the value that fits into the buffer. */
-    static constexpr std::size_t MAX_VALUE_LENGTH = VALUE_SIZE - 1;
+struct PropertyChange
+{
+  /** Buffer size for each identifier part. */
+  static constexpr std::size_t PART_SIZE = 32;
+  /** Buffer size for the serialized value string (including terminator). */
+  static constexpr std::size_t VALUE_SIZE = Event::CONTENT_SIZE - 4 * PART_SIZE - 1;
+  /** Maximum length of the value that fits into the buffer. */
+  static constexpr std::size_t MAX_VALUE_LENGTH = VALUE_SIZE - 1;
 
-    char processName[PART_SIZE]{};
-    char className[PART_SIZE]{};
-    char instanceName[PART_SIZE]{};
-    char name[PART_SIZE]{};
-    char value[VALUE_SIZE]{};
-    /** True if the value did not fit into the buffer and was truncated. */
-    bool m_valueTruncated = false;
+  char processName[PART_SIZE]{};
+  char className[PART_SIZE]{};
+  char instanceName[PART_SIZE]{};
+  char name[PART_SIZE]{};
+  char value[VALUE_SIZE]{};
+  /** True if the value did not fit into the buffer and was truncated. */
+  bool m_valueTruncated = false;
 
-    /** Create a change notification from a property.
-     * @param property the property that was changed
-     * @return the change notification carrying the new value */
-    static PropertyChange of(PropertyBase &property) {
-        PropertyChange change;
-        copyInto(change.processName, property.getProcessName());
-        copyInto(change.className, property.getClassName());
-        copyInto(change.instanceName, property.getInstanceName());
-        copyInto(change.name, property.getName());
-        const std::string value = property.toString();
-        change.m_valueTruncated = value.size() >= VALUE_SIZE;
-        copyInto(change.value, value);
-        return change;
-    }
+  /** Create a change notification from a property.
+   * @param property the property that was changed
+   * @return the change notification carrying the new value */
+  static PropertyChange of(PropertyBase &property)
+  {
+    PropertyChange change;
+    copyInto(change.processName, property.getProcessName());
+    copyInto(change.className, property.getClassName());
+    copyInto(change.instanceName, property.getInstanceName());
+    copyInto(change.name, property.getName());
+    const std::string value = property.toString();
+    change.m_valueTruncated = value.size() >= VALUE_SIZE;
+    copyInto(change.value, value);
+    return change;
+  }
 
-    /** @return the unique identifier name_instanceName_className_processName */
-    [[nodiscard]] std::string identifier() const {
-        return std::string(name) + "_" + instanceName + "_" + className + "_" +
-               processName;
-    }
+  /** @return the unique identifier name_instanceName_className_processName */
+  [[nodiscard]] std::string identifier() const
+  {
+    return std::string(name) + "_" + instanceName + "_" + className + "_" + processName;
+  }
 
 private:
-    static constexpr void copyInto(char (&destination)[PART_SIZE],
-                         std::string_view value) {
-        const std::size_t length =
-                value.size() >= PART_SIZE ? PART_SIZE - 1 : value.size();
-        std::memcpy(destination, value.data(), length);
-        destination[length] = '\0';
-    }
+  static constexpr void copyInto(char (&destination)[PART_SIZE], std::string_view value)
+  {
+    const std::size_t length = value.size() >= PART_SIZE ? PART_SIZE - 1 : value.size();
+    std::memcpy(destination, value.data(), length);
+    destination[length] = '\0';
+  }
 
-    static constexpr void copyInto(char (&destination)[VALUE_SIZE],
-                         std::string_view value) {
-        const std::size_t length =
-                value.size() >= VALUE_SIZE ? VALUE_SIZE - 1 : value.size();
-        std::memcpy(destination, value.data(), length);
-        destination[length] = '\0';
-    }
+  static constexpr void copyInto(char (&destination)[VALUE_SIZE], std::string_view value)
+  {
+    const std::size_t length = value.size() >= VALUE_SIZE ? VALUE_SIZE - 1 : value.size();
+    std::memcpy(destination, value.data(), length);
+    destination[length] = '\0';
+  }
 };
 
 static_assert(std::is_trivially_copyable_v<PropertyChange>,
-              "PropertyChange must be trivially copyable for the lock-free "
-              "queues");
-static_assert(sizeof(PropertyChange) == Event::CONTENT_SIZE,
-              "PropertyChange must exactly fit into the Event payload");
+  "PropertyChange must be trivially copyable for the lock-free "
+  "queues");
+static_assert(sizeof(PropertyChange) == Event::CONTENT_SIZE, "PropertyChange must exactly fit into the Event payload");
 
-#endif  // LINTEL_PROPERTYCHANGE_H
+}// namespace lintel
+#endif// LINTEL_PROPERTYCHANGE_H

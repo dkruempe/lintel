@@ -7,33 +7,35 @@
 #include "lintel/core/models/JsonSerializable.h"
 #include "lintel/features/base/controller/UserSessionDto.h"
 
+namespace lintel {
 /** DTO representing a collection of active user sessions. */
-class UserSessionsDto : public JsonSerializable {
+class UserSessionsDto : public JsonSerializable
+{
 private:
-    /** The session DTOs */
-    std::vector<UserSessionDto> m_sessions;
+  /** The session DTOs */
+  std::vector<UserSessionDto> m_sessions;
 
 public:
-    /** Construct from existing session DTOs
-     * @param sessions the session DTOs */
-    explicit UserSessionsDto(std::vector<UserSessionDto> sessions);
+  /** Construct from existing session DTOs
+   * @param sessions the session DTOs */
+  explicit UserSessionsDto(std::vector<UserSessionDto> sessions);
 
-    /** Default constructor */
-    UserSessionsDto() = default;
+  /** Default constructor */
+  UserSessionsDto() = default;
 
-    /** Get the session DTOs
-     * @return vector of session DTOs */
-    [[nodiscard]] const std::vector<UserSessionDto> &getSessions() const;
+  /** Get the session DTOs
+   * @return vector of session DTOs */
+  [[nodiscard]] const std::vector<UserSessionDto> &getSessions() const;
 
-    /** Serialize to JSON
-     * @param writer the rapidjson writer */
-    void serialize(
-            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+  /** Serialize to JSON
+   * @param writer the rapidjson writer */
+  void serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
 
-    /** Deserialize from JSON
-     * @param obj the JSON value
-     * @return true on success */
-    bool deserialize(const rapidjson::Value &obj) override;
+  /** Deserialize from JSON
+   * @param obj the JSON value
+   * @return true on success */
+  bool deserialize(const rapidjson::Value &obj) override;
 };
 
-#endif  // LINTEL_USERSESSIONSDTO_H
+}// namespace lintel
+#endif// LINTEL_USERSESSIONSDTO_H

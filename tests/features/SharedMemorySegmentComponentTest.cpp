@@ -12,30 +12,31 @@
 #include <string>
 #include <vector>
 
+namespace lintel {
 namespace {
 
-std::filesystem::path uniqueSegmentDirectory()
-{
-  static int counter = 0;
-  return std::filesystem::temp_directory_path() / ("shm_segment_component_test_" + std::to_string(counter++) + ".d");
-}
-
-// m_configDirectory must be the first member: members initialize in declaration order, so the guard
-// sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration, and it is
-// destroyed last - after the test case is done with it.
-struct SharedMemorySegmentFixture
-{
-  ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_shm_segment_cfg" };
-  std::filesystem::path directory;
-  std::shared_ptr<EnvironmentConfiguration> envConfig;
-
-  SharedMemorySegmentFixture() : directory(uniqueSegmentDirectory())
+  std::filesystem::path uniqueSegmentDirectory()
   {
-    envConfig = std::make_shared<EnvironmentConfiguration>();
+    static int counter = 0;
+    return std::filesystem::temp_directory_path() / ("shm_segment_component_test_" + std::to_string(counter++) + ".d");
   }
 
-  ~SharedMemorySegmentFixture() { std::filesystem::remove_all(directory); }
-};
+  // m_configDirectory must be the first member: members initialize in declaration order, so the guard
+  // sets CONFIG_DIRECTORY before the constructor body builds the EnvironmentConfiguration, and it is
+  // destroyed last - after the test case is done with it.
+  struct SharedMemorySegmentFixture
+  {
+    ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_shm_segment_cfg" };
+    std::filesystem::path directory;
+    std::shared_ptr<EnvironmentConfiguration> envConfig;
+
+    SharedMemorySegmentFixture() : directory(uniqueSegmentDirectory())
+    {
+      envConfig = std::make_shared<EnvironmentConfiguration>();
+    }
+
+    ~SharedMemorySegmentFixture() { std::filesystem::remove_all(directory); }
+  };
 
 }// namespace
 
@@ -97,3 +98,4 @@ TEST_CASE("SharedMemorySegmentComponent: parses Path and SharedMemorySegment")
   REQUIRE(segmentEntry->getSharedMemorySegment()->getName() == "shm_test");
   REQUIRE(segmentEntry->getSharedMemorySegment()->getSize() == 1000);
 }
+}// namespace lintel

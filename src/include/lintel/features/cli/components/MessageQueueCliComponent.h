@@ -1,10 +1,11 @@
 #ifndef MESSAGEQUEUECLICOMPONENT_H
 #define MESSAGEQUEUECLICOMPONENT_H
-#include "lintel/features/http/controllers/MessageQueueApi.h"
 #include "lintel/features/cli/models/CommandLineComponent.h"
 #include "lintel/features/cli/models/CommandParser.h"
+#include "lintel/features/http/controllers/MessageQueueApi.h"
 #include "lintel/features/http/service/Controller.h"
 
+namespace lintel {
 /** CLI component that displays message queue statistics */
 class MessageQueueCliComponent : public CommandLineComponent
 {
@@ -14,11 +15,7 @@ private:
   static constexpr std::string_view m_description = "The component can be used to show the message queue statistics";
   std::shared_ptr<MesssageQueueApi> m_messageQueueApi;
 
-  enum Commands
-  {
-    Undefined,
-    ShowMessageQueues
-  };
+  enum Commands { Undefined, ShowMessageQueues };
 
   // Flags
   std::optional<std::string> m_processName;
@@ -26,8 +23,8 @@ private:
 
   CommandParser<Commands, Undefined> m_commandParser;
 
-    /** Print formatted message queue DTOs to console */
-    static void printMessageQueues(const std::vector<MessageQueueDto> &messageQueueDtos);
+  /** Print formatted message queue DTOs to console */
+  static void printMessageQueues(const std::vector<MessageQueueDto> &messageQueueDtos);
 
 public:
   /** @param messsageQueueApi API for retrieving message queue data */
@@ -35,9 +32,8 @@ public:
 
   void onHelp() override;
 
-  void onCommand(const UserDto &userDto,
-    const std::string &command,
-    const std::vector<std::string> &parameters) override;
+  void
+    onCommand(const UserDto &userDto, const std::string &command, const std::vector<std::string> &parameters) override;
 
   void onShowMenu() override;
 
@@ -50,4 +46,5 @@ public:
   std::vector<std::string> allCommandsOf() override;
 };
 
-#endif //MESSAGEQUEUECLICOMPONENT_H
+}// namespace lintel
+#endif// MESSAGEQUEUECLICOMPONENT_H

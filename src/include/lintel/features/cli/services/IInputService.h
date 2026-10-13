@@ -3,6 +3,7 @@
 
 #include "lintel/features/cli/CliTypes.h"
 
+namespace lintel {
 /** Interface for reading raw keyboard input */
 class IInputService
 {
@@ -12,4 +13,5 @@ public:
   virtual KeyEvent onRead() = 0;
 };
 
+}// namespace lintel
 #endif

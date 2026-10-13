@@ -1,5 +1,6 @@
 #include "lintel/features/base/controller/HistoryDtos.h"
 
+namespace lintel {
 HistoryDto::Shapes HistoryDto::m_shape{};
 
 const std::vector<HistoryDto> &HistoryDtos::getHistories() const { return m_histories; }
@@ -28,12 +29,11 @@ std::vector<HistoryDto> HistoryDtos::build(const std::vector<HistoryEntry> entri
 {
   std::vector<HistoryDto> historiesDto;
   historiesDto.reserve(entries.size());
-  std::transform(entries.begin(),
-    entries.end(),
-    std::back_inserter(historiesDto),
-    [](const HistoryEntry &entry) { return HistoryDto(entry); });
+  std::transform(entries.begin(), entries.end(), std::back_inserter(historiesDto), [](const HistoryEntry &entry) {
+    return HistoryDto(entry);
+  });
   return historiesDto;
 }
 
-HistoryDtos::HistoryDtos(const std::vector<HistoryEntry> entries)
-  : m_histories(build(entries)) {}
+HistoryDtos::HistoryDtos(const std::vector<HistoryEntry> entries) : m_histories(build(entries)) {}
+}// namespace lintel

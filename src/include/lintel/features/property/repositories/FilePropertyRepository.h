@@ -7,6 +7,7 @@
 #include "lintel/features/property/models/DataStorage.h"
 #include "lintel/features/property/repositories/PropertyRepository.h"
 
+namespace lintel {
 /**
  * implementation of file repository for properties
  * This implementation works only for one process, bc. we have to make sure
@@ -14,48 +15,48 @@
  * Otherwise we would have to use semaphores to protect the access.
  * we
  */
-class FilePropertyRepository : public PropertyRepository {
+class FilePropertyRepository : public PropertyRepository
+{
 private:
-    std::vector<std::shared_ptr<PropertyBase>> m_properties;
+  std::vector<std::shared_ptr<PropertyBase>> m_properties;
 
 public:
-    explicit FilePropertyRepository(
-            std::shared_ptr<Configuration> configuration,
-            const std::shared_ptr<ProcessName> &processName);
+  explicit FilePropertyRepository(std::shared_ptr<Configuration> configuration,
+    const std::shared_ptr<ProcessName> &processName);
 
-    /**
-     * returns basic data storage information of repository
-     */
-    DataStorage getDataStorage() override;
+  /**
+   * returns basic data storage information of repository
+   */
+  DataStorage getDataStorage() override;
 
-    /**
-     * save property to repository
-     * - saves property in file
-     * - waits until awake was called
-     * - after awake PropertyService will check which properties doesn't have
-     *   a configuration and inform the PoropertyRepository
-     * - alternative is that the Property is changed via REST Controller
-     *   In this case fswatch will notify that the file was changed and the
-     *   PropertyService will be infomred about the changed data
-     * - in case new property is inserted. The new property will added to the
-     *   end of the file.
-     */
-    void save(std::shared_ptr<PropertyBase> property) override;
+  /**
+   * save property to repository
+   * - saves property in file
+   * - waits until awake was called
+   * - after awake PropertyService will check which properties doesn't have
+   *   a configuration and inform the PoropertyRepository
+   * - alternative is that the Property is changed via REST Controller
+   *   In this case fswatch will notify that the file was changed and the
+   *   PropertyService will be infomred about the changed data
+   * - in case new property is inserted. The new property will added to the
+   *   end of the file.
+   */
+  void save(std::shared_ptr<PropertyBase> property) override;
 
-    /**
-     * save saveProperties to repository
-     * @param saveProperties
-     */
-    void save(const std::vector<std::shared_ptr<PropertyBase>> &saveProperties)
-    override;
+  /**
+   * save saveProperties to repository
+   * @param saveProperties
+   */
+  void save(const std::vector<std::shared_ptr<PropertyBase>> &saveProperties) override;
 
-    /**
-     * load all properties from repository and return result
-     */
-    std::vector<std::shared_ptr<PropertyBase>> awake() override;
+  /**
+   * load all properties from repository and return result
+   */
+  std::vector<std::shared_ptr<PropertyBase>> awake() override;
 
 private:
-    std::shared_ptr<Configuration> m_configuration;
+  std::shared_ptr<Configuration> m_configuration;
 };
 
-#endif  // LOGGING_FILEPROPERTYREPOSITORY_H
+}// namespace lintel
+#endif// LOGGING_FILEPROPERTYREPOSITORY_H

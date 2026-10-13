@@ -32,71 +32,73 @@
  * all, because it would need a listening server.
  */
 
+namespace lintel {
 namespace {
 
-/** Temporary log directory that removes itself again. */
-struct LoggerServiceLogDir
-{
-  std::filesystem::path path;
-
-  LoggerServiceLogDir()
+  /** Temporary log directory that removes itself again. */
+  struct LoggerServiceLogDir
   {
-    static unsigned int counter = 0;
-    path = std::filesystem::temp_directory_path()
-           / ("logger_service_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + "_log");
-    std::filesystem::remove_all(path);
-    std::filesystem::create_directories(path);
+    std::filesystem::path path;
+
+    LoggerServiceLogDir()
+    {
+      static unsigned int counter = 0;
+      path = std::filesystem::temp_directory_path()
+             / ("logger_service_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + "_log");
+      std::filesystem::remove_all(path);
+      std::filesystem::create_directories(path);
+    }
+
+    ~LoggerServiceLogDir() { std::filesystem::remove_all(path); }
+
+    LoggerServiceLogDir(const LoggerServiceLogDir &) = delete;
+    LoggerServiceLogDir &operator=(const LoggerServiceLogDir &) = delete;
+  };
+
+  /** @return a configuration with a logger path entry and one logger configuration */
+  std::shared_ptr<Configuration> loggerConfigurationOf(const std::filesystem::path &baseDirectory,
+    const std::string &configuredProcess,
+    const std::string &loggerLevel,
+    const std::vector<LoggerSinkConfiguration> &sinks,
+    bool withPathEntry = true,
+    bool createSubDirectories = false)
+  {
+    std::vector<std::shared_ptr<Entry>> entries;
+    if (withPathEntry) {
+      entries.push_back(std::make_shared<LoggerEntry>(
+        type_name<LoggerComponent>(), std::make_shared<LoggerPathConfiguration>(baseDirectory, createSubDirectories)));
+    }
+    entries.push_back(std::make_shared<LoggerEntry>(type_name<LoggerComponent>(),
+      std::make_shared<LoggerConfiguration>(configuredProcess, "", loggerLevel, false, sinks)));
+    auto envConfig = std::make_shared<EnvironmentConfiguration>();
+    envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_logger_service_cfg");
+    envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
+    auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+    configuration->setEntries(entries);
+    return configuration;
   }
 
-  ~LoggerServiceLogDir() { std::filesystem::remove_all(path); }
-
-  LoggerServiceLogDir(const LoggerServiceLogDir &) = delete;
-  LoggerServiceLogDir &operator=(const LoggerServiceLogDir &) = delete;
-};
-
-/** @return a configuration with a logger path entry and one logger configuration */
-std::shared_ptr<Configuration> loggerConfigurationOf(const std::filesystem::path &baseDirectory,
-  const std::string &configuredProcess,
-  const std::string &loggerLevel,
-  const std::vector<LoggerSinkConfiguration> &sinks,
-  bool withPathEntry = true,
-  bool createSubDirectories = false)
-{
-  std::vector<std::shared_ptr<Entry>> entries;
-  if (withPathEntry) {
-    entries.push_back(std::make_shared<LoggerEntry>(
-      type_name<LoggerComponent>(), std::make_shared<LoggerPathConfiguration>(baseDirectory, createSubDirectories)));
+  std::string loggerFileContent(const std::filesystem::path &file)
+  {
+    std::ifstream stream(file);
+    std::stringstream buffer;
+    buffer << stream.rdbuf();
+    return buffer.str();
   }
-  entries.push_back(std::make_shared<LoggerEntry>(type_name<LoggerComponent>(),
-    std::make_shared<LoggerConfiguration>(configuredProcess, "", loggerLevel, false, sinks)));
-  auto envConfig = std::make_shared<EnvironmentConfiguration>();
-  envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_logger_service_cfg");
-  envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
-  auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
-  configuration->setEntries(entries);
-  return configuration;
-}
 
-std::string loggerFileContent(const std::filesystem::path &file)
-{
-  std::ifstream stream(file);
-  std::stringstream buffer;
-  buffer << stream.rdbuf();
-  return buffer.str();
-}
+  bool loggerContains(const std::string &haystack, const std::string &needle)
+  {
+    return haystack.find(needle) != std::string::npos;
+  }
 
-bool loggerContains(const std::string &haystack, const std::string &needle)
-{
-  return haystack.find(needle) != std::string::npos;
-}
-
-LoggerSinkConfiguration loggerRotatingSink(const std::string &fileName,
-  const std::string &level = "trace",
-  std::size_t maxFileSize = 1024 * 1024,
-  std::size_t maxFiles = 2)
-{
-  return LoggerSinkConfiguration(LoggerSinkConfiguration::RotatingFileSink, level, "", fileName, maxFileSize, maxFiles);
-}
+  LoggerSinkConfiguration loggerRotatingSink(const std::string &fileName,
+    const std::string &level = "trace",
+    std::size_t maxFileSize = 1024 * 1024,
+    std::size_t maxFiles = 2)
+  {
+    return LoggerSinkConfiguration(
+      LoggerSinkConfiguration::RotatingFileSink, level, "", fileName, maxFileSize, maxFiles);
+  }
 
 }// namespace
 
@@ -390,3 +392,4 @@ TEST_CASE("LoggerService: get() returns the same instance until it is replaced",
 
   REQUIRE(&LoggerService::get() == &first);
 }
+}// namespace lintel

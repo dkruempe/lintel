@@ -1,15 +1,16 @@
 #ifndef LINTEL_MESSAGEQUEUEREPOSITORY_H
 #define LINTEL_MESSAGEQUEUEREPOSITORY_H
 
+#include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
+#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
+#include <lintel/features/base/configuration/MessageQueueEntry.h>
+#include <lintel/features/base/models/Page.h>
+#include <lintel/features/base/repositories/IMessageQueueRepository.h>
 #include <memory>
 #include <optional>
 #include <vector>
-#include <lintel/features/base/configuration/MessageQueueEntry.h>
-#include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
-#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
-#include <lintel/features/base/models/Page.h>
-#include <lintel/features/base/repositories/IMessageQueueRepository.h>
 
+namespace lintel {
 /**
  * Database-backed implementation of IMessageQueueRepository.
  */
@@ -43,9 +44,9 @@ public:
    * @return one page of entries plus continuation info
    */
   Page<MessageQueueEntry> pageOf(const std::string &processName,
-                                 const std::string &messageQueueName,
-                                 const std::optional<std::string> &afterName,
-                                 std::size_t limit) override;
+    const std::string &messageQueueName,
+    const std::optional<std::string> &afterName,
+    std::size_t limit) override;
 
   /**
    * @param processName filter by process name
@@ -72,4 +73,5 @@ public:
   MessageQueueRepository(const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations);
 };
 
-#endif //LINTEL_MESSAGEQUEUEREPOSITORY_H
+}// namespace lintel
+#endif// LINTEL_MESSAGEQUEUEREPOSITORY_H

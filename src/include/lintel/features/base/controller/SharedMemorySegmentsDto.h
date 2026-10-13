@@ -6,33 +6,34 @@
 #include "lintel/core/models/JsonSerializable.h"
 #include "lintel/features/base/controller/SharedMemorySegmentDto.h"
 
+namespace lintel {
 /** DTO representing a collection of shared memory segments */
-class SharedMemorySegmentsDto : public JsonSerializable {
+class SharedMemorySegmentsDto : public JsonSerializable
+{
 private:
-    /** The segment DTOs */
-    std::vector<SharedMemorySegmentDto> m_segments;
+  /** The segment DTOs */
+  std::vector<SharedMemorySegmentDto> m_segments;
 
 public:
-    /** Construct from existing SharedMemorySegmentDto objects
-     * @param segments The segment DTOs */
-    explicit SharedMemorySegmentsDto(
-            std::vector<SharedMemorySegmentDto> segments);
+  /** Construct from existing SharedMemorySegmentDto objects
+   * @param segments The segment DTOs */
+  explicit SharedMemorySegmentsDto(std::vector<SharedMemorySegmentDto> segments);
 
-    /** Default constructor */
-    SharedMemorySegmentsDto() = default;
+  /** Default constructor */
+  SharedMemorySegmentsDto() = default;
 
-    /** Get the segment DTOs
-     * @return Vector of segment DTOs */
-    [[nodiscard]] const std::vector<SharedMemorySegmentDto> &getSegments() const;
+  /** Get the segment DTOs
+   * @return Vector of segment DTOs */
+  [[nodiscard]] const std::vector<SharedMemorySegmentDto> &getSegments() const;
 
-    /** Serialize to JSON
-     * @param writer The rapidjson writer */
-    void serialize(
-            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+  /** Serialize to JSON
+   * @param writer The rapidjson writer */
+  void serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
 
-    /** Deserialize from JSON string
-     * @param json The JSON string to parse */
-    void deserialize(const std::string &json) override;
+  /** Deserialize from JSON string
+   * @param json The JSON string to parse */
+  void deserialize(const std::string &json) override;
 };
 
-#endif  // LINTEL_SHAREDMEMORYSEGMENTSDTO_H
+}// namespace lintel
+#endif// LINTEL_SHAREDMEMORYSEGMENTSDTO_H

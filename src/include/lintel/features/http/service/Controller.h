@@ -25,29 +25,29 @@
 #define ADD_HANDLER_METHOD(pattern, httpType, name)                                   \
   void name##httpType(const httplib::Request &request,                                \
     httplib::Response &response,                                                      \
-    const ContentType &contentType,                                                   \
-    const std::optional<UserToken> &user);                                            \
+    const lintel::ContentType &contentType,                                           \
+    const std::optional<lintel::UserToken> &user);                                    \
   Handler name##httpType##Function = addMethod<std::function<HandlerArgs>, httpType>( \
     pattern, [&](const httplib::Request &request, httplib::Response &response) {      \
       std::string auth = request.get_header_value("Authorization");                   \
       std::string contentTypeString = request.get_header_value("Content-Type");       \
       if (contentTypeString.empty()) { contentTypeString = "application/json"; }      \
-      ContentType contentType(contentTypeString);                                     \
-      std::optional<UserToken> user = std::nullopt;                                   \
+      lintel::ContentType contentType(contentTypeString);                             \
+      std::optional<lintel::UserToken> user = std::nullopt;                           \
       try {                                                                           \
-        if (StringUtils::startsWith(auth, "Bearer ") && auth.size() > 7) {            \
+        if (lintel::StringUtils::startsWith(auth, "Bearer ") && auth.size() > 7) {    \
           std::string id = auth.substr(7);                                            \
-          UserTokenLogin userTokenLogin{ clientIpOf(request), id };                   \
+          lintel::UserTokenLogin userTokenLogin{ clientIpOf(request), id };           \
           user = m_authService->onAccessOf(userTokenLogin);                           \
         }                                                                             \
         name##httpType(request, response, contentType, user);                         \
-      } catch (const HttpBadRequestException &e) {                                    \
+      } catch (const lintel::HttpBadRequestException &e) {                            \
         LOG_ERROR("{}: {}", #name, e.what());                                         \
-        response.status = HttpStatusCodes::BadRequest;                                \
+        response.status = lintel::HttpStatusCodes::BadRequest;                        \
         response.set_content("bad request", "text/plain");                            \
       } catch (const std::exception &e) {                                             \
         LOG_ERROR("{}: {}", #name, e.what());                                         \
-        response.status = HttpStatusCodes::InternalServerError;                       \
+        response.status = lintel::HttpStatusCodes::InternalServerError;               \
         response.set_content("internal server error", "text/plain");                  \
       }                                                                               \
     })
@@ -57,20 +57,21 @@
     addMethod<std::function<HandlerWithContentReaderArgs>, httpType>(pattern,                                          \
       [&](const httplib::Request &request, httplib::Response &response, const httplib::ContentReader &contentReader) { \
         const std::string contentTypeString = request.get_header_value("Content-Type");                                \
-        ContentType contentType(contentTypeString);                                                                    \
+        lintel::ContentType contentType(contentTypeString);                                                            \
         try {                                                                                                          \
           name##httpType(request, response, contentReader, contentType);                                               \
         } catch (const std::exception &e) {                                                                            \
           LOG_ERROR("{}: {}", #name, e.what());                                                                        \
-          response.status = HttpStatusCodes::InternalServerError;                                                      \
+          response.status = lintel::HttpStatusCodes::InternalServerError;                                              \
           response.set_content("internal server error", "text/plain");                                                 \
         }                                                                                                              \
       });                                                                                                              \
   void name##httpType(const httplib::Request &request,                                                                 \
     httplib::Response &response,                                                                                       \
     const httplib::ContentReader &contentReader,                                                                       \
-    const ContentType &contentType)
+    const lintel::ContentType &contentType)
 
+namespace lintel {
 /** Parsed paging query parameters of a request */
 struct PagingParams
 {
@@ -171,4 +172,5 @@ public:
   void registerMethods(std::shared_ptr<httplib::Server> &server);
 };
 
+}// namespace lintel
 #endif// HTTP_LIBRARY_CONTROLLER_H

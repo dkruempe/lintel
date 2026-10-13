@@ -12,6 +12,7 @@
 #include "lintel/features/cli/models/CommandLineComponent.h"
 #include "lintel/features/cli/utils/CommandLineUtils.h"
 
+namespace lintel {
 CommandLineService::CommandLineService(const std::vector<std::shared_ptr<CommandLineComponent>> &components,
   std::shared_ptr<AuthCliService> authCliService,
   std::shared_ptr<UserApi> userApi,
@@ -125,8 +126,8 @@ void CommandLineService::onPrompt()
   if (!m_terminalService->getLine().empty()) { std::cout << m_terminalService->getLine(); }
 }
 
-void CommandLineService::handleCommandInput(
-    const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt) {
+void CommandLineService::handleCommandInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt)
+{
   tabPressed = false;
   printPrompt = true;
   std::string temp = symbolEvent.second;
@@ -155,8 +156,8 @@ void CommandLineService::handleCommandInput(
   onCommand(input, flags);
 }
 
-void CommandLineService::handleTabInput(
-    const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt) {
+void CommandLineService::handleTabInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt)
+{
   if (symbolEvent.second.empty() && !tabPressed) {
     CommandLineUtils::beep();
     tabPressed = true;
@@ -223,8 +224,10 @@ void CommandLineService::run()
     KeyEvent keyPressed = m_inputService->onRead();
     SymbolEvent symbolEvent = m_terminalService->onKeyPressed(keyPressed, menuNameOf());
     if (symbolEvent.first == Symbol::Command && !symbolEvent.second.empty()) {
-      m_commandLineHistoryService->historizeOf(CommandHistoryEntry(
-        symbolEvent.second, m_userDto.getUserName(), std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()), menuNameOf()));
+      m_commandLineHistoryService->historizeOf(CommandHistoryEntry(symbolEvent.second,
+        m_userDto.getUserName(),
+        std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()),
+        menuNameOf()));
     }
     switch (symbolEvent.first) {
     case Symbol::CtrlC:
@@ -252,9 +255,8 @@ void CommandLineService::run()
       break;
     case Symbol::Up:
     case Symbol::Down: {
-      auto commandHistoryEntry = symbolEvent.first == Symbol::Up
-        ? m_commandLineHistoryService->previousOf(menuNameOf())
-        : m_commandLineHistoryService->nextOf(menuNameOf());
+      auto commandHistoryEntry = symbolEvent.first == Symbol::Up ? m_commandLineHistoryService->previousOf(menuNameOf())
+                                                                 : m_commandLineHistoryService->nextOf(menuNameOf());
       if (!commandHistoryEntry.has_value()) {
         CommandLineUtils::beep();
         printPrompt = false;
@@ -345,3 +347,4 @@ void CommandLineService::onInitialize()
 {
   m_thread = std::thread([&]() { run(); });
 }
+}// namespace lintel

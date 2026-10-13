@@ -23,139 +23,140 @@
 #include "lintel/features/http/configuration/HttpEntry.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 namespace {
 
-/**
- * RAII redirector for `std::cout`; restores the original buffer on destruction so a failing
- * REQUIRE cannot leave the rest of the test binary writing into a dead stream.
- */
-class histCliCoutCapture
-{
-public:
-  histCliCoutCapture() : m_oldBuffer(std::cout.rdbuf(m_stream.rdbuf())) {}
-
-  ~histCliCoutCapture() { std::cout.rdbuf(m_oldBuffer); }
-
-  histCliCoutCapture(const histCliCoutCapture &) = delete;
-  histCliCoutCapture &operator=(const histCliCoutCapture &) = delete;
-
-  [[nodiscard]] std::string str() const { return m_stream.str(); }
-
-private:
-  std::ostringstream m_stream;
-  std::streambuf *m_oldBuffer;
-};
-
-/** RAII redirector for `std::cerr`, used for the error paths of onCommand(). */
-class histCliCerrCapture
-{
-public:
-  histCliCerrCapture() : m_oldBuffer(std::cerr.rdbuf(m_stream.rdbuf())) {}
-
-  ~histCliCerrCapture() { std::cerr.rdbuf(m_oldBuffer); }
-
-  histCliCerrCapture(const histCliCerrCapture &) = delete;
-  histCliCerrCapture &operator=(const histCliCerrCapture &) = delete;
-
-  [[nodiscard]] std::string str() const { return m_stream.str(); }
-
-private:
-  std::ostringstream m_stream;
-  std::streambuf *m_oldBuffer;
-};
-
-/**
- * `HistoryApi` has no virtual seam (unlike `UserApi`), so the only faithful way to observe what
- * the CLI component asks for is to let it talk to a real HTTP client. This loopback server
- * records every request and answers with a canned body.
- */
-class histCliBackend
-{
-public:
-  histCliBackend()
+  /**
+   * RAII redirector for `std::cout`; restores the original buffer on destruction so a failing
+   * REQUIRE cannot leave the rest of the test binary writing into a dead stream.
+   */
+  class histCliCoutCapture
   {
-    m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
-      paths.push_back(request.path);
-      methods.emplace_back(request.method);
-      bodies.push_back(request.body);
-      response.set_content(m_responseBody, "application/json");
-      return httplib::Server::HandlerResponse::Handled;
-    });
-    m_port = m_server.bind_to_any_port("127.0.0.1");
-    m_thread = std::thread([this]() { m_server.listen_after_bind(); });
-    // Server::stop() is a no-op until the accept loop is up. Without this wait a
-    // backend that is created and destroyed without a single request leaves the
-    // accept loop blocked in accept() and the join in the destructor never returns.
-    const auto histCliDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
-    while (!m_server.is_running() && std::chrono::steady_clock::now() < histCliDeadline) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  public:
+    histCliCoutCapture() : m_oldBuffer(std::cout.rdbuf(m_stream.rdbuf())) {}
+
+    ~histCliCoutCapture() { std::cout.rdbuf(m_oldBuffer); }
+
+    histCliCoutCapture(const histCliCoutCapture &) = delete;
+    histCliCoutCapture &operator=(const histCliCoutCapture &) = delete;
+
+    [[nodiscard]] std::string str() const { return m_stream.str(); }
+
+  private:
+    std::ostringstream m_stream;
+    std::streambuf *m_oldBuffer;
+  };
+
+  /** RAII redirector for `std::cerr`, used for the error paths of onCommand(). */
+  class histCliCerrCapture
+  {
+  public:
+    histCliCerrCapture() : m_oldBuffer(std::cerr.rdbuf(m_stream.rdbuf())) {}
+
+    ~histCliCerrCapture() { std::cerr.rdbuf(m_oldBuffer); }
+
+    histCliCerrCapture(const histCliCerrCapture &) = delete;
+    histCliCerrCapture &operator=(const histCliCerrCapture &) = delete;
+
+    [[nodiscard]] std::string str() const { return m_stream.str(); }
+
+  private:
+    std::ostringstream m_stream;
+    std::streambuf *m_oldBuffer;
+  };
+
+  /**
+   * `HistoryApi` has no virtual seam (unlike `UserApi`), so the only faithful way to observe what
+   * the CLI component asks for is to let it talk to a real HTTP client. This loopback server
+   * records every request and answers with a canned body.
+   */
+  class histCliBackend
+  {
+  public:
+    histCliBackend()
+    {
+      m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
+        paths.push_back(request.path);
+        methods.emplace_back(request.method);
+        bodies.push_back(request.body);
+        response.set_content(m_responseBody, "application/json");
+        return httplib::Server::HandlerResponse::Handled;
+      });
+      m_port = m_server.bind_to_any_port("127.0.0.1");
+      m_thread = std::thread([this]() { m_server.listen_after_bind(); });
+      // Server::stop() is a no-op until the accept loop is up. Without this wait a
+      // backend that is created and destroyed without a single request leaves the
+      // accept loop blocked in accept() and the join in the destructor never returns.
+      const auto histCliDeadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+      while (!m_server.is_running() && std::chrono::steady_clock::now() < histCliDeadline) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
     }
-  }
 
-  ~histCliBackend()
+    ~histCliBackend()
+    {
+      m_server.stop();
+      if (m_thread.joinable()) { m_thread.join(); }
+    }
+
+    histCliBackend(const histCliBackend &) = delete;
+    histCliBackend &operator=(const histCliBackend &) = delete;
+
+    void answerWith(const std::string &body) { m_responseBody = body; }
+
+    [[nodiscard]] int port() const { return m_port; }
+
+    /** @return true once the accept loop is up, so stop() can shut the server down */
+    [[nodiscard]] bool running() const { return m_server.is_running(); }
+
+    /** @return every path the component requested, in order */
+    std::vector<std::string> paths;
+    std::vector<std::string> methods;
+    std::vector<std::string> bodies;
+
+  private:
+    httplib::Server m_server;
+    std::thread m_thread;
+    int m_port{ -1 };
+    std::string m_responseBody{ "[]" };
+  };
+
+  /**
+   * Build a `ClientProvider` whose only client entry points at the loopback backend. The
+   * configuration directory is redirected to a path that does not exist so that constructing the
+   * `Configuration` cannot pick up the developer's real bootstrap.xml.
+   */
+  std::shared_ptr<ClientProvider> histCliProviderOf(int port)
   {
-    m_server.stop();
-    if (m_thread.joinable()) { m_thread.join(); }
+    static const std::string kHistCliAbsentConfigDir = "/nonexistent/lintel-cli-test-config";
+    auto environment = std::make_shared<EnvironmentConfiguration>();
+    environment->overrides(EnvironmentConfiguration::ConfigDirectory, kHistCliAbsentConfigDir);
+    auto clientConfiguration = std::make_shared<ClientConfiguration>("127.0.0.1",
+      port,
+      std::chrono::milliseconds(2000),
+      std::chrono::milliseconds(2000),
+      std::chrono::milliseconds(2000));
+    std::vector<std::shared_ptr<Entry>> entries{ std::make_shared<HttpEntry>(
+      type_name<HttpComponent>(), clientConfiguration) };
+    auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
+    configuration->setEntries(entries);
+    return std::make_shared<ClientProvider>(configuration);
   }
 
-  histCliBackend(const histCliBackend &) = delete;
-  histCliBackend &operator=(const histCliBackend &) = delete;
-
-  void answerWith(const std::string &body) { m_responseBody = body; }
-
-  [[nodiscard]] int port() const { return m_port; }
-
-  /** @return true once the accept loop is up, so stop() can shut the server down */
-  [[nodiscard]] bool running() const { return m_server.is_running(); }
-
-  /** @return every path the component requested, in order */
-  std::vector<std::string> paths;
-  std::vector<std::string> methods;
-  std::vector<std::string> bodies;
-
-private:
-  httplib::Server m_server;
-  std::thread m_thread;
-  int m_port{ -1 };
-  std::string m_responseBody{ "[]" };
-};
-
-/**
- * Build a `ClientProvider` whose only client entry points at the loopback backend. The
- * configuration directory is redirected to a path that does not exist so that constructing the
- * `Configuration` cannot pick up the developer's real bootstrap.xml.
- */
-std::shared_ptr<ClientProvider> histCliProviderOf(int port)
-{
-  static const std::string kHistCliAbsentConfigDir = "/nonexistent/lintel-cli-test-config";
-  auto environment = std::make_shared<EnvironmentConfiguration>();
-  environment->overrides(EnvironmentConfiguration::ConfigDirectory, kHistCliAbsentConfigDir);
-  auto clientConfiguration = std::make_shared<ClientConfiguration>("127.0.0.1",
-    port,
-    std::chrono::milliseconds(2000),
-    std::chrono::milliseconds(2000),
-    std::chrono::milliseconds(2000));
-  std::vector<std::shared_ptr<Entry>> entries{ std::make_shared<HttpEntry>(
-    type_name<HttpComponent>(), clientConfiguration) };
-  auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
-  configuration->setEntries(entries);
-  return std::make_shared<ClientProvider>(configuration);
-}
-
-/** @return a JSON body containing one history entry, exactly as HistoryController would send it */
-std::string histCliOneEntryBody(const std::string &processName,
-  const std::string &serviceName,
-  const std::string &label,
-  const std::string &text)
-{
-  HistoryEntry histCliEntry(processName,
-    serviceName,
-    label,
-    text,
-    std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()));
-  HistoryDtos histCliDtos(std::vector<HistoryEntry>{ histCliEntry });
-  return histCliDtos.JsonSerializable::serialize();
-}
+  /** @return a JSON body containing one history entry, exactly as HistoryController would send it */
+  std::string histCliOneEntryBody(const std::string &processName,
+    const std::string &serviceName,
+    const std::string &label,
+    const std::string &text)
+  {
+    HistoryEntry histCliEntry(processName,
+      serviceName,
+      label,
+      text,
+      std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()));
+    HistoryDtos histCliDtos(std::vector<HistoryEntry>{ histCliEntry });
+    return histCliDtos.JsonSerializable::serialize();
+  }
 
 }// namespace
 
@@ -376,3 +377,4 @@ TEST_CASE("HistoryCliComponent: show_histories without a value for -p prints an 
   REQUIRE(histCliServer.paths.empty());
   REQUIRE(histCliReported.find("ERROR") != std::string::npos);
 }
+}// namespace lintel

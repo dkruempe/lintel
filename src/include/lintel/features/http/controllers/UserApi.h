@@ -14,6 +14,7 @@
 #include "lintel/features/base/services/AuthService.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 /** API client for user authentication and management via HTTP */
 class UserApi
 {
@@ -88,4 +89,5 @@ public:
   virtual void deleteOf(const std::vector<std::string> &userNames);
 };
 
+}// namespace lintel
 #endif// LINTEL_USERAPI_H

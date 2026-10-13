@@ -5,6 +5,7 @@
 #include <ostream>
 #include <string>
 
+namespace lintel {
 /** Represents a single entry in the command history */
 class CommandHistoryEntry
 {
@@ -54,4 +55,5 @@ public:
   friend bool operator!=(const CommandHistoryEntry &lhs, const CommandHistoryEntry &rhs) { return !(lhs == rhs); }
 };
 
+}// namespace lintel
 #endif// COMMANDHISTORYENTRY_H

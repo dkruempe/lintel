@@ -5,28 +5,31 @@
 
 #include "lintel/core/models/JsonSerializable.h"
 
+namespace lintel {
 /** DTO representing a property value update request */
-class PropertyValueDto : public JsonSerializable {
+class PropertyValueDto : public JsonSerializable
+{
 private:
-    std::string m_value;
+  std::string m_value;
 
-    static struct Shapes {
-        const std::string VALUE = "value";
-    } m_shapes;
+  static struct Shapes
+  {
+    const std::string VALUE = "value";
+  } m_shapes;
 
 public:
-    /** @param value the new property value */
-    explicit PropertyValueDto(std::string value);
+  /** @param value the new property value */
+  explicit PropertyValueDto(std::string value);
 
-    PropertyValueDto() = default;
+  PropertyValueDto() = default;
 
-    /** @return the value string */
-    [[nodiscard]] const std::string &getValue() const;
+  /** @return the value string */
+  [[nodiscard]] const std::string &getValue() const;
 
-    void serialize(
-            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+  void serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
 
-    bool deserialize(const rapidjson::Value &obj) override;
+  bool deserialize(const rapidjson::Value &obj) override;
 };
 
-#endif  // LINTEL_PROPERTYVALUEDTO_H
+}// namespace lintel
+#endif// LINTEL_PROPERTYVALUEDTO_H

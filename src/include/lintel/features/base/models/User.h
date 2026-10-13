@@ -9,6 +9,7 @@
 
 #include "lintel/features/base/models/Group.h"
 
+namespace lintel {
 /**
  * User class for controlling of access right etc.
  *
@@ -18,36 +19,35 @@
  * All information of the user are saved in the database and the password is
  * of course saved as password hash.
  */
-class User {
+class User
+{
 public:
-    enum Sex {
-        Male, Female
-    };
+  enum Sex { Male, Female };
 
 private:
-    std::string m_firstName;
-    std::string m_lastName;
-    Sex m_sex;
-    std::string m_email;
-    std::string m_userName;
-    std::string m_password;
+  std::string m_firstName;
+  std::string m_lastName;
+  Sex m_sex;
+  std::string m_email;
+  std::string m_userName;
+  std::string m_password;
 
-    std::chrono::sys_time<std::chrono::microseconds> m_createdTimestamp;
-    std::vector<Group> m_groups;
-    std::set<Group> m_allGroups{};  // including subgroups
+  std::chrono::sys_time<std::chrono::microseconds> m_createdTimestamp;
+  std::vector<Group> m_groups;
+  std::set<Group> m_allGroups{};// including subgroups
 
 public:
-    /**
-     * Constructor.
-     * @param firstName user's first name
-     * @param lastName user's last name
-     * @param sex user's sex
-     * @param email user's email address
-     * @param userName login username
-     * @param password password (will be hashed)
-     * @param groups groups this user belongs to
-     * @param createdTimestamp creation timestamp (defaults to now)
-     */
+  /**
+   * Constructor.
+   * @param firstName user's first name
+   * @param lastName user's last name
+   * @param sex user's sex
+   * @param email user's email address
+   * @param userName login username
+   * @param password password (will be hashed)
+   * @param groups groups this user belongs to
+   * @param createdTimestamp creation timestamp (defaults to now)
+   */
   User(std::string firstName,
     std::string lastName,
     Sex sex,
@@ -92,4 +92,5 @@ public:
   friend std::ostream &operator<<(std::ostream &os, const User &user);
 };
 
-#endif  // LINTEL_USER_H
+}// namespace lintel
+#endif// LINTEL_USER_H

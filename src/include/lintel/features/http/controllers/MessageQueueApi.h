@@ -3,6 +3,7 @@
 #include "lintel/features/base/controller/MessageQueueDto.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 /** API client for retrieving message queue data from the HTTP service */
 class MesssageQueueApi
 {
@@ -19,4 +20,5 @@ public:
   std::vector<MessageQueueDto> allOf(const std::string &processName, const std::string &messageQueueName);
 };
 
-#endif //LINTEL_MESSAGEQUEUEAPI_H
+}// namespace lintel
+#endif// LINTEL_MESSAGEQUEUEAPI_H

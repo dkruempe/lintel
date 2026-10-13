@@ -4,15 +4,17 @@
 
 #include "lintel/core/services/LoggerService.h"
 
+namespace lintel {
 namespace HttpClientHelper {
 
-bool hasResponse(const httplib::Result &result)
-{
-  if (result == nullptr) {
-    LOG_ERROR("HTTP request failed - no response received");
-    return false;
+  bool hasResponse(const httplib::Result &result)
+  {
+    if (result == nullptr) {
+      LOG_ERROR("HTTP request failed - no response received");
+      return false;
+    }
+    return true;
   }
-  return true;
-}
 
 }// namespace HttpClientHelper
+}// namespace lintel

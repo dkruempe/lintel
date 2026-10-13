@@ -5,10 +5,8 @@
 #include <boost/next_prior.hpp>
 #include <streambuf>
 
-FileService::Stream::Stream(const std::filesystem::path &path) : m_file(path.string())
-{
-  getLine();
-}
+namespace lintel {
+FileService::Stream::Stream(const std::filesystem::path &path) : m_file(path.string()) { getLine(); }
 
 bool FileService::Stream::isEndOfFile() const { return m_endOfFile; }
 
@@ -48,10 +46,7 @@ void FileService::writeToFile(const std::string &content, bool overwrite /* defa
   out << content;
 }
 
-void FileService::createSymlinkTo(const std::filesystem::path &to)
-{
-  std::filesystem::create_symlink(m_path, to);
-}
+void FileService::createSymlinkTo(const std::filesystem::path &to) { std::filesystem::create_symlink(m_path, to); }
 
 std::vector<std::string> FileService::matches(const std::regex &regex)
 {
@@ -91,3 +86,4 @@ void FileService::createFile(std::size_t sizeOfFile)
     fbuf.sputc(0);
   }
 }
+}// namespace lintel

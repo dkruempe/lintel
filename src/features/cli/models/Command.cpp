@@ -7,6 +7,7 @@
 
 #include <numeric>
 
+namespace lintel {
 Command::Command(std::string command, std::string description)
   : m_command(std::move(command)), m_description(std::move(description))
 {}
@@ -219,3 +220,4 @@ void Command::parse(const std::string &command, const std::vector<std::string> &
 }
 
 std::string Command::getCommand() const { return m_command; }
+}// namespace lintel

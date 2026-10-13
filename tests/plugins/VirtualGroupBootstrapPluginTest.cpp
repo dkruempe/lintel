@@ -36,68 +36,69 @@
  * prefix" below, so that replacing it with a flag becomes a visible, conscious change.
  */
 
+namespace lintel {
 namespace {
 
-/** A provider holding the given virtual group names. */
-std::shared_ptr<GroupProvider> vgBootstrapProvider(const std::vector<std::string> &groupNames)
-{
-  auto provider = std::make_shared<GroupProvider>();
-  for (const auto &name : groupNames) { provider->add(Group(name, {}, true)); }
-  return provider;
-}
-
-/** @return the rows of the given query as "col0|col1" strings, in query order */
-std::vector<std::string> vgBootstrapRows(const std::filesystem::path &databaseFile, const std::string &query)
-{
-  std::vector<std::string> rows;
-  db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
-  db::Statement statement(connection);
-  db::Result result = statement.execute(query);
-  for (std::size_t i = 0; i < static_cast<std::size_t>(result.getSize()); i++) {
-    rows.push_back(result.getValue(static_cast<int>(i), 0));
-  }
-  return rows;
-}
-
-std::vector<std::string> vgBootstrapGroupNames(const std::filesystem::path &databaseFile)
-{
-  return vgBootstrapRows(databaseFile, "select name from groups order by name");
-}
-
-std::vector<std::string> vgBootstrapRelations(const std::filesystem::path &databaseFile)
-{
-  return vgBootstrapRows(databaseFile,
-    "select group_name || '|' || base_group_name from group_groups_relation"
-    " order by group_name, base_group_name");
-}
-
-struct VgBootstrapFixture
-{
-  std::filesystem::path databaseFile;
-  std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
-  std::shared_ptr<Hypodermic::Container> container;
-  std::shared_ptr<VirtualGroupBootstrapPlugin> plugin;
-
-  explicit VgBootstrapFixture(const std::vector<std::vector<std::string>> &providerGroups,
-    bool withDefaultConnection = true,
-    db::ConnectionType type = db::ConnectionType::SQLite)
+  /** A provider holding the given virtual group names. */
+  std::shared_ptr<GroupProvider> vgBootstrapProvider(const std::vector<std::string> &groupNames)
   {
-    static unsigned int counter = 0;
-    databaseFile = std::filesystem::temp_directory_path()
-                   / ("vg_bootstrap_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".db");
-    std::filesystem::remove(databaseFile);
+    auto provider = std::make_shared<GroupProvider>();
+    for (const auto &name : groupNames) { provider->add(Group(name, {}, true)); }
+    return provider;
+  }
 
+  /** @return the rows of the given query as "col0|col1" strings, in query order */
+  std::vector<std::string> vgBootstrapRows(const std::filesystem::path &databaseFile, const std::string &query)
+  {
+    std::vector<std::string> rows;
     db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
     db::Statement statement(connection);
-    statement.execute(R"(
+    db::Result result = statement.execute(query);
+    for (std::size_t i = 0; i < static_cast<std::size_t>(result.getSize()); i++) {
+      rows.push_back(result.getValue(static_cast<int>(i), 0));
+    }
+    return rows;
+  }
+
+  std::vector<std::string> vgBootstrapGroupNames(const std::filesystem::path &databaseFile)
+  {
+    return vgBootstrapRows(databaseFile, "select name from groups order by name");
+  }
+
+  std::vector<std::string> vgBootstrapRelations(const std::filesystem::path &databaseFile)
+  {
+    return vgBootstrapRows(databaseFile,
+      "select group_name || '|' || base_group_name from group_groups_relation"
+      " order by group_name, base_group_name");
+  }
+
+  struct VgBootstrapFixture
+  {
+    std::filesystem::path databaseFile;
+    std::shared_ptr<Configuration> configuration;
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
+    std::shared_ptr<Hypodermic::Container> container;
+    std::shared_ptr<VirtualGroupBootstrapPlugin> plugin;
+
+    explicit VgBootstrapFixture(const std::vector<std::vector<std::string>> &providerGroups,
+      bool withDefaultConnection = true,
+      db::ConnectionType type = db::ConnectionType::SQLite)
+    {
+      static unsigned int counter = 0;
+      databaseFile = std::filesystem::temp_directory_path()
+                     / ("vg_bootstrap_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".db");
+      std::filesystem::remove(databaseFile);
+
+      db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
+      db::Statement statement(connection);
+      statement.execute(R"(
             CREATE TABLE groups (
                 name text NOT NULL,
                 virtual bool NOT NULL,
                 CONSTRAINT group_pk PRIMARY KEY (name)
             );
         )");
-    statement.execute(R"(
+      statement.execute(R"(
             CREATE TABLE group_groups_relation (
                 group_name text NOT NULL,
                 base_group_name text NOT NULL,
@@ -105,52 +106,52 @@ struct VgBootstrapFixture
             );
         )");
 
-    std::vector<std::shared_ptr<Entry>> entries;
-    entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
-      databaseFile.string(),
-      "",
-      "",
-      type,
-      "default",
-      -1,
-      "",
-      withDefaultConnection));
-    auto envConfig = std::make_shared<EnvironmentConfiguration>();
-    envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_vg_bootstrap_cfg");
-    envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
-    configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
-    configuration->setEntries(entries);
-    connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
+      std::vector<std::shared_ptr<Entry>> entries;
+      entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+        databaseFile.string(),
+        "",
+        "",
+        type,
+        "default",
+        -1,
+        "",
+        withDefaultConnection));
+      auto envConfig = std::make_shared<EnvironmentConfiguration>();
+      envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_vg_bootstrap_cfg");
+      envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
+      configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+      configuration->setEntries(entries);
+      connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
 
-    Hypodermic::ContainerBuilder builder;
-    for (const auto &groups : providerGroups) { builder.registerInstance(vgBootstrapProvider(groups)); }
-    container = builder.build();
-    plugin = std::make_shared<VirtualGroupBootstrapPlugin>(connectionConfigurations, container);
-  }
+      Hypodermic::ContainerBuilder builder;
+      for (const auto &groups : providerGroups) { builder.registerInstance(vgBootstrapProvider(groups)); }
+      container = builder.build();
+      plugin = std::make_shared<VirtualGroupBootstrapPlugin>(connectionConfigurations, container);
+    }
 
-  ~VgBootstrapFixture() { std::filesystem::remove(databaseFile); }
+    ~VgBootstrapFixture() { std::filesystem::remove(databaseFile); }
 
-  VgBootstrapFixture(const VgBootstrapFixture &) = delete;
-  VgBootstrapFixture &operator=(const VgBootstrapFixture &) = delete;
+    VgBootstrapFixture(const VgBootstrapFixture &) = delete;
+    VgBootstrapFixture &operator=(const VgBootstrapFixture &) = delete;
 
-  /** @return the virtual flag of the given group, "" if the group is unknown */
-  std::string virtualFlagOf(const std::string &groupName)
-  {
-    db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
-    db::Statement statement(connection);
-    db::Result result = statement.execute("select virtual from groups where name = '" + groupName + "'");
-    return result.getSize() == 0 ? std::string{} : result.getValue(0, 0);
-  }
+    /** @return the virtual flag of the given group, "" if the group is unknown */
+    std::string virtualFlagOf(const std::string &groupName)
+    {
+      db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
+      db::Statement statement(connection);
+      db::Result result = statement.execute("select virtual from groups where name = '" + groupName + "'");
+      return result.getSize() == 0 ? std::string{} : result.getValue(0, 0);
+    }
 
-  /** @return the number of rows of the given table */
-  int countOf(const std::string &table)
-  {
-    db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
-    db::Statement statement(connection);
-    db::Result result = statement.execute("select count(*) from " + table);
-    return result.getSize() == 0 ? -1 : std::stoi(result.getValue(0, 0));
-  }
-};
+    /** @return the number of rows of the given table */
+    int countOf(const std::string &table)
+    {
+      db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
+      db::Statement statement(connection);
+      db::Result result = statement.execute("select count(*) from " + table);
+      return result.getSize() == 0 ? -1 : std::stoi(result.getValue(0, 0));
+    }
+  };
 
 }// namespace
 
@@ -292,3 +293,4 @@ TEST_CASE("VirtualGroupBootstrapPlugin: an undefined connection type fails in th
   REQUIRE_THROWS_AS(fixture.plugin->onStart(), db::SQLException);
   REQUIRE(fixture.countOf("groups") == 0);
 }
+}// namespace lintel

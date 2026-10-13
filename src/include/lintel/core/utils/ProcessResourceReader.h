@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <optional>
 
+namespace lintel {
 /**
  * Process resource snapshot read from the operating system (Linux /proc or
  * macOS libproc). Values are optional / deltas so that only successfully
@@ -48,4 +49,5 @@ public:
   static ProcessResourceData readOf(pid_t pid, const std::optional<ProcessResourceData> &previous);
 };
 
+}// namespace lintel
 #endif// LINTEL_PROCESSRESOURCEREADER_H

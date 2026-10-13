@@ -5,6 +5,7 @@
 
 #include "lintel/features/base/events/ShmSegmentAccessor.h"
 
+namespace lintel {
 /**
  * Allocator adapter that binds ShmSegmentAccessor to the boost interprocess
  * segment manager. This is the only translation unit boundary where the two
@@ -30,4 +31,5 @@ private:
   boost::interprocess::managed_mapped_file::segment_manager *m_segment;
 };
 
+}// namespace lintel
 #endif// LINTEL_BOOSTSEGMENTALLOCATOR_H

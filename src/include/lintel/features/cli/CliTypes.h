@@ -4,6 +4,7 @@
 #include <string>
 #include <utility>
 
+namespace lintel {
 /** Type of key event from terminal input */
 enum class KeyType { Ascii, Up, Down, Left, Right, Backspace, Canc, Home, End, Ret, Eof, CtrlC, CtrlR, Ignored };
 /** Pair of key type and ASCII character */
@@ -14,4 +15,5 @@ enum class Symbol { Nothing, Command, Up, Down, Tab, Eof, CtrlC, CtrlR };
 /** Pair of symbol and associated string data */
 using SymbolEvent = std::pair<Symbol, std::string>;
 
+}// namespace lintel
 #endif

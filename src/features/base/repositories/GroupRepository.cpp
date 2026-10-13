@@ -10,42 +10,42 @@
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/utils/RegexUtils.h"
 
-GroupRepository::GroupRepository(
-        std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
-        : m_connectionConfigurations(std::move(connectionConfigurations)),
-          m_connectionEntry(m_connectionConfigurations->ofDefault()) {}
+namespace lintel {
+GroupRepository::GroupRepository(std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
+  : m_connectionConfigurations(std::move(connectionConfigurations)),
+    m_connectionEntry(m_connectionConfigurations->ofDefault())
+{}
 
-void GroupRepository::initGroups() {
-    if (m_connectionEntry == nullptr) {
-        LOG_INFO("no default database connection - skip group initialization");
-        return;
-    }
-    db::Connection connection(m_connectionEntry);
-    db::Statement statement(connection);
-    // initialize virtual groups
-    db::ParameterBuilder builder(m_connectionEntry);
-    builder.add(true);
-    db::Result result = statement.execute(R"(
+void GroupRepository::initGroups()
+{
+  if (m_connectionEntry == nullptr) {
+    LOG_INFO("no default database connection - skip group initialization");
+    return;
+  }
+  db::Connection connection(m_connectionEntry);
+  db::Statement statement(connection);
+  // initialize virtual groups
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(true);
+  db::Result result = statement.execute(R"(
   select name,
          virtual
   from groups
   where virtual = ?
   )",
-                                          builder);
-    for (auto &iter: result) {
-        std::string groupName = iter.of(0).getValue();
-        bool isVirtual = iter.of(1).getValue<bool>();
-        if (groupName.empty()) {
-            continue;
-        }
-        Group group(groupName, {}, isVirtual);
-        m_groupMap.insert({group.getGroupName(), group});
-        m_groups.push_back(group);
-    }
-    db::ParameterBuilder builder1(m_connectionEntry);
-    builder1.add(false);
-    // initialize non virtual groups
-    result = statement.execute(R"(
+    builder);
+  for (auto &iter : result) {
+    std::string groupName = iter.of(0).getValue();
+    bool isVirtual = iter.of(1).getValue<bool>();
+    if (groupName.empty()) { continue; }
+    Group group(groupName, {}, isVirtual);
+    m_groupMap.insert({ group.getGroupName(), group });
+    m_groups.push_back(group);
+  }
+  db::ParameterBuilder builder1(m_connectionEntry);
+  builder1.add(false);
+  // initialize non virtual groups
+  result = statement.execute(R"(
   select g.name,
          g.virtual,
          gr.base_group_name
@@ -55,221 +55,193 @@ void GroupRepository::initGroups() {
   where g.virtual = ?
   order by g.name;
   )",
-                               builder1);
-    std::string lastGroupName;
-    bool lastIsVirtual = false;
-    std::vector<std::string> groupNames;
-    for (const auto &iter: result) {
-        std::string groupName = iter.of(0).getValue();
-        bool isVirtual = iter.of(1).getValue<bool>();
-        std::string groupMember = iter.of(2).getValue();
-        if (groupName.empty()) {
-            continue;
-        }
-        if (lastGroupName != groupName && !lastGroupName.empty()) {
-            std::vector<Group> groups;
-            std::transform(groupNames.begin(), groupNames.end(),
-                           std::back_inserter(groups),
-                           [&](const std::string &group) -> Group {
-                                return m_groupMap.at(group);
-                           });
-            Group group(lastGroupName, groups, lastIsVirtual);
-            m_groupMap.insert({group.getGroupName(), group});
-            m_groups.push_back(group);
-        }
-        if (lastGroupName != groupName) {
-            lastGroupName = groupName;
-            lastIsVirtual = isVirtual;
-            groupNames.clear();
-        }
-        if (!groupMember.empty()) {
-            groupNames.push_back(groupMember);
-        }
+    builder1);
+  std::string lastGroupName;
+  bool lastIsVirtual = false;
+  std::vector<std::string> groupNames;
+  for (const auto &iter : result) {
+    std::string groupName = iter.of(0).getValue();
+    bool isVirtual = iter.of(1).getValue<bool>();
+    std::string groupMember = iter.of(2).getValue();
+    if (groupName.empty()) { continue; }
+    if (lastGroupName != groupName && !lastGroupName.empty()) {
+      std::vector<Group> groups;
+      std::transform(
+        groupNames.begin(), groupNames.end(), std::back_inserter(groups), [&](const std::string &group) -> Group {
+          return m_groupMap.at(group);
+        });
+      Group group(lastGroupName, groups, lastIsVirtual);
+      m_groupMap.insert({ group.getGroupName(), group });
+      m_groups.push_back(group);
     }
-    std::vector<Group> groups;
-    if (lastGroupName.empty()) {
-        return;
+    if (lastGroupName != groupName) {
+      lastGroupName = groupName;
+      lastIsVirtual = isVirtual;
+      groupNames.clear();
     }
-    std::transform(groupNames.begin(), groupNames.end(),
-                   std::back_inserter(groups),
-                   [&](const std::string &groupName) -> Group {
-                       return m_groupMap.at(groupName);
-                   });
-    Group group(lastGroupName, groups, lastIsVirtual);
-    m_groupMap.insert({group.getGroupName(), group});
-    m_groups.push_back(group);
+    if (!groupMember.empty()) { groupNames.push_back(groupMember); }
+  }
+  std::vector<Group> groups;
+  if (lastGroupName.empty()) { return; }
+  std::transform(
+    groupNames.begin(), groupNames.end(), std::back_inserter(groups), [&](const std::string &groupName) -> Group {
+      return m_groupMap.at(groupName);
+    });
+  Group group(lastGroupName, groups, lastIsVirtual);
+  m_groupMap.insert({ group.getGroupName(), group });
+  m_groups.push_back(group);
 }
 
-std::optional<Group> GroupRepository::of(const std::string &groupName) {
-    auto found = m_groupMap.find(groupName);
-    if (found == m_groupMap.end()) {
-        return std::nullopt;
-    }
-    return std::make_optional(found->second);
+std::optional<Group> GroupRepository::of(const std::string &groupName)
+{
+  auto found = m_groupMap.find(groupName);
+  if (found == m_groupMap.end()) { return std::nullopt; }
+  return std::make_optional(found->second);
 }
 
 std::vector<Group> GroupRepository::allOf() { return m_groups; }
 
-std::vector<Group> GroupRepository::allOf(bool isVirtualGroup) {
-    std::vector<Group> temp(m_groups);
-    temp.erase(std::remove_if(temp.begin(), temp.end(),
-                              [&isVirtualGroup](const Group &group) -> bool {
-                                  return group.isVirtual() != isVirtualGroup;
-                              }),
-               temp.end());
-    return temp;
+std::vector<Group> GroupRepository::allOf(bool isVirtualGroup)
+{
+  std::vector<Group> temp(m_groups);
+  temp.erase(std::remove_if(temp.begin(),
+               temp.end(),
+               [&isVirtualGroup](const Group &group) -> bool { return group.isVirtual() != isVirtualGroup; }),
+    temp.end());
+  return temp;
 }
 
-std::vector<Group> GroupRepository::allOf(const std::string &groupName) {
-    std::vector<Group> temp(m_groups);
-    std::string errorMessage;
-    if (!RegexUtils::validatePattern(groupName, errorMessage)) {
-        LOG_WARN("allOf: {}", errorMessage);
-        return {};
-    }
-    const std::regex match(groupName, std::regex::ECMAScript);
-    temp.erase(std::remove_if(temp.begin(), temp.end(),
-                              [&match](const Group &group) -> bool {
-                                  return !std::regex_match(group.getGroupName(),
-                                                           match);
-                              }),
-               temp.end());
-    return temp;
+std::vector<Group> GroupRepository::allOf(const std::string &groupName)
+{
+  std::vector<Group> temp(m_groups);
+  std::string errorMessage;
+  if (!RegexUtils::validatePattern(groupName, errorMessage)) {
+    LOG_WARN("allOf: {}", errorMessage);
+    return {};
+  }
+  const std::regex match(groupName, std::regex::ECMAScript);
+  temp.erase(std::remove_if(temp.begin(),
+               temp.end(),
+               [&match](const Group &group) -> bool { return !std::regex_match(group.getGroupName(), match); }),
+    temp.end());
+  return temp;
 }
 
-std::vector<Group> GroupRepository::allOf(const std::string &groupName,
-                                          bool isVirtualGroup) {
-    std::vector<Group> temp = allOf(isVirtualGroup);
-    if (temp.empty()) {
-        return temp;
-    }
-    std::string errorMessage;
-    if (!RegexUtils::validatePattern(groupName, errorMessage)) {
-        LOG_WARN("allOf: {}", errorMessage);
-        return {};
-    }
-    const std::regex match(groupName, std::regex::ECMAScript);
-    temp.erase(std::remove_if(temp.begin(), temp.end(),
-                              [&match](const Group &group) -> bool {
-                                  return !std::regex_match(group.getGroupName(),
-                                                           match);
-                              }),
-               temp.end());
-    return temp;
+std::vector<Group> GroupRepository::allOf(const std::string &groupName, bool isVirtualGroup)
+{
+  std::vector<Group> temp = allOf(isVirtualGroup);
+  if (temp.empty()) { return temp; }
+  std::string errorMessage;
+  if (!RegexUtils::validatePattern(groupName, errorMessage)) {
+    LOG_WARN("allOf: {}", errorMessage);
+    return {};
+  }
+  const std::regex match(groupName, std::regex::ECMAScript);
+  temp.erase(std::remove_if(temp.begin(),
+               temp.end(),
+               [&match](const Group &group) -> bool { return !std::regex_match(group.getGroupName(), match); }),
+    temp.end());
+  return temp;
 }
 
-void GroupRepository::createOf(const Group &group) {
-    if (group.isVirtual()) {
-        throw std::runtime_error(
-                "group cannot be virtual. Those groups has to be defined in the code "
-                "itself");
-    }
-    auto found = m_groupMap.find(group.getGroupName());
-    if (found != m_groupMap.end()) {
-        throw std::runtime_error(
-                "There is an existing group with the mentioned name");
-    }
-    db::Connection connection(m_connectionEntry);
-    db::PreparedStatement preparedStatement(
-            connection, "insert into groups(name, virtual) values(?, ?)",
-            "insert_group");
-    db::ParameterBuilder builder(m_connectionEntry);
-    builder.add(group.getGroupName()).add(group.isVirtual());
-    preparedStatement.execute(builder);
-    m_groupMap.insert({group.getGroupName(), group});
-    m_groups.push_back(group);
+void GroupRepository::createOf(const Group &group)
+{
+  if (group.isVirtual()) {
+    throw std::runtime_error(
+      "group cannot be virtual. Those groups has to be defined in the code "
+      "itself");
+  }
+  auto found = m_groupMap.find(group.getGroupName());
+  if (found != m_groupMap.end()) { throw std::runtime_error("There is an existing group with the mentioned name"); }
+  db::Connection connection(m_connectionEntry);
+  db::PreparedStatement preparedStatement(connection, "insert into groups(name, virtual) values(?, ?)", "insert_group");
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(group.getGroupName()).add(group.isVirtual());
+  preparedStatement.execute(builder);
+  m_groupMap.insert({ group.getGroupName(), group });
+  m_groups.push_back(group);
 }
 
-void GroupRepository::deleteOf(const Group &group) {
-    db::Connection connection(m_connectionEntry);
-    db::Statement statement(connection);
-    db::ParameterBuilder builder(m_connectionEntry);
-    builder.add(group.getGroupName());
-    db::Result result = statement.execute(
-            "select user_name, group_name from user_groups_relation where "
-            "group_name = ?",
-            builder);
-    if (result.getSize() > 0) {
-        throw std::runtime_error(
-                "cannot remove group which is in usage of an user");
-    }
-    statement.execute("delete from groups where name = ?", builder);
-    m_groupMap.erase(group.getGroupName());
-    m_groups.erase(
-            std::remove_if(m_groups.begin(), m_groups.end(),
-                           [&](const Group &g) {
-                               return g.getGroupName() == group.getGroupName();
-                           }),
-            m_groups.end());
+void GroupRepository::deleteOf(const Group &group)
+{
+  db::Connection connection(m_connectionEntry);
+  db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(group.getGroupName());
+  db::Result result = statement.execute(
+    "select user_name, group_name from user_groups_relation where "
+    "group_name = ?",
+    builder);
+  if (result.getSize() > 0) { throw std::runtime_error("cannot remove group which is in usage of an user"); }
+  statement.execute("delete from groups where name = ?", builder);
+  m_groupMap.erase(group.getGroupName());
+  m_groups.erase(
+    std::remove_if(
+      m_groups.begin(), m_groups.end(), [&](const Group &g) { return g.getGroupName() == group.getGroupName(); }),
+    m_groups.end());
 }
 
-void GroupRepository::addGroupOf(const Group &group, const Group &add) {
-    auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(),
-                              [&](const Group &b) -> bool {
-                                  return b.getGroupName() == add.getGroupName();
-                              });
-    if (found != group.getGroups().end()) {
-        return;
-    }
-    if (group.isVirtual()) {
-        LOG_ERROR("{} is a virtual group", group.getGroupName());
-        return;
-    }
-    if (!add.isVirtual()) {
-        LOG_ERROR("{} is not a virtual group", add.getGroupName());
-        return;
-    }
-    db::Connection connection(m_connectionEntry);
-    db::Statement statement(connection);
-    db::ParameterBuilder builder(m_connectionEntry);
-    builder.add(group.getGroupName()).add(add.getGroupName());
-    db::Result result = statement.execute(R"(
+void GroupRepository::addGroupOf(const Group &group, const Group &add)
+{
+  auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(), [&](const Group &b) -> bool {
+    return b.getGroupName() == add.getGroupName();
+  });
+  if (found != group.getGroups().end()) { return; }
+  if (group.isVirtual()) {
+    LOG_ERROR("{} is a virtual group", group.getGroupName());
+    return;
+  }
+  if (!add.isVirtual()) {
+    LOG_ERROR("{} is not a virtual group", add.getGroupName());
+    return;
+  }
+  db::Connection connection(m_connectionEntry);
+  db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(group.getGroupName()).add(add.getGroupName());
+  db::Result result = statement.execute(R"(
     insert into group_groups_relation(group_name, base_group_name) values(?,?)
   )",
-                                          builder);
-    std::vector<Group> members = group.getGroups();
-    members.push_back(add);
-    Group updatedGroup(group.getGroupName(), members, group.isVirtual());
-    m_groupMap.insert_or_assign(group.getGroupName(), updatedGroup);
-    std::replace_if(
-            m_groups.begin(), m_groups.end(),
-            [&](const Group &g) {
-                return g.getGroupName() == updatedGroup.getGroupName();
-            },
-            updatedGroup);
+    builder);
+  std::vector<Group> members = group.getGroups();
+  members.push_back(add);
+  Group updatedGroup(group.getGroupName(), members, group.isVirtual());
+  m_groupMap.insert_or_assign(group.getGroupName(), updatedGroup);
+  std::replace_if(
+    m_groups.begin(),
+    m_groups.end(),
+    [&](const Group &g) { return g.getGroupName() == updatedGroup.getGroupName(); },
+    updatedGroup);
 }
 
-void GroupRepository::removeGroupOf(const Group &group, const Group &remove) {
-    auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(),
-                              [&](const Group &b) -> bool {
-                                  return b.getGroupName() == remove.getGroupName();
-                              });
-    if (found == group.getGroups().end()) {
-        return;
-    }
-    db::Connection connection(m_connectionEntry);
-    db::Statement statement(connection);
-    db::ParameterBuilder builder(m_connectionEntry);
-    builder.add(group.getGroupName()).add(remove.getGroupName());
-    db::Result result = statement.execute(
-            R"(
+void GroupRepository::removeGroupOf(const Group &group, const Group &remove)
+{
+  auto found = std::find_if(group.getGroups().begin(), group.getGroups().end(), [&](const Group &b) -> bool {
+    return b.getGroupName() == remove.getGroupName();
+  });
+  if (found == group.getGroups().end()) { return; }
+  db::Connection connection(m_connectionEntry);
+  db::Statement statement(connection);
+  db::ParameterBuilder builder(m_connectionEntry);
+  builder.add(group.getGroupName()).add(remove.getGroupName());
+  db::Result result = statement.execute(
+    R"(
     delete from group_groups_relation where group_name = ? and base_group_name = ?
       )",
-            builder);
-    std::vector<Group> members = group.getGroups();
-    members.erase(std::remove_if(members.begin(), members.end(),
-                                 [&](const Group &g) {
-                                     return g.getGroupName() == remove.getGroupName();
-                                 }),
-                  members.end());
-    Group updatedGroup(group.getGroupName(), members, group.isVirtual());
-    m_groupMap.insert_or_assign(group.getGroupName(), updatedGroup);
-    std::replace_if(
-            m_groups.begin(), m_groups.end(),
-            [&](const Group &g) {
-                return g.getGroupName() == updatedGroup.getGroupName();
-            },
-            updatedGroup);
+    builder);
+  std::vector<Group> members = group.getGroups();
+  members.erase(
+    std::remove_if(
+      members.begin(), members.end(), [&](const Group &g) { return g.getGroupName() == remove.getGroupName(); }),
+    members.end());
+  Group updatedGroup(group.getGroupName(), members, group.isVirtual());
+  m_groupMap.insert_or_assign(group.getGroupName(), updatedGroup);
+  std::replace_if(
+    m_groups.begin(),
+    m_groups.end(),
+    [&](const Group &g) { return g.getGroupName() == updatedGroup.getGroupName(); },
+    updatedGroup);
 }
 
 void GroupRepository::onAwake() { initGroups(); }
+}// namespace lintel

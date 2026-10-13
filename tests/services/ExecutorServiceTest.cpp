@@ -12,16 +12,17 @@
 #include <thread>
 #include <vector>
 
+namespace lintel {
 namespace {
 
-/** Deadline used whenever a test waits for a submitted task to complete. */
-constexpr std::chrono::seconds kExecSvcDeadline{ 5 };
+  /** Deadline used whenever a test waits for a submitted task to complete. */
+  constexpr std::chrono::seconds kExecSvcDeadline{ 5 };
 
-/** @return true if the value became reachable before the deadline */
-template<typename T> bool execSvcAwaited(const std::future<T> &future)
-{
-  return future.wait_for(kExecSvcDeadline) == std::future_status::ready;
-}
+  /** @return true if the value became reachable before the deadline */
+  template<typename T> bool execSvcAwaited(const std::future<T> &future)
+  {
+    return future.wait_for(kExecSvcDeadline) == std::future_status::ready;
+  }
 
 }// namespace
 
@@ -180,3 +181,4 @@ TEST_CASE("ExecutorService: a service without tasks shuts down cleanly")
 
   REQUIRE(execSvcDestroyed.load());
 }
+}// namespace lintel

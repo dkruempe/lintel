@@ -32,78 +32,79 @@
  * swallowed, so onStart() itself never throws.
  */
 
+namespace lintel {
 namespace {
 
-struct AdminUserFixture
-{
-  std::filesystem::path databaseFile;
-  /** database the connection entry of the plugin points to */
-  std::filesystem::path connectionPath;
-  std::shared_ptr<Configuration> configuration;
-  std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
-  std::shared_ptr<AdminUserBootstrapPlugin> plugin;
-
-  /** @param isDefault whether the connection is marked as the default connection
-   *  @param database database the entry points to, empty for the file of the fixture
-   *  @param withUsersTable whether the users table exists
-   *  @param withAdminGroup whether the Admin group exists */
-  explicit AdminUserFixture(bool isDefault = true,
-    const std::string &database = {},
-    bool withUsersTable = true,
-    bool withAdminGroup = true)
+  struct AdminUserFixture
   {
-    static unsigned int counter = 0;
-    databaseFile = std::filesystem::temp_directory_path()
-                   / ("admin_user_bootstrap_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".db");
-    std::filesystem::remove(databaseFile);
-    connectionPath = database.empty() ? databaseFile : std::filesystem::path(database);
+    std::filesystem::path databaseFile;
+    /** database the connection entry of the plugin points to */
+    std::filesystem::path connectionPath;
+    std::shared_ptr<Configuration> configuration;
+    std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
+    std::shared_ptr<AdminUserBootstrapPlugin> plugin;
 
-    db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
-    db::Statement statement(connection);
-    if (withUsersTable) { createUsersTable(statement); }
-    statement.execute(R"(
+    /** @param isDefault whether the connection is marked as the default connection
+     *  @param database database the entry points to, empty for the file of the fixture
+     *  @param withUsersTable whether the users table exists
+     *  @param withAdminGroup whether the Admin group exists */
+    explicit AdminUserFixture(bool isDefault = true,
+      const std::string &database = {},
+      bool withUsersTable = true,
+      bool withAdminGroup = true)
+    {
+      static unsigned int counter = 0;
+      databaseFile = std::filesystem::temp_directory_path()
+                     / ("admin_user_bootstrap_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".db");
+      std::filesystem::remove(databaseFile);
+      connectionPath = database.empty() ? databaseFile : std::filesystem::path(database);
+
+      db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
+      db::Statement statement(connection);
+      if (withUsersTable) { createUsersTable(statement); }
+      statement.execute(R"(
             CREATE TABLE groups (
                 name text NOT NULL,
                 virtual bool NOT NULL,
                 CONSTRAINT group_pk PRIMARY KEY (name)
             );
         )");
-    statement.execute(R"(
+      statement.execute(R"(
             CREATE TABLE user_groups_relation (
                 user_name text NOT NULL,
                 group_name text NOT NULL,
                 CONSTRAINT user_groups_pk PRIMARY KEY (user_name, group_name)
             );
         )");
-    if (withAdminGroup) { statement.execute("insert into groups(name, virtual) values ('Admin', '0')"); }
+      if (withAdminGroup) { statement.execute("insert into groups(name, virtual) values ('Admin', '0')"); }
 
-    std::vector<std::shared_ptr<Entry>> entries;
-    entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
-      connectionPath.string(),
-      "",
-      "",
-      db::ConnectionType::SQLite,
-      "default",
-      -1,
-      "",
-      isDefault));
-    auto envConfig = std::make_shared<EnvironmentConfiguration>();
-    envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_admin_user_cfg");
-    envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
-    configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
-    configuration->setEntries(entries);
-    connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
-    plugin = std::make_shared<AdminUserBootstrapPlugin>(connectionConfigurations);
-  }
+      std::vector<std::shared_ptr<Entry>> entries;
+      entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+        connectionPath.string(),
+        "",
+        "",
+        db::ConnectionType::SQLite,
+        "default",
+        -1,
+        "",
+        isDefault));
+      auto envConfig = std::make_shared<EnvironmentConfiguration>();
+      envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_admin_user_cfg");
+      envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
+      configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+      configuration->setEntries(entries);
+      connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
+      plugin = std::make_shared<AdminUserBootstrapPlugin>(connectionConfigurations);
+    }
 
-  ~AdminUserFixture() { std::filesystem::remove(databaseFile); }
+    ~AdminUserFixture() { std::filesystem::remove(databaseFile); }
 
-  AdminUserFixture(const AdminUserFixture &) = delete;
-  AdminUserFixture &operator=(const AdminUserFixture &) = delete;
+    AdminUserFixture(const AdminUserFixture &) = delete;
+    AdminUserFixture &operator=(const AdminUserFixture &) = delete;
 
-  static void createUsersTable(db::Statement &statement)
-  {
-    statement.execute(R"(
+    static void createUsersTable(db::Statement &statement)
+    {
+      statement.execute(R"(
             CREATE TABLE users (
                 first_name TEXT NOT NULL,
                 last_name TEXT NOT NULL,
@@ -114,41 +115,41 @@ struct AdminUserFixture
                 CONSTRAINT user_pk PRIMARY KEY (user_name)
             );
         )");
-  }
+    }
 
-  /** Creates the missing users table, e.g. after a failed bootstrap. */
-  void createUsersTable()
-  {
-    db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
-    db::Statement statement(connection);
-    createUsersTable(statement);
-  }
+    /** Creates the missing users table, e.g. after a failed bootstrap. */
+    void createUsersTable()
+    {
+      db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
+      db::Statement statement(connection);
+      createUsersTable(statement);
+    }
 
-  void insertUser(const std::string &userName, const std::string &password)
-  {
-    db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
-    db::Statement statement(connection);
-    statement.execute(
-      "insert into users(first_name, last_name, e_mail, user_name, password, "
-      "created_timestamp) values ('First', 'Last', 'mail@test.com', '"
-      + userName + "', '" + password + "', '2021-01-01 00:00:00.000000+0000')");
-  }
+    void insertUser(const std::string &userName, const std::string &password)
+    {
+      db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
+      db::Statement statement(connection);
+      statement.execute(
+        "insert into users(first_name, last_name, e_mail, user_name, password, "
+        "created_timestamp) values ('First', 'Last', 'mail@test.com', '"
+        + userName + "', '" + password + "', '2021-01-01 00:00:00.000000+0000')");
+    }
 
-  /** @return value of the single column of the first row of the query, "" if there is none */
-  std::string scalar(const std::string &query)
-  {
-    db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
-    db::Statement statement(connection);
-    db::Result result = statement.execute(query);
-    return result.getSize() == 0 ? std::string{} : result.getValue(0, 0);
-  }
+    /** @return value of the single column of the first row of the query, "" if there is none */
+    std::string scalar(const std::string &query)
+    {
+      db::Connection connection(db::ConnectionType::SQLite, databaseFile.string());
+      db::Statement statement(connection);
+      db::Result result = statement.execute(query);
+      return result.getSize() == 0 ? std::string{} : result.getValue(0, 0);
+    }
 
-  int countOf(const std::string &table)
-  {
-    const std::string value = scalar("select count(*) from " + table);
-    return value.empty() ? -1 : std::stoi(value);
-  }
-};
+    int countOf(const std::string &table)
+    {
+      const std::string value = scalar("select count(*) from " + table);
+      return value.empty() ? -1 : std::stoi(value);
+    }
+  };
 
 }// namespace
 
@@ -332,3 +333,4 @@ TEST_CASE("AdminUserBootstrapPlugin: a failing statement leaves the database unc
   REQUIRE(fixture.countOf("users") == 1);
   REQUIRE(fixture.scalar("select user_name from users") == "admin");
 }
+}// namespace lintel

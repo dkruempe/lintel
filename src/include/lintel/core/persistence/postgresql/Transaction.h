@@ -6,55 +6,58 @@
 #include "Connection.h"
 #include "lintel/core/exceptions/SQLException.h"
 
+namespace lintel {
 namespace postgresql {
+  /**
+   * Manages a PostgreSQL database transaction with commit, rollback, and savepoint support.
+   */
+  class Transaction
+  {
+  private:
+    const Connection &m_connection;
+    bool m_finished = false;
+
     /**
-     * Manages a PostgreSQL database transaction with commit, rollback, and savepoint support.
+     * Checks the result state and throws if an error occurred.
+     * @param result the result to check
+     * @throws SQLException if the result indicates an error
      */
-    class Transaction {
-    private:
-        const Connection &m_connection;
-        bool m_finished = false;
+    void checkState(const std::shared_ptr<Result> &result);
 
-        /**
-         * Checks the result state and throws if an error occurred.
-         * @param result the result to check
-         * @throws SQLException if the result indicates an error
-         */
-        void checkState(const std::shared_ptr<Result> &result);
+  public:
+    /**
+     * Constructs a Transaction bound to the given connection.
+     * @param tempConnection the PostgreSQL connection
+     */
+    explicit Transaction(const Connection &tempConnection);
 
-    public:
-        /**
-         * Constructs a Transaction bound to the given connection.
-         * @param tempConnection the PostgreSQL connection
-         */
-        explicit Transaction(const Connection &tempConnection);
+    Transaction(Transaction &transaction) = delete;
 
-        Transaction(Transaction &transaction) = delete;
+    /** Begins the transaction with a BEGIN statement. */
+    void start();
 
-        /** Begins the transaction with a BEGIN statement. */
-        void start();
+    /** Commits the transaction with a COMMIT statement. */
+    void commit();
 
-        /** Commits the transaction with a COMMIT statement. */
-        void commit();
+    /**
+     * Creates a savepoint within the transaction.
+     * @param savepoint the savepoint name
+     */
+    void save(const std::string &savepoint) const;
 
-        /**
-         * Creates a savepoint within the transaction.
-         * @param savepoint the savepoint name
-         */
-        void save(const std::string &savepoint) const;
+    /** Rolls back the transaction with a ROLLBACK statement. */
+    void rollback();
 
-        /** Rolls back the transaction with a ROLLBACK statement. */
-        void rollback();
+    /**
+     * Rolls back to a named savepoint.
+     * @param savepoint the savepoint name
+     */
+    void rollbackTo(const std::string &savepoint) const;
 
-        /**
-         * Rolls back to a named savepoint.
-         * @param savepoint the savepoint name
-         */
-        void rollbackTo(const std::string &savepoint) const;
+    /** Destructor, rolls back if not finished. */
+    ~Transaction();
+  };
+}// namespace postgresql
 
-        /** Destructor, rolls back if not finished. */
-        ~Transaction();
-    };
-}  // namespace postgresql
-
-#endif  // LINTEL_POSTGRESQL_TRANSACTION_H
+}// namespace lintel
+#endif// LINTEL_POSTGRESQL_TRANSACTION_H

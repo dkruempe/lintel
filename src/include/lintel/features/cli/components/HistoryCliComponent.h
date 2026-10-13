@@ -1,51 +1,51 @@
 #ifndef HISTORYCLICOMPONENT_H
 #define HISTORYCLICOMPONENT_H
 
-#include "lintel/features/http/controllers/HistoryApi.h"
 #include "lintel/features/cli/models/CommandLineComponent.h"
 #include "lintel/features/cli/models/CommandParser.h"
+#include "lintel/features/http/controllers/HistoryApi.h"
 
+namespace lintel {
 /** CLI component that displays command history */
-class HistoryCliComponent : public CommandLineComponent {
-    static constexpr std::string_view n_name = "History";
-    static constexpr std::string_view m_alias = "Hist";
-    static constexpr std::string_view m_description = "The Component can be used to show the history of components";
-    std::shared_ptr<HistoryApi> m_historyApi;
+class HistoryCliComponent : public CommandLineComponent
+{
+  static constexpr std::string_view n_name = "History";
+  static constexpr std::string_view m_alias = "Hist";
+  static constexpr std::string_view m_description = "The Component can be used to show the history of components";
+  std::shared_ptr<HistoryApi> m_historyApi;
 
-    // Commands
-    enum Commands {
-        Undefined,
-        ShowHistories
-    };
+  // Commands
+  enum Commands { Undefined, ShowHistories };
 
-    // Flags
-    std::optional<std::string> m_processName;
-    std::optional<std::string> m_serviceName;
-    std::optional<std::string> m_label;
+  // Flags
+  std::optional<std::string> m_processName;
+  std::optional<std::string> m_serviceName;
+  std::optional<std::string> m_label;
 
-    CommandParser<Commands, Undefined> m_commandParser;
+  CommandParser<Commands, Undefined> m_commandParser;
 
-    /** Print formatted history entries to console */
-    static void printHistories(const std::vector<HistoryDto> &histories);
+  /** Print formatted history entries to console */
+  static void printHistories(const std::vector<HistoryDto> &histories);
 
 public:
-    /** @param historyApi API for retrieving history data */
-    explicit HistoryCliComponent(std::shared_ptr<HistoryApi> historyApi);
+  /** @param historyApi API for retrieving history data */
+  explicit HistoryCliComponent(std::shared_ptr<HistoryApi> historyApi);
 
-    void onHelp() override;
+  void onHelp() override;
 
-    void onCommand(const UserDto &userDto, const std::string &command,
-                   const std::vector<std::string> &parameters) override;
+  void
+    onCommand(const UserDto &userDto, const std::string &command, const std::vector<std::string> &parameters) override;
 
-    void onShowMenu() override;
+  void onShowMenu() override;
 
-    bool onMenu(const std::string &component) override;
+  bool onMenu(const std::string &component) override;
 
-    bool onExit() override;
+  bool onExit() override;
 
-    void printCommandList(std::set<std::string> menuAlias) override;
+  void printCommandList(std::set<std::string> menuAlias) override;
 
-    std::vector<std::string> allCommandsOf() override;
+  std::vector<std::string> allCommandsOf() override;
 };
 
-#endif //HISTORYCLICOMPONENT_H
+}// namespace lintel
+#endif// HISTORYCLICOMPONENT_H

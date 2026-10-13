@@ -35,6 +35,7 @@ Binaries output to `bin/`.
 |----------|---------|--------|
 | `ci.yml` → `build` | push/PR to `master`, `workflow_dispatch` | matrix `gcc-release` (gate), `clang-release`, `gcc-debug-nonunity` (Debug + Non-Unity in one run) |
 | `ci.yml` → `format` | same | **blocking**: changed files must not contain new `clang-format` violations; additionally repo-wide drift report (informational only) |
+| `ci.yml` → `namespace` | same | **blocking**: public headers (`src/include/lintel/**/*.h`) must not declare their own names outside `namespace lintel` (generated `config.h` exempt) |
 | `ci.yml` → `lint` | same | `clang-tidy` on changed files (`src/`, without `tests/`/`external/`), currently `continue-on-error` |
 | `release.yml` | tag `v*`, `workflow_dispatch` (dry-run) | check version → release build → `ctest` → tarball with `bin/`, `cfg/` (without `certs/`), `swagger.yaml` → `gh release create` |
 
@@ -43,6 +44,7 @@ Check the same locally:
 ```bash
 ./scripts/check-format.sh master   # format regression on changed files
 ./scripts/check-format.sh --all    # repo-wide drift report (blocking: --strict)
+./scripts/check-namespace.sh       # public headers only declare inside namespace lintel
 ./scripts/check-tidy.sh master build/tidy   # needs a compile_commands.json without Non-Unity and without PCH
 ./scripts/check-secrets.sh         # plaintext credentials (--staged / --all)
 ./scripts/install-deps.sh build-essential cmake   # system packages, retrying (see below)
@@ -96,6 +98,7 @@ Do not commit credentials. Write passwords in config and examples as `${VAR}` or
 
 `lintel` is a CMake library (`lintel::lintel`).
 
+- **Namespace**: every public symbol lives in `namespace lintel` (persistence in `lintel::db`, shared-memory strings in `lintel::shm`). The generated `config.h` is the only global-scope exception. Enforced by `scripts/check-namespace.sh` (CI job `namespace`).
 - **`src/core/`** — StartupBuilder, DI wiring, persistence abstraction (PostgreSQL + SQLite), logging, services, plugins.
 - **`src/features/`** — Optional modules: `http/` (cpp-httplib server/client), `cli/`, `property/` (XML/file/DB/SHM config), `base/` (auth, processes, message queues, event bus, shared memory).
 - **`src/include/lintel/`** — Public headers. `config.h` is generated from `config.h.in` by CMake.

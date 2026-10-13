@@ -5,6 +5,7 @@
 #include "lintel/features/cli/models/CommandHistoryEntry.h"
 #include <optional>
 
+namespace lintel {
 /**
  * Service is responsible for the serialization of the entered commands and saving
  * for each user those entered entries. The entered cli command will be saved locally
@@ -53,4 +54,5 @@ public:
 
   void onInitialize() override;
 };
+}// namespace lintel
 #endif// COMMANDLINEHISTORYSERVICE_H

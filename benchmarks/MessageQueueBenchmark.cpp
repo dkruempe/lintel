@@ -10,41 +10,42 @@
 #include "lintel/features/base/msg/Message.h"
 #include "lintel/features/base/msg/MessageQueue.h"
 
+namespace lintel {
 namespace {
 
-// The system POSIX mqueue limit (fs.mqueue.msg_max) is 10 on the CI runners, so
-// the queue is deliberately small and stays below it.
-constexpr int32_t kQueueCount = 8;
+  // The system POSIX mqueue limit (fs.mqueue.msg_max) is 10 on the CI runners, so
+  // the queue is deliberately small and stays below it.
+  constexpr int32_t kQueueCount = 8;
 
-std::string uniqueQueueName(const std::string &suffix)
-{
-  static int counter = 0;
-  return "lintel_bench_mq_" + std::to_string(::getpid()) + "_" + std::to_string(++counter) + "_" + suffix;
-}
-
-/** Owns the underlying shared memory queue and removes it on every exit path. */
-struct QueueFixture
-{
-  std::string name;
-  std::shared_ptr<ProcessName> processName;
-  std::unique_ptr<MessageQueue<Message>> queue;
-
-  explicit QueueFixture(const std::string &suffix)
-    : name(uniqueQueueName(suffix)), processName(std::make_shared<ProcessName>("benchmark"))
+  std::string uniqueQueueName(const std::string &suffix)
   {
-    MessageQueue<Message>::removeOf(name);
-    queue = std::make_unique<MessageQueue<Message>>("benchmark", name, kQueueCount, processName);
+    static int counter = 0;
+    return "lintel_bench_mq_" + std::to_string(::getpid()) + "_" + std::to_string(++counter) + "_" + suffix;
   }
 
-  ~QueueFixture()
+  /** Owns the underlying shared memory queue and removes it on every exit path. */
+  struct QueueFixture
   {
-    queue.reset();
-    MessageQueue<Message>::removeOf(name);
-  }
+    std::string name;
+    std::shared_ptr<ProcessName> processName;
+    std::unique_ptr<MessageQueue<Message>> queue;
 
-  QueueFixture(const QueueFixture &) = delete;
-  QueueFixture &operator=(const QueueFixture &) = delete;
-};
+    explicit QueueFixture(const std::string &suffix)
+      : name(uniqueQueueName(suffix)), processName(std::make_shared<ProcessName>("benchmark"))
+    {
+      MessageQueue<Message>::removeOf(name);
+      queue = std::make_unique<MessageQueue<Message>>("benchmark", name, kQueueCount, processName);
+    }
+
+    ~QueueFixture()
+    {
+      queue.reset();
+      MessageQueue<Message>::removeOf(name);
+    }
+
+    QueueFixture(const QueueFixture &) = delete;
+    QueueFixture &operator=(const QueueFixture &) = delete;
+  };
 
 }// namespace
 
@@ -80,3 +81,4 @@ static void BM_MessageQueue_SendOfWithTimeout(benchmark::State &state)
   }
 }
 BENCHMARK(BM_MessageQueue_SendOfWithTimeout);
+}// namespace lintel

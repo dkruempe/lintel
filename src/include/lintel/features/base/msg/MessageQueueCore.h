@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 
+namespace lintel {
 /**
  * Non-template core of MessageQueue. Owns the underlying POSIX message queue,
  * so translation units that use MessageQueue<T> do not have to parse the
@@ -100,4 +101,5 @@ public:
   bool tryReceiveOf(void *message, std::size_t size);
 };
 
+}// namespace lintel
 #endif// LINTEL_MESSAGEQUEUECORE_H

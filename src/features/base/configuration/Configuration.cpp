@@ -10,6 +10,7 @@
 #include "lintel/features/base/configuration/ConfigurationException.h"
 #include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 
+namespace lintel {
 Configuration::Configuration(const std::vector<std::shared_ptr<Component>> &components,
   std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
   : m_components(initialize(components)), m_environmentConfiguration(std::move(environmentConfiguration)),
@@ -69,3 +70,4 @@ void Configuration::setEntries(std::vector<std::shared_ptr<Entry>> entries)
 {
   m_configurationEntries = std::move(entries);
 }
+}// namespace lintel

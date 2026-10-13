@@ -21,6 +21,7 @@
 #include "lintel/features/cli/utils/CommandLineUtils.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+namespace lintel {
 class CommandLineComponent;
 
 /** Main service that drives the interactive command-line interface */
@@ -89,4 +90,5 @@ public:
   void onShutdown() override;
 };
 
+}// namespace lintel
 #endif// LINTEL_COMMANDLINESERVICE_H

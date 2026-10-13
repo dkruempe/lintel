@@ -6,34 +6,34 @@
 #include "ProcessGroupDto.h"
 #include "lintel/core/models/JsonSerializable.h"
 
+namespace lintel {
 /** DTO representing a collection of process groups */
-class ProcessGroupsDto : public JsonSerializable {
+class ProcessGroupsDto : public JsonSerializable
+{
 private:
-    /** The process group DTOs */
-    std::vector<ProcessGroupDto> m_processGroups;
+  /** The process group DTOs */
+  std::vector<ProcessGroupDto> m_processGroups;
 
 public:
-    /** Construct from existing ProcessGroupDto objects
-     * @param processGroups The process group DTOs */
-    explicit ProcessGroupsDto(std::vector<ProcessGroupDto> processGroups);
+  /** Construct from existing ProcessGroupDto objects
+   * @param processGroups The process group DTOs */
+  explicit ProcessGroupsDto(std::vector<ProcessGroupDto> processGroups);
 
-    /** Default constructor */
-    ProcessGroupsDto() = default;
+  /** Default constructor */
+  ProcessGroupsDto() = default;
 
-    /** Get the process group DTOs
-     * @return Vector of process group DTOs */
-    [[nodiscard]] const std::vector<ProcessGroupDto> &getProcessGroups() const {
-        return m_processGroups;
-    }
+  /** Get the process group DTOs
+   * @return Vector of process group DTOs */
+  [[nodiscard]] const std::vector<ProcessGroupDto> &getProcessGroups() const { return m_processGroups; }
 
-    /** Serialize to JSON
-     * @param writer The rapidjson writer */
-    void serialize(
-            rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+  /** Serialize to JSON
+   * @param writer The rapidjson writer */
+  void serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
 
-    /** Deserialize from JSON string
-     * @param json The JSON string to parse */
-    void deserialize(const std::string &json) override;
+  /** Deserialize from JSON string
+   * @param json The JSON string to parse */
+  void deserialize(const std::string &json) override;
 };
 
-#endif  // LINTEL_PROCESSGROUPSDTO_H
+}// namespace lintel
+#endif// LINTEL_PROCESSGROUPSDTO_H

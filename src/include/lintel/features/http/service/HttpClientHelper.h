@@ -5,12 +5,14 @@ namespace httplib {
 class Result;
 }// namespace httplib
 
+namespace lintel {
 /** Shared HTTP client helper functions. */
 namespace HttpClientHelper {
 
-/** @return true if a valid response was received from the server */
-bool hasResponse(const httplib::Result &result);
+  /** @return true if a valid response was received from the server */
+  bool hasResponse(const httplib::Result &result);
 
 }// namespace HttpClientHelper
 
+}// namespace lintel
 #endif// LINTEL_HTTPCLIENTHELPER_H

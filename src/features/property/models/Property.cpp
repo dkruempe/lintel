@@ -1,5 +1,6 @@
 #include "lintel/features/property/models/Property.h"
 
+namespace lintel {
 template class Property<int8_t>;
 template class Property<int16_t>;
 template class Property<int32_t>;
@@ -15,3 +16,4 @@ template class Property<bool>;
 template class Property<std::chrono::milliseconds>;
 template class Property<std::chrono::seconds>;
 template class Property<std::chrono::minutes>;
+}// namespace lintel

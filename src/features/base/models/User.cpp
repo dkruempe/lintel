@@ -4,6 +4,7 @@
 
 #include <utility>
 
+namespace lintel {
 const std::string &User::getFirstName() const { return m_firstName; }
 
 const std::string &User::getLastName() const { return m_lastName; }
@@ -38,7 +39,8 @@ User::User(std::string firstName,
   }
 }
 
-std::ostream &operator<<(std::ostream &os, const User &user) {
+std::ostream &operator<<(std::ostream &os, const User &user)
+{
   os << "User{"
      << "username: " << user.m_userName << ", first_name: " << user.m_firstName << ", last_name: " << user.m_lastName
      << ", e_mail: " << user.m_email << ", password: " << user.m_password << ", sex: " << user.m_sex
@@ -47,12 +49,14 @@ std::ostream &operator<<(std::ostream &os, const User &user) {
     const Group &group = user.m_groups[i];
     os << group;
     if (i != user.m_groups.size() - 1) { os << ", "; }
-    }
-    os << "}";
-    return os;
+  }
+  os << "}";
+  return os;
 }
 
-bool User::has(const Group &group) const {
-    auto found = m_allGroups.find(group);
-    return found != m_allGroups.end();
+bool User::has(const Group &group) const
+{
+  auto found = m_allGroups.find(group);
+  return found != m_allGroups.end();
 }
+}// namespace lintel

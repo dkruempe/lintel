@@ -7,6 +7,7 @@
 #include "lintel/core/utils/StringUtils.h"
 #include "lintel/features/base/provider/GroupProvider.h"
 
+namespace lintel {
 VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
   const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
   std::shared_ptr<Hypodermic::Container> container)
@@ -119,3 +120,4 @@ void VirtualGroupBootstrapPlugin::onStart()
   transaction.commit();
   LOG_INFO("start");
 }
+}// namespace lintel

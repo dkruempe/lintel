@@ -9,6 +9,7 @@
 #include <thread>
 #include <type_traits>
 
+namespace lintel {
 /**
  * A simple thread pool executor that queues and executes tasks asynchronously.
  */
@@ -66,4 +67,5 @@ std::future<typename std::invoke_result<typename std::decay<F>::type, typename s
   return future;
 }
 
+}// namespace lintel
 #endif// LOGGING_EXECUTORSERVICE_H
