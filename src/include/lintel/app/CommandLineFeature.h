@@ -16,10 +16,10 @@ public:
   CommandLineFeature(std::shared_ptr<Features> features);
 
   /** Register CLI types in the dependency injection container */
-  void registerTypes(Hypodermic::ContainerBuilder &builder) override;
+  void registerTypes(lintel::di::ContainerBuilder &builder) override;
 
   /** Initialize the command-line service from the container */
-  void initialize(std::shared_ptr<Hypodermic::Container> container) override;
+  void initialize(std::shared_ptr<lintel::di::Container> container) override;
 };
 
 }// namespace lintel

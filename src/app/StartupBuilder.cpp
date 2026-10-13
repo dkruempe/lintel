@@ -10,8 +10,7 @@
 
 #include "lintel/core/Feature.h"
 
-#include "Hypodermic/Container.h"
-#include "Hypodermic/ContainerBuilder.h"
+#include "lintel/core/di/Container.h"
 
 #include "lintel/app/ConfigurationComponentBuilder.h"
 #include "lintel/core/configuration/Component.h"
@@ -66,7 +65,7 @@ void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment
 void StartupBuilder::start()
 {
   // I injection
-  Hypodermic::ContainerBuilder builder;
+  lintel::di::ContainerBuilder builder;
   m_configuration =
     std::make_shared<Configuration>(m_configurationComponentBuilder->build(), m_environmentConfiguration);
   builder.registerInstance(m_configuration);

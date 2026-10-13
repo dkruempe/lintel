@@ -3,7 +3,7 @@
 
 #include <memory>
 
-#include <Hypodermic/Container.h>
+#include "lintel/core/di/Container.h"
 
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 #include "lintel/core/plugins/BootstrapPlugin.h"
@@ -13,7 +13,7 @@ namespace lintel {
 class VirtualGroupBootstrapPlugin : public BootstrapPlugin
 {
 private:
-  std::shared_ptr<Hypodermic::Container> m_container;
+  std::shared_ptr<lintel::di::Container> m_container;
   std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
 
 public:
@@ -22,7 +22,7 @@ public:
    * @param container                the dependency injection container */
   explicit VirtualGroupBootstrapPlugin(
     const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
-    std::shared_ptr<Hypodermic::Container> container);
+    std::shared_ptr<lintel::di::Container> container);
 
   /** Load virtual group configuration from the database. */
   void onStart() override;

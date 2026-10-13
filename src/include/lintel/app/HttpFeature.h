@@ -16,10 +16,10 @@ public:
   HttpFeature(std::shared_ptr<Features> features);
 
   /** Register HTTP types in the dependency injection container */
-  void registerTypes(Hypodermic::ContainerBuilder &builder) override;
+  void registerTypes(lintel::di::ContainerBuilder &builder) override;
 
   /** Initialize the HTTP server from the container */
-  void initialize(std::shared_ptr<Hypodermic::Container> container) override;
+  void initialize(std::shared_ptr<lintel::di::Container> container) override;
 };
 
 }// namespace lintel

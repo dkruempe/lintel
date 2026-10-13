@@ -6,8 +6,7 @@
 
 #include <unistd.h>
 
-#include "Hypodermic/Container.h"
-#include "Hypodermic/ContainerBuilder.h"
+#include "lintel/core/di/Container.h"
 
 #include "lintel/app/plugins/VirtualGroupBootstrapPlugin.h"
 #include "lintel/core/configuration/Configuration.h"
@@ -77,7 +76,7 @@ namespace {
     std::filesystem::path databaseFile;
     std::shared_ptr<Configuration> configuration;
     std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations;
-    std::shared_ptr<Hypodermic::Container> container;
+    std::shared_ptr<lintel::di::Container> container;
     std::shared_ptr<VirtualGroupBootstrapPlugin> plugin;
 
     explicit VgBootstrapFixture(const std::vector<std::vector<std::string>> &providerGroups,
@@ -123,7 +122,7 @@ namespace {
       configuration->setEntries(entries);
       connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
 
-      Hypodermic::ContainerBuilder builder;
+      lintel::di::ContainerBuilder builder;
       for (const auto &groups : providerGroups) { builder.registerInstance(vgBootstrapProvider(groups)); }
       container = builder.build();
       plugin = std::make_shared<VirtualGroupBootstrapPlugin>(connectionConfigurations, container);

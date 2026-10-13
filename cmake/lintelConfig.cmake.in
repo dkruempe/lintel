@@ -28,30 +28,9 @@ find_dependency(magic_enum)
 find_dependency(RapidJSON)
 find_dependency(Boost 1.75.0)
 
-# Hypodermic is vendored (external/Hypodermic) and installed into the same prefix,
-# but ships only Hypodermic_targets.cmake and no config file. Since the lintel
-# export references lintel::Hypodermic, the targets file has to be loaded before the
-# lintel targets, otherwise the export reports "The following imported targets are referenced,
-# but are missing". The path via ../Hypodermic covers CMAKE_INSTALL_LIBDIR, the second
-# candidate covers the hard-wired lib/cmake of the vendored export.
-set(_lintel_hypodermic_targets "")
-foreach(_candidate
-        "${CMAKE_CURRENT_LIST_DIR}/../Hypodermic/Hypodermic_targets.cmake"
-        "${PACKAGE_PREFIX_DIR}/lib/cmake/Hypodermic/Hypodermic_targets.cmake"
-        "${PACKAGE_PREFIX_DIR}/${CMAKE_INSTALL_LIBDIR}/cmake/Hypodermic/Hypodermic_targets.cmake")
-    if(EXISTS "${_candidate}")
-        set(_lintel_hypodermic_targets "${_candidate}")
-        break()
-    endif()
-endforeach()
-if(_lintel_hypodermic_targets)
-    include("${_lintel_hypodermic_targets}")
-else()
-    # No vendored export in the prefix - then Hypodermic has to be findable elsewhere.
-    find_dependency(Hypodermic)
-endif()
-unset(_candidate)
-unset(_lintel_hypodermic_targets)
+# Hypodermic (the vendored DI container) has been replaced by lintel's own
+# header-only `lintel::di` container. It adds no external link dependency, so
+# nothing extra has to be loaded here before the lintel targets.
 
 include("${CMAKE_CURRENT_LIST_DIR}/lintelTargets.cmake")
 

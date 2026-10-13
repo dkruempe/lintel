@@ -1,7 +1,6 @@
 #include "lintel/app/HttpFeature.h"
 
-#include "Hypodermic/Container.h"
-#include "Hypodermic/ContainerBuilder.h"
+#include "lintel/core/di/Container.h"
 
 #include "lintel/features/http/controllers/HistoryApi.h"
 #include "lintel/features/http/controllers/HistoryController.h"
@@ -19,7 +18,7 @@
 namespace lintel {
 HttpFeature::HttpFeature(std::shared_ptr<Features> features) : Feature(Features::Http, std::move(features)) {}
 
-void HttpFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
+void HttpFeature::registerTypes(lintel::di::ContainerBuilder &builder)
 {
   builder.registerType<ServerProvider>().singleInstance();
   builder.registerType<ClientProvider>().singleInstance();
@@ -35,7 +34,7 @@ void HttpFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
   builder.registerType<MessageQueueController>().as<Controller>().as<GroupProvider>().asSelf().singleInstance();
 }
 
-void HttpFeature::initialize(std::shared_ptr<Hypodermic::Container> container)
+void HttpFeature::initialize(std::shared_ptr<lintel::di::Container> container)
 {
   m_ServerProvider = container->resolve<ServerProvider>();
 }

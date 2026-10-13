@@ -7,7 +7,6 @@ release of this repository, together with their licenses.
 ## How this list was produced
 
 - Versions are the ones pinned in [`conanfile.txt`](conanfile.txt) (Conan 2, CMake layout).
-- The vendored component comes from [`external/Hypodermic/CMakeLists.txt`](external/Hypodermic/CMakeLists.txt).
 - Every license was **read from the license files inside the Conan packages** in the local cache
   (`~/.conan2/p/<pkg>/licenses/`), not from memory or from secondary sources. Project URLs were
   taken from files shipped in the same packages (headers, CMake files, license texts).
@@ -23,7 +22,6 @@ the JSON License part of `rapidjson`. See "Obligations" below.
 
 | Component | Version | License | Project URL | Role |
 | --- | --- | --- | --- | --- |
-| Hypodermic | vendored (upstream 2017) | MIT | https://github.com/TheranBryant/Hypodermic | DI container, vendored in `external/Hypodermic` |
 | fmt | 12.1.0 | MIT | https://github.com/fmtlib/fmt | header-only formatting |
 | spdlog | 1.17.0 | MIT | https://github.com/gabime/spdlog | logging backend (header-only) |
 | tinyxml2 | 11.0.0 | zlib | https://github.com/leethomason/tinyxml2 | XML property files |
@@ -45,22 +43,12 @@ Not redistributed: the build-time tool packages that Conan uses to compile `libp
 (`meson`, `ninja`, `pkgconf`, `flex`, `bison`, `m4`, `gnu-config`). They never end up in a binary
 or source release of this project.
 
-## Vendored source: Hypodermic
-
-`external/Hypodermic` contains a vendored copy of Hypodermic (last synced from upstream in 2017,
-unmaintained since). It carries its own license and attribution files, which take precedence over
-this table:
-
-- `external/Hypodermic/LICENSE` — MIT, Copyright (c) 2016 Theran Bryant
-- `external/Hypodermic/NOTICE` — upstream provenance and the list of local modifications
-
 ## Copyright holders
 
 Taken verbatim from the license files in the packages:
 
 | Component | Copyright |
 | --- | --- |
-| Hypodermic | (c) 2016 Theran Bryant |
 | fmt | (c) 2012 - present, Victor Zverovich and {fmt} contributors |
 | spdlog | (c) 2016 - present, Gabi Melman and spdlog contributors |
 | magic_enum | (c) 2019 - 2024 Daniil Goncharov |

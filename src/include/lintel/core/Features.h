@@ -1,6 +1,7 @@
 #ifndef LINTEL_FEATURES_H
 #define LINTEL_FEATURES_H
 
+#include <cstdint>
 #include <functional>
 #include <magic_enum/magic_enum.hpp>
 #include <map>
@@ -9,14 +10,16 @@
 #include <utility>
 #include <vector>
 
-// Hypodermic is only needed as an incomplete type here: ContainerBuilder is
-// passed by reference and Container travels inside a shared_ptr. Forward
-// declaring both keeps the DI container - and the Boost headers it used to
-// pull in - out of every translation unit that only talks to Features.
-namespace Hypodermic {
-class Container;
-class ContainerBuilder;
-}// namespace Hypodermic
+// The DI container is only needed as an incomplete type here: ContainerBuilder
+// is passed by reference and Container travels inside a shared_ptr. Forward
+// declaring both keeps the container - and its heavier template machinery - out
+// of every translation unit that only talks to Features.
+namespace lintel {
+namespace di {
+  class Container;
+  class ContainerBuilder;
+}// namespace di
+}// namespace lintel
 
 namespace lintel {
 /**
@@ -31,9 +34,9 @@ class Features
 {
 public:
   /** Function type for registering types with the DI container */
-  using RegisterTypeFunc = std::function<void(Hypodermic::ContainerBuilder &)>;
+  using RegisterTypeFunc = std::function<void(lintel::di::ContainerBuilder &)>;
   /** Function type for initializing a feature with the resolved container */
-  using InitializeFunc = std::function<void(std::shared_ptr<Hypodermic::Container>)>;
+  using InitializeFunc = std::function<void(std::shared_ptr<lintel::di::Container>)>;
 
   /** Register a feature identified by its enum value
    * @tparam T The enum type
@@ -59,7 +62,7 @@ public:
   /** Initialize a specific feature by name
    * @param featureName The name of the feature to initialize
    * @param container The resolved DI container */
-  void initializeOf(const std::string &featureName, std::shared_ptr<Hypodermic::Container> container)
+  void initializeOf(const std::string &featureName, std::shared_ptr<lintel::di::Container> container)
   {
     auto found = m_initializeMap.find(featureName);
     if (found == m_initializeMap.end()) { return; }
@@ -69,7 +72,7 @@ public:
   /** Register types for a specific feature by name
    * @param featureName The name of the feature
    * @param builder The DI container builder */
-  void registerType(const std::string &featureName, Hypodermic::ContainerBuilder &builder)
+  void registerType(const std::string &featureName, lintel::di::ContainerBuilder &builder)
   {
     auto found = m_registerTypeMap.find(featureName);
     if (found == m_registerTypeMap.end()) { return; }
@@ -81,7 +84,7 @@ public:
   std::vector<std::string> allOf() { return m_features; }
 
   /** Enumeration of known features */
-  enum Value {
+  enum Value : std::uint8_t {
     Base, /**< Base library feature */
     Http, /**< HTTP feature */
     Property, /**< Property feature */

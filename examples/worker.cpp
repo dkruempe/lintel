@@ -22,8 +22,7 @@
 #include <lintel/features/property/repositories/SharedMemoryPropertyRepository.h>
 #include <lintel/features/property/services/PropertyService.h>
 
-#include "Hypodermic/Container.h"
-#include "Hypodermic/ContainerBuilder.h"
+#include "lintel/core/di/Container.h"
 
 /**
  * Worker process started by the main process through ProcessService.
@@ -37,14 +36,14 @@
 class WorkerService : public lintel::AbstractService<WorkerService>
 {
 private:
-  std::shared_ptr<Hypodermic::Container> m_container;
+  std::shared_ptr<lintel::di::Container> m_container;
   std::shared_ptr<lintel::ProcessName> m_processName;
   std::atomic_bool m_running = true;
   std::thread m_listener;
   std::thread m_historyThread;
 
 public:
-  WorkerService(std::shared_ptr<Hypodermic::Container> container, std::shared_ptr<lintel::ProcessName> processName)
+  WorkerService(std::shared_ptr<lintel::di::Container> container, std::shared_ptr<lintel::ProcessName> processName)
     : AbstractService<WorkerService>(processName->getProcessName()), m_container(std::move(container)),
       m_processName(std::move(processName))
   {}
@@ -146,12 +145,12 @@ class WorkerFeature : public lintel::FeatureInterface
 public:
   explicit WorkerFeature(const std::shared_ptr<lintel::Features> & /*features*/) {}
 
-  void registerTypes(Hypodermic::ContainerBuilder &builder) override
+  void registerTypes(lintel::di::ContainerBuilder &builder) override
   {
     builder.registerType<WorkerService>().as<lintel::AbstractServiceInterface>().asSelf().singleInstance();
   }
 
-  void initialize(std::shared_ptr<Hypodermic::Container> /*container*/) override {}
+  void initialize(std::shared_ptr<lintel::di::Container> /*container*/) override {}
 
   std::string_view getName() override { return "Worker"; }
 };

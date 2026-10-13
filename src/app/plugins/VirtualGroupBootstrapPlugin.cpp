@@ -10,7 +10,7 @@
 namespace lintel {
 VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
   const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
-  std::shared_ptr<Hypodermic::Container> container)
+  std::shared_ptr<lintel::di::Container> container)
   : m_container(std::move(container)), m_connectionEntry(connectionConfigurations->ofDefault())
 {}
 

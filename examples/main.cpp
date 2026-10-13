@@ -19,8 +19,7 @@
 #include <lintel/features/base/services/SharedMemoryService.h>
 #include <lintel/features/property/services/PropertyService.h>
 
-#include "Hypodermic/Container.h"
-#include "Hypodermic/ContainerBuilder.h"
+#include "lintel/core/di/Container.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -297,14 +296,14 @@ private:
 public:
   explicit TestFeature(std::shared_ptr<lintel::Features> features) : Feature(TestEnum::Test, std::move(features)) {}
 
-  void registerTypes(Hypodermic::ContainerBuilder &builder) override
+  void registerTypes(lintel::di::ContainerBuilder &builder) override
   {
     builder.registerType<ShmVec>().as<lintel::SharedMemoryRepository>().asSelf().singleInstance();
     builder.registerType<ShmArray>().as<lintel::SharedMemoryRepository>().asSelf().singleInstance();
     builder.registerType<ShmObject>().as<lintel::SharedMemoryRepository>().asSelf().singleInstance();
   }
 
-  void initialize(std::shared_ptr<Hypodermic::Container> container) override
+  void initialize(std::shared_ptr<lintel::di::Container> container) override
   {
     m_shmVec = container->resolve<ShmVec>();
     // publish property changes on the event bus so that the worker

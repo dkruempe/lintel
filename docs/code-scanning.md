@@ -50,9 +50,9 @@ built the code. The fix is in the configure step:
 cmake ... -DENABLE_UNITY_BUILD=OFF ...
 ```
 
-No amalgamations, nothing to include, no alerts. `external/` (vendored
-Hypodermic) and `benchmarks/` (off by default, `BUILD_BENCHMARKS=OFF`) do not
-produce findings under the built analysis either.
+No amalgamations, nothing to include, no alerts. `benchmarks/` (off by default,
+`BUILD_BENCHMARKS=OFF`) and the removed `external/` tree do not produce findings
+under the built analysis either.
 
 ## Excluding queries repo-wide
 

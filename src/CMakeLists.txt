@@ -35,10 +35,6 @@ configure_file(
         ${PROJECT_SOURCE_DIR}/include/lintel/config.h)
 
 # dependencies
-if (NOT TARGET lintel::Hypodermic)
-    find_package(Hypodermic REQUIRED)
-endif ()
-
 find_package(tinyxml2 REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(magic_enum REQUIRED)
@@ -53,6 +49,8 @@ find_package(Threads REQUIRED)
 # build
 set(headers
     include/lintel/config.h
+    # core - dependency injection
+    include/lintel/core/di/Container.h
     # core - exceptions
     include/lintel/core/exceptions/ConfigShmSegmentNotFound.h
     include/lintel/core/exceptions/FileServiceFileExists.h
@@ -568,14 +566,6 @@ list(FILTER LINTEL_CLI_SOURCES INCLUDE REGEX "^features/cli/")
 set(LINTEL_APP_SOURCES ${sources})
 list(FILTER LINTEL_APP_SOURCES INCLUDE REGEX "^app/")
 
-# Hypodermic includes: propagated via target_link_libraries for vendored target,
-# explicit variable for find_package fallback
-if (NOT TARGET lintel::Hypodermic)
-    set(HYPODERMIC_INCLUDE_DIRS_VAR ${Hypodermic_INCLUDE_DIRS})
-else ()
-    set(HYPODERMIC_INCLUDE_DIRS_VAR "")
-endif ()
-
 # Common settings applied to every module target. Include directories: everything
 # needed permanently is passed on via the PUBLIC link targets below; the *_INCLUDE_DIRS
 # variables point into the Conan cache of the build machine and would be dead weight
@@ -587,7 +577,7 @@ endif ()
 function(lintel_setup_module target)
     target_compile_features(${target} PUBLIC cxx_std_20)
     target_include_directories(${target} SYSTEM PUBLIC
-            "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${HYPODERMIC_INCLUDE_DIRS_VAR};${CMAKE_CURRENT_SOURCE_DIR}/include>"
+            "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${CMAKE_CURRENT_SOURCE_DIR}/include>"
             "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
     target_link_libraries(${target} PRIVATE $<BUILD_INTERFACE:project_warnings>)
     # Boost.UUID formats UUIDs via SSE2 intrinsics. Without optimization (-O0) GCC 13 no
@@ -607,7 +597,7 @@ lintel_setup_module(lintel_core)
 # release export).
 target_link_libraries(lintel_core PUBLIC tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
         Threads::Threads OpenSSL::SSL OpenSSL::Crypto rapidjson magic_enum::magic_enum
-        spdlog::spdlog_header_only lintel::Hypodermic Boost::boost Boost::headers Boost::filesystem)
+        spdlog::spdlog_header_only Boost::boost Boost::headers Boost::filesystem)
 set_target_properties(lintel_core PROPERTIES EXPORT_NAME core)
 add_library(lintel::core ALIAS lintel_core)
 

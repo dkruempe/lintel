@@ -36,7 +36,7 @@ Binaries output to `bin/`.
 | `ci.yml` → `build` | push/PR to `master`, `workflow_dispatch` | matrix `gcc-release` (gate), `clang-release`, `gcc-debug-nonunity` (Debug + Non-Unity in one run) |
 | `ci.yml` → `format` | same | **blocking**: changed files must not contain new `clang-format` violations; additionally repo-wide drift report (informational only) |
 | `ci.yml` → `namespace` | same | **blocking**: public headers (`src/include/lintel/**/*.h`) must not declare their own names outside `namespace lintel` (generated `config.h` exempt) |
-| `ci.yml` → `lint` | same | `clang-tidy` on changed files (`src/`, without `tests/`/`external/`), currently `continue-on-error` |
+| `ci.yml` → `lint` | same | `clang-tidy` on changed files (`src/`, without `tests/`), currently `continue-on-error` |
 | `release.yml` | tag `v*`, `workflow_dispatch` (dry-run) | check version → release build → `ctest` → tarball with `bin/`, `cfg/` (without `certs/`), `swagger.yaml` → `gh release create` |
 
 Check the same locally:
@@ -98,11 +98,11 @@ Do not commit credentials. Write passwords in config and examples as `${VAR}` or
 
 `lintel` is a CMake library (`lintel::lintel`).
 
-- **Namespace**: every public symbol lives in `namespace lintel` (persistence in `lintel::db`, shared-memory strings in `lintel::shm`). The generated `config.h` is the only global-scope exception. Enforced by `scripts/check-namespace.sh` (CI job `namespace`).
+- **Namespace**: every public symbol lives in `namespace lintel` (persistence in `lintel::db`, shared-memory strings in `lintel::shm`, the DI container in `lintel::di`). The generated `config.h` is the only global-scope exception. Enforced by `scripts/check-namespace.sh` (CI job `namespace`).
 - **`src/core/`** — StartupBuilder, DI wiring, persistence abstraction (PostgreSQL + SQLite), logging, services, plugins.
 - **`src/features/`** — Optional modules: `http/` (cpp-httplib server/client), `cli/`, `property/` (XML/file/DB/SHM config), `base/` (auth, processes, message queues, event bus, shared memory).
 - **`src/include/lintel/`** — Public headers. `config.h` is generated from `config.h.in` by CMake.
-- **`external/Hypodermic/`** — Vendored DI framework.
+- **`src/include/lintel/core/di/`** — Header-only DI container (`lintel::di`), the successor of the former vendored Hypodermic.
 - **`cfg/`** — Runtime XML config (`bootstrap.xml`, `bootstrap_worker.xml`). `CONFIG_DIRECTORY` env var overrides path.
 - **`examples/`** — Reference apps showing how to wire StartupBuilder.
 - **`tests/`** — Single binary (`base_tests`), all test files listed explicitly in `tests/CMakeLists.txt`.

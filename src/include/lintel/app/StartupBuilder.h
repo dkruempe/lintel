@@ -21,9 +21,11 @@ class Features;
 class ProcessName;
 
 }// namespace lintel
-namespace Hypodermic {
-class Container;
-}
+namespace lintel {
+namespace di {
+  class Container;
+}// namespace di
+}// namespace lintel
 
 namespace lintel {
 /** Builder for application startup lifecycle, managing features, configuration, and signal handling. */
@@ -31,7 +33,7 @@ class StartupBuilder
 {
 private:
   std::vector<std::shared_ptr<FeatureInterface>> m_featureVec;
-  std::shared_ptr<Hypodermic::Container> m_container = nullptr;
+  std::shared_ptr<lintel::di::Container> m_container = nullptr;
   std::shared_ptr<ProcessName> m_name;
   std::vector<std::shared_ptr<AbstractServiceInterface>> m_abstractServices;
   std::thread m_signalThread;

@@ -12,8 +12,7 @@
 #include <lintel/features/base/services/IHistoryService.h>
 #include <lintel/features/base/services/NoopHistoryService.h>
 
-#include "Hypodermic/Container.h"
-#include "Hypodermic/ContainerBuilder.h"
+#include "lintel/core/di/Container.h"
 
 #include <catch2/catch_all.hpp>
 
@@ -50,7 +49,7 @@ TEST_CASE("HistoryServiceGating: non-owner with history config gets a HistorySer
     std::make_shared<MessageQueueEntry>(type_name<MessageQueueComponent>(), "main", "history", 1000) });
   auto processName = std::make_shared<ProcessName>("worker");
 
-  Hypodermic::ContainerBuilder builder;
+  lintel::di::ContainerBuilder builder;
   auto feature = std::make_shared<BaseFeature>(std::make_shared<Features>());
   builder.registerInstance(processName);
   builder.registerInstance(config);
@@ -68,7 +67,7 @@ TEST_CASE("HistoryServiceGating: process without any history configuration gets 
   auto config = configurationWith({});
   auto processName = std::make_shared<ProcessName>("main");
 
-  Hypodermic::ContainerBuilder builder;
+  lintel::di::ContainerBuilder builder;
   auto feature = std::make_shared<BaseFeature>(std::make_shared<Features>());
   builder.registerInstance(processName);
   builder.registerInstance(config);
@@ -86,7 +85,7 @@ TEST_CASE("HistoryServiceGating: configured owner process gets the real HistoryS
     std::make_shared<MessageQueueEntry>(type_name<MessageQueueComponent>(), "main", "history", 1000) });
   auto processName = std::make_shared<ProcessName>("main");
 
-  Hypodermic::ContainerBuilder builder;
+  lintel::di::ContainerBuilder builder;
   auto feature = std::make_shared<BaseFeature>(std::make_shared<Features>());
   builder.registerInstance(processName);
   builder.registerInstance(config);

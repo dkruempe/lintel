@@ -37,18 +37,18 @@ namespace {
   /**
    * Minimal feature that records when it was registered with the DI container.
    *
-   * Hypodermic stays an incomplete type: ContainerBuilder is only passed by
-   * reference and Container travels inside a shared_ptr, exactly as in
-   * lintel/features/Feature.h.
+   * The DI container stays an incomplete type: ContainerBuilder is only
+   * passed by reference and Container travels inside a shared_ptr, exactly as
+   * in lintel/core/Feature.h.
    */
   class SbCountingFeature : public FeatureInterface
   {
   public:
     SbCountingFeature(std::shared_ptr<Features> /*features*/, std::string name) : m_name(std::move(name)) {}
 
-    void registerTypes(Hypodermic::ContainerBuilder & /*builder*/) override { sbFeatureLog().push_back(m_name); }
+    void registerTypes(lintel::di::ContainerBuilder & /*builder*/) override { sbFeatureLog().push_back(m_name); }
 
-    void initialize(std::shared_ptr<Hypodermic::Container> /*container*/) override {}
+    void initialize(std::shared_ptr<lintel::di::Container> /*container*/) override {}
 
     std::string_view getName() override { return m_name; }
 

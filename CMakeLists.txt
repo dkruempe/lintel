@@ -77,7 +77,6 @@ lintel_enable_cppcheck(${lintel_WARNINGS_AS_ERRORS} "" # override cppcheck optio
 
 
 # Library
-ADD_SUBDIRECTORY(external)
 ADD_SUBDIRECTORY(src)
 
 # Examples

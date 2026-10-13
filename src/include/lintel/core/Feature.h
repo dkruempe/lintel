@@ -15,14 +15,15 @@ class Configuration;
 class ProcessName;
 
 // The DI container is only referenced through pointers/references in the
-// signatures below, so an incomplete type is enough. Implementations of
-// registerTypes()/initialize() include "Hypodermic/ContainerBuilder.h" and
-// "Hypodermic/Container.h" themselves.
+// signatures below, so an incomplete type is enough. Implementations that
+// register or resolve types include "lintel/core/di/Container.h" themselves.
 }// namespace lintel
-namespace Hypodermic {
-class Container;
-class ContainerBuilder;
-}// namespace Hypodermic
+namespace lintel {
+namespace di {
+  class Container;
+  class ContainerBuilder;
+}// namespace di
+}// namespace lintel
 
 namespace lintel {
 /** Interface for all feature implementations */
@@ -33,7 +34,7 @@ public:
   virtual ~FeatureInterface() = default;
 
   /** Register dependency injection types for this feature */
-  virtual void registerTypes(Hypodermic::ContainerBuilder &builder) = 0;
+  virtual void registerTypes(lintel::di::ContainerBuilder &builder) = 0;
 
   /** Register dependency injection types for this feature.
    *
@@ -45,7 +46,7 @@ public:
    * @param configuration the parsed application configuration
    * @param processName the process name of the running process
    */
-  virtual void registerTypes(Hypodermic::ContainerBuilder &builder,
+  virtual void registerTypes(lintel::di::ContainerBuilder &builder,
     const std::shared_ptr<Configuration> &configuration,
     const std::shared_ptr<ProcessName> &processName)
   {
@@ -55,7 +56,7 @@ public:
   }
 
   /** Initialize the feature with the resolved container */
-  virtual void initialize(std::shared_ptr<Hypodermic::Container> container) = 0;
+  virtual void initialize(std::shared_ptr<lintel::di::Container> container) = 0;
 
   /** Get the name of this feature */
   virtual std::string_view getName() = 0;
@@ -80,18 +81,18 @@ public:
   {
     m_features->registerFeature(
       type,
-      [&](Hypodermic::ContainerBuilder &builder) { registerTypes(builder); },
-      [&](std::shared_ptr<Hypodermic::Container> container) { initialize(container); });
+      [&](lintel::di::ContainerBuilder &builder) { registerTypes(builder); },
+      [&](std::shared_ptr<lintel::di::Container> container) { initialize(container); });
   }
 
   /** Virtual destructor */
   virtual ~Feature() = default;
 
   /** Register dependency injection types for this feature */
-  virtual void registerTypes(Hypodermic::ContainerBuilder &builder) = 0;
+  virtual void registerTypes(lintel::di::ContainerBuilder &builder) = 0;
 
   /** Initialize the feature with the resolved container */
-  virtual void initialize(std::shared_ptr<Hypodermic::Container> container) = 0;
+  virtual void initialize(std::shared_ptr<lintel::di::Container> container) = 0;
 
   /** Get the name of this feature
    * @return The feature name as a string view */

@@ -1,7 +1,6 @@
 #include "lintel/app/CommandLineFeature.h"
 
-#include "Hypodermic/Container.h"
-#include "Hypodermic/ContainerBuilder.h"
+#include "lintel/core/di/Container.h"
 
 #include "lintel/features/cli/components/HistoryCliComponent.h"
 #include "lintel/features/cli/components/MessageQueueCliComponent.h"
@@ -18,7 +17,7 @@ namespace lintel {
 CommandLineFeature::CommandLineFeature(std::shared_ptr<Features> features) : Feature(Features::Cli, std::move(features))
 {}
 
-void CommandLineFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
+void CommandLineFeature::registerTypes(lintel::di::ContainerBuilder &builder)
 {
   builder.registerType<CommandLineService>().as<AbstractServiceInterface>().asSelf().singleInstance();
   builder.registerType<CommandLineHistoryService>().as<AbstractServiceInterface>().asSelf().singleInstance();
@@ -34,7 +33,7 @@ void CommandLineFeature::registerTypes(Hypodermic::ContainerBuilder &builder)
   builder.registerType<HistoryCliComponent>().as<CommandLineComponent>().asSelf().singleInstance();
 }
 
-void CommandLineFeature::initialize(std::shared_ptr<Hypodermic::Container> container)
+void CommandLineFeature::initialize(std::shared_ptr<lintel::di::Container> container)
 {
   m_commandLineService = container->resolve<CommandLineService>();
 }

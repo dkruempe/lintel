@@ -11,8 +11,8 @@
 # that is not a namespace opening.
 #
 # Allowed at global scope: the `namespace lintel { ... }` block and known
-# third-party forward-declaration blocks (`namespace spdlog {`, `namespace
-# Hypodermic {`, `namespace httplib {`, ...). Everything else at that level is
+# third-party forward-declaration blocks (`namespace spdlog {`,
+# `namespace httplib {`, ...). Everything else at that level is
 # reported with file:line.
 #
 # Usage: ./scripts/check-namespace.sh [path]   (default: src/include/lintel)

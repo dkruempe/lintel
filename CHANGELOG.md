@@ -71,6 +71,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (empty result = "keep the configured default") and log, services propagate domain errors but
   degrade once a change is already effective in memory, and the HTTP layer maps to status codes.
   See `docs/architecture.dox` (*Errors*); `DatabasePropertyRepository` is the reference case.
+- **The DI container is now `lintel::di` (breaking, `ROADMAP.md` A2).** The vendored, unmaintained
+  Hypodermic (2017) was replaced by a header-only `lintel::di::Container` / `ContainerBuilder`
+  (`lintel/core/di/Container.h`) with the same registration API the code already used
+  (`registerInstance`, `registerType<T>().as<I>().asSelf().singleInstance()`, `resolve<T>()`,
+  `resolveAll<T>()`). Constructor parameters of type `std::shared_ptr<...>` and
+  `std::vector<std::shared_ptr<...>>` are injected; unregistered concrete types are auto-registered
+  transiently; registrations resolve to the last registration resp. all in registration order.
+  Unlike before, a dependency cycle is reported as `lintel::di::ResolutionException` instead of
+  recursing without bound. Public headers now forward-declare `lintel::di::Container` /
+  `ContainerBuilder` instead of `Hypodermic::Container` / `ContainerBuilder`.
+
+### Removed
+- **The vendored `external/Hypodermic/` tree** (and its `external/CMakeLists.txt`, package-config
+  glue in `cmake/lintelConfig.cmake.in`, and `tests/external/HypodermicSignalTest.cpp`) is gone.
+  Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
 - **`DatabasePropertyRepository::allOf()`** default `instanceName` was `".*0"` instead of `".*"`,

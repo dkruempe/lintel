@@ -1,7 +1,6 @@
 #include "lintel/app/BaseFeature.h"
 
-#include "Hypodermic/Container.h"
-#include "Hypodermic/ContainerBuilder.h"
+#include "lintel/core/di/Container.h"
 
 #include "lintel/app/plugins/AdminUserBootstrapPlugin.h"
 #include "lintel/app/plugins/DatabaseBootstrapPlugin.h"
@@ -58,9 +57,9 @@ BaseFeature::BaseFeature(std::shared_ptr<Features> features) : Feature(Features:
  * initialization step", the same contract `NoopHistoryService` uses for the
  * services it replaces.
  */
-void BaseFeature::initialize(std::shared_ptr<Hypodermic::Container> container) {}
+void BaseFeature::initialize(std::shared_ptr<lintel::di::Container> container) {}
 
-void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) { registerTypes(builder, nullptr, nullptr); }
+void BaseFeature::registerTypes(lintel::di::ContainerBuilder &builder) { registerTypes(builder, nullptr, nullptr); }
 
 /**
  * Registers the core services in the DI container.
@@ -81,7 +80,7 @@ void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder) { registe
  * @param configuration    the parsed application configuration, may be null
  * @param processName      the process name of the running process, may be null
  */
-void BaseFeature::registerTypes(Hypodermic::ContainerBuilder &builder,
+void BaseFeature::registerTypes(lintel::di::ContainerBuilder &builder,
   const std::shared_ptr<Configuration> &configuration,
   const std::shared_ptr<ProcessName> &processName)
 {

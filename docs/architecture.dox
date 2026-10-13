@@ -90,16 +90,24 @@
  *
  * @section arch_di Dependency injection
  *
- * The container is Hypodermic (`external/Hypodermic/`, vendored because it is
- * unmaintained since 2017). It is used through two interface methods rather
- * than exposed in the API:
+ * The container is the library's own header-only `lintel::di`
+ * (`src/include/lintel/core/di/Container.h`). It replaces the former vendored
+ * Hypodermic, which was unmaintained since 2017. It is used through two
+ * interface methods rather than exposed in the API:
  *
  * - `FeatureInterface::registerTypes()` / `FeatureInterface::initialize()`
  * - `BootstrapPlugin::onStart()` / `BootstrapPlugin::getPriority()`
  *
- * Public headers only mention `Hypodermic::Container` / `ContainerBuilder`
+ * Public headers only mention `lintel::di::Container` / `ContainerBuilder`
  * through forward declarations where a signature needs it, so consumers are
- * not forced to have Hypodermic's headers on their include path.
+ * not forced to have the container's header on their include path.
+ *
+ * Constructor parameters are injected when they are `std::shared_ptr<T>`
+ * (resolved as the last registration of `T`) or `std::vector<std::shared_ptr<T>>`
+ * (all registrations of `T`, in registration order). Unregistered concrete types
+ * are auto-registered transiently, and a thread-local activation stack turns a
+ * resumed registration (a dependency cycle) into a `ResolutionException` instead
+ * of unbounded recursion.
  *
  * @section arch_properties Properties
  *
