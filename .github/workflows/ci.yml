@@ -287,11 +287,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
 
-    # Advisory until a full green run exists: the lock-free IPC queues and the
-    # crash-tolerant registry spin lock are expected to surface findings that
-    # still need triage, and Actions minutes are limited. Promote to blocking
-    # once a full run is green.
-    continue-on-error: true
+    # Blocking since 13.10.2026: a full green run exists (663/663 tests, no
+    # ThreadSanitizer findings). The previous 121 SIGSEGVs were not data races
+    # but glibc's getaddrinfo_a helper thread, which is invisible to GCC-14
+    # TSan; disabled with cpp-httplib's use_non_blocking_getaddrinfo=False.
+    continue-on-error: false
 
     env:
       # GCC's TSan is the mature implementation; Clang's runtime is not used
