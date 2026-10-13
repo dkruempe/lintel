@@ -112,6 +112,8 @@ void ProcessController::startProcessPost(const httplib::Request &request,
       process.disableAutoStart();
     }
     m_processService->startOf(process);
+    std::string result = R"({"id":")" + process.getId() + R"("})";
+    response.set_content(result, contentType.getName());
   } else {
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());

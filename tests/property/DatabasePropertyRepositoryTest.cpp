@@ -190,11 +190,8 @@ TEST_CASE("DatabasePropertyRepository::allOf filters by process, class, instance
     fixture.makeProperty("dprGamma", "__DEFAULT", "OtherService", "dprProcess", 3),
     fixture.makeProperty("dprDelta", "__DEFAULT", "DprService", "otherProcess", 4) });
 
-  // The default arguments of DatabasePropertyRepository::allOf() cannot be used: the header
-  // declares instanceName = ".*0" instead of ".*"
-  // (src/include/lintel/features/property/repositories/DatabasePropertyRepository.h:51), which becomes
-  // "LIKE '%0'" and therefore matches nothing. The filters are passed explicitly here and the defect
-  // is reported instead of being locked into the test.
+  // all four filters are passed explicitly so that the individual LIKE clauses are pinned here;
+  // the defaults of the header are exercised by the regression test below
   REQUIRE(fixture.m_repository->allOf(".*", ".*", ".*", ".*").size() == 4);
   REQUIRE(fixture.m_repository->allOf("dprProcess", ".*", ".*", ".*").size() == 3);
   REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService", ".*", ".*").size() == 2);
@@ -206,6 +203,20 @@ TEST_CASE("DatabasePropertyRepository::allOf filters by process, class, instance
   const auto alpha = fixture.m_repository->allOf("dprProcess", "DprService", ".*", "dprAlpha");
   REQUIRE(alpha.size() == 1);
   REQUIRE(alpha[0]->toString() == "1");
+}
+
+TEST_CASE("DatabasePropertyRepository::allOf matches every instance for the default instance filter",
+  "[database_property_repository]")
+{
+  DatabasePropertyRepositoryFixture fixture;
+
+  // "__DEFAULT" does not end in '0'; a default of ".*0" would become LIKE '%0' and hide both rows
+  fixture.m_repository->save(fixture.makeProperty("dprAlpha", "__DEFAULT", "DprService", "dprProcess", 1));
+  fixture.m_repository->save(fixture.makeProperty("dprBeta", "second", "DprService", "dprProcess", 2));
+
+  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService").size() == 2);
+  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService", ".*", ".*").size() == 2);
+  REQUIRE(fixture.m_repository->allOf().size() == 2);
 }
 
 TEST_CASE("DatabasePropertyRepository::deleteOf removes the given properties", "[database_property_repository]")

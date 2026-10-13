@@ -8,6 +8,9 @@ add_executable(base_benchmarks
     RegexBenchmark.cpp
     SqliteBenchmark.cpp
     PropertyDtoBenchmark.cpp
+    PropertyServiceBenchmark.cpp
+    EventBusBenchmark.cpp
+    MessageQueueBenchmark.cpp
 )
 target_compile_features(base_benchmarks PUBLIC cxx_std_20)
 target_link_libraries(base_benchmarks PRIVATE

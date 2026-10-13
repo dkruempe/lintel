@@ -282,6 +282,192 @@ jobs:
           cd ${{ env.BUILD_DIR }}
           ctest --output-on-failure --label-regex unit
 
+  tsan:
+    name: sanitizers (TSan)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    # Advisory until a full green run exists: the lock-free IPC queues and the
+    # crash-tolerant registry spin lock are expected to surface findings that
+    # still need triage, and Actions minutes are limited. Promote to blocking
+    # once a full run is green.
+    continue-on-error: true
+
+    env:
+      # GCC's TSan is the mature implementation; Clang's runtime is not used
+      # here on purpose.
+      CC: gcc-14
+      CXX: g++-14
+      BUILD_TYPE: RelWithDebInfo
+      BUILD_DIR: build/build/tsan
+      CACHE_ID: tsan
+      CONAN_SYSREQUIRES_MODE: enabled
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Conan packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      - name: Install system dependencies
+        # Hard backstop above install-deps.sh's own 30 min budget: cmake is
+        # ~11 MB and runners occasionally get a mirror throttled to ~12 kB/s,
+        # which takes ~16 min and must NOT be killed and restarted.
+        timeout-minutes: 40
+        run: |
+          ./scripts/install-deps.sh \
+            build-essential g++-14 cmake ninja-build pkg-config python3 python3-pip \
+            libpq-dev libsqlite3-dev libssl-dev
+
+      - name: Install Conan
+        run: pip3 install conan --break-system-packages --no-cache-dir
+
+      - name: Install Conan dependencies
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      - name: Configure CMake with ThreadSanitizer
+        run: |
+          cmake -S . -B ${{ env.BUILD_DIR }} \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/${{ env.BUILD_TYPE }}/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DCMAKE_CXX_FLAGS="-fsanitize=thread -fno-omit-frame-pointer -g" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" \
+            -G Ninja
+
+      # The TLS integration test needs certs/server.crt + certs/server.key. Both
+      # are generated and git-ignored, so this job creates its own throwaway pair.
+      - name: Generate TLS test certificates
+        run: ./cfg/certs/generate_certs.sh
+
+      - name: Build
+        run: cmake --build ${{ env.BUILD_DIR }} --parallel $(nproc)
+
+      - name: Run tests
+        working-directory: ${{ env.BUILD_DIR }}
+        env:
+          # halt_on_error: stop at the first real data race instead of continuing.
+          # second_deadlock_stack: include the second stack in lock-order findings.
+          TSAN_OPTIONS: halt_on_error=1:second_deadlock_stack=1
+          # A missing postgres service must fail the job, not turn the [pg] tests
+          # into ctest skips - see requirePg().
+          LINTEL_REQUIRE_PG: "1"
+        run: ctest --output-on-failure --label-regex unit
+
+  benchmarks:
+    name: benchmarks (runtime)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    # Advisory: the runtime numbers are tracked as an artifact, not gated. They
+    # are noisy on shared runners, so a regression must be reviewed by a human.
+    continue-on-error: true
+
+    env:
+      CC: gcc-14
+      CXX: g++-14
+      BUILD_TYPE: Release
+      BUILD_DIR: build/build/Release
+      CACHE_ID: benchmarks
+      CONAN_SYSREQUIRES_MODE: enabled
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Conan packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'benchmarks/**', 'external/**') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      - name: Install system dependencies
+        # Hard backstop above install-deps.sh's own 30 min budget: cmake is
+        # ~11 MB and runners occasionally get a mirror throttled to ~12 kB/s,
+        # which takes ~16 min and must NOT be killed and restarted.
+        timeout-minutes: 40
+        run: |
+          ./scripts/install-deps.sh \
+            build-essential g++-14 cmake ninja-build ccache \
+            pkg-config python3 python3-pip \
+            libpq-dev libsqlite3-dev libssl-dev
+
+      - name: Install Conan
+        run: pip3 install conan --break-system-packages --no-cache-dir
+
+      - name: Install Conan dependencies
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      - name: Configure CMake (benchmarks)
+        run: |
+          cmake -S . -B ${{ env.BUILD_DIR }} \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/${{ env.BUILD_TYPE }}/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_BENCHMARKS=ON \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -G Ninja
+
+      # Only the benchmark target: the tests are exercised by the build job, so
+      # this job does not pay for compiling them again.
+      - name: Build benchmarks
+        run: cmake --build ${{ env.BUILD_DIR }} --target base_benchmarks --parallel $(nproc)
+
+      - name: Run benchmarks (console)
+        run: timeout 20m ./bin/base_benchmarks --benchmark_min_time=0.2s --benchmark_format=console
+
+      # The JSON run is best effort: a benchmark crash must not skip the upload.
+      - name: Run benchmarks (json)
+        continue-on-error: true
+        run: timeout 20m ./bin/base_benchmarks --benchmark_min_time=0.2s --benchmark_format=json > benchmark_results.json
+
+      - name: Upload benchmark results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: benchmark-results
+          path: benchmark_results.json
+          if-no-files-found: warn
+
   secrets:
     name: secret guard
     runs-on: ubuntu-24.04

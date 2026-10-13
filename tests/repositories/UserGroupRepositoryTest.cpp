@@ -391,13 +391,19 @@ TEST_CASE("UserRepository::deleteOf removes user and relations",
     REQUIRE_FALSE(found.has_value());
 }
 
-TEST_CASE("UserRepository::deleteOf by username vector", "[user_repository]") {
-    RepoFixture fixture;
-    fixture.userRepository->createOf(fixture.makeUser("alice"));
+TEST_CASE("UserRepository::deleteOf by username vector", "[user_repository]")
+{
+  RepoFixture fixture;
+  fixture.userRepository->createOf(fixture.makeUser("alice"));
+  fixture.userRepository->createOf(fixture.makeUser("bob"));
+  fixture.userRepository->createOf(fixture.makeUser("carol"));
 
-    fixture.userRepository->deleteOf(std::vector<std::string>{"alice"});
+  // more than one name exercises the single transaction commit after the loop
+  fixture.userRepository->deleteOf(std::vector<std::string>{ "alice", "bob" });
 
-    REQUIRE_FALSE(fixture.userRepository->of("alice").has_value());
+  REQUIRE_FALSE(fixture.userRepository->of("alice").has_value());
+  REQUIRE_FALSE(fixture.userRepository->of("bob").has_value());
+  REQUIRE(fixture.userRepository->of("carol").has_value());
 }
 
 TEST_CASE("UserRepository::addGroupOf adds group to user", "[user_repository]") {

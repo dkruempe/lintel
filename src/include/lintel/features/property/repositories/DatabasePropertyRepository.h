@@ -48,7 +48,7 @@ public:
     std::vector<std::shared_ptr<PropertyBase>> allOf(
             const std::string &processName = ".*",
             const std::string &className = ".*",
-            const std::string &instanceName = ".*0",
+            const std::string &instanceName = ".*",
             const std::string &name = ".*") override;
 };
 

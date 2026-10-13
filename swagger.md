@@ -306,13 +306,17 @@ Returns the ProcessInfoDto of one active process. Requires a bearer token of a u
 
 Start a process
 
+##### Description
+
+Starts the process described by the JSON body (ProcessInfoDto: path, args, auto_restart, max_auto_restarts). A missing Content-Type header defaults to application/json.
+
 ##### Responses
 
 | Code | Description |
 | ---- | ----------- |
-| 200 | A successful response |
+| 200 | A successful response, returns the id of the started process |
 | 401 | Unauthorized |
-| 403 | Forbidden (wrong content type) |
+| 403 | Forbidden (explicit non-JSON content type) |
 | 500 | Internal server error |
 
 ##### Security

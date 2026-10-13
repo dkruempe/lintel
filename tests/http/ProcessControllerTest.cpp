@@ -743,3 +743,157 @@ TEST_CASE("ProcessController::startProcessPost returns 403 for a non json conten
   REQUIRE(response->status == 403);
   REQUIRE(fixture.m_processService->allActiveOf().size() == 1);
 }
+
+TEST_CASE("ProcessController::startProcessPost accepts request without Content-Type header", "[process_controller]")
+{
+  const std::string sleeper = pcFindSleeperBinary();
+  REQUIRE(!sleeper.empty());
+
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  auto response = fixture.m_client->Post("/process/start", headers, pcStartBody(sleeper, { "10" }), "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+  REQUIRE(fixture.m_processService->allActiveOf().size() == 2);
+}
+
+TEST_CASE("ProcessController::restartProcessPut accepts request without Content-Type header", "[process_controller]")
+{
+  const std::string sleeper = pcFindSleeperBinary();
+  REQUIRE(!sleeper.empty());
+
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(3)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto started = fixture.m_client->Post(
+    "/process/start", pcAuthJsonHeaders(pcTokenAdmin), pcStartBody(sleeper, { "600" }), "application/json");
+  REQUIRE(started != nullptr);
+  REQUIRE(started->status == 200);
+
+  const std::string sleeperName = std::filesystem::path(sleeper).filename().string();
+  auto listed = fixture.m_client->Get("/process/processes/" + sleeperName, pcAuthHeaders(pcTokenAdmin));
+  REQUIRE(listed != nullptr);
+  const auto infos = fixture.parseProcessInfos(listed->body);
+  REQUIRE(infos.size() == 1);
+  const std::string childId = infos[0].getId();
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  auto restarted = fixture.m_client->Put("/process/restart/" + childId, headers, std::string(), "");
+  REQUIRE(restarted != nullptr);
+  REQUIRE(restarted->status == 200);
+
+  fixture.m_processService->terminateOf(*fixture.m_processService->of(childId).value());
+}
+
+TEST_CASE("ProcessController::resetProcessPost accepts request without Content-Type header", "[process_controller]")
+{
+  const std::string sleeper = pcFindSleeperBinary();
+  REQUIRE(!sleeper.empty());
+
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(3)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto started = fixture.m_client->Post(
+    "/process/start", pcAuthJsonHeaders(pcTokenAdmin), pcStartBody(sleeper, { "600" }), "application/json");
+  REQUIRE(started != nullptr);
+  REQUIRE(started->status == 200);
+
+  const std::string sleeperName = std::filesystem::path(sleeper).filename().string();
+  auto listed = fixture.m_client->Get("/process/processes/" + sleeperName, pcAuthHeaders(pcTokenAdmin));
+  REQUIRE(listed != nullptr);
+  const auto infos = fixture.parseProcessInfos(listed->body);
+  REQUIRE(infos.size() == 1);
+  const std::string childId = infos[0].getId();
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  auto reset = fixture.m_client->Post("/process/reset/" + childId, headers, std::string(), "");
+  REQUIRE(reset != nullptr);
+  REQUIRE(reset->status == 200);
+
+  fixture.m_processService->terminateOf(*fixture.m_processService->of(childId).value());
+}
+
+TEST_CASE("ProcessController::stopProcessDelete accepts request without Content-Type header", "[process_controller]")
+{
+  const std::string sleeper = pcFindSleeperBinary();
+  REQUIRE(!sleeper.empty());
+
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(3)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto started = fixture.m_client->Post(
+    "/process/start", pcAuthJsonHeaders(pcTokenAdmin), pcStartBody(sleeper, { "600" }), "application/json");
+  REQUIRE(started != nullptr);
+  REQUIRE(started->status == 200);
+
+  const std::string sleeperName = std::filesystem::path(sleeper).filename().string();
+  auto listed = fixture.m_client->Get("/process/processes/" + sleeperName, pcAuthHeaders(pcTokenAdmin));
+  REQUIRE(listed != nullptr);
+  const auto infos = fixture.parseProcessInfos(listed->body);
+  REQUIRE(infos.size() == 1);
+  const std::string childId = infos[0].getId();
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  auto stopped = fixture.m_client->Delete("/process/stop/" + childId, headers);
+  REQUIRE(stopped != nullptr);
+  REQUIRE(stopped->status == 200);
+}
+
+TEST_CASE("ProcessController::terminateProcessDelete accepts request without Content-Type header",
+  "[process_controller]")
+{
+  const std::string sleeper = pcFindSleeperBinary();
+  REQUIRE(!sleeper.empty());
+
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(3)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto started = fixture.m_client->Post(
+    "/process/start", pcAuthJsonHeaders(pcTokenAdmin), pcStartBody(sleeper, { "600" }), "application/json");
+  REQUIRE(started != nullptr);
+  REQUIRE(started->status == 200);
+
+  const std::string sleeperName = std::filesystem::path(sleeper).filename().string();
+  auto listed = fixture.m_client->Get("/process/processes/" + sleeperName, pcAuthHeaders(pcTokenAdmin));
+  REQUIRE(listed != nullptr);
+  const auto infos = fixture.parseProcessInfos(listed->body);
+  REQUIRE(infos.size() == 1);
+  const std::string childId = infos[0].getId();
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  auto terminated = fixture.m_client->Delete("/process/terminate/" + childId, headers);
+  REQUIRE(terminated != nullptr);
+  REQUIRE(terminated->status == 200);
+}

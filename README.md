@@ -252,12 +252,20 @@ Docker workflows are defined in [`docker-compose.yml`](docker-compose.yml). The 
   ```bash
   docker compose --profile test up --build --abort-on-container-exit
   ```
-- **`app` profile** (`service: app`, target `runtime`, working dir `/workspace`, ports `8080:8080`, `CONFIG_DIRECTORY=/workspace/cfg`, depends on `postgres` healthy): runs `./bin/main`. The runtime image contains only the required libraries (`libpq5`, `libsqlite3-0`, `libssl3t64`, `ca-certificates`) and copies `bin/` and `cfg/` from the builder stage.  
+- **`app` profile** (`service: app`, target `runtime`, working dir `/workspace`, ports `8080:8080`, `CONFIG_DIRECTORY=/workspace/cfg`, depends on `postgres` healthy): runs `./bin/main`. `cfg/bootstrap.xml` sets `require_tls="true"`, so the API is served over **HTTPS** on port `8080` using the self-signed development certificates in `cfg/certs/` — run `./cfg/certs/generate_certs.sh` before building the image. The service declares a healthcheck against the unauthenticated `GET /health` endpoint (`curl -fsSk https://localhost:8080/health`; `-k` skips verification of the self-signed dev certificate). The runtime image contains the required libraries (`libpq5`, `libsqlite3-0`, `libssl3t64`, `ca-certificates`), `curl` for the healthcheck, and copies `bin/` and `cfg/` from the builder stage.  
   ```bash
   docker compose --profile app up --build
   ```
 
 Notes: the dev container exposes no published ports by default; `postgres` is published on `5432` (as defined). These commands were verified against `docker compose config`.
+
+### Development defaults are not production-safe
+
+The compose profiles are development defaults, not a production deployment:
+
+- **Database credentials**: `postgres` runs with user/password/db `test`/`test`/`test` and publishes port `5432` to the host, so it is reachable with guessable credentials. The app's default connection is SQLite (see [SQLite vs. PostgreSQL](#sqlite-vs-postgresql)), so this Postgres is only needed by the DB-backed tests.
+- **TLS**: the app terminates HTTPS, but with the **self-signed development certificate** in `cfg/certs/`, which is git-ignored and not shipped in the release tarball.
+- **For production**: do not publish `5432`, replace the credentials with real secrets, keep `require_tls="true"` in `cfg/bootstrap.xml` and point `cert_path`/`key_path` at real certificates. See [HTTP Server Configuration](#http-server-configuration) and [TLS](#tls).
 
 ## Testing
 

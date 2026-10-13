@@ -112,7 +112,14 @@
  * - `PropertyFactory::Create()` materializes a `PropertyBase` from its string
  *    representation, using the recorded type name.
  * - Changes are published on the event bus, so a subscriber learns about a
- *    change without polling the repository.
+ *   change without polling the repository.
+ *
+ * The bootstrap XML is expanded before parsing: every `${NAME}` occurrence whose
+ * `NAME` matches `[A-Za-z_][A-Za-z0-9_]*` is replaced by the environment variable
+ * of that name via `EnvironmentConfiguration::expand()`. An **unset** variable is
+ * left as the literal text `${NAME}` (it is not an error), and `$${NAME}` escapes
+ * to the literal `${NAME}`. A malformed XML document aborts startup with a
+ * `ConfigurationException` that carries the tinyxml2 error and line number.
  *
  * @section arch_persistence Persistence
  *

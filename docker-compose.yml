@@ -1,6 +1,18 @@
+# Development/test compose file.
+#
+# Everything here is a DEVELOPMENT DEFAULT and is NOT production-safe:
+#   * postgres is published on the host with the trivial credentials test/test/test,
+#   * the app serves the HTTP API over HTTPS with a self-signed development certificate.
+# For production: use real credentials (do not publish 5432), keep
+# require_tls="true" in cfg/bootstrap.xml and point cert_path/key_path at real
+# certificates instead of the self-signed cfg/certs/ pair.
 services:
   postgres:
     image: postgres:17
+    # DEV/TEST ONLY: user/password/db are all "test" and the port is published
+    # to 0.0.0.0:5432, so the database is world-reachable with guessable
+    # credentials. Inject a real secret (e.g. ${POSTGRES_PASSWORD}) and drop the
+    # ports mapping for anything but local development.
     environment:
       POSTGRES_USER: test
       POSTGRES_PASSWORD: test
@@ -60,9 +72,24 @@ services:
       postgres:
         condition: service_healthy
     environment:
+      # cfg/ is copied into the runtime image (see Dockerfile) and cfg/bootstrap.xml
+      # sets require_tls="true", so ./bin/main serves HTTPS on 8080 using the
+      # self-signed dev certificates in cfg/certs/. Development default only:
+      # production must supply real certificates and real database credentials.
       CONFIG_DIRECTORY: /workspace/cfg
     ports:
       - "8080:8080"
+    healthcheck:
+      # Unauthenticated liveness endpoint (GET /health, see
+      # src/features/http/service/Server.cpp). The server is HTTPS because
+      # cfg/bootstrap.xml has require_tls="true"; -k skips verification of the
+      # self-signed development certificate. curl is installed in the runtime
+      # stage (Dockerfile) for exactly this check.
+      test: ["CMD", "curl", "-fsSk", "https://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 30s
     profiles:
       - app
 

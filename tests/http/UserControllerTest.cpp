@@ -834,11 +834,30 @@ TEST_CASE("UserController::deleteUser removes a listed user", "[user_controller]
   REQUIRE(fixture.m_userRepository->of("ucSurvivor").has_value());
 }
 
-// KNOWN DEFECT, deliberately not asserted here: UserRepository::deleteOf(const std::vector<std::string>&)
-// calls transaction.commit() *inside* its loop (src/features/base/repositories/UserRepository.cpp:522),
-// so the second and every further user name raise "SQLite Transaction was finished before with commit or
-// rollback" and DELETE /user/delete answers 500 although swagger.yaml documents 200. A test that pinned the
-// current 500 would fail as soon as the repository is fixed, so the defect is reported instead of locked in.
+TEST_CASE("UserController::deleteUser removes every listed user in one request", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  fixture.seedUser("ucVictimOne", "hash");
+  fixture.seedUser("ucVictimTwo", "hash");
+  fixture.seedUser("ucSurvivor", "hash");
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Delete("/user/delete",
+    ucAuthHeaders(ucTokenAdmin),
+    R"([{"user_name":"ucVictimOne"},{"user_name":"ucVictimTwo"}])",
+    "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+  REQUIRE_FALSE(fixture.m_userRepository->of("ucVictimOne").has_value());
+  REQUIRE_FALSE(fixture.m_userRepository->of("ucVictimTwo").has_value());
+  REQUIRE(fixture.m_userRepository->of("ucSurvivor").has_value());
+}
 
 TEST_CASE("UserController::deleteUser returns 401 for a caller without Admin-User", "[user_controller]")
 {

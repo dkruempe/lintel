@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`${ENV_VAR}` expansion for the bootstrap configuration.** `EnvironmentConfiguration::expand()`
+  replaces every `${NAME}` (`NAME` = `[A-Za-z_][A-Za-z0-9_]*`) with the environment variable of
+  that name; an unset variable stays literal and `$${NAME}` escapes to `${NAME}`.
+  `Configuration::loadConfiguration()` expands the raw XML before parsing, and a malformed
+  document now aborts startup with a `ConfigurationException` carrying the tinyxml2 error and
+  line number. Documented in `docs/architecture.dox` and covered by integration tests.
+- **Runtime benchmark suite.** New `PropertyService`, `EventBus` and `MessageQueue` benchmarks
+  (alongside the existing DTO/Regex/SQLite ones) and an advisory CI job `benchmarks` that builds
+  `base_benchmarks`, runs it and uploads a JSON result artifact.
+- **ThreadSanitizer CI job** `tsan` (advisory, GCC 14), modelled on the existing ASan+UBSan job.
+- **Docker `app` healthcheck** via the unauthenticated `GET /health` endpoint (`curl` added to
+  the runtime image), plus explicit development-safety warnings in `docker-compose.yml` and the
+  README about published `test/test` PostgreSQL credentials and non-production TLS.
+
+### Fixed
+- **`DatabasePropertyRepository::allOf()`** default `instanceName` was `".*0"` instead of `".*"`,
+  so every call omitting the instance filter returned nothing (`LIKE '%0'`). Fixed the default;
+  regression test added.
+- **`DELETE /user/delete` with two or more names answered 500.** `UserRepository::deleteOf(vector)`
+  committed the transaction inside the loop; it now commits once after the loop. Regression tests
+  in `UserGroupRepositoryTest.cpp` and `UserControllerTest.cpp`.
+- **`POST /process/start` returned an empty body.** It now returns `{"id":"<uuid>"}` of the
+  started process, documented in `swagger.yaml`/`swagger.md`.
+- **`ADD_HANDLER_METHOD` defaulted `Content-Type: application/json` only for GET**, so a
+  PUT/POST/DELETE with a JSON body but no explicit header was answered 403. The default now
+  applies to all verbs; swagger documents the behaviour and tests pin it.
+
 ## [0.2.0] - 2026-10-11
 
 ### Added

@@ -242,15 +242,25 @@ paths:
   /process/start:
     post:
       summary: Start a process
+      description: >
+        Starts the process described by the JSON body (ProcessInfoDto: path, args,
+        auto_restart, max_auto_restarts). A missing Content-Type header defaults to
+        application/json.
       security:
         - bearerAuth: []
       responses:
         "200":
-          description: A successful response
+          description: A successful response, returns the id of the started process
+          schema:
+            type: object
+            properties:
+              id:
+                type: string
+                example: 3f2a1c9e-8b7d-4c6a-9f10-2ab5cd8e71f3
         "401":
           description: Unauthorized
         "403":
-          description: Forbidden (wrong content type)
+          description: Forbidden (explicit non-JSON content type)
         "500":
           description: Internal server error
   /process/stop/{processId}:

@@ -515,6 +515,6 @@ void UserRepository::deleteOf(const std::vector<std::string> &userNames) {
     where user_name = ?
   )",
                           builder);
-        transaction.commit();
     }
+    transaction.commit();
 }

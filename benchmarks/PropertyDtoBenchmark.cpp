@@ -1,5 +1,7 @@
 #include <benchmark/benchmark.h>
 
+#include <cstddef>
+
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -102,7 +104,7 @@ static void BM_PropertiesDto_Deserialize10(benchmark::State &state) {
 BENCHMARK(BM_PropertiesDto_Deserialize10);
 
 static void BM_PropertyDto_ConstructBatch(benchmark::State &state) {
-    const int N = state.range(0);
+    const auto N = state.range(0);
     std::vector<std::shared_ptr<PropertyBase>> props;
     for (int i = 0; i < N; ++i) {
         props.push_back(MakeTestProperty(i));
@@ -110,7 +112,7 @@ static void BM_PropertyDto_ConstructBatch(benchmark::State &state) {
 
     for (auto _ : state) {
         std::vector<PropertyDto> dtos;
-        dtos.reserve(N);
+        dtos.reserve(static_cast<std::size_t>(N));
         for (auto &p : props) {
             dtos.emplace_back(p);
         }
