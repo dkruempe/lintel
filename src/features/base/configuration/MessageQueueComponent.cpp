@@ -1,7 +1,7 @@
 #include "lintel/features/base/configuration/MessageQueueComponent.h"
 
+#include <lintel/core/configuration/ConfigurationException.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/ConfigurationException.h>
 #include <lintel/features/base/configuration/MessageQueueEntry.h>
 #include <tinyxml2.h>
 
@@ -21,7 +21,7 @@ std::vector<std::shared_ptr<Entry>>
   if (rootNode == nullptr) { return entries; }
 
   for (tinyxml2::XMLElement *propertyElement = rootNode->FirstChildElement(); propertyElement != nullptr;
-    propertyElement = propertyElement->NextSiblingElement()) {
+       propertyElement = propertyElement->NextSiblingElement()) {
     if (std::strcmp(propertyElement->Name(), shape.MESSAGE_QUEUE_ROOT) != 0) { continue; }
     const char *name = propertyElement->Attribute(shape.MESSAGE_QUEUE_NAME);
     const char *processName = propertyElement->Attribute(shape.MESSAGE_QUEUE_PROCESS_NAME);

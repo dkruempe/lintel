@@ -7,7 +7,7 @@
 
 #include <unistd.h>
 
-#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/features/base/msg/Message.h"
 #include "lintel/features/base/msg/MessageQueue.h"
 

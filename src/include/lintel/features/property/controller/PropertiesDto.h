@@ -6,8 +6,8 @@
 #include <vector>
 
 #include "lintel/core/models/JsonSerializable.h"
+#include "lintel/core/models/PropertyBase.h"
 #include "lintel/features/property/controller/PropertyDto.h"
-#include "lintel/features/property/models/PropertyBase.h"
 
 namespace lintel {
 /** DTO for a collection of properties, JSON-serializable */

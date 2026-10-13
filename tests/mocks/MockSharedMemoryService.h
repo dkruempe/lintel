@@ -3,8 +3,8 @@
 
 #include <catch2/trompeloeil.hpp>
 
+#include "lintel/core/models/SharedMemorySegmentInfo.h"
 #include "lintel/core/services/ISharedMemoryService.h"
-#include "lintel/features/base/models/SharedMemorySegmentInfo.h"
 
 namespace lintel {
 class MockSharedMemoryService : public ISharedMemoryService

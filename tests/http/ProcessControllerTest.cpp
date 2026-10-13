@@ -4,16 +4,16 @@
 #include <catch2/catch_all.hpp>
 #include <catch2/trompeloeil.hpp>
 
-#include <lintel/core/services/ProcessService.h>
-#include <lintel/features/base/configuration/Configuration.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/configuration/Configuration.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/models/ProcessName.h>
 #include <lintel/features/base/controller/ProcessGroupsDto.h>
 #include <lintel/features/base/controller/ProcessInfoDto.h>
 #include <lintel/features/base/controller/ProcessInfosDto.h>
 #include <lintel/features/base/models/Group.h>
-#include <lintel/features/base/models/ProcessName.h>
 #include <lintel/features/base/models/User.h>
 #include <lintel/features/base/services/NoopHistoryService.h>
+#include <lintel/features/base/services/ProcessService.h>
 #include <lintel/features/http/controllers/ProcessController.h>
 #include <lintel/features/http/service/ContentType.h>
 #include <lintel/features/http/service/HttpStatusCodes.h>

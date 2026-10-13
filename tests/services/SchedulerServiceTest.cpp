@@ -1,4 +1,4 @@
-#include <lintel/features/base/models/ProcessName.h>
+#include <lintel/core/models/ProcessName.h>
 #include <lintel/features/base/services/SchedulerService.h>
 
 #include <catch2/catch_all.hpp>

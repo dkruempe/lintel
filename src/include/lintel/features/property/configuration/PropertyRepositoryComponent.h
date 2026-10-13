@@ -3,7 +3,7 @@
 
 #include <tinyxml2.h>
 
-#include "lintel/features/base/configuration/Component.h"
+#include "lintel/core/configuration/Component.h"
 
 namespace lintel {
 /** Parses property repository type configuration (mutable, shadow, type) from XML */

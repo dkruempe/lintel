@@ -7,10 +7,10 @@
 #include <string>
 #include <vector>
 
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/exceptions/SQLException.h"
 #include "lintel/core/persistence/Parameter.h"
 #include "lintel/core/persistence/postgresql/Result.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace lintel {
 namespace postgresql {

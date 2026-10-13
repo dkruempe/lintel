@@ -6,9 +6,9 @@
 #include <string>
 #include <vector>
 
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
 #include "lintel/core/utils/TypeName.h"
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 #include "lintel/features/property/configuration/PropertyRepositoryComponent.h"
 #include "lintel/features/property/configuration/PropertyRepositoryEntry.h"
 #include "lintel/features/property/services/PropertyService.h"

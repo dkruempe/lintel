@@ -10,9 +10,9 @@
 
 #include "lintel/core/models/SharedMemorySegment.h"
 #include "lintel/core/services/PersistableBean.h"
-#include "lintel/core/services/SharedMemoryService.h"
-#include "lintel/core/services/ShmConstructors.h"
 #include "lintel/core/utils/TypeName.h"
+#include "lintel/features/base/services/SharedMemoryService.h"
+#include "lintel/features/base/services/ShmConstructors.h"
 
 namespace lintel {
 /** Types of shared memory data structures. */

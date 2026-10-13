@@ -1,8 +1,8 @@
 #include "lintel/features/base/configuration/EventBusComponent.h"
 
 #include <cstring>
+#include <lintel/core/configuration/ConfigurationException.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/ConfigurationException.h>
 #include <lintel/features/base/configuration/EventBusEntry.h>
 #include <lintel/features/base/events/EventBus.h>
 #include <tinyxml2.h>
@@ -32,7 +32,7 @@ std::vector<std::shared_ptr<Entry>>
   if (rootNode == nullptr) { return entries; }
 
   for (tinyxml2::XMLElement *busElement = rootNode->FirstChildElement(); busElement != nullptr;
-    busElement = busElement->NextSiblingElement()) {
+       busElement = busElement->NextSiblingElement()) {
     if (std::strcmp(busElement->Name(), shape.EVENT_BUS_ROOT) != 0) { continue; }
     const char *name = busElement->Attribute(shape.EVENT_BUS_NAME);
     const char *segment = busElement->Attribute(shape.EVENT_BUS_SEGMENT);

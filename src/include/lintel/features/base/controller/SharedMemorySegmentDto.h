@@ -4,7 +4,7 @@
 #include <filesystem>
 
 #include "lintel/core/models/JsonSerializable.h"
-#include "lintel/features/base/models/SharedMemorySegmentInfo.h"
+#include "lintel/core/models/SharedMemorySegmentInfo.h"
 
 namespace lintel {
 /** DTO representing detailed shared memory segment information */

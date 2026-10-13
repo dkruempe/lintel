@@ -3,8 +3,8 @@
 
 #include <tinyxml2.h>
 
-#include "lintel/features/base/configuration/Component.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
+#include "lintel/core/configuration/Component.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
 
 namespace lintel {
 /** Component for parsing process and process group configurations from XML */

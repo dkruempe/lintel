@@ -4,8 +4,8 @@
 #include <memory>
 
 #include "lintel/core/models/JsonSerializable.h"
-#include "lintel/features/property/models/PropertyBase.h"
-#include "lintel/features/property/models/PropertyRepositoryType.h"
+#include "lintel/core/models/PropertyBase.h"
+#include "lintel/core/models/PropertyRepositoryType.h"
 
 namespace lintel {
 /** DTO representing a single property, JSON-serializable */

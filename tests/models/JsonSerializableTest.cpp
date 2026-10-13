@@ -1,6 +1,6 @@
+#include <lintel/core/exceptions/HttpBadRequestException.h>
 #include <lintel/core/models/JsonSerializable.h>
 #include <lintel/features/base/controller/GroupDto.h>
-#include <lintel/features/http/service/HttpBadRequestException.h>
 
 #include <catch2/catch_all.hpp>
 

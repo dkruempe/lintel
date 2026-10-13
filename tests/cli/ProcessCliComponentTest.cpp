@@ -12,9 +12,9 @@
 
 #include <httplib.h>
 
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
 #include "lintel/core/utils/TypeName.h"
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 #include "lintel/features/base/controller/ProcessGroupDto.h"
 #include "lintel/features/base/controller/ProcessGroupsDto.h"
 #include "lintel/features/base/controller/ProcessInfoDto.h"

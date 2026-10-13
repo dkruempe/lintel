@@ -4,10 +4,10 @@
 #include <memory>
 #include <optional>
 
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 #include "lintel/core/services/PersistableBean.h"
 #include "lintel/features/base/models/Group.h"
-#include "lintel/features/base/models/ProcessName.h"
 
 namespace lintel {
 /**

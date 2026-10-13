@@ -4,9 +4,9 @@
 #include <regex>
 #include <sstream>
 
+#include "lintel/core/models/PropertyBase.h"
+#include "lintel/core/models/PropertyRepositoryType.h"
 #include "lintel/features/property/exceptions/PropertyNotFoundException.h"
-#include "lintel/features/property/models/PropertyBase.h"
-#include "lintel/features/property/models/PropertyRepositoryType.h"
 
 namespace lintel {
 std::map<std::string, std::shared_ptr<PropertyBase>> PropertyService::init(

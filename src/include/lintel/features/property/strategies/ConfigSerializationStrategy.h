@@ -5,7 +5,7 @@
 #include <memory>
 #include <vector>
 
-#include "lintel/features/property/models/PropertyBase.h"
+#include "lintel/core/models/PropertyBase.h"
 
 namespace lintel {
 /**

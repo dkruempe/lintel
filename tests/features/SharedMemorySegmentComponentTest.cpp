@@ -1,5 +1,5 @@
-#include <lintel/features/base/configuration/ConfigurationException.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/configuration/ConfigurationException.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
 #include <lintel/features/base/configuration/SharedMemorySegmentComponent.h>
 #include <lintel/features/base/configuration/SharedMemorySegmentEntry.h>
 

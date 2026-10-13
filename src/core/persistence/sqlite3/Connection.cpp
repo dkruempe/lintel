@@ -3,9 +3,9 @@
 #include <functional>
 #include <regex>
 
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/exceptions/SQLException.h"
 #include "lintel/core/utils/RegexUtils.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace lintel {
 namespace {

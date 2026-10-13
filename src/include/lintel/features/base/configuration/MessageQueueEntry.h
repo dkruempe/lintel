@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-#include "lintel/features/base/configuration/Entry.h"
+#include "lintel/core/configuration/Entry.h"
 
 namespace lintel {
 /** Configuration entry for a message queue */

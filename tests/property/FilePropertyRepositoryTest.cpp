@@ -1,15 +1,15 @@
 #include <catch2/catch_all.hpp>
 
+#include <lintel/core/configuration/Configuration.h>
+#include <lintel/core/configuration/ConfigurationException.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/models/ProcessName.h>
+#include <lintel/core/models/Property.h>
+#include <lintel/core/models/PropertyRepositoryType.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/Configuration.h>
-#include <lintel/features/base/configuration/ConfigurationException.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
-#include <lintel/features/base/models/ProcessName.h>
 #include <lintel/features/property/configuration/PropertyComponent.h>
 #include <lintel/features/property/configuration/PropertyRepositoryComponent.h>
 #include <lintel/features/property/configuration/PropertyRepositoryEntry.h>
-#include <lintel/features/property/models/Property.h>
-#include <lintel/features/property/models/PropertyRepositoryType.h>
 #include <lintel/features/property/repositories/FilePropertyRepository.h>
 
 

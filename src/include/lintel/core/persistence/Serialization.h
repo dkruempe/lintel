@@ -4,9 +4,9 @@
 #include <exception>
 #include <memory>
 
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/persistence/postgresql/Serialization.h"
 #include "lintel/core/persistence/sqlite3/Serialization.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace lintel {
 namespace db {

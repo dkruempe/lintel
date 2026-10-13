@@ -1,6 +1,6 @@
 #include <httplib.h>
 
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
 #include <lintel/features/http/configuration/ClientConfiguration.h>
 #include <lintel/features/http/configuration/ServerConfiguration.h>
 #include <lintel/features/http/service/Client.h>

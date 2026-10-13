@@ -1,3 +1,4 @@
+#include <lintel/core/configuration/DatabaseConnectionEntry.h>
 #include <lintel/core/persistence/Connection.h>
 #include <lintel/core/persistence/ConnectionType.h>
 #include <lintel/core/persistence/Cursor.h>
@@ -7,7 +8,6 @@
 #include <lintel/core/persistence/Result.h>
 #include <lintel/core/persistence/Statement.h>
 #include <lintel/core/persistence/Transaction.h>
-#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
 
 #include <catch2/catch_all.hpp>
 

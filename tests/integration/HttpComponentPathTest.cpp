@@ -1,4 +1,4 @@
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
 #include <lintel/features/http/configuration/HttpComponent.h>
 #include <lintel/features/http/configuration/HttpEntry.h>
 

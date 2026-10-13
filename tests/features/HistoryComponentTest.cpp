@@ -1,5 +1,5 @@
+#include <lintel/core/configuration/ConfigurationException.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/ConfigurationException.h>
 #include <lintel/features/base/configuration/HistoryComponent.h>
 #include <lintel/features/base/configuration/HistoryServiceEntry.h>
 

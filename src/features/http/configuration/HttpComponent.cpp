@@ -1,8 +1,8 @@
 #include "lintel/features/http/configuration/HttpComponent.h"
 
+#include <lintel/core/configuration/ConfigurationException.h>
 #include <lintel/core/utils/StringUtils.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/ConfigurationException.h>
 
 #include <filesystem>
 
@@ -145,7 +145,7 @@ std::vector<std::shared_ptr<Entry>>
   bool readClientConfiguration = false;
   bool readServerConfiguration = false;
   for (tinyxml2::XMLElement *httpElement = rootNode->FirstChildElement(); httpElement != nullptr;
-    httpElement = httpElement->NextSiblingElement()) {
+       httpElement = httpElement->NextSiblingElement()) {
     if (std::strcmp(httpElement->Name(), shape.SERVER_ROOT) != 0
         && std::strcmp(httpElement->Name(), shape.CLIENT_ROOT) != 0) {
       continue;

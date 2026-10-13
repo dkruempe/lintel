@@ -1,7 +1,7 @@
 #ifndef LINTEL_CLIENTPROVIDER_H
 #define LINTEL_CLIENTPROVIDER_H
 
-#include "lintel/features/base/configuration/Configuration.h"
+#include "lintel/core/configuration/Configuration.h"
 #include "lintel/features/http/service/Client.h"
 
 namespace lintel {

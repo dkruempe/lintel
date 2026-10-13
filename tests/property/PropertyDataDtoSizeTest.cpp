@@ -1,11 +1,11 @@
-#include <lintel/core/services/SharedMemoryService.h>
-#include <lintel/features/base/configuration/Configuration.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/configuration/Configuration.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/models/ProcessName.h>
 #include <lintel/features/base/configuration/SharedMemorySegmentComponent.h>
 #include <lintel/features/base/configuration/SharedMemorySegmentEntry.h>
-#include <lintel/features/base/models/ProcessName.h>
 #include <lintel/features/base/services/SchedulerService.h>
 #include <lintel/features/base/services/SharedMemorySegmentManager.h>
+#include <lintel/features/base/services/SharedMemoryService.h>
 #include <lintel/features/property/repositories/SharedMemoryPropertyRepository.h>
 
 #include <catch2/catch_all.hpp>

@@ -1,10 +1,10 @@
 #ifndef LOGGING_FILEPROPERTYREPOSITORY_H
 #define LOGGING_FILEPROPERTYREPOSITORY_H
 
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/models/DataStorage.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/features/base/services/ExecutorService.h"
-#include "lintel/features/property/models/DataStorage.h"
 #include "lintel/features/property/repositories/PropertyRepository.h"
 
 namespace lintel {

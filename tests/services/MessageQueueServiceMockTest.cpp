@@ -4,11 +4,11 @@
 #include <memory>
 
 #include "../mocks/MockMessageQueueRepository.h"
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/features/base/configuration/MessageQueueComponent.h"
 #include "lintel/features/base/configuration/MessageQueueEntry.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/services/MessageQueueService.h"
 
 namespace lintel {

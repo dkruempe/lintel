@@ -4,8 +4,8 @@
 #include <memory>
 #include <tinyxml2.h>
 
-#include "lintel/features/base/configuration/Component.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
+#include "lintel/core/configuration/Component.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
 
 namespace lintel {
 /** Parses HTTP host configuration (server/client) from XML */

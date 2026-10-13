@@ -4,9 +4,9 @@
 #include <cstdint>
 #include <filesystem>
 
+#include "lintel/core/models/Property.h"
 #include "lintel/core/services/AbstractService.h"
 #include "lintel/core/services/LoggerService.h"
-#include "lintel/features/property/models/Property.h"
 
 namespace lintel {
 /** CRTP base class that adds property registration capabilities to services. */

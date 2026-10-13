@@ -3,7 +3,6 @@
 #include "lintel/features/base/configuration/MessageQueueEntry.h"
 
 #include "lintel/core/services/LoggerService.h"
-#include "lintel/features/http/controllers/MessageQueueApi.h"
 
 #include <rapidjson/stringbuffer.h>
 

@@ -1,19 +1,19 @@
 #include <catch2/catch_all.hpp>
 
+#include <lintel/core/configuration/Configuration.h>
+#include <lintel/core/configuration/DatabaseConnectionComponent.h>
+#include <lintel/core/configuration/DatabaseConnectionEntry.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/models/ProcessName.h>
+#include <lintel/core/models/Property.h>
+#include <lintel/core/models/PropertyRepositoryType.h>
 #include <lintel/core/persistence/Connection.h>
 #include <lintel/core/persistence/ConnectionType.h>
 #include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
 #include <lintel/core/persistence/Statement.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/Configuration.h>
-#include <lintel/features/base/configuration/DatabaseConnectionComponent.h>
-#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
-#include <lintel/features/base/models/ProcessName.h>
 #include <lintel/features/property/configuration/PropertyComponent.h>
 #include <lintel/features/property/configuration/PropertyRepositoryComponent.h>
-#include <lintel/features/property/models/Property.h>
-#include <lintel/features/property/models/PropertyRepositoryType.h>
 #include <lintel/features/property/repositories/DatabasePropertyRepository.h>
 
 

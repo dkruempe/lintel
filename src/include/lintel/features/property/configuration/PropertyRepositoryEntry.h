@@ -4,8 +4,8 @@
 #include <memory>
 #include <ostream>
 
-#include "lintel/features/base/configuration/Entry.h"
-#include "lintel/features/property/models/PropertyRepositoryType.h"
+#include "lintel/core/configuration/Entry.h"
+#include "lintel/core/models/PropertyRepositoryType.h"
 
 namespace lintel {
 /** Configuration entry for a property repository (type, mutability, shadow mode) */

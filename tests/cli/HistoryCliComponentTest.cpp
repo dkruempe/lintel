@@ -11,9 +11,9 @@
 
 #include <httplib.h>
 
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
 #include "lintel/core/utils/TypeName.h"
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 #include "lintel/features/base/controller/HistoryDtos.h"
 #include "lintel/features/base/controller/UserDto.h"
 #include "lintel/features/base/models/HistoryEntry.h"

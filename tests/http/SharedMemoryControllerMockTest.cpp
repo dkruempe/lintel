@@ -8,8 +8,8 @@
 #include "../mocks/MockSharedMemorySegmentManager.h"
 #include "../mocks/MockSharedMemoryService.h"
 #include "lintel/core/models/SharedMemorySegment.h"
+#include "lintel/core/models/SharedMemorySegmentInfo.h"
 #include "lintel/features/base/models/Group.h"
-#include "lintel/features/base/models/SharedMemorySegmentInfo.h"
 #include "lintel/features/base/models/User.h"
 #include "lintel/features/http/controllers/SharedMemoryController.h"
 

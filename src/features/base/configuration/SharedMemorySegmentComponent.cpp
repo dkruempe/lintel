@@ -1,8 +1,8 @@
 #include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
 
+#include <lintel/core/configuration/ConfigurationException.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/ConfigurationException.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
 #include <lintel/features/base/configuration/SharedMemorySegmentEntry.h>
 #include <tinyxml2.h>
 
@@ -106,7 +106,7 @@ std::vector<std::shared_ptr<Entry>>
   if (rootNode == nullptr) { return {}; }
   int32_t lineNumber = lineOffset;
   for (tinyxml2::XMLElement *shmElement = rootNode->FirstChildElement(); shmElement != nullptr;
-    shmElement = shmElement->NextSiblingElement()) {
+       shmElement = shmElement->NextSiblingElement()) {
     lineNumber++;
     bool isPath = std::strcmp(shmElement->Name(), m_shape.PATH_ROOT) == 0;
     bool isSegment = std::strcmp(shmElement->Name(), m_shape.SHM_SEGMENT_ROOT) == 0;

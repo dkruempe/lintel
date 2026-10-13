@@ -4,8 +4,8 @@
 #include <map>
 #include <vector>
 
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 
 namespace lintel {
 /**

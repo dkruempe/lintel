@@ -6,7 +6,7 @@
 
 #include "ClientConfiguration.h"
 #include "ServerConfiguration.h"
-#include "lintel/features/base/configuration/Entry.h"
+#include "lintel/core/configuration/Entry.h"
 
 namespace lintel {
 /** Configuration entry holding either a server or client HTTP configuration */

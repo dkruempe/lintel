@@ -12,13 +12,13 @@
 #include <type_traits>
 #include <vector>
 
+#include "lintel/core/exceptions/HttpBadRequestException.h"
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/utils/StringUtils.h"
 #include "lintel/features/base/provider/GroupProvider.h"
 #include "lintel/features/base/services/IAuthService.h"
 #include "lintel/features/http/service/ClientIpResolver.h"
 #include "lintel/features/http/service/ContentType.h"
-#include "lintel/features/http/service/HttpBadRequestException.h"
 #include "lintel/features/http/service/HttpStatusCodes.h"
 
 

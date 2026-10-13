@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <map>
 
+#include "lintel/core/configuration/DatabaseConnectionComponent.h"
 #include "lintel/core/exceptions/SQLException.h"
-#include "lintel/features/base/configuration/DatabaseConnectionComponent.h"
 
 namespace lintel {
 DatabaseConnectionConfigurations::DatabaseConnectionConfigurations(const std::shared_ptr<Configuration> &configuration)

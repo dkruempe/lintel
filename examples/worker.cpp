@@ -8,17 +8,17 @@
 #include <unistd.h>
 #include <utility>
 
-#include <lintel/core/StartupBuilder.h>
+#include <lintel/app/BaseFeature.h>
+#include <lintel/app/PropertyFeature.h>
+#include <lintel/app/StartupBuilder.h>
+#include <lintel/core/Feature.h>
+#include <lintel/core/Features.h>
+#include <lintel/core/models/ProcessName.h>
 #include <lintel/core/services/AbstractService.h>
 #include <lintel/core/services/LoggerService.h>
-#include <lintel/features/Feature.h>
-#include <lintel/features/Features.h>
-#include <lintel/features/base/BaseFeature.h>
 #include <lintel/features/base/models/HistoryEntry.h>
-#include <lintel/features/base/models/ProcessName.h>
 #include <lintel/features/base/services/EventBusService.h>
 #include <lintel/features/base/services/IHistoryService.h>
-#include <lintel/features/property/PropertyFeature.h>
 #include <lintel/features/property/repositories/SharedMemoryPropertyRepository.h>
 #include <lintel/features/property/services/PropertyService.h>
 

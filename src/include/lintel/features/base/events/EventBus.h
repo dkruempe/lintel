@@ -7,8 +7,8 @@
 #include <optional>
 #include <string>
 
+#include "lintel/core/shm/ShmSegmentAccessor.h"
 #include "lintel/features/base/events/Event.h"
-#include "lintel/features/base/events/ShmSegmentAccessor.h"
 
 namespace lintel {
 /** Compile-time upper bounds for the fixed event bus slots. */

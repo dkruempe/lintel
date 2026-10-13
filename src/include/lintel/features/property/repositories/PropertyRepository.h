@@ -4,11 +4,11 @@
 #include <memory>
 #include <vector>
 
-#include "lintel/features/base/configuration/Configuration.h"
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/models/DataStorage.h"
+#include "lintel/core/models/PropertyRepositoryType.h"
 #include "lintel/features/property/configuration/PropertyRepositoryComponent.h"
 #include "lintel/features/property/configuration/PropertyRepositoryEntry.h"
-#include "lintel/features/property/models/DataStorage.h"
-#include "lintel/features/property/models/PropertyRepositoryType.h"
 
 namespace lintel {
 class PropertyBase;

@@ -4,7 +4,7 @@
 #include <memory>
 #include <string>
 
-#include "lintel/features/property/models/PropertyBase.h"
+#include "lintel/core/models/PropertyBase.h"
 
 namespace lintel {
 /** Factory for creating PropertyBase instances from string-typed values */

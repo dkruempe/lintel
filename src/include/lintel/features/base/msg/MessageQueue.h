@@ -1,7 +1,7 @@
 #ifndef LINTEL_MESSAGEQUEUE_H
 #define LINTEL_MESSAGEQUEUE_H
 
-#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/features/base/msg/MessageQueueCore.h"
 
 #include <atomic>

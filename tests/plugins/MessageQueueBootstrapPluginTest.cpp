@@ -3,19 +3,19 @@
 #include <string>
 #include <vector>
 
+#include "lintel/app/plugins/MessageQueueBootstrapPlugin.h"
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/configuration/DatabaseConnectionComponent.h"
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
 #include "lintel/core/models/BootstrapSequence.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/core/persistence/ConnectionType.h"
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
-#include "lintel/core/plugins/MessageQueueBootstrapPlugin.h"
 #include "lintel/core/utils/TypeName.h"
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/configuration/DatabaseConnectionComponent.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
 #include "lintel/features/base/configuration/MessageQueueComponent.h"
 #include "lintel/features/base/configuration/MessageQueueEntry.h"
 #include "lintel/features/base/models/Page.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/repositories/IMessageQueueRepository.h"
 
 #include <catch2/catch_all.hpp>

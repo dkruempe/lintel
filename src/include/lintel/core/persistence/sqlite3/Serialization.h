@@ -7,9 +7,9 @@
 #include <memory>
 #include <type_traits>
 
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/persistence/postgresql/Serialization.h"
 #include "lintel/core/persistence/sqlite3/Serialization.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 /**
  * Macro that generates a full specialization of Serialization for a given type

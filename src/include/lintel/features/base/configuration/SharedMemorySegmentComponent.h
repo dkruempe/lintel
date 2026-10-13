@@ -6,8 +6,8 @@
 #include <memory>
 #include <vector>
 
-#include "Component.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
+#include "lintel/core/configuration/Component.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
 
 namespace tinyxml2 {
 class XMLElement;

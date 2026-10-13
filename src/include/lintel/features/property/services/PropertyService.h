@@ -7,16 +7,16 @@
 #include <ostream>
 #include <vector>
 
+#include "lintel/core/models/ProcessName.h"
+#include "lintel/core/models/Property.h"
+#include "lintel/core/models/PropertyRepositoryType.h"
 #include "lintel/core/services/AbstractService.h"
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/PersistableBean.h"
 #include "lintel/features/base/events/EventBus.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/property/events/PropertyChange.h"
 #include "lintel/features/property/exceptions/PropertyNoRuntimeChangeSupported.h"
 #include "lintel/features/property/exceptions/PropertyNotFoundException.h"
-#include "lintel/features/property/models/Property.h"
-#include "lintel/features/property/models/PropertyRepositoryType.h"
 #include "lintel/features/property/repositories/PropertyRepository.h"
 
 #define DEFINE_PROPERTY(name, type, defaultValue, description, runtime) \

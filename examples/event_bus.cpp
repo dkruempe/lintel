@@ -10,7 +10,7 @@
 
 #include <boost/interprocess/managed_mapped_file.hpp>
 
-#include "lintel/features/base/events/BoostSegmentAllocator.h"
+#include "lintel/core/shm/BoostSegmentAllocator.h"
 #include "lintel/features/base/events/Event.h"
 #include "lintel/features/base/events/EventBus.h"
 

@@ -7,9 +7,9 @@
 #include <memory>
 #include <string>
 
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/persistence/Parameter.h"
 #include "lintel/core/persistence/sqlite3/Result.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace lintel {
 namespace sqlite {

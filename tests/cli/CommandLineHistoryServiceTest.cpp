@@ -7,11 +7,11 @@
 #include <unistd.h>
 
 #include "lintel/config.h"
+#include "lintel/core/models/ProcessName.h"
+#include "lintel/core/models/Property.h"
 #include "lintel/core/services/StringifyService.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/cli/models/CommandHistoryEntry.h"
 #include "lintel/features/cli/services/CommandLineHistoryService.h"
-#include "lintel/features/property/models/Property.h"
 
 namespace lintel {
 namespace {

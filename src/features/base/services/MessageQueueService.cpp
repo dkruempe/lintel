@@ -1,10 +1,10 @@
 #include "lintel/features/base/services/MessageQueueService.h"
 
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/core/services/LoggerService.h"
-#include "lintel/features/base/configuration/Configuration.h"
 #include "lintel/features/base/configuration/MessageQueueComponent.h"
 #include "lintel/features/base/configuration/MessageQueueEntry.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/msg/MessageQueue.h"
 #include "lintel/features/base/repositories/MessageQueueRepository.h"
 #include <map>

@@ -1,9 +1,9 @@
-#include <lintel/core/StartupBuilder.h>
+#include <lintel/app/StartupBuilder.h>
 
 #include <catch2/catch_all.hpp>
 
-#include <lintel/features/Feature.h>
-#include <lintel/features/Features.h>
+#include <lintel/core/Feature.h>
+#include <lintel/core/Features.h>
 
 #include <memory>
 #include <stdexcept>

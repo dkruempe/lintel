@@ -1,11 +1,11 @@
+#include <lintel/app/ConfigurationComponentBuilder.h>
+#include <lintel/core/configuration/Component.h>
+#include <lintel/core/configuration/Configuration.h>
+#include <lintel/core/configuration/ConfigurationException.h>
+#include <lintel/core/configuration/DatabaseConnectionComponent.h>
+#include <lintel/core/configuration/DatabaseConnectionEntry.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/Component.h>
-#include <lintel/features/base/configuration/Configuration.h>
-#include <lintel/features/base/configuration/ConfigurationComponentBuilder.h>
-#include <lintel/features/base/configuration/ConfigurationException.h>
-#include <lintel/features/base/configuration/DatabaseConnectionComponent.h>
-#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
 #include <lintel/features/http/configuration/HttpComponent.h>
 #include <lintel/features/http/configuration/HttpEntry.h>
 

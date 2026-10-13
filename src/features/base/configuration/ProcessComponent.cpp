@@ -5,9 +5,9 @@
 #include <stdexcept>
 #include <string>
 
+#include "lintel/core/configuration/ConfigurationException.h"
 #include "lintel/core/utils/StringUtils.h"
 #include "lintel/core/utils/TypeName.h"
-#include "lintel/features/base/configuration/ConfigurationException.h"
 #include "lintel/features/base/configuration/ProcessEntry.h"
 #include "lintel/features/base/models/Process.h"
 
@@ -121,7 +121,7 @@ std::vector<std::shared_ptr<Entry>>
   tinyxml2::XMLElement *rootNode = document.FirstChildElement(getConfigRoot().c_str());
   if (rootNode == nullptr) { return processEntries; }
   for (tinyxml2::XMLElement *processElement = rootNode->FirstChildElement(); processElement != nullptr;
-    processElement = processElement->NextSiblingElement()) {
+       processElement = processElement->NextSiblingElement()) {
     if (std::strcmp(processElement->Name(), m_shapes.PROCESS_ROOT) == 0) {
       processEntries.push_back(parseProcess(processElement, lineOffset));
     } else if (std::strcmp(processElement->Name(), m_shapes.PROCESS_GROUP_ROOT) == 0) {
@@ -136,7 +136,7 @@ std::shared_ptr<Entry> ProcessComponent::parseProcessGroup(tinyxml2::XMLElement 
 {
   std::vector<Process> entries;
   for (tinyxml2::XMLElement *processElement = processGroupElement->FirstChildElement(); processElement != nullptr;
-    processElement = processElement->NextSiblingElement()) {
+       processElement = processElement->NextSiblingElement()) {
     if (std::strcmp(processElement->Name(), m_shapes.PROCESS_ROOT) != 0) { continue; }
     std::shared_ptr<ProcessEntry> processEntry =
       std::static_pointer_cast<ProcessEntry>(parseProcess(processElement, lineOffset));

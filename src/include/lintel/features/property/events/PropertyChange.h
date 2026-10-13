@@ -7,8 +7,8 @@
 #include <string>
 #include <type_traits>
 
+#include "lintel/core/models/PropertyBase.h"
 #include "lintel/features/base/events/Event.h"
-#include "lintel/features/property/models/PropertyBase.h"
 
 namespace lintel {
 /**

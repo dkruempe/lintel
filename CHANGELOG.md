@@ -42,6 +42,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   | `shm::String`, `shm::constructString` | `lintel::shm::String`, `lintel::shm::constructString` |
 
   This was a one-time hard cut **without** a `using`-directive transition window (see `ROADMAP.md` A1). A new blocking CI job `namespace` (`scripts/check-namespace.sh`) fails if a public header declares its own names at global scope again.
+- **`core` and every feature are now separately linkable CMake targets (breaking, `ROADMAP.md` A3).**
+  What used to be one monolithic `lintel::lintel` is now an acyclic stack of exported
+  targets - `lintel::core` &larr; `lintel::base` &larr; `lintel::property` &larr; `lintel::http`
+  &larr; `lintel::cli` &larr; `lintel::app` - so an application only links the layers it
+  needs. The composition classes (`StartupBuilder`, `ConfigurationComponentBuilder`,
+  every `*Feature`) were moved into the new top layer `lintel::app`. `lintel::lintel`
+  remains as an `INTERFACE` aggregate that links everything. Several public headers
+  moved to their correct layer:
+
+  | Before | After |
+  |---|---|
+  | `lintel/core/StartupBuilder.h`, `lintel/core/plugins/*Feature` | `lintel/app/StartupBuilder.h`, `lintel/app/{Base,Property,Http,CommandLine}Feature.h` |
+  | `lintel/core/plugins/*` (concrete bootstrap plugins) | `lintel/app/plugins/` |
+  | `lintel/features/base/configuration/{Component,Configuration,Entry,ConfigurationException,EnvironmentConfiguration,Logger*,DatabaseConnectionEntry}.h` | `lintel/core/configuration/` |
+  | `lintel/features/base/models/{ProcessName,SharedMemorySegmentInfo}.h`, `lintel/features/base/events/{ShmSegmentAccessor,BoostSegmentAllocator}.h` | `lintel/core/models/`, `lintel/core/shm/` |
+  | property models (`Property.h`, `PropertyBase.h`, `DataStorage.h`, …) | `lintel/core/models/` |
+  | `lintel/features/http/service/HttpBadRequestException.h` | `lintel/core/exceptions/HttpBadRequestException.h` |
+  | `lintel/core/services/ProcessService.h`, `SharedMemoryService.h` | `lintel/features/base/services/…` |
+  | `lintel/features/property/controller/{PropertyApi,PropertyController}.h` | `lintel/features/http/controllers/…` |
+  | `lintel/features/property/command_line/PropertyCliComponent.h` | `lintel/features/cli/components/…` |
+
+  The stale `base_library` references in `cmake/lintelConfig.cmake.in` (wrong targets file
+  and `check_required_components`) were fixed as well.
 
 ### Fixed
 - **`DatabasePropertyRepository::allOf()`** default `instanceName` was `".*0"` instead of `".*"`,

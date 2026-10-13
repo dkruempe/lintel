@@ -4,8 +4,8 @@
 #include <map>
 #include <memory>
 
+#include "lintel/core/configuration/Configuration.h"
 #include "lintel/core/models/SharedMemorySegment.h"
-#include "lintel/features/base/configuration/Configuration.h"
 #include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
 #include "lintel/features/base/services/ISharedMemorySegmentManager.h"
 

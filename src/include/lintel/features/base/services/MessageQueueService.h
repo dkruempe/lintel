@@ -7,9 +7,9 @@
 #include <memory>
 #include <string>
 
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/core/services/AbstractService.h"
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/msg/Message.h"
 #include "lintel/features/base/msg/MessageQueue.h"
 

@@ -5,13 +5,13 @@
 #include <memory>
 #include <string>
 
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/core/services/AbstractService.h"
-#include "lintel/core/services/SharedMemoryService.h"
-#include "lintel/features/base/configuration/Configuration.h"
 #include "lintel/features/base/configuration/EventBusEntry.h"
 #include "lintel/features/base/events/EventBus.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/services/SharedMemorySegmentManager.h"
+#include "lintel/features/base/services/SharedMemoryService.h"
 
 namespace lintel {
 /**

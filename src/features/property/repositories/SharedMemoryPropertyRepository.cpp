@@ -1,6 +1,6 @@
 #include "lintel/features/property/repositories/SharedMemoryPropertyRepository.h"
 
-#include <lintel/features/property/models/PropertyRepositoryType.h>
+#include <lintel/core/models/PropertyRepositoryType.h>
 
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>

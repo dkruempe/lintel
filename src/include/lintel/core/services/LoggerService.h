@@ -20,7 +20,7 @@
 namespace lintel {
 class Configuration;
 }// namespace lintel
-#include "lintel/features/base/models/ProcessName.h"
+#include "lintel/core/models/ProcessName.h"
 
 namespace spdlog {
 /** Forward declaration only; users of this header never need spdlog itself. */

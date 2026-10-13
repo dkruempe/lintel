@@ -28,14 +28,19 @@
  *
  * | Feature | Header | What it adds |
  * |---|---|---|
- * | `PropertyFeature` | `lintel/features/property/PropertyFeature.h` | configuration properties, repositories, change notification |
- * | `BaseFeature` | `lintel/features/base/BaseFeature.h` | user/groups/history services, shared memory, process control |
- * | `CommandLineFeature` | `lintel/features/cli/CommandLineFeature.h` | interactive CLI, the reference client for the HTTP API |
- * | `HttpFeature` | `lintel/features/http/HttpFeature.h` | cpp-httplib server and client, the HTTP API |
+ * | `PropertyFeature` | `lintel/app/PropertyFeature.h` | configuration properties, repositories, change notification |
+ * | `BaseFeature` | `lintel/app/BaseFeature.h` | user/groups/history services, shared memory, process control |
+ * | `CommandLineFeature` | `lintel/app/CommandLineFeature.h` | interactive CLI, the reference client for the HTTP API |
+ * | `HttpFeature` | `lintel/app/HttpFeature.h` | cpp-httplib server and client, the HTTP API |
  *
- * The `features` split is a source-level boundary, not a link-time one: the
- * exported CMake target is `lintel::lintel`, and an application pays only for
- * what its own `addFeature<...>()` calls register at runtime.
+ * The split is both a source-level and a link-time boundary. Each layer is an
+ * exported CMake target with a strictly acyclic dependency graph
+ * (`core` &larr; `base` &larr; `property` &larr; `http` &larr; `cli` &larr; `app`),
+ * so an application can link only the layers it needs (e.g. `lintel::property`).
+ * The composition classes (`StartupBuilder`, `ConfigurationComponentBuilder` and
+ * the `*Feature` types) live in `lintel::app`, the top layer. The historical
+ * `lintel::lintel` aggregate target still links everything and remains the
+ * default entry point.
  *
  * @section arch_bootstrap Bootstrap and lifecycle
  *

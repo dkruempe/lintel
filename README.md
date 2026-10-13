@@ -137,9 +137,9 @@ This minimal example shows how to bootstrap an application using `StartupBuilder
 3. By default, runtime configuration is loaded from `cfg/` (the repository's `cfg/bootstrap.xml`). The `CONFIG_DIRECTORY` environment variable can override this path if needed (see `src/include/lintel/config.h.in`).
 
 ```cpp
-#include <lintel/core/StartupBuilder.h>
-#include <lintel/features/base/BaseFeature.h>
-#include <lintel/features/property/PropertyFeature.h>
+#include <lintel/app/StartupBuilder.h>
+#include <lintel/app/BaseFeature.h>
+#include <lintel/app/PropertyFeature.h>
 
 int main(int argc, char* argv[]) {
   auto builder = lintel::StartupBuilder::with(argc, argv);

@@ -1,11 +1,11 @@
 #include "lintel/features/property/configuration/PropertyComponent.h"
 
-#include <lintel/features/base/configuration/ConfigurationException.h>
+#include <lintel/core/configuration/ConfigurationException.h>
 
+#include "lintel/core/models/PropertyRepositoryType.h"
 #include "lintel/core/utils/TypeName.h"
 #include "lintel/features/property/configuration/PropertyEntry.h"
 #include "lintel/features/property/factories/PropertyFactory.h"
-#include "lintel/features/property/models/PropertyRepositoryType.h"
 
 namespace lintel {
 PropertyComponent::Shapes PropertyComponent::shape{};
@@ -23,7 +23,7 @@ std::vector<std::shared_ptr<Entry>>
   if (rootNode == nullptr) { return properties; }
 
   for (tinyxml2::XMLElement *propertyElement = rootNode->FirstChildElement(); propertyElement != nullptr;
-    propertyElement = propertyElement->NextSiblingElement()) {
+       propertyElement = propertyElement->NextSiblingElement()) {
     if (std::strcmp(propertyElement->Name(), shape.PROPERTY_ROOT.c_str()) != 0) { continue; }
     const char *processName = propertyElement->Attribute(shape.PROCESS_ROOT.c_str());
     const char *className = propertyElement->Attribute(shape.CLASS_ROOT.c_str());

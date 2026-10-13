@@ -99,13 +99,13 @@ set(headers
     include/lintel/core/persistence/sqlite3/Statement.h
     include/lintel/core/persistence/sqlite3/Transaction.h
     # core - plugins
-    include/lintel/core/plugins/AdminUserBootstrapPlugin.h
+    include/lintel/app/plugins/AdminUserBootstrapPlugin.h
     include/lintel/core/plugins/BootstrapPlugin.h
-    include/lintel/core/plugins/DatabaseBootstrapPlugin.h
-    include/lintel/core/plugins/MessageQueueBootstrapPlugin.h
-    include/lintel/core/plugins/SharedMemoryBootstrapPlugin.h
-    include/lintel/core/plugins/SingleInstanceBootstrapPlugin.h
-    include/lintel/core/plugins/VirtualGroupBootstrapPlugin.h
+    include/lintel/app/plugins/DatabaseBootstrapPlugin.h
+    include/lintel/app/plugins/MessageQueueBootstrapPlugin.h
+    include/lintel/app/plugins/SharedMemoryBootstrapPlugin.h
+    include/lintel/app/plugins/SingleInstanceBootstrapPlugin.h
+    include/lintel/app/plugins/VirtualGroupBootstrapPlugin.h
     # core - services
     include/lintel/core/services/AbstractService.h
     include/lintel/core/services/BootstrapService.h
@@ -114,15 +114,15 @@ set(headers
     include/lintel/core/services/LoggerService.h
     include/lintel/core/services/PersistableBean.h
     include/lintel/core/services/PersistableService.h
-    include/lintel/core/services/ProcessService.h
+    include/lintel/features/base/services/ProcessService.h
     include/lintel/core/services/ISharedMemoryService.h
     include/lintel/core/services/PropertyRegistration.h
-    include/lintel/core/services/SharedMemoryService.h
-    include/lintel/core/services/ShmConstructors.h
+    include/lintel/features/base/services/SharedMemoryService.h
+    include/lintel/features/base/services/ShmConstructors.h
     include/lintel/core/services/SignalService.h
     include/lintel/core/services/StopWatchService.h
     include/lintel/core/services/StringifyService.h
-    include/lintel/core/StartupBuilder.h
+    include/lintel/app/StartupBuilder.h
     # core - utils
     include/lintel/core/utils/Cryption.h
     include/lintel/core/utils/MemorySize.h
@@ -134,21 +134,21 @@ set(headers
     include/lintel/core/utils/UUID.h
     include/lintel/core/utils/Argument.h
     # features - base
-    include/lintel/features/base/BaseFeature.h
+    include/lintel/app/BaseFeature.h
     # features - base - configuration
-    include/lintel/features/base/configuration/Component.h
-    include/lintel/features/base/configuration/Configuration.h
-    include/lintel/features/base/configuration/ConfigurationComponentBuilder.h
-    include/lintel/features/base/configuration/ConfigurationException.h
-    include/lintel/features/base/configuration/DatabaseConnectionComponent.h
-    include/lintel/features/base/configuration/DatabaseConnectionEntry.h
-    include/lintel/features/base/configuration/Entry.h
-    include/lintel/features/base/configuration/EnvironmentConfiguration.h
-    include/lintel/features/base/configuration/LoggerComponent.h
-    include/lintel/features/base/configuration/LoggerConfiguration.h
-    include/lintel/features/base/configuration/LoggerEntry.h
-    include/lintel/features/base/configuration/LoggerPathConfiguration.h
-    include/lintel/features/base/configuration/LoggerSinkConfiguration.h
+    include/lintel/core/configuration/Component.h
+    include/lintel/core/configuration/Configuration.h
+    include/lintel/app/ConfigurationComponentBuilder.h
+    include/lintel/core/configuration/ConfigurationException.h
+    include/lintel/core/configuration/DatabaseConnectionComponent.h
+    include/lintel/core/configuration/DatabaseConnectionEntry.h
+    include/lintel/core/configuration/Entry.h
+    include/lintel/core/configuration/EnvironmentConfiguration.h
+    include/lintel/core/configuration/LoggerComponent.h
+    include/lintel/core/configuration/LoggerConfiguration.h
+    include/lintel/core/configuration/LoggerEntry.h
+    include/lintel/core/configuration/LoggerPathConfiguration.h
+    include/lintel/core/configuration/LoggerSinkConfiguration.h
     include/lintel/features/base/configuration/MessageQueueComponent.h
     include/lintel/features/base/configuration/MessageQueueEntry.h
     include/lintel/features/base/configuration/HistoryComponent.h
@@ -187,8 +187,8 @@ set(headers
     include/lintel/features/base/models/Process.h
     include/lintel/features/base/models/ProcessGroup.h
     include/lintel/features/base/models/ProcessInfo.h
-    include/lintel/features/base/models/ProcessName.h
-    include/lintel/features/base/models/SharedMemorySegmentInfo.h
+    include/lintel/core/models/ProcessName.h
+    include/lintel/core/models/SharedMemorySegmentInfo.h
     include/lintel/features/base/models/User.h
     # features - base - msg
     include/lintel/features/base/msg/Message.h
@@ -198,8 +198,8 @@ set(headers
     # features - base - events
     include/lintel/features/base/events/Event.h
     include/lintel/features/base/events/EventBus.h
-    include/lintel/features/base/events/BoostSegmentAllocator.h
-    include/lintel/features/base/events/ShmSegmentAccessor.h
+    include/lintel/core/shm/BoostSegmentAllocator.h
+    include/lintel/core/shm/ShmSegmentAccessor.h
     # features - base - provider
     include/lintel/features/base/provider/GroupProvider.h
     # features - base - repositories
@@ -224,7 +224,7 @@ set(headers
     include/lintel/features/base/services/SchedulerService.h
     include/lintel/features/base/services/SharedMemorySegmentManager.h
     # features - cli
-    include/lintel/features/cli/CommandLineFeature.h
+    include/lintel/app/CommandLineFeature.h
     include/lintel/features/cli/CliTypes.h
     include/lintel/features/cli/models/AbstractCommandLineMenu.h
     include/lintel/features/cli/models/Command.h
@@ -246,10 +246,10 @@ set(headers
     include/lintel/features/cli/components/SharedMemoryCliComponent.h
     include/lintel/features/cli/components/UserManagementCliComponent.h
     # features - common
-    include/lintel/features/Feature.h
-    include/lintel/features/Features.h
+    include/lintel/core/Feature.h
+    include/lintel/core/Features.h
     # features - http
-    include/lintel/features/http/HttpFeature.h
+    include/lintel/app/HttpFeature.h
     include/lintel/features/http/ExampleController.h
     include/lintel/features/http/configuration/ClientConfiguration.h
     include/lintel/features/http/configuration/HttpComponent.h
@@ -262,7 +262,7 @@ set(headers
     include/lintel/features/http/service/ContentType.h
     include/lintel/features/http/service/Controller.h
     include/lintel/features/http/service/HttpStatusCodes.h
-    include/lintel/features/http/service/HttpBadRequestException.h
+    include/lintel/core/exceptions/HttpBadRequestException.h
     include/lintel/features/http/service/HttpUnauthorizedException.h
     include/lintel/features/http/service/HttpClientHelper.h
     include/lintel/features/http/service/Server.h
@@ -277,26 +277,26 @@ set(headers
     include/lintel/features/http/controllers/UserApi.h
     include/lintel/features/http/controllers/UserController.h
     # features - property
-    include/lintel/features/property/PropertyFeature.h
-    include/lintel/features/property/command_line/PropertyCliComponent.h
+    include/lintel/app/PropertyFeature.h
+    include/lintel/features/cli/components/PropertyCliComponent.h
     include/lintel/features/property/configuration/PropertyComponent.h
     include/lintel/features/property/configuration/PropertyEntry.h
     include/lintel/features/property/configuration/PropertyRepositoryComponent.h
     include/lintel/features/property/configuration/PropertyRepositoryEntry.h
     include/lintel/features/property/controller/PropertiesDto.h
-    include/lintel/features/property/controller/PropertyApi.h
-    include/lintel/features/property/controller/PropertyController.h
+    include/lintel/features/http/controllers/PropertyApi.h
+    include/lintel/features/http/controllers/PropertyController.h
     include/lintel/features/property/controller/PropertyDto.h
     include/lintel/features/property/controller/PropertyValueDto.h
     include/lintel/features/property/events/PropertyChange.h
     include/lintel/features/property/exceptions/PropertyNoRuntimeChangeSupported.h
     include/lintel/features/property/exceptions/PropertyNotFoundException.h
     include/lintel/features/property/factories/PropertyFactory.h
-    include/lintel/features/property/models/DataStorage.h
-    include/lintel/features/property/models/Property.h
-    include/lintel/features/property/models/PropertyBase.h
-    include/lintel/features/property/models/PropertyRepositoryType.h
-    include/lintel/features/property/models/PropertyValueStorage.h
+    include/lintel/core/models/DataStorage.h
+    include/lintel/core/models/Property.h
+    include/lintel/core/models/PropertyBase.h
+    include/lintel/core/models/PropertyRepositoryType.h
+    include/lintel/core/models/PropertyValueStorage.h
     include/lintel/features/property/repositories/DatabasePropertyRepository.h
     include/lintel/features/property/repositories/FilePropertyRepository.h
     include/lintel/features/property/repositories/PropertyRepository.h
@@ -308,7 +308,7 @@ set(headers
 
 set(sources
     # core
-    core/StartupBuilder.cpp
+    app/StartupBuilder.cpp
     # core - models
     core/models/SharedMemorySegment.cpp
     # core - persistence
@@ -340,20 +340,20 @@ set(sources
     core/persistence/sqlite3/Statement.cpp
     core/persistence/sqlite3/Transaction.cpp
     # core - plugins
-    core/plugins/AdminUserBootstrapPlugin.cpp
-    core/plugins/DatabaseBootstrapPlugin.cpp
-    core/plugins/MessageQueueBootstrapPlugin.cpp
-    core/plugins/SharedMemoryBootstrapPlugin.cpp
-    core/plugins/SingleInstanceBootstrapPlugin.cpp
-    core/plugins/VirtualGroupBootstrapPlugin.cpp
+    app/plugins/AdminUserBootstrapPlugin.cpp
+    app/plugins/DatabaseBootstrapPlugin.cpp
+    app/plugins/MessageQueueBootstrapPlugin.cpp
+    app/plugins/SharedMemoryBootstrapPlugin.cpp
+    app/plugins/SingleInstanceBootstrapPlugin.cpp
+    app/plugins/VirtualGroupBootstrapPlugin.cpp
     # core - services
     core/services/BootstrapService.cpp
     core/services/DirectoryService.cpp
     core/services/FileService.cpp
     core/services/LoggerService.cpp
     core/services/PersistableService.cpp
-    core/services/ProcessService.cpp
-    core/services/SharedMemoryService.cpp
+    features/base/services/ProcessService.cpp
+    features/base/services/SharedMemoryService.cpp
     core/services/StopWatchService.cpp
     # core - utils
     core/utils/Cryption.cpp
@@ -364,22 +364,22 @@ set(sources
     core/utils/UUID.cpp
     core/utils/Argument.cpp
     # features - base
-    features/base/BaseFeature.cpp
+    app/BaseFeature.cpp
     # features - base - configuration
-    features/base/configuration/Component.cpp
-    features/base/configuration/Configuration.cpp
-    features/base/configuration/ConfigurationComponentBuilder.cpp
-    features/base/configuration/DatabaseConnectionComponent.cpp
-    features/base/configuration/DatabaseConnectionEntry.cpp
-    features/base/configuration/Entry.cpp
-    features/base/configuration/EnvironmentConfiguration.cpp
-    features/base/configuration/LoggerComponent.cpp
-    features/base/configuration/LoggerConfiguration.cpp
-    features/base/configuration/LoggerEntry.cpp
+    core/configuration/Component.cpp
+    core/configuration/Configuration.cpp
+    app/ConfigurationComponentBuilder.cpp
+    core/configuration/DatabaseConnectionComponent.cpp
+    core/configuration/DatabaseConnectionEntry.cpp
+    core/configuration/Entry.cpp
+    core/configuration/EnvironmentConfiguration.cpp
+    core/configuration/LoggerComponent.cpp
+    core/configuration/LoggerConfiguration.cpp
+    core/configuration/LoggerEntry.cpp
     features/base/configuration/HistoryComponent.cpp
     features/base/configuration/HistoryServiceEntry.cpp
-    features/base/configuration/LoggerPathConfiguration.cpp
-    features/base/configuration/LoggerSinkConfiguration.cpp
+    core/configuration/LoggerPathConfiguration.cpp
+    core/configuration/LoggerSinkConfiguration.cpp
     features/base/configuration/MessageQueueComponent.cpp
     features/base/configuration/MessageQueueEntry.cpp
     features/base/configuration/ProcessComponent.cpp
@@ -414,7 +414,7 @@ set(sources
     features/base/models/Process.cpp
     features/base/models/ProcessGroup.cpp
     features/base/models/ProcessInfo.cpp
-    features/base/models/SharedMemorySegmentInfo.cpp
+    core/models/SharedMemorySegmentInfo.cpp
     features/base/models/User.cpp
     # features - base - msg
     features/base/msg/Message.cpp
@@ -435,7 +435,7 @@ set(sources
     features/base/services/SchedulerService.cpp
     features/base/services/SharedMemorySegmentManager.cpp
     # features - cli
-    features/cli/CommandLineFeature.cpp
+    app/CommandLineFeature.cpp
     features/cli/models/AbstractCommandLineMenu.cpp
     features/cli/models/Command.cpp
     features/cli/models/CommandLineComponent.cpp
@@ -453,7 +453,7 @@ set(sources
     features/cli/components/SharedMemoryCliComponent.cpp
     features/cli/components/UserManagementCliComponent.cpp
     # features - http
-    features/http/HttpFeature.cpp
+    app/HttpFeature.cpp
     features/http/ExampleController.cpp
     features/http/configuration/ClientConfiguration.cpp
     features/http/configuration/HttpComponent.cpp
@@ -479,19 +479,19 @@ set(sources
     features/http/controllers/UserApi.cpp
     features/http/controllers/UserController.cpp
     # features - property
-    features/property/PropertyFeature.cpp
-    features/property/command_line/PropertyCliComponent.cpp
+    app/PropertyFeature.cpp
+    features/cli/components/PropertyCliComponent.cpp
     features/property/configuration/PropertyComponent.cpp
     features/property/configuration/PropertyEntry.cpp
     features/property/configuration/PropertyRepositoryComponent.cpp
     features/property/configuration/PropertyRepositoryEntry.cpp
     features/property/controller/PropertiesDto.cpp
-    features/property/controller/PropertyApi.cpp
-    features/property/controller/PropertyController.cpp
+    features/http/controllers/PropertyApi.cpp
+    features/http/controllers/PropertyController.cpp
     features/property/controller/PropertyDto.cpp
     features/property/controller/PropertyValueDto.cpp
     features/property/factories/PropertyFactory.cpp
-    features/property/models/Property.cpp
+    core/models/Property.cpp
     features/property/repositories/DatabasePropertyRepository.cpp
     features/property/repositories/FilePropertyRepository.cpp
     features/property/repositories/SharedMemoryPropertyRepository.cpp
@@ -506,7 +506,68 @@ set(sources
     features/base/services/EventBusService.cpp
 )
 
-add_library(lintel ${headers} ${sources})
+# ---- per-module targets -----------------------------------------------------
+# Dependency graph (a DAG): core <- base <- property <- http <- cli <- app.
+# lintel::lintel is the INTERFACE aggregate that links every module - it is what
+# this repository's tests and examples link. A consumer that only needs a subset
+# links the corresponding module (e.g. lintel::property) and pulls in only its
+# prerequisites (linked PUBLIC below, so includes/link flags stay transitive).
+set(LINTEL_PCH_HEADERS
+    <algorithm>
+    <atomic>
+    <chrono>
+    <cstdint>
+    <cstring>
+    <exception>
+    <filesystem>
+    <functional>
+    <fstream>
+    <iostream>
+    <map>
+    <memory>
+    <mutex>
+    <optional>
+    <ostream>
+    <set>
+    <shared_mutex>
+    <sstream>
+    <stdexcept>
+    <string>
+    <string_view>
+    <thread>
+    <type_traits>
+    <utility>
+    <vector>
+)
+
+# Partition the explicit header/source lists by module (path prefix). The lists
+# above are kept flat and single-sourced; the filters below only route them.
+set(LINTEL_CORE_HEADERS ${headers})
+list(FILTER LINTEL_CORE_HEADERS INCLUDE REGEX "^include/lintel/(config\\.h|core/)")
+set(LINTEL_BASE_HEADERS ${headers})
+list(FILTER LINTEL_BASE_HEADERS INCLUDE REGEX "^include/lintel/features/base/")
+set(LINTEL_PROPERTY_HEADERS ${headers})
+list(FILTER LINTEL_PROPERTY_HEADERS INCLUDE REGEX "^include/lintel/features/property/")
+set(LINTEL_HTTP_HEADERS ${headers})
+list(FILTER LINTEL_HTTP_HEADERS INCLUDE REGEX "^include/lintel/features/http/")
+set(LINTEL_CLI_HEADERS ${headers})
+list(FILTER LINTEL_CLI_HEADERS INCLUDE REGEX "^include/lintel/features/cli/")
+set(LINTEL_APP_HEADERS ${headers})
+list(FILTER LINTEL_APP_HEADERS INCLUDE REGEX "^include/lintel/app/")
+
+set(LINTEL_CORE_SOURCES ${sources})
+list(FILTER LINTEL_CORE_SOURCES INCLUDE REGEX "^core/")
+set(LINTEL_BASE_SOURCES ${sources})
+list(FILTER LINTEL_BASE_SOURCES INCLUDE REGEX "^features/base/")
+set(LINTEL_PROPERTY_SOURCES ${sources})
+list(FILTER LINTEL_PROPERTY_SOURCES INCLUDE REGEX "^features/property/")
+set(LINTEL_HTTP_SOURCES ${sources})
+list(FILTER LINTEL_HTTP_SOURCES INCLUDE REGEX "^features/http/")
+set(LINTEL_CLI_SOURCES ${sources})
+list(FILTER LINTEL_CLI_SOURCES INCLUDE REGEX "^features/cli/")
+set(LINTEL_APP_SOURCES ${sources})
+list(FILTER LINTEL_APP_SOURCES INCLUDE REGEX "^app/")
+
 # Hypodermic includes: propagated via target_link_libraries for vendored target,
 # explicit variable for find_package fallback
 if (NOT TARGET lintel::Hypodermic)
@@ -515,73 +576,77 @@ else ()
     set(HYPODERMIC_INCLUDE_DIRS_VAR "")
 endif ()
 
-target_compile_features(lintel PUBLIC cxx_std_20)
-# Include directories: everything needed permanently is passed on as a linked target in
-# target_link_libraries() further down. So only the include paths that are really needed
-# just for building are listed here (Hypodermic from find_package, own headers). The
-# *_INCLUDE_DIRS variables point into the Conan cache of the build machine and would be
-# dead weight in the installed export - exactly what the old
-# $<INSTALL_INTERFACE:${OpenSSL_INCLUDES};...> warns about. The include paths of the
-# dependencies arrive via their targets in the consumer tree instead, which keeps the
-# export relocatable. The include directory of the installed library itself is
-# prefix-relative.
-target_include_directories(lintel
-        SYSTEM PUBLIC
-        "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${HYPODERMIC_INCLUDE_DIRS_VAR};${CMAKE_CURRENT_SOURCE_DIR}/include>"
-        "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>"
-)
+# Common settings applied to every module target. Include directories: everything
+# needed permanently is passed on via the PUBLIC link targets below; the *_INCLUDE_DIRS
+# variables point into the Conan cache of the build machine and would be dead weight
+# in the installed export, so they are wrapped in $<BUILD_INTERFACE:...>. The include
+# directory of the installed library itself is prefix-relative.
+# project_warnings is a pure build target (CompilerWarnings.cmake). Wrapped in
+# $<BUILD_INTERFACE:...> so it stays out of the install export while keeping the
+# flags in the build tree.
+function(lintel_setup_module target)
+    target_compile_features(${target} PUBLIC cxx_std_20)
+    target_include_directories(${target} SYSTEM PUBLIC
+            "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${HYPODERMIC_INCLUDE_DIRS_VAR};${CMAKE_CURRENT_SOURCE_DIR}/include>"
+            "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")
+    target_link_libraries(${target} PRIVATE $<BUILD_INTERFACE:project_warnings>)
+    # Boost.UUID formats UUIDs via SSE2 intrinsics. Without optimization (-O0) GCC 13 no
+    # longer inlines the _mm_slli_si128 intrinsic and the backend call with a variable
+    # shift produces a hard error ("the last argument must be an 8-bit immediate").
+    target_compile_definitions(${target} PRIVATE $<$<CONFIG:Debug>:BOOST_UUID_NO_SIMD>)
+    if(ENABLE_PCH)
+        target_precompile_headers(${target} PRIVATE ${LINTEL_PCH_HEADERS})
+    endif()
+endfunction()
 
+add_library(lintel_core ${LINTEL_CORE_HEADERS} ${LINTEL_CORE_SOURCES})
+lintel_setup_module(lintel_core)
 # magic_enum and rapidjson are part of the interface through public headers and are
 # therefore linked as targets (rapidjson thereby replaces the previous
 # ${rapidjson_LIBRARIES_DEBUG} that was resolved in Debug only and was empty in the
 # release export).
-# project_warnings is a pure build target of this project (CompilerWarnings.cmake). As a
-# PRIVATE linked dependency of a static library it ends up as $<LINK_ONLY:project_warnings>
-# in the export and would have to be exported along with it. The $<BUILD_INTERFACE:...>
-# removes it from the install export but keeps the flags in the build tree - so
-# project_warnings does not belong into the export.
-target_link_libraries(lintel PUBLIC tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
-        Threads::Threads OpenSSL::SSL OpenSSL::Crypto httplib::httplib rapidjson magic_enum::magic_enum
-        spdlog::spdlog_header_only lintel::Hypodermic Boost::boost Boost::headers Boost::filesystem
-        PRIVATE $<BUILD_INTERFACE:project_warnings>)
+target_link_libraries(lintel_core PUBLIC tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
+        Threads::Threads OpenSSL::SSL OpenSSL::Crypto rapidjson magic_enum::magic_enum
+        spdlog::spdlog_header_only lintel::Hypodermic Boost::boost Boost::headers Boost::filesystem)
+set_target_properties(lintel_core PROPERTIES EXPORT_NAME core)
+add_library(lintel::core ALIAS lintel_core)
 
-# Boost.UUID formats UUIDs via SSE2 intrinsics. Without optimization (-O0) GCC 13 no longer
-# inlines the _mm_slli_si128 intrinsic, but the backend call with a variable shift then
-# produces a hard error ("the last argument must be an 8-bit immediate"). Use the generic
-# Boost path in debug builds.
-target_compile_definitions(lintel PRIVATE $<$<CONFIG:Debug>:BOOST_UUID_NO_SIMD>)
+add_library(lintel_base ${LINTEL_BASE_HEADERS} ${LINTEL_BASE_SOURCES})
+lintel_setup_module(lintel_base)
+target_link_libraries(lintel_base PUBLIC lintel_core)
+set_target_properties(lintel_base PROPERTIES EXPORT_NAME base)
+add_library(lintel::base ALIAS lintel_base)
 
-option(ENABLE_PCH "Enable precompiled headers" ON)
-if(ENABLE_PCH)
-    target_precompile_headers(lintel PRIVATE
-        <algorithm>
-        <atomic>
-        <chrono>
-        <cstdint>
-        <cstring>
-        <exception>
-        <filesystem>
-        <functional>
-        <fstream>
-        <iostream>
-        <map>
-        <memory>
-        <mutex>
-        <optional>
-        <ostream>
-        <set>
-        <shared_mutex>
-        <sstream>
-        <stdexcept>
-        <string>
-        <string_view>
-        <thread>
-        <type_traits>
-        <utility>
-        <vector>
-    )
-endif()
+add_library(lintel_property ${LINTEL_PROPERTY_HEADERS} ${LINTEL_PROPERTY_SOURCES})
+lintel_setup_module(lintel_property)
+target_link_libraries(lintel_property PUBLIC lintel_base)
+set_target_properties(lintel_property PROPERTIES EXPORT_NAME property)
+add_library(lintel::property ALIAS lintel_property)
 
+add_library(lintel_http ${LINTEL_HTTP_HEADERS} ${LINTEL_HTTP_SOURCES})
+lintel_setup_module(lintel_http)
+target_link_libraries(lintel_http PUBLIC lintel_property httplib::httplib)
+set_target_properties(lintel_http PROPERTIES EXPORT_NAME http)
+add_library(lintel::http ALIAS lintel_http)
+
+add_library(lintel_cli ${LINTEL_CLI_HEADERS} ${LINTEL_CLI_SOURCES})
+lintel_setup_module(lintel_cli)
+target_link_libraries(lintel_cli PUBLIC lintel_http)
+set_target_properties(lintel_cli PROPERTIES EXPORT_NAME cli)
+add_library(lintel::cli ALIAS lintel_cli)
+
+add_library(lintel_app ${LINTEL_APP_HEADERS} ${LINTEL_APP_SOURCES})
+lintel_setup_module(lintel_app)
+# app composes every feature; linking cli pulls in http -> property -> base -> core.
+target_link_libraries(lintel_app PUBLIC lintel_cli)
+set_target_properties(lintel_app PROPERTIES EXPORT_NAME app)
+add_library(lintel::app ALIAS lintel_app)
+
+# Aggregate target: preserves the historical lintel::lintel entry point and links
+# every module. Existing consumers (and this repo's tests/examples) keep working.
+add_library(lintel INTERFACE)
+target_link_libraries(lintel INTERFACE lintel_app)
+set_target_properties(lintel PROPERTIES EXPORT_NAME lintel)
 add_library(lintel::lintel ALIAS lintel)
 
 # --- Installation and CMake package ---------------------------------------------
@@ -596,23 +661,13 @@ set(LINTEL_SOURCE_ROOT "${PROJECT_SOURCE_DIR}/..")
 set(LINTEL_CMAKE_INSTALL_DIR "${CMAKE_INSTALL_LIBDIR}/cmake/lintel")
 set(LINTEL_DOCS_INSTALL_DIR "${CMAKE_INSTALL_DATAROOTDIR}/doc/lintel")
 
-# Only lintel is exported, project_warnings is not (see the comment at
-# target_link_libraries). The include directory is already part of the
-# $<INSTALL_INTERFACE:...> of the include directories, so no INCLUDES DESTINATION here.
-install(TARGETS lintel
+install(TARGETS lintel_core lintel_base lintel_property lintel_http lintel_cli lintel_app
         EXPORT lintelTargets
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
-install(DIRECTORY include/lintel
-        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-
-# NAMESPACE lintel:: matches the alias the library is used with in the build
-# tree - so the imported name is lintel::lintel.
-install(EXPORT lintelTargets
-        DESTINATION ${LINTEL_CMAKE_INSTALL_DIR}
-        FILE lintelTargets.cmake
-        NAMESPACE lintel::)
+install(TARGETS lintel EXPORT lintelTargets)
+install(DIRECTORY ${PROJECT_SOURCE_DIR}/include/lintel DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 
 # Package configuration. @PACKAGE_INIT@ in the template makes it relocatable, and the
 # find_dependency() calls for the dependencies from the public export live there as well.
@@ -624,6 +679,10 @@ configure_package_config_file(
         INSTALL_DESTINATION ${LINTEL_CMAKE_INSTALL_DIR})
 write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/lintelConfigVersion.cmake
         COMPATIBILITY SameMajorVersion)
+
+install(EXPORT lintelTargets
+        NAMESPACE lintel::
+        DESTINATION ${LINTEL_CMAKE_INSTALL_DIR})
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/lintelConfig.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/lintelConfigVersion.cmake

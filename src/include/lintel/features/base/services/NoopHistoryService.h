@@ -5,8 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/features/base/models/HistoryEntry.h"
-#include "lintel/features/base/models/ProcessName.h"
 #include "lintel/features/base/services/IHistoryService.h"
 
 namespace lintel {

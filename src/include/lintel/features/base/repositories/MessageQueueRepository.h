@@ -1,8 +1,8 @@
 #ifndef LINTEL_MESSAGEQUEUEREPOSITORY_H
 #define LINTEL_MESSAGEQUEUEREPOSITORY_H
 
+#include <lintel/core/configuration/DatabaseConnectionEntry.h>
 #include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
-#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
 #include <lintel/features/base/configuration/MessageQueueEntry.h>
 #include <lintel/features/base/models/Page.h>
 #include <lintel/features/base/repositories/IMessageQueueRepository.h>

@@ -6,9 +6,9 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include "lintel/core/models/Property.h"
 #include "lintel/features/property/controller/PropertiesDto.h"
 #include "lintel/features/property/controller/PropertyDto.h"
-#include "lintel/features/property/models/Property.h"
 
 namespace lintel {
 static std::shared_ptr<PropertyBase> MakeTestProperty(int i)

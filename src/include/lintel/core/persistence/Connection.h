@@ -3,9 +3,9 @@
 
 #include <memory>
 
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/persistence/postgresql/Connection.h"
 #include "lintel/core/persistence/sqlite3/Connection.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 
 namespace lintel {
 namespace db {

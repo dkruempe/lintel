@@ -4,7 +4,7 @@
 #include <memory>
 #include <ostream>
 
-#include "lintel/features/base/configuration/Entry.h"
+#include "lintel/core/configuration/Entry.h"
 #include "lintel/features/property/factories/PropertyFactory.h"
 
 namespace lintel {

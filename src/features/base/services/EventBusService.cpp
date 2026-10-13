@@ -3,9 +3,9 @@
 #include <stdexcept>
 
 #include "lintel/core/services/LoggerService.h"
-#include "lintel/core/services/ShmConstructors.h"
+#include "lintel/core/shm/ShmSegmentAccessor.h"
 #include "lintel/features/base/configuration/EventBusComponent.h"
-#include "lintel/features/base/events/ShmSegmentAccessor.h"
+#include "lintel/features/base/services/ShmConstructors.h"
 
 namespace lintel {
 EventBusService::EventBusService(const std::shared_ptr<Configuration> &configuration,

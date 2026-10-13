@@ -1,7 +1,7 @@
 #ifndef LINTEL_PROCESSENTRY_H
 #define LINTEL_PROCESSENTRY_H
 
-#include "lintel/features/base/configuration/Entry.h"
+#include "lintel/core/configuration/Entry.h"
 #include "lintel/features/base/models/Process.h"
 #include "lintel/features/base/models/ProcessGroup.h"
 

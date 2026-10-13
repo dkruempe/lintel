@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include "lintel/features/http/service/HttpBadRequestException.h"
+#include "lintel/core/exceptions/HttpBadRequestException.h"
 
 namespace lintel {
 /**

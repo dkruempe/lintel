@@ -4,10 +4,10 @@
 
 #include <memory>
 
+#include "lintel/core/configuration/ConfigurationException.h"
+#include "lintel/core/models/PropertyRepositoryType.h"
 #include "lintel/core/utils/TypeName.h"
-#include "lintel/features/base/configuration/ConfigurationException.h"
 #include "lintel/features/property/factories/PropertyFactory.h"
-#include "lintel/features/property/models/PropertyRepositoryType.h"
 
 namespace lintel {
 PropertyRepositoryComponent::Shapes PropertyRepositoryComponent::shape{};
@@ -25,7 +25,7 @@ std::vector<std::shared_ptr<Entry>>
   if (rootNode == nullptr) { return tmp; }
 
   for (tinyxml2::XMLElement *propertyElement = rootNode->FirstChildElement(); propertyElement != nullptr;
-    propertyElement = propertyElement->NextSiblingElement()) {
+       propertyElement = propertyElement->NextSiblingElement()) {
     if (std::strcmp(propertyElement->Name(), shape.PROPERTY_REPOSITORY_ROOT.c_str()) != 0) { continue; }
     const char *typeStr = propertyElement->Attribute(shape.PROPERTY_REPOSITORY_TYPE.c_str());
     const char *isShadowStr = propertyElement->Attribute(shape.PROPERTY_REPOSITORY_SHADOW.c_str());

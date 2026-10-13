@@ -5,7 +5,7 @@
 #include <lintel/core/utils/TypeName.h>
 #include <tinyxml2.h>
 
-#include "lintel/features/base/configuration/ConfigurationException.h"
+#include "lintel/core/configuration/ConfigurationException.h"
 #include "lintel/features/base/configuration/HistoryServiceEntry.h"
 
 namespace lintel {
@@ -24,7 +24,7 @@ std::vector<std::shared_ptr<Entry>>
   if (rootNode == nullptr) { return entries; }
 
   for (tinyxml2::XMLElement *historyElement = rootNode->FirstChildElement(); historyElement != nullptr;
-    historyElement = historyElement->NextSiblingElement()) {
+       historyElement = historyElement->NextSiblingElement()) {
     if (std::strcmp(historyElement->Name(), shape.HISTORY_ROOT) != 0) { continue; }
     const char *processName = historyElement->Attribute(shape.PROCESS_NAME);
     const char *queueName = historyElement->Attribute(shape.QUEUE);

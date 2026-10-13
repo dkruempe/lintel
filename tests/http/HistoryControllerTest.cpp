@@ -3,15 +3,15 @@
 #include <catch2/catch_all.hpp>
 #include <catch2/trompeloeil.hpp>
 
+#include <lintel/core/configuration/Configuration.h>
+#include <lintel/core/configuration/DatabaseConnectionComponent.h>
+#include <lintel/core/configuration/DatabaseConnectionEntry.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
 #include <lintel/core/persistence/Connection.h>
 #include <lintel/core/persistence/ConnectionType.h>
 #include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
 #include <lintel/core/persistence/Statement.h>
 #include <lintel/core/utils/TypeName.h>
-#include <lintel/features/base/configuration/Configuration.h>
-#include <lintel/features/base/configuration/DatabaseConnectionComponent.h>
-#include <lintel/features/base/configuration/DatabaseConnectionEntry.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
 #include <lintel/features/base/controller/HistoryDtos.h>
 #include <lintel/features/base/models/Group.h>
 #include <lintel/features/base/models/HistoryEntry.h>

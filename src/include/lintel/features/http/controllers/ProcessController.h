@@ -1,8 +1,8 @@
 #ifndef LINTEL_PROCESSCONTROLLER_H
 #define LINTEL_PROCESSCONTROLLER_H
 
-#include "lintel/core/services/ProcessService.h"
 #include "lintel/features/base/services/IAuthService.h"
+#include "lintel/features/base/services/ProcessService.h"
 #include "lintel/features/http/service/Controller.h"
 
 namespace lintel {

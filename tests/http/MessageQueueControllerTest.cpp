@@ -3,13 +3,13 @@
 #include <catch2/catch_all.hpp>
 #include <catch2/trompeloeil.hpp>
 
-#include <lintel/features/base/configuration/Configuration.h>
-#include <lintel/features/base/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/configuration/Configuration.h>
+#include <lintel/core/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/models/ProcessName.h>
 #include <lintel/features/base/configuration/MessageQueueEntry.h>
 #include <lintel/features/base/controller/MessageQueueDtos.h>
 #include <lintel/features/base/models/Group.h>
 #include <lintel/features/base/models/Page.h>
-#include <lintel/features/base/models/ProcessName.h>
 #include <lintel/features/base/models/User.h>
 #include <lintel/features/base/services/IAuthService.h>
 #include <lintel/features/base/services/MessageQueueService.h>

@@ -9,14 +9,14 @@
  * Run: ./bin/main  (needs CONFIG_DIRECTORY or the baked-in cfg/ path and
  * ./cfg/certs/generate_certs.sh, because bootstrap.xml requires TLS).
  */
-#include <lintel/core/StartupBuilder.h>
-#include <lintel/core/services/SharedMemoryService.h>
-#include <lintel/features/base/BaseFeature.h>
+#include <lintel/app/BaseFeature.h>
+#include <lintel/app/CommandLineFeature.h>
+#include <lintel/app/HttpFeature.h>
+#include <lintel/app/PropertyFeature.h>
+#include <lintel/app/StartupBuilder.h>
 #include <lintel/features/base/repositories/SharedMemoryRepository.h>
 #include <lintel/features/base/services/EventBusService.h>
-#include <lintel/features/cli/CommandLineFeature.h>
-#include <lintel/features/http/HttpFeature.h>
-#include <lintel/features/property/PropertyFeature.h>
+#include <lintel/features/base/services/SharedMemoryService.h>
 #include <lintel/features/property/services/PropertyService.h>
 
 #include "Hypodermic/Container.h"

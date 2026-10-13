@@ -1,8 +1,8 @@
 #ifndef LINTEL_HISTORYREPOSITORY_H
 #define LINTEL_HISTORYREPOSITORY_H
 
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 #include "lintel/features/base/models/HistoryEntry.h"
 #include <chrono>
 

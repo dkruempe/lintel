@@ -4,8 +4,8 @@
 #include <optional>
 #include <set>
 
+#include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
-#include "lintel/features/base/configuration/DatabaseConnectionEntry.h"
 #include "lintel/features/base/models/Page.h"
 #include "lintel/features/base/models/User.h"
 #include "lintel/features/base/repositories/GroupRepository.h"

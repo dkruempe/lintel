@@ -6,8 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "lintel/features/base/configuration/Component.h"
-#include "lintel/features/base/configuration/Entry.h"
+#include "lintel/core/configuration/Component.h"
+#include "lintel/core/configuration/Entry.h"
 
 namespace lintel {
 /** Component for parsing the history service configuration from XML */

@@ -1,6 +1,6 @@
 #include "lintel/core/services/LoggerService.h"
 
-#include "lintel/features/base/configuration/Configuration.h"
+#include "lintel/core/configuration/Configuration.h"
 #include <spdlog/sinks/daily_file_sink.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -12,11 +12,11 @@
 #include <regex>
 
 #include "lintel/config.h"
+#include "lintel/core/configuration/LoggerComponent.h"
+#include "lintel/core/configuration/LoggerEntry.h"
 #include "lintel/core/exceptions/LoggerServiceNotInitialized.h"
 #include "lintel/core/services/DirectoryService.h"
 #include "lintel/core/services/FileService.h"
-#include "lintel/features/base/configuration/LoggerComponent.h"
-#include "lintel/features/base/configuration/LoggerEntry.h"
 
 // spdlog is used here only, never in the public header
 #include <spdlog/logger.h>

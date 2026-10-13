@@ -4,8 +4,8 @@
 #include <cstdint>
 #include <string>
 
+#include "lintel/core/models/Property.h"
 #include "lintel/core/services/StringifyService.h"
-#include "lintel/features/property/models/Property.h"
 
 namespace lintel {
 namespace {

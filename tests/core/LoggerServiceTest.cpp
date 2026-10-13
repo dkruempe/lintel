@@ -7,18 +7,18 @@
 
 #include <unistd.h>
 
+#include "lintel/core/configuration/Configuration.h"
+#include "lintel/core/configuration/EnvironmentConfiguration.h"
+#include "lintel/core/configuration/LoggerComponent.h"
+#include "lintel/core/configuration/LoggerConfiguration.h"
+#include "lintel/core/configuration/LoggerEntry.h"
+#include "lintel/core/configuration/LoggerPathConfiguration.h"
+#include "lintel/core/configuration/LoggerSinkConfiguration.h"
 #include "lintel/core/models/BootstrapSequence.h"
+#include "lintel/core/models/ProcessName.h"
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/utils/StringUtils.h"
 #include "lintel/core/utils/TypeName.h"
-#include "lintel/features/base/configuration/Configuration.h"
-#include "lintel/features/base/configuration/EnvironmentConfiguration.h"
-#include "lintel/features/base/configuration/LoggerComponent.h"
-#include "lintel/features/base/configuration/LoggerConfiguration.h"
-#include "lintel/features/base/configuration/LoggerEntry.h"
-#include "lintel/features/base/configuration/LoggerPathConfiguration.h"
-#include "lintel/features/base/configuration/LoggerSinkConfiguration.h"
-#include "lintel/features/base/models/ProcessName.h"
 
 #include <catch2/catch_all.hpp>
 

@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-#include "lintel/features/property/models/PropertyBase.h"
+#include "lintel/core/models/PropertyBase.h"
 
 namespace lintel {
 /** Exception thrown when a runtime change is attempted on a non-runtime-changeable property */

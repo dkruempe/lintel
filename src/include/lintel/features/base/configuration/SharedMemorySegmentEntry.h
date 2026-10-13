@@ -4,8 +4,8 @@
 #include <memory>
 #include <ostream>
 
+#include "lintel/core/configuration/Entry.h"
 #include "lintel/core/models/SharedMemorySegment.h"
-#include "lintel/features/base/configuration/Entry.h"
 
 namespace lintel {
 /** Configuration entry for a shared memory segment */
