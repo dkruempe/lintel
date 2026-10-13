@@ -13,7 +13,7 @@ PropertyComponent::Shapes PropertyComponent::shape{};
 PropertyComponent::PropertyComponent() : Component(shape.CONFIG_ROOT) {}
 
 std::vector<std::shared_ptr<Entry>>
-  PropertyComponent::parse(const std::string &content, const std::string &fileName, const int32_t lineOffset)
+  PropertyComponent::parse(const std::string &content, const int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> properties;
   tinyxml2::XMLDocument document;

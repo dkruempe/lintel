@@ -87,7 +87,7 @@ std::shared_ptr<Entry> DatabaseConnectionComponent::parseDatabaseEntry(tinyxml2:
 }
 
 std::vector<std::shared_ptr<Entry>>
-  DatabaseConnectionComponent::parse(const std::string &content, const std::string &fileName, const int32_t lineOffset)
+  DatabaseConnectionComponent::parse(const std::string &content, const int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> databaseEntries;
   tinyxml2::XMLDocument document;

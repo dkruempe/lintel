@@ -55,14 +55,22 @@ private:
    * @return Parsed entry or nullptr */
   std::shared_ptr<Entry> parseLogger(tinyxml2::XMLElement *loggerElement, int32_t &lineNumber, int32_t lineOffset);
 
+  /** Inherited defaults applied to a logger sink that does not override them. */
+  struct SinkDefaults
+  {
+    /** inherited log level */
+    const char *level = nullptr;
+    /** inherited log pattern */
+    const char *pattern = nullptr;
+  };
+
   /** Parse a logger sink configuration from XML
    * @param loggerSinkElement The XML element to parse
    * @param lineNo Current line number
-   * @param level Inherited log level
-   * @param pattern Inherited log pattern
+   * @param defaults Inherited log level and pattern
    * @return Parsed logger sink configuration */
   LoggerSinkConfiguration
-    parseLoggerSink(tinyxml2::XMLElement *loggerSinkElement, int32_t lineNo, const char *level, const char *pattern);
+    parseLoggerSink(tinyxml2::XMLElement *loggerSinkElement, int32_t lineNo, const SinkDefaults &defaults);
 
 public:
   /** Construct a LoggerComponent
@@ -75,7 +83,7 @@ public:
    * @param lineOffset Line offset for error reporting
    * @return Vector of parsed logger entries */
   std::vector<std::shared_ptr<Entry>>
-    parse(const std::string &content, const std::string &fileName, int32_t lineOffset) override;
+    parse(const std::string &content, int32_t lineOffset, const std::string &fileName) override;
 };
 
 }// namespace lintel

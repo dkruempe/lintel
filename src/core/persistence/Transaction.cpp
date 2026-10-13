@@ -6,7 +6,7 @@ namespace lintel {
 namespace db {
   Transaction::Transaction(const Connection &connection) : m_connection(connection)
   {
-    switch (this->m_connection.m_connectionType) {
+    switch (this->m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_transactionSQLite = std::make_unique<sqlite::Transaction>(*m_connection.m_connSQLite);
       break;
@@ -20,7 +20,7 @@ namespace db {
 
   void Transaction::start()
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_transactionSQLite->start();
       break;
@@ -34,7 +34,7 @@ namespace db {
 
   void Transaction::commit()
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_transactionSQLite->commit();
       break;
@@ -48,7 +48,7 @@ namespace db {
 
   void Transaction::rollbackTo(const std::string &savepoint) const
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_transactionSQLite->rollbackTo(savepoint);
       break;
@@ -62,7 +62,7 @@ namespace db {
 
   void Transaction::rollback()
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_transactionSQLite->rollback();
       break;
@@ -76,7 +76,7 @@ namespace db {
 
   void Transaction::save(const std::string &savepoint) const
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_transactionSQLite->save(savepoint);
       break;

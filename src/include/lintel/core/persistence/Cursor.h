@@ -118,7 +118,7 @@ namespace db {
 
       Iterator &operator++();
 
-      Iterator operator++(int);
+      const Iterator operator++(int);
 
       bool operator==(const Iterator &other) const;
 

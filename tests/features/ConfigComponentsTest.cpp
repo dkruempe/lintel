@@ -37,7 +37,7 @@ TEST_CASE("LoggerComponent: parse Logger with ConsoleSink")
         </Logger>
     </Loggers>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto loggerEntry = std::static_pointer_cast<LoggerEntry>(entries[0]);
@@ -65,7 +65,7 @@ TEST_CASE("LoggerComponent: parse Logger with RotatingFileSink")
         </Logger>
     </Loggers>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto config = std::static_pointer_cast<LoggerEntry>(entries[0])->getLoggerConfiguration();
@@ -91,7 +91,7 @@ TEST_CASE("LoggerComponent: parse multiple sinks")
         </Logger>
     </Loggers>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto config = std::static_pointer_cast<LoggerEntry>(entries[0])->getLoggerConfiguration();
@@ -115,7 +115,7 @@ TEST_CASE("LoggerComponent: parse with custom pattern")
         </Logger>
     </Loggers>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto config = std::static_pointer_cast<LoggerEntry>(entries[0])->getLoggerConfiguration();
@@ -134,7 +134,7 @@ TEST_CASE("LoggerComponent: parse Path")
         <Path path="/tmp/test_logs" create_sub_dirs="true"/>
     </Loggers>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto loggerEntry = std::static_pointer_cast<LoggerEntry>(entries[0]);
@@ -158,9 +158,9 @@ TEST_CASE("LoggerComponent: throw on empty Path path attribute")
         <Path path="" create_sub_dirs="true"/>
     </Loggers>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
   REQUIRE_THROWS_WITH(
-    component.parse(xml, "test.xml", 0), Catch::Matchers::ContainsSubstring("path is empty or is not a directory"));
+    component.parse(xml, 0, "test.xml"), Catch::Matchers::ContainsSubstring("path is empty or is not a directory"));
 }
 
 // Second half of the same guard: an existing path that is not a directory is rejected as well.
@@ -185,9 +185,9 @@ TEST_CASE("LoggerComponent: throw when Path is a regular file")
                     + logFile.string() + R"(" create_sub_dirs="false"/>
     </Loggers>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
   REQUIRE_THROWS_WITH(
-    component.parse(xml, "test.xml", 0), Catch::Matchers::ContainsSubstring("path is empty or is not a directory"));
+    component.parse(xml, 0, "test.xml"), Catch::Matchers::ContainsSubstring("path is empty or is not a directory"));
 
   std::remove(logFile.c_str());
 }
@@ -199,7 +199,7 @@ TEST_CASE("LoggerComponent: parse empty child returns empty")
   LoggerComponent component(envConfig);
 
   std::string xml = R"(<Loggers></Loggers>)";
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.empty());
 }
 
@@ -215,7 +215,7 @@ TEST_CASE("LoggerComponent: throw on missing process_name")
         </Logger>
     </Loggers>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("LoggerComponent: throw on missing level")
@@ -230,7 +230,7 @@ TEST_CASE("LoggerComponent: throw on missing level")
         </Logger>
     </Loggers>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("LoggerComponent: throw on missing async")
@@ -245,7 +245,7 @@ TEST_CASE("LoggerComponent: throw on missing async")
         </Logger>
     </Loggers>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("LoggerComponent: throw on missing sink type")
@@ -260,7 +260,7 @@ TEST_CASE("LoggerComponent: throw on missing sink type")
         </Logger>
     </Loggers>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("LoggerComponent: throw on unknown sink type")
@@ -275,7 +275,7 @@ TEST_CASE("LoggerComponent: throw on unknown sink type")
         </Logger>
     </Loggers>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("ProcessComponent: parse single process")
@@ -286,7 +286,7 @@ TEST_CASE("ProcessComponent: parse single process")
         <Process name="/usr/bin/myapp" args="" autoRestart="false" maxRestarts="0"/>
     </Processes>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto processEntry = std::static_pointer_cast<ProcessEntry>(entries[0]);
@@ -302,7 +302,7 @@ TEST_CASE("ProcessComponent: parse process with autoRestart")
         <Process name="/usr/bin/worker" args="" autoRestart="true" maxRestarts="5"/>
     </Processes>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto process = std::static_pointer_cast<ProcessEntry>(entries[0])->getProcess();
@@ -317,7 +317,7 @@ TEST_CASE("ProcessComponent: parse process with args")
         <Process name="/usr/bin/myapp" args="--verbose,--debug" autoRestart="true" maxRestarts="3"/>
     </Processes>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 }
 
@@ -332,7 +332,7 @@ TEST_CASE("ProcessComponent: parse process group")
         </ProcessGroup>
     </Processes>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto processEntry = std::static_pointer_cast<ProcessEntry>(entries[0]);
@@ -349,7 +349,7 @@ TEST_CASE("ProcessComponent: parse multiple entries")
         <Process name="/usr/bin/app2" args="" autoRestart="true" maxRestarts="3"/>
     </Processes>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
 }
 
@@ -357,7 +357,7 @@ TEST_CASE("ProcessComponent: empty Processes returns empty")
 {
   ProcessComponent component;
   std::string xml = R"(<Processes></Processes>)";
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.empty());
 }
 
@@ -367,7 +367,7 @@ TEST_CASE("ProcessComponent: throw on missing name")
   std::string xml = R"(<Processes>
         <Process args="" autoRestart="false" maxRestarts="0"/>
     </Processes>)";
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("ProcessComponent: throw on missing autoRestart")
@@ -376,7 +376,7 @@ TEST_CASE("ProcessComponent: throw on missing autoRestart")
   std::string xml = R"(<Processes>
         <Process name="/test" args="" maxRestarts="0"/>
     </Processes>)";
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("ProcessComponent: parse automation policy attributes")
@@ -390,7 +390,7 @@ TEST_CASE("ProcessComponent: parse automation policy attributes")
             cpuNotify="80" memNotify="1048576"/>
     </Processes>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto process = std::static_pointer_cast<ProcessEntry>(entries[0])->getProcess();
@@ -417,7 +417,7 @@ TEST_CASE("ProcessComponent: automation policy defaults when attributes absent")
         <Process name="/usr/bin/app" args="" autoRestart="true" maxRestarts="5"/>
     </Processes>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto process = std::static_pointer_cast<ProcessEntry>(entries[0])->getProcess();
@@ -436,7 +436,7 @@ TEST_CASE("MessageQueueComponent: parse single queue")
         <MessageQueue process_name="main" name="commands" max_messages="100"/>
     </MessageQueues>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto entry = std::static_pointer_cast<MessageQueueEntry>(entries[0]);
@@ -454,7 +454,7 @@ TEST_CASE("MessageQueueComponent: parse multiple queues")
         <MessageQueue process_name="main" name="queue2" max_messages="200"/>
     </MessageQueues>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
 }
 
@@ -462,7 +462,7 @@ TEST_CASE("MessageQueueComponent: empty MessageQueues returns empty")
 {
   MessageQueueComponent component;
   std::string xml = R"(<MessageQueues></MessageQueues>)";
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.empty());
 }
 
@@ -472,7 +472,7 @@ TEST_CASE("MessageQueueComponent: throw on missing name")
   std::string xml = R"(<MessageQueues>
         <MessageQueue process_name="main" max_messages="100"/>
     </MessageQueues>)";
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("MessageQueueComponent: throw on missing process_name")
@@ -481,7 +481,7 @@ TEST_CASE("MessageQueueComponent: throw on missing process_name")
   std::string xml = R"(<MessageQueues>
         <MessageQueue name="test" max_messages="100"/>
     </MessageQueues>)";
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("MessageQueueComponent: throw on missing max_messages")
@@ -490,7 +490,7 @@ TEST_CASE("MessageQueueComponent: throw on missing max_messages")
   std::string xml = R"(<MessageQueues>
         <MessageQueue process_name="main" name="test"/>
     </MessageQueues>)";
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("EventBusComponent: parse single bus")
@@ -502,7 +502,7 @@ TEST_CASE("EventBusComponent: parse single bus")
                   subscriber_capacity="32" max_topics="4" max_subscribers="2"/>
     </EventBuses>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto entry = std::static_pointer_cast<EventBusEntry>(entries[0]);
@@ -522,7 +522,7 @@ TEST_CASE("EventBusComponent: defaults for omitted capacities")
         <EventBus name="main" segment="shm_eventbus"/>
     </EventBuses>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto entry = std::static_pointer_cast<EventBusEntry>(entries[0]);
@@ -543,7 +543,7 @@ TEST_CASE("EventBusComponent: parse multiple buses")
         <EventBus name="worker" segment="shm_b" bus_capacity="32"/>
     </EventBuses>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
 
   auto first = std::static_pointer_cast<EventBusEntry>(entries[0]);
@@ -560,7 +560,7 @@ TEST_CASE("EventBusComponent: empty EventBuses returns empty")
 {
   EventBusComponent component;
   std::string xml = R"(<EventBuses></EventBuses>)";
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.empty());
 }
 
@@ -570,7 +570,7 @@ TEST_CASE("EventBusComponent: throw on missing name")
   std::string xml = R"(<EventBuses>
         <EventBus segment="shm_eventbus"/>
     </EventBuses>)";
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("EventBusComponent: throw on missing segment")
@@ -579,7 +579,7 @@ TEST_CASE("EventBusComponent: throw on missing segment")
   std::string xml = R"(<EventBuses>
         <EventBus name="main"/>
     </EventBuses>)";
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 // overrides(Path, "") is a no-op on purpose: splitting an empty PATH would drop the whole search

@@ -4,10 +4,10 @@
 
 namespace lintel {
 namespace db {
-  Notify::Notify(Connection &connection, std::function<void()> functionCallBack, std::string tableName)
+  Notify::Notify(Connection &connection, std::function<void()> functionCallBack, const std::string &tableName)
     : m_connection(connection)
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_notifySqlite = std::make_unique<sqlite::Notify>(*connection.m_connSQLite, functionCallBack, tableName);
       break;

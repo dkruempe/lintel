@@ -46,13 +46,21 @@ namespace postgresql {
      */
     static std::string initStatement(const std::string &tempStatement);
 
+    /** The name and SQL template of a prepared statement. */
+    struct Definition
+    {
+      /** the name the statement is prepared under */
+      std::string name;
+      /** the SQL statement template with '?' placeholders */
+      std::string statement;
+    };
+
     /**
      * Prepares a statement on the given connection.
      * @param connection the PostgreSQL connection
-     * @param statement the SQL statement template with '?' placeholders
-     * @param statementName the name for the prepared statement
+     * @param definition the statement name and SQL template
      */
-    PreparedStatement(const Connection &connection, const std::string &statement, const std::string &statementName);
+    PreparedStatement(const Connection &connection, const Definition &definition);
 
     ~PreparedStatement() = default;
 

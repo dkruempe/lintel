@@ -16,7 +16,7 @@ TEST_CASE("HistoryComponent: parse single history service")
         <HistoryService process_name="main" queue="history" max_messages="1000"/>
     </HistoryServices>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto entry = std::static_pointer_cast<HistoryServiceEntry>(entries[0]);
@@ -34,7 +34,7 @@ TEST_CASE("HistoryComponent: defaults for omitted queue and max_messages")
         <HistoryService process_name="worker"/>
     </HistoryServices>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto entry = std::static_pointer_cast<HistoryServiceEntry>(entries[0]);
@@ -52,7 +52,7 @@ TEST_CASE("HistoryComponent: parse multiple history services")
         <HistoryService process_name="other" queue="other_queue" max_messages="10"/>
     </HistoryServices>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
 
   auto first = std::static_pointer_cast<HistoryServiceEntry>(entries[0]);
@@ -69,7 +69,7 @@ TEST_CASE("HistoryComponent: empty HistoryServices returns empty")
 {
   HistoryComponent component;
   std::string xml = R"(<HistoryServices></HistoryServices>)";
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.empty());
 }
 
@@ -77,7 +77,7 @@ TEST_CASE("HistoryComponent: missing HistoryServices returns empty")
 {
   HistoryComponent component;
   std::string xml = R"(<Unrelated></Unrelated>)";
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.empty());
 }
 
@@ -87,6 +87,6 @@ TEST_CASE("HistoryComponent: throw on missing process_name")
   std::string xml = R"(<HistoryServices>
         <HistoryService/>
     </HistoryServices>)";
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 }// namespace lintel

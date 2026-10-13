@@ -52,7 +52,7 @@ TEST_CASE("SharedMemorySegmentComponent: throw on empty Path path attribute")
         <Path path=""/>
     </SharedMemorySegments>)";
 
-  REQUIRE_THROWS_WITH(component.parse(xml, "test.xml", 0), Catch::Matchers::ContainsSubstring("wrong configured path"));
+  REQUIRE_THROWS_WITH(component.parse(xml, 0, "test.xml"), Catch::Matchers::ContainsSubstring("wrong configured path"));
   REQUIRE_FALSE(std::filesystem::exists(fixture.directory));
 }
 
@@ -68,9 +68,9 @@ TEST_CASE("SharedMemorySegmentComponent: throw when the Path element is missing"
         <SharedMemorySegment name="shm_test" size="1kB"/>
     </SharedMemorySegments>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
   REQUIRE_THROWS_WITH(
-    component.parse(xml, "test.xml", 0), Catch::Matchers::ContainsSubstring("Path definition is completely missing"));
+    component.parse(xml, 0, "test.xml"), Catch::Matchers::ContainsSubstring("Path definition is completely missing"));
   REQUIRE_FALSE(std::filesystem::exists(fixture.directory));
 }
 
@@ -87,7 +87,7 @@ TEST_CASE("SharedMemorySegmentComponent: parses Path and SharedMemorySegment")
         <SharedMemorySegment name="shm_test" size="1kB"/>
     </SharedMemorySegments>)";
 
-  auto entries = component.parse(xml, "test.xml", 0);
+  auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
   REQUIRE(std::filesystem::exists(fixture.directory));
 

@@ -27,6 +27,7 @@ namespace db {
   std::vector<const char *> Parameters::getParameters() const
   {
     std::vector<const char *> temp;
+    temp.reserve(m_params.size());
     for (auto &iter : m_params) { temp.push_back(iter.getValue().c_str()); }
     return temp;
   }
@@ -34,6 +35,7 @@ namespace db {
   std::vector<int32_t> Parameters::getParametersLengths() const
   {
     std::vector<int32_t> temp;
+    temp.reserve(m_params.size());
     for (auto &iter : m_params) { temp.push_back(static_cast<int32_t>(iter.getLength())); }
     return temp;
   }
@@ -41,6 +43,7 @@ namespace db {
   std::vector<int32_t> Parameters::getParametersTypes() const
   {
     std::vector<int32_t> temp;
+    temp.reserve(m_params.size());
     for (auto &iter : m_params) { temp.push_back(iter.getFormatId()); }
     return temp;
   }

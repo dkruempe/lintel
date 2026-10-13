@@ -72,7 +72,7 @@ namespace postgresql {
       PQclear(result);
       while (!m_shutdown) { listen(); }
     } catch (const std::exception &exception) {
-      std::cerr << "Notify listener stopped: " << exception.what() << std::endl;
+      std::cerr << "Notify listener stopped: " << exception.what() << '\n';
       m_shutdown.store(true);
     }
   }

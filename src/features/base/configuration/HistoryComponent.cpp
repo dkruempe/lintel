@@ -14,7 +14,7 @@ const HistoryComponent::Shapes HistoryComponent::shape{};
 HistoryComponent::HistoryComponent() : Component(shape.CONFIG_ROOT) {}
 
 std::vector<std::shared_ptr<Entry>>
-  HistoryComponent::parse(const std::string &content, const std::string &fileName, int32_t lineOffset)
+  HistoryComponent::parse(const std::string &content, int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> entries;
   tinyxml2::XMLDocument document;

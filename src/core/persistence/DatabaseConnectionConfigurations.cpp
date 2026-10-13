@@ -39,6 +39,7 @@ std::shared_ptr<DatabaseConnectionEntry> DatabaseConnectionConfigurations::of(co
 std::vector<std::shared_ptr<DatabaseConnectionEntry>> DatabaseConnectionConfigurations::allOf()
 {
   std::vector<std::shared_ptr<DatabaseConnectionEntry>> connections;
+  connections.reserve(m_connections.size());
   for (auto &[name, connection] : m_connections) { connections.push_back(connection); }
   return connections;
 }

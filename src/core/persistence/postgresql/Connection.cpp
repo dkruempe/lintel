@@ -25,7 +25,6 @@ namespace postgresql {
   }
 
   [[nodiscard]] std::shared_ptr<Result> Connection::executePreparedStatement(const std::string &statementName,
-    const std::string &query,
     int32_t nParams,
     const db::Parameters &parameters) const
   {

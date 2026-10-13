@@ -15,7 +15,7 @@ PropertyRepositoryComponent::Shapes PropertyRepositoryComponent::shape{};
 PropertyRepositoryComponent::PropertyRepositoryComponent() : Component(shape.CONFIG_ROOT) {}
 
 std::vector<std::shared_ptr<Entry>>
-  PropertyRepositoryComponent::parse(const std::string &content, const std::string &fileName, const int32_t lineOffset)
+  PropertyRepositoryComponent::parse(const std::string &content, const int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> tmp;
   tinyxml2::XMLDocument document;

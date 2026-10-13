@@ -61,7 +61,7 @@ void Configuration::loadConfiguration()
         "Configuration", "no component name defined for " + componentName, iter->GetLineNum());
     }
 
-    auto entries = found->second->parse(printer.CStr(), file.getName(), lineOffset);
+    auto entries = found->second->parse(printer.CStr(), lineOffset, file.getName());
     for (auto &entry : entries) { m_configurationEntries.push_back(entry); }
   }
 }

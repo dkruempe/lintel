@@ -82,8 +82,10 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::buildEntries(c
     if (!segmentTemp.m_autoExtend) {
       sharedMemorySegment = std::make_shared<SharedMemorySegment>(filePath, segmentTemp.m_name, segmentTemp.m_size);
     } else {
-      sharedMemorySegment = std::make_shared<SharedMemorySegment>(
-        filePath, segmentTemp.m_name, segmentTemp.m_size, segmentTemp.m_autoExtendSize, segmentTemp.m_maxSize);
+      sharedMemorySegment = std::make_shared<SharedMemorySegment>(filePath,
+        segmentTemp.m_name,
+        segmentTemp.m_size,
+        SharedMemorySegment::AutoExtendConfig{ segmentTemp.m_autoExtendSize, segmentTemp.m_maxSize });
     }
     entries.push_back(
       std::make_shared<SharedMemorySegmentEntry>(type_name<SharedMemorySegmentComponent>(), sharedMemorySegment));
@@ -92,7 +94,7 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::buildEntries(c
 }
 
 std::vector<std::shared_ptr<Entry>>
-  SharedMemorySegmentComponent::parse(const std::string &content, const std::string &fileName, int32_t lineOffset)
+  SharedMemorySegmentComponent::parse(const std::string &content, int32_t lineOffset, const std::string &fileName)
 {
   std::vector<SegmentTemp> segments;
   std::filesystem::path path;

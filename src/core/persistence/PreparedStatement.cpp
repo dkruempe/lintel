@@ -10,14 +10,14 @@ namespace db {
     const std::string &statementName)
     : m_connection(connection)
   {
-    switch (connection.m_connectionType) {
+    switch (connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_preparedStatementSQLite =
         std::make_unique<sqlite::PreparedStatement>(*connection.m_connSQLite, statement, statementName);
       break;
     case ConnectionType::PostgreSQL:
-      m_preparedStatement =
-        std::make_unique<postgresql::PreparedStatement>(*connection.m_conn, statement, statementName);
+      m_preparedStatement = std::make_unique<postgresql::PreparedStatement>(
+        *connection.m_conn, postgresql::PreparedStatement::Definition{ statementName, statement });
       break;
     case ConnectionType::UNDEFINED:
       throw db::SQLException("Undefined Database Type");
@@ -31,7 +31,7 @@ namespace db {
 
   void PreparedStatement::close()
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_preparedStatementSQLite->close();
       break;
@@ -45,7 +45,7 @@ namespace db {
 
   Result PreparedStatement::execute(const ParameterBuilder &builder)
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       return Result(m_preparedStatementSQLite->execute(builder.build()));
       break;

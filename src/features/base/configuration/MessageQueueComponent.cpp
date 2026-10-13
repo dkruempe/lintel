@@ -11,7 +11,7 @@ const MessageQueueComponent::Shapes MessageQueueComponent::shape{};
 MessageQueueComponent::MessageQueueComponent() : Component(shape.CONFIG_ROOT) {}
 
 std::vector<std::shared_ptr<Entry>>
-  MessageQueueComponent::parse(const std::string &content, const std::string &fileName, int32_t lineOffset)
+  MessageQueueComponent::parse(const std::string &content, int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> entries;
   tinyxml2::XMLDocument document;

@@ -55,7 +55,7 @@ public:
    * @param lineOffset Line offset for error reporting
    * @return Vector of parsed database connection entries */
   std::vector<std::shared_ptr<Entry>>
-    parse(const std::string &content, const std::string &fileName, int32_t lineOffset) override;
+    parse(const std::string &content, int32_t lineOffset, const std::string &fileName) override;
 };
 
 }// namespace lintel

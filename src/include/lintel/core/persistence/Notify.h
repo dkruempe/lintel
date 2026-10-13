@@ -27,7 +27,7 @@ namespace db {
      * @param functionCallBack callback invoked when a notification is received
      * @param tableName the table to watch for changes
      */
-    explicit Notify(Connection &connection, std::function<void()> functionCallBack, std::string tableName);
+    explicit Notify(Connection &connection, std::function<void()> functionCallBack, const std::string &tableName);
   };
 }// namespace db
 

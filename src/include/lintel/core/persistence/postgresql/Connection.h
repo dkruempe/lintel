@@ -72,13 +72,11 @@ namespace postgresql {
     /**
      * Executes a previously prepared statement.
      * @param statementName the name of the prepared statement
-     * @param query the SQL query
      * @param nParams the number of parameters
      * @param parameters the parameters to bind
      * @return shared pointer to the result
      */
     [[nodiscard]] std::shared_ptr<Result> executePreparedStatement(const std::string &statementName,
-      const std::string &query,
       int32_t nParams,
       const db::Parameters &parameters) const;
 

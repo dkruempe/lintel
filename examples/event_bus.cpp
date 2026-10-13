@@ -93,7 +93,7 @@ int main()
     for (int i = 0; i < 4; ++i) {
       lintel::Event event("sensor", "reading");
       SensorReading reading{};
-      std::snprintf(reading.sensor, sizeof(reading.sensor), "sensor_%d", i);
+      (void)std::snprintf(reading.sensor, sizeof(reading.sensor), "sensor_%d", i);
       reading.value = 20.0 + i;
       reading.measuredAt = std::chrono::system_clock::now().time_since_epoch().count();
       event.assign(reading);

@@ -22,7 +22,7 @@ namespace {
 }// namespace
 
 std::vector<std::shared_ptr<Entry>>
-  EventBusComponent::parse(const std::string &content, const std::string &fileName, int32_t lineOffset)
+  EventBusComponent::parse(const std::string &content, int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> entries;
   tinyxml2::XMLDocument document;

@@ -15,7 +15,7 @@ LoggerComponent::LoggerComponent(std::shared_ptr<EnvironmentConfiguration> envir
 {}
 
 std::vector<std::shared_ptr<Entry>>
-  LoggerComponent::parse(const std::string &content, const std::string &fileName, int32_t lineOffset)
+  LoggerComponent::parse(const std::string &content, int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> loggerEntries;
   tinyxml2::XMLDocument document;
@@ -62,7 +62,7 @@ std::shared_ptr<Entry>
     loggerSinkElement = loggerSinkElement->NextSiblingElement()) {
     int32_t lineNo = lineOffset + loggerSinkElement->GetLineNum();
     if (std::strcmp(loggerSinkElement->Name(), shape.LOGGER_SINK_ROOT) != 0) { continue; }
-    loggerSinks.push_back(parseLoggerSink(loggerSinkElement, lineNo, level, pattern));
+    loggerSinks.push_back(parseLoggerSink(loggerSinkElement, lineNo, SinkDefaults{ level, pattern }));
   }
   if (loggerSinks.empty()) { throw ConfigurationException(getConfigRoot(), "logger sinks not defined", lineNumber); }
   std::shared_ptr<LoggerConfiguration> loggerConfiguration =
@@ -114,8 +114,7 @@ namespace {
 
 LoggerSinkConfiguration LoggerComponent::parseLoggerSink(tinyxml2::XMLElement *loggerSinkElement,
   int32_t lineNo,
-  const char *level,
-  const char *pattern)
+  const SinkDefaults &defaults)
 {
   const char *typeStr = loggerSinkElement->Attribute(shape.LOGGER_SINK_TYPE);
   if (typeStr == nullptr) { throw ConfigurationException(getConfigRoot(), "logger sink type is null", lineNo); }
@@ -129,8 +128,8 @@ LoggerSinkConfiguration LoggerComponent::parseLoggerSink(tinyxml2::XMLElement *l
   const char *connection = loggerSinkElement->Attribute(shape.LOGGER_SINK_CONNECTION);
   const char *port = loggerSinkElement->Attribute(shape.LOGGER_SINK_PORT);
   const char *id = loggerSinkElement->Attribute(shape.LOGGER_SINK_ID);
-  std::string loggerSinkLevel = levelSink != nullptr ? levelSink : level;
-  std::string loggerSinkPattern = patternSink != nullptr ? patternSink : pattern;
+  std::string loggerSinkLevel = levelSink != nullptr ? levelSink : defaults.level;
+  std::string loggerSinkPattern = patternSink != nullptr ? patternSink : defaults.pattern;
   switch (type) {
   case LoggerSinkConfiguration::ConsoleSink: {
     return { type, loggerSinkLevel, loggerSinkPattern };

@@ -113,7 +113,7 @@ std::shared_ptr<Entry> ProcessComponent::parseProcess(tinyxml2::XMLElement *proc
 }
 
 std::vector<std::shared_ptr<Entry>>
-  ProcessComponent::parse(const std::string &content, const std::string &fileName, int32_t lineOffset)
+  ProcessComponent::parse(const std::string &content, int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> processEntries;
   tinyxml2::XMLDocument document;

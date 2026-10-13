@@ -133,7 +133,7 @@ namespace {
 }// namespace
 
 std::vector<std::shared_ptr<Entry>>
-  HttpComponent::parse(const std::string &content, const std::string &fileName, const int32_t lineOffset)
+  HttpComponent::parse(const std::string &content, const int32_t lineOffset, const std::string &fileName)
 {
   std::vector<std::shared_ptr<Entry>> httpEntries;
   tinyxml2::XMLDocument document;

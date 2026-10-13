@@ -1,6 +1,7 @@
 #ifndef LINTEL_CONNECTIONTYPE_H
 #define LINTEL_CONNECTIONTYPE_H
 
+#include <cstdint>
 #include <magic_enum/magic_enum.hpp>
 #include <set>
 #include <string>
@@ -14,7 +15,7 @@ namespace db {
   {
   public:
     // value is defining priority of property repository type
-    enum Value { UNDEFINED = -1, SQLite = 0, PostgreSQL };
+    enum Value : std::int8_t { UNDEFINED = -1, SQLite = 0, PostgreSQL };
 
     /** Default constructor, initializes to UNDEFINED. */
     ConnectionType() = default;
@@ -35,6 +36,9 @@ namespace db {
 
     /** Implicit conversion to Value. */
     constexpr operator Value() const { return m_value; }
+
+    /** @return the underlying Value as an enum, e.g. for exhaustive switches */
+    constexpr Value value() const { return m_value; }
 
     explicit operator bool() = delete;
 

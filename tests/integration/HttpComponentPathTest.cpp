@@ -23,7 +23,7 @@ TEST_CASE("HttpComponent: absent cert/key/ca paths stay empty with a config dire
         <Client host="localhost" port="443"/>
     </HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
 
   auto serverEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
@@ -46,7 +46,7 @@ TEST_CASE("HttpComponent: empty cert/key/ca attributes stay empty with a config 
         <Client host="localhost" port="443" cert_path="" key_path="" ca_cert_path=""/>
     </HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
 
   auto serverEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
@@ -70,7 +70,7 @@ TEST_CASE("HttpComponent: a set cert path is still resolved against the config d
         <Server host="0.0.0.0" port="443" cert_path="certs/server.crt" key_path="certs/server.key"/>
     </HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto serverEntry = std::static_pointer_cast<HttpEntry>(entries[0]);

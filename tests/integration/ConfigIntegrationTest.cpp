@@ -24,7 +24,7 @@ TEST_CASE("Component: getConfigRoot returns configured root name")
   {
   public:
     TestComponent() : Component("TestRoot") {}
-    std::vector<std::shared_ptr<Entry>> parse(const std::string &, const std::string &, int32_t) override { return {}; }
+    std::vector<std::shared_ptr<Entry>> parse(const std::string &, int32_t, const std::string &) override { return {}; }
   };
   TestComponent comp;
   REQUIRE(comp.getConfigRoot() == "TestRoot");
@@ -36,7 +36,7 @@ TEST_CASE("Component: convertToBytes parses size strings")
   {
   public:
     TestComponent() : Component("Test") {}
-    std::vector<std::shared_ptr<Entry>> parse(const std::string &, const std::string &, int32_t) override { return {}; }
+    std::vector<std::shared_ptr<Entry>> parse(const std::string &, int32_t, const std::string &) override { return {}; }
     std::size_t testConvert(const std::string &s) { return convertToBytes(s); }
   };
   TestComponent comp;
@@ -52,7 +52,7 @@ TEST_CASE("HttpComponent: parse server configuration")
   HttpComponent httpComp;
   std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
@@ -66,7 +66,7 @@ TEST_CASE("HttpComponent: parse client configuration")
   HttpComponent httpComp;
   std::string xml = R"(<HttpHost><Client host="localhost" port="9090" connection_timeout="5000"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
 
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
@@ -83,7 +83,7 @@ TEST_CASE("HttpComponent: parse both server and client")
         <Client host="localhost" port="9090"/>
     </HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
 }
 
@@ -94,7 +94,7 @@ TEST_CASE("HttpComponent: parse with timeouts")
         <Server host="0.0.0.0" port="8080" read_timeout="3000" write_timeout="5000" idle_timeout="60000"/>
     </HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   auto &config = httpEntry->getServerConfiguration();
   REQUIRE(config->getReadTimeOut().count() == 3000);
@@ -107,7 +107,7 @@ TEST_CASE("HttpComponent: require_tls defaults to false")
   HttpComponent httpComp;
   std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   REQUIRE_FALSE(httpEntry->getServerConfiguration()->isTlsRequired());
 }
@@ -117,7 +117,7 @@ TEST_CASE("HttpComponent: require_tls true is parsed")
   HttpComponent httpComp;
   std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080" require_tls="true"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   REQUIRE(httpEntry->getServerConfiguration()->isTlsRequired());
 }
@@ -127,7 +127,7 @@ TEST_CASE("HttpComponent: require_tls case-insensitive value")
   HttpComponent httpComp;
   std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080" require_tls="TRUE"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   REQUIRE(httpEntry->getServerConfiguration()->isTlsRequired());
 }
@@ -137,7 +137,7 @@ TEST_CASE("HttpComponent: require_tls 1 is parsed as true")
   HttpComponent httpComp;
   std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080" require_tls="1"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   REQUIRE(httpEntry->getServerConfiguration()->isTlsRequired());
 }
@@ -147,7 +147,7 @@ TEST_CASE("HttpComponent: trusted_proxies defaults to empty")
   HttpComponent httpComp;
   std::string xml = R"(<HttpHost><Server host="0.0.0.0" port="8080"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   REQUIRE(httpEntry->getServerConfiguration()->getTrustedProxies().empty());
 }
@@ -158,7 +158,7 @@ TEST_CASE("HttpComponent: trusted_proxies parsed with trimming")
   std::string xml =
     R"(<HttpHost><Server host="0.0.0.0" port="8080" trusted_proxies="10.0.0.1, 192.168.0.0/16,2001:db8::/32"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   auto &proxies = httpEntry->getServerConfiguration()->getTrustedProxies();
   REQUIRE(proxies.size() == 3);
@@ -177,7 +177,7 @@ TEST_CASE("HttpComponent: relative cert/key paths resolved against config dir")
         <Client host="localhost" port="8080" cert_path="certs/client.crt" key_path="certs/client.key"/>
     </HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 2);
 
   auto serverEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
@@ -197,7 +197,7 @@ TEST_CASE("HttpComponent: absolute cert/key paths kept unchanged")
   std::string xml =
     R"(<HttpHost><Server host="0.0.0.0" port="443" cert_path="/etc/ssl/server.pem" key_path="/etc/ssl/private/server.key"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   REQUIRE(httpEntry->getServerConfiguration()->getCertFile() == "/etc/ssl/server.pem");
   REQUIRE(httpEntry->getServerConfiguration()->getKeyFile() == "/etc/ssl/private/server.key");
@@ -209,7 +209,7 @@ TEST_CASE("HttpComponent: without env config relative cert/key paths kept")
   std::string xml =
     R"(<HttpHost><Server host="0.0.0.0" port="443" cert_path="certs/server.crt" key_path="certs/server.key"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   REQUIRE(httpEntry->getServerConfiguration()->getCertFile() == "certs/server.crt");
   REQUIRE(httpEntry->getServerConfiguration()->getKeyFile() == "certs/server.key");
@@ -223,7 +223,7 @@ TEST_CASE("HttpComponent: client ca_cert_path resolved against config dir")
   std::string xml =
     R"(<HttpHost><Client host="localhost" port="8080" cert_path="certs/client.crt" key_path="certs/client.key" ca_cert_path="certs/server.crt"/></HttpHost>)";
 
-  auto entries = httpComp.parse(xml, "test.xml", 0);
+  auto entries = httpComp.parse(xml, 0, "test.xml");
   auto httpEntry = std::static_pointer_cast<HttpEntry>(entries[0]);
   auto &clientConfig = httpEntry->getClientConfiguration();
   REQUIRE(clientConfig->getCertFile() == "/tmp/example_cfg/certs/client.crt");
@@ -256,7 +256,7 @@ TEST_CASE("Configuration: setEntries and query by type")
   {
   public:
     TestComponent() : Component("Test") {}
-    std::vector<std::shared_ptr<Entry>> parse(const std::string &, const std::string &, int32_t) override { return {}; }
+    std::vector<std::shared_ptr<Entry>> parse(const std::string &, int32_t, const std::string &) override { return {}; }
   };
 
   auto entries = config.configurationOf<TestComponent>();
@@ -271,7 +271,7 @@ TEST_CASE("Configuration: with type_name matching")
   {
   public:
     TestComponent() : Component("Test") {}
-    std::vector<std::shared_ptr<Entry>> parse(const std::string &, const std::string &, int32_t) override { return {}; }
+    std::vector<std::shared_ptr<Entry>> parse(const std::string &, int32_t, const std::string &) override { return {}; }
   };
 
   class TestEntry : public Entry

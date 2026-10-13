@@ -144,7 +144,7 @@ public:
 class WorkerFeature : public lintel::FeatureInterface
 {
 public:
-  explicit WorkerFeature(std::shared_ptr<lintel::Features> /*features*/) {}
+  explicit WorkerFeature(const std::shared_ptr<lintel::Features> & /*features*/) {}
 
   void registerTypes(Hypodermic::ContainerBuilder &builder) override
   {

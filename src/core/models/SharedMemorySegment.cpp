@@ -17,9 +17,8 @@ SharedMemorySegment::SharedMemorySegment(std::filesystem::path sharedMemoryPath,
 SharedMemorySegment::SharedMemorySegment(std::filesystem::path sharedMemoryPath,
   std::string name,
   std::size_t size,
-  std::size_t autoExtendSize,
-  std::size_t maxSize)
+  AutoExtendConfig autoExtendConfig)
   : m_path(std::move(sharedMemoryPath)), m_name(std::move(name)), m_size(size), m_isAutoExtend(true),
-    m_autoExtendSize(autoExtendSize), m_maxSize(maxSize)
+    m_autoExtendSize(autoExtendConfig.size), m_maxSize(autoExtendConfig.maxSize)
 {}
 }// namespace lintel

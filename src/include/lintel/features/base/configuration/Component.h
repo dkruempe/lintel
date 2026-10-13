@@ -39,7 +39,7 @@ public:
    * @param lineOffset Line offset for error reporting
    * @return Vector of parsed configuration entries */
   virtual std::vector<std::shared_ptr<Entry>>
-    parse(const std::string &content, const std::string &fileName, int32_t lineOffset) = 0;
+    parse(const std::string &content, int32_t lineOffset, const std::string &fileName) = 0;
 };
 
 }// namespace lintel

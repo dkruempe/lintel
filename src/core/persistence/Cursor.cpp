@@ -70,7 +70,7 @@ namespace db {
     return *this;
   }
 
-  Cursor::Iterator Cursor::Iterator::operator++(int)
+  const Cursor::Iterator Cursor::Iterator::operator++(int)
   {
     Iterator tmp = *this;
     ++(*this);

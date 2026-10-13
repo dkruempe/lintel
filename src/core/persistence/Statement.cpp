@@ -6,7 +6,7 @@ namespace lintel {
 namespace db {
   Statement::Statement(const Connection &connection) : m_connection(connection)
   {
-    switch (connection.m_connectionType) {
+    switch (connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       m_statementSQLite = std::make_unique<sqlite::Statement>(*connection.m_connSQLite);
       break;
@@ -20,7 +20,7 @@ namespace db {
 
   Result Statement::execute(const std::string &query)
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       return Result(m_statementSQLite->execute(query));
       break;
@@ -34,7 +34,7 @@ namespace db {
 
   Result Statement::execute(const std::string &query, const ParameterBuilder &builder)
   {
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       return Result(m_statementSQLite->execute(query, builder.build()));
       break;
@@ -51,7 +51,7 @@ namespace db {
     Cursor cursor;
     cursor.m_query = query;
     cursor.m_needsInit = true;
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       cursor.m_sqliteConn = m_connection.m_connSQLite;
       break;
@@ -70,7 +70,7 @@ namespace db {
     cursor.m_query = query;
     cursor.m_params = builder.build();
     cursor.m_needsInit = true;
-    switch (m_connection.m_connectionType) {
+    switch (m_connection.m_connectionType.value()) {
     case ConnectionType::SQLite:
       cursor.m_sqliteConn = m_connection.m_connSQLite;
       break;

@@ -10,6 +10,16 @@ namespace lintel {
  */
 class SharedMemorySegment
 {
+public:
+  /** Auto-extend configuration for a segment that grows on demand. */
+  struct AutoExtendConfig
+  {
+    /** number of bytes to extend by when full */
+    std::size_t size;
+    /** maximum allowed size in bytes */
+    std::size_t maxSize;
+  };
+
 private:
   std::filesystem::path m_path;
   std::string m_name;
@@ -32,14 +42,12 @@ public:
    * @param sharedMemoryPath path to the shared memory file
    * @param name name of the segment
    * @param size initial size of the segment in bytes
-   * @param autoExtendSize number of bytes to extend by when full
-   * @param maxSize maximum allowed size in bytes
+   * @param autoExtendConfig how much to grow by when full and the hard upper bound
    */
   SharedMemorySegment(std::filesystem::path sharedMemoryPath,
     std::string name,
     std::size_t size,
-    std::size_t autoExtendSize,
-    std::size_t maxSize);
+    AutoExtendConfig autoExtendConfig);
 
   /** @return path to the shared memory file */
   [[nodiscard]] std::filesystem::path getPath() const;

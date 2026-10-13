@@ -20,15 +20,13 @@ namespace postgresql {
     return temp;
   }
 
-  PreparedStatement::PreparedStatement(const Connection &connection,
-    const std::string &statement,
-    const std::string &statementName)
-    : m_connection(connection), m_nParams(initNParams(statement)), m_statementName(statementName),
-      m_statement(initStatement(statement))
+  PreparedStatement::PreparedStatement(const Connection &connection, const Definition &definition)
+    : m_connection(connection), m_nParams(initNParams(definition.statement)), m_statementName(definition.name),
+      m_statement(initStatement(definition.statement))
   {
     std::shared_ptr<Result> result = connection.prepareStatement(m_statementName, m_statement, m_nParams);
     if (!result->isState(PGRES_COMMAND_OK)) {
-      throw db::SQLException("Prepare of statement '" + statementName + "' failed: " + connection.getErrorMessage());
+      throw db::SQLException("Prepare of statement '" + definition.name + "' failed: " + connection.getErrorMessage());
     }
   }
 
@@ -42,7 +40,7 @@ namespace postgresql {
     }
 
     std::shared_ptr<Result> result =
-      m_connection.executePreparedStatement(m_statementName, m_statement, m_nParams, db::Parameters(params));
+      m_connection.executePreparedStatement(m_statementName, m_nParams, db::Parameters(params));
     if (!result->isState(PGRES_TUPLES_OK) && !result->isState(PGRES_COMMAND_OK)) {
       throw db::SQLException("Prepared execution failed: " + m_connection.getErrorMessage());
     }

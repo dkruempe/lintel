@@ -215,7 +215,7 @@ TEST_CASE("PropertyRepositoryComponent rejects a mutable FILE_REPOSITORY", "[fil
         <PropertyRepository type="FILE_REPOSITORY" mutable="true" shadow="false"/>
     </PropertyRepositories>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("PropertyRepositoryComponent rejects a shadow FILE_REPOSITORY", "[file_property_repository]")
@@ -226,7 +226,7 @@ TEST_CASE("PropertyRepositoryComponent rejects a shadow FILE_REPOSITORY", "[file
         <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="true"/>
     </PropertyRepositories>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("PropertyRepositoryComponent accepts an immutable FILE_REPOSITORY", "[file_property_repository]")
@@ -237,7 +237,7 @@ TEST_CASE("PropertyRepositoryComponent accepts an immutable FILE_REPOSITORY", "[
         <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="false"/>
     </PropertyRepositories>)";
 
-  const auto entries = component.parse(xml, "test.xml", 0);
+  const auto entries = component.parse(xml, 0, "test.xml");
   REQUIRE(entries.size() == 1);
   const auto entry = std::static_pointer_cast<PropertyRepositoryEntry>(entries[0]);
   REQUIRE(entry->getType() == PropertyRepositoryType::FILE_REPOSITORY);
@@ -254,7 +254,7 @@ TEST_CASE("PropertyRepositoryComponent rejects an undefined repository type", "[
         <PropertyRepository type="DEFAULT" mutable="false" shadow="false"/>
     </PropertyRepositories>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("PropertyRepositoryComponent rejects a shadow repository that is not mutable", "[file_property_repository]")
@@ -265,7 +265,7 @@ TEST_CASE("PropertyRepositoryComponent rejects a shadow repository that is not m
         <PropertyRepository type="DATABASE_REPOSITORY" mutable="false" shadow="true"/>
     </PropertyRepositories>)";
 
-  REQUIRE_THROWS_AS(component.parse(xml, "test.xml", 0), ConfigurationException);
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 
 TEST_CASE("FilePropertyRepository is disabled when no FILE_REPOSITORY entry is configured",

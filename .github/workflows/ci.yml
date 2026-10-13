@@ -345,10 +345,15 @@ jobs:
       - name: Install Conan dependencies
         run: |
           conan profile detect --force
+          # cpp-httplib's default use_non_blocking_getaddrinfo=True selects glibc's
+          # getaddrinfo_a, whose internal resolver worker thread GCC's TSan does not
+          # instrument: the first malloc on it crashes in TSan's allocator (no data
+          # race). Force the thread-based resolver for this job only.
           conan install . \
             --output-folder=build \
             --build=missing \
             -s build_type=${{ env.BUILD_TYPE }} \
+            -o 'cpp-httplib/*:use_non_blocking_getaddrinfo=False' \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
       - name: Configure CMake with ThreadSanitizer
