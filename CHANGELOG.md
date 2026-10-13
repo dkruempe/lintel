@@ -65,6 +65,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
   The stale `base_library` references in `cmake/lintelConfig.cmake.in` (wrong targets file
   and `check_required_components`) were fixed as well.
+- **The error-handling model is now documented per layer (`ROADMAP.md` A4).** The library stays
+  exception-based (no `Result`/`std::expected`): `core` persistence/config throw
+  (`db::SQLException` / `ConfigurationException`), feature repositories degrade deliberately
+  (empty result = "keep the configured default") and log, services propagate domain errors but
+  degrade once a change is already effective in memory, and the HTTP layer maps to status codes.
+  See `docs/architecture.dox` (*Errors*); `DatabasePropertyRepository` is the reference case.
 
 ### Fixed
 - **`DatabasePropertyRepository::allOf()`** default `instanceName` was `".*0"` instead of `".*"`,

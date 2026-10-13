@@ -237,10 +237,29 @@
  * three places. This was a deliberate breaking change; the CHANGELOG migration
  * table lists the former global names next to their `lintel::` counterparts.
  *
- * @section conv_errors Errors
+ * @section conv_errors Errors and degradation
  *
- * - Persistence failures throw `db::SQLException`; the message carries the
- *   driver's own error text.
+ * The library is exception-based; there is no `std::expected`/`Result` error
+ * channel. The decision of *who* propagates and who degrades is made per layer
+ * and is what keeps the layering (`core` &larr; `base` &larr; `property` &larr;
+ * `http` &larr; `cli`) honest:
+ *
+ * | Layer | Contract |
+ * |---|---|
+ * | `core` persistence | throws `db::SQLException`, whose message carries the driver's own error text; never returns a partial result silently. |
+ * | `core` configuration | throws `ConfigurationException` carrying the tinyxml2 error text and the offending line number. |
+ * | `core` models / `core` shm | no I/O, therefore no error channel. |
+ * | feature repositories | **degrade deliberately**: a persistence failure is logged (`LOG_ERROR`) and surfaced as an empty list or a no-op, because the repository is an override layer over the configured defaults - an empty result means "keep the default", not "data lost". Domain-validation failures, in contrast, do throw (`std::runtime_error`, `HttpBadRequestException`). |
+ * | feature services | propagate domain exceptions; where a change is already effective in memory they log and continue instead of turning a local success into an HTTP 500. |
+ * | `features/http` | maps internal exceptions to status codes (`HttpBadRequestException` &rarr; 400, unauthorized &rarr; 401) and catches at the handler boundary so a stray exception cannot become a dropped connection. |
+ *
+ * The rule of thumb: **a layer that can substitute a sensible default degrades
+ * and logs; a layer that cannot must propagate.** `DatabasePropertyRepository`
+ * is the reference implementation of the "degrade" case and spells out its
+ * reasoning at the top of the file.
+ *
+ * Two further conventions:
+ *
  * - A `switch` over an enum is required to have a `default` branch that either
  *   handles the case or throws. A fall-through out of a non-`void` function is
  *   undefined behaviour, and CodeQL flagged exactly that once in this codebase.
