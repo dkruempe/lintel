@@ -58,6 +58,16 @@ if(ENABLE_LTO)
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
 endif()
 
+# Code coverage instrumentation (gcov). Off by default; the CI job `coverage`
+# configures a Debug build with this on and turns the results into an lcov/html
+# report via scripts/coverage-report.sh. Debug (-g -O0) keeps the line numbers
+# accurate; combining coverage with an optimised build type is not supported.
+option(ENABLE_COVERAGE "Enable code coverage instrumentation (gcov/lcov)" OFF)
+if(ENABLE_COVERAGE)
+    add_compile_options(--coverage)
+    add_link_options(--coverage)
+endif()
+
 # Link this 'library' to use the warnings specified in CompilerWarnings.cmake
 add_library(project_warnings INTERFACE)
 add_library(lintel_options INTERFACE)
@@ -90,4 +100,12 @@ ADD_SUBDIRECTORY(tests)
 option(BUILD_BENCHMARKS "Build benchmark suite" OFF)
 if(BUILD_BENCHMARKS)
     ADD_SUBDIRECTORY(benchmarks)
+endif()
+
+# Fuzzers (off by default). Clang builds real libFuzzer targets; any other
+# compiler falls back to scripts/standalone driver so the harnesses still
+# compile and can be smoke-tested against a corpus.
+option(BUILD_FUZZERS "Build libFuzzer harnesses" OFF)
+if(BUILD_FUZZERS)
+    ADD_SUBDIRECTORY(fuzz)
 endif()

@@ -4,14 +4,17 @@
 #include <boost/container/map.hpp>
 #include <boost/container/string.hpp>
 #include <boost/container/vector.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/sync/named_semaphore.hpp>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <string>
 #include <utility>
 
@@ -62,14 +65,39 @@ namespace shm {
 
   /** RAII guard that acquires (default) the segment remap semaphore and
    *  releases it on destruction. Used as a cross-process mutex around the
-   *  shared memory remap / construct critical sections. */
+   *  shared memory remap / construct critical sections.
+   *
+   *  The acquisition is bounded: a process that crashes while holding the
+   *  semaphore leaves its count at zero forever, so an unbounded `wait()`
+   *  would deadlock every other process. Instead the guard times out and
+   *  throws, turning the silent hang into an actionable error (the orphaned
+   *  handle can be inspected/removed out of band). */
   class SegmentSemaphoreGuard
   {
   public:
-    /** @param semaphore semaphore of the segment to guard */
-    explicit SegmentSemaphoreGuard(boost::interprocess::named_semaphore &semaphore) : m_semaphore(&semaphore)
+    /** Default time to wait for the semaphore before giving up. Generous,
+     *  because the guarded critical sections are short (remap/construct). */
+    static constexpr std::chrono::seconds kDefaultWaitTimeout{ 30 };
+
+    /** @param semaphore semaphore of the segment to guard
+     *  @param timeout   upper bound for acquiring the semaphore
+     *  @throws std::runtime_error if the semaphore could not be acquired
+     *          within the timeout (e.g. a previous holder crashed) */
+    explicit SegmentSemaphoreGuard(boost::interprocess::named_semaphore &semaphore,
+      std::chrono::steady_clock::duration timeout = kDefaultWaitTimeout)
+      : m_semaphore(&semaphore)
     {
-      m_semaphore->wait();
+      const auto microseconds = std::chrono::duration_cast<std::chrono::microseconds>(timeout).count();
+      const auto deadline =
+        boost::posix_time::microsec_clock::universal_time() + boost::posix_time::microseconds(microseconds);
+      if (!m_semaphore->timed_wait(deadline)) {
+        // A timed-out guard must not post on destruction - that would hand
+        // the lock to the next waiter even though we never owned it.
+        m_semaphore = nullptr;
+        throw std::runtime_error(
+          "timed out acquiring the shared memory segment remap semaphore; "
+          "a previous process may have crashed while holding it");
+      }
     }
 
     ~SegmentSemaphoreGuard()

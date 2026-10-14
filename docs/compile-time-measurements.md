@@ -300,6 +300,81 @@ print(next(e['command'] for e in d if 'StartupBuilder' in e['file']))") | wc -l
 
 ---
 
+## Record 4: Link-Time Optimization (`ENABLE_LTO`)
+
+Goal: quantify what `-DENABLE_LTO=ON` (CMake's `CMAKE_INTERPROCEDURAL_OPTIMIZATION`,
+i.e. GCC `-flto=auto -fno-fat-lto-objects`) buys for the Release artifacts, since the
+option existed but had never been measured (`ROADMAP.md` §4).
+
+Environment: GCC 14 / libstdc++ 14, `-O3 -DNDEBUG`, Ninja, Unity build ON, PCH ON,
+ccache **disabled** so the two builds are comparable. Two clean build trees
+(`Release-nolto`, `Release-lto`) over the same source; full default target set (41 steps).
+
+### Build time
+
+| | no LTO | LTO | Δ |
+|---|-------:|----:|---:|
+| full build (41 steps) | 169 s | 174 s | +3,0 % |
+
+The build is compile-bound, so the extra LTO link cost is almost invisible; a
+relink-only comparison would show a larger difference.
+
+### Binary size (bytes, statically linked)
+
+| Binary | no LTO | LTO | Δ |
+|--------|-------:|----:|---:|
+| `main` | 14.573.832 | 13.732.688 | −5,8 % |
+| `base_tests` | 20.029.608 | 18.838.904 | −5,9 % |
+| `base_benchmarks` | 12.678.504 | 10.907.240 | −14,0 % |
+| `db` | 11.912.584 | 10.226.520 | −14,2 % |
+| `event_bus` | 11.913.344 | 9.625.240 | −19,2 % |
+| `worker` | 14.507.712 | 12.498.680 | −13,8 % |
+| `property_change` | 12.253.104 | 10.658.616 | −13,0 % |
+| `named_pipe_server` | 44.120 | 36.104 | −18,2 % |
+| `message_queue` | 59.848 | 43.392 | −27,5 % |
+| `cleanup` | 16.992 | 16.752 | −1,4 % |
+| `base_test_sleeper` | 17.272 | 17.104 | −1,0 % |
+
+The thin wrappers around a small amount of code (`cleanup`,
+`base_test_sleeper`) gain almost nothing; the library-heavy executables shrink by
+**6–19 %**, with the single-purpose tools (`event_bus`, `message_queue`) at the
+top of the range.
+
+### Throughput (Google Benchmark, median of 7 runs, `min_time=0.5s`)
+
+| Benchmark | no LTO | LTO | Δ |
+|-----------|-------:|----:|---:|
+| `BM_ValidatePattern_Simple` | 600 ns | 601 ns | +0,2 % |
+| `BM_ValidatePattern_Complex` | 33.864 ns | 38.883 ns | **+14,8 %** |
+| `BM_PropertyDto_Serialize` | 600 ns | 586 ns | −2,3 % |
+| `BM_PropertyDto_Deserialize` | 1.099 ns | 1.095 ns | −0,4 % |
+
+LTO is **not a uniform win**. The regex path (`ValidatePattern_Complex`) is
+reproducibly ~15 % **slower** under LTO (confirmed across two independent runs),
+while the library's own DTO serialisation is unchanged within noise. The likely
+cause is inlining/layout decisions in the `<regex>`/libstdc++ path that happen to
+land badly here; this is a microbenchmark, not a full workload, so the size should
+be read together with a profile before adopting LTO for a regexy service.
+
+### Conclusion
+
+Keep `ENABLE_LTO` **opt-in**. It is a real size win (−6…−19 %) at no meaningful
+build-time cost and no code change, but throughput must be measured per workload:
+on this snapshot it helps some paths, leaves most unchanged and regresses the
+regex-heavy one.
+
+### Reproduction
+
+```bash
+cmake -S . -B build/build/Release-nolto -DCMAKE_BUILD_TYPE=Release -G Ninja -DBUILD_BENCHMARKS=ON
+cmake -S . -B build/build/Release-lto   -DCMAKE_BUILD_TYPE=Release -G Ninja -DENABLE_LTO=ON -DBUILD_BENCHMARKS=ON
+cmake --build build/build/Release-nolto --parallel $(nproc)
+cmake --build build/build/Release-lto   --parallel $(nproc)
+ls -l bin/main bin/base_tests bin/db        # size comparison
+```
+
+---
+
 ## ccache notes
 
 - The local cache is small (cache size 0,06–0,45 % of 5 GB): the Unity TUs

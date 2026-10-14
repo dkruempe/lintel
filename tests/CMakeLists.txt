@@ -38,6 +38,7 @@ ADD_EXECUTABLE(base_tests
     features/HistoryComponentTest.cpp
     features/HistoryServiceGatingTest.cpp
     features/SharedMemorySegmentComponentTest.cpp
+    features/SharedMemoryServiceTest.cpp
     events/EventBusTest.cpp
     plugins/AdminUserBootstrapPluginTest.cpp
     plugins/DatabaseBootstrapPluginTest.cpp

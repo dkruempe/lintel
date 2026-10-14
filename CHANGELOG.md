@@ -18,9 +18,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (alongside the existing DTO/Regex/SQLite ones) and an advisory CI job `benchmarks` that builds
   `base_benchmarks`, runs it and uploads a JSON result artifact.
 - **ThreadSanitizer CI job** `tsan` (advisory, GCC 14), modelled on the existing ASan+UBSan job.
+- **Code-coverage measurement.** New CMake option `ENABLE_COVERAGE` (gcov instrumentation) and
+  `scripts/coverage-report.sh`, which turns the gcov data into an lcov tracefile and an html
+  report. The advisory CI job `coverage` builds a Debug binary with coverage, runs the unit
+  tests and uploads the report as an artifact (`ROADMAP.md` §4).
+- **Fuzzing harnesses for the parsers.** New `fuzz/` directory with `fuzz_config_env`
+  (`EnvironmentConfiguration::expand`), `fuzz_json_dto` (every JSON DTO `deserialize`) and
+  `fuzz_property_xml` (`XMLConfigSerializationStrategy::deserialize`), built with
+  `-DBUILD_FUZZERS=ON`. Clang builds real libFuzzer targets; other compilers build the same
+  harness behind a standalone driver. The advisory CI job `fuzz` runs each against a seed
+  corpus with ASan.
+- **API-specification lint and a written versioning policy (`ROADMAP.md` A7).** New
+  `scripts/check-swagger.sh` (blocking CI job `swagger`) validates `swagger.yaml` (Swagger 2.0):
+  version against `LINTEL_VERSION`, dangling `$ref`s, operations without `responses`,
+  undeclared security schemes, and that the `swagger.md` mirror's `## Version:` matches.
+  `docs/versioning.md` documents the SemVer contract, the public-API surface and the
+  deprecation/release process.
 - **Docker `app` healthcheck** via the unauthenticated `GET /health` endpoint (`curl` added to
   the runtime image), plus explicit development-safety warnings in `docker-compose.yml` and the
   README about published `test/test` PostgreSQL credentials and non-production TLS.
+- **Shared-memory grow/shrink semantics are now tested and documented (`ROADMAP.md` A6).**
+  `tests/features/SharedMemoryServiceTest.cpp` exercises `SharedMemoryService::growOf()` /
+  `shrinkOf()` against real segments: `grow=0` is a no-op, a request beyond the remaining
+  headroom is capped at `maxSize`, growing an already-maximal segment throws, an unknown segment
+  raises `ShmSegmentNotFound`, and the generation counter advances. `docs/architecture.dox`
+  documents the sizing semantics.
+- **LTO Release artifacts measured (`ROADMAP.md` §4).** `docs/compile-time-measurements.md`
+  (Record 4) compares a clean `-DENABLE_LTO=ON` build against the default: **−6…−19 %** binary
+  size at essentially unchanged build time, but workload-dependent throughput (a regex-heavy
+  microbenchmark regresses ~15 %, the library's DTO paths are unchanged). `ENABLE_LTO` stays
+  opt-in.
 
 ### Changed
 - **The public API moved into `namespace lintel` (breaking).** Every public class, free
@@ -88,6 +115,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **A crashed shared-memory holder no longer deadlocks the segment (`ROADMAP.md` A6).**
+  `shm::SegmentSemaphoreGuard` acquired the segment's named remap semaphore with an unbounded
+  `wait()`; a process that died while holding it left the count at zero, so every other process
+  blocked forever. Acquisition is now bounded (default 30 s) and throws a descriptive
+  `std::runtime_error` on timeout, leaving the orphaned handle for out-of-band recovery.
+- **`swagger.md` advertised the wrong version.** The mirror's heading still said `Version:
+  0.1.0` while `swagger.yaml` had advanced to `0.2.0`; the CMake check only covers
+  `swagger.yaml`. Corrected, and `scripts/check-swagger.sh` now keeps both in sync (`ROADMAP.md`
+  A7).
+- **Schema migrations of an existing database were silently dropped (`ROADMAP.md` A5).**
+  `DatabaseBootstrapPlugin::initDatabase()` started its version counter at `0` instead of the
+  version recorded in `schema_version`, so the first `init_*_version_N.sql` of an upgrade
+  (`N > 1`) tripped the "version jump" guard and the migration never ran. The counter now
+  starts at the recorded version, so higher-versioned init/data file pairs form a working
+  migration path. The file ordering comparator was also not a strict weak ordering (undefined
+  behaviour for `std::sort`) and is fixed. Tests cover a single upgrade and a multi-step chain.
 - **`DatabasePropertyRepository::allOf()`** default `instanceName` was `".*0"` instead of `".*"`,
   so every call omitting the instance filter returned nothing (`LIKE '%0'`). Fixed the default;
   regression test added.

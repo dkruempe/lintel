@@ -145,13 +145,20 @@ void DatabaseBootstrapPlugin::initDatabase(const std::shared_ptr<DatabaseConnect
         fileInformations.end(),
         [&](const FileInformation &fileInformation) { return fileInformation.m_version <= schemaVersionStart; }),
       fileInformations.end());
+    // Strict weak ordering: sort by version first, and only within the same version run the
+    // init file before the data file. Comparing only "init before data" as a tie-breaker after
+    // the version comparison is not a strict weak ordering and is undefined behaviour for
+    // std::sort.
     std::sort(
       fileInformations.begin(), fileInformations.end(), [](const FileInformation &a, const FileInformation &b) -> bool {
-        if (a.m_version < b.m_version) { return true; }
+        if (a.m_version != b.m_version) { return a.m_version < b.m_version; }
         return a.m_isInitFile && !b.m_isInitFile;
       });
     db::Connection connection(connectionEntry);
-    int32_t currentSchemaVersion = 0;
+    // Continue from the recorded version so that higher-versioned files form a migration path
+    // for an already initialised database. Starting at 0 made the first init file of an upgrade
+    // look like a version jump and silently dropped the migration.
+    int32_t currentSchemaVersion = schemaVersionStart;
     for (const auto &item : fileInformations) {
       if (item.m_isInitFile && currentSchemaVersion + 1 != item.m_version) {
         LOG_ERROR("{} - initialization failed bc. of version jump between files", connectionEntry->getName());

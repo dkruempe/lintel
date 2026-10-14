@@ -276,24 +276,44 @@ TEST_CASE("DatabaseBootstrapPlugin: init and data files are applied and recorded
   REQUIRE(dbpSchemaVersion(fixture.databaseFile, "demo") == 1);
 }
 
-TEST_CASE("DatabaseBootstrapPlugin: a higher version is rejected as a version jump", "[db_bootstrap_plugin]")
+TEST_CASE("DatabaseBootstrapPlugin: a higher version upgrades an already initialised schema", "[db_bootstrap_plugin]")
 {
   DbpFixture fixture("upgrade");
   fixture.writeFile("init_schema_demo_version_1.sql", "create table demo (id integer);");
   fixture.writeFile("data_schema_demo_version_1.sql", "insert into demo values (1);");
   fixture.plugin->onStart();
   REQUIRE(dbpSchemaVersion(fixture.databaseFile, "demo") == 1);
+  REQUIRE(dbpCount(fixture.databaseFile, "select id from demo") == 1);
 
   fixture.writeFile("init_schema_demo_version_2.sql", "alter table demo add column extra text;");
-  fixture.writeFile("data_schema_demo_version_2.sql", "insert into demo values (2);");
+  fixture.writeFile("data_schema_demo_version_2.sql", "insert into demo(id) values (2);");
   REQUIRE_NOTHROW(fixture.plugin->onStart());
 
-  // initDatabase starts its counter at 0 instead of the recorded version, so the first file of an
-  // upgrade (init version 2) trips the "version jump" guard. The migration is dropped silently
-  // and the recorded version stays where it was. Pinned, because fixing the counter would change
-  // the upgrade path of an already initialised database.
-  REQUIRE(dbpSchemaVersion(fixture.databaseFile, "demo") == 1);
-  REQUIRE(dbpCount(fixture.databaseFile, "select id from demo") == 1);
+  // The recorded version advances, the init file changes the structure and the data file inserts
+  // the new row: a higher-versioned pair is a migration for an existing database, not a jump.
+  REQUIRE(dbpSchemaVersion(fixture.databaseFile, "demo") == 2);
+  REQUIRE(dbpCount(fixture.databaseFile, "select id from demo") == 2);
+  REQUIRE(dbpCount(fixture.databaseFile, "select extra from demo") == 2);
+  // the tracking row is updated, not inserted a second time
+  REQUIRE(dbpCount(fixture.databaseFile, "select name from schema_version") == 1);
+}
+
+TEST_CASE("DatabaseBootstrapPlugin: a migration chain applies every version in order", "[db_bootstrap_plugin]")
+{
+  DbpFixture fixture("chain");
+  fixture.writeFile("init_schema_demo_version_1.sql", "create table demo (id integer);");
+  fixture.writeFile("data_schema_demo_version_1.sql", "insert into demo values (1);");
+  fixture.writeFile("init_schema_demo_version_2.sql", "alter table demo add column extra text;");
+  fixture.writeFile("data_schema_demo_version_2.sql", "insert into demo(id) values (2);");
+  fixture.writeFile("init_schema_demo_version_3.sql", "alter table demo add column more text;");
+  fixture.writeFile("data_schema_demo_version_3.sql", "insert into demo(id) values (3);");
+
+  REQUIRE_NOTHROW(fixture.plugin->onStart());
+
+  REQUIRE(dbpSchemaVersion(fixture.databaseFile, "demo") == 3);
+  REQUIRE(dbpCount(fixture.databaseFile, "select id from demo") == 3);
+  REQUIRE(dbpCount(fixture.databaseFile, "select extra from demo") == 3);
+  REQUIRE(dbpCount(fixture.databaseFile, "select more from demo") == 3);
 }
 
 TEST_CASE("DatabaseBootstrapPlugin: a version jump aborts the whole directory", "[db_bootstrap_plugin]")

@@ -158,7 +158,26 @@
  *
  * Cross-process access to a remapped segment is serialized by
  * `SegmentSemaphoreGuard`, which acquires and releases the segment's named
- * remap semaphore.
+ * remap semaphore. The acquisition is bounded (`SegmentSemaphoreGuard::kDefaultWaitTimeout`
+ * seconds): a process
+ * that crashes while holding the semaphore leaves its count at zero, and an
+ * unbounded wait would stall every other process. On timeout the guard throws
+ * instead, and the orphaned handle can be inspected or removed out of band
+ * (`examples/cleanup.cpp` shows the manual path).
+ *
+ * Sizing semantics of @ref lintel::SharedMemoryService:
+ *
+ * - A segment is created with its configured initial size. With an
+ *   `AutoExtendConfig` it also has a grow increment and a hard `maxSize`.
+ * - `growOf()` grows by the requested amount. A `grow` of zero is a no-op.
+ *   With `maxSize != 0` the request is capped to the remaining headroom, and
+ *   growing a segment that is already at `maxSize` throws. With `maxSize == 0`
+ *   the segment is unbounded (the historical behavior).
+ * - `shrinkOf()` shrinks the file to the size its current contents need.
+ * - Both operations reopen the mapping (the `mmap` length is fixed at mapping
+ *   time) and bump the generation counter, so repositories notice that
+ *   references into the old mapping are invalid and re-fetch them.
+ * - Unknown segment names raise @ref lintel::ShmSegmentNotFound.
  *
  * @section arch_transports Transports
  *

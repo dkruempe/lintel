@@ -1,0 +1,1 @@
+<Properties><Property name="demo" type="int32_t" value="42" process="p" class="c" instance="i"/></Properties>

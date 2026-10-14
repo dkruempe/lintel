@@ -1,0 +1,1 @@
+prefix-${HOME}-mid-${FUZZ_A}-$${LITERAL}-suffix-${UNSET_VAR}

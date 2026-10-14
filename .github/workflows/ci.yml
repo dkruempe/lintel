@@ -473,6 +473,227 @@ jobs:
           path: benchmark_results.json
           if-no-files-found: warn
 
+  coverage:
+    name: coverage (gcov/lcov)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+
+    # Advisory: the report is uploaded as an artifact and summarised, but a drop
+    # does not fail the run yet. Promote to blocking once a floor is agreed.
+    continue-on-error: true
+
+    env:
+      CC: gcc-14
+      CXX: g++-14
+      BUILD_TYPE: Debug
+      BUILD_DIR: build/build/Debug
+      CACHE_ID: coverage
+      CONAN_SYSREQUIRES_MODE: enabled
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Conan packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'tests/**', 'examples/**') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      - name: Install system dependencies
+        # Hard backstop above install-deps.sh's own 30 min budget: cmake is
+        # ~11 MB and runners occasionally get a mirror throttled to ~12 kB/s,
+        # which takes ~16 min and must NOT be killed and restarted.
+        timeout-minutes: 40
+        run: |
+          ./scripts/install-deps.sh \
+            build-essential g++-14 cmake ninja-build ccache \
+            pkg-config python3 python3-pip lcov \
+            libpq-dev libsqlite3-dev libssl-dev
+
+      - name: Generate TLS test certificates
+        run: ./cfg/certs/generate_certs.sh
+
+      - name: Install Conan
+        run: pip3 install conan --break-system-packages --no-cache-dir
+
+      - name: Install Conan dependencies
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      # Debug keeps -g -O0, so line coverage is accurate: optimised builds
+      # inline code away and skew the report.
+      - name: Configure CMake with coverage
+        run: |
+          cmake -S . -B ${{ env.BUILD_DIR }} \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/${{ env.BUILD_TYPE }}/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DENABLE_COVERAGE=ON \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -G Ninja
+
+      - name: Build
+        run: cmake --build ${{ env.BUILD_DIR }} --parallel $(nproc)
+
+      - name: Run tests
+        working-directory: ${{ env.BUILD_DIR }}
+        env:
+          # A missing postgres service must fail the job - see requirePg().
+          LINTEL_REQUIRE_PG: "1"
+        run: ctest --output-on-failure --label-regex unit
+
+      - name: Build coverage report
+        env:
+          GCOV: gcov-14
+          SUMMARY_FILE: ${{ github.step_summary }}
+        run: ./scripts/coverage-report.sh ${{ env.BUILD_DIR }} coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: warn
+
+  fuzz:
+    name: fuzzing (libFuzzer)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+
+    # Advisory: each harness runs for a bounded time on every run. A finding
+    # (crash / sanitizer error) is uploaded as an artifact and should be reviewed
+    # by a human; the job is promoted to blocking once the parsers stay quiet.
+    continue-on-error: true
+
+    env:
+      CC: clang-18
+      CXX: clang++-18
+      BUILD_TYPE: RelWithDebInfo
+      BUILD_DIR: build/fuzz
+      CACHE_ID: fuzz
+      CONAN_SYSREQUIRES_MODE: enabled
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Conan packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      - name: Cache ccache
+        uses: actions/cache@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: ccache-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'conanfile.txt', 'src/**', 'fuzz/**') }}
+          restore-keys: |
+            ccache-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      - name: Install system dependencies
+        timeout-minutes: 40
+        run: |
+          ./scripts/install-deps.sh \
+            build-essential g++-14 clang-18 cmake ninja-build ccache \
+            pkg-config python3 python3-pip \
+            libpq-dev libsqlite3-dev libssl-dev
+
+      - name: Generate TLS test certificates
+        run: ./cfg/certs/generate_certs.sh
+
+      - name: Install Conan
+        run: pip3 install conan --break-system-packages --no-cache-dir
+
+      - name: Install Conan dependencies
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      # fuzzer-no-link instruments the whole library with libFuzzer's coverage
+      # feedback (without pulling in its main()); the fuzz targets themselves add
+      # -fsanitize=fuzzer. ASan catches memory errors the harnesses reach.
+      - name: Configure CMake with sanitizers and fuzzers
+        run: |
+          cmake -S . -B ${{ env.BUILD_DIR }} \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/${{ env.BUILD_TYPE }}/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_FUZZERS=ON \
+            -DCMAKE_CXX_FLAGS="-fsanitize=fuzzer-no-link,address -fno-omit-frame-pointer -g" \
+            -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address" \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -G Ninja
+
+      - name: Build fuzzers
+        run: |
+          cmake --build ${{ env.BUILD_DIR }} \
+            --target fuzz_config_env fuzz_json_dto fuzz_property_xml \
+            --parallel $(nproc)
+
+      - name: Run fuzzers
+        env:
+          ASAN_OPTIONS: abort_on_error=1:detect_leaks=0
+        run: |
+          set -euo pipefail
+          run_fuzzer() {
+            local target="$1" corpus="$2"
+            mkdir -p "fuzz-artifacts/$target"
+            echo "::group::$target (corpus: fuzz/corpus/$corpus)"
+            "./bin/$target" "fuzz/corpus/$corpus" \
+              -max_total_time=90 \
+              -timeout=10 \
+              -rss_limit_mb=2048 \
+              -artifact_prefix="fuzz-artifacts/$target/" \
+              -print_final_stats=1
+            echo "::endgroup::"
+          }
+          run_fuzzer fuzz_config_env config_env
+          run_fuzzer fuzz_json_dto json_dto
+          run_fuzzer fuzz_property_xml property_xml
+
+      - name: Upload fuzzing artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: fuzzing-artifacts
+          path: fuzz-artifacts/
+          if-no-files-found: ignore
+
   secrets:
     name: secret guard
     runs-on: ubuntu-24.04
@@ -505,6 +726,27 @@ jobs:
       # the collisions the migration removed. The generated `config.h` is exempt.
       - name: Check public header namespaces
         run: ./scripts/check-namespace.sh
+
+  swagger:
+    name: swagger lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Blocking, and cheap. swagger.yaml is the wire-contract source of truth;
+      # the configured version check in CMakeLists.txt only covers info.version,
+      # while this job also catches dangling $refs, operations without responses,
+      # undeclared security schemes and a stale swagger.md mirror.
+      - name: Install YAML support
+        timeout-minutes: 12
+        run: |
+          ./scripts/install-deps.sh python3 python3-yaml
+          pip3 install swagger-spec-validator --break-system-packages --no-cache-dir
+
+      - name: Lint the API specification
+        run: ./scripts/check-swagger.sh
 
   format:
     name: clang-format
