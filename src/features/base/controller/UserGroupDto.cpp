@@ -48,7 +48,7 @@ bool UserGroupDto::deserialize(const rapidjson::Value &obj)
     success = false;
   }
   if (const auto *groupRemoves = json::member(obj, shape.GROUPS_REMOVE);
-    groupRemoves != nullptr && groupRemoves->IsArray()) {
+      groupRemoves != nullptr && groupRemoves->IsArray()) {
     for (const auto &item : groupRemoves->GetArray()) {
       if (item.IsString()) { m_groupRemoves.insert(std::string(item.GetString(), item.GetStringLength())); }
     }
