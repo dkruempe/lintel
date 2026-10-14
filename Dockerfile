@@ -1,4 +1,4 @@
-FROM ubuntu:25.10 AS base
+FROM ubuntu:26.04 AS base
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     build-essential \
@@ -54,7 +54,7 @@ WORKDIR /workspace/build/build/Release
 CMD ["ctest", "--output-on-failure"]
 
 # ── Runtime layer (minimal image) ────────────────────────────────────
-FROM ubuntu:25.10 AS runtime
+FROM ubuntu:26.04 AS runtime
 
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y \
     libpq5 \
