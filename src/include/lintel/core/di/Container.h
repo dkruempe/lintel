@@ -320,6 +320,19 @@ namespace di {
     {
       auto container = std::make_shared<Container>();
       for (const auto &registration : m_registrations) { container->addRegistration(registration); }
+      // The container is resolvable as itself so injected services and bootstrap
+      // plugins receive the real container (e.g. VirtualGroupBootstrapPlugin
+      // resolves all registered GroupProviders). A weak_ptr keeps this from
+      // creating a container <-> registration reference cycle.
+      auto selfRegistration = std::make_shared<Registration>();
+      selfRegistration->keys.push_back(std::type_index(typeid(Container)));
+      selfRegistration->casts[std::type_index(typeid(Container))] =
+        [](const std::shared_ptr<void> &instance) -> std::shared_ptr<void> { return instance; };
+      std::weak_ptr<Container> weak = container;
+      selfRegistration->factory = [weak](Container &) -> std::shared_ptr<void> {
+        return std::static_pointer_cast<void>(weak.lock());
+      };
+      container->addRegistration(selfRegistration);
       return container;
     }
 

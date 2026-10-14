@@ -33,6 +33,7 @@ ADD_EXECUTABLE(base_tests
     core/CursorTest.cpp
     core/RegexUtilsTest.cpp
     core/StartupBuilderTest.cpp
+    core/DiContainerTest.cpp
     features/ConfigComponentsTest.cpp
     features/HistoryComponentTest.cpp
     features/HistoryServiceGatingTest.cpp
