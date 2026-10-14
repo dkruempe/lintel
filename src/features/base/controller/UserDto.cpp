@@ -3,6 +3,7 @@
 
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/StringifyService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 UserDto::Shapes UserDto::shape{};
@@ -71,41 +72,34 @@ bool UserDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // FIRST_NAME
-  if (obj.HasMember(shape.FIRST_NAME)) {
-    m_firstName = obj[shape.FIRST_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.FIRST_NAME, m_firstName)) {
     success = false;
     LOG_ERROR("{} not defined in json serializatioon", shape.FIRST_NAME);
   }
-  if (obj.HasMember(shape.PASSWORD)) {
-    m_password = std::make_optional(obj[shape.PASSWORD].GetString());
+  std::string password;
+  if (json::getString(obj, shape.PASSWORD, password)) {
+    m_password = std::make_optional(password);
   } else {
     m_password = std::nullopt;
   }
   // LAST_NAME
-  if (obj.HasMember(shape.LAST_NAME)) {
-    m_lastName = obj[shape.LAST_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.LAST_NAME, m_lastName)) {
     success = false;
     LOG_ERROR("{} not defined in json serializatioon", shape.LAST_NAME);
   }
   // EMAIL
-  if (obj.HasMember(shape.EMAIL)) {
-    m_eMail = obj[shape.EMAIL].GetString();
-  } else {
+  if (!json::getString(obj, shape.EMAIL, m_eMail)) {
     success = false;
     LOG_ERROR("{} not defined in json serializatioon", shape.EMAIL);
   }
   // USER_NAME
-  if (obj.HasMember(shape.USER_NAME)) {
-    m_userName = obj[shape.USER_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.USER_NAME, m_userName)) {
     success = false;
     LOG_ERROR("{} not defined in json serializatioon", shape.USER_NAME);
   }
   // SEX
-  if (obj.HasMember(shape.SEX) && obj[shape.SEX].IsString()) {
-    const std::string sex = obj[shape.SEX].GetString();
+  std::string sex;
+  if (json::getString(obj, shape.SEX, sex)) {
     if (sex == "female") {
       m_sex = User::Sex::Female;
     } else if (sex == "male") {
@@ -116,26 +110,23 @@ bool UserDto::deserialize(const rapidjson::Value &obj)
     }
   }
   // CREATED_TIMESTAMP
-  if (obj.HasMember(shape.CREATED_TIMESTAMP)) {
-    m_createdTimestamp = StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(
-      obj[shape.CREATED_TIMESTAMP].GetString());
+  std::string createdTimestamp;
+  if (json::getString(obj, shape.CREATED_TIMESTAMP, createdTimestamp)) {
+    m_createdTimestamp =
+      StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(createdTimestamp);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serializatioon", shape.CREATED_TIMESTAMP);
   }
   // GROUPS
-  if (obj.HasMember(shape.GROUPS)) {
+  if (const auto *groups = json::member(obj, shape.GROUPS); groups != nullptr) {
     m_groups = std::make_unique<GroupsDto>();
-    m_groups->deserialize(obj[shape.GROUPS]);
+    m_groups->deserialize(*groups);
   } else {
     m_groups = nullptr;
   }
   // ID
-  if (obj.HasMember(shape.ID)) {
-    m_id = obj[shape.ID].GetString();
-  } else {
-    m_id = "";
-  }
+  if (!json::getString(obj, shape.ID, m_id)) { m_id = ""; }
   return success;
 }
 
@@ -176,6 +167,7 @@ bool UsersDto::deserialize(const rapidjson::Value &obj)
 {
   if (!obj.IsArray()) { return false; }
   for (auto iter = obj.Begin(); iter != obj.End(); iter++) {
+    if (!iter->IsObject()) { continue; }
     UserDto userDto;
     userDto.deserialize(*iter);
     m_users.push_back(std::move(userDto));
@@ -218,8 +210,10 @@ void UsersPageDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer)
 bool UsersPageDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
+  if (!obj.IsObject()) { return false; }
   if (obj.HasMember(shape.ITEMS) && obj[shape.ITEMS].IsArray()) {
     for (auto iter = obj[shape.ITEMS].Begin(); iter != obj[shape.ITEMS].End(); iter++) {
+      if (!iter->IsObject()) { continue; }
       UserDto userDto;
       userDto.deserialize(*iter);
       m_users.push_back(std::move(userDto));

@@ -16,6 +16,7 @@ bool UserSessionsDto::deserialize(const rapidjson::Value &obj)
 {
   if (!obj.IsArray()) { return false; }
   for (auto iter = obj.Begin(); iter != obj.End(); iter++) {
+    if (!iter->IsObject()) { continue; }
     UserSessionDto sessionDto;
     sessionDto.deserialize(*iter);
     m_sessions.push_back(std::move(sessionDto));

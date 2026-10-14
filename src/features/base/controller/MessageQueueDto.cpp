@@ -3,6 +3,7 @@
 #include "lintel/features/base/configuration/MessageQueueEntry.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 #include <rapidjson/stringbuffer.h>
 
@@ -44,27 +45,19 @@ void MessageQueueDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writ
 bool MessageQueueDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(m_shape.NAME)) {
-    m_name = obj[m_shape.NAME].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.NAME, m_name)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.NAME);
   }
-  if (obj.HasMember(m_shape.PROCESS)) {
-    m_process = obj[m_shape.PROCESS].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.PROCESS, m_process)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.PROCESS);
   }
-  if (obj.HasMember(m_shape.MAX_MESSAGES)) {
-    m_maxMessages = obj[m_shape.MAX_MESSAGES].GetInt();
-  } else {
+  if (!json::getInt(obj, m_shape.MAX_MESSAGES, m_maxMessages)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.MAX_MESSAGES);
   }
-  if (obj.HasMember(m_shape.MESSAGES)) {
-    m_messages = obj[m_shape.MESSAGES].GetInt();
-  } else {
+  if (!json::getInt(obj, m_shape.MESSAGES, m_messages)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.MESSAGES);
   }

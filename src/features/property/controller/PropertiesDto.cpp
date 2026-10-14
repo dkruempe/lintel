@@ -33,6 +33,7 @@ void PropertiesDto::deserialize(const std::string &json)
   document.Parse(json.c_str());
   if (!document.IsArray()) { return; }
   for (const auto &property : document.GetArray()) {
+    if (!property.IsObject()) { continue; }
     PropertyDto propertyDto;
     propertyDto.deserialize(property);
     m_properties.push_back(propertyDto);

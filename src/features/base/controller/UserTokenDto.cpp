@@ -1,6 +1,7 @@
 #include "lintel/features/base/controller/UserTokenDto.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 UserTokenDto::Shapes UserTokenDto::shape{};
@@ -19,9 +20,7 @@ void UserTokenDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer)
 bool UserTokenDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(shape.ID)) {
-    m_id = obj[shape.ID].GetString();
-  } else {
+  if (!json::getString(obj, shape.ID, m_id)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", shape.ID);
   }

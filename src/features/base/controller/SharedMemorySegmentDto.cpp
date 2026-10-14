@@ -1,6 +1,7 @@
 #include "lintel/features/base/controller/SharedMemorySegmentDto.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 SharedMemorySegmentDto::Shapes SharedMemorySegmentDto::m_shape{};
@@ -84,78 +85,80 @@ bool SharedMemorySegmentDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // PATH
-  if (obj.HasMember(m_shape.PATH)) {
-    m_path = obj[m_shape.PATH].GetString();
+  std::string pathString;
+  if (json::getString(obj, m_shape.PATH, pathString)) {
+    m_path = std::filesystem::path(pathString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.PATH);
   }
   // NAME
-  if (obj.HasMember(m_shape.NAME)) {
-    m_name = obj[m_shape.NAME].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.NAME, m_name)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.NAME);
   }
   // SIZE
-  if (obj.HasMember(m_shape.SIZE)) {
-    m_size = std::stoul(obj[m_shape.SIZE].GetString());
+  std::string sizeString;
+  if (json::getString(obj, m_shape.SIZE, sizeString)) {
+    m_size = std::stoul(sizeString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.SIZE);
   }
   // AUTO_EXTEND
-  if (obj.HasMember(m_shape.AUTO_EXTEND)) {
-    m_isAutoExtend = obj[m_shape.AUTO_EXTEND].GetBool();
-  } else {
+  if (!json::getBool(obj, m_shape.AUTO_EXTEND, m_isAutoExtend)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.AUTO_EXTEND);
   }
   // AUTO_EXTEND_SIZE
-  if (obj.HasMember(m_shape.AUTO_EXTEND_SIZE)) {
-    m_autoExtendSize = std::stoul(obj[m_shape.AUTO_EXTEND_SIZE].GetString());
+  std::string autoExtendSizeString;
+  if (json::getString(obj, m_shape.AUTO_EXTEND_SIZE, autoExtendSizeString)) {
+    m_autoExtendSize = std::stoul(autoExtendSizeString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.AUTO_EXTEND_SIZE);
   }
   // MAX_SIZE
-  if (obj.HasMember(m_shape.MAX_SIZE)) {
-    m_maxSize = std::stoul(obj[m_shape.MAX_SIZE].GetString());
+  std::string maxSizeString;
+  if (json::getString(obj, m_shape.MAX_SIZE, maxSizeString)) {
+    m_maxSize = std::stoul(maxSizeString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.MAX_SIZE);
   }
   // SANITY
-  if (obj.HasMember(m_shape.SANITY)) {
-    m_isSanity = obj[m_shape.SANITY].GetBool();
-  } else {
+  if (!json::getBool(obj, m_shape.SANITY, m_isSanity)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.SANITY);
   }
   // CURRENT_SIZE
-  if (obj.HasMember(m_shape.CURRENT_SIZE)) {
-    m_currentSize = std::stoul(obj[m_shape.CURRENT_SIZE].GetString());
+  std::string currentSizeString;
+  if (json::getString(obj, m_shape.CURRENT_SIZE, currentSizeString)) {
+    m_currentSize = std::stoul(currentSizeString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.CURRENT_SIZE);
   }
   // FREE_SIZE
-  if (obj.HasMember(m_shape.FREE_SIZE)) {
-    m_freeSize = std::stoul(obj[m_shape.FREE_SIZE].GetString());
+  std::string freeSizeString;
+  if (json::getString(obj, m_shape.FREE_SIZE, freeSizeString)) {
+    m_freeSize = std::stoul(freeSizeString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.FREE_SIZE);
   }
   // NAMED_OBJECTS
-  if (obj.HasMember(m_shape.NAMED_OBJECTS)) {
-    m_amountNamedObjects = std::stoul(obj[m_shape.NAMED_OBJECTS].GetString());
+  std::string namedObjectsString;
+  if (json::getString(obj, m_shape.NAMED_OBJECTS, namedObjectsString)) {
+    m_amountNamedObjects = std::stoul(namedObjectsString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.NAMED_OBJECTS);
   }
   // UNIQUE_OBJECTS
-  if (obj.HasMember(m_shape.UNIQUE_OBJECTS)) {
-    m_amountUniqueObjects = std::stoul(obj[m_shape.UNIQUE_OBJECTS].GetString());
+  std::string uniqueObjectsString;
+  if (json::getString(obj, m_shape.UNIQUE_OBJECTS, uniqueObjectsString)) {
+    m_amountUniqueObjects = std::stoul(uniqueObjectsString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.UNIQUE_OBJECTS);

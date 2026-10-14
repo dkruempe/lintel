@@ -20,6 +20,7 @@ void ProcessGroupsDto::deserialize(const std::string &json)
   document.Parse(json.c_str());
   if (!document.IsArray()) { return; }
   for (const auto &iter : document.GetArray()) {
+    if (!iter.IsObject()) { continue; }
     ProcessGroupDto processGroupDto;
     processGroupDto.deserialize(iter);
     m_processGroups.push_back(processGroupDto);

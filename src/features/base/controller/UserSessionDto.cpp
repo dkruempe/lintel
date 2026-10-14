@@ -4,6 +4,7 @@
 
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/StringifyService.h"
+#include "lintel/core/utils/JsonUtils.h"
 #include <algorithm>
 
 namespace lintel {
@@ -59,30 +60,25 @@ bool UserSessionDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // ID
-  if (obj.HasMember(shape.ID)) {
-    m_id = obj[shape.ID].GetString();
-  } else {
+  if (!json::getString(obj, shape.ID, m_id)) {
     LOG_ERROR("{} not defined in json serialization", shape.ID);
     success = false;
   }
   // IP_ADDRESS
-  if (obj.HasMember(shape.IP_ADDRESS)) {
-    m_ipAddress = obj[shape.IP_ADDRESS].GetString();
-  } else {
+  if (!json::getString(obj, shape.IP_ADDRESS, m_ipAddress)) {
     LOG_ERROR("{} not defined in json serialization", shape.IP_ADDRESS);
     success = false;
   }
   // USER_NAME
-  if (obj.HasMember(shape.USER_NAME)) {
-    m_userName = obj[shape.USER_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.USER_NAME, m_userName)) {
     LOG_ERROR("{} not defined in json serialization", shape.USER_NAME);
     success = false;
   }
   // LAST_ACCESS
-  if (obj.HasMember(shape.LAST_ACCESS)) {
-    m_lastAccessTimestamps = StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(
-      obj[shape.LAST_ACCESS].GetString());
+  std::string lastAccess;
+  if (json::getString(obj, shape.LAST_ACCESS, lastAccess)) {
+    m_lastAccessTimestamps =
+      StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(lastAccess);
   } else {
     LOG_ERROR("{} not defined in json serialization", shape.LAST_ACCESS);
     success = false;

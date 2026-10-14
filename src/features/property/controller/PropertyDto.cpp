@@ -1,6 +1,7 @@
 #include "lintel/features/property/controller/PropertyDto.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 PropertyDto::Shapes PropertyDto::m_shape{};
@@ -53,61 +54,46 @@ bool PropertyDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // NAME
-  if (obj.HasMember(m_shape.NAME.c_str())) {
-    m_name = obj[m_shape.NAME.c_str()].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.NAME.c_str(), m_name)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.NAME.c_str());
   }
   // TYPE
-  if (obj.HasMember(m_shape.TYPE.c_str())) {
-    m_type = obj[m_shape.TYPE.c_str()].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.TYPE.c_str(), m_type)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.TYPE.c_str());
   }
   // VALUE
-  if (obj.HasMember(m_shape.VALUE.c_str())) {
-    m_value = obj[m_shape.VALUE.c_str()].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.VALUE.c_str(), m_value)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.VALUE.c_str());
   }
   // PROCESS
-  if (obj.HasMember(m_shape.PROCESS.c_str())) {
-    m_processName = obj[m_shape.PROCESS.c_str()].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.PROCESS.c_str(), m_processName)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.PROCESS.c_str());
   }
   // CLASS
-  if (obj.HasMember(m_shape.CLASS.c_str())) {
-    m_className = obj[m_shape.CLASS.c_str()].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.CLASS.c_str(), m_className)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.CLASS.c_str());
   }
   // INSTANCE
-  if (obj.HasMember(m_shape.INSTANCE.c_str())) {
-    m_instanceName = obj[m_shape.INSTANCE.c_str()].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.INSTANCE.c_str(), m_instanceName)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.INSTANCE.c_str());
   }
   // DESCRIPTION
-  if (obj.HasMember(m_shape.DESCRIPTION.c_str())) { m_description = obj[m_shape.DESCRIPTION.c_str()].GetString(); }
+  json::getString(obj, m_shape.DESCRIPTION.c_str(), m_description);
   // EXTRA INFORMATION
-  if (obj.HasMember(m_shape.EXTRA_INFORMATION.c_str())) {
-    m_extraInformation = obj[m_shape.EXTRA_INFORMATION.c_str()].GetString();
-  }
+  json::getString(obj, m_shape.EXTRA_INFORMATION.c_str(), m_extraInformation);
   // TYPE
-  if (obj.HasMember(m_shape.REPOSITORY_TYPE.c_str())) {
-    m_repositoryType = PropertyRepositoryType(obj[m_shape.REPOSITORY_TYPE.c_str()].GetString());
+  std::string repositoryType;
+  if (json::getString(obj, m_shape.REPOSITORY_TYPE.c_str(), repositoryType)) {
+    m_repositoryType = PropertyRepositoryType(repositoryType);
   }
   // RUNTIME_CHANGE
-  if (obj.HasMember(m_shape.RUNTIME_CHANGE.c_str())) {
-    m_runtimeChange = obj[m_shape.RUNTIME_CHANGE.c_str()].GetBool();
-  }
+  json::getBool(obj, m_shape.RUNTIME_CHANGE.c_str(), m_runtimeChange);
   return success;
 }
 

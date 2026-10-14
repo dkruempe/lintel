@@ -18,6 +18,7 @@ void HistoryDtos::deserialize(const std::string &json)
   document.Parse(json.c_str());
   if (!document.IsArray()) { return; }
   for (const auto &history : document.GetArray()) {
+    if (!history.IsObject()) { continue; }
     HistoryDto historyDto;
     historyDto.deserialize(history);
     m_histories.push_back(historyDto);

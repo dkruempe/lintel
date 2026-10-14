@@ -28,6 +28,7 @@ void MessageQueueDtos::deserialize(const std::string &json)
   doc.Parse(json.c_str());
   if (!doc.IsArray()) { return; }
   for (const auto &messageQueue : doc.GetArray()) {
+    if (!messageQueue.IsObject()) { continue; }
     MessageQueueDto messageQueueDto;
     messageQueueDto.deserialize(messageQueue);
     m_messageQueueDtos.push_back(messageQueueDto);
@@ -73,6 +74,7 @@ void MessageQueuesPageDto::deserialize(const std::string &json)
   if (!doc.IsObject()) { return; }
   if (doc.HasMember(shape.ITEMS) && doc[shape.ITEMS].IsArray()) {
     for (const auto &messageQueue : doc[shape.ITEMS].GetArray()) {
+      if (!messageQueue.IsObject()) { continue; }
       MessageQueueDto messageQueueDto;
       messageQueueDto.deserialize(messageQueue);
       m_messageQueueDtos.push_back(messageQueueDto);

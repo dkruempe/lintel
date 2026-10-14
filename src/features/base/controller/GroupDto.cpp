@@ -1,6 +1,7 @@
 #include "lintel/features/base/controller/GroupDto.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 const GroupDto::Shapes GroupDto::shape{};
@@ -31,21 +32,17 @@ void GroupDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) con
 bool GroupDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(shape.GROUP_NAME)) {
-    m_groupName = obj[shape.GROUP_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.GROUP_NAME, m_groupName)) {
     success = false;
     LOG_ERROR("deserialization of {} failed", shape.GROUP_NAME);
   }
-  if (obj.HasMember(shape.VIRTUAL)) {
-    m_isVirtual = obj[shape.VIRTUAL].GetBool();
-  } else {
+  if (!json::getBool(obj, shape.VIRTUAL, m_isVirtual)) {
     success = false;
     LOG_ERROR("deserialization of {} failed", shape.VIRTUAL);
   }
-  if (obj.HasMember(shape.GROUPS)) {
+  if (const auto *groups = json::member(obj, shape.GROUPS); groups != nullptr) {
     GroupsDto dto;
-    dto.deserialize(obj[shape.GROUPS]);
+    dto.deserialize(*groups);
     m_groups = dto.getGroups();
   }
   return success;
@@ -79,6 +76,7 @@ bool GroupsDto::deserialize(const rapidjson::Value &obj)
 {
   if (!obj.IsArray()) { return false; }
   for (const auto *iter = obj.Begin(); iter != obj.End(); iter++) {
+    if (!iter->IsObject()) { continue; }
     GroupDto groupDto;
     groupDto.deserialize(*iter);
     m_groups.push_back(std::move(groupDto));

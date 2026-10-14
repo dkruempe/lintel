@@ -1,6 +1,7 @@
 #include "lintel/features/base/controller/UserGroupDto.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 UserGroupDto::Shapes UserGroupDto::shape{};
@@ -34,23 +35,22 @@ void UserGroupDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer)
 bool UserGroupDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(shape.USER_NAME)) {
-    m_userName = obj[shape.USER_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.USER_NAME, m_userName)) {
     LOG_ERROR("failed to deserialize user_name");
     success = false;
   }
-  if (obj.HasMember(shape.GROUPS_ADD) && obj[shape.GROUPS_ADD].IsArray()) {
-    for (auto iter = obj[shape.GROUPS_ADD].Begin(); iter != obj[shape.GROUPS_ADD].End(); iter++) {
-      m_groupAdds.insert(iter->GetString());
+  if (const auto *groupAdds = json::member(obj, shape.GROUPS_ADD); groupAdds != nullptr && groupAdds->IsArray()) {
+    for (const auto &item : groupAdds->GetArray()) {
+      if (item.IsString()) { m_groupAdds.insert(std::string(item.GetString(), item.GetStringLength())); }
     }
   } else {
     LOG_ERROR("failed to deserialize user_name");
     success = false;
   }
-  if (obj.HasMember(shape.GROUPS_REMOVE) && obj[shape.GROUPS_REMOVE].IsArray()) {
-    for (auto iter = obj[shape.GROUPS_REMOVE].Begin(); iter != obj[shape.GROUPS_REMOVE].End(); iter++) {
-      m_groupRemoves.insert(iter->GetString());
+  if (const auto *groupRemoves = json::member(obj, shape.GROUPS_REMOVE);
+    groupRemoves != nullptr && groupRemoves->IsArray()) {
+    for (const auto &item : groupRemoves->GetArray()) {
+      if (item.IsString()) { m_groupRemoves.insert(std::string(item.GetString(), item.GetStringLength())); }
     }
   } else {
     LOG_ERROR("failed to deserialize user_name");

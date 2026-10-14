@@ -75,6 +75,7 @@ public:
   bool deserialize(const rapidjson::Value &obj) override
   {
     bool success = true;
+    if (!obj.IsObject()) { return false; }
     if (!obj.HasMember(m_shape.PROCESS_NAME)) {
       success = false;
       LOG_ERROR("{} not defined in json serialization", m_shape.PROCESS_NAME);

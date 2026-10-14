@@ -3,6 +3,7 @@
 
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/StringifyService.h"
+#include "lintel/core/utils/JsonUtils.h"
 #include "lintel/features/base/models/HistoryEntry.h"
 
 namespace lintel {
@@ -40,39 +41,30 @@ void HistoryDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) c
 bool HistoryDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(m_shape.PROCESS_NAME)) {
-    m_processName = obj[m_shape.PROCESS_NAME].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.PROCESS_NAME, m_processName)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.PROCESS_NAME);
   }
-  if (obj.HasMember(m_shape.SERVICE_NAME)) {
-    m_serviceName = obj[m_shape.SERVICE_NAME].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.SERVICE_NAME, m_serviceName)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.SERVICE_NAME);
   }
-  if (obj.HasMember(m_shape.LABEL)) {
-    m_label = obj[m_shape.LABEL].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.LABEL, m_label)) {
     success = false;
     LOG_ERROR("{} not defined in json serilization", m_shape.LABEL);
   }
-  if (obj.HasMember(m_shape.TEXT)) {
-    m_text = obj[m_shape.TEXT].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.TEXT, m_text)) {
     success = false;
     LOG_ERROR("{} not defined in json seriliazation", m_shape.TEXT);
   }
-  if (obj.HasMember(m_shape.UUID)) {
-    m_uuid = obj[m_shape.UUID].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.UUID, m_uuid)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.UUID);
   }
-  if (obj.HasMember(m_shape.CREATED_TIMESTAMP)) {
-    m_createdTimestamp = StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(
-      obj[m_shape.CREATED_TIMESTAMP].GetString());
+  std::string createdTimestamp;
+  if (json::getString(obj, m_shape.CREATED_TIMESTAMP, createdTimestamp)) {
+    m_createdTimestamp =
+      StringifyService<std::chrono::sys_time<std::chrono::microseconds>>::deserializeFromString(createdTimestamp);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.CREATED_TIMESTAMP);

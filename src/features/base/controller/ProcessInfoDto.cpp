@@ -1,6 +1,7 @@
 #include "lintel/features/base/controller/ProcessInfoDto.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 #include "lintel/features/base/models/ProcessInfo.h"
 
 namespace lintel {
@@ -130,96 +131,82 @@ bool ProcessInfoDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // ID
-  if (obj.HasMember(m_shape.ID)) {
-    m_id = obj[m_shape.ID].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.ID, m_id)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.ID);
   }
   // PATH
-  if (obj.HasMember(m_shape.PATH)) {
-    std::string pathStr = obj[m_shape.PATH].GetString();
+  std::string pathStr;
+  if (json::getString(obj, m_shape.PATH, pathStr)) {
     m_path = std::filesystem::path(pathStr);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json seralization", m_shape.PATH);
   }
   // ARGS
-  if (obj.HasMember(m_shape.ARGS)) {
-    auto args = obj[m_shape.ARGS].GetArray();
-    for (const auto &arg : args) { m_args.emplace_back(arg[m_shape.ARG].GetString()); }
+  if (const auto *args = json::member(obj, m_shape.ARGS); args != nullptr && args->IsArray()) {
+    for (const auto &arg : args->GetArray()) {
+      std::string value;
+      if (json::getString(arg, m_shape.ARG, value)) { m_args.emplace_back(std::move(value)); }
+    }
   } else {
     LOG_WARN("{} not defined in json serilization", m_shape.ARGS);
   }
   // AUTO_RESTART
-  if (obj.HasMember(m_shape.AUTO_RESTART)) {
-    m_autoRestart = obj[m_shape.AUTO_RESTART].GetBool();
-  } else {
+  if (!json::getBool(obj, m_shape.AUTO_RESTART, m_autoRestart)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.AUTO_RESTART);
   }
   // RESTARTS
-  if (obj.HasMember(m_shape.RESTARTS)) {
-    m_restarts = obj[m_shape.RESTARTS].GetInt();
-  } else {
+  if (!json::getInt(obj, m_shape.RESTARTS, m_restarts)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.RESTARTS);
   }
   // MAX_RESTARTS
-  if (obj.HasMember(m_shape.MAX_RESTARTS)) {
-    m_maxAutoRestarts = obj[m_shape.MAX_RESTARTS].GetInt();
-  } else {
+  if (!json::getInt(obj, m_shape.MAX_RESTARTS, m_maxAutoRestarts)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.MAX_RESTARTS);
   }
   // PROCESS_ID
-  if (obj.HasMember(m_shape.PROCESS_ID)) {
-    m_processId = obj[m_shape.PROCESS_ID].GetInt();
+  std::int32_t processId = 0;
+  if (json::getInt(obj, m_shape.PROCESS_ID, processId)) {
+    m_processId = processId;
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.PROCESS_ID);
   }
   // RUNS
-  if (obj.HasMember(m_shape.RUNS)) {
-    m_isRunning = obj[m_shape.RUNS].GetBool();
-  } else {
+  if (!json::getBool(obj, m_shape.RUNS, m_isRunning)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.RUNS);
   }
   // EXIT_CODE
-  if (obj.HasMember(m_shape.EXIT_CODE)) {
-    m_exitCode = obj[m_shape.EXIT_CODE].GetInt();
-  } else {
+  if (!json::getInt(obj, m_shape.EXIT_CODE, m_exitCode)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.EXIT_CODE);
   }
   // EXIT_CODE_VALID (optional, defaults to true)
-  if (obj.HasMember(m_shape.EXIT_CODE_VALID)) { m_exitCodeValid = obj[m_shape.EXIT_CODE_VALID].GetBool(); }
+  bool exitCodeValid = false;
+  if (json::getBool(obj, m_shape.EXIT_CODE_VALID, exitCodeValid)) { m_exitCodeValid = exitCodeValid; }
   // GROUP_NAME
-  if (obj.HasMember(m_shape.GROUP_NAME)) {
-    m_groupName = obj[m_shape.GROUP_NAME].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.GROUP_NAME, m_groupName)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.GROUP_NAME);
   }
   // GROUP_ID
-  if (obj.HasMember(m_shape.GROUP_ID)) {
-    m_groupId = obj[m_shape.GROUP_ID].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.GROUP_ID, m_groupId)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.GROUP_ID);
   }
   // resource data (optional; values may be serialized as JSON null)
-  if (obj.HasMember(m_shape.RESOURCES_VALID)) { m_resourceDataValid = obj[m_shape.RESOURCES_VALID].GetBool(); }
-  if (obj.HasMember(m_shape.UPTIME_SECONDS) && !obj[m_shape.UPTIME_SECONDS].IsNull()) {
-    m_uptimeSeconds = obj[m_shape.UPTIME_SECONDS].GetInt64();
-  }
-  if (obj.HasMember(m_shape.CPU_PERCENT) && !obj[m_shape.CPU_PERCENT].IsNull()) {
-    m_cpuPercent = obj[m_shape.CPU_PERCENT].GetDouble();
-  }
-  if (obj.HasMember(m_shape.MEMORY_BYTES) && !obj[m_shape.MEMORY_BYTES].IsNull()) {
-    m_memoryBytes = obj[m_shape.MEMORY_BYTES].GetUint64();
-  }
+  bool resourceDataValid = false;
+  if (json::getBool(obj, m_shape.RESOURCES_VALID, resourceDataValid)) { m_resourceDataValid = resourceDataValid; }
+  std::int64_t uptimeSeconds = 0;
+  if (json::getInt64(obj, m_shape.UPTIME_SECONDS, uptimeSeconds)) { m_uptimeSeconds = uptimeSeconds; }
+  double cpuPercent = 0.0;
+  if (json::getDouble(obj, m_shape.CPU_PERCENT, cpuPercent)) { m_cpuPercent = cpuPercent; }
+  std::uint64_t memoryBytes = 0;
+  if (json::getUint64(obj, m_shape.MEMORY_BYTES, memoryBytes)) { m_memoryBytes = memoryBytes; }
   return success;
 }
 }// namespace lintel

@@ -1,6 +1,7 @@
 #include "lintel/features/base/controller/ProcessGroupDto.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 ProcessGroupDto::Shapes ProcessGroupDto::m_shape{};
@@ -29,23 +30,19 @@ bool ProcessGroupDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // ID
-  if (obj.HasMember(m_shape.ID)) {
-    m_id = obj[m_shape.ID].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.ID, m_id)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.ID);
   }
   // NAME
-  if (obj.HasMember(m_shape.NAME)) {
-    m_name = obj[m_shape.NAME].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.NAME, m_name)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.NAME);
   }
   // PROCESSES
-  if (obj.HasMember(m_shape.PROCESSES)) {
+  if (const auto *processes = json::member(obj, m_shape.PROCESSES); processes != nullptr && processes->IsArray()) {
     ProcessInfosDto processInfosDto;
-    processInfosDto.deserialize(obj[m_shape.PROCESSES]);
+    processInfosDto.deserialize(*processes);
     m_processInfosDto = processInfosDto;
   } else {
     success = false;

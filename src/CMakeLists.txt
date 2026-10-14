@@ -123,6 +123,7 @@ set(headers
     include/lintel/app/StartupBuilder.h
     # core - utils
     include/lintel/core/utils/Cryption.h
+    include/lintel/core/utils/JsonUtils.h
     include/lintel/core/utils/MemorySize.h
     include/lintel/core/utils/ProcessResourceReader.h
     include/lintel/core/utils/RegexUtils.h

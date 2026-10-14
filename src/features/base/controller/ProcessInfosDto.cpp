@@ -26,7 +26,9 @@ void ProcessInfosDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writ
 
 bool ProcessInfosDto::deserialize(const rapidjson::Value &obj)
 {
+  if (!obj.IsArray()) { return false; }
   for (const auto &iter : obj.GetArray()) {
+    if (!iter.IsObject()) { continue; }
     ProcessInfoDto processInfoDto;
     processInfoDto.deserialize(iter);
     m_processInfos.push_back(processInfoDto);

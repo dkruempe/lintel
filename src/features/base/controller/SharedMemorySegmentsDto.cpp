@@ -20,6 +20,7 @@ void SharedMemorySegmentsDto::deserialize(const std::string &json)
   document.Parse(json.c_str());
   if (!document.IsArray()) { return; }
   for (const auto &segment : document.GetArray()) {
+    if (!segment.IsObject()) { continue; }
     SharedMemorySegmentDto dto;
     dto.deserialize(segment);
     m_segments.push_back(dto);

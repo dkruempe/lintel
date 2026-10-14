@@ -1,5 +1,7 @@
 #include "lintel/features/base/controller/UserLoginDto.h"
 
+#include "lintel/core/utils/JsonUtils.h"
+
 namespace lintel {
 UserLoginDto::Shapes UserLoginDto::shape{};
 
@@ -31,16 +33,12 @@ bool UserLoginDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // USERNAME
-  if (obj.HasMember(shape.USER_NAME)) {
-    m_userName = obj[shape.USER_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.USER_NAME, m_userName)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", shape.USER_NAME);
   }
   // PASSWORD
-  if (obj.HasMember(shape.PASSWORD)) {
-    m_password = obj[shape.PASSWORD].GetString();
-  } else {
+  if (!json::getString(obj, shape.PASSWORD, m_password)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", shape.PASSWORD);
   }

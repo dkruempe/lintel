@@ -23,6 +23,7 @@ void SharedMemoryRepositoriesDto::deserialize(const std::string &json)
   document.Parse(json.c_str());
   if (!document.IsArray()) { return; }
   for (const auto &item : document.GetArray()) {
+    if (!item.IsObject()) { continue; }
     SharedMemoryRepositoryDto sharedMemoryRepositoryDto;
     sharedMemoryRepositoryDto.deserialize(item);
     m_repositories.push_back(sharedMemoryRepositoryDto);

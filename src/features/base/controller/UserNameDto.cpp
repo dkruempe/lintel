@@ -1,5 +1,6 @@
 #include "lintel/features/base/controller/UserNameDto.h"
 
+#include "lintel/core/utils/JsonUtils.h"
 #include "lintel/features/base/controller/UserDto.h"
 
 namespace lintel {
@@ -22,9 +23,7 @@ bool UserNameDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // USERNAME
-  if (obj.HasMember(shape.USER_NAME)) {
-    m_userName = obj[shape.USER_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.USER_NAME, m_userName)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", shape.USER_NAME);
   }
@@ -67,6 +66,7 @@ bool UserNamesDto::deserialize(const rapidjson::Value &obj)
 {
   if (!obj.IsArray()) { return false; }
   for (auto iter = obj.Begin(); iter != obj.End(); iter++) {
+    if (!iter->IsObject()) { continue; }
     UserNameDto userNameDto;
     userNameDto.deserialize(*iter);
     m_userNames.push_back(std::move(userNameDto));

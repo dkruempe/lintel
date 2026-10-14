@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 UserPasswordChangeDto::Shapes UserPasswordChangeDto::shape{};
@@ -32,21 +33,15 @@ void UserPasswordChangeDto::serialize(rapidjson::Writer<rapidjson::StringBuffer>
 bool UserPasswordChangeDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(shape.USER_NAME)) {
-    m_userName = obj[shape.USER_NAME].GetString();
-  } else {
+  if (!json::getString(obj, shape.USER_NAME, m_userName)) {
     LOG_ERROR("{} not defined in json serialization", shape.USER_NAME);
     success = false;
   }
-  if (obj.HasMember(shape.OLD_PASSWORD)) {
-    m_oldPassword = obj[shape.OLD_PASSWORD].GetString();
-  } else {
+  if (!json::getString(obj, shape.OLD_PASSWORD, m_oldPassword)) {
     LOG_ERROR("{} not defined in json serialization", shape.OLD_PASSWORD);
     success = false;
   }
-  if (obj.HasMember(shape.NEW_PASSWORD)) {
-    m_newPassword = obj[shape.NEW_PASSWORD].GetString();
-  } else {
+  if (!json::getString(obj, shape.NEW_PASSWORD, m_newPassword)) {
     LOG_ERROR("{} not defined in json serialization", shape.NEW_PASSWORD);
     success = false;
   }

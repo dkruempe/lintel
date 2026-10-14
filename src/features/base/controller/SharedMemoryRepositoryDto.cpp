@@ -1,5 +1,7 @@
 #include "lintel/features/base/controller/SharedMemoryRepositoryDto.h"
 
+#include "lintel/core/utils/JsonUtils.h"
+
 namespace lintel {
 SharedMemoryRepositoryDto::Shapes SharedMemoryRepositoryDto::m_shape{};
 
@@ -49,47 +51,39 @@ bool SharedMemoryRepositoryDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
   // UUID
-  if (obj.HasMember(m_shape.UUID)) {
-    m_uuid = obj[m_shape.UUID].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.UUID, m_uuid)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.UUID);
   }
   // NAME
-  if (obj.HasMember(m_shape.NAME)) {
-    m_name = obj[m_shape.NAME].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.NAME, m_name)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.NAME);
   }
   // SEGMENT_NAME
-  if (obj.HasMember(m_shape.SEGMENT_NAME)) {
-    m_segmentName = obj[m_shape.SEGMENT_NAME].GetString();
-  } else {
+  if (!json::getString(obj, m_shape.SEGMENT_NAME, m_segmentName)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.SEGMENT_NAME);
   }
   // TYPE
-  if (obj.HasMember(m_shape.TYPE)) {
-    std::string_view enumName = obj[m_shape.TYPE].GetString();
-
-    auto enumValue = magic_enum::enum_cast<SharedMemoryType>(enumName);
+  std::string enumName;
+  if (json::getString(obj, m_shape.TYPE, enumName)) {
+    auto enumValue = magic_enum::enum_cast<SharedMemoryType>(std::string_view(enumName));
     if (enumValue.has_value()) { m_type = enumValue.value(); }
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.TYPE);
   }
   // SIZE
-  if (obj.HasMember(m_shape.SIZE)) {
-    m_size = std::stoul(obj[m_shape.SIZE].GetString());
+  std::string sizeString;
+  if (json::getString(obj, m_shape.SIZE, sizeString)) {
+    m_size = std::stoul(sizeString);
   } else {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.SIZE);
   }
   // VERSION
-  if (obj.HasMember(m_shape.VERSION)) {
-    m_currentVersion = obj[m_shape.VERSION].GetInt();
-  } else {
+  if (!json::getInt(obj, m_shape.VERSION, m_currentVersion)) {
     success = false;
     LOG_ERROR("{} not defined in json serialization", m_shape.VERSION);
   }

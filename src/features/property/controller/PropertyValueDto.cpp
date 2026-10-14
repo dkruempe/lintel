@@ -1,6 +1,7 @@
 #include "lintel/features/property/controller/PropertyValueDto.h"
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
 
 namespace lintel {
 PropertyValueDto::Shapes PropertyValueDto::m_shapes{};
@@ -21,11 +22,7 @@ void PropertyValueDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *wri
 bool PropertyValueDto::deserialize(const rapidjson::Value &obj)
 {
   bool success = true;
-  if (obj.HasMember(m_shapes.VALUE.c_str())) {
-    m_value = obj[m_shapes.VALUE.c_str()].GetString();
-  } else {
-    success = false;
-  }
+  if (!json::getString(obj, m_shapes.VALUE.c_str(), m_value)) { success = false; }
   return success;
 }
 }// namespace lintel
