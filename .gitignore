@@ -18,6 +18,9 @@ include/config.h
 CMakeUserPresets.json
 cfg/.history
 
+# Local environment configuration for running the examples
+.env
+
 # TLS certificates (generated locally)
 cfg/certs/*.key
 cfg/certs/*.crt

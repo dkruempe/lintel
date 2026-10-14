@@ -178,6 +178,19 @@ Every example is built into `bin/` (`CMAKE_RUNTIME_OUTPUT_DIRECTORY` in the top-
 | `named_pipe_server.cpp` | A POSIX FIFO (`mkfifo`) service: creating the pipe, writing, blocking and non-blocking reads, callback-based reading and a small throughput loop. Does not use the library itself. | `./bin/named_pipe_server` |
 | `cleanup.cpp` | Removes leftover `boost::interprocess` named mutexes, e.g. after a crash, taking one or more mutex names as arguments. | `./bin/cleanup <mutex-name> [...]` |
 
+### Running the examples locally
+
+The full-stack examples are configured through a single, git-ignored `.env` file in the repository root. `scripts/run-example.sh` loads it (every assignment is exported), generates the self-signed development certificates on first use and then starts the selected example:
+
+```bash
+cp .env.example .env    # first time only; adjust the values
+scripts/run-example.sh              # runs bin/main (HTTP + CLI + workers)
+scripts/run-example.sh worker       # runs bin/worker with the worker config
+scripts/run-example.sh main --help  # arguments are passed through
+```
+
+`.env` sets `CONFIG_DIRECTORY`, `BOOTSTRAP_CONFIG_NAME`, `ADMIN_USERNAME` and `ADMIN_PASSWORD` (see the file for the full list). It is excluded via `.gitignore`, so local credentials and machine-specific paths never end up in a commit. `main` starts the interactive CLI, so run it from a terminal; the HTTP API is available at `https://localhost:8080` (unauthenticated liveness: `curl -fsSk https://localhost:8080/health`).
+
 ### Configuration directory
 
 The `StartupBuilder`-based examples (`main`, `worker`) read their bootstrap XML from the directory named by the `CONFIG_DIRECTORY` environment variable. If that variable is not set, the path compiled into the binary is used: `CONFIG_DIRECTORY` is a macro generated into `lintel/config.h` from `src/include/lintel/config.h.in`, which CMake fills with `${PROJECT_SOURCE_DIR}/../cfg` — i.e. the `cfg/` directory of the checkout the binary was built in. The file inside that directory is `BOOTSTRAP_CONFIG_NAME` + `.xml`, where `BOOTSTRAP_CONFIG_NAME` defaults to `bootstrap`. The defaults therefore resolve to `<repo>/cfg/bootstrap.xml` (used by `main`) and `<repo>/cfg/bootstrap_worker.xml` (used by `worker`).
