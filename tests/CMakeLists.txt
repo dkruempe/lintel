@@ -106,5 +106,8 @@ target_link_libraries(base_tests PRIVATE
     lintel_options
 )
 
-# Auto-register each TEST_CASE / SECTION as a separate CTest test
-catch_discover_tests(base_tests PROPERTIES LABELS "unit")
+# Auto-register each TEST_CASE / SECTION as a separate CTest test.
+# TIMEOUT is a safety net: the unit tests finish in well under a second each, so a
+# test that hangs (e.g. a lost wakeup during teardown) must fail the run quickly
+# instead of blocking the whole sanitizer job until its 90-minute limit.
+catch_discover_tests(base_tests PROPERTIES LABELS "unit" TIMEOUT 120)

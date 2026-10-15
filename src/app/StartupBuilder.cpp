@@ -151,7 +151,12 @@ void StartupBuilder::signalThreadLoop()
 
 void StartupBuilder::onShutdown()
 {
-  m_stop.store(true);
+  {
+    // flip m_stop under the mutex start() waits under, so the notify_all below
+    // cannot be lost between the predicate check and the wait
+    std::lock_guard<std::mutex> lock(mutex);
+    m_stop.store(true);
+  }
   LOG_INFO("{} shutdown", m_name->getProcessName());
   // trigger shutdown
   std::sort(m_abstractServices.begin(),

@@ -33,7 +33,13 @@ public:
   /** Destructor; signals exit and joins the worker thread. */
   ~ExecutorService()
   {
-    m_exit = true;
+    {
+      // m_exit must be flipped under the mutex the worker's predicate reads under,
+      // otherwise the notify_all() can slip into the window between the predicate
+      // check and the wait, and the join() below hangs forever.
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_exit = true;
+    }
     m_conditionVariable.notify_all();
     m_runnable.join();
   }

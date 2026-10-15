@@ -119,6 +119,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **Lost wakeup when stopping a worker thread.** `ExecutorService`'s destructor set its `m_exit`
+  flag and called `notify_all()` without holding the mutex that the worker's `wait(lock, pred)`
+  reads the flag under. When the notification landed in the window between the worker's predicate
+  check and its block, the worker slept forever and the destructor's `join()` hung — the
+  intermittent `ExecutorService: execute runs a task and resolves its future` hang under
+  ThreadSanitizer. The flag is now flipped under the mutex; the same anti-pattern in
+  `SchedulerService::onShutdown()`/destructor and `StartupBuilder::onShutdown()` is fixed as well.
+  Discovered tests now carry a 120 s CTest `TIMEOUT` so a future hang fails fast instead of
+  blocking the sanitizer job.
 - **A crashed shared-memory holder no longer deadlocks the segment (`ROADMAP.md` A6).**
   `shm::SegmentSemaphoreGuard` acquired the segment's named remap semaphore with an unbounded
   `wait()`; a process that died while holding it left the count at zero, so every other process

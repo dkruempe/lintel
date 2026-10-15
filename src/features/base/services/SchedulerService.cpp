@@ -61,6 +61,9 @@ void SchedulerService::onShutdown()
   LOG_INFO("stop Scheduler");
   clear();
   {
+    // set m_exit under the mutex the worker's predicate reads under, so the
+    // notify below cannot be lost between its predicate check and its wait
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_exit = true;
   }
   m_conditionVariable.notify_all();
@@ -76,6 +79,8 @@ SchedulerService::SchedulerService(const std::shared_ptr<ProcessName> &processNa
 SchedulerService::~SchedulerService()
 {
   {
+    // same lost-wakeup guard as onShutdown(): flip m_exit under the mutex
+    std::lock_guard<std::mutex> lock(m_mutex);
     m_exit = true;
   }
 
