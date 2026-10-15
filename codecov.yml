@@ -1,0 +1,35 @@
+# Codecov configuration - https://docs.codecov.com/docs/codecov-yaml
+#
+# scripts/coverage-report.sh already strips system headers, the Conan cache, the
+# tests, examples and benchmarks before the tracefile is written. The `ignore`
+# list below is a second line of defence for the same paths.
+#
+# The `target: auto` statuses compare against the commit the branch diverged
+# from, so they stay advisory while the project coverage baseline is still low
+# (see the coverage badge / Codecov dashboard) instead of demanding a fixed
+# number.
+
+coverage:
+  precision: 1
+  round: down
+  range: "50...90"
+
+  status:
+    project:
+      default:
+        target: auto
+        threshold: 1%
+    patch:
+      default:
+        informational: true
+
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: true
+
+ignore:
+  - "tests"
+  - "examples"
+  - "benchmarks"
+  - "fuzz"

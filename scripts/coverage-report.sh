@@ -44,6 +44,11 @@ lcov --capture \
   --ignore-errors mismatch,empty,gcov,source \
   --output-file "$WORK_DIR/coverage.raw.info"
 
+# The tracefile lives in the output directory (not the scratch dir) so that CI
+# can hand it to Codecov - the html report alone is not machine readable.
+rm -rf "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
+
 # Only the library sources are interesting: system headers, the Conan cache,
 # the tests, examples and benchmarks would drown the report in noise.
 lcov --remove "$WORK_DIR/coverage.raw.info" \
@@ -54,16 +59,16 @@ lcov --remove "$WORK_DIR/coverage.raw.info" \
   "$PROJ_ROOT/examples/*" \
   "$PROJ_ROOT/benchmarks/*" \
   --ignore-errors unused,empty \
-  --output-file "$WORK_DIR/coverage.info"
+  --output-file "$OUTPUT_DIR/coverage.info"
 
-rm -rf "$OUTPUT_DIR"
-genhtml "$WORK_DIR/coverage.info" \
+genhtml "$OUTPUT_DIR/coverage.info" \
   --output-directory "$OUTPUT_DIR" \
   --ignore-errors source \
   --title "lintel coverage" >/dev/null
 
-summary="$(lcov --summary "$WORK_DIR/coverage.info" 2>&1 || true)"
+summary="$(lcov --summary "$OUTPUT_DIR/coverage.info" 2>&1 || true)"
 echo "$summary"
+echo "lcov tracefile: $OUTPUT_DIR/coverage.info"
 echo "html report: $OUTPUT_DIR/index.html"
 
 # Make the numbers visible in the GitHub Actions run summary when available.

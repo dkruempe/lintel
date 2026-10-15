@@ -2,6 +2,7 @@
 
 [![build](https://github.com/dkruempe/lintel/actions/workflows/ci.yml/badge.svg)](https://github.com/dkruempe/lintel/actions/workflows/ci.yml)
 [![docs](https://github.com/dkruempe/lintel/actions/workflows/doxygen.yml/badge.svg)](https://dkruempe.github.io/lintel/)
+[![coverage](https://codecov.io/gh/dkruempe/lintel/branch/master/graph/badge.svg)](https://codecov.io/gh/dkruempe/lintel)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A modular and feature-rich C++ library designed to accelerate the development of modern, high-performance applications.
@@ -292,6 +293,17 @@ ctest --output-on-failure --label-regex unit
 All test files are listed explicitly in `tests/CMakeLists.txt`; new test files are not discovered automatically.
 
 The PostgreSQL-backed tests need a running server (`docker compose up postgres`, database/user/password `test`/`test`/`test` on port `5432`). Without one they are reported as skipped rather than failed.
+
+### Coverage
+
+Line and function coverage are measured with gcov/lcov by the advisory CI job `coverage` and published to [Codecov](https://codecov.io/gh/dkruempe/lintel) (see the badge above). To reproduce it locally, configure a Debug build with `-DENABLE_COVERAGE=ON`, run the unit tests, and generate the report:
+
+```bash
+cmake -S . -B build/build/Debug ... -DENABLE_COVERAGE=ON -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/build/Debug --parallel "$(nproc)"
+(cd build/build/Debug && ctest --output-on-failure --label-regex unit)
+./scripts/coverage-report.sh          # writes coverage/coverage.info and coverage/index.html
+```
 
 ## Contributing
 

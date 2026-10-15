@@ -577,6 +577,18 @@ jobs:
           SUMMARY_FILE: ${{ github.step_summary }}
         run: ./scripts/coverage-report.sh ${{ env.BUILD_DIR }} coverage
 
+      - name: Upload coverage to Codecov
+        # Requires the repository `CODECOV_TOKEN` secret (Settings -> Secrets and
+        # variables -> Actions). Advisory like the rest of the job: a failed
+        # upload never fails CI. `use_oidc: true` is the tokenless alternative.
+        uses: codecov/codecov-action@v7
+        with:
+          files: coverage/coverage.info
+          flags: unittests
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          verbose: true
+
       - name: Upload coverage report
         if: always()
         uses: actions/upload-artifact@v7

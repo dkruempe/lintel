@@ -21,7 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Code-coverage measurement.** New CMake option `ENABLE_COVERAGE` (gcov instrumentation) and
   `scripts/coverage-report.sh`, which turns the gcov data into an lcov tracefile and an html
   report. The advisory CI job `coverage` builds a Debug binary with coverage, runs the unit
-  tests and uploads the report as an artifact (`ROADMAP.md` §4).
+  tests, uploads the report as an artifact and publishes the tracefile to **Codecov**
+  (`codecov/codecov-action@v7`, authenticated with the `CODECOV_TOKEN` secret). The README
+  carries a coverage badge and `codecov.yml` configures the status checks (`ROADMAP.md` §4).
 - **Fuzzing harnesses for the parsers.** New `fuzz/` directory with `fuzz_config_env`
   (`EnvironmentConfiguration::expand`), `fuzz_json_dto` (every JSON DTO `deserialize`) and
   `fuzz_property_xml` (`XMLConfigSerializationStrategy::deserialize`), built with
