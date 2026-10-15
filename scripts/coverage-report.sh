@@ -37,11 +37,13 @@ trap 'rm -rf "$WORK_DIR"' EXIT
 
 # --capture walks the build tree for .gcno/.gcda and calls gcov. --ignore-errors
 # keeps lcov going on the "no data"/"mismatch" errors that a partial build (some
-# translation units not compiled or not run) produces.
+# translation units not compiled or not run) produces. "negative" is GCC
+# occasionally emitting a -1 counter across concurrently observed .gcda files;
+# lcov treats it as fatal unless it is listed here.
 lcov --capture \
   --directory "$BUILD_DIR" \
   --gcov-tool "$GCOV_TOOL" \
-  --ignore-errors mismatch,empty,gcov,source \
+  --ignore-errors mismatch,empty,gcov,source,negative \
   --output-file "$WORK_DIR/coverage.raw.info"
 
 # The tracefile lives in the output directory (not the scratch dir) so that CI
