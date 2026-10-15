@@ -53,6 +53,7 @@ mkdir -p "$OUTPUT_DIR"
 # the tests, examples and benchmarks would drown the report in noise.
 lcov --remove "$WORK_DIR/coverage.raw.info" \
   '/usr/*' \
+  '*/.conan2/*' \
   '*/conan2/*' \
   '*/_deps/*' \
   "$PROJ_ROOT/tests/*" \

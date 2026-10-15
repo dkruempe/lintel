@@ -24,6 +24,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   tests, uploads the report as an artifact and publishes the tracefile to **Codecov**
   (`codecov/codecov-action@v7`, authenticated with the `CODECOV_TOKEN` secret). The README
   carries a coverage badge and `codecov.yml` configures the status checks (`ROADMAP.md` §4).
+  The lcov filter also now excludes Conan 2's `~/.conan2` cache — the previous `*/conan2/*`
+  pattern missed the leading dot and left third-party Boost headers in the report.
 - **Fuzzing harnesses for the parsers.** New `fuzz/` directory with `fuzz_config_env`
   (`EnvironmentConfiguration::expand`), `fuzz_json_dto` (every JSON DTO `deserialize`) and
   `fuzz_property_xml` (`XMLConfigSerializationStrategy::deserialize`), built with
