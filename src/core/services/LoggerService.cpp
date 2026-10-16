@@ -94,7 +94,7 @@ namespace {
         auto basePath = resolveSinkPath(loggerPathEntry->getLoggerPathConfiguration(), processName);
         auto filePath = resolveFilePath(basePath, logSinkConfig, processName);
         auto rotatingFileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
-          filePath, logSinkConfig.getFileSize(), logSinkConfig.getMaxFiles());
+          filePath.string(), logSinkConfig.getFileSize(), logSinkConfig.getMaxFiles());
         setSinkLevelPattern(logSinkConfig, rotatingFileSink);
         sinks.push_back(rotatingFileSink);
         break;
@@ -106,7 +106,7 @@ namespace {
         int32_t minute = std::stoi(time.substr(3, 2));
         auto basePath = resolveSinkPath(loggerPathEntry->getLoggerPathConfiguration(), processName);
         auto filePath = resolveFilePath(basePath, logSinkConfig, processName);
-        auto dailyFileSink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filePath, hour, minute);
+        auto dailyFileSink = std::make_shared<spdlog::sinks::daily_file_sink_mt>(filePath.string(), hour, minute);
         setSinkLevelPattern(logSinkConfig, dailyFileSink);
         sinks.push_back(dailyFileSink);
         break;
