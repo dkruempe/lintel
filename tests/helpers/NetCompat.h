@@ -42,31 +42,29 @@ namespace testcompat {
     }
     sockaddr_in address{};
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = ::htonl(INADDR_LOOPBACK);
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     address.sin_port = 0;
     int port = -1;
     if (::bind(sock, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0) {
       int length = sizeof(address);
-      if (::getsockname(sock, reinterpret_cast<sockaddr *>(&address), &length) == 0) {
-        port = ::ntohs(address.sin_port);
-      }
+      if (::getsockname(sock, reinterpret_cast<sockaddr *>(&address), &length) == 0) { port = ntohs(address.sin_port); }
     }
     ::closesocket(sock);
     ::WSACleanup();
     return port;
 #else
+    // Not written as ::htonl/::ntohs: macOS defines both as macros, and the
+    // leading "::" turns the expansion into a syntax error there.
     const int sock = ::socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) { return -1; }
     sockaddr_in address{};
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = ::htonl(INADDR_LOOPBACK);
+    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
     address.sin_port = 0;
     int port = -1;
     if (::bind(sock, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0) {
       socklen_t length = sizeof(address);
-      if (::getsockname(sock, reinterpret_cast<sockaddr *>(&address), &length) == 0) {
-        port = ::ntohs(address.sin_port);
-      }
+      if (::getsockname(sock, reinterpret_cast<sockaddr *>(&address), &length) == 0) { port = ntohs(address.sin_port); }
     }
     ::close(sock);
     return port;

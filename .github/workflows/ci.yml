@@ -307,11 +307,24 @@ jobs:
           # MSVC has no default -std flag, so profile detect reports cppstd=14
           # and conan rejects magic_enum/benchmark (need >= 17). The project
           # builds C++20 (target_compile_features), so pin the profile to 20.
+          #
+          # The image's MSVC (compiler.version=195 / VS 2026) is newer than any
+          # ABI ConanCenter ships, so every dependency would be built from
+          # source. Pin the *dependency* compiler to the newest version with
+          # binaries (194) - MSVC is binary compatible across 19.4x/19.5x, and
+          # the project itself is still compiled by the real cl.exe.
+          #
+          # cppstd=20 also turns on Boost.Cobalt, whose cobalt_io_ssl component
+          # needs OpenSSL and is not built by the recipe here - package_info()
+          # then aborts with "libboost_cobalt_io_ssl ... not built". lintel does
+          # not use Boost.Cobalt, so switch the component off.
           conan install . \
             --output-folder=build \
             --build=missing \
             -s build_type=${{ env.BUILD_TYPE }} \
             -s compiler.cppstd=20 \
+            -s compiler.version=194 \
+            -o "boost/*:without_cobalt=True" \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
       - name: Configure CMake

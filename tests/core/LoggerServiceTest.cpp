@@ -452,7 +452,8 @@ TEST_CASE("LoggerService: a tcp sink is constructed and used", "[logger_service]
   REQUIRE(::listen(serverFd, 4) == 0);
   socklen_t length = sizeof(address);
   REQUIRE(::getsockname(serverFd, reinterpret_cast<sockaddr *>(&address), &length) == 0);
-  const int32_t port = ::ntohs(address.sin_port);
+  // Unqualified: macOS defines ntohs as a macro (see tests/helpers/NetCompat.h).
+  const int32_t port = ntohs(address.sin_port);
 
   LoggerServiceLogDir directory;
   auto configuration = loggerConfigurationOf(directory.path,
