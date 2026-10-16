@@ -304,10 +304,14 @@ jobs:
         shell: bash
         run: |
           conan profile detect --force
+          # MSVC has no default -std flag, so profile detect reports cppstd=14
+          # and conan rejects magic_enum/benchmark (need >= 17). The project
+          # builds C++20 (target_compile_features), so pin the profile to 20.
           conan install . \
             --output-folder=build \
             --build=missing \
             -s build_type=${{ env.BUILD_TYPE }} \
+            -s compiler.cppstd=20 \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
       - name: Configure CMake

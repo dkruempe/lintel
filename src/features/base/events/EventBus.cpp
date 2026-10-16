@@ -5,6 +5,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <memory>
 #include <new>
 #include <stdexcept>
 #include <thread>
@@ -97,8 +98,13 @@ EventBus::ShmRing::ShmRing(std::size_t capacity, ShmSegmentAccessor segment) : m
   std::byte *raw = static_cast<std::byte *>(segment.allocate(bufferSize + CACHE_LINE - 1u));
   if (raw == nullptr) { throw std::bad_alloc(); }
   m_allocation = raw;
-  std::byte *aligned =
-    reinterpret_cast<std::byte *>((reinterpret_cast<std::uintptr_t>(raw) + CACHE_LINE - 1u) & ~(CACHE_LINE - 1u));
+  std::byte *aligned = nullptr;
+  {
+    void *alignedRaw = raw;
+    std::size_t alignmentSpace = bufferSize + CACHE_LINE - 1u;
+    if (std::align(CACHE_LINE, bufferSize, alignedRaw, alignmentSpace) == nullptr) { throw std::bad_alloc(); }
+    aligned = static_cast<std::byte *>(alignedRaw);
+  }
   m_bufferOffset = aligned - reinterpret_cast<std::byte *>(this);
   Slot *slots = buffer();
   for (std::size_t i = 0; i < capacity; ++i) {
@@ -117,13 +123,12 @@ EventBus::ShmRing::~ShmRing()
 
 EventBus::ShmRing::Slot *EventBus::ShmRing::buffer()
 {
-  return reinterpret_cast<Slot *>(reinterpret_cast<std::uintptr_t>(this) + static_cast<std::uintptr_t>(m_bufferOffset));
+  return reinterpret_cast<Slot *>(reinterpret_cast<std::byte *>(this) + m_bufferOffset);
 }
 
 const EventBus::ShmRing::Slot *EventBus::ShmRing::buffer() const
 {
-  return reinterpret_cast<const Slot *>(
-    reinterpret_cast<std::uintptr_t>(this) + static_cast<std::uintptr_t>(m_bufferOffset));
+  return reinterpret_cast<const Slot *>(reinterpret_cast<const std::byte *>(this) + m_bufferOffset);
 }
 
 bool EventBus::ShmRing::push(const Event &event)
@@ -452,7 +457,7 @@ std::size_t EventBus::requiredSize(const EventBusConfig &config)
   const std::size_t busRing = config.busCapacity * slotSize + CACHELINE;
   const std::size_t subscriberRing = config.subscriberCapacity * slotSize + CACHELINE;
   const std::size_t total = sizeof(EventBus) + busRing + EventBusLimits::MAX_SUBSCRIBERS * subscriberRing;
-  static constexpr std::size_t OVERHEAD = 256 * 1024;
+  static constexpr std::size_t OVERHEAD = std::size_t{ 256 } * 1024;
   return total + OVERHEAD;
 }
 

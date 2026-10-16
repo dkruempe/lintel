@@ -137,6 +137,7 @@ void CommandLineService::onPrompt()
   if (!m_terminalService->getLine().empty()) { std::cout << m_terminalService->getLine(); }
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) — named out-params, both mutated by the prompt loop.
 void CommandLineService::handleCommandInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt)
 {
   tabPressed = false;
@@ -167,6 +168,7 @@ void CommandLineService::handleCommandInput(const SymbolEvent &symbolEvent, bool
   onCommand(input, flags);
 }
 
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) — named out-params, both mutated by the prompt loop.
 void CommandLineService::handleTabInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt)
 {
   if (symbolEvent.second.empty() && !tabPressed) {

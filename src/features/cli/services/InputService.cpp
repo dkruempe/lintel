@@ -240,7 +240,7 @@ InputService::InputService()
   }
 
   static std::once_flag atexitFlag;
-  std::call_once(atexitFlag, [] { std::atexit(restoreTerminal); });
+  std::call_once(atexitFlag, [] { static_cast<void>(std::atexit(restoreTerminal)); });
 }
 #else
 InputService::InputService() : newt()
@@ -253,7 +253,7 @@ InputService::InputService() : newt()
   tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 
   static std::once_flag atexitFlag;
-  std::call_once(atexitFlag, [] { std::atexit(restoreTerminal); });
+  std::call_once(atexitFlag, [] { static_cast<void>(std::atexit(restoreTerminal)); });
 
   if (!g_sigusr1Registered) {
     g_sigusr1Registered = true;

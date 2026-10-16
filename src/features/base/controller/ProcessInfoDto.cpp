@@ -16,12 +16,12 @@ ProcessInfoDto::ProcessInfoDto(const ProcessInfo &processInfo)
     m_exitCodeValid(processInfo.isExitCodeValid()), m_groupName(processInfo.getGroupName()),
     m_groupId(processInfo.getGroupId())
 {
-  if (processInfo.getResourceData().has_value() && processInfo.getResourceData()->valid) {
+  const std::optional<ProcessResourceData> &resourceData = processInfo.getResourceData();
+  if (resourceData.has_value() && resourceData->valid) {
     m_resourceDataValid = true;
-    const auto &resourceData = processInfo.getResourceData().value();
-    m_uptimeSeconds = resourceData.uptime.count();
-    m_cpuPercent = resourceData.cpuPercent;
-    m_memoryBytes = resourceData.memoryBytes;
+    m_uptimeSeconds = resourceData->uptime.count();
+    m_cpuPercent = resourceData->cpuPercent;
+    m_memoryBytes = resourceData->memoryBytes;
   }
 }
 

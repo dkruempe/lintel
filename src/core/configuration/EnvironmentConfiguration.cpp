@@ -39,7 +39,7 @@ EnvironmentConfiguration::EnvironmentConfiguration()
   }
 }
 
-void EnvironmentConfiguration::overrides(Environment environment, std::string value)
+void EnvironmentConfiguration::overrides(Environment environment, const std::string &value)
 {
   if (environment == Environment::Path) {
     if (value.empty()) {

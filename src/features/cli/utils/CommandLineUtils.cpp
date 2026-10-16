@@ -130,8 +130,8 @@ void CommandLineUtils::enableOfCanonicalMode()
 
 void CommandLineUtils::beep()
 {
-  fprintf(stderr, "\x7");
-  fflush(stderr);
+  static_cast<void>(fprintf(stderr, "\x7"));
+  static_cast<void>(fflush(stderr));
 }
 
 bool CommandLineUtils::isCanonicalMode() const { return m_isCanonicalMode; }

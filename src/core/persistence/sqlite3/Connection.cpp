@@ -83,6 +83,7 @@ namespace sqlite {
     }
   }
 
+  // NOLINTNEXTLINE(bugprone-easily-swappable-parameters) — distinct names (queryName, query); signature is public API.
   std::shared_ptr<Result> Connection::prepareStatement(const std::string &queryName, const std::string &query)
   {
     auto found = m_preparedStatements.find(queryName);
@@ -140,10 +141,7 @@ namespace sqlite {
         text = sqlite3_column_text(found->second, i);
         const char *name = sqlite3_column_name(found->second, i);
         std::string value;
-        if (text != nullptr) {
-          std::basic_string<unsigned char> temp = text;
-          value = std::string(temp.begin(), temp.end());
-        }
+        if (text != nullptr) { value = std::string(reinterpret_cast<const char *>(text)); }
         if (name == nullptr) { continue; }
         db::Argument argument(value, name);
         arguments.add(argument);
@@ -187,10 +185,7 @@ namespace sqlite {
         text = sqlite3_column_text(stmt, j);
         const char *name = sqlite3_column_name(stmt, j);
         std::string value;
-        if (text != nullptr) {
-          std::basic_string<unsigned char> temp = text;
-          value = std::string(temp.begin(), temp.end());
-        }
+        if (text != nullptr) { value = std::string(reinterpret_cast<const char *>(text)); }
         if (name == nullptr) { continue; }
         db::Argument argument(value, name);
         arguments.add(argument);
@@ -205,6 +200,7 @@ namespace sqlite {
   {
     char *errorMessage = nullptr;
     std::shared_ptr<Result> result = std::make_shared<Result>();
+    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters) — sqlite3_exec callback signature is fixed by the C API.
     std::function<void(int argc, char **argv, char **column)> func = [&](int argc, char **argv, char **column) {
       db::Arguments arguments(db::ConnectionType::SQLite);
       for (int i = 0; i < argc; i++) {

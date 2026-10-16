@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <map>
 #include <optional>
@@ -12,7 +13,7 @@ class EnvironmentConfiguration
 {
 public:
   /** Environment configuration keys */
-  enum Environment {
+  enum Environment : std::uint8_t {
     ConfigDirectory, /**< Configuration directory */
     BootstrapConfigName, /**< Bootstrap configuration file name */
     Home, /**< Home directory */
@@ -49,7 +50,7 @@ public:
   /** Override an environment value
    * @param environment The environment key to override
    * @param value The new value */
-  void overrides(Environment environment, std::string value);
+  void overrides(Environment environment, const std::string &value);
 
   /**
    * Expand environment variables in the given string.

@@ -14,8 +14,7 @@ namespace {
     for (int i = 0; i < count; i++) {
       std::string value;
       if (const unsigned char *text = sqlite3_column_text(stmt, i); text != nullptr) {
-        std::basic_string<unsigned char> temp = text;
-        value = std::string(temp.begin(), temp.end());
+        value = std::string(reinterpret_cast<const char *>(text));
       }
       const char *name = sqlite3_column_name(stmt, i);
       if (name == nullptr) { continue; }
