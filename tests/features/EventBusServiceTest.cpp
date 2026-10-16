@@ -46,10 +46,12 @@ namespace {
     return path;
   }
 
+  // Keep the segment name short: macOS caps POSIX semaphore names at 31
+  // characters and SharedMemoryService appends "_remap_sem" (10) to it.
   std::string ebsUniqueName()
   {
     static unsigned int counter = 0;
-    return "eventbus_service_segment_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
+    return "ebs_svc_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
   }
 
   EventBusConfig ebsValidConfig()

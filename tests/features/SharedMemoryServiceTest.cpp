@@ -46,10 +46,13 @@ namespace {
     return path;
   }
 
+  // macOS caps POSIX semaphore names at 31 characters (PSEMNAMLEN) and
+  // SharedMemoryService derives one as "<segment name>_remap_sem", so keep the
+  // segment name short enough for the suffix to fit (<= 21 characters).
   std::string uniqueSegmentName()
   {
     static unsigned int counter = 0;
-    return "shm_service_test_segment_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
+    return "shm_svc_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
   }
 
   // m_configDirectory must be the first member: members initialize in declaration order, so the

@@ -42,10 +42,12 @@ namespace {
            / ("shm_repository_test_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".bin");
   }
 
+  // Keep the segment name short: macOS caps POSIX semaphore names at 31
+  // characters and SharedMemoryService appends "_remap_sem" (10) to it.
   std::string uniqueRepositorySegmentName()
   {
     static unsigned int counter = 0;
-    return "shm_repository_segment_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
+    return "shm_rep_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
   }
 
   /** Minimal JSON DAO so the Array/Object templates can be instantiated with a POD element. */

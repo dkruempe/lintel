@@ -314,6 +314,12 @@ jobs:
           # binaries (194) - MSVC is binary compatible across 19.4x/19.5x, and
           # the project itself is still compiled by the real cl.exe.
           #
+          # Pinning 194 also makes Conan resolve the VS installation as "Visual
+          # Studio 17" (msvc 194 -> VS 17) whenever it writes the vcvars wrapper
+          # for a Ninja build. The image only has VS 18 (2026), so the one
+          # dependency without a matching binary (catch2) fails while building
+          # from source. Point the wrapper at the installation that exists.
+          #
           # cppstd=20 also turns on Boost.Cobalt, whose cobalt_io_ssl component
           # needs OpenSSL and is not built by the recipe here - package_info()
           # then aborts with "libboost_cobalt_io_ssl ... not built". lintel does
@@ -325,6 +331,7 @@ jobs:
             -s compiler.cppstd=20 \
             -s compiler.version=194 \
             -o "boost/*:without_cobalt=True" \
+            -c tools.microsoft.msbuild:vs_version=18 \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
       - name: Configure CMake
