@@ -805,7 +805,10 @@ void ProcessService::terminateOf(const ProcessGroup &processGroup)
     "PROCESS",
     std::format("{}/{} processGroup terminated", processGroup.getId(), processGroup.getName()));
   m_historyService->historizeOf({ historyEntry });
-  m_processGroups.erase(processGroup.getId());
+  {
+    std::lock_guard<std::mutex> locker(m_processGroupMutex);
+    m_processGroups.erase(processGroup.getId());
+  }
 }
 void ProcessService::detachOf(const ProcessGroup &processGroup)
 {
@@ -820,7 +823,10 @@ void ProcessService::detachOf(const ProcessGroup &processGroup)
     }
   }
   for (const auto &process : processGroup.getProcesses()) { detachOf(process); }
-  m_processGroups.erase(processGroup.getId());
+  {
+    std::lock_guard<std::mutex> locker(m_processGroupMutex);
+    m_processGroups.erase(processGroup.getId());
+  }
   DEFINE_HISTORY_ENTRY(
     historyEntry, "PROCESS", std::format("{}/{} detached", processGroup.getId(), processGroup.getName()));
   m_historyService->historizeOf({ historyEntry });
