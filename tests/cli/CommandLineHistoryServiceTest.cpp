@@ -1,7 +1,10 @@
 #include <catch2/catch_all.hpp>
 
 #include <chrono>
+#include <cstddef>
 #include <filesystem>
+#include <fstream>
+#include <sstream>
 #include <string>
 
 #include <unistd.h>
@@ -38,6 +41,23 @@ namespace {
     ~HistoryFileCleanup() { std::filesystem::remove(historyFilePath()); }
   } g_historyFileCleanup;
 
+  /** A distinct history file per test regardless of whether they share a process */
+  struct UniqueHistoryFile
+  {
+    std::string name;
+    std::filesystem::path path;
+
+    UniqueHistoryFile()
+    {
+      static unsigned int counter = 0;
+      name = ".commandline_history_unique_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".history";
+      path = std::filesystem::path(CONFIG_DIRECTORY) / name;
+      std::filesystem::remove(path);
+    }
+
+    ~UniqueHistoryFile() { std::filesystem::remove(path); }
+  };
+
   /** Test helper that allows redirecting the history file away from the real config */
   class TestCommandLineHistoryService : public CommandLineHistoryService
   {
@@ -54,6 +74,19 @@ namespace {
       }
       FAIL("m_historyFileName property not registered");
     }
+
+    void setMaxEntries(std::size_t value)
+    {
+      for (auto &property : m_properties) {
+        if (property->getName() == "m_maxCommandHistoryEntries") {
+          std::static_pointer_cast<Property<std::size_t>>(property)->setValue(value);
+          return;
+        }
+      }
+      FAIL("m_maxCommandHistoryEntries property not registered");
+    }
+
+    void initialize() { onInitialize(); }
 
     void addEntries(const std::vector<std::string> &commands, const std::string &menu)
     {
@@ -184,5 +217,73 @@ TEST_CASE("CommandLineHistoryService: startsWith matches the oldest single entry
   service.addEntries({ "abc" }, "Root");
 
   REQUIRE(service.startsWith("ab", "Root")->getCommand() == "abc");
+}
+
+TEST_CASE("CommandLineHistoryService: nextOf returns nothing when no entry matches the menu")
+{
+  auto processName = std::make_shared<ProcessName>("test-process");
+  TestCommandLineHistoryService service(processName);
+  service.setHistoryFileName(historyFileName());
+
+  service.addEntries({ "cmd1", "cmd2" }, "Root");
+  REQUIRE_FALSE(service.nextOf("UserManagement").has_value());
+  REQUIRE_FALSE(service.previousOf("UserManagement").has_value());
+}
+
+TEST_CASE("CommandLineHistoryService: historizeOf rewrites the file once the limit is reached")
+{
+  UniqueHistoryFile file;
+  auto processName = std::make_shared<ProcessName>("test-process");
+  TestCommandLineHistoryService service(processName);
+  service.setHistoryFileName(file.name);
+  service.setMaxEntries(2);
+
+  service.addEntries({ "cmd1", "cmd2" }, "Root");// both below the limit -> appended
+  service.addEntries({ "cmd3" }, "Root");// at the limit -> oldest entry is dropped
+
+  const auto history = service.allOf();
+  REQUIRE(history.size() == 2);
+  REQUIRE(history[0].getCommand() == "cmd2");
+  REQUIRE(history[1].getCommand() == "cmd3");
+
+  // the file was rewritten to hold exactly the retained entries
+  const std::string content = [&] {
+    std::ifstream stream(file.path);
+    std::stringstream buffer;
+    buffer << stream.rdbuf();
+    return buffer.str();
+  }();
+  REQUIRE(content.find("cmd1") == std::string::npos);
+  REQUIRE(content.find("cmd2") != std::string::npos);
+  REQUIRE(content.find("cmd3") != std::string::npos);
+}
+
+TEST_CASE("CommandLineHistoryService: onInitialize loads the persisted history")
+{
+  UniqueHistoryFile file;
+  auto processName = std::make_shared<ProcessName>("test-process");
+  {
+    TestCommandLineHistoryService writer(processName);
+    writer.setHistoryFileName(file.name);
+    writer.addEntries({ "cmd1", "cmd2", "cmd3" }, "Root");
+  }
+
+  TestCommandLineHistoryService reader(processName);
+  reader.setHistoryFileName(file.name);
+  reader.initialize();
+
+  REQUIRE(reader.allOf().size() == 3);
+  REQUIRE(reader.previousOf("Root")->getCommand() == "cmd3");
+}
+
+TEST_CASE("CommandLineHistoryService: onInitialize tolerates a missing history file")
+{
+  UniqueHistoryFile file;// the constructor removes the file, so it is guaranteed to be absent
+  auto processName = std::make_shared<ProcessName>("test-process");
+  TestCommandLineHistoryService service(processName);
+  service.setHistoryFileName(file.name);
+
+  REQUIRE_NOTHROW(service.initialize());
+  REQUIRE(service.allOf().empty());
 }
 }// namespace lintel

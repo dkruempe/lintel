@@ -28,6 +28,7 @@
 #include "lintel/features/http/configuration/HttpComponent.h"
 #include "lintel/features/http/configuration/HttpEntry.h"
 #include "lintel/features/http/provider/ClientProvider.h"
+#include "lintel/features/http/service/HttpUnauthorizedException.h"
 
 namespace lintel {
 namespace {
@@ -600,5 +601,66 @@ TEST_CASE("ProcessCliComponent: show_processes without a value for -p prints an 
 
   REQUIRE(procCliServer.paths.empty());
   REQUIRE(procCliReported.find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("ProcessApi: an unauthorized response throws for every endpoint")
+{
+  procCliBackend procCliServer;
+  procCliServer.answerWithStatus(401, "{}");
+  auto procCliApi = std::make_shared<ProcessApi>(procCliProviderOf(procCliServer.port()));
+  auto procCliProcess = std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
+
+  REQUIRE_THROWS_AS(procCliApi->allOf(".*"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(procCliApi->allGroupsOf(".*"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(procCliApi->startOf(procCliProcess), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(procCliApi->stopOf("id"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(procCliApi->terminateOf("id"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(procCliApi->restartOf("id"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(procCliApi->resetOf("id"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(procCliApi->healthOf("id"), HttpUnauthorizedException);
+}
+
+TEST_CASE("ProcessApi: a server error is reported per endpoint")
+{
+  procCliBackend procCliServer;
+  procCliServer.answerWithStatus(500, "{}");
+  auto procCliApi = std::make_shared<ProcessApi>(procCliProviderOf(procCliServer.port()));
+  auto procCliProcess = std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
+
+  REQUIRE(procCliApi->allOf(".*").empty());
+  REQUIRE(procCliApi->allGroupsOf(".*").empty());
+  REQUIRE_THROWS_AS(procCliApi->startOf(procCliProcess), std::runtime_error);
+  REQUIRE_THROWS_AS(procCliApi->stopOf("id"), std::runtime_error);
+  REQUIRE_THROWS_AS(procCliApi->terminateOf("id"), std::runtime_error);
+  REQUIRE_THROWS_AS(procCliApi->restartOf("id"), std::runtime_error);
+  REQUIRE_THROWS_AS(procCliApi->resetOf("id"), std::runtime_error);
+  REQUIRE_FALSE(procCliApi->healthOf("id").has_value());
+}
+
+TEST_CASE("ProcessApi: a malformed body is tolerated")
+{
+  procCliBackend procCliServer;
+  procCliServer.answerWith("{ this is not valid json");
+  auto procCliApi = std::make_shared<ProcessApi>(procCliProviderOf(procCliServer.port()));
+
+  REQUIRE(procCliApi->allOf(".*").empty());
+  REQUIRE(procCliApi->allGroupsOf(".*").empty());
+  REQUIRE_FALSE(procCliApi->healthOf("id").has_value());
+}
+
+TEST_CASE("ProcessApi: a missing server is reported per endpoint")
+{
+  // port 1 is never served -> the client cannot establish a connection
+  auto procCliApi = std::make_shared<ProcessApi>(procCliProviderOf(1));
+  auto procCliProcess = std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
+
+  REQUIRE(procCliApi->allOf(".*").empty());
+  REQUIRE(procCliApi->allGroupsOf(".*").empty());
+  REQUIRE_THROWS_AS(procCliApi->startOf(procCliProcess), std::runtime_error);
+  REQUIRE_THROWS_AS(procCliApi->stopOf("id"), std::runtime_error);
+  REQUIRE_THROWS_AS(procCliApi->terminateOf("id"), std::runtime_error);
+  REQUIRE_THROWS_AS(procCliApi->restartOf("id"), std::runtime_error);
+  REQUIRE_THROWS_AS(procCliApi->resetOf("id"), std::runtime_error);
+  REQUIRE_FALSE(procCliApi->healthOf("id").has_value());
 }
 }// namespace lintel

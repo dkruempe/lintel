@@ -1,10 +1,14 @@
 #include <filesystem>
+#include <memory>
 #include <string>
 #include <type_traits>
 
 #include <unistd.h>
 
 #include <boost/interprocess/managed_mapped_file.hpp>
+
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 #include <catch2/catch_all.hpp>
 
@@ -279,5 +283,41 @@ TEST_CASE("truncated change without shared memory repository is not applied")
   serviceA.changeStringValueOf(greetingA, longValue);
   REQUIRE(serviceB.applyChangeNotifications() == 0);
   REQUIRE(greetingB->getValue() == initialValue);
+}
+
+TEST_CASE("shared memory property repository round-trips saved properties")
+{
+  PropertyRepositoryFixture fixture;
+  auto property = std::make_shared<Property<int32_t>>("value", "instance", "className", "testProcess", 5, "", true);
+
+  fixture.repository->save(property);
+
+  const auto awake = fixture.repository->awake();
+  REQUIRE(awake.size() == 1);
+  REQUIRE(awake.front()->getName() == "value");
+
+  REQUIRE(fixture.repository->allOf("testProcess", "className", "instance", "value").size() == 1);
+  REQUIRE(fixture.repository->allOf("otherProcess", ".*", ".*", ".*").empty());
+
+  // deliberate no-op migration hook
+  fixture.repository->onMigrate(0);
+
+  fixture.repository->deleteOf({ property });
+  REQUIRE(fixture.repository->awake().empty());
+}
+
+TEST_CASE("shared memory property repository serializes to json")
+{
+  PropertyRepositoryFixture fixture;
+  auto property = std::make_shared<Property<int32_t>>("value", "instance", "className", "testProcess", 5, "", true);
+  fixture.repository->save(property);
+
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+  fixture.repository->serialize(&writer);
+
+  const std::string json(buffer.GetString());
+  REQUIRE(json.find("SharedMemoryMapRepository") != std::string::npos);
+  REQUIRE(json.find("testProcess") != std::string::npos);
 }
 }// namespace lintel

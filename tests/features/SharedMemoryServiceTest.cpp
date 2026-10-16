@@ -9,6 +9,7 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "lintel/core/configuration/Configuration.h"
@@ -193,6 +194,70 @@ TEST_CASE("SegmentSemaphoreGuard: times out instead of blocking on a crashed hol
   // After the holder released it the semaphore is usable again.
   REQUIRE_NOTHROW(shm::SegmentSemaphoreGuard(semaphore, std::chrono::milliseconds(50)));
   boost::interprocess::named_semaphore::remove(name.c_str());
+}
+
+TEST_CASE("SharedMemoryService: periodic check leaves a non auto-extend segment untouched")
+{
+  SharedMemoryServiceFixture fixture;
+
+  fixture.scheduler->onInitialize();
+  fixture.service->onInitialize();
+
+  // default schedule rate is 2s - give the scheduled onCheck a chance to run
+  std::this_thread::sleep_for(std::chrono::milliseconds(2600));
+
+  fixture.scheduler->onShutdown();
+  REQUIRE(fixture.service->getGeneration() == 0);
+}
+
+TEST_CASE("SharedMemoryService: periodic check auto-extends a nearly full segment")
+{
+  SharedMemoryServiceFixture fixture(kInitialSize, kMaxSize);
+  REQUIRE(fixture.segment->isAutoExtend());
+
+  // drain the segment until less than the auto-extend epsilon (1000 bytes) is free
+  auto accessor = fixture.service->getSegmentAccessor(fixture.segment);
+  while (fixture.service->showStateOf(fixture.segment).getFreeSize() >= 1000) {
+    try {
+      static_cast<void>(accessor.allocate(64));
+    } catch (const std::exception &) {
+      break;
+    }
+  }
+  REQUIRE(fixture.service->showStateOf(fixture.segment).getFreeSize() < 1000);
+
+  fixture.scheduler->onInitialize();
+  fixture.service->onInitialize();
+
+  std::this_thread::sleep_for(std::chrono::milliseconds(2600));
+
+  fixture.scheduler->onShutdown();
+  REQUIRE(fixture.service->getGeneration() >= 1);
+  REQUIRE(fixture.currentSize() == kInitialSize + kGrowSize);
+}
+
+TEST_CASE("SharedMemoryService: getSegmentAccessor reports allocation through the segment")
+{
+  SharedMemoryServiceFixture fixture;
+
+  auto accessor = fixture.service->getSegmentAccessor(fixture.segment);
+  void *block = accessor.allocate(128);
+  REQUIRE(block != nullptr);
+  accessor.deallocate(block);
+
+  // the same accessor is returned again for the same segment
+  auto second = fixture.service->getSegmentAccessor(fixture.segment);
+  void *secondBlock = second.allocate(64);
+  REQUIRE(secondBlock != nullptr);
+  second.deallocate(secondBlock);
+}
+
+TEST_CASE("SharedMemoryService: getSegmentAccessor throws for an unknown segment")
+{
+  SharedMemoryServiceFixture fixture;
+  auto unknown = std::make_shared<SharedMemorySegment>(fixture.path, fixture.name + "_missing", kInitialSize);
+
+  REQUIRE_THROWS_AS(fixture.service->getSegmentAccessor(unknown), ShmSegmentNotFound);
 }
 
 }// namespace lintel

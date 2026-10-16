@@ -268,4 +268,123 @@ TEST_CASE("UserManagementCliComponent: user_session_revoke without -s prints err
   std::cerr.rdbuf(oldBuf);
   REQUIRE(oss.str().find("ERROR") != std::string::npos);
 }
+
+TEST_CASE("UserManagementCliComponent: user_add with all args calls createOf")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, createOf(ANY(UserDto))).TIMES(1);
+
+  UserDto userDto;
+  component.onCommand(
+    userDto, "user_add", { "-f", "John", "-l", "Doe", "-e", "john@doe.test", "-p", "secret", "-u", "jdoe" });
+}
+
+TEST_CASE("UserManagementCliComponent: show_groups with data prints the groups")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  GroupDto group(Group("admin", { Group("sub", {}, false), Group("ops", {}, true) }, false));
+  REQUIRE_CALL(*mockUserApi, allOf()).TIMES(1).LR_RETURN(std::vector<GroupDto>{ group });
+
+  UserDto userDto;
+  std::ostringstream oss;
+  auto oldBuf = std::cout.rdbuf(oss.rdbuf());
+
+  component.onCommand(userDto, "show_groups", {});
+
+  std::cout.rdbuf(oldBuf);
+  const std::string output = oss.str();
+  REQUIRE(output.find("admin") != std::string::npos);
+  REQUIRE(output.find("sub;ops") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: show_users with data prints the users")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  User user("John", "Doe", User::Sex::Male, "john@doe.test", "jdoe", "secret", { Group("admin", {}, false) });
+  UserDto userDto(user);
+  REQUIRE_CALL(*mockUserApi, allUsersOf()).TIMES(1).LR_RETURN(std::vector<UserDto>{ userDto });
+
+  std::ostringstream oss;
+  auto oldBuf = std::cout.rdbuf(oss.rdbuf());
+
+  component.onCommand(UserDto{}, "show_users", {});
+
+  std::cout.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("jdoe") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: lifecycle and metadata accessors")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  std::ostringstream oss;
+  auto oldOut = std::cout.rdbuf(oss.rdbuf());
+
+  component.onHelp();
+  component.onShowMenu();
+  component.printCommandList({ "Test" });
+  const auto commands = component.allCommandsOf();
+
+  std::cout.rdbuf(oldOut);
+
+  REQUIRE_FALSE(component.onMenu("anything"));
+  REQUIRE(component.onExit());
+  REQUIRE_FALSE(commands.empty());
+  REQUIRE(oss.str().find("No submenu available!") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: a failed password change prints an error")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, changePasswordOf(ANY(UserPasswordChangeDto))).TIMES(1).LR_RETURN(false);
+
+  std::ostringstream oss;
+  auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+  component.onCommand(UserDto{}, "user_change_password", { "-u", "jdoe", "-n", "newpass" });
+
+  std::cerr.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: a failed session revoke prints an error")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, revokeSessionOf(std::string{ "abc123" })).TIMES(1).LR_RETURN(false);
+
+  std::ostringstream oss;
+  auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+  component.onCommand(UserDto{}, "user_session_revoke", { "-s", "abc123" });
+
+  std::cerr.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: an exception from the api is caught and printed")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, allOf()).TIMES(1).LR_THROW(std::runtime_error("boom"));
+
+  std::ostringstream oss;
+  auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+  component.onCommand(UserDto{}, "show_groups", {});
+
+  std::cerr.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("boom") != std::string::npos);
+}
 }// namespace lintel

@@ -6,6 +6,7 @@
 #include <lintel/features/base/services/SchedulerService.h>
 #include <lintel/features/base/services/SharedMemorySegmentManager.h>
 #include <lintel/features/base/services/SharedMemoryService.h>
+#include <lintel/features/base/services/ShmConstructors.h>
 #include <lintel/features/property/repositories/SharedMemoryPropertyRepository.h>
 
 #include <catch2/catch_all.hpp>
@@ -17,6 +18,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace lintel {
 namespace {
@@ -90,5 +92,52 @@ TEST_CASE("PropertyDataDto::getSize matches the mapped element size")
   // And the hint has to be the one the repository actually uses - not just a correct formula.
   REQUIRE(fixture.repository->getSizeOfData() == static_cast<std::size_t>(PropertyDataDto::getSize()));
   REQUIRE(fixture.repository->getSizeOfData() == sizeof(PropertyDataDto));
+}
+
+TEST_CASE("PropertyDataDto compares lexicographically over all fields")
+{
+  PropertySizeRepositoryFixture fixture;
+
+  // reconstruct the segment handle by name so strings can be allocated in the real segment
+  auto segment = std::make_shared<SharedMemorySegment>(fixture.path, "shm_property", 5 * 1024 * 1024);
+  auto make = [&](const std::string &processName,
+                const std::string &className,
+                const std::string &instanceName,
+                const std::string &name,
+                const std::string &value,
+                const std::string &type) {
+    return PropertyDataDto{ shm::constructString(*fixture.sharedMemoryService, segment, processName),
+      shm::constructString(*fixture.sharedMemoryService, segment, className),
+      shm::constructString(*fixture.sharedMemoryService, segment, instanceName),
+      shm::constructString(*fixture.sharedMemoryService, segment, name),
+      shm::constructString(*fixture.sharedMemoryService, segment, value),
+      shm::constructString(*fixture.sharedMemoryService, segment, type) };
+  };
+
+  const PropertyDataDto base = make("p", "c", "i", "n", "v", "t");
+  const PropertyDataDto identical = make("p", "c", "i", "n", "v", "t");
+  REQUIRE(base == identical);
+  REQUIRE_FALSE(base != identical);
+  REQUIRE(base <= identical);
+  REQUIRE(base >= identical);
+  REQUIRE_FALSE(base < identical);
+  REQUIRE_FALSE(base > identical);
+
+  const std::vector<PropertyDataDto> greater = {
+    make("q", "c", "i", "n", "v", "t"),// processName decides
+    make("p", "d", "i", "n", "v", "t"),// className decides
+    make("p", "c", "j", "n", "v", "t"),// instanceName decides
+    make("p", "c", "i", "o", "v", "t"),// name decides
+    make("p", "c", "i", "n", "w", "t"),// value decides
+    make("p", "c", "i", "n", "v", "u"),// type decides
+  };
+  for (const auto &other : greater) {
+    REQUIRE(base < other);
+    REQUIRE(base <= other);
+    REQUIRE(other > base);
+    REQUIRE(other >= base);
+    REQUIRE(base != other);
+    REQUIRE_FALSE(base == other);
+  }
 }
 }// namespace lintel

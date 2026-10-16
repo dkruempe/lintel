@@ -20,6 +20,7 @@
 #include "lintel/features/http/configuration/HttpComponent.h"
 #include "lintel/features/http/configuration/HttpEntry.h"
 #include "lintel/features/http/provider/ClientProvider.h"
+#include "lintel/features/http/service/HttpUnauthorizedException.h"
 
 namespace lintel {
 namespace {
@@ -72,6 +73,7 @@ namespace {
       m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
         paths.push_back(request.path);
         methods.emplace_back(request.method);
+        response.status = m_responseStatus;
         response.set_content(m_responseBody, "application/json");
         return httplib::Server::HandlerResponse::Handled;
       });
@@ -95,7 +97,17 @@ namespace {
     shmCliBackend(const shmCliBackend &) = delete;
     shmCliBackend &operator=(const shmCliBackend &) = delete;
 
-    void answerWith(const std::string &body) { m_responseBody = body; }
+    void answerWith(const std::string &body)
+    {
+      m_responseBody = body;
+      m_responseStatus = 200;
+    }
+
+    void answerWithStatus(int status, const std::string &body)
+    {
+      m_responseStatus = status;
+      m_responseBody = body;
+    }
 
     [[nodiscard]] int port() const { return m_port; }
 
@@ -109,6 +121,7 @@ namespace {
     httplib::Server m_server;
     std::thread m_thread;
     int m_port{ -1 };
+    int m_responseStatus{ 200 };
     std::string m_responseBody{ "[]" };
   };
 
@@ -496,5 +509,57 @@ TEST_CASE("SharedMemoryCliComponent: show_segments without a value for -s prints
 
   REQUIRE(shmCliServer.paths.empty());
   REQUIRE(shmCliReported.find("ERROR") != std::string::npos);
+}
+
+// --------------------------------------------------------------------------------------
+// SharedMemoryApi error branches
+// --------------------------------------------------------------------------------------
+
+TEST_CASE("SharedMemoryApi: an unauthorized response throws for every endpoint")
+{
+  shmCliBackend shmCliServer;
+  shmCliServer.answerWithStatus(401, "{}");
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+
+  REQUIRE_THROWS_AS(shmCliApi->allSegmentsOf(".*"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(shmCliApi->shrinkOf("seg"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(shmCliApi->allRepositoriesOf(".*", ".*"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(shmCliApi->growOf("seg", "1024"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(shmCliApi->repositoryOf("uuid"), HttpUnauthorizedException);
+}
+
+TEST_CASE("SharedMemoryApi: a server error is tolerated per endpoint")
+{
+  shmCliBackend shmCliServer;
+  shmCliServer.answerWithStatus(500, "{}");
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+
+  REQUIRE(shmCliApi->allSegmentsOf(".*").empty());
+  REQUIRE_NOTHROW(shmCliApi->shrinkOf("seg"));
+  REQUIRE(shmCliApi->allRepositoriesOf(".*", ".*").empty());
+  REQUIRE_NOTHROW(shmCliApi->growOf("seg", "1024"));
+  REQUIRE(shmCliApi->repositoryOf("uuid").empty());
+}
+
+TEST_CASE("SharedMemoryApi: a malformed body is tolerated")
+{
+  shmCliBackend shmCliServer;
+  shmCliServer.answerWith("{ this is not valid json");
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+
+  REQUIRE(shmCliApi->allSegmentsOf(".*").empty());
+  REQUIRE(shmCliApi->allRepositoriesOf(".*", ".*").empty());
+}
+
+TEST_CASE("SharedMemoryApi: a missing server is tolerated per endpoint")
+{
+  // port 1 is never served -> the client cannot establish a connection
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(1));
+
+  REQUIRE(shmCliApi->allSegmentsOf(".*").empty());
+  REQUIRE_NOTHROW(shmCliApi->shrinkOf("seg"));
+  REQUIRE(shmCliApi->allRepositoriesOf(".*", ".*").empty());
+  REQUIRE_NOTHROW(shmCliApi->growOf("seg", "1024"));
+  REQUIRE(shmCliApi->repositoryOf("uuid").empty());
 }
 }// namespace lintel

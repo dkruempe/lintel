@@ -2,6 +2,9 @@
 #include <lintel/core/configuration/EnvironmentConfiguration.h>
 #include <lintel/core/models/ProcessName.h>
 #include <lintel/core/utils/ProcessResourceReader.h>
+#include <lintel/core/utils/TypeName.h>
+#include <lintel/features/base/configuration/ProcessComponent.h>
+#include <lintel/features/base/configuration/ProcessEntry.h>
 #include <lintel/features/base/controller/ProcessGroupDto.h>
 #include <lintel/features/base/controller/ProcessInfoDto.h>
 #include <lintel/features/base/models/Process.h>
@@ -435,5 +438,225 @@ TEST_CASE("ProcessResourceReader reads own process resources", "[process_service
 #else
   SKIP("ProcessResourceReader only fully supported on Linux here");
 #endif
+}
+
+TEST_CASE("ProcessService constructor starts configured processes and groups", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+
+  auto process = std::make_shared<Process>(fixture.sleepBinary, std::vector<std::string>{ "600" });
+  auto grouped = std::make_shared<Process>(fixture.sleepBinary, std::vector<std::string>{ "600" });
+  auto group = std::make_shared<ProcessGroup>("ctor_group", std::vector<Process>{ *grouped });
+
+  std::vector<std::shared_ptr<Entry>> entries;
+  entries.push_back(std::make_shared<ProcessEntry>(type_name<ProcessComponent>(), process));
+  entries.push_back(std::make_shared<ProcessEntry>(type_name<ProcessComponent>(), group));
+  fixture.configuration->setEntries(entries);
+
+  auto service = fixture.createService();
+
+  // self + the standalone process + the process of the group
+  REQUIRE(service->allActiveOf().size() == 3);
+
+  service->terminateOf(*group);
+  service->terminateOf(*process);
+}
+
+TEST_CASE("ProcessService monitor auto-restarts then finalizes a crashing process", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process process(fixture.sleepBinary, std::vector<std::string>{ "0" });
+  process.enableAutoStart(1);// exactly one auto-restart, then finalize
+
+  auto future = service->startOf(process);
+  REQUIRE(future.has_value());
+
+  service->onInitialize();
+
+  REQUIRE(future->wait_for(std::chrono::seconds(6)) == std::future_status::ready);
+  REQUIRE(future->get() == 0);
+  // after the restart budget is spent the entry is finalized and removed
+  REQUIRE(service->allActiveOf().size() == 1);
+}
+
+TEST_CASE("ProcessService monitor trips the circuit breaker and recovers a group member", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process process(fixture.sleepBinary, std::vector<std::string>{ "0" });
+  process.setMaxRestartRate(1);// one fast failure is enough to move to failed state
+  process.setRestartDelay(std::chrono::milliseconds(0));
+  ProcessGroup group("recover_group", std::vector<Process>{ process });
+
+  service->startOf(group);
+  service->onInitialize();
+
+  // let the crash/fail/recover cycle run for a few monitor ticks
+  std::this_thread::sleep_for(std::chrono::milliseconds(3500));
+
+  auto stored = service->of(process.getId());
+  REQUIRE(stored.has_value());
+  REQUIRE(stored.value()->currentRestarts() >= 2);// at least one restart and one group recovery
+
+  service->terminateOf(group);
+}
+
+TEST_CASE("ProcessService monitor samples resources and fires notify thresholds", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process process(fixture.sleepBinary, std::vector<std::string>{ "600" });
+  process.setMemoryNotify(1ULL);// 1 byte: always exceeded, forces the notify path
+
+  service->startOf(process);
+  service->onInitialize();
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+  bool foundFreshSample = false;
+  for (const auto &info : service->allActiveOf()) {
+    if (info.getProcess() == service->currentOf().getProcess()) { continue; }
+    if (info.getResourceData().has_value() && info.getResourceData()->valid) { foundFreshSample = true; }
+  }
+  REQUIRE(foundFreshSample);
+
+  service->terminateOf(process);
+}
+
+TEST_CASE("ProcessService monitor performs a periodic restart", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process process(fixture.sleepBinary, std::vector<std::string>{ "600" });
+  process.setRestartInterval(std::chrono::milliseconds(200));
+  process.disableAutoStart();// the periodic restart stops it; it must not come back
+
+  service->startOf(process);
+  service->onInitialize();
+  std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+
+  REQUIRE(service->allActiveOf().size() == 1);// only self remains
+}
+
+TEST_CASE("ProcessService spawns a child with an explicit bootstrap config name", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process process(fixture.sleepBinary, std::vector<std::string>{ "600" }, "worker");
+  service->startOf(process);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  REQUIRE(service->of(process.getId()).has_value());
+  service->terminateOf(process);
+}
+
+TEST_CASE("ProcessService resolves a path relative to the configuration directory", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  const auto tempDirectory = std::filesystem::temp_directory_path() / "lintel_processservice_relative";
+  std::filesystem::remove_all(tempDirectory);
+  std::filesystem::create_directories(tempDirectory);
+  std::filesystem::copy_file(
+    fixture.sleepBinary, tempDirectory / "relative_sleeper", std::filesystem::copy_options::overwrite_existing);
+  fixture.envConfig->overrides(
+    EnvironmentConfiguration::ConfigDirectory, tempDirectory.string());
+
+  Process process("relative_sleeper", std::vector<std::string>{ "600" });
+  service->startOf(process);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  REQUIRE(service->of(process.getId()).has_value());
+  service->terminateOf(process);
+  std::filesystem::remove_all(tempDirectory);
+}
+
+TEST_CASE("ProcessService resolves a bare command name through PATH", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  // "sleep" is not a file next to the test binary and not relative to the config dir, so
+  // resolvePath falls through to the PATH lookup
+  Process process("sleep", std::vector<std::string>{ "600" });
+  service->startOf(process);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  REQUIRE(service->of(process.getId()).has_value());
+  service->terminateOf(process);
+}
+
+TEST_CASE("ProcessService::allGroupsOf rejects an invalid regex", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  REQUIRE(service->allGroupsOf("(").empty());
+}
+
+TEST_CASE("ProcessService lifecycle calls are no-ops for unknown processes and groups", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process unknown(fixture.sleepBinary, std::vector<std::string>{ "600" });
+  ProcessGroup unknownGroup("unknown_group", std::vector<Process>{ unknown });
+
+  service->detachOf(unknown);
+  service->resetOf(unknown);
+  REQUIRE(service->stopOf(unknownGroup));
+  service->terminateOf(unknownGroup);
+  service->detachOf(unknownGroup);
+}
+
+TEST_CASE("ProcessService::startOf ignores a duplicate process group", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process process(fixture.sleepBinary, std::vector<std::string>{ "600" });
+  ProcessGroup group("dup_group", std::vector<Process>{ process });
+
+  service->startOf(group);
+  service->startOf(group);// must not throw or start the process twice
+
+  REQUIRE(service->allGroupsOf("dup_group").size() == 1);
+  service->terminateOf(group);
+}
+
+TEST_CASE("ProcessService restarts a whole process group", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process process(fixture.sleepBinary, std::vector<std::string>{ "600" });
+  ProcessGroup group("restart_group", std::vector<Process>{ process });
+
+  service->startOf(group);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  service->restartOf(group);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+  REQUIRE(service->allGroupsOf("restart_group").size() == 1);
+  service->terminateOf(group);
+}
+
+TEST_CASE("ProcessService destructor force-terminates a process that ignores SIGINT", "[process_service]")
+{
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  // stopOf sends SIGINT, which this child traps; the destructor then has to terminate it
+  Process stubborn("/bin/sh", std::vector<std::string>{ "-c", "trap '' INT; sleep 30" });
+  service->startOf(stubborn);
+  std::this_thread::sleep_for(std::chrono::milliseconds(150));
+  // deliberately no terminateOf: the destructor must clean the child up
 }
 }// namespace lintel

@@ -899,4 +899,202 @@ TEST_CASE("ProcessController::terminateProcessDelete accepts request without Con
   REQUIRE(terminated != nullptr);
   REQUIRE(terminated->status == 200);
 }
+
+// --------------------------------------------------------------------------------------
+// remaining 401/403 branches per endpoint
+// --------------------------------------------------------------------------------------
+
+TEST_CASE("ProcessController::allProcessOfGet returns 401 for a user outside Admin-Process and User-Process",
+  "[process_controller]")
+{
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcOutsiderUser, pcTokenOutsider));
+
+  auto response = fixture.m_client->Get("/process/processes/.*", pcAuthHeaders(pcTokenOutsider));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 401);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("ProcessController::allProcessOfGet returns 403 for a non json content type", "[process_controller]")
+{
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcPlainUser, pcTokenPlain));
+
+  auto headers = pcAuthHeaders(pcTokenPlain);
+  headers.emplace("Content-Type", "text/plain");
+  auto response = fixture.m_client->Get("/process/processes/.*", headers);
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 403);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("ProcessController::allProcessGroupsOfGet returns 401 for a user outside Admin-Process and User-Process",
+  "[process_controller]")
+{
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcOutsiderUser, pcTokenOutsider));
+
+  auto response = fixture.m_client->Get("/process/groups/.*", pcAuthHeaders(pcTokenOutsider));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 401);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("ProcessController::allProcessGroupsOfGet returns 403 for a non json content type", "[process_controller]")
+{
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcPlainUser, pcTokenPlain));
+
+  auto headers = pcAuthHeaders(pcTokenPlain);
+  headers.emplace("Content-Type", "text/plain");
+  auto response = fixture.m_client->Get("/process/groups/.*", headers);
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 403);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("ProcessController::terminateProcessDelete returns 403 for a non json content type",
+  "[process_controller]")
+{
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  headers.emplace("Content-Type", "text/plain");
+  auto response = fixture.m_client->Delete("/process/terminate/" + std::string(pcUnknownProcessId), headers);
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 403);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("ProcessController::restartProcessPut returns 403 for a non json content type", "[process_controller]")
+{
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  headers.emplace("Content-Type", "text/plain");
+  auto response =
+    fixture.m_client->Put("/process/restart/" + std::string(pcUnknownProcessId), headers, std::string(), "");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 403);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("ProcessController::resetProcessPost returns 403 for a non json content type", "[process_controller]")
+{
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  headers.emplace("Content-Type", "text/plain");
+  auto response =
+    fixture.m_client->Post("/process/reset/" + std::string(pcUnknownProcessId), headers, std::string(), "");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 403);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("ProcessController::healthProcessGet returns 403 for a non json content type", "[process_controller]")
+{
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  auto headers = pcAuthHeaders(pcTokenAdmin);
+  headers.emplace("Content-Type", "text/plain");
+  auto response = fixture.m_client->Get("/process/health/" + std::string(pcUnknownProcessId), headers);
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 403);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("ProcessController::startProcessPost enables auto restart when requested", "[process_controller]")
+{
+  const std::string sleeper = pcFindSleeperBinary();
+  REQUIRE(!sleeper.empty());
+
+  ProcessControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(3)
+    .LR_RETURN(pcTokenOf(pcAdminUser, pcTokenAdmin));
+
+  std::string body = pcStartBody(sleeper, { "600" });
+  const std::string from = R"("auto_restart":false,"restarts":0,"max_restarts":0)";
+  const std::string to = R"("auto_restart":true,"restarts":0,"max_restarts":3)";
+  const auto position = body.find(from);
+  REQUIRE(position != std::string::npos);
+  body.replace(position, from.size(), to);
+
+  auto started =
+    fixture.m_client->Post("/process/start", pcAuthJsonHeaders(pcTokenAdmin), body, "application/json");
+  REQUIRE(started != nullptr);
+  REQUIRE(started->status == 200);
+
+  const std::string sleeperName = std::filesystem::path(sleeper).filename().string();
+  auto listed = fixture.m_client->Get("/process/processes/" + sleeperName, pcAuthHeaders(pcTokenAdmin));
+  REQUIRE(listed != nullptr);
+  REQUIRE(listed->status == 200);
+  const auto infos = fixture.parseProcessInfos(listed->body);
+  REQUIRE(infos.size() == 1);
+  REQUIRE(infos[0].isAutoRestart());
+  REQUIRE(infos[0].getMaxAutoRestarts() == 3);
+  const std::string childId = infos[0].getId();
+
+  auto terminated = fixture.m_client->Delete("/process/terminate/" + childId, pcAuthJsonHeaders(pcTokenAdmin));
+  REQUIRE(terminated != nullptr);
+  REQUIRE(terminated->status == 200);
+}
 }// namespace lintel

@@ -17,10 +17,12 @@
 
 #include <catch2/catch_all.hpp>
 
+#include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <thread>
 #include <unistd.h>
 #include <vector>
 
@@ -94,6 +96,12 @@ namespace {
     void createUser(const std::string &userName, const std::string &password)
     {
       User user("First", "Last", User::Sex::Male, "", userName, Cryption::hashOf(password), {});
+      userRepository->createOf(user);
+    }
+
+    void createUserWithStoredHash(const std::string &userName, const std::string &storedHash)
+    {
+      User user("First", "Last", User::Sex::Male, "", userName, storedHash, {});
       userRepository->createOf(user);
     }
 
@@ -178,5 +186,150 @@ TEST_CASE("AuthService: sliding window rate limits excessive logins per IP")
   // a different IP is not affected
   auto otherIp = fixture.authService->onLoginOf(UserLogin{ "192.168.1.2", "alice", "secret1" });
   REQUIRE(otherIp.has_value());
+}
+
+TEST_CASE("AuthService: onLoginOf rejects an empty ip address")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  auto token = fixture.authService->onLoginOf(UserLogin{ "", "alice", "secret1" });
+  REQUIRE_FALSE(token.has_value());
+}
+
+TEST_CASE("AuthService: onLoginOf rejects a malformed ip address")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  auto token = fixture.authService->onLoginOf(UserLogin{ "not-an-ip", "alice", "secret1" });
+  REQUIRE_FALSE(token.has_value());
+}
+
+TEST_CASE("AuthService: onLoginOf rejects an unknown user")
+{
+  AuthFixture fixture;
+
+  auto token = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "ghost", "secret1" });
+  REQUIRE_FALSE(token.has_value());
+}
+
+TEST_CASE("AuthService: onLoginOf rejects a wrong password and clears failures on success")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  for (int i = 0; i < 3; i++) {
+    auto failed = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "wrong" });
+    REQUIRE_FALSE(failed.has_value());
+  }
+
+  // a correct login below the lockout threshold clears the recorded failures
+  auto token = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "secret1" });
+  REQUIRE(token.has_value());
+}
+
+TEST_CASE("AuthService: repeated failures lock out an ip address")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  // default maxLoginFailures is 5
+  for (int i = 0; i < 5; i++) {
+    auto failed = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "wrong" });
+    REQUIRE_FALSE(failed.has_value());
+  }
+
+  // even the correct password is now blocked by the lockout
+  auto blocked = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "secret1" });
+  REQUIRE_FALSE(blocked.has_value());
+
+  // a different ip is unaffected
+  auto otherIp = fixture.authService->onLoginOf(UserLogin{ "192.168.1.2", "alice", "secret1" });
+  REQUIRE(otherIp.has_value());
+}
+
+TEST_CASE("AuthService: onAccessOf returns the token and refreshes its timestamp")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  auto token = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "secret1" });
+  REQUIRE(token.has_value());
+
+  auto access = fixture.authService->onAccessOf(UserTokenLogin{ "192.168.1.1", token->m_id });
+  REQUIRE(access.has_value());
+  REQUIRE(access->m_id == token->m_id);
+  REQUIRE(access->m_user.getUserName() == "alice");
+}
+
+TEST_CASE("AuthService: onAccessOf rejects an ip address mismatch")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  auto token = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "secret1" });
+  REQUIRE(token.has_value());
+
+  auto mismatch = fixture.authService->onAccessOf(UserTokenLogin{ "192.168.1.2", token->m_id });
+  REQUIRE_FALSE(mismatch.has_value());
+}
+
+TEST_CASE("AuthService: onLogoutOf throws for an unknown token")
+{
+  AuthFixture fixture;
+
+  REQUIRE_THROWS_AS(
+    fixture.authService->onLogoutOf(UserTokenLogin{ "192.168.1.1", "does-not-exist" }), std::runtime_error);
+}
+
+TEST_CASE("AuthService: onLogoutOf keeps the session on an ip address mismatch")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  auto token = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "secret1" });
+  REQUIRE(token.has_value());
+
+  fixture.authService->onLogoutOf(UserTokenLogin{ "192.168.1.2", token->m_id });
+  REQUIRE(fixture.authService->allTokensOf("alice").size() == 1);
+}
+
+TEST_CASE("AuthService: onLoginOf upgrades a legacy password hash")
+{
+  AuthFixture fixture;
+  fixture.createUserWithStoredHash("alice", Cryption::hashOfSha512("secret1"));
+  REQUIRE_FALSE(Cryption::isModernHash(fixture.userRepository->of("alice")->getPassword()));
+
+  auto token = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "secret1" });
+  REQUIRE(token.has_value());
+
+  auto stored = fixture.userRepository->of("alice");
+  REQUIRE(stored.has_value());
+  REQUIRE(Cryption::isModernHash(stored->getPassword()));
+}
+
+TEST_CASE("AuthService: onInitialize runs the periodic token check on the scheduler")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  auto token = fixture.authService->onLoginOf(UserLogin{ "192.168.1.1", "alice", "secret1" });
+  REQUIRE(token.has_value());
+  // a failed login leaves an entry in both prune maps
+  auto failed = fixture.authService->onLoginOf(UserLogin{ "192.168.1.2", "alice", "wrong" });
+  REQUIRE_FALSE(failed.has_value());
+
+  fixture.scheduler->onInitialize();
+  fixture.authService->onInitialize();
+
+  // default schedule rate is 2s - give the scheduled onCheck a chance to run
+  std::this_thread::sleep_for(std::chrono::milliseconds(2600));
+
+  fixture.authService->onShutdown();
+  fixture.scheduler->onShutdown();
+
+  // the still-valid session survives the check
+  REQUIRE(fixture.authService->allTokensOf("alice").size() == 1);
 }
 }// namespace lintel

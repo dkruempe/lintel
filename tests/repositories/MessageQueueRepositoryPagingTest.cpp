@@ -2,6 +2,7 @@
 #include <lintel/core/configuration/DatabaseConnectionComponent.h>
 #include <lintel/core/configuration/DatabaseConnectionEntry.h>
 #include <lintel/core/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/exceptions/SQLException.h>
 #include <lintel/core/persistence/Connection.h>
 #include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
 #include <lintel/core/persistence/Statement.h>
@@ -75,6 +76,24 @@ namespace {
     }
   };
 
+  /** Builds a repository from an arbitrary set of connection entries. */
+  struct MessageQueueConfigFixture
+  {
+    ScopedEnvironmentVariable m_configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_mq_unsupported_cfg" };
+    std::shared_ptr<EnvironmentConfiguration> envConfig;
+    std::shared_ptr<Configuration> configuration;
+    std::shared_ptr<MessageQueueRepository> repository;
+
+    void withEntries(std::vector<std::shared_ptr<Entry>> entries)
+    {
+      envConfig = std::make_shared<EnvironmentConfiguration>();
+      configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+      configuration->setEntries(std::move(entries));
+      repository =
+        std::make_shared<MessageQueueRepository>(std::make_shared<DatabaseConnectionConfigurations>(configuration));
+    }
+  };
+
 }// namespace
 
 TEST_CASE("MessageQueueRepository::pageOf walks through all queues", "[message_queue_paging]")
@@ -139,5 +158,56 @@ TEST_CASE("MessageQueueRepository::pageOf returns empty page without matches", "
   REQUIRE(page.getItems().empty());
   REQUIRE_FALSE(page.hasMore());
   REQUIRE_FALSE(page.getNextAfter().has_value());
+}
+
+TEST_CASE("MessageQueueRepository::deleteOf removes the given queues", "[message_queue_paging]")
+{
+  MessageQueuePagingFixture fixture;
+  fixture.insertQueue("proc1", "queue_a");
+  fixture.insertQueue("proc1", "queue_b");
+  fixture.insertQueue("proc2", "queue_c");
+
+  fixture.repository->deleteOf(
+    { MessageQueueEntry("test", "proc1", "queue_a", 10), MessageQueueEntry("test", "proc1", "queue_b", 10) });
+
+  const auto remaining = fixture.repository->allOf(".*", ".*");
+  REQUIRE(remaining.size() == 1);
+  REQUIRE(remaining[0].get_message_queue_name() == "queue_c");
+}
+
+TEST_CASE("MessageQueueRepository: queries without a default connection return empty", "[message_queue_paging]")
+{
+  MessageQueueConfigFixture fixture;
+  fixture.withEntries({});
+
+  REQUIRE(fixture.repository->allOf(".*", ".*").empty());
+
+  const Page<MessageQueueEntry> page = fixture.repository->pageOf(".*", ".*", std::nullopt, 10);
+  REQUIRE(page.getItems().empty());
+  REQUIRE_FALSE(page.hasMore());
+
+  // a limit of zero short-circuits before the connection is even consulted
+  const Page<MessageQueueEntry> zero = fixture.repository->pageOf(".*", ".*", std::nullopt, 0);
+  REQUIRE(zero.getItems().empty());
+  REQUIRE_FALSE(zero.hasMore());
+}
+
+TEST_CASE("MessageQueueRepository: an unsupported connection type throws", "[message_queue_paging]")
+{
+  MessageQueueConfigFixture fixture;
+  auto entry = std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+    "/tmp/mq_unsupported.db",
+    "",
+    "",
+    db::ConnectionType(db::ConnectionType::UNDEFINED),
+    "default",
+    0,
+    "",
+    true);
+  fixture.withEntries({ entry });
+
+  REQUIRE_THROWS_AS(fixture.repository->allOf(".*", ".*"), db::SQLException);
+  REQUIRE_THROWS_AS(fixture.repository->pageOf(".*", ".*", std::nullopt, 5), db::SQLException);
+  REQUIRE_THROWS_AS(fixture.repository->allMessageQueueNameOf("queue_a"), db::SQLException);
 }
 }// namespace lintel

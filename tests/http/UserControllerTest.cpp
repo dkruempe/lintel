@@ -1148,4 +1148,138 @@ TEST_CASE("UserController::revokeSessionOf lets an admin revoke a foreign sessio
   REQUIRE(response->status == 200);
   REQUIRE(response->body.empty());
 }
+
+// --------------------------------------------------------------------------------------
+// branch coverage: missing bearer token, missing group membership, non json content type
+// --------------------------------------------------------------------------------------
+
+TEST_CASE("UserController: every guarded handler rejects a missing bearer token with 401", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  // no Authorization header at all => the mock is never consulted
+  const std::vector<std::pair<std::string, int>> plainDeletes{ { "/user/sessions/some-id", 401 },
+    { "/user/delete", 401 },
+    { "/user/logout", 401 } };
+
+  REQUIRE(fixture.m_client->Get("/user/groups")->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/groups/true")->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/groups/ucAdmins/true")->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/users")->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/users/uc")->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/sessions")->status == 401);
+  REQUIRE(fixture.m_client->Post("/user/add", "{}", "application/json")->status == 401);
+  REQUIRE(fixture.m_client->Put("/user/update", "{}", "application/json")->status == 401);
+  REQUIRE(fixture.m_client->Put("/user/password", "{}", "application/json")->status == 401);
+  for (const auto &[path, status] : plainDeletes) { REQUIRE(fixture.m_client->Delete(path)->status == status); }
+}
+
+TEST_CASE("UserController: every group-guarded handler rejects a user outside both groups with 401",
+  "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  ALLOW_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .LR_RETURN(ucTokenOf(ucOutsiderUser, ucTokenOutsider));
+
+  REQUIRE(fixture.m_client->Get("/user/groups", ucAuthHeaders(ucTokenOutsider))->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/groups/true", ucAuthHeaders(ucTokenOutsider))->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/groups/ucAdmins/true", ucAuthHeaders(ucTokenOutsider))->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/users", ucAuthHeaders(ucTokenOutsider))->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/users/uc", ucAuthHeaders(ucTokenOutsider))->status == 401);
+  REQUIRE(fixture.m_client->Get("/user/sessions", ucAuthHeaders(ucTokenOutsider))->status == 401);
+  REQUIRE(fixture.m_client->Delete("/user/sessions/some-id", ucAuthHeaders(ucTokenOutsider))->status == 401);
+}
+
+TEST_CASE("UserController: updateUserPut rejects a caller without Admin-User with 401", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucPlainUser, ucTokenPlain));
+
+  const std::string body = R"({"user_name":"ucTarget","groups_add":[],"groups_remove":[]})";
+  auto response = fixture.m_client->Put("/user/update", ucAuthHeaders(ucTokenPlain), body, "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 401);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("UserController: every json-only handler rejects a non json content type with 403", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  fixture.seedUser("ucTarget");
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  ALLOW_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  httplib::Headers getHeaders = ucAuthHeaders(ucTokenAdmin);
+  getHeaders.emplace("Content-Type", "text/plain");
+
+  REQUIRE(fixture.m_client->Get("/user/groups", getHeaders)->status == 403);
+  REQUIRE(fixture.m_client->Get("/user/groups/true", getHeaders)->status == 403);
+  REQUIRE(fixture.m_client->Get("/user/groups/ucAdmins/true", getHeaders)->status == 403);
+  REQUIRE(fixture.m_client->Get("/user/users", getHeaders)->status == 403);
+  REQUIRE(fixture.m_client->Get("/user/users/uc", getHeaders)->status == 403);
+  REQUIRE(fixture.m_client->Get("/user/sessions", getHeaders)->status == 403);
+
+  REQUIRE(fixture.m_client->Post("/user/add", ucAuthHeaders(ucTokenAdmin), "{}", "text/plain")->status == 403);
+  REQUIRE(fixture.m_client->Put("/user/update", ucAuthHeaders(ucTokenAdmin), "{}", "text/plain")->status == 403);
+  REQUIRE(fixture.m_client->Put("/user/password", ucAuthHeaders(ucTokenAdmin), "{}", "text/plain")->status == 403);
+  REQUIRE(fixture.m_client->Delete("/user/delete", getHeaders)->status == 403);
+}
+
+TEST_CASE("UserController::allUsersOfUserNameGet returns the paging envelope when a limit is given",
+  "[user_controller]")
+{
+  UserControllerFixture fixture;
+  fixture.seedUser("ucPaged");
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Get("/user/users/ucPaged?limit=10", ucAuthHeaders(ucTokenAdmin));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+
+  const auto envelope = fixture.parseUserEnvelope(response->body);
+  REQUIRE(envelope.getUsers().size() == 1);
+  REQUIRE(envelope.getUsers()[0].getUserName() == "ucPaged");
+}
+
+TEST_CASE("UserController::changePasswordOfPut returns 403 for an unknown user name", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  UserPasswordChangeDto dto("ucGhost", Cryption::encodeBase64("old"), Cryption::encodeBase64("new"));
+  auto response = fixture.m_client->Put(
+    "/user/password", ucAuthHeaders(ucTokenAdmin), dto.JsonSerializable::serialize(), "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 403);
+  REQUIRE(response->body.empty());
+}
 }// namespace lintel
