@@ -2,6 +2,7 @@
 #define LINTEL_CORE_UTILS_DATETIMEFORMAT_H
 
 #include <cctype>
+#include <charconv>
 #include <chrono>
 #include <cstdio>
 #include <ctime>
@@ -69,13 +70,14 @@ namespace datetime {
   {
     const long absolute = offsetSeconds < 0 ? -offsetSeconds : offsetSeconds;
     char buffer[16];
-    std::snprintf(buffer,
+    const int written = std::snprintf(buffer,
       sizeof(buffer),
       "%c%02ld:%02ld",
       isEastOfUtc(offsetSeconds) ? '+' : '-',
       absolute / 3600,
       (absolute % 3600) / 60);
-    return buffer;
+    if (written < 0) { return {}; }
+    return std::string(buffer, static_cast<std::size_t>(written));
   }
 
   /**
@@ -129,13 +131,26 @@ namespace datetime {
     int hour = 0;
     int minute = 0;
     int second = 0;
-    int consumed = 0;
-    if (std::sscanf(value.c_str(), "%d-%d-%d %d:%d:%d%n", &year, &month, &day, &hour, &minute, &second, &consumed)
-        != 6) {
-      return SystemTime{};
-    }
 
-    std::size_t index = static_cast<std::size_t>(consumed);
+    // The date/time fields are converted with std::from_chars: std::sscanf cannot
+    // report invalid input or overflow (cert-err34-c).
+    const auto readInt = [&value](std::size_t &position, int &result) {
+      const auto parsed = std::from_chars(value.data() + position, value.data() + value.size(), result);
+      if (parsed.ec != std::errc{} || parsed.ptr == value.data() + position) { return false; }
+      position = static_cast<std::size_t>(parsed.ptr - value.data());
+      return true;
+    };
+    const auto readField = [&value, &readInt](std::size_t &position, char separator, int &result) {
+      if (!readInt(position, result)) { return false; }
+      if (position >= value.size() || value[position] != separator) { return false; }
+      ++position;
+      return true;
+    };
+
+    std::size_t index = 0;
+    const bool parsedDate = readField(index, '-', year) && readField(index, '-', month) && readField(index, ' ', day);
+    const bool parsedTime = readField(index, ':', hour) && readField(index, ':', minute) && readInt(index, second);
+    if (!parsedDate || !parsedTime) { return SystemTime{}; }
     long micros = 0;
     if (index < value.size() && value[index] == '.') {
       ++index;
