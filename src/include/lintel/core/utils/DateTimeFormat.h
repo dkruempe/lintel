@@ -13,7 +13,7 @@ namespace lintel {
 /**
  * Portable, locale-independent timestamp formatting/parsing.
  *
- * The library used to rely on the C++20 chrono integrations of <format>
+ * The library used to rely on the C++20 chrono integrations of &lt;format&gt;
  * (`std::format("{:%Y-%m-%d %H:%M:%S%Ez}", sys_time<microseconds>)`) and of the
  * stream extraction operator (`std::chrono::parse(...)`). Both landed in libc++
  * only recently (chrono formatting in LLVM 21) and are still incomplete in
