@@ -636,6 +636,9 @@ TEST_CASE("LoggerComponent: expands a leading tilde in a Path")
 {
   ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
   ScopedEnvironmentVariable home{ "HOME", "/tmp" };
+  // homeDirectory() reads USERPROFILE on Windows, so HOME alone would leave the expansion at the
+  // runner's real profile directory there.
+  ScopedEnvironmentVariable userProfile{ "USERPROFILE", "/tmp" };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   LoggerComponent component(envConfig);
 
