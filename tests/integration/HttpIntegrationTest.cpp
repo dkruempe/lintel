@@ -140,10 +140,10 @@ TEST_CASE("Server: applies configured read, write and idle timeouts")
   REQUIRE(port > 0);
 
   Server server(ServerConfiguration("127.0.0.1",
-                 port,
-                 std::chrono::milliseconds(3000),
-                 std::chrono::milliseconds(5000),
-                 std::chrono::milliseconds(60000)),
+                  port,
+                  std::chrono::milliseconds(3000),
+                  std::chrono::milliseconds(5000),
+                  std::chrono::milliseconds(60000)),
     std::vector<std::shared_ptr<Controller>>{});
 
   httplib::Client client("127.0.0.1", port);
@@ -168,12 +168,12 @@ TEST_CASE("Server: serves HTTPS when a certificate and key are configured")
   REQUIRE(port > 0);
 
   Server server(ServerConfiguration("127.0.0.1",
-                 port,
-                 std::chrono::milliseconds(3000),
-                 std::chrono::milliseconds(5000),
-                 std::chrono::milliseconds(60000),
-                 certPath.string(),
-                 keyPath.string()),
+                  port,
+                  std::chrono::milliseconds(3000),
+                  std::chrono::milliseconds(5000),
+                  std::chrono::milliseconds(60000),
+                  certPath.string(),
+                  keyPath.string()),
     std::vector<std::shared_ptr<Controller>>{});
 
   httplib::SSLClient client("127.0.0.1", port);

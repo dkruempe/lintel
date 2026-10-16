@@ -7,6 +7,7 @@
 #include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "../mocks/MockCommandLineComponent.h"
@@ -36,7 +37,10 @@ namespace {
     std::streambuf *m_oldBuffer;
   };
 
-  std::shared_ptr<MockCommandLineComponent> acmComponent(const std::string &name, const std::string &alias)
+  // `CommandLineComponent` stores the name/alias as `std::string_view`, so the
+  // helper must forward string literals (static storage) rather than build
+  // temporary `std::string`s whose lifetime ends before the component is used.
+  std::shared_ptr<MockCommandLineComponent> acmComponent(std::string_view name, std::string_view alias)
   {
     return std::make_shared<MockCommandLineComponent>(name, alias);
   }

@@ -1161,9 +1161,9 @@ TEST_CASE("UserController: every guarded handler rejects a missing bearer token 
   REQUIRE(fixture.isReady());
 
   // no Authorization header at all => the mock is never consulted
-  const std::vector<std::pair<std::string, int>> plainDeletes{ { "/user/sessions/some-id", 401 },
-    { "/user/delete", 401 },
-    { "/user/logout", 401 } };
+  const std::vector<std::pair<std::string, int>> plainDeletes{
+    { "/user/sessions/some-id", 401 }, { "/user/delete", 401 }, { "/user/logout", 401 }
+  };
 
   REQUIRE(fixture.m_client->Get("/user/groups")->status == 401);
   REQUIRE(fixture.m_client->Get("/user/groups/true")->status == 401);

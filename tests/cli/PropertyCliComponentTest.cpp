@@ -77,9 +77,7 @@ namespace {
         paths.push_back(request.path);
         methods.emplace_back(request.method);
         bodies.emplace_back();
-        if (request.method == "POST" || request.method == "PUT") {
-          return httplib::Server::HandlerResponse::Unhandled;
-        }
+        if (request.method == "POST" || request.method == "PUT") { return httplib::Server::HandlerResponse::Unhandled; }
         response.status = m_responseStatus;
         response.set_content(m_responseBody, "application/json");
         return httplib::Server::HandlerResponse::Handled;
@@ -272,7 +270,8 @@ TEST_CASE("PropertyCliComponent: show_properties forwards the name filters")
   PropertyCliComponent component(api);
 
   propCliCoutCapture out;
-  component.onCommand(UserDto{}, "show_properties", { "--process-name", "proc", "--class-name", "cls", "--instance-name", "inst" });
+  component.onCommand(
+    UserDto{}, "show_properties", { "--process-name", "proc", "--class-name", "cls", "--instance-name", "inst" });
 
   REQUIRE(server.paths.size() == 1);
   REQUIRE(server.paths[0] == "/properties/proc/cls/inst");
@@ -325,11 +324,16 @@ TEST_CASE("PropertyCliComponent: update_property updates and prints before/after
   propCliCoutCapture out;
   component.onCommand(UserDto{},
     "update_property",
-    { "--process_name", "proc",
-      "--class_name", "cls",
-      "--instance-name", "inst",
-      "--value", "42",
-      "--name", "myProp" });
+    { "--process_name",
+      "proc",
+      "--class_name",
+      "cls",
+      "--instance-name",
+      "inst",
+      "--value",
+      "42",
+      "--name",
+      "myProp" });
   const std::string printed = out.str();
 
   REQUIRE(server.paths.size() == 3);
@@ -352,11 +356,16 @@ TEST_CASE("PropertyCliComponent: update_property reports an absent property on s
   propCliCerrCapture err;
   component.onCommand(UserDto{},
     "update_property",
-    { "--process_name", "proc",
-      "--class_name", "cls",
-      "--instance-name", "inst",
-      "--value", "42",
-      "--name", "missing" });
+    { "--process_name",
+      "proc",
+      "--class_name",
+      "cls",
+      "--instance-name",
+      "inst",
+      "--value",
+      "42",
+      "--name",
+      "missing" });
 
   REQUIRE(server.paths.size() == 1);
   REQUIRE(err.str().find("not preset") != std::string::npos);

@@ -17,8 +17,7 @@ namespace {
     const std::string &caCert = "",
     std::chrono::milliseconds timeout = std::chrono::milliseconds(500))
   {
-    return std::make_shared<ClientConfiguration>(
-      "127.0.0.1", 1, timeout, timeout, timeout, cert, key, caCert);
+    return std::make_shared<ClientConfiguration>("127.0.0.1", 1, timeout, timeout, timeout, cert, key, caCert);
   }
 
   httplib::Headers httpTestHeaders() { return httplib::Headers{ { "X-Test", "1" } }; }

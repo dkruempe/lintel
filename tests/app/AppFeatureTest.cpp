@@ -36,16 +36,18 @@ namespace {
   std::shared_ptr<Configuration> appConfiguration(std::vector<std::shared_ptr<Entry>> entries)
   {
     auto environment = std::make_shared<EnvironmentConfiguration>();
-    auto configuration =
-      std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
+    auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
     configuration->setEntries(std::move(entries));
     return configuration;
   }
 
   std::shared_ptr<ClientConfiguration> appClientConfiguration()
   {
-    return std::make_shared<ClientConfiguration>(
-      "127.0.0.1", 1, std::chrono::milliseconds(1000), std::chrono::milliseconds(1000), std::chrono::milliseconds(1000));
+    return std::make_shared<ClientConfiguration>("127.0.0.1",
+      1,
+      std::chrono::milliseconds(1000),
+      std::chrono::milliseconds(1000),
+      std::chrono::milliseconds(1000));
   }
 
   /** @return an ephemeral TCP port that is free at the time of the call */
@@ -170,8 +172,9 @@ TEST_CASE("ServerProvider provides the server of a server configuration entry")
   REQUIRE(port > 0);
   auto serverConfiguration = std::make_shared<ServerConfiguration>("127.0.0.1", port);
   // a client entry must be skipped; the server entry that follows wins
-  auto configuration = appConfiguration({ std::make_shared<HttpEntry>(type_name<HttpComponent>(), appClientConfiguration()),
-    std::make_shared<HttpEntry>(type_name<HttpComponent>(), serverConfiguration) });
+  auto configuration =
+    appConfiguration({ std::make_shared<HttpEntry>(type_name<HttpComponent>(), appClientConfiguration()),
+      std::make_shared<HttpEntry>(type_name<HttpComponent>(), serverConfiguration) });
 
   ServerProvider provider(configuration, {});
   REQUIRE(provider.provide() != nullptr);

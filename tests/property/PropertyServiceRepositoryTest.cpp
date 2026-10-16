@@ -36,8 +36,7 @@ namespace {
     return configuration;
   }
 
-  std::shared_ptr<PropertyRepositoryEntry>
-    propSvcEntry(PropertyRepositoryType type, bool mutableFlag, bool shadowFlag)
+  std::shared_ptr<PropertyRepositoryEntry> propSvcEntry(PropertyRepositoryType type, bool mutableFlag, bool shadowFlag)
   {
     return std::make_shared<PropertyRepositoryEntry>(
       type_name<PropertyRepositoryComponent>(), type, mutableFlag, shadowFlag);
@@ -55,9 +54,8 @@ namespace {
 
 TEST_CASE("PropertyService: onAwake loads every enabled repository and allOf filters by coordinates")
 {
-  auto configuration = propSvcConfig(
-    { propSvcEntry(PropertyRepositoryType::FILE_REPOSITORY, false, false),
-      propSvcEntry(PropertyRepositoryType::SHM_REPOSITORY, true, false) });
+  auto configuration = propSvcConfig({ propSvcEntry(PropertyRepositoryType::FILE_REPOSITORY, false, false),
+    propSvcEntry(PropertyRepositoryType::SHM_REPOSITORY, true, false) });
   auto fileRepository =
     std::make_shared<MockPropertyRepository>(PropertyRepositoryType::FILE_REPOSITORY, configuration);
   auto sharedMemoryRepository =
@@ -87,8 +85,7 @@ TEST_CASE("PropertyService: allOf delegates to the shadow repository when one is
 
   ALLOW_CALL(*shadowRepository, awake()).LR_RETURN(PropertyVector{});
   ALLOW_CALL(*shadowRepository, save(ANY(std::vector<std::shared_ptr<PropertyBase>>)));
-  ALLOW_CALL(*shadowRepository,
-    allOf(trompeloeil::_, trompeloeil::_, trompeloeil::_, trompeloeil::_))
+  ALLOW_CALL(*shadowRepository, allOf(trompeloeil::_, trompeloeil::_, trompeloeil::_, trompeloeil::_))
     .LR_RETURN(PropertyVector{ propSvcProperty("shadowed") });
 
   PropertyService service({ shadowRepository }, {});

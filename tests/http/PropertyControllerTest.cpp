@@ -58,8 +58,8 @@ namespace {
 
   std::shared_ptr<PropertyService> propctlMakeService()
   {
-    return std::make_shared<PropertyService>(std::vector<std::shared_ptr<PropertyRepository>>{},
-      std::vector<std::shared_ptr<AbstractServiceInterface>>{});
+    return std::make_shared<PropertyService>(
+      std::vector<std::shared_ptr<PropertyRepository>>{}, std::vector<std::shared_ptr<AbstractServiceInterface>>{});
   }
 
   /** Drives PropertyController through a real httplib server, because its
@@ -75,9 +75,7 @@ namespace {
     int m_port = -1;
     std::unique_ptr<httplib::Client> m_client;
 
-    PropCtlFixture()
-    {
-    }
+    PropCtlFixture() {}
 
     ~PropCtlFixture()
     {
@@ -179,7 +177,8 @@ TEST_CASE("PropertyController propertyOfGet returns the serialized property", "[
   REQUIRE(fixture.isReady());
   ALLOW_CALL(*fixture.m_auth, onAccessOf(ANY(const UserTokenLogin &))).LR_RETURN(propctlResolveToken(_1));
 
-  auto response = fixture.m_client->Get("/properties/process/klass/instance/myProp", propctlAuthHeaders(propctlTokenAdmin));
+  auto response =
+    fixture.m_client->Get("/properties/process/klass/instance/myProp", propctlAuthHeaders(propctlTokenAdmin));
   REQUIRE(response != nullptr);
   REQUIRE(response->status == 200);
   REQUIRE(response->body.find("myProp") != std::string::npos);
@@ -193,7 +192,8 @@ TEST_CASE("PropertyController propertyOfGet returns 405 for an unknown property"
   REQUIRE(fixture.isReady());
   ALLOW_CALL(*fixture.m_auth, onAccessOf(ANY(const UserTokenLogin &))).LR_RETURN(propctlResolveToken(_1));
 
-  auto response = fixture.m_client->Get("/properties/process/klass/instance/missing", propctlAuthHeaders(propctlTokenAdmin));
+  auto response =
+    fixture.m_client->Get("/properties/process/klass/instance/missing", propctlAuthHeaders(propctlTokenAdmin));
   REQUIRE(response != nullptr);
   REQUIRE(response->status == 405);
 }
@@ -254,8 +254,8 @@ TEST_CASE("PropertyController updatePropertyPut returns 401 without user", "[pro
   REQUIRE(fixture.isReady());
   ALLOW_CALL(*fixture.m_auth, onAccessOf(ANY(const UserTokenLogin &))).LR_RETURN(propctlResolveToken(_1));
 
-  auto response = fixture.m_client->Put(
-    "/properties/process/klass/instance/myProp", {}, R"({"value":"42"})", "application/json");
+  auto response =
+    fixture.m_client->Put("/properties/process/klass/instance/myProp", {}, R"({"value":"42"})", "application/json");
   REQUIRE(response != nullptr);
   REQUIRE(response->status == 401);
 }

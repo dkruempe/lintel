@@ -73,10 +73,7 @@ TEST_CASE("InputService: decodes printable ascii")
   REQUIRE(readKey({ 'Z' }) == KeyType::Ascii);
 }
 
-TEST_CASE("InputService: end of input yields Ctrl+C")
-{
-  REQUIRE(readKey({}) == KeyType::CtrlC);
-}
+TEST_CASE("InputService: end of input yields Ctrl+C") { REQUIRE(readKey({}) == KeyType::CtrlC); }
 
 TEST_CASE("InputService: decodes arrow and navigation escape sequences")
 {

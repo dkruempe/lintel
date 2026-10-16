@@ -58,7 +58,7 @@ TEST_CASE("SharedMemorySegmentDto deserializes every field and round-trips")
   REQUIRE(dto.getAmountNamedObjects() == 3u);
   REQUIRE(dto.getAmountUniqueObjects() == 2u);
 
-  REQUIRE(&SharedMemorySegmentDto::getShape() != nullptr);
+  REQUIRE(std::string(SharedMemorySegmentDto::getShape().NAME) == "name");
 
   const std::string json = smsdSerialize(dto);
   REQUIRE(json.find("\"name\":\"lintel_test\"") != std::string::npos);

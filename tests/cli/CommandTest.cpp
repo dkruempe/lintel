@@ -114,7 +114,8 @@ TEST_CASE("Command::parse parses every supported value type")
   command.addArgument({ "--str" }, &str, "str");
   command.addArgument({ "--list" }, &list, "list");
 
-  command.parse("types", { "--i32", "-42", "--u32", "7", "--dbl", "3.5", "--flt", "2.5", "--str=hello", "--list", "a,b,c" });
+  command.parse(
+    "types", { "--i32", "-42", "--u32", "7", "--dbl", "3.5", "--flt", "2.5", "--str=hello", "--list", "a,b,c" });
   REQUIRE(i32 == -42);
   REQUIRE(u32 == 7);
   REQUIRE(dbl == Catch::Approx(3.5));

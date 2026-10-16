@@ -978,8 +978,7 @@ TEST_CASE("ProcessController::allProcessGroupsOfGet returns 403 for a non json c
   REQUIRE(response->body.empty());
 }
 
-TEST_CASE("ProcessController::terminateProcessDelete returns 403 for a non json content type",
-  "[process_controller]")
+TEST_CASE("ProcessController::terminateProcessDelete returns 403 for a non json content type", "[process_controller]")
 {
   ProcessControllerFixture fixture;
   auto controller = fixture.makeController();
@@ -1078,8 +1077,7 @@ TEST_CASE("ProcessController::startProcessPost enables auto restart when request
   REQUIRE(position != std::string::npos);
   body.replace(position, from.size(), to);
 
-  auto started =
-    fixture.m_client->Post("/process/start", pcAuthJsonHeaders(pcTokenAdmin), body, "application/json");
+  auto started = fixture.m_client->Post("/process/start", pcAuthJsonHeaders(pcTokenAdmin), body, "application/json");
   REQUIRE(started != nullptr);
   REQUIRE(started->status == 200);
 

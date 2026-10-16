@@ -48,10 +48,8 @@ TEST_CASE("ProcessArgumentService: parses long and short flags with values")
 {
   std::string name;
   int32_t count = 0;
-  std::vector<std::shared_ptr<ArgumentProvider>> providers{
-    std::make_shared<ArgumentProvider>(std::vector<Argument>{
-      Argument("--name", "-n", "the name", &name), Argument("--count", "-c", "the count", &count) })
-  };
+  std::vector<std::shared_ptr<ArgumentProvider>> providers{ std::make_shared<ArgumentProvider>(std::vector<Argument>{
+    Argument("--name", "-n", "the name", &name), Argument("--count", "-c", "the count", &count) }) };
   ProcessArgumentService service(providers);
 
   service.parseArguments({ "--name", "abc", "-c", "7" });
@@ -63,9 +61,8 @@ TEST_CASE("ProcessArgumentService: parses long and short flags with values")
 TEST_CASE("ProcessArgumentService: a flag without a value sets a bool argument")
 {
   bool verbose = false;
-  std::vector<std::shared_ptr<ArgumentProvider>> providers{
-    std::make_shared<ArgumentProvider>(std::vector<Argument>{ Argument("--verbose", "-v", "be verbose", &verbose) })
-  };
+  std::vector<std::shared_ptr<ArgumentProvider>> providers{ std::make_shared<ArgumentProvider>(
+    std::vector<Argument>{ Argument("--verbose", "-v", "be verbose", &verbose) }) };
   ProcessArgumentService service(providers);
 
   service.parseArguments({ "--verbose" });
@@ -76,9 +73,8 @@ TEST_CASE("ProcessArgumentService: a flag without a value sets a bool argument")
 TEST_CASE("ProcessArgumentService: skips empty argument strings")
 {
   bool verbose = false;
-  std::vector<std::shared_ptr<ArgumentProvider>> providers{
-    std::make_shared<ArgumentProvider>(std::vector<Argument>{ Argument("--verbose", "-v", "be verbose", &verbose) })
-  };
+  std::vector<std::shared_ptr<ArgumentProvider>> providers{ std::make_shared<ArgumentProvider>(
+    std::vector<Argument>{ Argument("--verbose", "-v", "be verbose", &verbose) }) };
   ProcessArgumentService service(providers);
 
   service.parseArguments({ "", "--verbose" });
@@ -89,9 +85,8 @@ TEST_CASE("ProcessArgumentService: skips empty argument strings")
 TEST_CASE("ProcessArgumentService: extra values of a flag are ignored with an error log")
 {
   std::string name;
-  std::vector<std::shared_ptr<ArgumentProvider>> providers{
-    std::make_shared<ArgumentProvider>(std::vector<Argument>{ Argument("--name", "-n", "the name", &name) })
-  };
+  std::vector<std::shared_ptr<ArgumentProvider>> providers{ std::make_shared<ArgumentProvider>(
+    std::vector<Argument>{ Argument("--name", "-n", "the name", &name) }) };
   ProcessArgumentService service(providers);
 
   service.parseArguments({ "--name", "first", "second" });
@@ -102,9 +97,8 @@ TEST_CASE("ProcessArgumentService: extra values of a flag are ignored with an er
 TEST_CASE("ProcessArgumentService: an unknown flag is reported on stderr and ignored")
 {
   std::string name;
-  std::vector<std::shared_ptr<ArgumentProvider>> providers{
-    std::make_shared<ArgumentProvider>(std::vector<Argument>{ Argument("--name", "-n", "the name", &name) })
-  };
+  std::vector<std::shared_ptr<ArgumentProvider>> providers{ std::make_shared<ArgumentProvider>(
+    std::vector<Argument>{ Argument("--name", "-n", "the name", &name) }) };
   ProcessArgumentService service(providers);
 
   std::string cerr;
@@ -121,9 +115,8 @@ TEST_CASE("ProcessArgumentService: an unknown flag is reported on stderr and ign
 TEST_CASE("ProcessArgumentService: -h prints the help text")
 {
   std::string name;
-  std::vector<std::shared_ptr<ArgumentProvider>> providers{
-    std::make_shared<ArgumentProvider>(std::vector<Argument>{ Argument("--name", "-n", "the name", &name) })
-  };
+  std::vector<std::shared_ptr<ArgumentProvider>> providers{ std::make_shared<ArgumentProvider>(
+    std::vector<Argument>{ Argument("--name", "-n", "the name", &name) }) };
   ProcessArgumentService service(providers);
 
   std::string cout;
@@ -141,9 +134,8 @@ TEST_CASE("ProcessArgumentService: -h prints the help text")
 TEST_CASE("ProcessArgumentService: --help prints the help text")
 {
   std::string name;
-  std::vector<std::shared_ptr<ArgumentProvider>> providers{
-    std::make_shared<ArgumentProvider>(std::vector<Argument>{ Argument("--name", "-n", "the name", &name) })
-  };
+  std::vector<std::shared_ptr<ArgumentProvider>> providers{ std::make_shared<ArgumentProvider>(
+    std::vector<Argument>{ Argument("--name", "-n", "the name", &name) }) };
   ProcessArgumentService service(providers);
 
   std::string cout;

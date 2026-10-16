@@ -49,8 +49,7 @@ namespace {
   public:
     ShmCtlFakeRepository(std::shared_ptr<SharedMemorySegment> segment, std::string_view name, std::string uuid)
       : SharedMemoryRepository(std::move(segment), 8, name, 1, std::move(uuid))
-    {
-    }
+    {}
 
     SharedMemoryType getType() const override { return SharedMemoryType::Map; }
 

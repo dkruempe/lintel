@@ -16,8 +16,8 @@ namespace lintel {
 
 TEST_CASE("PropertyDto: reflects the property metadata and round-trips through JSON")
 {
-  auto property =
-    PropertyFactory::Create("testProperty", "testInstance", "testClass", "testProcess", "int32_t", "4711", "extra", true);
+  auto property = PropertyFactory::Create(
+    "testProperty", "testInstance", "testClass", "testProcess", "int32_t", "4711", "extra", true);
   REQUIRE(property != nullptr);
 
   PropertyDto dto(property);
@@ -76,10 +76,9 @@ TEST_CASE("PropertyDto: deserialize accepts a full object")
 
 TEST_CASE("PropertiesDto: builds, serializes and deserializes a list of properties")
 {
-  std::vector<std::shared_ptr<PropertyBase>> properties{
-    PropertyFactory::Create("a", "i", "c", "p", "int32_t", "1", "", true),
-    PropertyFactory::Create("b", "i", "c", "p", "std::string", "hello", "", false)
-  };
+  std::vector<std::shared_ptr<PropertyBase>> properties{ PropertyFactory::Create(
+                                                           "a", "i", "c", "p", "int32_t", "1", "", true),
+    PropertyFactory::Create("b", "i", "c", "p", "std::string", "hello", "", false) };
 
   PropertiesDto dto(properties);
   REQUIRE(dto.getProperties().size() == 2);

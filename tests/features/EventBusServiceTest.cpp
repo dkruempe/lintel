@@ -39,8 +39,9 @@ namespace {
   std::filesystem::path ebsUniquePath()
   {
     static unsigned int counter = 0;
-    const auto path = std::filesystem::temp_directory_path()
-                      / ("eventbus_service_test_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".bin");
+    const auto path =
+      std::filesystem::temp_directory_path()
+      / ("eventbus_service_test_" + std::to_string(::getpid()) + "_" + std::to_string(counter++) + ".bin");
     std::filesystem::remove(path);
     return path;
   }

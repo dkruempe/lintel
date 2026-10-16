@@ -121,12 +121,18 @@ namespace {
           m_currentLine.erase(m_currentLine.begin() + static_cast<std::string::difference_type>(m_position));
         }
         return { Symbol::Nothing, {} };
-      case KeyType::Up: return { Symbol::Up, {} };
-      case KeyType::Down: return { Symbol::Down, {} };
-      case KeyType::CtrlC: return { Symbol::CtrlC, {} };
-      case KeyType::CtrlR: return { Symbol::CtrlR, {} };
-      case KeyType::Eof: return { Symbol::Eof, {} };
-      default: return { Symbol::Nothing, {} };
+      case KeyType::Up:
+        return { Symbol::Up, {} };
+      case KeyType::Down:
+        return { Symbol::Down, {} };
+      case KeyType::CtrlC:
+        return { Symbol::CtrlC, {} };
+      case KeyType::CtrlR:
+        return { Symbol::CtrlR, {} };
+      case KeyType::Eof:
+        return { Symbol::Eof, {} };
+      default:
+        return { Symbol::Nothing, {} };
       }
     }
 

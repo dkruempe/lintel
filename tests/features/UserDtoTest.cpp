@@ -20,13 +20,7 @@ namespace {
 
   User makeUser(std::vector<Group> groups = {})
   {
-    return User("Ada",
-      "Lovelace",
-      User::Sex::Female,
-      "ada@example.com",
-      "ada",
-      "secret-hash",
-      std::move(groups));
+    return User("Ada", "Lovelace", User::Sex::Female, "ada@example.com", "ada", "secret-hash", std::move(groups));
   }
 
   rapidjson::Document parse(const std::string &json)
@@ -104,27 +98,32 @@ TEST_CASE("UserDto reports incomplete objects")
   SECTION("first name missing")
   {
     UserDto dto;
-    REQUIRE_FALSE(dto.deserialize(parse(R"({"last_name":"x","email":"e","user_name":"u","sex":"male","created_timestamp":"2024-01-02T03:04:05.000000"})")));
+    REQUIRE_FALSE(dto.deserialize(parse(
+      R"({"last_name":"x","email":"e","user_name":"u","sex":"male","created_timestamp":"2024-01-02T03:04:05.000000"})")));
   }
   SECTION("last name missing")
   {
     UserDto dto;
-    REQUIRE_FALSE(dto.deserialize(parse(R"({"first_name":"x","email":"e","user_name":"u","sex":"male","created_timestamp":"2024-01-02T03:04:05.000000"})")));
+    REQUIRE_FALSE(dto.deserialize(parse(
+      R"({"first_name":"x","email":"e","user_name":"u","sex":"male","created_timestamp":"2024-01-02T03:04:05.000000"})")));
   }
   SECTION("email missing")
   {
     UserDto dto;
-    REQUIRE_FALSE(dto.deserialize(parse(R"({"first_name":"x","last_name":"y","user_name":"u","sex":"male","created_timestamp":"2024-01-02T03:04:05.000000"})")));
+    REQUIRE_FALSE(dto.deserialize(parse(
+      R"({"first_name":"x","last_name":"y","user_name":"u","sex":"male","created_timestamp":"2024-01-02T03:04:05.000000"})")));
   }
   SECTION("user name missing")
   {
     UserDto dto;
-    REQUIRE_FALSE(dto.deserialize(parse(R"({"first_name":"x","last_name":"y","email":"e","sex":"male","created_timestamp":"2024-01-02T03:04:05.000000"})")));
+    REQUIRE_FALSE(dto.deserialize(parse(
+      R"({"first_name":"x","last_name":"y","email":"e","sex":"male","created_timestamp":"2024-01-02T03:04:05.000000"})")));
   }
   SECTION("timestamp missing")
   {
     UserDto dto;
-    REQUIRE_FALSE(dto.deserialize(parse(R"({"first_name":"x","last_name":"y","email":"e","user_name":"u","sex":"male"})")));
+    REQUIRE_FALSE(
+      dto.deserialize(parse(R"({"first_name":"x","last_name":"y","email":"e","user_name":"u","sex":"male"})")));
   }
 }
 

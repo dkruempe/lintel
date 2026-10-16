@@ -160,8 +160,8 @@ TEST_CASE("SharedMemoryVectorRepository serializes its elements and reports its 
   REQUIRE(repository.getType() == SharedMemoryType::Vector);
   REQUIRE(repository.getTypeName() == "Vector");
 
-  auto &vector = shm::constructVector<shm::String>(
-    *fixture.service, fixture.segment, repository.getSharedMemoryRepository());
+  auto &vector =
+    shm::constructVector<shm::String>(*fixture.service, fixture.segment, repository.getSharedMemoryRepository());
   vector.push_back(shm::constructString(*fixture.service, fixture.segment, "entry"));
 
   REQUIRE(repositoryToJson(repository).find("entry") != std::string::npos);

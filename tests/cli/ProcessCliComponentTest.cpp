@@ -608,7 +608,8 @@ TEST_CASE("ProcessApi: an unauthorized response throws for every endpoint")
   procCliBackend procCliServer;
   procCliServer.answerWithStatus(401, "{}");
   auto procCliApi = std::make_shared<ProcessApi>(procCliProviderOf(procCliServer.port()));
-  auto procCliProcess = std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
+  auto procCliProcess =
+    std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
 
   REQUIRE_THROWS_AS(procCliApi->allOf(".*"), HttpUnauthorizedException);
   REQUIRE_THROWS_AS(procCliApi->allGroupsOf(".*"), HttpUnauthorizedException);
@@ -625,7 +626,8 @@ TEST_CASE("ProcessApi: a server error is reported per endpoint")
   procCliBackend procCliServer;
   procCliServer.answerWithStatus(500, "{}");
   auto procCliApi = std::make_shared<ProcessApi>(procCliProviderOf(procCliServer.port()));
-  auto procCliProcess = std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
+  auto procCliProcess =
+    std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
 
   REQUIRE(procCliApi->allOf(".*").empty());
   REQUIRE(procCliApi->allGroupsOf(".*").empty());
@@ -652,7 +654,8 @@ TEST_CASE("ProcessApi: a missing server is reported per endpoint")
 {
   // port 1 is never served -> the client cannot establish a connection
   auto procCliApi = std::make_shared<ProcessApi>(procCliProviderOf(1));
-  auto procCliProcess = std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
+  auto procCliProcess =
+    std::make_shared<Process>(std::filesystem::path("/opt/lintel/worker"), std::vector<std::string>{});
 
   REQUIRE(procCliApi->allOf(".*").empty());
   REQUIRE(procCliApi->allGroupsOf(".*").empty());

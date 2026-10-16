@@ -40,8 +40,8 @@ namespace {
 
   std::chrono::sys_time<std::chrono::microseconds> hsTimestampOf(int seconds)
   {
-    return std::chrono::sys_time<std::chrono::microseconds>{ std::chrono::microseconds{ std::chrono::seconds{
-      seconds } } };
+    return std::chrono::sys_time<std::chrono::microseconds>{ std::chrono::microseconds{
+      std::chrono::seconds{ seconds } } };
   }
 
   struct HistoryServiceFixture
@@ -90,7 +90,8 @@ namespace {
           0,
           "",
           true),
-        std::make_shared<MessageQueueEntry>(type_name<MessageQueueComponent>(), queueOwnerProcess, hsQueueName, 1024) });
+        std::make_shared<MessageQueueEntry>(
+          type_name<MessageQueueComponent>(), queueOwnerProcess, hsQueueName, 1024) });
       m_connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(m_configuration);
       m_historyRepository = std::make_shared<HistoryRepository>(m_connectionConfigurations);
       m_scheduler = std::make_shared<SchedulerService>(std::make_shared<ProcessName>("history-service-test"));
@@ -120,10 +121,8 @@ namespace {
     }
   };
 
-  HistoryEntry hsEntry(const std::string &process,
-    const std::string &service,
-    const std::string &label,
-    const std::string &text)
+  HistoryEntry
+    hsEntry(const std::string &process, const std::string &service, const std::string &label, const std::string &text)
   {
     return HistoryEntry(process, service, label, text, hsTimestampOf(100));
   }
@@ -144,8 +143,8 @@ TEST_CASE("HistoryService: getProcessName returns the owning process")
 TEST_CASE("HistoryService: allOf query overloads delegate to the repository")
 {
   HistoryServiceFixture fixture;
-  fixture.m_historyRepository->insertOf({ hsEntry("p1", "s1", "labelA", "text-1"),
-    hsEntry("p1", "s2", "labelB", "text-2") });
+  fixture.m_historyRepository->insertOf(
+    { hsEntry("p1", "s1", "labelA", "text-1"), hsEntry("p1", "s2", "labelB", "text-2") });
 
   auto service = std::make_shared<HistoryService>(std::make_shared<ProcessName>("histproc"),
     fixture.m_scheduler,
@@ -198,8 +197,8 @@ TEST_CASE("HistoryService: non-owner sends entries through the queue and drains 
     fixture.m_historyRepository,
     fixture.messageQueueService("histworker"));
 
-  service->historizeOf({ hsEntry("histworker", "svcA", "queued-a", "text-a"),
-    hsEntry("histworker", "svcB", "queued-b", "text-b") });
+  service->historizeOf(
+    { hsEntry("histworker", "svcA", "queued-a", "text-a"), hsEntry("histworker", "svcB", "queued-b", "text-b") });
   REQUIRE(fixture.m_historyRepository->allOf().empty());
 
   service.reset();

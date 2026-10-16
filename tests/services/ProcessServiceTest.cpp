@@ -565,8 +565,7 @@ TEST_CASE("ProcessService resolves a path relative to the configuration director
   std::filesystem::create_directories(tempDirectory);
   std::filesystem::copy_file(
     fixture.sleepBinary, tempDirectory / "relative_sleeper", std::filesystem::copy_options::overwrite_existing);
-  fixture.envConfig->overrides(
-    EnvironmentConfiguration::ConfigDirectory, tempDirectory.string());
+  fixture.envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, tempDirectory.string());
 
   Process process("relative_sleeper", std::vector<std::string>{ "600" });
   service->startOf(process);
