@@ -55,7 +55,9 @@ void SharedMemoryBootstrapPlugin::validateSegments()
       LOG_ERROR("{}", message);
       throw std::runtime_error(message);
     }
-    boost::interprocess::managed_mapped_file mapping(boost::interprocess::open_only, path.c_str());
+    // boost::interprocess takes a narrow file name; path::c_str() is wchar_t on Windows.
+    const std::string filePath = path.string();
+    boost::interprocess::managed_mapped_file mapping(boost::interprocess::open_only, filePath.c_str());
     if (mapping.get_size() > fileSize) {
       const std::string message = "shared memory segment '" + segment->getName() + "' is truncated: file '"
                                   + path.string() + "' has " + std::to_string(fileSize)
@@ -105,7 +107,9 @@ void SharedMemoryBootstrapPlugin::validateEventBuses()
     const std::filesystem::path &path = segment->getPath();
     std::error_code error;
     if (!std::filesystem::exists(path, error) || error) { continue; }
-    boost::interprocess::managed_mapped_file mapping(boost::interprocess::open_only, path.c_str());
+    // boost::interprocess takes a narrow file name; path::c_str() is wchar_t on Windows.
+    const std::string filePath = path.string();
+    boost::interprocess::managed_mapped_file mapping(boost::interprocess::open_only, filePath.c_str());
     const auto bus = mapping.find<EventBus>(eventBusEntry->getName().c_str());
     if (bus.first == nullptr) { continue; }
     const EventBusConfig persisted = bus.first->getConfig();

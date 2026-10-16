@@ -189,7 +189,7 @@ TEST_CASE("LoggerComponent: throw when Path is a regular file")
   REQUIRE_THROWS_WITH(
     component.parse(xml, 0, "test.xml"), Catch::Matchers::ContainsSubstring("path is empty or is not a directory"));
 
-  std::remove(logFile.c_str());
+  std::remove(logFile.string().c_str());
 }
 
 TEST_CASE("LoggerComponent: parse empty child returns empty")

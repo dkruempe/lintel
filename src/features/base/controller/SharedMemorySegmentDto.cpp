@@ -47,7 +47,7 @@ void SharedMemorySegmentDto::serialize(rapidjson::Writer<rapidjson::StringBuffer
   writer->StartObject();
   // PATH
   writer->String(m_shape.PATH);
-  writer->String(m_path.c_str());
+  writer->String(m_path.string().c_str());
   // NAME
   writer->String(m_shape.NAME);
   writer->String(m_name.c_str());

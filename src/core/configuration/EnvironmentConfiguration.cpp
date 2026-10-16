@@ -71,9 +71,9 @@ std::optional<std::filesystem::path> EnvironmentConfiguration::pathOf(const std:
 {
   std::optional<std::filesystem::path> path = std::nullopt;
   for (const auto &iter : m_paths) {
-    std::filesystem::path temp = iter;
-    temp += std::filesystem::path::preferred_separator;
-    temp += fileName;
+    // operator/ keeps this portable: path::preferred_separator is wchar_t on
+    // Windows, so building the name with string concatenation does not compile.
+    const std::filesystem::path temp = iter / fileName;
     if (std::filesystem::exists(temp) && std::filesystem::is_regular_file(temp)) {
       path = std::make_optional(temp);
       break;

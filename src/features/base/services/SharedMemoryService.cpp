@@ -50,15 +50,18 @@ void SharedMemoryService::growOf(const std::shared_ptr<SharedMemorySegment> &seg
   // Hold the cross-process remap semaphore so no other process references the
   // segment (find_or_construct / getSegmentAccessor) while it is being resized.
   shm::SegmentSemaphoreGuard gate(*found->second->m_remapSemaphore);
-  if (!boost::interprocess::managed_mapped_file::grow(segment->getPath().c_str(), grow)) {
+  // boost::interprocess takes a narrow file name; std::filesystem::path::c_str()
+  // is wchar_t on Windows, so the conversion has to be explicit.
+  const std::string filePath = segment->getPath().string();
+  if (!boost::interprocess::managed_mapped_file::grow(filePath.c_str(), grow)) {
     throw std::runtime_error("failed to grow shared memory segment '" + segment->getName() + "'");
   }
   // Reopen the segment so the new mapping covers the grown file. This
   // invalidates references into the old mapping - repositories detect the
   // bump of the generation counter and re-fetch their references.
   found->second->m_segmentAllocator.reset();
-  found->second->m_managedMappedFile = std::make_shared<boost::interprocess::managed_mapped_file>(
-    boost::interprocess::open_only, segment->getPath().c_str());
+  found->second->m_managedMappedFile =
+    std::make_shared<boost::interprocess::managed_mapped_file>(boost::interprocess::open_only, filePath.c_str());
   ++m_generation;
 }
 
@@ -70,13 +73,14 @@ void SharedMemoryService::shrinkOf(const std::shared_ptr<SharedMemorySegment> &s
   // Hold the cross-process remap semaphore so no other process references the
   // segment while it is being resized and reopened (see growOf).
   shm::SegmentSemaphoreGuard gate(*found->second->m_remapSemaphore);
-  if (!boost::interprocess::managed_mapped_file::shrink_to_fit(segment->getPath().c_str())) {
+  const std::string filePath = segment->getPath().string();
+  if (!boost::interprocess::managed_mapped_file::shrink_to_fit(filePath.c_str())) {
     throw std::runtime_error("failed to shrink shared memory segment '" + segment->getName() + "'");
   }
   // Reopen the segment so the new mapping covers the shrunk file.
   found->second->m_segmentAllocator.reset();
-  found->second->m_managedMappedFile = std::make_shared<boost::interprocess::managed_mapped_file>(
-    boost::interprocess::open_only, segment->getPath().c_str());
+  found->second->m_managedMappedFile =
+    std::make_shared<boost::interprocess::managed_mapped_file>(boost::interprocess::open_only, filePath.c_str());
   ++m_generation;
 }
 
@@ -111,8 +115,9 @@ std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> SharedMemorySe
     [](const std::shared_ptr<SharedMemorySegment> &segment)
       -> std::pair<std::string, std::shared_ptr<SharedMemorySegmentHandle>> {
       auto handle = std::make_shared<SharedMemorySegmentHandle>();
+      const std::string filePath = segment->getPath().string();
       handle->m_managedMappedFile = std::make_shared<boost::interprocess::managed_mapped_file>(
-        boost::interprocess::open_or_create, segment->getPath().c_str(), segment->getSize());
+        boost::interprocess::open_or_create, filePath.c_str(), segment->getSize());
       handle->m_remapSemaphore = std::make_unique<boost::interprocess::named_semaphore>(
         boost::interprocess::open_or_create, (segment->getName() + "_remap_sem").c_str(), 1u);
       handle->m_sharedMemorySegment = segment;

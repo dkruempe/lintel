@@ -54,7 +54,7 @@ namespace {
 
     explicit PropChangeBusFixture(EventBusConfig fixtureConfig = EventBusConfig{})
       : config(fixtureConfig), path(uniquePropChangeShmPath()), size(EventBus::requiredSize(config) + 4096u),
-        segment(boost::interprocess::open_or_create, path.c_str(), size),
+        segment(boost::interprocess::open_or_create, path.string().c_str(), size),
         segmentAllocator(*segment.get_segment_manager())
     {
       bus = segment.find_or_construct<EventBus>("bus")("bus", config, ShmSegmentAccessor(segmentAllocator));

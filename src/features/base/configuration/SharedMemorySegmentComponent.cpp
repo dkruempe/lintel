@@ -77,7 +77,7 @@ std::vector<std::shared_ptr<Entry>> SharedMemorySegmentComponent::buildEntries(c
   entries.push_back(std::make_shared<SharedMemorySegmentEntry>(
     type_name<SharedMemorySegmentComponent>(), std::make_shared<std::filesystem::path>(path)));
   for (const auto &segmentTemp : segments) {
-    auto filePath = path.string() + std::filesystem::path::preferred_separator + segmentTemp.m_name + ".bin";
+    const std::filesystem::path filePath = path / (segmentTemp.m_name + ".bin");
     std::shared_ptr<SharedMemorySegment> sharedMemorySegment = nullptr;
     if (!segmentTemp.m_autoExtend) {
       sharedMemorySegment = std::make_shared<SharedMemorySegment>(filePath, segmentTemp.m_name, segmentTemp.m_size);

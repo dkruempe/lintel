@@ -26,7 +26,7 @@ CommandLineHistoryService::CommandLineHistoryService(const std::shared_ptr<Proce
     "m_historyFileName", std::string(".history"), "Filename of local history file", false, __FILE__, __LINE__);
 }
 
-std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(std::string menu)
+std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(const std::string &menu)
 {
   if (m_history.empty()) { return std::nullopt; }
   if (m_menu != menu) { m_position = std::nullopt; }
@@ -46,7 +46,7 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(std::string
   return std::nullopt;
 }
 
-std::optional<CommandHistoryEntry> CommandLineHistoryService::previousOf(std::string menu)
+std::optional<CommandHistoryEntry> CommandLineHistoryService::previousOf(const std::string &menu)
 {
   if (m_history.empty()) { return std::nullopt; }
   if (m_menu != menu) { m_position = std::nullopt; }
@@ -64,7 +64,9 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::previousOf(std::st
   return std::nullopt;
 }
 
-std::optional<CommandHistoryEntry> CommandLineHistoryService::startsWith(std::string command, std::string menu)
+// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) - both are named arguments of the same type.
+std::optional<CommandHistoryEntry> CommandLineHistoryService::startsWith(const std::string &command,
+  const std::string &menu)
 {
   if (m_history.empty()) { return std::nullopt; }
   for (std::size_t i = m_history.size(); i > 0; i--) {
@@ -77,8 +79,7 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::startsWith(std::st
 
 void CommandLineHistoryService::historizeOf(const CommandHistoryEntry &commandHistoryEntry)
 {
-  std::filesystem::path path(
-    std::string(CONFIG_DIRECTORY) + std::filesystem::path::preferred_separator + m_historyFileName->getValue());
+  std::filesystem::path path(std::filesystem::path(CONFIG_DIRECTORY) / m_historyFileName->getValue());
   if (m_maxCommandHistoryEntries->getValue() > m_history.size()) {
     std::ofstream file(path.string(), std::ios_base::app);
     if (!file.is_open()) { return; }
@@ -99,8 +100,7 @@ void CommandLineHistoryService::historizeOf(const CommandHistoryEntry &commandHi
 
 std::vector<CommandHistoryEntry> CommandLineHistoryService::internalAllOf()
 {
-  std::filesystem::path path(
-    std::string(CONFIG_DIRECTORY) + std::filesystem::path::preferred_separator + m_historyFileName->getValue());
+  std::filesystem::path path(std::filesystem::path(CONFIG_DIRECTORY) / m_historyFileName->getValue());
   FileService fileService(path);
   try {
     FileService::Stream stream = fileService.createStream();

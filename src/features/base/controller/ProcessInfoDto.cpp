@@ -65,7 +65,7 @@ void ProcessInfoDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *write
   writer->String(m_id.c_str());
   // PATH
   writer->String(m_shape.PATH);
-  writer->String(m_path.c_str());
+  writer->String(m_path.string().c_str());
   // ARGS
   writer->String(m_shape.ARGS);
   writer->StartArray();

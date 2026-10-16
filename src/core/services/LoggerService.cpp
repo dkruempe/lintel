@@ -61,9 +61,7 @@ namespace {
     const std::string &processName)
   {
     auto path = pathConfig->getPath();
-    if (pathConfig->isCreateSubDirectories()) {
-      path = path.concat(std::filesystem::path::preferred_separator + processName);
-    }
+    if (pathConfig->isCreateSubDirectories()) { path /= processName; }
     if (is_regular_file(path)) { throw std::runtime_error("path is file and not directory"); }
     if (!exists(path)) { create_directories(path); }
     return path;
@@ -73,11 +71,8 @@ namespace {
     const LoggerSinkConfiguration &config,
     const std::string &processName)
   {
-    auto path = basePath;
-    if (config.getFileName().empty()) {
-      return path.concat(std::filesystem::path::preferred_separator + processName + ".log");
-    }
-    return path.concat(std::filesystem::path::preferred_separator + config.getFileName() + ".log");
+    if (config.getFileName().empty()) { return basePath / (processName + ".log"); }
+    return basePath / (config.getFileName() + ".log");
   }
 
   void collectSinks(std::vector<spdlog::sink_ptr> &sinks,

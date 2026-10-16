@@ -40,7 +40,7 @@ namespace {
 
     explicit BusFixture(EventBusConfig fixtureConfig)
       : config(fixtureConfig), path(uniqueShmPath()), size(EventBus::requiredSize(config) + 4096u),
-        segment(boost::interprocess::open_or_create, path.c_str(), size),
+        segment(boost::interprocess::open_or_create, path.string().c_str(), size),
         segmentAllocator(*segment.get_segment_manager())
     {
       bus = segment.find_or_construct<EventBus>("bus")("bus", config, ShmSegmentAccessor(segmentAllocator));
@@ -233,8 +233,8 @@ TEST_CASE("EventBus: IPC across independent mappings")
   std::filesystem::remove(path);
 
   const std::size_t size = EventBus::requiredSize(config) + 4096u;
-  Segment mappingA(boost::interprocess::open_or_create, path.c_str(), size);
-  Segment mappingB(boost::interprocess::open_only, path.c_str());
+  Segment mappingA(boost::interprocess::open_or_create, path.string().c_str(), size);
+  Segment mappingB(boost::interprocess::open_only, path.string().c_str());
 
   auto *managerA = mappingA.get_segment_manager();
   auto *managerB = mappingB.get_segment_manager();
@@ -300,7 +300,8 @@ TEST_CASE("EventBus: invalid configuration is rejected")
 
   const std::filesystem::path path = uniqueShmPath();
   std::filesystem::remove(path);
-  Segment segment(boost::interprocess::open_or_create, path.c_str(), EventBus::requiredSize(defaultConfig()) + 4096u);
+  Segment segment(
+    boost::interprocess::open_or_create, path.string().c_str(), EventBus::requiredSize(defaultConfig()) + 4096u);
   BoostSegmentAllocator allocator(*segment.get_segment_manager());
   REQUIRE_THROWS_AS(
     segment.find_or_construct<EventBus>("bad")("bad", config, ShmSegmentAccessor(allocator)), std::invalid_argument);

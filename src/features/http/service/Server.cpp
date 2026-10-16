@@ -17,7 +17,7 @@ namespace {
   constexpr const char *kReadyBody = "{\"status\":\"ready\"}";
 
   /** Register unauthenticated liveness/readiness endpoints on the server */
-  void registerHealthEndpoints(std::shared_ptr<httplib::Server> server)
+  void registerHealthEndpoints(const std::shared_ptr<httplib::Server> &server)
   {
     server->Get("/health", [](const httplib::Request &, httplib::Response &response) {
       response.status = HttpStatusCodes::OK;
@@ -70,8 +70,11 @@ namespace {
     const ServerConfiguration &serverConfiguration)
   {
     if (serverConfiguration.getCertFile().empty() || serverConfiguration.getKeyFile().empty()) { return nullptr; }
-    std::shared_ptr<httplib::SSLServer> sslServer = std::make_shared<httplib::SSLServer>(
-      serverConfiguration.getCertFile().c_str(), serverConfiguration.getKeyFile().c_str());
+    // httplib takes narrow paths; std::filesystem::path::c_str() is wchar_t on Windows.
+    const std::string certFile = serverConfiguration.getCertFile().string();
+    const std::string keyFile = serverConfiguration.getKeyFile().string();
+    std::shared_ptr<httplib::SSLServer> sslServer =
+      std::make_shared<httplib::SSLServer>(certFile.c_str(), keyFile.c_str());
     if (serverConfiguration.getWriteTimeOut().count() != 0) {
       sslServer->set_write_timeout(serverConfiguration.getWriteTimeOut());
     }
@@ -103,7 +106,7 @@ struct Server::Impl
     : controller(std::move(controllers)), sslServer(initSslServer(controller, serverConfiguration)),
       server(initServer(controller, serverConfiguration, sslServer))
   {
-    const std::string host = serverConfiguration.getHost();
+    const std::string &host = serverConfiguration.getHost();
     const int port = serverConfiguration.getPort();
     const bool bound = sslServer != nullptr ? sslServer->bind_to_port(host, port) : server->bind_to_port(host, port);
     if (!bound) { throw std::runtime_error("HTTP server: failed to bind to " + host + ":" + std::to_string(port)); }

@@ -51,8 +51,7 @@ private:
     std::filesystem::path m_filePath;
     bool m_isInitFile;
   };
-  std::filesystem::path m_configPath =
-    std::string(CONFIG_DIRECTORY) + std::filesystem::path::preferred_separator + "database";
+  std::filesystem::path m_configPath = std::filesystem::path(CONFIG_DIRECTORY) / "database";
   std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
 
   static constexpr std::string_view m_createSchemaVersion =

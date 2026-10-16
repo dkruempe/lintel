@@ -14,9 +14,8 @@ namespace lintel {
 Configuration::Configuration(const std::vector<std::shared_ptr<Component>> &components,
   std::shared_ptr<EnvironmentConfiguration> environmentConfiguration)
   : m_components(initialize(components)), m_environmentConfiguration(std::move(environmentConfiguration)),
-    m_configurationFile(m_environmentConfiguration->of(EnvironmentConfiguration::ConfigDirectory)
-                        + std::filesystem::path::preferred_separator
-                        + m_environmentConfiguration->of(EnvironmentConfiguration::BootstrapConfigName) + ".xml")
+    m_configurationFile(std::filesystem::path(m_environmentConfiguration->of(EnvironmentConfiguration::ConfigDirectory))
+                        / (m_environmentConfiguration->of(EnvironmentConfiguration::BootstrapConfigName) + ".xml"))
 {
   loadConfiguration();
 }

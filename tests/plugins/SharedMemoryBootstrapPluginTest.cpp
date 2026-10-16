@@ -81,8 +81,8 @@ namespace {
       : propertyPath(uniquePath("property")), eventBusPath(uniquePath("eventbus"))
     {
       if (createFiles) {
-        Segment(boost::interprocess::open_or_create, propertyPath.c_str(), propertySize);
-        Segment(boost::interprocess::open_or_create, eventBusPath.c_str(), eventBusSize);
+        Segment(boost::interprocess::open_or_create, propertyPath.string().c_str(), propertySize);
+        Segment(boost::interprocess::open_or_create, eventBusPath.string().c_str(), eventBusSize);
       }
       std::vector<std::shared_ptr<Entry>> entries;
       auto propertySegment = std::make_shared<SharedMemorySegment>(propertyPath, "shm_property", propertySize);
@@ -117,7 +117,7 @@ namespace {
 
   void createBusInSegment(const std::filesystem::path &path, const EventBusConfig &config, const char *name = "main")
   {
-    Segment mapping(boost::interprocess::open_only, path.c_str());
+    Segment mapping(boost::interprocess::open_only, path.string().c_str());
     BoostSegmentAllocator allocator(*mapping.get_segment_manager());
     mapping.find_or_construct<EventBus>(name)(name, config, ShmSegmentAccessor(allocator));
   }

@@ -28,6 +28,14 @@ function(set_project_warnings project_name)
             /w14905 # wide string literal cast to 'LPSTR'
             /w14906 # string literal cast to 'LPWSTR'
             /w14928 # illegal copy-initialization; more than one user-defined conversion has been implicitly applied
+            # The MSVC CRT deprecates the standard C functions (getenv, strerror, ...) in favour of its
+            # own _s variants. lintel uses the portable spelling, so the deprecation is noise here and
+            # /WX would otherwise turn it into a hard error.
+            /D_CRT_SECURE_NO_WARNINGS
+            /wd4100 # 'identifier': unreferenced formal parameter - the GCC/Clang builds disable this via
+            # -Wno-unused-parameter, so MSVC must not reject the same interfaces.
+            /wd4101 # 'identifier': unreferenced local variable - fires on catch() handler variables, which
+            # GCC/Clang accept; genuinely unused locals are still reported as C4189 at /W4.
             /permissive- # standards conformance mode for MSVC compiler.
             )
 

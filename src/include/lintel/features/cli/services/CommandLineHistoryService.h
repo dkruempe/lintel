@@ -33,10 +33,10 @@ public:
   std::vector<CommandHistoryEntry> allOf();
 
   /** @return next of history element */
-  std::optional<CommandHistoryEntry> nextOf(std::string menu);
+  std::optional<CommandHistoryEntry> nextOf(const std::string &menu);
 
   /** @return previous of history element */
-  std::optional<CommandHistoryEntry> previousOf(std::string menu);
+  std::optional<CommandHistoryEntry> previousOf(const std::string &menu);
 
   /**
    * searches first match backwards (newest first)
@@ -44,7 +44,7 @@ public:
    * @param menu
    * @return returns match if found
    */
-  std::optional<CommandHistoryEntry> startsWith(std::string command, std::string menu);
+  std::optional<CommandHistoryEntry> startsWith(const std::string &command, const std::string &menu);
 
   /**
    * historizes the last entered command in the local file

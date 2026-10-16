@@ -30,8 +30,7 @@ void DatabaseBootstrapPlugin::handle(const std::shared_ptr<DatabaseConnectionEnt
     db::Connection connection(connectionEntry);
   }
   auto optResult = hasSchemaVersionTable(connectionEntry);
-  std::filesystem::path dbPath =
-    m_configPath.string() + std::filesystem::path::preferred_separator + connectionEntry->getName();
+  std::filesystem::path dbPath = m_configPath / connectionEntry->getName();
   if (!optResult.has_value()) { createSchemaVersionTable(connectionEntry); }
   if (!std::filesystem::exists(dbPath)) {
     LOG_WARN("{} - {} does not exists", connectionEntry->getName(), dbPath.string());

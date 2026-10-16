@@ -31,7 +31,7 @@ std::string FileService::readFile()
   return buffer.str();
 }
 
-std::string FileService::getName() { return m_path.filename(); }
+std::string FileService::getName() { return m_path.filename().string(); }
 
 std::filesystem::path FileService::getPath() { return m_path; }
 

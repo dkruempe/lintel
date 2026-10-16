@@ -14,8 +14,8 @@ namespace {
     if (!clientConfiguration->getCertFile().empty() && !clientConfiguration->getKeyFile().empty()) {
       sslClient = std::make_shared<httplib::SSLClient>(clientConfiguration->getHost(),
         clientConfiguration->getPort(),
-        clientConfiguration->getCertFile(),
-        clientConfiguration->getKeyFile());
+        clientConfiguration->getCertFile().string(),
+        clientConfiguration->getKeyFile().string());
     } else if (!clientConfiguration->getCaCertFile().empty()) {
       sslClient = std::make_shared<httplib::SSLClient>(clientConfiguration->getHost(), clientConfiguration->getPort());
     } else {

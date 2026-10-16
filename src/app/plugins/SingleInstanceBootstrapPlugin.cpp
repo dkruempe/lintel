@@ -17,7 +17,7 @@ class SingleInstanceBootstrapPlugin::Lock
 {
 public:
   /** @param path path of the lock file */
-  explicit Lock(const std::filesystem::path &path) : m_lock(path.c_str()) {}
+  explicit Lock(const std::filesystem::path &path) : m_lock(path.string().c_str()) {}
 
   /** @return true if the exclusive lock was acquired */
   [[nodiscard]] bool tryLock() { return m_lock.try_lock(); }
