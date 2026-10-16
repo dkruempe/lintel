@@ -272,9 +272,15 @@ TEST_CASE("ProcessService::allActiveOf refreshes resources for running process",
       roundTripped.JsonSerializable::deserialize(dto.JsonSerializable::serialize());
     }
   }
+  // ProcessResourceReader has an implementation on Linux (procfs) and macOS (libproc) only, so on
+  // every other platform the snapshots stay invalid - and the service must not invent resource data.
+#if defined(__linux__) || defined(__APPLE__)
   REQUIRE(foundValidResource);
   REQUIRE(roundTripped.isResourceDataValid());
   REQUIRE(roundTripped.getMemoryBytes().has_value());
+#else
+  REQUIRE_FALSE(foundValidResource);
+#endif
 
   service->terminateOf(process);
 }
@@ -563,11 +569,18 @@ TEST_CASE("ProcessService resolves a path relative to the configuration director
   const auto tempDirectory = std::filesystem::temp_directory_path() / "lintel_processservice_relative";
   std::filesystem::remove_all(tempDirectory);
   std::filesystem::create_directories(tempDirectory);
+  // The helper keeps the platform's executable naming: Windows only starts ".exe" images through the
+  // ordinary CreateProcess path, so a bare "relative_sleeper" would not start there.
+#if defined(_WIN32)
+  const std::string sleeperName = "relative_sleeper.exe";
+#else
+  const std::string sleeperName = "relative_sleeper";
+#endif
   std::filesystem::copy_file(
-    fixture.sleepBinary, tempDirectory / "relative_sleeper", std::filesystem::copy_options::overwrite_existing);
+    fixture.sleepBinary, tempDirectory / sleeperName, std::filesystem::copy_options::overwrite_existing);
   fixture.envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, tempDirectory.string());
 
-  Process process("relative_sleeper", std::vector<std::string>{ "600" });
+  Process process(sleeperName, std::vector<std::string>{ "600" });
   service->startOf(process);
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -581,14 +594,28 @@ TEST_CASE("ProcessService resolves a bare command name through PATH", "[process_
   ProcessServiceFixture fixture;
   auto service = fixture.createService();
 
-  // "sleep" is not a file next to the test binary and not relative to the config dir, so
-  // resolvePath falls through to the PATH lookup
-  Process process("sleep", std::vector<std::string>{ "600" });
+  // A bare name that is neither a file next to the test binary nor relative to the config directory
+  // makes resolvePath fall through to the PATH lookup. pathOf() joins each PATH entry with the name
+  // verbatim (there is no PATHEXT handling), so the helper has to carry the platform's suffix.
+#if defined(_WIN32)
+  const std::string sleeperName = "sleep.exe";
+#else
+  const std::string sleeperName = "sleep";
+#endif
+  const std::filesystem::path pathDirectory = std::filesystem::temp_directory_path() / "lintel_processservice_path";
+  std::filesystem::remove_all(pathDirectory);
+  std::filesystem::create_directories(pathDirectory);
+  std::filesystem::copy_file(
+    fixture.sleepBinary, pathDirectory / sleeperName, std::filesystem::copy_options::overwrite_existing);
+  fixture.envConfig->overrides(EnvironmentConfiguration::Path, pathDirectory.string());
+
+  Process process(sleeperName, std::vector<std::string>{ "600" });
   service->startOf(process);
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
   REQUIRE(service->of(process.getId()).has_value());
   service->terminateOf(process);
+  std::filesystem::remove_all(pathDirectory);
 }
 
 TEST_CASE("ProcessService::allGroupsOf rejects an invalid regex", "[process_service]")
