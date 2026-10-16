@@ -134,6 +134,59 @@ TEST_CASE("Server: health and readiness endpoints respond 200 without auth")
   REQUIRE(ready->get_header_value("Content-Type") == "application/json");
 }
 
+TEST_CASE("Server: applies configured read, write and idle timeouts")
+{
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  Server server(ServerConfiguration("127.0.0.1",
+                 port,
+                 std::chrono::milliseconds(3000),
+                 std::chrono::milliseconds(5000),
+                 std::chrono::milliseconds(60000)),
+    std::vector<std::shared_ptr<Controller>>{});
+
+  httplib::Client client("127.0.0.1", port);
+  client.set_connection_timeout(std::chrono::seconds(2));
+  client.set_read_timeout(std::chrono::seconds(2));
+
+  auto health = client.Get("/health");
+  REQUIRE(health != nullptr);
+  REQUIRE(health->status == 200);
+}
+
+TEST_CASE("Server: serves HTTPS when a certificate and key are configured")
+{
+  EnvironmentConfiguration envConfig;
+  const std::filesystem::path configDir = envConfig.of(EnvironmentConfiguration::ConfigDirectory);
+  const std::filesystem::path certPath = configDir / "certs/server.crt";
+  const std::filesystem::path keyPath = configDir / "certs/server.key";
+  REQUIRE(std::filesystem::exists(certPath));
+  REQUIRE(std::filesystem::exists(keyPath));
+
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  Server server(ServerConfiguration("127.0.0.1",
+                 port,
+                 std::chrono::milliseconds(3000),
+                 std::chrono::milliseconds(5000),
+                 std::chrono::milliseconds(60000),
+                 certPath.string(),
+                 keyPath.string()),
+    std::vector<std::shared_ptr<Controller>>{});
+
+  httplib::SSLClient client("127.0.0.1", port);
+  client.set_ca_cert_path(certPath.string().c_str());
+  client.enable_server_certificate_verification(true);
+  client.set_connection_timeout(std::chrono::seconds(2));
+  client.set_read_timeout(std::chrono::seconds(2));
+
+  auto health = client.Get("/health");
+  REQUIRE(health != nullptr);
+  REQUIRE(health->status == 200);
+}
+
 TEST_CASE("ContentType: parse from string")
 {
   ContentType ct("application/json");

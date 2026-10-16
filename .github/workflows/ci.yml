@@ -478,9 +478,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
 
-    # Advisory: the report is uploaded as an artifact and summarised, but a drop
-    # does not fail the run yet. Promote to blocking once a floor is agreed.
-    continue-on-error: true
+    # Coverage should meet target (90%) once established.
+    continue-on-error: false
 
     env:
       CC: gcc-14

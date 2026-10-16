@@ -604,4 +604,104 @@ TEST_CASE("EnvironmentConfiguration: empty Path override is ignored")
   REQUIRE(envConfig->pathsOf()[0] == "/tmp/env_path_three");
   REQUIRE(envConfig->of(EnvironmentConfiguration::Environment::Path) == "/tmp/env_path_three");
 }
+
+TEST_CASE("LoggerComponent: throw when a Path has no create_sub_dirs attribute")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  LoggerComponent component(envConfig);
+
+  const std::string xml = R"(<Loggers>
+        <Path path="/tmp/test_logs"/>
+    </Loggers>)";
+
+  REQUIRE_THROWS_WITH(component.parse(xml, 0, "test.xml"), Catch::Matchers::ContainsSubstring("create_sub_dirs"));
+}
+
+TEST_CASE("LoggerComponent: throw on an invalid create_sub_dirs value")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  LoggerComponent component(envConfig);
+
+  const std::string xml = R"(<Loggers>
+        <Path path="/tmp/test_logs" create_sub_dirs="maybe"/>
+    </Loggers>)";
+
+  REQUIRE_THROWS_WITH(
+    component.parse(xml, 0, "test.xml"), Catch::Matchers::ContainsSubstring("create_sub_dirs is wrong"));
+}
+
+TEST_CASE("LoggerComponent: expands a leading tilde in a Path")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  ScopedEnvironmentVariable home{ "HOME", "/tmp" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  LoggerComponent component(envConfig);
+
+  const std::string xml = R"(<Loggers>
+        <Path path="~/logger_test_logs" create_sub_dirs="true"/>
+    </Loggers>)";
+
+  auto entries = component.parse(xml, 0, "test.xml");
+  REQUIRE(entries.size() == 1);
+  auto loggerEntry = std::static_pointer_cast<LoggerEntry>(entries[0]);
+  REQUIRE(loggerEntry->isLoggerPathConfiguration());
+  REQUIRE(loggerEntry->getLoggerPathConfiguration()->getPath() == "/tmp/logger_test_logs");
+}
+
+TEST_CASE("LoggerComponent: throw when a TcpSink has no connection")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  LoggerComponent component(envConfig);
+
+  const std::string xml = R"(<Loggers>
+        <Logger process_name="main" level="info" async="false">
+            <LoggerSink type="TcpSink" port="9999"/>
+        </Logger>
+    </Loggers>)";
+
+  REQUIRE_THROWS_WITH(component.parse(xml, 0, "test.xml"), Catch::Matchers::ContainsSubstring("connection == nullptr"));
+}
+
+TEST_CASE("LoggerComponent: parse Logger with DailyFileSink")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  LoggerComponent component(envConfig);
+
+  const std::string xml = R"(<Loggers>
+        <Logger process_name="main" level="info" async="false">
+            <LoggerSink type="DailyFileSink" time="02:30" file_name="daily.log"/>
+        </Logger>
+    </Loggers>)";
+
+  auto entries = component.parse(xml, 0, "test.xml");
+  REQUIRE(entries.size() == 1);
+  const auto config = std::static_pointer_cast<LoggerEntry>(entries[0])->getLoggerConfiguration();
+  const auto sinks = config->getLoggerSinks();
+  REQUIRE(sinks.size() == 1);
+  REQUIRE(sinks[0].getType() == LoggerSinkConfiguration::DailyFileSink);
+}
+
+TEST_CASE("LoggerComponent: parse Logger with SysLogSink")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  LoggerComponent component(envConfig);
+
+  const std::string xml = R"(<Loggers>
+        <Logger process_name="main" level="info" async="false">
+            <LoggerSink type="SysLogSink" id="lintel"/>
+        </Logger>
+    </Loggers>)";
+
+  auto entries = component.parse(xml, 0, "test.xml");
+  REQUIRE(entries.size() == 1);
+  const auto config = std::static_pointer_cast<LoggerEntry>(entries[0])->getLoggerConfiguration();
+  const auto sinks = config->getLoggerSinks();
+  REQUIRE(sinks.size() == 1);
+  REQUIRE(sinks[0].getType() == LoggerSinkConfiguration::SysLogSink);
+}
 }// namespace lintel

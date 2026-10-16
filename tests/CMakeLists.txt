@@ -16,10 +16,13 @@ ADD_EXECUTABLE(base_tests
     models/JsonSerializableTest.cpp
     factories/PropertyFactoryTest.cpp
     property/PropertyChangeTest.cpp
+    property/PropertyServiceRepositoryTest.cpp
+    property/PropertyDtoTest.cpp
     property/PropertyDataDtoSizeTest.cpp
     property/FilePropertyRepositoryTest.cpp
     property/DatabasePropertyRepositoryTest.cpp
     services/PropertyServiceTest.cpp
+    services/ProcessArgumentServiceTest.cpp
     services/SchedulerServiceTest.cpp
     services/ExecutorServiceTest.cpp
     core/LoggerServiceTest.cpp
@@ -30,7 +33,12 @@ ADD_EXECUTABLE(base_tests
     integration/HttpComponentPathTest.cpp
     integration/PropertySerializationTest.cpp
     core/CoreUtilsTest.cpp
+    core/ArgumentTest.cpp
+    core/FileServiceTest.cpp
     core/CursorTest.cpp
+    core/StopWatchServiceTest.cpp
+    core/InputServiceTest.cpp
+    core/ParameterTest.cpp
     core/RegexUtilsTest.cpp
     core/StartupBuilderTest.cpp
     core/DiContainerTest.cpp
@@ -39,7 +47,18 @@ ADD_EXECUTABLE(base_tests
     features/HistoryServiceGatingTest.cpp
     features/SharedMemorySegmentComponentTest.cpp
     features/SharedMemoryServiceTest.cpp
+    features/SharedMemoryRepositoryTest.cpp
+    features/UserDtoTest.cpp
+    features/UserLoginDtoTest.cpp
+    features/GroupTest.cpp
+    features/GroupDtosTest.cpp
+    features/ProcessTest.cpp
+    features/ProcessInfoDtoTest.cpp
+    features/SharedMemorySegmentDtoTest.cpp
+    features/EventBusServiceTest.cpp
+    features/HistoryServiceTest.cpp
     events/EventBusTest.cpp
+    app/AppFeatureTest.cpp
     plugins/AdminUserBootstrapPluginTest.cpp
     plugins/DatabaseBootstrapPluginTest.cpp
     plugins/MessageQueueBootstrapPluginTest.cpp
@@ -51,6 +70,11 @@ ADD_EXECUTABLE(base_tests
     cli/MessageQueueCliComponentTest.cpp
     cli/ProcessCliComponentTest.cpp
     cli/SharedMemoryCliComponentTest.cpp
+    cli/PropertyCliComponentTest.cpp
+    cli/TerminalServiceTest.cpp
+    cli/AbstractCommandLineMenuTest.cpp
+    cli/CommandLineUtilsTest.cpp
+    cli/CommandTest.cpp
     services/BootstrapServiceMockTest.cpp
     services/AuthServiceTest.cpp
     services/MessageQueueServiceMockTest.cpp
@@ -58,6 +82,7 @@ ADD_EXECUTABLE(base_tests
     cli/CommandLineComponentMockTest.cpp
     cli/CommandLineHistoryServiceTest.cpp
     cli/AuthCliServiceMockTest.cpp
+    cli/CommandLineServiceTest.cpp
     cli/UserManagementCliComponentMockTest.cpp
     http/ControllerMockTest.cpp
     http/ClientIpResolverTest.cpp
@@ -66,6 +91,10 @@ ADD_EXECUTABLE(base_tests
     http/MessageQueueControllerTest.cpp
     http/UserControllerTest.cpp
     http/ProcessControllerTest.cpp
+    http/ClientTest.cpp
+    http/UserApiTest.cpp
+    http/PropertyApiTest.cpp
+    http/PropertyControllerTest.cpp
     services/ProcessServiceTest.cpp
     repositories/UserGroupRepositoryTest.cpp
     repositories/UserRepositoryPagingTest.cpp
