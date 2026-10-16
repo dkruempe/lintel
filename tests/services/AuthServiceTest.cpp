@@ -17,13 +17,13 @@
 
 #include <catch2/catch_all.hpp>
 
+#include "../helpers/PlatformCompat.h"
 #include <chrono>
 #include <cstdlib>
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <thread>
-#include <unistd.h>
 #include <vector>
 
 #include "../helpers/ScopedEnvironmentVariable.h"

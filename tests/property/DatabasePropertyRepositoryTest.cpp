@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 

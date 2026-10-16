@@ -3,8 +3,11 @@
 #include <memory>
 #include <vector>
 
-#include <sys/wait.h>
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
+
+#if !defined(_WIN32)
+#include <sys/wait.h>// waitpid (runInChild cannot work on Windows: no fork)
+#endif
 
 #include "lintel/app/plugins/SingleInstanceBootstrapPlugin.h"
 #include "lintel/core/configuration/Configuration.h"
@@ -87,6 +90,7 @@ namespace {
    * @param fixture the test fixture
    * @param expectThrow whether the child must observe the single instance conflict
    * @return 0 if the child behaved as expected, non-zero otherwise */
+#if !defined(_WIN32)
   int runInChild(const SingleInstanceFixture &fixture, bool expectThrow)
   {
     int pipeFds[2];
@@ -114,6 +118,7 @@ namespace {
     REQUIRE(::waitpid(pid, &status, 0) == pid);
     return childResult;
   }
+#endif// !_WIN32
 
 }// namespace
 
@@ -133,6 +138,7 @@ TEST_CASE("SingleInstanceBootstrapPlugin: first instance acquires the lock")
   REQUIRE(std::filesystem::exists(fixture.lockDir / "main.lock"));
 }
 
+#if !defined(_WIN32)
 TEST_CASE("SingleInstanceBootstrapPlugin: a second process of the same name throws")
 {
   SingleInstanceFixture fixture("main");
@@ -149,6 +155,7 @@ TEST_CASE("SingleInstanceBootstrapPlugin: lock is released when the instance end
   first.reset();
   REQUIRE(runInChild(fixture, false) == 0);
 }
+#endif// !_WIN32
 
 TEST_CASE("SingleInstanceBootstrapPlugin: different process names are independent")
 {

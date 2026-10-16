@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "lintel/app/plugins/DatabaseBootstrapPlugin.h"
 #include "lintel/config.h"

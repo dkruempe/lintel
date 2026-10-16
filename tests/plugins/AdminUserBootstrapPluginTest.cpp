@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "lintel/app/plugins/AdminUserBootstrapPlugin.h"
 #include "lintel/core/configuration/Configuration.h"

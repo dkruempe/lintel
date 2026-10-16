@@ -2,7 +2,7 @@
 
 namespace lintel {
 ProcessInfo::ProcessInfo(std::shared_ptr<Process> process,
-  pid_t id,
+  lintel::ProcessId id,
   bool isRunning,
   int exitCode,
   std::string groupName,
@@ -16,7 +16,7 @@ ProcessInfo::ProcessInfo(std::shared_ptr<Process> process,
 
 const std::shared_ptr<Process> &ProcessInfo::getProcess() const { return m_process; }
 
-pid_t ProcessInfo::getProcessId() const { return m_id; }
+lintel::ProcessId ProcessInfo::getProcessId() const { return m_id; }
 
 std::string ProcessInfo::getGroupName() const { return m_groupName; }
 

@@ -1,11 +1,11 @@
 #ifndef LINTEL_PROCESSRESOURCEREADER_H
 #define LINTEL_PROCESSRESOURCEREADER_H
 
-#include <unistd.h>
-
 #include <chrono>
 #include <cstdint>
 #include <optional>
+
+#include "lintel/core/platform/Platform.h"
 
 namespace lintel {
 /**
@@ -46,7 +46,7 @@ public:
    * @param previous a previously read snapshot used to compute the CPU delta
    * @return the resource snapshot (valid=false on unsupported platforms or unreadable pid)
    */
-  static ProcessResourceData readOf(pid_t pid, const std::optional<ProcessResourceData> &previous);
+  static ProcessResourceData readOf(ProcessId pid, const std::optional<ProcessResourceData> &previous);
 };
 
 }// namespace lintel

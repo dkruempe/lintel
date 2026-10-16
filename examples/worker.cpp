@@ -5,7 +5,6 @@
 #include <string>
 #include <string_view>
 #include <thread>
-#include <unistd.h>
 #include <utility>
 
 #include <lintel/app/BaseFeature.h>
@@ -14,6 +13,7 @@
 #include <lintel/core/Feature.h>
 #include <lintel/core/Features.h>
 #include <lintel/core/models/ProcessName.h>
+#include <lintel/core/platform/Platform.h>
 #include <lintel/core/services/AbstractService.h>
 #include <lintel/core/services/LoggerService.h>
 #include <lintel/features/base/models/HistoryEntry.h>
@@ -55,7 +55,7 @@ public:
     auto eventBusService = m_container->resolve<lintel::EventBusService>();
 
     // unique subscriber name per worker instance (pid based)
-    const std::string subscriber = m_processName->getProcessName() + "-" + std::to_string(::getpid());
+    const std::string subscriber = m_processName->getProcessName() + "-" + std::to_string(lintel::currentProcessId());
     propertyService->setPropertyChangeBus(eventBusService->of("main"), subscriber);
 
     // read the current value from the shared memory mirror before the local
@@ -113,7 +113,7 @@ public:
     // produce a few test history entries every 3 seconds so that main
     // picks them up from the IPC queue and persists them
     auto historyService = m_container->resolve<lintel::IHistoryService>();
-    const std::string workerPid = std::to_string(::getpid());
+    const std::string workerPid = std::to_string(lintel::currentProcessId());
     m_historyThread = std::thread([this, historyService, subscriber, workerPid]() {
       int counter = 0;
       while (m_running) {

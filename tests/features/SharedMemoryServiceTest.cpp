@@ -1,6 +1,6 @@
 #include <boost/interprocess/sync/named_semaphore.hpp>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include <chrono>
 #include <cstddef>

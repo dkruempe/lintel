@@ -1,3 +1,4 @@
+#include "../helpers/PlatformCompat.h"
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -5,7 +6,6 @@
 #include <filesystem>
 #include <string>
 #include <type_traits>
-#include <unistd.h>
 
 #include <boost/interprocess/managed_mapped_file.hpp>
 

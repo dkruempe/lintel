@@ -1,6 +1,6 @@
 #include "lintel/features/base/models/User.h"
+#include "lintel/core/utils/DateTimeFormat.h"
 #include <chrono>
-#include <format>
 
 #include <utility>
 
@@ -44,7 +44,7 @@ std::ostream &operator<<(std::ostream &os, const User &user)
   os << "User{"
      << "username: " << user.m_userName << ", first_name: " << user.m_firstName << ", last_name: " << user.m_lastName
      << ", e_mail: " << user.m_email << ", password: " << user.m_password << ", sex: " << user.m_sex
-     << ", created_timestamp: " << std::format("{:%Y.%m.%d %T%Ez}", user.m_createdTimestamp) << ", groups = {";
+     << ", created_timestamp: " << datetime::formatSystemTime(user.m_createdTimestamp, '.') << ", groups = {";
   for (std::size_t i = 0; i < user.m_groups.size(); i++) {
     const Group &group = user.m_groups[i];
     os << group;

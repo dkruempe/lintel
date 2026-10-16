@@ -647,6 +647,9 @@ TEST_CASE("ProcessService restarts a whole process group", "[process_service]")
   service->terminateOf(group);
 }
 
+#if !defined(_WIN32)
+// Windows has no SIGINT trap in a child process (SignalService::kill terminates the process outright),
+// so the scenario this test proves only exists on POSIX.
 TEST_CASE("ProcessService destructor force-terminates a process that ignores SIGINT", "[process_service]")
 {
   ProcessServiceFixture fixture;
@@ -658,4 +661,5 @@ TEST_CASE("ProcessService destructor force-terminates a process that ignores SIG
   std::this_thread::sleep_for(std::chrono::milliseconds(150));
   // deliberately no terminateOf: the destructor must clean the child up
 }
+#endif// !_WIN32
 }// namespace lintel

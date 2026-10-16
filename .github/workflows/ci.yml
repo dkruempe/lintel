@@ -181,6 +181,152 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  # ── Cross-platform (advisory) ─────────────────────────────────────────────
+  # macOS and Windows are built from the same sources but cannot be verified on
+  # a Linux box, so both jobs are advisory (continue-on-error) until a full run
+  # is green on a real runner. They do NOT set LINTEL_REQUIRE_PG: there is no
+  # `services:` container on these runners, so the PostgreSQL integration tests
+  # skip instead of failing.
+  macos:
+    name: build (macos)
+    runs-on: macos-latest
+    timeout-minutes: 150
+
+    # Advisory - see the cross-platform comment above. Promote to blocking once
+    # the run is stable; the code paths are already shared with the Linux jobs.
+    continue-on-error: true
+
+    env:
+      BUILD_TYPE: Release
+      BUILD_DIR: build/build/Release
+      CACHE_ID: macos
+      CONAN_SYSREQUIRES_MODE: enabled
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Conan packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      # Xcode ships the toolchain; Conan builds boost/openssl/libpq from source
+      # (no apt on macOS), so the run is slower than the Linux gate.
+      - name: Install build tools
+        run: |
+          brew install ninja || true
+          ninja --version
+          cmake --version
+          ccache --version || true
+
+      - name: Generate TLS test certificates
+        run: ./cfg/certs/generate_certs.sh
+
+      - name: Install Conan
+        run: pip3 install --break-system-packages --no-cache-dir conan
+
+      - name: Install Conan dependencies
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      - name: Configure CMake
+        run: |
+          cmake -S . -B ${{ env.BUILD_DIR }} \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/${{ env.BUILD_TYPE }}/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -G Ninja
+
+      - name: Build
+        run: cmake --build ${{ env.BUILD_DIR }} --parallel $(sysctl -n hw.ncpu)
+
+      - name: Run tests
+        working-directory: ${{ env.BUILD_DIR }}
+        run: ctest --output-on-failure --label-regex unit
+
+  windows:
+    name: build (windows-msvc)
+    runs-on: windows-latest
+    timeout-minutes: 180
+
+    # Advisory - see the cross-platform comment above.
+    continue-on-error: true
+
+    env:
+      BUILD_TYPE: Release
+      BUILD_DIR: build/build/Release
+      CACHE_ID: windows
+      CONAN_SYSREQUIRES_MODE: enabled
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Cache Conan packages
+        uses: actions/cache@v6
+        with:
+          path: ~/.conan2
+          key: conan-${{ runner.os }}-${{ env.CACHE_ID }}-${{ hashFiles('conanfile.txt') }}
+          restore-keys: |
+            conan-${{ runner.os }}-${{ env.CACHE_ID }}-
+
+      # Conan needs the MSVC environment (cl.exe / link.exe on PATH) to build
+      # the C++ dependencies from source and to compile the project with Ninja.
+      - name: Set up MSVC developer environment
+        uses: ilammy/msvc-dev-cmd@v1
+
+      # Ninja and CMake ship with the runner image; the pip fallback keeps the
+      # job working if the image changes underneath us.
+      - name: Ensure build tools
+        shell: bash
+        run: |
+          command -v cmake && cmake --version
+          if ! command -v ninja >/dev/null 2>&1; then
+            python -m pip install --no-cache-dir ninja
+          fi
+          ninja --version
+
+      - name: Generate TLS test certificates
+        shell: bash
+        run: ./cfg/certs/generate_certs.sh
+
+      - name: Install Conan
+        shell: bash
+        run: python -m pip install --no-cache-dir conan
+
+      - name: Install Conan dependencies
+        shell: bash
+        run: |
+          conan profile detect --force
+          conan install . \
+            --output-folder=build \
+            --build=missing \
+            -s build_type=${{ env.BUILD_TYPE }} \
+            -c tools.cmake.cmaketoolchain:generator=Ninja
+
+      - name: Configure CMake
+        shell: bash
+        run: |
+          cmake -S . -B "${{ env.BUILD_DIR }}" \
+            -DCMAKE_TOOLCHAIN_FILE=build/build/${{ env.BUILD_TYPE }}/generators/conan_toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -G Ninja
+
+      - name: Build
+        shell: bash
+        run: cmake --build "${{ env.BUILD_DIR }}" --parallel
+
+      - name: Run tests
+        shell: bash
+        working-directory: ${{ env.BUILD_DIR }}
+        run: ctest --output-on-failure --label-regex unit
+
   sanitizers:
     name: sanitizers (ASan+UBSan)
     runs-on: ubuntu-24.04

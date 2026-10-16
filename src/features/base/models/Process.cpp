@@ -1,5 +1,7 @@
 #include "lintel/features/base/models/Process.h"
 
+#include "lintel/core/platform/Platform.h"
+
 #include <ctime>
 
 namespace lintel {
@@ -133,9 +135,10 @@ bool Process::inActiveWindow() const
   if (!m_activeFromHour.has_value() || !m_activeToHour.has_value()) { return true; }
   const std::time_t now = std::time(nullptr);
   std::tm local{};
-  // localtime_r writes into the caller's storage, localtime shares one static buffer
-  // between all threads and is therefore a data race (CodeQL cpp/potentially-dangerous-function).
-  if (::localtime_r(&now, &local) == nullptr) { return true; }
+  // lintel::localTime wraps localtime_r (POSIX) / localtime_s (Windows);
+  // localtime shares one static buffer between all threads and is therefore
+  // a data race (CodeQL cpp/potentially-dangerous-function).
+  if (!lintel::localTime(now, local)) { return true; }
   const int32_t hour = local.tm_hour;
   const int32_t from = m_activeFromHour.value();
   const int32_t to = m_activeToHour.value();

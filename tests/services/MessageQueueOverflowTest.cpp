@@ -5,7 +5,7 @@
 #include <string>
 #include <utility>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "lintel/core/models/ProcessName.h"
 #include "lintel/features/base/msg/Message.h"

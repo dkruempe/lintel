@@ -2,9 +2,10 @@
 #define LINTEL_POSTGRES_SERIALIZATION_H
 
 #include <chrono>
-#include <format>
 #include <string>
 #include <type_traits>
+
+#include "lintel/core/utils/DateTimeFormat.h"
 
 /**
  * Macro that generates a full specialization of Serialization for a given type
@@ -75,15 +76,10 @@ namespace postgresql {
   IMPLEMENT_SERIALIZE(
     std::chrono::sys_time<std::chrono::microseconds>,
     [](const std::chrono::sys_time<std::chrono::microseconds> &time) -> std::string {
-      std::string createdTimestamp = std::format("{:%Y-%m-%d %H:%M:%S%Ez}", time);
-      std::replace(createdTimestamp.begin(), createdTimestamp.end(), ',', '.');
-      return createdTimestamp;
+      return datetime::formatSystemTime(time);
     },
     [](const std::string &timeString) -> std::chrono::sys_time<std::chrono::microseconds> {
-      std::stringstream ss(timeString);
-      std::chrono::sys_time<std::chrono::microseconds> lt;
-      ss >> std::chrono::parse("%Y-%m-%d %H:%M:%S%Ez", lt);
-      return lt;
+      return datetime::parseSystemTime(timeString);
     })
 
   // Only activated when std::size_t is distinct from all fixed-width integer types

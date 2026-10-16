@@ -26,7 +26,7 @@ find_dependency(httplib)
 find_dependency(spdlog)
 find_dependency(magic_enum)
 find_dependency(RapidJSON)
-find_dependency(Boost 1.75.0)
+find_dependency(Boost 1.86.0)
 
 # Hypodermic (the vendored DI container) has been replaced by lintel's own
 # header-only `lintel::di` container. It adds no external link dependency, so

@@ -8,7 +8,7 @@
 #include <fstream>
 #include <string>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 namespace lintel {
 TEST_CASE("XMLConfigSerializationStrategy: serialize properties to XML")

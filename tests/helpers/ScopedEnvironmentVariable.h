@@ -7,14 +7,10 @@
 #include <string>
 #include <utility>
 
-#if defined(_WIN32)
-// Deliberately a hard error, not a silent no-op: setenv()/unsetenv() do not exist on Windows, and a
-// no-op here would make every guarded test run against the real environment instead of the intended
-// one - the exact class of bug this helper exists to remove. The test suite is POSIX-only anyway
-// (fork(), unistd.h, sys/wait.h in SingleInstanceBootstrapPluginTest), so a Windows port has to
-// provide these two functions - or map them to _putenv_s()/_getenv_s() - before it compiles.
-#error "ScopedEnvironmentVariable requires setenv()/unsetenv(); map them to _putenv_s() on Windows first"
-#endif// _WIN32
+// setenv()/unsetenv() do not exist on Windows; the two fallbacks are _putenv_s() (MSVC). It takes
+// "name=value" semantics through separate arguments and removes a variable when the value is empty.
+// A silent no-op is not an option: it would make every guarded test run against the real environment
+// instead of the intended one - the exact class of bug this helper exists to remove.
 
 /** Overwrites an environment variable for the lifetime of an object and restores the previous state in the destructor.
  *
@@ -57,9 +53,9 @@ public:
     // Best effort and deliberately non-throwing: a throwing destructor terminates the test binary. A
     // failure here can only mean the environment was already unusable, which the constructor reported.
     if (m_previousValue.has_value()) {
-      setenv(m_name.c_str(), m_previousValue->c_str(), 1);
+      set(m_previousValue->c_str());
     } else {
-      unsetenv(m_name.c_str());
+      unset();
     }
   }
 
@@ -73,11 +69,30 @@ private:
   /** @param value new value of the variable */
   void set(const char *value)
   {
+#if defined(_WIN32)
+    if (_putenv_s(m_name.c_str(), value) != 0) {
+      // Without this the test would silently run against the wrong value, which is the failure mode
+      // this helper is meant to eliminate.
+      throw std::runtime_error("ScopedEnvironmentVariable: _putenv_s(" + m_name + ") failed");
+    }
+#else
     if (setenv(m_name.c_str(), value, 1) != 0) {
       // Without this the test would silently run against the wrong value, which is the failure mode
       // this helper is meant to eliminate.
       throw std::runtime_error("ScopedEnvironmentVariable: setenv(" + m_name + ") failed");
     }
+#endif// _WIN32
+  }
+
+  /** Remove the variable from the environment. */
+  void unset() noexcept
+  {
+#if defined(_WIN32)
+    // _putenv_s() removes the variable when the value is empty.
+    static_cast<void>(_putenv_s(m_name.c_str(), ""));
+#else
+    unsetenv(m_name.c_str());
+#endif// _WIN32
   }
 
   std::string m_name;

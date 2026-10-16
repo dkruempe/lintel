@@ -18,7 +18,7 @@ namespace {
 
 }// namespace
 
-ProcessResourceData ProcessResourceReader::readOf(pid_t pid, const std::optional<ProcessResourceData> &previous)
+ProcessResourceData ProcessResourceReader::readOf(ProcessId pid, const std::optional<ProcessResourceData> &previous)
 {
   ProcessResourceData data;
   if (pid < 0) { return data; }
@@ -77,7 +77,7 @@ ProcessResourceData ProcessResourceReader::readOf(pid_t pid, const std::optional
   }
 #elif defined(__APPLE__)
   struct proc_taskinfo taskInfo{};
-  const int size = proc_pidinfo(pid, PROC_PIDTASKINFO, 0, &taskInfo, sizeof(taskInfo));
+  const int size = proc_pidinfo(static_cast<int>(pid), PROC_PIDTASKINFO, 0, &taskInfo, sizeof(taskInfo));
   if (size != sizeof(taskInfo)) { return data; }
   data.cpuTicksTotal = static_cast<uint64_t>(taskInfo.pti_total_user + taskInfo.pti_total_system);
   data.memoryBytes = static_cast<uint64_t>(taskInfo.pti_resident_size);

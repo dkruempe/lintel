@@ -11,6 +11,13 @@ include(CTest)
 include(Catch)
 
 # All tests in a single binary — one link instead of 27.
+# POSIX-only test sources: InputServiceTest redirects fd 0 through a pipe, which the Windows
+# InputService never reads (it polls the console with _kbhit/_getch), so the test only exists on POSIX.
+set(LINTEL_POSIX_ONLY_TEST_SOURCES)
+if(NOT WIN32)
+    list(APPEND LINTEL_POSIX_ONLY_TEST_SOURCES core/InputServiceTest.cpp)
+endif()
+
 ADD_EXECUTABLE(base_tests
     models/PropertyTest.cpp
     models/JsonSerializableTest.cpp
@@ -37,7 +44,6 @@ ADD_EXECUTABLE(base_tests
     core/FileServiceTest.cpp
     core/CursorTest.cpp
     core/StopWatchServiceTest.cpp
-    core/InputServiceTest.cpp
     core/ParameterTest.cpp
     core/RegexUtilsTest.cpp
     core/StartupBuilderTest.cpp
@@ -100,6 +106,7 @@ ADD_EXECUTABLE(base_tests
     repositories/UserRepositoryPagingTest.cpp
     repositories/MessageQueueRepositoryPagingTest.cpp
     repositories/MessageQueueRepositoryFilterTest.cpp
+    ${LINTEL_POSIX_ONLY_TEST_SOURCES}
 )
 # Split the single-test-binary unity batch so multiple cores in CI actually get used
 set_target_properties(base_tests PROPERTIES UNITY_BUILD_BATCH_SIZE 8)

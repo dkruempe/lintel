@@ -37,7 +37,7 @@
 #include <thread>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 #include "../mocks/MockAuthService.h"

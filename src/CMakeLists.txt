@@ -41,7 +41,11 @@ find_package(magic_enum REQUIRED)
 find_package(SQLite3 REQUIRED)
 find_package(httplib REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(Boost 1.75.0 COMPONENTS system filesystem REQUIRED)
+# Boost.Process v1 (boost/process/v1/*) was introduced in Boost 1.86 and is used
+# by ProcessService; the CMake floor therefore has to match, otherwise a system
+# Boost < 1.86 (Homebrew/vcpkg on macOS, default on some Windows images) is
+# accepted here and fails at compile time instead.
+find_package(Boost 1.86.0 COMPONENTS system filesystem REQUIRED)
 find_package(RapidJSON REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(Threads REQUIRED)
@@ -49,6 +53,8 @@ find_package(Threads REQUIRED)
 # build
 set(headers
     include/lintel/config.h
+    # core - platform
+    include/lintel/core/platform/Platform.h
     # core - dependency injection
     include/lintel/core/di/Container.h
     # core - exceptions
@@ -123,6 +129,7 @@ set(headers
     include/lintel/app/StartupBuilder.h
     # core - utils
     include/lintel/core/utils/Cryption.h
+    include/lintel/core/utils/DateTimeFormat.h
     include/lintel/core/utils/JsonUtils.h
     include/lintel/core/utils/MemorySize.h
     include/lintel/core/utils/ProcessResourceReader.h
@@ -577,6 +584,12 @@ list(FILTER LINTEL_APP_SOURCES INCLUDE REGEX "^app/")
 # flags in the build tree.
 function(lintel_setup_module target)
     target_compile_features(${target} PUBLIC cxx_std_20)
+    if(MSVC)
+        # Defined on the command line (PUBLIC, so it also reaches consumers of the
+        # installed package): <Windows.h> must never define the min/max macros,
+        # they would break every std::min/std::max in the public headers.
+        target_compile_definitions(${target} PUBLIC NOMINMAX WIN32_LEAN_AND_MEAN)
+    endif()
     target_include_directories(${target} SYSTEM PUBLIC
             "$<BUILD_INTERFACE:${OpenSSL_INCLUDES};${magic_enum_INCLUDE_DIRS};${RapidJSON_INCLUDE_DIRS};${CMAKE_CURRENT_SOURCE_DIR}/include>"
             "$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>")

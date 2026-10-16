@@ -19,10 +19,7 @@
 #include <thread>
 #include <vector>
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#include "../helpers/NetCompat.h"
 
 namespace lintel {
 namespace {
@@ -39,24 +36,7 @@ namespace {
    * port; if that race is lost, the `Server` constructor throws and the test fails loudly.
    *
    * @return a free port number, or -1 if the socket could not be created or bound */
-  int freeEphemeralPort()
-  {
-    const int socket = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (socket < 0) { return -1; }
-    sockaddr_in address{};
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = ::htonl(INADDR_LOOPBACK);
-    address.sin_port = 0;// let the kernel choose
-    int port = -1;
-    if (::bind(socket, reinterpret_cast<sockaddr *>(&address), sizeof(address)) == 0) {
-      socklen_t length = sizeof(address);
-      if (::getsockname(socket, reinterpret_cast<sockaddr *>(&address), &length) == 0) {
-        port = ::ntohs(address.sin_port);
-      }
-    }
-    ::close(socket);
-    return port;
-  }
+  int freeEphemeralPort() { return lintel::testcompat::freeTcpPort(); }
 
   /** Bind a server to a free ephemeral port on 127.0.0.1 and run its accept loop in `serverThread`.
    *

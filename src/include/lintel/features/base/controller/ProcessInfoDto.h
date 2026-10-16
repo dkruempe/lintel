@@ -4,9 +4,9 @@
 #include <memory>
 #include <optional>
 #include <string>
-#include <unistd.h>
 
 #include "lintel/core/models/JsonSerializable.h"
+#include "lintel/core/platform/Platform.h"
 #include "lintel/core/utils/ProcessResourceReader.h"
 #include "lintel/features/base/models/ProcessInfo.h"
 
@@ -28,7 +28,7 @@ private:
   /** Maximum allowed restarts */
   int32_t m_maxAutoRestarts;
   /** Operating system process ID */
-  pid_t m_processId;
+  lintel::ProcessId m_processId;
   /** Whether the process is currently running */
   bool m_isRunning;
   /** The exit code of the process */
@@ -104,7 +104,7 @@ public:
 
   /** Get the OS process ID
    * @return The process ID */
-  [[nodiscard]] pid_t getProcessId() const;
+  [[nodiscard]] lintel::ProcessId getProcessId() const;
 
   /** Check if the process is running
    * @return True if running */

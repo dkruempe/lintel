@@ -1,6 +1,7 @@
 #include "lintel/features/cli/components/SharedMemoryCliComponent.h"
 
 #include <fstream>
+#include <lintel/core/platform/Platform.h>
 #include <lintel/core/utils/MemorySize.h>
 #include <lintel/core/utils/StringUtils.h>
 #include <lintel/core/utils/TableBuilder.h>
@@ -97,8 +98,7 @@ void SharedMemoryCliComponent::handleExportRepository()
   }
   std::string result = m_sharedMemoryApi->repositoryOf(m_uuid.value());
   if (m_file.has_value()) {
-    const char *home = getenv("HOME");
-    std::string file = StringUtils::replaceAll(m_file.value(), "~", home != nullptr ? home : "");
+    std::string file = StringUtils::replaceAll(m_file.value(), "~", lintel::homeDirectory());
     std::filesystem::path path(file);
     bool parentPathExits = std::filesystem::exists(path.parent_path());
     if (!parentPathExits) { std::filesystem::create_directories(path.parent_path()); }

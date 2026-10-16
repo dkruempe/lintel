@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "lintel/core/configuration/Configuration.h"
 #include "lintel/core/configuration/DatabaseConnectionComponent.h"

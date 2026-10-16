@@ -1,5 +1,6 @@
 #pragma once
 
+#include "lintel/core/platform/Platform.h"
 #include "lintel/core/utils/ProcessResourceReader.h"
 #include "lintel/features/base/models/Process.h"
 
@@ -12,7 +13,7 @@ class ProcessInfo
 {
 private:
   std::shared_ptr<Process> m_process;
-  pid_t m_id;
+  lintel::ProcessId m_id;
   bool m_isRunning;
   int m_exitCode;
   bool m_exitCodeValid;
@@ -33,7 +34,7 @@ public:
    * @param resourceData optional resource snapshot
    */
   ProcessInfo(std::shared_ptr<Process> process,
-    pid_t id,
+    lintel::ProcessId id,
     bool isRunning,
     int exitCode,
     std::string groupName,
@@ -45,7 +46,7 @@ public:
   [[nodiscard]] const std::shared_ptr<Process> &getProcess() const;
 
   /** @return OS process ID */
-  [[nodiscard]] pid_t getProcessId() const;
+  [[nodiscard]] lintel::ProcessId getProcessId() const;
 
   /** @return true if the process is running */
   [[nodiscard]] constexpr bool isRunning() const { return m_isRunning; }

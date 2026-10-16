@@ -8,6 +8,7 @@
 
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/SignalService.h"
+#include "lintel/core/utils/DateTimeFormat.h"
 #include "lintel/core/utils/StringUtils.h"
 #include "lintel/features/cli/models/CommandLineComponent.h"
 #include "lintel/features/cli/utils/CommandLineUtils.h"
@@ -40,7 +41,14 @@ CommandLineService::~CommandLineService()
   LOG_TRACE("finish command line service");
   if (m_thread.joinable()) {
     m_running.store(false);
+#if !defined(_WIN32)
     pthread_kill(m_thread.native_handle(), SIGUSR1);
+#else
+    // No SIGUSR1 on Windows. The input thread polls with a short timeout
+    // (InputService::onRead returns KeyType::Ignored when idle), so it notices
+    // m_running being cleared and the join below completes without a wake-up.
+    // Ctrl+C is delivered to the console input directly.
+#endif
     m_thread.join();
   }
   LOG_INFO("stopped command line service");
@@ -50,7 +58,11 @@ void CommandLineService::onShutdown()
 {
   m_running.store(false);
   if (m_thread.joinable()) {
+#if !defined(_WIN32)
     pthread_kill(m_thread.native_handle(), SIGUSR1);
+#else
+    // No SIGUSR1 on Windows: see the destructor for the polling reason.
+#endif
     m_thread.join();
   }
 }
@@ -120,9 +132,8 @@ void CommandLineService::onPrompt()
 {
   // timestamp MENU %
   std::string_view const currentMenu = m_menu.currentOf() == nullptr ? "MAIN" : m_menu.currentOf()->getName();
-  using namespace std;
-  using namespace std::chrono;
-  std::cout << std::format("{:%FT%TZ}", floor<seconds>(system_clock::now())) << " " << currentMenu << " % ";
+  std::cout << datetime::formatUtcIsoSeconds(std::chrono::floor<std::chrono::seconds>(std::chrono::system_clock::now()))
+            << " " << currentMenu << " % ";
   if (!m_terminalService->getLine().empty()) { std::cout << m_terminalService->getLine(); }
 }
 

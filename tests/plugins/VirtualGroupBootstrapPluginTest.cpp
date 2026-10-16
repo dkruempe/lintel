@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "lintel/core/di/Container.h"
 

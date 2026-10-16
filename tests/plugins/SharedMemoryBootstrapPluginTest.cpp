@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include <boost/interprocess/managed_mapped_file.hpp>
 

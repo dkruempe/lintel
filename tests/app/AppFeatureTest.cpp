@@ -23,10 +23,7 @@
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 
-#include <arpa/inet.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <unistd.h>
+#include "../helpers/NetCompat.h"
 
 namespace lintel {
 namespace {
@@ -50,27 +47,11 @@ namespace {
       std::chrono::milliseconds(1000));
   }
 
-  /** @return an ephemeral TCP port that is free at the time of the call */
+  /** @return an ephemeral TCP port that is free at the time of the call, or 0 on failure */
   int appFreePort()
   {
-    const int fd = ::socket(AF_INET, SOCK_STREAM, 0);
-    if (fd < 0) { return 0; }
-    sockaddr_in address{};
-    address.sin_family = AF_INET;
-    address.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    address.sin_port = 0;
-    if (::bind(fd, reinterpret_cast<sockaddr *>(&address), sizeof(address)) != 0) {
-      ::close(fd);
-      return 0;
-    }
-    socklen_t length = sizeof(address);
-    if (::getsockname(fd, reinterpret_cast<sockaddr *>(&address), &length) != 0) {
-      ::close(fd);
-      return 0;
-    }
-    const int port = ntohs(address.sin_port);
-    ::close(fd);
-    return port;
+    const int port = lintel::testcompat::freeTcpPort();
+    return port < 0 ? 0 : port;
   }
 
 }// namespace

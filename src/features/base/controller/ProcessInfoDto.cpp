@@ -37,7 +37,7 @@ int32_t ProcessInfoDto::getRestarts() const { return m_restarts; }
 
 int32_t ProcessInfoDto::getMaxAutoRestarts() const { return m_maxAutoRestarts; }
 
-pid_t ProcessInfoDto::getProcessId() const { return m_processId; }
+lintel::ProcessId ProcessInfoDto::getProcessId() const { return m_processId; }
 
 bool ProcessInfoDto::isRunning() const { return m_isRunning; }
 

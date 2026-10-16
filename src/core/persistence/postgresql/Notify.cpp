@@ -1,6 +1,15 @@
 #include "lintel/core/persistence/postgresql/Notify.h"
 
-#include <string.h>
+#include <cerrno>
+#include <cstring>
+
+#if defined(_WIN32)
+// winsock2.h must be included before any <windows.h>; it provides timeval,
+// fd_set, FD_ZERO/FD_SET and select() on Windows.
+#include <winsock2.h>
+#else
+#include <sys/select.h>
+#endif// _WIN32
 
 #include <iostream>
 
@@ -29,15 +38,18 @@ namespace postgresql {
   {
     if (m_shutdown) { return; }
 
-    // select() modifies the timeout, so reset it before each call
-    m_timeout = { kTimeoutSeconds, 0 };
+    // select() modifies the timeout, so build a fresh one before each call. The
+    // intermediate long long keeps the cast portable: tv_sec is long on both
+    // POSIX and Winsock, while std::chrono::seconds::rep differs per stdlib.
+    timeval timeout{};
+    timeout.tv_sec = static_cast<decltype(timeout.tv_sec)>(static_cast<long long>(m_timeout.count()));
     int sock = PQsocket(m_conn);
 
     if (sock < 0) { throw db::SQLException("LISTEN sock connection failed"); }
     fd_set input_mask;
     FD_ZERO(&input_mask);
     FD_SET(sock, &input_mask);
-    const int rc = select(sock + 1, &input_mask, nullptr, nullptr, &m_timeout);
+    const int rc = select(sock + 1, &input_mask, nullptr, nullptr, &timeout);
     switch (rc) {
     // error happen
     case -1:

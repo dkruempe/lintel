@@ -121,7 +121,7 @@ ProcessInfo ProcessService::processInfoOf(const std::string &id,
   }
   if (running) { refreshResourceSampleIfStale(processExecutes); }
   ProcessInfo info(processExecutes.getProcess(),
-    processExecutes.getChild()->id(),
+    static_cast<lintel::ProcessId>(processExecutes.getChild()->id()),
     running,
     exitCode,
     groupName,
@@ -434,13 +434,14 @@ void ProcessService::refreshResourceSampleIfStale(ProcessExecutes &processExecut
   const auto age = cached.has_value() ? std::chrono::steady_clock::now() - cached->sampleTime
                                       : std::chrono::steady_clock::duration::max();
   if (cached.has_value() && cached->valid && age <= std::chrono::milliseconds(500)) { return; }
-  auto fresh = ProcessResourceReader::readOf(processExecutes.getChild()->id(), cached);
+  auto fresh = ProcessResourceReader::readOf(static_cast<lintel::ProcessId>(processExecutes.getChild()->id()), cached);
   processExecutes.setResourceSample(fresh);
 }
 
 void ProcessService::sampleResources(const std::string &id, ProcessExecutes &processExecutes)
 {
-  auto newSample = ProcessResourceReader::readOf(processExecutes.getChild()->id(), processExecutes.resourceSample());
+  auto newSample = ProcessResourceReader::readOf(
+    static_cast<lintel::ProcessId>(processExecutes.getChild()->id()), processExecutes.resourceSample());
   processExecutes.setResourceSample(newSample);
   if (!newSample.valid) { return; }
 
@@ -569,7 +570,7 @@ bool ProcessService::stopOf(const Process &process)
     process.getId(),
     process.getPath().filename().string(),
     processExecutes.getChild()->id());
-  SignalService::kill(processExecutes.getChild()->id(), SIGINT);
+  SignalService::kill(static_cast<lintel::ProcessId>(processExecutes.getChild()->id()), SIGINT);
   bool stopped = !processExecutes.getChild()->running();
   // only wait if process is still running
   if (!stopped) {

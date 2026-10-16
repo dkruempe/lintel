@@ -5,11 +5,13 @@
 #include <string>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
+#if !defined(_WIN32)
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#endif// _WIN32
 
 #include "lintel/core/configuration/Configuration.h"
 #include "lintel/core/configuration/EnvironmentConfiguration.h"
@@ -436,6 +438,7 @@ TEST_CASE("LoggerService: every logger level string is mapped", "[logger_service
   }
 }
 
+#if !defined(_WIN32)
 TEST_CASE("LoggerService: a tcp sink is constructed and used", "[logger_service]")
 {
   // a listening socket lets the tcp sink connect during construction
@@ -467,6 +470,7 @@ TEST_CASE("LoggerService: a tcp sink is constructed and used", "[logger_service]
   ::close(serverFd);
   REQUIRE(loggerContains(loggerFileContent(directory.path / "app.log"), "tcp marker"));
 }
+#endif// !_WIN32
 
 TEST_CASE("LoggerService: initSingleton installs a configured logger", "[logger_service]")
 {

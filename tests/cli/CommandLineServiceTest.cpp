@@ -11,7 +11,7 @@
 #include <thread>
 #include <vector>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "../helpers/ScopedEnvironmentVariable.h"
 #include "../mocks/MockCommandLineComponent.h"
@@ -34,13 +34,22 @@ namespace {
    * The service kills the whole process with SIGINT when the session ends
    * (onEndOfFile / the exit command) and interrupts its worker thread with
    * SIGUSR1 on shutdown. Both must be neutralised for the duration of a test.
+   * Windows has no SIGUSR1 (the service polls instead of signalling), so only
+   * SIGINT needs guarding there.
    */
   struct ClsSignalGuard
   {
     using Handler = void (*)(int);
     Handler m_oldInt;
+#if !defined(_WIN32)
     Handler m_oldUsr1;
+#endif
 
+#if defined(_WIN32)
+    ClsSignalGuard() : m_oldInt(std::signal(SIGINT, SIG_IGN)) {}
+
+    ~ClsSignalGuard() { std::signal(SIGINT, m_oldInt); }
+#else
     ClsSignalGuard() : m_oldInt(std::signal(SIGINT, SIG_IGN)), m_oldUsr1(std::signal(SIGUSR1, SIG_IGN)) {}
 
     ~ClsSignalGuard()
@@ -48,6 +57,7 @@ namespace {
       std::signal(SIGINT, m_oldInt);
       std::signal(SIGUSR1, m_oldUsr1);
     }
+#endif// _WIN32
   };
 
   class ClsStubInput : public IInputService

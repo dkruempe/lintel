@@ -1,5 +1,6 @@
 #include "lintel/features/base/events/EventBus.h"
 
+#include "lintel/core/platform/Platform.h"
 #include "lintel/core/shm/ShmSegmentAccessor.h"
 
 #include <chrono>
@@ -7,8 +8,6 @@
 #include <new>
 #include <stdexcept>
 #include <thread>
-
-#include <unistd.h>
 
 namespace lintel {
 static_assert(std::atomic<std::uint64_t>::is_always_lock_free, "EventBus requires lock-free 64 bit atomics");
@@ -459,7 +458,8 @@ std::size_t EventBus::requiredSize(const EventBusConfig &config)
 
 EventBus::RegistryLock::RegistryLock() : m_state(0) {}
 
-std::uint64_t EventBus::RegistryLock::ownerId() { return static_cast<std::uint64_t>(::getpid()) + 1u; }
+// +1u keeps the owner id positive: 0 is reserved for the unlocked registry state.
+std::uint64_t EventBus::RegistryLock::ownerId() { return static_cast<std::uint64_t>(lintel::currentProcessId()) + 1u; }
 
 std::uint64_t EventBus::RegistryLock::nowMs()
 {

@@ -11,7 +11,7 @@
 
 #include <catch2/catch_all.hpp>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include <cstddef>
 #include <cstdint>

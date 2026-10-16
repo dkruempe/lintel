@@ -7,6 +7,7 @@
 #include <optional>
 
 #include "lintel/config.h"
+#include "lintel/core/platform/Platform.h"
 #include "lintel/core/utils/StringUtils.h"
 
 namespace lintel {
@@ -27,13 +28,13 @@ EnvironmentConfiguration::EnvironmentConfiguration()
     m_environmentConfigurations.insert({ ConfigDirectory, CONFIG_DIRECTORY });
   }
   // HOME
-  const char *home = std::getenv("HOME");
-  if (home != nullptr) { m_environmentConfigurations.insert({ Home, home }); }
+  const std::string home = lintel::homeDirectory();
+  if (!home.empty()) { m_environmentConfigurations.insert({ Home, home }); }
   // PATH
   const char *path = std::getenv("PATH");
   if (path != nullptr) {
     m_environmentConfigurations.insert({ Path, path });
-    std::vector<std::string> pathsStr = StringUtils::split(path, ':');
+    std::vector<std::string> pathsStr = StringUtils::split(path, lintel::pathListSeparator());
     for (const auto &iter : pathsStr) { m_paths.emplace_back(iter); }
   }
 }
@@ -51,7 +52,7 @@ void EnvironmentConfiguration::overrides(Environment environment, std::string va
     } else {
       m_environmentConfigurations.insert({ environment, value });
     }
-    std::vector<std::string> pathsStr = StringUtils::split(value, ':');
+    std::vector<std::string> pathsStr = StringUtils::split(value, lintel::pathListSeparator());
     m_paths.clear();
     for (const auto &iter : pathsStr) { m_paths.push_back((std::filesystem::path(iter))); }
     return;

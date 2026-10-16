@@ -10,7 +10,7 @@
 #include <regex>
 #include <string>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 namespace lintel {
 namespace {

@@ -7,7 +7,7 @@
 #include <sstream>
 #include <string>
 
-#include <unistd.h>
+#include "../helpers/PlatformCompat.h"
 
 #include "lintel/config.h"
 #include "lintel/core/models/ProcessName.h"

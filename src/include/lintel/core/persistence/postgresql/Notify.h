@@ -3,9 +3,8 @@
 
 #include <libpq-fe.h>
 
-#include <sys/select.h>
-
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <string>
 #include <thread>
@@ -31,7 +30,8 @@ namespace postgresql {
 
     std::string m_tableName;
     std::function<void()> m_callBack;
-    struct timeval m_timeout{ kTimeoutSeconds, 0 };
+    /** Poll timeout for the listener select() loop. */
+    std::chrono::seconds m_timeout{ kTimeoutSeconds };
 
     /** Main loop that polls for notifications. */
     void run();
