@@ -80,10 +80,19 @@ SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
 # static analyzers
 option(LINTEL_ENABLE_CLANG_TIDY "Enable clang-tidy during build (slow)" OFF)
+# cppcheck runs on every compile as soon as one is on PATH. Some toolchains ship
+# a broken copy (the MinGW cppcheck bundled with Strawberry Perl on Windows
+# cannot find its std.cfg and fails every translation unit), so it can be
+# switched off explicitly for such environments.
+option(LINTEL_ENABLE_CPPCHECK "Run cppcheck during the build when one is on PATH" ON)
 include(cmake/StaticAnalyzers.cmake)
 lintel_enable_clang_tidy(lintel_options ${lintel_WARNINGS_AS_ERRORS})
-lintel_enable_cppcheck(${lintel_WARNINGS_AS_ERRORS} "" # override cppcheck options
-)
+if(LINTEL_ENABLE_CPPCHECK)
+    lintel_enable_cppcheck(${lintel_WARNINGS_AS_ERRORS} "" # override cppcheck options
+    )
+else()
+    message(STATUS "cppcheck disabled via LINTEL_ENABLE_CPPCHECK=OFF")
+endif()
 
 
 # Library
