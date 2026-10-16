@@ -32,6 +32,10 @@ function(set_project_warnings project_name)
             # own _s variants. lintel uses the portable spelling, so the deprecation is noise here and
             # /WX would otherwise turn it into a hard error.
             /D_CRT_SECURE_NO_WARNINGS
+            # Same for the POSIX names (getpid, read, unlink, ...): the tests provide their own
+            # portable getpid wrapper, and MSVC's C4996 on the legacy spelling has no portable
+            # replacement to point at, so /WX would turn the deprecation into a hard error.
+            /D_CRT_NONSTDC_NO_DEPRECATE
             /wd4100 # 'identifier': unreferenced formal parameter - the GCC/Clang builds disable this via
             # -Wno-unused-parameter, so MSVC must not reject the same interfaces.
             /wd4101 # 'identifier': unreferenced local variable - fires on catch() handler variables, which

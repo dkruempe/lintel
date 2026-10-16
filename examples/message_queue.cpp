@@ -7,6 +7,8 @@
 #include <iostream>
 #include <optional>
 
+#include "lintel/core/platform/Platform.h"
+
 class Message
 {
 private:
@@ -155,12 +157,11 @@ struct TestObject
   {
     os << "msg: " << object.msg << " name: " << object.name << " age: " << object.age << " rate: " << object.rate
        << " created_timestamp: ";
-    // localtime_r instead of ctime: ctime returns a pointer to a buffer shared by all
-    // threads and appends a newline (CodeQL cpp/potentially-dangerous-function).
+    // lintel::localTime instead of ctime: ctime returns a pointer to a buffer shared by all
+    // threads and appends a newline (CodeQL cpp/potentially-dangerous-function). The wrapper
+    // picks localtime_r on POSIX and localtime_s on Windows.
     std::tm created{};
-    if (::localtime_r(&object.created_timestamp, &created) != nullptr) {
-      os << std::put_time(&created, "%Y-%m-%d %H:%M:%S");
-    }
+    if (lintel::localTime(object.created_timestamp, created)) { os << std::put_time(&created, "%Y-%m-%d %H:%M:%S"); }
     return os;
   }
 };
