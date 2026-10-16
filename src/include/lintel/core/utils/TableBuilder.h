@@ -47,7 +47,7 @@ public:
       i++;
     }
     // 2. sum max length
-    std::size_t sumMaxLength = std::accumulate(maxLengthPerCol.begin(), maxLengthPerCol.end(), 0);
+    std::size_t sumMaxLength = std::accumulate(maxLengthPerCol.begin(), maxLengthPerCol.end(), std::size_t{ 0 });
     sumMaxLength += 4 * N + 1;
     // 3. start printing separator
     std::string separator;

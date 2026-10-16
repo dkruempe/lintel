@@ -62,8 +62,8 @@ void DatabaseBootstrapPlugin::handle(const std::shared_ptr<DatabaseConnectionEnt
       return;
     }
     // get information of filename
-    std::string schemaName = schemaNameOf(path);
-    int32_t version = versionOf(path);
+    std::string schemaName = schemaNameOf(path.string());
+    int32_t version = versionOf(path.string());
     FileInformation fileInformation{ schemaName, version, path, isInitFile };
     auto found = files.find(schemaName);
     if (found == files.end()) {
