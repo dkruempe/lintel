@@ -71,7 +71,7 @@ TEST_CASE("TerminalService: return emits the Command symbol and clears the line"
   terminalCoutCapture out;
   terminalType(service, "cmd arg");
 
-  const SymbolEvent event = service.onKeyPressed({ KeyType::Ret, 0 }, "MAIN");
+  const SymbolEvent event = service.onKeyPressed({ KeyType::Ret, '\0' }, "MAIN");
   REQUIRE(event.first == Symbol::Command);
   REQUIRE(event.second == "cmd arg");
   REQUIRE(service.getLine().empty());
@@ -83,7 +83,7 @@ TEST_CASE("TerminalService: backspace removes the character before the cursor")
   terminalCoutCapture out;
   terminalType(service, "abc");
 
-  service.onKeyPressed({ KeyType::Backspace, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::Backspace, '\0' }, "MAIN");
   REQUIRE(service.getLine() == "ab");
 }
 
@@ -92,7 +92,7 @@ TEST_CASE("TerminalService: backspace at the start of the line is a no-op")
   TerminalService service;
   terminalCoutCapture out;
 
-  const SymbolEvent event = service.onKeyPressed({ KeyType::Backspace, 0 }, "MAIN");
+  const SymbolEvent event = service.onKeyPressed({ KeyType::Backspace, '\0' }, "MAIN");
   REQUIRE(event.first == Symbol::Nothing);
   REQUIRE(service.getLine().empty());
 }
@@ -103,12 +103,12 @@ TEST_CASE("TerminalService: left and right move the insertion point")
   terminalCoutCapture out;
   terminalType(service, "ac");
 
-  service.onKeyPressed({ KeyType::Left, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::Left, '\0' }, "MAIN");
   service.onKeyPressed(terminalAscii('b'), "MAIN");
   REQUIRE(service.getLine() == "abc");
 
-  service.onKeyPressed({ KeyType::Left, 0 }, "MAIN");
-  service.onKeyPressed({ KeyType::Right, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::Left, '\0' }, "MAIN");
+  service.onKeyPressed({ KeyType::Right, '\0' }, "MAIN");
   service.onKeyPressed(terminalAscii('d'), "MAIN");
   REQUIRE(service.getLine() == "abdc");
 }
@@ -119,14 +119,14 @@ TEST_CASE("TerminalService: left at the start and right at the end are no-ops")
   terminalCoutCapture out;
   terminalType(service, "a");
 
-  service.onKeyPressed({ KeyType::Left, 0 }, "MAIN");
-  service.onKeyPressed({ KeyType::Left, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::Left, '\0' }, "MAIN");
+  service.onKeyPressed({ KeyType::Left, '\0' }, "MAIN");
   service.onKeyPressed(terminalAscii('x'), "MAIN");
   REQUIRE(service.getLine() == "xa");
 
-  service.onKeyPressed({ KeyType::Right, 0 }, "MAIN");
-  service.onKeyPressed({ KeyType::Right, 0 }, "MAIN");
-  service.onKeyPressed({ KeyType::Right, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::Right, '\0' }, "MAIN");
+  service.onKeyPressed({ KeyType::Right, '\0' }, "MAIN");
+  service.onKeyPressed({ KeyType::Right, '\0' }, "MAIN");
   service.onKeyPressed(terminalAscii('y'), "MAIN");
   REQUIRE(service.getLine() == "xay");
 }
@@ -136,8 +136,8 @@ TEST_CASE("TerminalService: up and down return their symbols")
   TerminalService service;
   terminalCoutCapture out;
 
-  REQUIRE(service.onKeyPressed({ KeyType::Up, 0 }, "MAIN").first == Symbol::Up);
-  REQUIRE(service.onKeyPressed({ KeyType::Down, 0 }, "MAIN").first == Symbol::Down);
+  REQUIRE(service.onKeyPressed({ KeyType::Up, '\0' }, "MAIN").first == Symbol::Up);
+  REQUIRE(service.onKeyPressed({ KeyType::Down, '\0' }, "MAIN").first == Symbol::Down);
 }
 
 TEST_CASE("TerminalService: home and end move the cursor")
@@ -146,11 +146,11 @@ TEST_CASE("TerminalService: home and end move the cursor")
   terminalCoutCapture out;
   terminalType(service, "ac");
 
-  service.onKeyPressed({ KeyType::Home, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::Home, '\0' }, "MAIN");
   service.onKeyPressed(terminalAscii('b'), "MAIN");
   REQUIRE(service.getLine() == "bac");
 
-  service.onKeyPressed({ KeyType::End, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::End, '\0' }, "MAIN");
   service.onKeyPressed(terminalAscii('d'), "MAIN");
   REQUIRE(service.getLine() == "bacd");
 }
@@ -161,8 +161,8 @@ TEST_CASE("TerminalService: cancel deletes the character at the cursor")
   terminalCoutCapture out;
   terminalType(service, "abc");
 
-  service.onKeyPressed({ KeyType::Home, 0 }, "MAIN");
-  service.onKeyPressed({ KeyType::Canc, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::Home, '\0' }, "MAIN");
+  service.onKeyPressed({ KeyType::Canc, '\0' }, "MAIN");
   REQUIRE(service.getLine() == "bc");
 }
 
@@ -172,7 +172,7 @@ TEST_CASE("TerminalService: cancel at the end of the line is a no-op")
   terminalCoutCapture out;
   terminalType(service, "ab");
 
-  service.onKeyPressed({ KeyType::Canc, 0 }, "MAIN");
+  service.onKeyPressed({ KeyType::Canc, '\0' }, "MAIN");
   REQUIRE(service.getLine() == "ab");
 }
 
@@ -181,10 +181,10 @@ TEST_CASE("TerminalService: control keys map to their symbols")
   TerminalService service;
   terminalCoutCapture out;
 
-  REQUIRE(service.onKeyPressed({ KeyType::CtrlC, 0 }, "MAIN").first == Symbol::CtrlC);
-  REQUIRE(service.onKeyPressed({ KeyType::CtrlR, 0 }, "MAIN").first == Symbol::CtrlR);
-  REQUIRE(service.onKeyPressed({ KeyType::Eof, 0 }, "MAIN").first == Symbol::Eof);
-  REQUIRE(service.onKeyPressed({ KeyType::Ignored, 0 }, "MAIN").first == Symbol::Nothing);
+  REQUIRE(service.onKeyPressed({ KeyType::CtrlC, '\0' }, "MAIN").first == Symbol::CtrlC);
+  REQUIRE(service.onKeyPressed({ KeyType::CtrlR, '\0' }, "MAIN").first == Symbol::CtrlR);
+  REQUIRE(service.onKeyPressed({ KeyType::Eof, '\0' }, "MAIN").first == Symbol::Eof);
+  REQUIRE(service.onKeyPressed({ KeyType::Ignored, '\0' }, "MAIN").first == Symbol::Nothing);
 }
 
 TEST_CASE("TerminalService: log replaces the current line")

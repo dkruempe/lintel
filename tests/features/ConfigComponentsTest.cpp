@@ -5,6 +5,7 @@
 #include <lintel/core/configuration/LoggerEntry.h>
 #include <lintel/core/configuration/LoggerPathConfiguration.h>
 #include <lintel/core/configuration/LoggerSinkConfiguration.h>
+#include <lintel/core/platform/Platform.h>
 #include <lintel/core/utils/TypeName.h>
 #include <lintel/features/base/configuration/EventBusComponent.h>
 #include <lintel/features/base/configuration/EventBusEntry.h>
@@ -587,16 +588,21 @@ TEST_CASE("EventBusComponent: throw on missing segment")
 TEST_CASE("EnvironmentConfiguration: empty Path override is ignored")
 {
   ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
-  ScopedEnvironmentVariable path{ "PATH", "/tmp/env_path_one:/tmp/env_path_two" };
+  // pathsOf() splits on the platform's list separator (':' on POSIX, ';' on Windows), so the value
+  // has to be built with the same character instead of hardcoding the POSIX one.
+  const std::string separator(1, lintel::pathListSeparator());
+  const std::string firstEntry = "/tmp/env_path_one";
+  const std::string secondEntry = "/tmp/env_path_two";
+  ScopedEnvironmentVariable path{ "PATH", firstEntry + separator + secondEntry };
   auto envConfig = std::make_shared<EnvironmentConfiguration>();
   REQUIRE(envConfig->pathsOf().size() == 2);
 
   envConfig->overrides(EnvironmentConfiguration::Environment::Path, "");
 
   REQUIRE(envConfig->pathsOf().size() == 2);
-  REQUIRE(envConfig->pathsOf()[0] == "/tmp/env_path_one");
-  REQUIRE(envConfig->pathsOf()[1] == "/tmp/env_path_two");
-  REQUIRE(envConfig->of(EnvironmentConfiguration::Environment::Path) == "/tmp/env_path_one:/tmp/env_path_two");
+  REQUIRE(envConfig->pathsOf()[0] == firstEntry);
+  REQUIRE(envConfig->pathsOf()[1] == secondEntry);
+  REQUIRE(envConfig->of(EnvironmentConfiguration::Environment::Path) == firstEntry + separator + secondEntry);
 
   // A non-empty value still replaces the search path, so the case above is not a general no-op.
   envConfig->overrides(EnvironmentConfiguration::Environment::Path, "/tmp/env_path_three");
