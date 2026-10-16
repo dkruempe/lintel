@@ -56,7 +56,7 @@ void Argument::parseOptionalFromStream(const std::string &argument)
         sstr >> temp;
         *arg = std::make_optional(temp);
       } else if constexpr (std::is_same<T, std::optional<float> *>::value) {
-        double temp = 0.0;
+        float temp = 0.0F;
         std::stringstream sstr(argument);
         sstr >> temp;
         *arg = std::make_optional(temp);

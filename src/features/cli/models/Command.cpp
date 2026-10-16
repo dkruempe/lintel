@@ -126,7 +126,7 @@ void Command::parseValueFromStream(const std::string &value, const Value &m_valu
         sstr >> temp;
         *arg = std::make_optional(temp);
       } else if constexpr (std::is_same_v<T, std::optional<float> *>) {
-        double temp = 0.0;
+        float temp = 0.0F;
         std::stringstream sstr(value);
         sstr >> temp;
         *arg = std::make_optional(temp);
