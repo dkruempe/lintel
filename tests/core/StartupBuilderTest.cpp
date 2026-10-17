@@ -5,12 +5,27 @@
 #include <lintel/core/Feature.h>
 #include <lintel/core/Features.h>
 
+#include <atomic>
+#include <chrono>
+#include <csignal>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <vector>
 
+#if !defined(_WIN32)
+#include <pthread.h>// pthread_sigmask
+#endif
+
+#include "lintel/core/di/Container.h"
+#include "lintel/core/models/ShutdownPriority.h"
+#include "lintel/core/services/AbstractService.h"
+
+#include "../helpers/PlatformCompat.h"
 #include "../helpers/ScopedEnvironmentVariable.h"
 
 namespace lintel {
@@ -103,6 +118,125 @@ namespace {
    */
   void sbForgetConfiguration() { sbFeatureLog().clear(); }
 
+  /** Instance names of the lifecycle services in the order they were shut down. */
+  std::vector<std::string> &sbShutdownOrder()
+  {
+    static std::vector<std::string> order;
+    return order;
+  }
+
+  /** Number of lifecycle services that have been initialized. */
+  std::atomic<int> &sbInitializedCount()
+  {
+    static std::atomic<int> count{ 0 };
+    return count;
+  }
+
+  /**
+   * Lifecycle service that records its initialization and shutdown.
+   *
+   * A file-scope log instead of a fixture member, because the DI container constructs the services
+   * from a type registration - there is no place to hand a per-test-case sink into them.
+   */
+  class SbLifecycleService : public AbstractService<SbLifecycleService>
+  {
+  public:
+    SbLifecycleService(std::string instanceName, ShutdownPriority priority)
+      : AbstractService<SbLifecycleService>("startup_builder_test_process", std::move(instanceName)),
+        m_priority(priority)
+    {}
+
+    void onInitialize() override { ++sbInitializedCount(); }
+
+    void onShutdown() override { sbShutdownOrder().push_back(getInstanceName()); }
+
+    ShutdownPriority shutdownPriorityOf() const override { return m_priority; }
+
+  private:
+    ShutdownPriority m_priority;
+  };
+
+  /** Default shutdown priority, i.e. shut down before the process service. */
+  class SbDefaultPriorityService : public SbLifecycleService
+  {
+  public:
+    SbDefaultPriorityService() : SbLifecycleService("default_priority_service", ShutdownPriority::DEFAULT) {}
+  };
+
+  /** Process service priority, i.e. shut down last. */
+  class SbProcessPriorityService : public SbLifecycleService
+  {
+  public:
+    SbProcessPriorityService() : SbLifecycleService("process_priority_service", ShutdownPriority::PROCESS_SERVICE) {}
+  };
+
+  /** Registers the two lifecycle services of the shutdown order test. */
+  class SbLifecycleFeature : public FeatureInterface
+  {
+  public:
+    explicit SbLifecycleFeature(std::shared_ptr<Features> /*features*/) {}
+
+    void registerTypes(lintel::di::ContainerBuilder &builder) override
+    {
+      builder.registerType<SbDefaultPriorityService>().as<AbstractServiceInterface>().singleInstance();
+      builder.registerType<SbProcessPriorityService>().as<AbstractServiceInterface>().singleInstance();
+    }
+
+    void initialize(std::shared_ptr<lintel::di::Container> /*container*/) override {}
+
+    std::string_view getName() override { return "SbLifecycleFeature"; }
+  };
+
+  /**
+   * Blocks the shutdown signals in the calling thread for the test duration.
+   *
+   * start() blocks SIGINT/SIGCHLD/SIGTERM in the thread that calls it and waits for them in a
+   * sigwait() thread. With the same signals blocked in the test thread as well, the SIGTERM below
+   * stays pending until that sigwait() thread consumes it - without the guard its default action
+   * would kill the test process. The previous mask is restored on destruction, so the test cases
+   * behind this one are not affected.
+   */
+  struct SbSignalMaskGuard
+  {
+#if !defined(_WIN32)
+    sigset_t m_previous{};
+    sigset_t m_blocked{};
+#endif
+
+    SbSignalMaskGuard()
+    {
+#if !defined(_WIN32)
+      sigemptyset(&m_blocked);
+      sigaddset(&m_blocked, SIGINT);
+      sigaddset(&m_blocked, SIGCHLD);
+      sigaddset(&m_blocked, SIGTERM);
+      pthread_sigmask(SIG_BLOCK, &m_blocked, &m_previous);
+#endif
+    }
+
+    ~SbSignalMaskGuard()
+    {
+#if !defined(_WIN32)
+      pthread_sigmask(SIG_SETMASK, &m_previous, nullptr);
+#endif
+    }
+
+    SbSignalMaskGuard(const SbSignalMaskGuard &) = delete;
+    SbSignalMaskGuard &operator=(const SbSignalMaskGuard &) = delete;
+  };
+
+  /** Joins the start() thread on destruction, so a failing REQUIRE cannot terminate the process
+   *  through a joinable std::thread. */
+  struct SbStarterGuard
+  {
+    std::thread &thread;
+
+    ~SbStarterGuard()
+    {
+      if (thread.joinable()) { thread.join(); }
+    }
+  };
+
 }// namespace
 
 TEST_CASE("StartupBuilder::with creates a builder from argc/argv", "[startup_builder]")
@@ -184,5 +318,83 @@ TEST_CASE("StartupBuilder::start reports a missing bootstrap configuration inste
 
   // nothing was registered and no container was built
   REQUIRE(sbFeatureLog().empty());
+}
+
+TEST_CASE("StartupBuilder::start shuts the services down in shutdown priority order", "[startup_builder]")
+{
+  // A configuration directory with a logger: the logger is built before any service, so start()
+  // cannot get past phase II without one.
+  const std::filesystem::path configDirectory =
+    std::filesystem::temp_directory_path() / ("startup_builder_shutdown_" + std::to_string(::getpid()));
+  std::filesystem::remove_all(configDirectory);
+  std::filesystem::create_directories(configDirectory);
+  {
+    std::ofstream configFile(configDirectory / "bootstrap.xml");
+    configFile << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+                  "<Configuration>\n"
+                  "  <Loggers>\n"
+                  "    <Path path=\""
+               << (configDirectory / "log").string()
+               << "\" create_sub_dirs=\"true\"/>\n"
+                  "    <Logger process_name=\".*\" level=\"info\" async=\"false\">\n"
+                  "      <LoggerSink type=\"RotatingFileSink\" level=\"trace\" size=\"5MB\" max_files=\"10\"/>\n"
+                  "    </Logger>\n"
+                  "  </Loggers>\n"
+                  "</Configuration>\n";
+  }
+  ScopedEnvironmentVariable configEnv{ "CONFIG_DIRECTORY", configDirectory.string() };
+  ScopedEnvironmentVariable bootstrapEnv{ "BOOTSTRAP_CONFIG_NAME", "bootstrap" };
+
+  sbForgetConfiguration();
+  sbShutdownOrder().clear();
+  sbInitializedCount().store(0);
+
+  auto builder = sbMakeBuilder();
+  REQUIRE(builder != nullptr);
+  builder->addFeature<SbLifecycleFeature>();
+  builder->disableBootstrapService();
+
+  // signals stay blocked in this thread and in everything the start() thread spawns (see the guard)
+  SbSignalMaskGuard signalGuard;
+
+  std::exception_ptr failure;
+  std::thread starter([&builder, &failure]() {
+    try {
+      builder->start();
+    } catch (...) {
+      failure = std::current_exception();
+    }
+  });
+  SbStarterGuard starterGuard{ starter };
+
+  // phase VIII initializes both services; stop as soon as they are up, so the signal cannot race
+  // the initialization phase
+  const std::chrono::steady_clock::time_point deadline = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+  while (sbInitializedCount().load() < 2 && std::chrono::steady_clock::now() < deadline) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+  if (sbInitializedCount().load() != 2) {
+    // join first (also publishes `failure`), then report why start() did not get that far
+    starterGuard.thread.join();
+    if (failure != nullptr) { std::rethrow_exception(failure); }
+  }
+  REQUIRE(sbInitializedCount().load() == 2);
+
+#if defined(_WIN32)
+  // Windows has no sigwait() thread; the console control handler calls the same shutdown method
+  builder->onShutdown();
+#else
+  REQUIRE(kill(getpid(), SIGTERM) == 0);
+#endif
+  starterGuard.thread.join();
+
+  // ascending priority: the default services wind down first, the process service last, so it keeps
+  // reaping children while the rest of the process is already stopping
+  const std::vector<std::string> expected{ "default_priority_service", "process_priority_service" };
+  REQUIRE(sbShutdownOrder() == expected);
+
+  // best effort: the logger still holds a file below the directory
+  std::error_code errorCode;
+  std::filesystem::remove_all(configDirectory, errorCode);
 }
 }// namespace lintel
