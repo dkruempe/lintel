@@ -167,6 +167,15 @@
  * library (`Cryption::hashOf` on login and on change) hash before the value
  * reaches this layer.
  *
+ * One limit is deliberate and documented instead of worked around: neither
+ * backend lets the library scrub a decrypted secret from its own memory. The
+ * drivers copy values into buffers the application cannot reach afterwards, so
+ * a "secure erase" of the plaintext would only clear a copy. What is kept short
+ * instead is the exposure - passwords are hashed before they reach this layer,
+ * sessions live in memory rather than in a session table, and the SQLite file
+ * is created under the user's home directory. A deployment that needs secrets
+ * scrubbed from memory needs a backend that never returns them to the client.
+ *
  * @section arch_ipc Shared memory and the event bus
  *
  * Shared memory is `boost::interprocess` based and deliberately quarantined:
@@ -225,9 +234,68 @@
  *    rotation while a dependency is down.
  * - TLS is configured per `<HttpHost><Server>` in the bootstrap XML. With
  *    `require_tls="true"` the server refuses to start without a certificate and
- *    key, which keeps credentials from being served in clear text.
+ *    key, which keeps credentials from being served in clear text. A certificate
+ *    that OpenSSL cannot load is reported as such at startup instead of surfacing
+ *    later as a failed bind.
+ * - A renewed certificate is applied **without a restart** by
+ *    `POST /admin/reload-tls` (admin group). The running server registers a
+ *    handler in @ref lintel::TlsReloadRegistry and the endpoint runs it,
+ *    answering `200` with `{"status":"reloaded","results":{"tls":"ok"}}`, `500`
+ *    with `"failed: <reason>"` when a file cannot be read or the pair is
+ *    rejected, and `409 {"status":"nothing_to_reload"}` when the process serves
+ *    clear text. The certificate pair is swapped under the context mutex the
+ *    handshake path also takes, so a handshake starting at the same time sees
+ *    either the old or the new certificate. The server keeps the last pair that
+ *    worked and puts it back when a renewal is rejected - the loader installs the
+ *    certificate before it validates the key, so a mismatched pair would
+ *    otherwise leave the running server unable to complete a handshake.
  * - `trusted_proxies` lists the proxies whose `X-Forwarded-For` header is
  *    believed; without it the header is ignored and the peer address is used.
+ *    That list decides which address a token is bound to and which address the
+ *    login rate limit and lockout are keyed by, so it has to name exactly the
+ *    proxies in front of the process: a range that is too wide lets a client
+ *    pick its own `X-Forwarded-For` and rotate it per request, which turns the
+ *    per-address brute-force protection into no protection at all.
+ *
+ * @section arch_authentication Authentication and sessions
+ *
+ * @ref lintel::AuthService keeps the sessions in memory: a successful login mints
+ * a token that carries the canonical client address, and an access is rejected
+ * unless it comes from that same address. The token slides forward on every
+ * access and expires after `m_timeoutLogin` (5 minutes) without one; the sweep
+ * that removes them runs every `m_scheduleRate` seconds.
+ *
+ * Login is protected against brute force, keyed by the canonical client address
+ * and measured in sliding windows:
+ *
+ * - `m_maxLoginAttempts` (20) attempts per `m_rateLimitWindow` (60 s); the next
+ *   one is rejected.
+ * - `m_maxLoginFailures` (5) failures inside `m_loginLockout` (60 s) lock the
+ *   address out until the window passes; a successful login clears the failures
+ *   recorded for that address.
+ * - A rejected login answers exactly like a wrong password, so a caller cannot
+ *   tell a locked-out address, an unknown user and a wrong password apart from
+ *   the response; the reason only goes to the log.
+ *
+ * Three consequences of the per-address keying are worth planning for:
+ *
+ * - Clients that share one address (NAT, or a proxy missing from
+ *   `trusted_proxies`) share one budget, so too many failed logins behind a NAT
+ *   lock out everybody behind it.
+ * - The address is canonicalized before it is stored, so one client in two
+ *   spellings (`2001:DB8::1` and `2001:db8::1`, or an ipv4 client that an ipv6
+ *   listener reports in its ipv4-mapped form) is one budget and one session,
+ *   not two. This also means a session cannot be logged out from a differently
+ *   spelled address.
+ * - A client that opens many source addresses grows the per-address tables until
+ *   the sweep prunes them at the end of the window; the tables are pruned per
+ *   window, not per entry count.
+ *
+ * Passwords are stored as salted hashes (@ref lintel::Cryption). A legacy
+ * unsalted SHA-512 hash is upgraded transparently on the next successful login.
+ * Verification is skipped when the user does not exist, which is faster than
+ * verifying a wrong password - the response is identical either way, only the
+ * log entry and the timing differ.
  *
  * @section arch_extending Extension points
  *

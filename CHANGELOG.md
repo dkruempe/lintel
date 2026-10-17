@@ -64,6 +64,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   environment, and ships no fallback credentials. The graceful-shutdown order (services are shut
   down by ascending `shutdownPriorityOf()`, the process manager last) is now pinned by a test in
   `tests/core/StartupBuilderTest.cpp` and documented in `docs/architecture.dox` and the README.
+- **TLS certificate renewal without a restart, plus a session-handling audit
+  (`ROADMAP.md` item 17 / U3).** New `POST /admin/reload-tls` (admin group) re-reads the
+  configured certificate/key pair and swaps it into the running OpenSSL context: `200`
+  `{"status":"reloaded","results":{"tls":"ok"}}`, `500` with the reason when a file cannot be
+  read or OpenSSL rejects the pair, `409` when the process serves clear text. The new
+  `lintel::TlsReloadRegistry` holds the reload handlers; `lintel::Server` registers the TLS pair
+  on startup and unregisters it on shutdown, so the registry never keeps a handler pointing at a
+  destroyed server. A rejected renewal keeps the pair that was already being served — the loader
+  installs the certificate before it validates the key, so a mismatched pair would otherwise
+  leave the running server unable to complete a handshake. A certificate OpenSSL cannot load now
+  stops startup with `cannot load the TLS certificate ...` instead of a misleading
+  `failed to bind`. Wire contract: `swagger.yaml` / `swagger.md`.
+- **One canonical client address for token binding, lockout and rate limiting.**
+  `AuthService::onLogoutOf()` compared the raw incoming address with the stored, canonical one,
+  so a client whose address arrived in another spelling (`2001:DB8::1` vs. `2001:db8::1`, or an
+  IPv4 client reported as `::ffff:192.0.2.1`) kept its session alive after a logout that the API
+  reported as successful. Login, access and logout now share one `normalizedIpOf()`, which also
+  makes the sliding-window rate limit a single budget per real client. The brute-force
+  protections (per-address `m_maxLoginAttempts`/`m_rateLimitWindow` and
+  `m_maxLoginFailures`/`m_loginLockout`), their NAT and `trusted_proxies` consequences and the
+  limits of SQLite-side secret scrubbing are documented in `docs/architecture.dox`.
 
 ### Changed
 - **The public API moved into `namespace lintel` (breaking).** Every public class, free

@@ -252,6 +252,25 @@ Note that the database schema and seed files are an exception to the `CONFIG_DIR
 
 The certificates are deliberately not part of the repository (`.gitignore` ignores `*.key`, `*.crt`, `*.csr`, `*.srl`) and are not part of the release tarball either: it ships `bin/` and `cfg/`, minus `cfg/certs`. Examples that do not enable `HttpFeature` need no certificates. See [HTTP Server Configuration](#http-server-configuration) and [cfg/certs/README.md](cfg/certs/README.md).
 
+#### Renewing a certificate without a restart
+
+The pair is loaded into the server's OpenSSL context once at startup, so replacing the files on disk does nothing for a running process. `POST /admin/reload-tls` re-reads them and swaps the pair in place:
+
+```bash
+# log in once and keep the bearer token
+TOKEN=$(curl -sk -u "$ADMIN_USER:$ADMIN_PASSWORD" https://localhost:8080/user/login | jq -r .id)
+
+# after certbot (or any other renewal) wrote the new pair
+curl -sk -X POST https://localhost:8080/admin/reload-tls \
+     -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json"
+```
+
+- `200 {"status":"reloaded","results":{"tls":"ok"}}` — the new pair is in use.
+- `500` with `"failed: <reason>"` — a file could not be read or OpenSSL rejected the pair. The server **keeps serving the previous certificate**, so a truncated renewal never takes the endpoint down; fix the files and call the endpoint again.
+- `409 {"status":"nothing_to_reload"}` — this process serves clear text, so there is no pair to reload.
+
+The endpoint is restricted to the `Admin` group and the reload is safe under load: httplib swaps the context under the mutex the handshake path also takes, so an in-flight handshake sees either the old or the new certificate, never a half-applied pair. The startup path is equally strict — a certificate OpenSSL cannot load stops the server with `cannot load the TLS certificate ...` rather than a misleading bind error.
+
 ### SQLite vs. PostgreSQL
 
 `cfg/bootstrap.xml` ships with SQLite as the default connection (`DEFAULT_SQLITE`, `~/temp.db`, `default="true"`). A leading `~` is expanded to the user's home directory, so the database file is created there and its schema and seed data are applied from `cfg/database/DEFAULT_SQLITE/`. No database server is required for `./bin/main`.
