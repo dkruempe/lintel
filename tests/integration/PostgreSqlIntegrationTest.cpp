@@ -368,6 +368,206 @@ TEST_CASE("PostgreSQL: savepoint rollback keeps the earlier insert", "[pg]")
   REQUIRE(result.getValue(0, 0) == "kept");
 }
 
+TEST_CASE("PostgreSQL: a concurrent reader sees the old state mid-transaction and the new one after commit", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+
+  db::Connection writer = connectPg();
+  db::Statement writeStatement(writer);
+  db::Transaction transaction(writer);
+  writeStatement.execute("insert into " + table.name() + " (name, value) values ('in_flight', 1)");
+
+  // The row exists only inside the writer's transaction; a second connection
+  // must keep seeing the old (empty) state until the commit.
+  db::Connection reader = connectPg();
+  db::Statement readStatement(reader);
+  REQUIRE(readStatement.execute("select count(*) from " + table.name()).getValue(0, 0) == "0");
+
+  transaction.commit();
+
+  // After the commit the same reader connection must see the new state - this
+  // is what separates a real commit from visibility inside the writer only.
+  REQUIRE(readStatement.execute("select count(*) from " + table.name()).getValue(0, 0) == "1");
+}
+
+TEST_CASE("PostgreSQL: parallel writers and a rollback race never expose a partial transaction", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+
+  constexpr int kWriters = 4;
+  constexpr int kIterations = 10;
+
+  std::atomic_bool writersDone{ false };
+  std::atomic<int> writersFinished{ 0 };
+  std::atomic<int> writerErrors{ 0 };
+  std::atomic<int> samples{ 0 };
+  std::atomic<int> pairImbalance{ 0 };
+  std::atomic<int> racerRowsVisible{ 0 };
+
+  // Each committed transaction inserts a pair of rows sharing one value, so a
+  // partial commit (the bug this test guards) would momentarily leave one half
+  // of a pair visible and unbalance the two counts.
+  auto writer = [&table, &writerErrors, &writersFinished, &writersDone](int writerIndex) {
+    try {
+      db::Connection connection = connectPg();
+      db::Statement statement(connection);
+      for (int i = 0; i < kIterations; i++) {
+        db::Transaction transaction(connection);
+        const std::string prefix = "w" + std::to_string(writerIndex) + "_" + std::to_string(i);
+        statement.execute(
+          "insert into " + table.name() + " (name, value) values ('" + prefix + "_a', " + std::to_string(i) + ")");
+        statement.execute(
+          "insert into " + table.name() + " (name, value) values ('" + prefix + "_b', " + std::to_string(i) + ")");
+        transaction.commit();
+        // widen the window in which the readers can interleave
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+    } catch (const std::exception &) {
+      writerErrors.fetch_add(1);
+    }
+    // the last writer to finish releases the readers
+    if (writersFinished.fetch_add(1) + 1 == kWriters) { writersDone.store(true); }
+  };
+
+  // The racer keeps a BEGIN/INSERT/ROLLBACK cycle with a pause between INSERT
+  // and ROLLBACK running, so the readers sample exactly inside the window in
+  // which a broken implementation would show the uncommitted row.
+  auto racer = [&table, &writerErrors, &racerRowsVisible, &writersDone]() {
+    try {
+      db::Connection connection = connectPg();
+      db::Statement statement(connection);
+      while (true) {
+        db::Transaction transaction(connection);
+        statement.execute("insert into " + table.name() + " (name, value) values ('racer', 1)");
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        transaction.rollback();
+        if (racerRowsVisible.load() > 0 || writerErrors.load() > 0) { return; }
+        if (writersDone.load()) { return; }
+      }
+    } catch (const std::exception &) {
+      writerErrors.fetch_add(1);
+    }
+  };
+
+  // The readers run on their own connections while the writers and the racer
+  // are active. Catch2 assertions are not used on the worker threads; the
+  // violations are counted and checked on the main thread after the join.
+  auto reader = [&table, &writersDone, &writerErrors, &samples, &pairImbalance, &racerRowsVisible]() {
+    try {
+      db::Connection connection = connectPg();
+      db::Statement statement(connection);
+      while (!writersDone.load()) {
+        // Both counts in ONE statement and therefore one snapshot: a committed
+        // pair is either fully visible or not at all. Reading the counts in two
+        // statements would let a commit landing between them look like a
+        // partial one.
+        db::Result result = statement.execute(
+          "select count(*) filter (where right(name, 2) = '_a'), "
+          "count(*) filter (where right(name, 2) = '_b') from "
+          + table.name());
+        if (result.getValue(0, 0) != result.getValue(0, 1)) { pairImbalance.fetch_add(1); }
+        const int racerRows =
+          std::stoi(statement.execute("select count(*) from " + table.name() + " where name = 'racer'").getValue(0, 0));
+        if (racerRows != 0) { racerRowsVisible.fetch_add(1); }
+        samples.fetch_add(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      }
+    } catch (const std::exception &) {
+      writerErrors.fetch_add(1);
+    }
+  };
+
+  std::vector<std::thread> threads;
+  threads.reserve(kWriters + 3);
+  for (int i = 0; i < kWriters; i++) { threads.emplace_back(writer, i); }
+  threads.emplace_back(racer);
+  threads.emplace_back(reader);
+  threads.emplace_back(reader);
+  for (auto &thread : threads) { thread.join(); }
+
+  REQUIRE(writerErrors.load() == 0);
+  // the readers must really have overlapped with the writers
+  REQUIRE(samples.load() > 0);
+  REQUIRE(pairImbalance.load() == 0);
+  REQUIRE(racerRowsVisible.load() == 0);
+
+  // Rollback race, deterministic variant: a second connection reads while the
+  // transaction is open and again after the rollback - the row must be
+  // invisible in both cases.
+  db::Connection observer = connectPg();
+  const auto countWhere = [&table](db::Connection &connection, const std::string &condition) {
+    db::Statement statement(connection);
+    return std::stoi(statement.execute("select count(*) from " + table.name() + " where " + condition).getValue(0, 0));
+  };
+  {
+    db::Connection racerConnection = connectPg();
+    db::Statement statement(racerConnection);
+    db::Transaction transaction(racerConnection);
+    statement.execute("insert into " + table.name() + " (name, value) values ('racer', 1)");
+    REQUIRE(countWhere(observer, "name = 'racer'") == 0);
+    transaction.rollback();
+  }
+  REQUIRE(countWhere(observer, "name = 'racer'") == 0);
+
+  // Final state: every writer pair committed exactly once, nothing of the racer.
+  REQUIRE(countWhere(observer, "right(name, 2) = '_a'") == kWriters * kIterations);
+  REQUIRE(countWhere(observer, "right(name, 2) = '_b'") == kWriters * kIterations);
+  REQUIRE(countWhere(observer, "name = 'racer'") == 0);
+}
+
+TEST_CASE("PostgreSQL: a blocked update times out with the driver text instead of hanging", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+  table.insert("contended", 1);
+
+  // The holder takes the row lock and keeps the transaction open.
+  db::Connection holder = connectPg();
+  db::Statement holdStatement(holder);
+  db::Transaction holdTransaction(holder);
+  holdStatement.execute("update " + table.name() + " set value = 2 where name = 'contended'");
+
+  std::string message;
+  std::chrono::milliseconds elapsed{ 0 };
+  {
+    db::Connection blocked = connectPg();
+    db::Statement statement(blocked);
+    // lock_timeout turns the indefinite row-lock wait into a bounded error;
+    // set before BEGIN so it applies to the whole blocked transaction.
+    statement.execute("set lock_timeout = '300ms'");
+    db::Transaction transaction(blocked);
+    const auto start = std::chrono::steady_clock::now();
+    try {
+      statement.execute("update " + table.name() + " set value = 3 where name = 'contended'");
+      FAIL("the blocked update must not succeed while the holder keeps the row lock");
+    } catch (const db::SQLException &exception) {
+      message = exception.what();
+    }
+    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
+    // cleanup: the failed transaction must roll back without hanging
+    transaction.rollback();
+  }
+  holdTransaction.rollback();
+
+  // The driver text ("canceling statement due to lock timeout") has to survive
+  // into the exception message - a generic "statement failed" would hide the
+  // actual cause.
+  REQUIRE(message.find("lock timeout") != std::string::npos);
+  // it waited for the lock instead of failing instantly for another reason ...
+  REQUIRE(elapsed >= std::chrono::milliseconds(200));
+  // ... and it did not hang beyond the timeout.
+  REQUIRE(elapsed < std::chrono::seconds(5));
+
+  // After the holder rolled back the row is free again and its value is the
+  // original one - neither of the two blocked updates was applied.
+  db::Connection after = connectPg();
+  db::Statement afterStatement(after);
+  REQUIRE(
+    afterStatement.execute("select value from " + table.name() + " where name = 'contended'").getValue(0, 0) == "1");
+}
+
 TEST_CASE("PostgreSQL: notify delivers to a listening connection", "[pg]")
 {
   requirePg();
@@ -391,5 +591,63 @@ TEST_CASE("PostgreSQL: notify delivers to a listening connection", "[pg]")
   // than asserting immediately, which would be a race.
   for (int i = 0; i < 50 && !received.load(); i++) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
   REQUIRE(received.load());
+}
+
+TEST_CASE("PostgreSQL: notify keeps delivering while inserts are running", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+
+  constexpr int kWrites = 20;
+
+  db::Connection listener = connectPg();
+  std::atomic<int> callbacks{ 0 };
+  db::Notify notify(listener, [&callbacks]() { callbacks.fetch_add(1); }, table.name());
+  std::this_thread::sleep_for(std::chrono::milliseconds(200));
+
+  // Writer thread: every insert is followed by a notification, so the listener
+  // is under constant traffic while the rows land. The callback may batch
+  // several notifications into one wakeup (the listener drains the queue per
+  // select() round-trip), so exact callback counts are not asserted - delivery
+  // within a deadline and progress after the load are.
+  std::atomic_bool writerDone{ false };
+  std::thread writer([&table, &writerDone]() {
+    db::Connection connection = connectPg();
+    db::Statement statement(connection);
+    for (int i = 0; i < kWrites; i++) {
+      statement.execute("insert into " + table.name() + " (name, value) values ('load" + std::to_string(i) + "', "
+                        + std::to_string(i) + ")");
+      statement.execute("notify " + table.name());
+      std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    writerDone.store(true);
+  });
+
+  // The first notification must arrive while the load is still running.
+  const auto start = std::chrono::steady_clock::now();
+  while (!writerDone.load() && callbacks.load() == 0) { std::this_thread::sleep_for(std::chrono::milliseconds(10)); }
+  const auto firstDelivery = std::chrono::steady_clock::now() - start;
+  writer.join();
+
+  REQUIRE(callbacks.load() >= 1);
+  // Generous deadline: the listener wakes at most one poll interval (1s) after
+  // the notification reaches the server.
+  REQUIRE(firstDelivery < std::chrono::seconds(5));
+
+  // All rows landed ...
+  db::Connection reader = connectPg();
+  db::Statement select(reader);
+  REQUIRE(select.execute("select count(*) from " + table.name()).getValue(0, 0) == std::to_string(kWrites));
+
+  // ... and the listener is still alive after the load: a final notification
+  // sent on an otherwise idle channel must produce another callback.
+  const int before = callbacks.load();
+  db::Connection writerConnection = connectPg();
+  db::Statement notifyStatement(writerConnection);
+  notifyStatement.execute("notify " + table.name());
+  for (int i = 0; i < 50 && callbacks.load() <= before; i++) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  REQUIRE(callbacks.load() > before);
 }
 }// namespace lintel

@@ -353,6 +353,48 @@ TEST_CASE("DatabaseBootstrapPlugin: a migration chain applies every version in o
   REQUIRE(dbpCount(fixture.databaseFile, "select more from demo") == 3);
 }
 
+TEST_CASE("DatabaseBootstrapPlugin: a reference version 2 migration upgrades a version 1 database",
+  "[db_bootstrap_plugin]")
+{
+  // Reference migration (ROADMAP A5): schema "foo" starts at version 1 with one table and
+  // seed data; version 2 adds a column *and* a second table plus its own data file. This is
+  // the pattern a real *_version_2.sql seed follows, spelled out end to end: the recorded
+  // version advances, the structure changes, and the data of version 1 survives untouched.
+  DbpFixture fixture("foo");
+  fixture.writeFile("init_schema_foo_version_1.sql", "create table foo (id integer primary key, name text);");
+  fixture.writeFile("data_schema_foo_version_1.sql", "insert into foo values (1, 'alpha'), (2, 'beta');");
+
+  REQUIRE_NOTHROW(fixture.plugin->onStart());
+  REQUIRE(dbpSchemaVersion(fixture.databaseFile, "foo") == 1);
+  REQUIRE(dbpCount(fixture.databaseFile, "select name from foo") == 2);
+
+  // Both files of version 2 appear only now - the second bootstrap run has to pick
+  // them up as a migration of the already initialised database.
+  fixture.writeFile("init_schema_foo_version_2.sql",
+    "alter table foo add column note text;\n"
+    "create table foo_audit (id integer primary key, action text);");
+  fixture.writeFile("data_schema_foo_version_2.sql",
+    "update foo set note = 'migrated' where id = 1;\n"
+    "insert into foo_audit values (1, 'migrated');");
+
+  REQUIRE_NOTHROW(fixture.plugin->onStart());
+
+  REQUIRE(dbpSchemaVersion(fixture.databaseFile, "foo") == 2);
+  // the structural change of version 2 is live: the new column shows up in the
+  // SQLite catalog and the second table exists
+  REQUIRE(dbpCount(fixture.databaseFile, "select name from pragma_table_info('foo') where name = 'note'") == 1);
+  REQUIRE(dbpTableExists(fixture.databaseFile, "foo_audit"));
+  // the data file of version 2 was applied ...
+  REQUIRE(dbpScalar(fixture.databaseFile, "select note from foo where id = 1") == "migrated");
+  REQUIRE(dbpCount(fixture.databaseFile, "select action from foo_audit where action = 'migrated'") == 1);
+  // ... while both version 1 rows are still there, now carrying the new column
+  REQUIRE(dbpCount(fixture.databaseFile, "select id, name from foo where id = 1 and name = 'alpha'") == 1);
+  REQUIRE(dbpCount(fixture.databaseFile, "select id, name from foo where id = 2 and name = 'beta'") == 1);
+  REQUIRE(dbpScalar(fixture.databaseFile, "select note from foo where id = 2").empty());
+  // the tracking row was updated, not inserted a second time
+  REQUIRE(dbpCount(fixture.databaseFile, "select name from schema_version") == 1);
+}
+
 TEST_CASE("DatabaseBootstrapPlugin: a version jump aborts the whole directory", "[db_bootstrap_plugin]")
 {
   DbpFixture fixture("jump");
