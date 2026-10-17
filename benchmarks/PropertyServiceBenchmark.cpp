@@ -43,8 +43,12 @@ namespace {
   {
     // Point Configuration at a directory without a bootstrap.xml, otherwise it
     // would parse the real cfg/ (and fail: the benchmark has no components).
-    ::setenv("CONFIG_DIRECTORY", "/tmp/lintel_benchmark_nonexistent_cfg", 1);
+    // The override is instance level on purpose: setting CONFIG_DIRECTORY via
+    // ::setenv would leak into every later benchmark in the same process (the
+    // HTTP benchmark, for instance, resolves the development certificate
+    // through EnvironmentConfiguration).
     auto environment = std::make_shared<EnvironmentConfiguration>();
+    environment->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/lintel_benchmark_nonexistent_cfg");
     auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, environment);
     auto entry = std::make_shared<PropertyRepositoryEntry>(
       type_name<PropertyRepositoryComponent>(), PropertyRepositoryType::DEFAULT, true, false);

@@ -6,6 +6,9 @@ cmake-*
 *.txt
 !CMakeLists.txt
 *.json
+# The benchmark baseline is compared by scripts/check-benchmarks.sh in CI, so it
+# is the one JSON file that has to be in the repository.
+!benchmarks/baseline.json
 build*
 bin*
 .idea

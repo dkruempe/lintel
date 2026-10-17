@@ -11,6 +11,7 @@ add_executable(base_benchmarks
     PropertyServiceBenchmark.cpp
     EventBusBenchmark.cpp
     MessageQueueBenchmark.cpp
+    HttpBenchmark.cpp
 )
 target_compile_features(base_benchmarks PUBLIC cxx_std_20)
 target_link_libraries(base_benchmarks PRIVATE

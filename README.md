@@ -396,6 +396,27 @@ cmake --build build/build/Debug --parallel "$(nproc)"
 ./scripts/coverage-report.sh          # writes coverage/coverage.info and coverage/index.html
 ```
 
+### Benchmarks
+
+`BUILD_BENCHMARKS=ON` builds `bin/base_benchmarks` (google/benchmark). It covers the property hotpath, DTO (de)serialization, the event bus, message queues, SQLite persistence and HTTP transport throughput (plain and TLS). The TLS cases read `LINTEL_BENCH_TLS_CERT`/`LINTEL_BENCH_TLS_KEY` and fall back to `cfg/certs/`; they report themselves as skipped when there is no pair, so generate it once with `./cfg/certs/generate_certs.sh`.
+
+```bash
+./bin/base_benchmarks --benchmark_filter='BM_Http' --benchmark_min_time=0.2s
+```
+
+The advisory CI job `benchmarks` compares a run against the recorded
+[`benchmarks/baseline.json`](benchmarks/baseline.json) and reports every benchmark whose
+latency grew by more than 10%:
+
+```bash
+./bin/base_benchmarks --benchmark_min_time=0.2s --benchmark_repetitions=3 \
+  --benchmark_report_aggregates_only=true --benchmark_out=benchmark_results.json --benchmark_out_format=json
+./scripts/check-benchmarks.sh --threshold 10 benchmark_results.json
+./scripts/check-benchmarks.sh --update-baseline benchmark_results.json   # refresh the baseline
+```
+
+Absolute numbers depend on the machine, so the comparison normalizes each benchmark against the geometric mean of the whole run: a globally slower host cancels out and only benchmarks that moved relative to the rest are reported. Real time is the compared metric, not CPU time — the delayed-acknowledgement stall that `ROADMAP.md` P6 fixed cost 40 ms of real time per TLS request while the CPU time stayed flat.
+
 ## Contributing
 
 The checks a change has to pass are documented in [AGENTS.md](AGENTS.md): build, `ctest --output-on-failure --label-regex unit`, `./scripts/check-format.sh <base-branch>` (blocking format gate), `./scripts/check-secrets.sh` (blocking plaintext-credential guard) and `./scripts/check-tidy.sh <base-branch> build/tidy` (advisory).

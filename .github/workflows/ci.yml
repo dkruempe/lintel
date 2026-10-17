@@ -632,13 +632,32 @@ jobs:
       - name: Build benchmarks
         run: cmake --build ${{ env.BUILD_DIR }} --target base_benchmarks --parallel $(nproc)
 
-      - name: Run benchmarks (console)
-        run: timeout 20m ./bin/base_benchmarks --benchmark_min_time=0.2s --benchmark_format=console
+      - name: Generate development certificate pair
+        # the TLS benchmarks read cfg/certs/server.{crt,key} and report "skipped"
+        # without it; the file is git-ignored, so CI has to create it
+        run: ./cfg/certs/generate_certs.sh
 
-      # The JSON run is best effort: a benchmark crash must not skip the upload.
-      - name: Run benchmarks (json)
+      # One run, two outputs: the table for the log and the JSON for the baseline
+      # comparison. Best effort - a benchmark crash must not skip the upload or
+      # the comparison, so this step keeps the job advisory.
+      - name: Run benchmarks
         continue-on-error: true
-        run: timeout 20m ./bin/base_benchmarks --benchmark_min_time=0.2s --benchmark_format=json > benchmark_results.json
+        run: |
+          timeout 20m ./bin/base_benchmarks \
+            --benchmark_min_time=0.2s \
+            --benchmark_repetitions=3 \
+            --benchmark_report_aggregates_only=true \
+            --benchmark_format=console \
+            --benchmark_out=benchmark_results.json \
+            --benchmark_out_format=json
+
+      # Advisory for now (see ROADMAP.md P2): the comparison uses a
+      # geometric-mean-normalized index, which cancels the machine-wide speed
+      # factor, but shared runners are still noisy. Promote to a blocker by
+      # removing continue-on-error once the numbers are stable.
+      - name: Compare with the baseline
+        continue-on-error: true
+        run: ./scripts/check-benchmarks.sh --threshold 10 benchmark_results.json
 
       - name: Upload benchmark results
         if: always()
