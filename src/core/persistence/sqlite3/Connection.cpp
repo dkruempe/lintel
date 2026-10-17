@@ -1,3 +1,15 @@
+/**
+ * SQLite connection setup.
+ *
+ * Both constructors apply a small set of PRAGMAs after a successful `sqlite3_open`:
+ * - `PRAGMA busy_timeout = 5000`: a second writer waits up to 5 seconds for the lock
+ *   instead of failing immediately with SQLITE_BUSY.
+ * - `PRAGMA journal_mode = WAL` (file databases only, not `:memory:`): readers do not
+ *   block while a writer holds the write lock and vice versa. WAL is persistent in the
+ *   database file, so existing databases keep the mode after reopening.
+ * - `PRAGMA foreign_keys = ON`: FK constraints are enforced (SQLite defaults to off).
+ */
+
 #include "lintel/core/persistence/sqlite3/Connection.h"
 
 #include <functional>
@@ -9,6 +21,28 @@
 
 namespace lintel {
 namespace {
+
+  /// Wait time in ms before SQLite reports SQLITE_BUSY on a locked database.
+  constexpr int kBusyTimeoutMs = 5000;
+
+  /// In-memory databases (and empty paths) must not switch to WAL.
+  constexpr const char *kInMemoryDatabase = ":memory:";
+
+  void execPragma(sqlite3 *db, const std::string &pragma)
+  {
+    char *errorMessage = nullptr;
+    const int rc = sqlite3_exec(db, pragma.c_str(), nullptr, nullptr, &errorMessage);
+    if (rc != SQLITE_OK) {
+      std::string const msg = (errorMessage != nullptr) ? errorMessage : sqlite3_errmsg(db);
+      sqlite3_free(errorMessage);
+      throw db::SQLException("SQLite PRAGMA exception (" + pragma + "): " + msg);
+    }
+  }
+
+  [[nodiscard]] bool isFileDatabase(const std::string &connectionInfo)
+  {
+    return !connectionInfo.empty() && connectionInfo != kInMemoryDatabase;
+  }
 
   void regexpFunc(sqlite3_context *ctx, int argc, sqlite3_value **argv)
   {
@@ -53,6 +87,7 @@ namespace sqlite {
       throw db::SQLException("Can't open database: " + msg);
     }
     registerRegexp(m_db);
+    applyPragmas(connectionInfo);
   }
 
   Connection::Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry) : m_db(nullptr)
@@ -65,6 +100,19 @@ namespace sqlite {
       throw db::SQLException("Can't open database: " + msg);
     }
     registerRegexp(m_db);
+    applyPragmas(connectionEntry->getConnection());
+  }
+
+  void Connection::applyPragmas(const std::string &connectionInfo)
+  {
+    // wait for the lock instead of failing immediately with SQLITE_BUSY
+    execPragma(m_db, "PRAGMA busy_timeout = " + std::to_string(kBusyTimeoutMs));
+    if (isFileDatabase(connectionInfo)) {
+      // readers do not block during a write and vice versa; persisted in the DB file
+      execPragma(m_db, "PRAGMA journal_mode = WAL");
+    }
+    // FK constraints are off by default in SQLite
+    execPragma(m_db, "PRAGMA foreign_keys = ON");
   }
 
   std::string Connection::getErrorMessage() const { return sqlite3_errmsg(m_db); }

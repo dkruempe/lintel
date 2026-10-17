@@ -61,6 +61,13 @@ namespace sqlite {
       const db::Parameters &parameters);
 
     /**
+     * Applies the SQLite connection PRAGMAs (busy_timeout, WAL for file databases,
+     * foreign_keys) right after a successful open. Shared by both constructors.
+     * @param connectionInfo the connection string (file path or ":memory:")
+     */
+    void applyPragmas(const std::string &connectionInfo);
+
+    /**
      * Prepares a named statement for repeated execution.
      * @param queryName the name for the prepared statement
      * @param query the SQL query

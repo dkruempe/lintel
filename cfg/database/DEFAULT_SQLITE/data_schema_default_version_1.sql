@@ -1,4 +1,4 @@
--- Seed-Daten wurden bereinigt (keine echten Personendaten/Passwörter). Beispielwerte sind absichtlich nicht-funktionsfähig.
+-- Seed-Daten wurden bereinigt (keine echten Personendaten/Passwörter). Beispielwerte sind absichtlich nicht-funktionsfähig.;
 insert into users(first_name, last_name, e_mail, user_name, password, created_timestamp)
 values ('Example', 'User', 'example@example.com', 'example_user',
          'REPLACE_WITH_NON_FUNCTIONAL_HASH_OR_SET_PASSWORD_MANUALLY',

@@ -44,6 +44,7 @@ ADD_EXECUTABLE(base_tests
     core/ArgumentTest.cpp
     core/FileServiceTest.cpp
     core/CursorTest.cpp
+    core/SqliteConnectionTest.cpp
     core/StopWatchServiceTest.cpp
     core/ParameterTest.cpp
     core/RegexUtilsTest.cpp

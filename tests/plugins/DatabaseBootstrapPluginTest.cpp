@@ -254,19 +254,22 @@ TEST_CASE("DatabaseBootstrapPlugin: valid configuration creates the schema and t
 
 TEST_CASE("DatabaseBootstrapPlugin: a sql file starting with a comment is not executed", "[db_bootstrap_plugin]")
 {
-  DbpFixture fixture("comment", "DEFAULT_SQLITE");
+  DbpFixture fixture("comment");
+  fixture.writeFile("init_schema_commentdemo_version_1.sql", "create table items (id integer);");
+  fixture.writeFile("data_schema_commentdemo_version_1.sql",
+    "-- leading comment\n"
+    "insert into items values (1);\n"
+    "insert into items values (2);\n");
 
   REQUIRE_NOTHROW(fixture.plugin->onStart());
 
   // executeInitFile strips every '\n' before it splits the file at ';', so the leading comment
-  // of the shipped data file merges with the statement behind it: the insert into "users" is
-  // swallowed, while the following inserts (which start on their own line) are executed. Pinned
-  // here, because a fix would change what the shipped seed data inserts.
-  REQUIRE(dbpTableExists(fixture.databaseFile, "users"));
-  REQUIRE(dbpCount(fixture.databaseFile, "select user_name from users") == 0);
-  REQUIRE(dbpCount(fixture.databaseFile, "select name from groups") == 2);
-  REQUIRE(dbpCount(fixture.databaseFile, "select user_name, group_name from user_groups_relation") == 2);
-  REQUIRE(dbpSchemaVersion(fixture.databaseFile, "default") == 1);
+  // merges with the statement behind it: the first insert is swallowed, while the second one
+  // (which starts on its own line) is executed. Pinned here, because a fix would change what
+  // the shipped seed data inserts.
+  REQUIRE(dbpCount(fixture.databaseFile, "select id from items") == 1);
+  REQUIRE(dbpScalar(fixture.databaseFile, "select id from items") == "2");
+  REQUIRE(dbpSchemaVersion(fixture.databaseFile, "commentdemo") == 1);
 }
 
 TEST_CASE("DatabaseBootstrapPlugin: a second bootstrap applies the files only once", "[db_bootstrap_plugin]")
