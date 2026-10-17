@@ -295,6 +295,51 @@ TEST_CASE("AuthService: onLogoutOf keeps the session on an ip address mismatch")
   REQUIRE(fixture.authService->allTokensOf("alice").size() == 1);
 }
 
+TEST_CASE("AuthService: onLogoutOf removes a session that arrives in another spelling")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  // a forwarded header carries the same address upper case or compressed; the
+  // session must not outlive a logout just because the text differs
+  auto token = fixture.authService->onLoginOf(UserLogin{ "2001:db8::1", "alice", "secret1" });
+  REQUIRE(token.has_value());
+
+  fixture.authService->onLogoutOf(UserTokenLogin{ "2001:DB8::1", token->m_id });
+  REQUIRE(fixture.authService->allTokensOf("alice").empty());
+}
+
+TEST_CASE("AuthService: one rate limit budget per canonical client address")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  // the default window allows 20 attempts per ip; alternating between the
+  // spellings of one address must not buy a second budget
+  for (int attempt = 0; attempt < 10; ++attempt) {
+    REQUIRE(fixture.authService->onLoginOf(UserLogin{ "2001:db8::1", "alice", "secret1" }).has_value());
+    REQUIRE(fixture.authService->onLoginOf(UserLogin{ "2001:DB8::1", "alice", "secret1" }).has_value());
+  }
+  auto blocked = fixture.authService->onLoginOf(UserLogin{ "2001:db8::1", "alice", "secret1" });
+  REQUIRE_FALSE(blocked.has_value());
+}
+
+TEST_CASE("AuthService: a different canonical address keeps its own budget")
+{
+  AuthFixture fixture;
+  fixture.createUser("alice", "secret1");
+
+  // 192.0.2.1 and 2001:db8::1 are different clients and stay independent
+  for (int attempt = 0; attempt < 19; ++attempt) {
+    REQUIRE(fixture.authService->onLoginOf(UserLogin{ "192.0.2.1", "alice", "secret1" }).has_value());
+  }
+  REQUIRE(fixture.authService->onLoginOf(UserLogin{ "192.0.2.1", "alice", "secret1" }).has_value());
+  REQUIRE_FALSE(fixture.authService->onLoginOf(UserLogin{ "192.0.2.1", "alice", "secret1" }).has_value());
+
+  auto other = fixture.authService->onLoginOf(UserLogin{ "2001:db8::1", "alice", "secret1" });
+  REQUIRE(other.has_value());
+}
+
 TEST_CASE("AuthService: onLoginOf upgrades a legacy password hash")
 {
   AuthFixture fixture;

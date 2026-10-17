@@ -9,6 +9,35 @@
 #include "lintel/core/utils/UUID.h"
 
 namespace lintel {
+namespace {
+
+  /** @return true if the string parses as an ip address */
+  bool isValidIpAddress(const std::string &address)
+  {
+    boost::system::error_code errorCode{};
+    boost::asio::ip::make_address(address, errorCode);
+    return !errorCode;
+  }
+
+  /** @return the canonical text form of an ip address, unchanged when it does not parse.
+   *
+   *  The same client can reach the service in more than one spelling: the
+   *  socket reports `2001:DB8::1` as written, a forwarded header may carry it
+   *  compressed and lower case, and an ipv4 client on an ipv6 listener appears
+   *  as `::ffff:192.0.2.1`. The token, the lockout and the rate limit are all
+   *  keyed by this value, so one canonical form has to be used everywhere -
+   *  otherwise the same client gets a second rate limit budget and a session
+   *  that cannot be logged out. */
+  std::string normalizedIpOf(const std::string &address)
+  {
+    boost::system::error_code errorCode{};
+    auto ip = boost::asio::ip::make_address(address, errorCode);
+    if (errorCode) { return address; }
+    return ip.to_string();
+  }
+
+}// namespace
+
 AuthService::AuthService(const std::shared_ptr<ProcessName> &processName,
   std::shared_ptr<UserRepository> userRepository,
   std::shared_ptr<SchedulerService> schedulerService)
@@ -48,14 +77,12 @@ std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin)
     LOG_ERROR("ip address of {} empty", userLogin.m_userName);
     return std::nullopt;
   }
-  // II check via boost ip address and normalize the representation
-  boost::system::error_code ec{};
-  auto ip = boost::asio::ip::make_address(userLogin.m_ipAddress, ec);
-  if (ec) {
+  // II validate it and bring it into the canonical form (see normalizedIpOf)
+  if (!isValidIpAddress(userLogin.m_ipAddress)) {
     LOG_ERROR("{} invalid ip address of {}", userLogin.m_ipAddress, userLogin.m_userName);
     return std::nullopt;
   }
-  const std::string ipAddress = ip.to_string();
+  const std::string ipAddress = normalizedIpOf(userLogin.m_ipAddress);
   // IIb brute-force protection: reject locked-out IPs
   {
     std::lock_guard lock(m_mutex);
@@ -115,9 +142,7 @@ std::optional<UserToken> AuthService::onAccessOf(const UserTokenLogin &userToken
     LOG_ERROR("{}: {} user not logged in", userTokenLogin.m_ipAddress, userTokenLogin.m_id);
     return std::nullopt;
   }
-  boost::system::error_code ec{};
-  const auto ip = boost::asio::ip::make_address(userTokenLogin.m_ipAddress, ec);
-  const std::string ipAddress = ec ? userTokenLogin.m_ipAddress : ip.to_string();
+  const std::string ipAddress = normalizedIpOf(userTokenLogin.m_ipAddress);
   if (ipAddress.empty() || found->second.m_ipAddress != ipAddress) {
     LOG_WARN("{}: {} ip address mismatch (expected {})",
       userTokenLogin.m_ipAddress,
@@ -138,7 +163,9 @@ void AuthService::onLogoutOf(const UserTokenLogin &userToken)
     LOG_ERROR("{}: {} user not logged in", userToken.m_ipAddress, userToken.m_id);
     throw std::runtime_error("user not logged in");
   }
-  if (found->second.m_ipAddress != userToken.m_ipAddress) {
+  // the stored address is already canonical; the incoming one may be another
+  // spelling of it (see normalizedIpOf), so normalize before comparing
+  if (found->second.m_ipAddress != normalizedIpOf(userToken.m_ipAddress)) {
     LOG_WARN("{}: {} logout blocked, ip address mismatch (expected {})",
       userToken.m_ipAddress,
       userToken.m_id,
