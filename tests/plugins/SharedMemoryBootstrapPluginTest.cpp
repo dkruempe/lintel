@@ -219,7 +219,14 @@ TEST_CASE("SharedMemoryBootstrapPlugin: inserts missing database bookmark")
   db::Statement stmt(conn);
   auto result = stmt.execute("SELECT count(*) FROM shared_memory_repositories");
   REQUIRE(result.getValue(0, 0) == "1");
-  std::filesystem::remove(dbPath);
+  // ensure all connections/statements are dropped before removing the file on Windows
+  {
+    db::Connection conn(db::ConnectionType::SQLite, dbPath.string());
+    db::Statement stmt(conn);
+    stmt.execute("DELETE FROM shared_memory_repositories");
+  }
+  std::error_code ec;
+  std::filesystem::remove(dbPath, ec);
 }
 
 TEST_CASE("SharedMemoryBootstrapPlugin: matching database bookmark is valid")
@@ -235,7 +242,8 @@ TEST_CASE("SharedMemoryBootstrapPlugin: matching database bookmark is valid")
   }
   ShmPluginFixture fixture(true, false, sqliteEntry(dbPath));
   REQUIRE_NOTHROW(fixture.plugin->onStart());
-  std::filesystem::remove(dbPath);
+  std::error_code ec;
+  std::filesystem::remove(dbPath, ec);
 }
 
 TEST_CASE("SharedMemoryBootstrapPlugin: database version mismatch throws")
@@ -251,6 +259,7 @@ TEST_CASE("SharedMemoryBootstrapPlugin: database version mismatch throws")
   }
   ShmPluginFixture fixture(true, false, sqliteEntry(dbPath));
   REQUIRE_THROWS_AS(fixture.plugin->onStart(), std::runtime_error);
-  std::filesystem::remove(dbPath);
+  std::error_code ec;
+  std::filesystem::remove(dbPath, ec);
 }
 }// namespace lintel

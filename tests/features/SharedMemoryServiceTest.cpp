@@ -160,6 +160,10 @@ TEST_CASE("SharedMemoryService: shrink reduces the segment size and bumps the ge
 
   REQUIRE(fixture.currentSize() <= grown);
   REQUIRE(fixture.service->getGeneration() == generation + 1);
+  // allow the file to be closed/reopened before fixture teardown; in particular on
+  // Windows a still-mapped segment must be released before boost::interprocess
+  // finalises the file or the fixture tries to remove it
+  fixture.service.reset();
 }
 
 TEST_CASE("SharedMemoryService: shrink of an unknown segment throws ShmSegmentNotFound")
