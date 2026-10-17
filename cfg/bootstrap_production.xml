@@ -1,0 +1,88 @@
+<!--
+  Production bootstrap profile (ROADMAP.md U4 / item 18).
+
+  Activate it with
+
+      export BOOTSTRAP_CONFIG_NAME=bootstrap_production
+      ./bin/main
+
+  It differs from the development `bootstrap.xml` on purpose:
+
+    * TLS is mandatory (`require_tls="true"`) and the certificate/key are read
+      from ${TLS_CERT_FILE}/${TLS_KEY_FILE} instead of the self-signed files
+      under cfg/certs/. The server refuses to start when it cannot load them.
+    * The default database is PostgreSQL with credentials from the environment
+      (${DB_HOST}, ${DB_PORT}, ${DB_USER}, ${DB_PASSWORD}, ${DB_NAME}); there is
+      no SQLite fallback and no committed password.
+    * The log directory and the shared-memory directory come from ${LOG_DIR} and
+      ${SHM_DIR} (put the latter on a tmpfs) instead of the developer's $HOME.
+    * No dev worker processes are declared; add <Process> entries only if the
+      deployment runs child processes.
+
+  Required environment variables: LOG_DIR, SHM_DIR, DB_HOST, DB_PORT, DB_USER,
+  DB_PASSWORD, DB_NAME, TLS_CERT_FILE, TLS_KEY_FILE.
+
+  Every ${NAME} whose variable is not set stays literal (see
+  EnvironmentConfiguration::expand()). The values below are *not* defaulted, so
+  an unset variable makes startup fail loudly - or, for the two path variables,
+  point at a literal "${LOG_DIR}" directory - instead of silently connecting
+  somewhere unexpected. Export them before launching.
+-->
+<Configuration>
+    <!-- Logging: missing directories are created because create_sub_dirs="true". -->
+    <Loggers>
+        <Path path="${LOG_DIR}" create_sub_dirs="true"/>
+        <Logger process_name=".*" level="info" async="false">
+            <LoggerSink type="RotatingFileSink" level="info" size="20MB" max_files="20"/>
+        </Logger>
+    </Loggers>
+
+    <!-- Message Queue + history service owned by the main process. -->
+    <MessageQueues>
+        <MessageQueue process_name="main" name="history" max_messages="1000" remove_on_shutdown="false"/>
+    </MessageQueues>
+    <HistoryServices>
+        <HistoryService process_name="main" queue="history" max_messages="1000"/>
+    </HistoryServices>
+
+    <!-- PostgreSQL is the authoritative store; the default connection drives the
+         schema bootstrap and the `database:<name>` readiness check. -->
+    <DatabaseConnections>
+        <DatabaseConnection name="DEFAULT_PSQL"
+                             user_name="${DB_USER}" password="${DB_PASSWORD}"
+                             connection="${DB_HOST}" port="${DB_PORT}"
+                             database_name="${DB_NAME}" type="PostgreSQL" default="true"/>
+    </DatabaseConnections>
+
+    <!-- Shared memory segments (sizes are deployment specific, ${SHM_DIR} should
+         be backed by tmpfs). -->
+    <SharedMemorySegments>
+        <Path path="${SHM_DIR}"/>
+        <SharedMemorySegment name="shm_property" size="5MB" auto_extend_size="2MB" max_size="100MB"/>
+        <SharedMemorySegment name="shm_eventbus" size="8MB" auto_extend_size="2MB" max_size="50MB"/>
+    </SharedMemorySegments>
+
+    <EventBuses>
+        <EventBus name="main" segment="shm_eventbus" bus_capacity="128"
+                  subscriber_capacity="128" max_topics="8" max_subscribers="8"/>
+    </EventBuses>
+
+    <!-- HTTP server: TLS required, certificate/key from the environment. Add
+         trusted_proxies="10.0.0.0/8, ..." when the process runs behind a reverse
+         proxy whose X-Forwarded-For may be believed. The Client entry lets the
+         bundled CLI talk to this server over TLS. -->
+    <HttpHost>
+        <Server host="0.0.0.0" port="8443"
+                cert_path="${TLS_CERT_FILE}" key_path="${TLS_KEY_FILE}"
+                require_tls="true"/>
+        <Client host="localhost" port="8443" cert_path="${TLS_CERT_FILE}"
+                key_path="${TLS_KEY_FILE}" ca_cert_path="${TLS_CERT_FILE}"
+                connection_timeout="1000"/>
+    </HttpHost>
+
+    <PropertyRepositories>
+        <PropertyRepository type="FILE_REPOSITORY" mutable="false" shadow="false"/>
+        <PropertyRepository type="DATABASE_REPOSITORY" mutable="true" shadow="false"/>
+        <PropertyRepository type="SHM_REPOSITORY" mutable="true" shadow="false"/>
+    </PropertyRepositories>
+</Configuration>

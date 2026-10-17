@@ -1,10 +1,12 @@
 #include <lintel/app/ConfigurationComponentBuilder.h>
+#include <lintel/config.h>
 #include <lintel/core/configuration/Component.h>
 #include <lintel/core/configuration/Configuration.h>
 #include <lintel/core/configuration/ConfigurationException.h>
 #include <lintel/core/configuration/DatabaseConnectionComponent.h>
 #include <lintel/core/configuration/DatabaseConnectionEntry.h>
 #include <lintel/core/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/persistence/ConnectionType.h>
 #include <lintel/core/utils/TypeName.h>
 #include <lintel/features/http/configuration/HttpComponent.h>
 #include <lintel/features/http/configuration/HttpEntry.h>
@@ -15,6 +17,7 @@
 #include <filesystem>
 #include <fstream>
 
+#include "../helpers/PlatformCompat.h"
 #include "../helpers/ScopedEnvironmentVariable.h"
 
 namespace lintel {
@@ -370,5 +373,59 @@ TEST_CASE("Configuration: malformed XML throws ConfigurationException")
   REQUIRE_THROWS_AS(
     Configuration(builder.build(), std::make_shared<EnvironmentConfiguration>()), ConfigurationException);
   std::filesystem::remove_all("/tmp/test_cfg_expand_bad");
+}
+
+TEST_CASE("Configuration: the shipped production profile parses")
+{
+  // Points CONFIG_DIRECTORY at the repository's cfg/ directory (compile time macro) and boots the
+  // shipped cfg/bootstrap_production.xml, so a typo in that file fails here instead of a deployment.
+  // The two directory variables are redirected into a temporary directory: the profile would
+  // otherwise create its shared-memory directory next to the developer's home.
+  const std::filesystem::path scratch =
+    std::filesystem::temp_directory_path() / ("lintel_prod_profile_" + std::to_string(::getpid()));
+  std::filesystem::remove_all(scratch);
+
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", CONFIG_DIRECTORY };
+  ScopedEnvironmentVariable bootstrapName{ "BOOTSTRAP_CONFIG_NAME", "bootstrap_production" };
+  ScopedEnvironmentVariable logDirectory{ "LOG_DIR", (scratch / "log").string() };
+  ScopedEnvironmentVariable shmDirectory{ "SHM_DIR", (scratch / "shm").string() };
+  ScopedEnvironmentVariable dbHost{ "DB_HOST", "db.internal" };
+  ScopedEnvironmentVariable dbPort{ "DB_PORT", "5432" };
+  ScopedEnvironmentVariable dbUser{ "DB_USER", "lintel" };
+  ScopedEnvironmentVariable dbPassword{ "DB_PASSWORD", "placeholder" };
+  ScopedEnvironmentVariable dbName{ "DB_NAME", "lintel" };
+  ScopedEnvironmentVariable tlsCert{ "TLS_CERT_FILE", "/etc/lintel/tls/server.crt" };
+  ScopedEnvironmentVariable tlsKey{ "TLS_KEY_FILE", "/etc/lintel/tls/server.key" };
+
+  ConfigurationComponentBuilder builder(std::make_shared<EnvironmentConfiguration>());
+  Configuration config(builder.build(), std::make_shared<EnvironmentConfiguration>());
+
+  // PostgreSQL from the environment, no SQLite fallback and no committed password
+  const auto connections = config.configurationOf<DatabaseConnectionComponent>();
+  REQUIRE(connections.size() == 1);
+  const auto connection = std::static_pointer_cast<DatabaseConnectionEntry>(connections[0]);
+  REQUIRE(connection->getName() == "DEFAULT_PSQL");
+  REQUIRE(connection->isDefault());
+  REQUIRE(connection->getType() == db::ConnectionType::PostgreSQL);
+  REQUIRE(connection->getConnection() == "db.internal");
+  REQUIRE(connection->getPort() == 5432);
+  REQUIRE(connection->getUserName() == "lintel");
+  REQUIRE(connection->getDatabaseName() == "lintel");
+
+  // TLS is required and the certificate paths come from the environment, not from cfg/certs/
+  const auto httpEntries = config.configurationOf<HttpComponent>();
+  bool foundServer = false;
+  for (const auto &entry : httpEntries) {
+    const auto httpEntry = std::static_pointer_cast<HttpEntry>(entry);
+    if (!httpEntry->isServer()) { continue; }
+    const auto &serverConfiguration = httpEntry->getServerConfiguration();
+    REQUIRE(serverConfiguration->isTlsRequired());
+    REQUIRE(serverConfiguration->getCertFile() == std::filesystem::path("/etc/lintel/tls/server.crt"));
+    REQUIRE(serverConfiguration->getKeyFile() == std::filesystem::path("/etc/lintel/tls/server.key"));
+    foundServer = true;
+  }
+  REQUIRE(foundServer);
+
+  std::filesystem::remove_all(scratch);
 }
 }// namespace lintel
