@@ -273,6 +273,8 @@ set(headers
     include/lintel/features/http/service/HttpUnauthorizedException.h
     include/lintel/features/http/service/HttpClientHelper.h
     include/lintel/features/http/service/Server.h
+    include/lintel/features/http/service/TlsReloadRegistry.h
+    include/lintel/features/http/controllers/AdminController.h
     include/lintel/features/http/controllers/HistoryApi.h
     include/lintel/features/http/controllers/HistoryController.h
     include/lintel/features/http/controllers/MessageQueueApi.h
@@ -476,6 +478,8 @@ set(sources
     features/http/service/Controller.cpp
     features/http/service/HttpStatusCode.cpp
     features/http/service/Server.cpp
+    features/http/service/TlsReloadRegistry.cpp
+    features/http/controllers/AdminController.cpp
     features/http/controllers/HistoryApi.cpp
     features/http/controllers/HistoryController.cpp
     features/http/controllers/MessageQueueApi.cpp

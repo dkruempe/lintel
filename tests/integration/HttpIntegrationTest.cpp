@@ -9,12 +9,15 @@
 #include <lintel/features/http/service/ContentType.h>
 #include <lintel/features/http/service/HttpStatusCodes.h>
 #include <lintel/features/http/service/Server.h>
+#include <lintel/features/http/service/TlsReloadRegistry.h>
 
 #include <catch2/catch_all.hpp>
 
 #include <atomic>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -256,6 +259,190 @@ TEST_CASE("Server: serves HTTPS when a certificate and key are configured")
   auto health = client.Get("/health");
   REQUIRE(health != nullptr);
   REQUIRE(health->status == 200);
+}
+
+namespace {
+  /** Empties the process-wide TLS reload registry for the duration of a test.
+   *
+   * The registry is a singleton; ctest starts one process per test case, but a
+   * direct run of base_tests does not, so a handler registered by an earlier case
+   * could leak into this one. */
+  struct TlsReloadGuard
+  {
+    TlsReloadGuard() { TlsReloadRegistry::instance().clear(); }
+    ~TlsReloadGuard() { TlsReloadRegistry::instance().clear(); }
+  };
+
+  /** A private copy of the development certificate pair.
+   *
+   * A reload test has to overwrite the files on disk; copying them first keeps
+   * the shared cfg/certs/ pair that every other test depends on intact. */
+  struct TlsCertScratch
+  {
+    std::filesystem::path m_dir;
+    std::filesystem::path m_certPath;
+    std::filesystem::path m_keyPath;
+
+    explicit TlsCertScratch(const std::string &tag)
+    {
+      EnvironmentConfiguration envConfig;
+      const std::filesystem::path source =
+        std::filesystem::path(envConfig.of(EnvironmentConfiguration::ConfigDirectory)) / "certs";
+      m_dir = std::filesystem::temp_directory_path() / ("lintel_tls_reload_" + tag);
+      std::filesystem::remove_all(m_dir);
+      std::filesystem::create_directories(m_dir);
+      m_certPath = m_dir / "server.crt";
+      m_keyPath = m_dir / "server.key";
+      std::filesystem::copy_file(source / "server.crt", m_certPath, std::filesystem::copy_options::overwrite_existing);
+      std::filesystem::copy_file(source / "server.key", m_keyPath, std::filesystem::copy_options::overwrite_existing);
+    }
+
+    ~TlsCertScratch() { std::filesystem::remove_all(m_dir); }
+
+    TlsCertScratch(const TlsCertScratch &) = delete;
+    TlsCertScratch &operator=(const TlsCertScratch &) = delete;
+
+    /** @return true when the given client can still fetch /health over TLS */
+    bool serves(httplib::SSLClient &client) const
+    {
+      auto health = client.Get("/health");
+      return health != nullptr && health->status == 200;
+    }
+  };
+}// namespace
+
+TEST_CASE("Server: registers a reload handler and serves through a reload")
+{
+  TlsReloadGuard reloadGuard;
+  TlsCertScratch scratch("ok");
+  REQUIRE(std::filesystem::exists(scratch.m_certPath));
+  REQUIRE(std::filesystem::exists(scratch.m_keyPath));
+
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  Server server(ServerConfiguration("127.0.0.1",
+                  port,
+                  std::chrono::milliseconds(3000),
+                  std::chrono::milliseconds(5000),
+                  std::chrono::milliseconds(60000),
+                  scratch.m_certPath.string(),
+                  scratch.m_keyPath.string()),
+    std::vector<std::shared_ptr<Controller>>{});
+
+  httplib::SSLClient client("127.0.0.1", port);
+  client.set_ca_cert_path(scratch.m_certPath.string().c_str());
+  client.enable_server_certificate_verification(true);
+  client.set_connection_timeout(std::chrono::seconds(2));
+  client.set_read_timeout(std::chrono::seconds(2));
+  REQUIRE(scratch.serves(client));
+
+  // the running server registered exactly one reload handler for its pair
+  const std::vector<TlsReloadRegistry::ReloadResult> results = TlsReloadRegistry::instance().reload();
+  REQUIRE(results.size() == 1);
+  REQUIRE(results[0].m_name == "tls");
+  REQUIRE(results[0].m_reloaded);
+  REQUIRE(results[0].m_detail.empty());
+
+  // and it keeps serving after the swap
+  REQUIRE(scratch.serves(client));
+}
+
+TEST_CASE("Server: a rejected certificate keeps the server on the previous pair")
+{
+  TlsReloadGuard reloadGuard;
+  TlsCertScratch scratch("broken");
+  const std::string validCert = [&scratch] {
+    std::ifstream file(scratch.m_certPath, std::ios::binary);
+    return std::string(std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>());
+  }();
+  REQUIRE_FALSE(validCert.empty());
+
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  Server server(ServerConfiguration("127.0.0.1",
+                  port,
+                  std::chrono::milliseconds(3000),
+                  std::chrono::milliseconds(5000),
+                  std::chrono::milliseconds(60000),
+                  scratch.m_certPath.string(),
+                  scratch.m_keyPath.string()),
+    std::vector<std::shared_ptr<Controller>>{});
+
+  httplib::SSLClient client("127.0.0.1", port);
+  client.set_ca_cert_path(scratch.m_certPath.string().c_str());
+  client.enable_server_certificate_verification(true);
+  client.set_connection_timeout(std::chrono::seconds(2));
+  client.set_read_timeout(std::chrono::seconds(2));
+  REQUIRE(scratch.serves(client));
+
+  // a truncated renewal must not take the running server down: the reload fails
+  // with the file name and the context keeps the pair it was serving
+  {
+    std::ofstream broken(scratch.m_certPath, std::ios::binary | std::ios::trunc);
+    broken << "-----BEGIN CERTIFICATE-----\nnot a certificate\n";
+  }
+  const std::vector<TlsReloadRegistry::ReloadResult> rejected = TlsReloadRegistry::instance().reload();
+  REQUIRE(rejected.size() == 1);
+  REQUIRE_FALSE(rejected[0].m_reloaded);
+  REQUIRE(rejected[0].m_detail.find(scratch.m_certPath.string()) != std::string::npos);
+  REQUIRE(scratch.serves(client));
+
+  // once the file is valid again the reload succeeds
+  {
+    std::ofstream restored(scratch.m_certPath, std::ios::binary | std::ios::trunc);
+    restored << validCert;
+  }
+  REQUIRE(TlsReloadRegistry::instance().reload().at(0).m_reloaded);
+  REQUIRE(scratch.serves(client));
+}
+
+TEST_CASE("Server: refuses to start when the certificate cannot be loaded")
+{
+  TlsReloadGuard reloadGuard;
+  TlsCertScratch scratch("unloadable");
+  {
+    std::ofstream broken(scratch.m_certPath, std::ios::binary | std::ios::trunc);
+    broken << "-----BEGIN CERTIFICATE-----\nnot a certificate\n";
+  }
+
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  REQUIRE_THROWS_WITH(Server(ServerConfiguration("127.0.0.1",
+                               port,
+                               std::chrono::milliseconds(3000),
+                               std::chrono::milliseconds(5000),
+                               std::chrono::milliseconds(60000),
+                               scratch.m_certPath.string(),
+                               scratch.m_keyPath.string()),
+                        std::vector<std::shared_ptr<Controller>>{}),
+    Catch::Matchers::ContainsSubstring("cannot load the TLS certificate"));
+}
+
+TEST_CASE("Server: drops its reload handler when it stops")
+{
+  TlsReloadGuard reloadGuard;
+  TlsCertScratch scratch("lifetime");
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  {
+    Server server(ServerConfiguration("127.0.0.1",
+                    port,
+                    std::chrono::milliseconds(3000),
+                    std::chrono::milliseconds(5000),
+                    std::chrono::milliseconds(60000),
+                    scratch.m_certPath.string(),
+                    scratch.m_keyPath.string()),
+      std::vector<std::shared_ptr<Controller>>{});
+    REQUIRE(TlsReloadRegistry::instance().reload().size() == 1);
+  }
+
+  // the registry lives longer than the server: it must not keep a handler that
+  // points at the destroyed object
+  REQUIRE(TlsReloadRegistry::instance().reload().empty());
 }
 
 TEST_CASE("ContentType: parse from string")

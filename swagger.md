@@ -19,6 +19,33 @@
 
 ---
 
+### /admin/reload-tls
+
+#### POST
+##### Summary
+
+Reload the TLS certificate of the running server
+
+##### Description
+
+Re-reads the certificate and private key files configured for the HTTP server and swaps them into the running OpenSSL context, so a renewal takes effect without restarting the process. The server keeps the pair it was serving and puts it back when a renewal is rejected, so a broken pair never takes the endpoint down. Answers 409 when the process does not serve TLS at all.
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Reload succeeded (TlsReloadResultDto JSON) |
+| 401 | Unauthorized (missing token or not in the Admin group) |
+| 403 | Forbidden (wrong content type) |
+| 409 | Nothing to reload (the server is not running with TLS) |
+| 500 | Reload failed; the previous certificate stays active (TlsReloadResultDto JSON) |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
 ### /hello
 
 #### GET

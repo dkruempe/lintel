@@ -10,6 +10,33 @@ host: localhost:8080
 schemes:
   - http
 paths:
+  /admin/reload-tls:
+    post:
+      summary: Reload the TLS certificate of the running server
+      description: |
+        Re-reads the certificate and private key files configured for the HTTP
+        server and swaps them into the running OpenSSL context, so a renewal
+        takes effect without restarting the process.
+        The server keeps the pair it was serving and puts it back when a
+        renewal is rejected, so a broken pair never takes the endpoint down.
+        Answers 409 when the process does not serve TLS at all.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Reload succeeded (TlsReloadResultDto JSON)
+          schema:
+            $ref: "#/definitions/TlsReloadResultDto"
+        "401":
+          description: Unauthorized (missing token or not in the Admin group)
+        "403":
+          description: Forbidden (wrong content type)
+        "409":
+          description: Nothing to reload (the server is not running with TLS)
+        "500":
+          description: Reload failed; the previous certificate stays active
+          schema:
+            $ref: "#/definitions/TlsReloadResultDto"
   /hello:
     get:
       summary: Greets the user
@@ -955,6 +982,21 @@ definitions:
         type: string
         format: date-time
         example: "2026-07-31T10:00:00.000000Z"
+  TlsReloadResultDto:
+    type: object
+    description: Result of POST /admin/reload-tls, one entry per reloadable resource
+    properties:
+      status:
+        type: string
+        enum: [reloaded, failed, nothing_to_reload]
+        description: Overall result of the reload
+      results:
+        type: object
+        description: "Per-resource result: \"ok\" or \"failed: <reason>\""
+        additionalProperties:
+          type: string
+        example:
+          tls: ok
 securityDefinitions:
   bearerAuth:
     type: apiKey

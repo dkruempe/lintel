@@ -5,8 +5,11 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include <fstream>
+#include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "lintel/core/services/LoggerService.h"
@@ -14,6 +17,7 @@
 #include "lintel/features/http/service/ContentType.h"
 #include "lintel/features/http/service/Controller.h"
 #include "lintel/features/http/service/HttpStatusCodes.h"
+#include "lintel/features/http/service/TlsReloadRegistry.h"
 
 namespace lintel {
 namespace {
@@ -21,6 +25,60 @@ namespace {
   constexpr const char *kHealthBody = "{\"status\":\"ok\"}";
   /** Body of the readiness response while no dependency check is registered */
   constexpr const char *kReadyBody = "{\"status\":\"ready\"}";
+  /** Name the HTTP server registers its TLS reload handler under */
+  constexpr const char *kTlsReloadName = "tls";
+
+  /** Read a whole file in binary mode. */
+  bool readFile(const std::string &fileName, std::string &content)
+  {
+    std::ifstream file(fileName, std::ios::binary);
+    if (!file) { return false; }
+    std::ostringstream buffer;
+    buffer << file.rdbuf();
+    content = buffer.str();
+    return true;
+  }
+
+  /** Reload the certificate/key pair of a running TLS server.
+   *
+   * httplib loads the pair into the OpenSSL context once, so a renewed file on
+   * disk stays invisible until the process restarts. update_certs_pem() swaps
+   * it under the context mutex the handshake path also takes, so a handshake
+   * starting at the same time sees either the old or the new pair.
+   *
+   * @param sslServer    the running server, nullptr for a clear-text server
+   * @param certFile     certificate file to read
+   * @param keyFile      private key file to read
+   * @param lastGoodCert PEM of the pair currently in use, updated on success
+   * @param lastGoodKey  PEM of the pair currently in use, updated on success
+   * @return an error description, empty on success */
+  std::string reloadTls(const std::shared_ptr<httplib::SSLServer> &sslServer,
+    const std::string &certFile,
+    const std::string &keyFile,
+    std::string &lastGoodCert,
+    std::string &lastGoodKey)
+  {
+    if (sslServer == nullptr) { return "the HTTP server is not running with TLS"; }
+    std::string cert;
+    if (!readFile(certFile, cert)) { return "cannot read the certificate file '" + certFile + "'"; }
+    std::string key;
+    if (!readFile(keyFile, key)) { return "cannot read the private key file '" + keyFile + "'"; }
+    if (sslServer->update_certs_pem(cert.c_str(), key.c_str())) {
+      lastGoodCert = std::move(cert);
+      lastGoodKey = std::move(key);
+      LOG_INFO("reloaded the TLS certificate from '{}'", certFile);
+      return {};
+    }
+    // update_certs_pem() rejects the pair, but it sets the certificate before it
+    // validates the key: a mismatched renewal would leave the context with the
+    // new certificate and the old key, and every following handshake would
+    // fail. Re-applying the pair that is known to work keeps the server on the
+    // old certificate until the operator fixes the renewal files.
+    if (!lastGoodCert.empty() && !lastGoodKey.empty()) {
+      sslServer->update_certs_pem(lastGoodCert.c_str(), lastGoodKey.c_str());
+    }
+    return "the certificate/key pair in '" + certFile + "' and '" + keyFile + "' was rejected by OpenSSL";
+  }
 
   /**
    * @return the readiness body with the result of every registered check:
@@ -146,12 +204,33 @@ struct Server::Impl
   std::vector<std::shared_ptr<Controller>> controller;
   std::shared_ptr<httplib::SSLServer> sslServer;
   std::shared_ptr<httplib::Server> server;
+  std::string certFile;
+  std::string keyFile;
+  std::string lastGoodCert;
+  std::string lastGoodKey;
+  TlsReloadRegistry::ReloadId tlsReloadId = 0;
   std::thread thread;
 
   Impl(const ServerConfiguration &serverConfiguration, std::vector<std::shared_ptr<Controller>> controllers)
     : controller(std::move(controllers)), sslServer(initSslServer(controller, serverConfiguration)),
-      server(initServer(controller, serverConfiguration, sslServer))
+      server(initServer(controller, serverConfiguration, sslServer)),
+      certFile(serverConfiguration.getCertFile().string()), keyFile(serverConfiguration.getKeyFile().string())
   {
+    if (sslServer != nullptr) {
+      // A certificate that OpenSSL cannot load leaves the context empty; without
+      // this check the failure surfaces later as "failed to bind", which hides
+      // the real cause (a bad or unreadable certificate file).
+      if (!sslServer->is_valid()) {
+        throw std::runtime_error(
+          "HTTP server: cannot load the TLS certificate '" + certFile + "' and key '" + keyFile + "'");
+      }
+      // Keep the pair that is known to work so a failed reload can roll back to
+      // it (see reloadTls) instead of leaving a broken context serving traffic.
+      readFile(certFile, lastGoodCert);
+      readFile(keyFile, lastGoodKey);
+      tlsReloadId = TlsReloadRegistry::instance().registerHandler(
+        kTlsReloadName, [this]() { return reloadTls(sslServer, certFile, keyFile, lastGoodCert, lastGoodKey); });
+    }
     const std::string &host = serverConfiguration.getHost();
     const int port = serverConfiguration.getPort();
     const bool bound = sslServer != nullptr ? sslServer->bind_to_port(host, port) : server->bind_to_port(host, port);
@@ -168,6 +247,11 @@ struct Server::Impl
   ~Impl()
   {
     if (sslServer != nullptr) {
+      // Drop the reload handler before the server it points at goes away: the
+      // registry outlives the server, and a stale handler would let
+      // POST /admin/reload-tls report success for a stopped server. Removing it
+      // by id keeps a server that took over the name (see ServerProvider) intact.
+      TlsReloadRegistry::instance().unregisterHandler(tlsReloadId);
       sslServer->stop();
     } else {
       server->stop();

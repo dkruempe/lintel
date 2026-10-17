@@ -2,6 +2,7 @@
 
 #include "lintel/core/di/Container.h"
 
+#include "lintel/features/http/controllers/AdminController.h"
 #include "lintel/features/http/controllers/HistoryApi.h"
 #include "lintel/features/http/controllers/HistoryController.h"
 #include "lintel/features/http/controllers/MessageQueueApi.h"
@@ -22,6 +23,7 @@ void HttpFeature::registerTypes(lintel::di::ContainerBuilder &builder)
 {
   builder.registerType<ServerProvider>().singleInstance();
   builder.registerType<ClientProvider>().singleInstance();
+  builder.registerType<AdminController>().as<Controller>().as<GroupProvider>().asSelf().singleInstance();
   builder.registerType<ProcessApi>().singleInstance();
   builder.registerType<ProcessController>().as<Controller>().as<GroupProvider>().asSelf().singleInstance();
   builder.registerType<UserApi>().singleInstance();

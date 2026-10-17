@@ -98,6 +98,8 @@ ADD_EXECUTABLE(base_tests
     http/MessageQueueControllerTest.cpp
     http/UserControllerTest.cpp
     http/ProcessControllerTest.cpp
+    http/AdminControllerTest.cpp
+    http/TlsReloadRegistryTest.cpp
     http/ClientTest.cpp
     http/UserApiTest.cpp
     http/PropertyApiTest.cpp
