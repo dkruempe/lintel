@@ -188,7 +188,11 @@ TEST_CASE("ProcessService::detachOf detaches process", "[process_service]")
   ProcessServiceFixture fixture;
   auto service = fixture.createService();
 
-  Process process = fixture.makeSleepProcess();
+  // A detached child is never reaped by the service, so it has to end on its own: on
+  // Windows it inherits the handles ctest reads the test output from, and a long lived
+  // orphan would keep the test "running" until the ctest timeout. Two seconds are more
+  // than the detach needs.
+  Process process(fixture.sleepBinary, std::vector<std::string>{ "2" });
   service->startOf(process);
   std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
@@ -363,7 +367,8 @@ TEST_CASE("ProcessService process group detach", "[process_service]")
   ProcessServiceFixture fixture;
   auto service = fixture.createService();
 
-  Process p1 = fixture.makeSleepProcess();
+  // see "ProcessService::detachOf detaches process": a detached child must end on its own
+  Process p1(fixture.sleepBinary, std::vector<std::string>{ "2" });
   ProcessGroup group("detach_group", { p1 });
 
   service->startOf(group);
@@ -512,6 +517,7 @@ TEST_CASE("ProcessService monitor trips the circuit breaker and recovers a group
 
 TEST_CASE("ProcessService monitor samples resources and fires notify thresholds", "[process_service]")
 {
+#if defined(__linux__) || defined(__APPLE__)
   ProcessServiceFixture fixture;
   auto service = fixture.createService();
 
@@ -530,6 +536,11 @@ TEST_CASE("ProcessService monitor samples resources and fires notify thresholds"
   REQUIRE(foundFreshSample);
 
   service->terminateOf(process);
+#else
+  // ProcessResourceReader has no Windows implementation and reports every sample as
+  // invalid there, so a monitor sample can never exist on this platform.
+  SKIP("resource sampling is only implemented for Linux and macOS");
+#endif
 }
 
 TEST_CASE("ProcessService monitor performs a periodic restart", "[process_service]")
@@ -615,8 +626,7 @@ TEST_CASE("ProcessService resolves a bare command name through PATH", "[process_
 
   REQUIRE(service->of(process.getId()).has_value());
   service->terminateOf(process);
-  std::error_code __ec{};
-  std::filesystem::remove_all(pathDirectory, __ec);
+  std::filesystem::remove_all(pathDirectory);
 }
 
 TEST_CASE("ProcessService::allGroupsOf rejects an invalid regex", "[process_service]")

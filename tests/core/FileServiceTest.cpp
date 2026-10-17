@@ -28,7 +28,8 @@ namespace {
     std::filesystem::path writeFile(const std::string &name, const std::string &content) const
     {
       const auto path = directory / name;
-      std::ofstream out(path);
+      // write in binary mode so line endings are not translated on Windows
+      std::ofstream out(path, std::ios::binary);
       out << content;
       return path;
     }

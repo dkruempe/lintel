@@ -24,6 +24,37 @@
 #include "lintel/features/base/models/ProcessInfo.h"
 
 namespace lintel {
+namespace {
+
+  /** Terminate a running child process and return only once it has really exited.
+   *
+   * boost::process::child::terminate() closes the process handle right after calling
+   * TerminateProcess(), and the child object then counts itself as exited - a later
+   * wait() becomes a no-op. TerminateProcess() however only *marks* the process for
+   * termination: on Windows the address space is torn down asynchronously, and until
+   * that happened every file the process still maps stays locked. Deleting the
+   * executable of a just terminated child therefore failed with "Access is denied".
+   * Waiting for the process to signal its exit before returning makes terminateOf()
+   * synchronous on both platforms.
+   */
+  void terminateChild(const std::shared_ptr<boost::process::v1::child> &child)
+  {
+#if defined(_WIN32)
+    const HANDLE handle = static_cast<HANDLE>(child->native_handle());
+    if (::TerminateProcess(handle, EXIT_FAILURE) == 0) {
+      child->terminate();// report the failure through boost::process
+      return;
+    }
+    ::WaitForSingleObject(handle, INFINITE);
+    // reap the exit code and close the process handle
+    child->wait();
+#else
+    child->terminate();
+#endif
+  }
+
+}// namespace
+
 ProcessService::ProcessService(std::shared_ptr<ProcessName> processName,
   std::shared_ptr<EnvironmentConfiguration> environmentConfiguration,
   std::shared_ptr<Configuration> configuration,
@@ -651,7 +682,7 @@ void ProcessService::terminateOf(const Process &process)
     processExecutes = found->second;
   }
   bool running = processExecutes.getChild()->running();
-  if (running) { processExecutes.getChild()->terminate(); }
+  if (running) { terminateChild(processExecutes.getChild()); }
   if (processExecutes.getChild()->running()) { processExecutes.getChild()->wait(); }
   int exitCode = processExecutes.getChild()->exit_code();
   {
