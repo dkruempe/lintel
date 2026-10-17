@@ -81,6 +81,16 @@ private:
 
   static int32_t versionOf(const std::string &fileName);
 
+  /** Register a `GET /ready` check that pings this connection.
+   *
+   * The plugin owns the connection definitions, so it is the place that knows
+   * which databases the process depends on. The check re-connects on every
+   * readiness request (the persistence layer has no pool): a probe usually runs
+   * every few seconds, which is cheap compared to reporting ready while the
+   * database is gone.
+   * @param connectionEntry the database connection to check */
+  static void registerReadinessCheck(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+
   void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
 public:

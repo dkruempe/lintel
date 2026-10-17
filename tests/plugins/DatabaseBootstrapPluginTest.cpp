@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -18,6 +19,7 @@
 #include "lintel/core/persistence/ConnectionType.h"
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 #include "lintel/core/persistence/Statement.h"
+#include "lintel/core/services/ReadinessRegistry.h"
 #include "lintel/core/utils/TypeName.h"
 
 #include <catch2/catch_all.hpp>
@@ -199,6 +201,38 @@ TEST_CASE("DatabaseBootstrapPlugin: getPriority is Database", "[db_bootstrap_plu
   DbpFixture fixture("priority");
 
   REQUIRE(fixture.plugin->getPriority() == BootstrapSequence::Database);
+}
+
+TEST_CASE("DatabaseBootstrapPlugin: onStart registers one readiness check per connection", "[db_bootstrap_plugin]")
+{
+  // the registry is a process-wide singleton; a direct run of base_tests keeps
+  // the checks of earlier cases, so this one starts and ends with an empty one
+  ReadinessRegistry::instance().clear();
+
+  DbpFixture fixture("readiness");
+  // a directory handed to SQLite as its database file cannot be opened, which is
+  // the failure the check has to report
+  fixture.addConnection("broken", std::filesystem::temp_directory_path().string(), false);
+
+  REQUIRE_NOTHROW(fixture.plugin->onStart());
+
+  const std::vector<ReadinessRegistry::CheckResult> results = ReadinessRegistry::instance().run();
+  REQUIRE(results.size() == 2);
+  const auto findBy = [&results](const std::string &name) {
+    return std::find_if(results.begin(), results.end(), [&name](const ReadinessRegistry::CheckResult &result) {
+      return result.m_name == name;
+    });
+  };
+  const auto healthy = findBy("database:" + fixture.connectionName);
+  REQUIRE(healthy != results.end());
+  REQUIRE(healthy->m_ready);
+  REQUIRE(healthy->m_detail.empty());
+  const auto broken = findBy("database:broken");
+  REQUIRE(broken != results.end());
+  REQUIRE_FALSE(broken->m_ready);
+  REQUIRE_FALSE(broken->m_detail.empty());
+
+  ReadinessRegistry::instance().clear();
 }
 TEST_CASE("DatabaseBootstrapPlugin: valid configuration creates the schema and the tracking row",
   "[db_bootstrap_plugin]")

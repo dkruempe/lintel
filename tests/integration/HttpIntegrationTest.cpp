@@ -1,6 +1,8 @@
 #include <httplib.h>
+#include <rapidjson/document.h>
 
 #include <lintel/core/configuration/EnvironmentConfiguration.h>
+#include <lintel/core/services/ReadinessRegistry.h>
 #include <lintel/features/http/configuration/ClientConfiguration.h>
 #include <lintel/features/http/configuration/ServerConfiguration.h>
 #include <lintel/features/http/service/Client.h>
@@ -86,10 +88,23 @@ namespace {
     }
   };
 
+  /** Empties the process-wide readiness registry for the duration of a test.
+   *
+   * `GET /ready` reads a singleton, so a check registered by another test that
+   * runs earlier in the same process (ctest starts one process per test case, a
+   * direct run does not) would leak in and change the response. */
+  struct ReadyCheckGuard
+  {
+    ReadyCheckGuard() { ReadinessRegistry::instance().clear(); }
+    ~ReadyCheckGuard() { ReadinessRegistry::instance().clear(); }
+  };
+
 }// namespace
 
 TEST_CASE("Server: health and readiness endpoints respond 200 without auth")
 {
+  ReadyCheckGuard readyGuard;
+
   // Server binds this port itself, so it has to be picked before the object exists. The
   // constructor throws if the bind fails, which fails the test.
   const int port = freeEphemeralPort();
@@ -112,6 +127,82 @@ TEST_CASE("Server: health and readiness endpoints respond 200 without auth")
   REQUIRE(ready->status == 200);
   REQUIRE(ready->body == "{\"status\":\"ready\"}");
   REQUIRE(ready->get_header_value("Content-Type") == "application/json");
+}
+
+TEST_CASE("Server: readiness endpoint reports the result of every registered check")
+{
+  ReadyCheckGuard readyGuard;
+  ReadinessRegistry::instance().registerCheck("database:test", [](std::string &) { return true; });
+  ReadinessRegistry::instance().registerCheck("shared_memory", [](std::string &) { return true; });
+
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  Server server(ServerConfiguration("127.0.0.1", port), std::vector<std::shared_ptr<Controller>>{});
+
+  httplib::Client client("127.0.0.1", port);
+  client.set_connection_timeout(std::chrono::seconds(2));
+  client.set_read_timeout(std::chrono::seconds(2));
+
+  auto ready = client.Get("/ready");
+  REQUIRE(ready != nullptr);
+  REQUIRE(ready->status == 200);
+  REQUIRE(ready->body == "{\"status\":\"ready\",\"checks\":{\"database:test\":\"ok\",\"shared_memory\":\"ok\"}}");
+}
+
+TEST_CASE("Server: readiness endpoint answers 503 when a check fails")
+{
+  ReadyCheckGuard readyGuard;
+  ReadinessRegistry::instance().registerCheck("database:test", [](std::string &) { return true; });
+  // a check reports why the dependency is unusable, a throwing one counts as failed
+  ReadinessRegistry::instance().registerCheck("shared_memory", [](std::string &detail) {
+    detail = "segment 'main' is not mapped";
+    return false;
+  });
+
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  Server server(ServerConfiguration("127.0.0.1", port), std::vector<std::shared_ptr<Controller>>{});
+
+  httplib::Client client("127.0.0.1", port);
+  client.set_connection_timeout(std::chrono::seconds(2));
+  client.set_read_timeout(std::chrono::seconds(2));
+
+  auto ready = client.Get("/ready");
+  REQUIRE(ready != nullptr);
+  REQUIRE(ready->status == 503);
+  REQUIRE(ready->body
+          == "{\"status\":\"not_ready\",\"checks\":{\"database:test\":\"ok\",\"shared_memory\":\"failed: segment "
+             "'main' is not mapped\"}}");
+}
+
+TEST_CASE("Server: readiness endpoint escapes a failure reason in the JSON body")
+{
+  ReadyCheckGuard readyGuard;
+  // a reason that would break hand-written JSON: quote, backslash and newline
+  ReadinessRegistry::instance().registerCheck("database:test", [](std::string &detail) {
+    detail = "connection \"x\\y\"\nfailed";
+    return false;
+  });
+
+  const int port = freeEphemeralPort();
+  REQUIRE(port > 0);
+
+  Server server(ServerConfiguration("127.0.0.1", port), std::vector<std::shared_ptr<Controller>>{});
+
+  httplib::Client client("127.0.0.1", port);
+  client.set_connection_timeout(std::chrono::seconds(2));
+  client.set_read_timeout(std::chrono::seconds(2));
+
+  auto ready = client.Get("/ready");
+  REQUIRE(ready != nullptr);
+  REQUIRE(ready->status == 503);
+
+  rapidjson::Document document;
+  REQUIRE_FALSE(document.Parse(ready->body.c_str()).HasParseError());
+  REQUIRE(document["status"].GetString() == std::string("not_ready"));
+  REQUIRE(document["checks"]["database:test"].GetString() == std::string("failed: connection \"x\\y\"\nfailed"));
 }
 
 TEST_CASE("Server: applies configured read, write and idle timeouts")

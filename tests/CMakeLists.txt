@@ -33,6 +33,7 @@ ADD_EXECUTABLE(base_tests
     services/SchedulerServiceTest.cpp
     services/ExecutorServiceTest.cpp
     core/LoggerServiceTest.cpp
+    core/ReadinessRegistryTest.cpp
     integration/SQLiteIntegrationTest.cpp
     integration/PostgreSqlIntegrationTest.cpp
     integration/ConfigIntegrationTest.cpp

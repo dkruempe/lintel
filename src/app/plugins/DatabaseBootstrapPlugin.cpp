@@ -7,12 +7,16 @@
 #include "lintel/core/persistence/Transaction.h"
 #include "lintel/core/services/FileService.h"
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/services/ReadinessRegistry.h"
 #include "lintel/core/utils/StringUtils.h"
 
 namespace lintel {
 void DatabaseBootstrapPlugin::onStart()
 {
   for (const auto &connectionEntry : m_connectionConfigurations->allOf()) {
+    // register before handling: a failing bootstrap must still show up as an
+    // unready dependency instead of silently missing from `GET /ready`
+    registerReadinessCheck(connectionEntry);
     try {
       handle(connectionEntry);
     } catch (db::SQLException &exception) {
@@ -21,6 +25,23 @@ void DatabaseBootstrapPlugin::onStart()
       LOG_ERROR("{} - failed to handle database bootstrap plugin - {}", connectionEntry->getName(), exception.what());
     }
   }
+}
+
+void DatabaseBootstrapPlugin::registerReadinessCheck(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
+{
+  ReadinessRegistry::instance().registerCheck(
+    "database:" + connectionEntry->getName(), [connectionEntry](std::string &detail) {
+      try {
+        // SELECT 1 is portable across PostgreSQL and SQLite and needs no schema
+        db::Connection connection(connectionEntry);
+        db::Statement statement(connection);
+        statement.execute("SELECT 1");
+        return true;
+      } catch (const std::exception &exception) {
+        detail = exception.what();
+        return false;
+      }
+    });
 }
 
 void DatabaseBootstrapPlugin::handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)

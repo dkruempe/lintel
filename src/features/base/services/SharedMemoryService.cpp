@@ -2,6 +2,7 @@
 
 #include <lintel/core/models/SharedMemorySegment.h>
 #include <lintel/core/models/SharedMemorySegmentInfo.h>
+#include <lintel/core/services/ReadinessRegistry.h>
 #include <lintel/core/shm/BoostSegmentAllocator.h>
 #include <lintel/features/base/services/ShmConstructors.h>
 
@@ -152,6 +153,26 @@ ShmSegmentAccessor SharedMemoryService::getSegmentAccessor(const std::shared_ptr
 void SharedMemoryService::onInitialize()
 {
   std::weak_ptr<SharedMemoryService> weakSelf = shared_from_this();
+  // `GET /ready` reports the segments this service mapped: a segment that is
+  // gone (file removed, mapping closed) makes the process unable to serve the
+  // data structures it stores there. The weak_ptr keeps the registry free of
+  // the service lifetime; an expired reference means the service was destroyed
+  // and the process is shutting down anyway.
+  ReadinessRegistry::instance().registerCheck("shared_memory", [weakSelf](std::string &detail) {
+    const std::shared_ptr<SharedMemoryService> self = weakSelf.lock();
+    if (self == nullptr) {
+      detail = "shared memory service is not running";
+      return false;
+    }
+    std::lock_guard<std::mutex> lock(self->m_segmentsMutex);
+    for (const auto &entry : self->m_segments) {
+      if (entry.second == nullptr || entry.second->m_managedMappedFile == nullptr) {
+        detail = "segment '" + entry.first + "' is not mapped";
+        return false;
+      }
+    }
+    return true;
+  });
   m_schedulerService->schedule_at_fixed_rate(m_scheduleRate->getValue(), m_scheduleRate->getValue(), [weakSelf]() {
     if (auto self = weakSelf.lock()) { self->onCheck(); }
   });

@@ -2,9 +2,15 @@
 
 #include <httplib.h>
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/services/ReadinessRegistry.h"
 #include "lintel/features/http/service/ContentType.h"
 #include "lintel/features/http/service/Controller.h"
 #include "lintel/features/http/service/HttpStatusCodes.h"
@@ -13,8 +19,38 @@ namespace lintel {
 namespace {
   /** Body of the liveness (health) response */
   constexpr const char *kHealthBody = "{\"status\":\"ok\"}";
-  /** Body of the readiness response */
+  /** Body of the readiness response while no dependency check is registered */
   constexpr const char *kReadyBody = "{\"status\":\"ready\"}";
+
+  /**
+   * @return the readiness body with the result of every registered check:
+   *         {"status":"ready|not_ready","checks":{"<name>":"ok|failed: <reason>"}}
+   *
+   * rapidjson writes the JSON so that failure reasons coming from exception
+   * messages (quotes, backslashes, control characters) cannot break the body.
+   */
+  std::string readinessBody(const std::vector<ReadinessRegistry::CheckResult> &results, const bool ready)
+  {
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    writer.StartObject();
+    writer.Key("status");
+    writer.String(ready ? "ready" : "not_ready");
+    writer.Key("checks");
+    writer.StartObject();
+    for (const auto &result : results) {
+      writer.Key(result.m_name.c_str(), static_cast<rapidjson::SizeType>(result.m_name.size()));
+      if (result.m_ready) {
+        writer.String("ok");
+      } else {
+        const std::string detail = result.m_detail.empty() ? "failed" : "failed: " + result.m_detail;
+        writer.String(detail.c_str(), static_cast<rapidjson::SizeType>(detail.size()));
+      }
+    }
+    writer.EndObject();
+    writer.EndObject();
+    return std::string(buffer.GetString(), buffer.GetSize());
+  }
 
   /** Register unauthenticated liveness/readiness endpoints on the server */
   void registerHealthEndpoints(const std::shared_ptr<httplib::Server> &server)
@@ -24,8 +60,18 @@ namespace {
       response.set_content(kHealthBody, ContentType(ContentType::ApplicationJson).getName());
     });
     server->Get("/ready", [](const httplib::Request &, httplib::Response &response) {
-      response.status = HttpStatusCodes::OK;
-      response.set_content(kReadyBody, ContentType(ContentType::ApplicationJson).getName());
+      // liveness stays dependency free, readiness runs the registered checks:
+      // an unready dependency must take this instance out of the load balancer
+      const std::vector<ReadinessRegistry::CheckResult> results = ReadinessRegistry::instance().run();
+      if (results.empty()) {
+        response.status = HttpStatusCodes::OK;
+        response.set_content(kReadyBody, ContentType(ContentType::ApplicationJson).getName());
+        return;
+      }
+      bool ready = true;
+      for (const auto &result : results) { ready = ready && result.m_ready; }
+      response.status = ready ? HttpStatusCodes::OK : HttpStatusCodes::ServiceUnavailable;
+      response.set_content(readinessBody(results, ready), ContentType(ContentType::ApplicationJson).getName());
     });
   }
 

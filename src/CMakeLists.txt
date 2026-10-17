@@ -118,6 +118,7 @@ set(headers
     include/lintel/core/services/LoggerService.h
     include/lintel/core/services/PersistableBean.h
     include/lintel/core/services/PersistableService.h
+    include/lintel/core/services/ReadinessRegistry.h
     include/lintel/features/base/services/ProcessService.h
     include/lintel/core/services/ISharedMemoryService.h
     include/lintel/core/services/PropertyRegistration.h
@@ -358,6 +359,7 @@ set(sources
     core/services/FileService.cpp
     core/services/LoggerService.cpp
     core/services/PersistableService.cpp
+    core/services/ReadinessRegistry.cpp
     features/base/services/ProcessService.cpp
     features/base/services/SharedMemoryService.cpp
     core/services/StopWatchService.cpp

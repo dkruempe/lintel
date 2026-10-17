@@ -17,6 +17,7 @@
 #include "lintel/core/exceptions/ShmSegmentNotFound.h"
 #include "lintel/core/models/ProcessName.h"
 #include "lintel/core/models/SharedMemorySegment.h"
+#include "lintel/core/services/ReadinessRegistry.h"
 #include "lintel/core/utils/TypeName.h"
 #include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
@@ -215,6 +216,33 @@ TEST_CASE("SharedMemoryService: periodic check leaves a non auto-extend segment 
 
   fixture.scheduler->onShutdown();
   REQUIRE(fixture.service->getGeneration() == 0);
+}
+
+TEST_CASE("SharedMemoryService: onInitialize registers a readiness check for its segments")
+{
+  // the registry is process-wide; clear it so an earlier case in a direct run
+  // cannot add checks of its own
+  ReadinessRegistry::instance().clear();
+
+  SharedMemoryServiceFixture fixture;
+  fixture.scheduler->onInitialize();
+  fixture.service->onInitialize();
+  fixture.scheduler->onShutdown();
+
+  const std::vector<ReadinessRegistry::CheckResult> results = ReadinessRegistry::instance().run();
+  REQUIRE(results.size() == 1);
+  REQUIRE(results[0].m_name == "shared_memory");
+  REQUIRE(results[0].m_ready);
+
+  // the check follows the service lifetime: a stale registration must report
+  // not ready instead of claiming the (gone) segments are mapped
+  fixture.service.reset();
+  const std::vector<ReadinessRegistry::CheckResult> stale = ReadinessRegistry::instance().run();
+  REQUIRE(stale.size() == 1);
+  REQUIRE_FALSE(stale[0].m_ready);
+  REQUIRE_FALSE(stale[0].m_detail.empty());
+
+  ReadinessRegistry::instance().clear();
 }
 
 TEST_CASE("SharedMemoryService: periodic check auto-extends a nearly full segment")
