@@ -169,7 +169,7 @@ namespace {
   std::string procCliOneProcessBody(const std::string &executable,
     const std::string &groupName,
     const std::string &groupId,
-    pid_t systemPid)
+    lintel::ProcessId systemPid)
   {
     auto procCliProcess = std::make_shared<Process>(std::filesystem::path(executable), std::vector<std::string>{});
     ProcessInfo procCliInfo(procCliProcess, systemPid, true, 0, groupName, groupId);
@@ -190,7 +190,7 @@ namespace {
   std::string procCliHealthBody(const std::string &executable,
     const std::string &groupName,
     const std::string &groupId,
-    pid_t systemPid)
+    lintel::ProcessId systemPid)
   {
     auto procCliProcess = std::make_shared<Process>(std::filesystem::path(executable), std::vector<std::string>{});
     ProcessInfo procCliInfo(procCliProcess, systemPid, true, 0, groupName, groupId);
