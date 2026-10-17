@@ -110,6 +110,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   configuration directory (the HTTP benchmark, which looks for the development certificate)
   silently saw the wrong path. It now uses `EnvironmentConfiguration::overrides()` on its own
   instance.
+- **An end-to-end HTTP tutorial (`ROADMAP.md` U6).** `docs/tutorial.md` walks through the
+  reference application: starting it, the `/health` and `/ready` probes, the login flow (HTTP
+  Basic in, `UserDto.id` as the bearer token out) and the consequences of token-to-address
+  binding, an authenticated call, `POST /admin/reload-tls`, and what has to change for
+  production (production profile, `${VAR}` credentials, proxy `trusted_proxies`, probe wiring,
+  the 8 MiB request-body cap). Every command was run against `bin/main` and the results are the
+  real responses; the page also records that `/hello` belongs to `lintel::ExampleController`
+  and is not served by the reference app.
 
 ### Changed
 - **The public API moved into `namespace lintel` (breaking).** Every public class, free

@@ -288,6 +288,7 @@ The full API reference is generated from the public headers with Doxygen and pub
 | [Architecture](https://dkruempe.github.io/lintel/architecture.html) | The `core`/`features` split, the bootstrap sequence and its ordering contract, dependency injection, properties, persistence, shared memory, transports, extension points, integration with `find_package` |
 | [Conventions](https://dkruempe.github.io/lintel/architecture_conventions.html) | Header hygiene, namespaces, error handling, test constraints |
 | [Class reference](https://dkruempe.github.io/lintel/annotated.html) | Generated from the public headers |
+| [Tutorial: the HTTP API in 15 minutes](docs/tutorial.md) | Start the reference app, talk to the API over TLS, authenticate, renew the certificate, deploy |
 
 The `Doxygen` workflow runs with `WARN_AS_ERROR`, so undocumented or malformed comments fail the build rather than accumulating. To generate the documentation locally:
 
