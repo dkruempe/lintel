@@ -74,6 +74,48 @@ This writes `cfg/certs/server.crt` and `cfg/certs/server.key` (SAN: `localhost`,
 - `require_tls` – refuse to start the server without a configured TLS certificate/key (`true`/`false`). Defaults to `false`; use it in production to avoid serving credentials in clear text.
 - `trusted_proxies` – comma-separated list of IPs or CIDR ranges (e.g. `10.0.0.0/8`) whose `X-Forwarded-For` header is trusted for client-IP detection. By default the header is ignored, so clients behind a proxy must be listed here for correct IP binding, rate limiting and lockout.
 
+### Health and readiness probes
+
+Two unauthenticated endpoints are always registered:
+
+| Endpoint | Meaning | Response |
+|---|---|---|
+| `GET /health` | liveness – is the process alive? | always `200 {"status":"ok"}` |
+| `GET /ready` | readiness – can the process serve? | `200` when ready, `503` when a dependency is down |
+
+`/health` never touches a dependency, so a broken database does not make a
+supervisor restart an otherwise healthy process. `/ready` runs the dependency
+checks registered at startup and reports them in the body:
+
+```json
+{"status":"ready","checks":{"database:DEFAULT_PSQL":"ok","shared_memory":"ok"}}
+{"status":"not_ready","checks":{"database:DEFAULT_PSQL":"failed: connection refused","shared_memory":"ok"}}
+```
+
+The checks are contributed by the components that own the dependency:
+`DatabaseBootstrapPlugin` registers one `database:<connection name>` check per
+configured connection (a `SELECT 1` ping) and `SharedMemoryService` a
+`shared_memory` check that verifies its segments are mapped. With no check
+registered yet the endpoint answers the legacy `200 {"status":"ready"}`.
+
+Kubernetes example:
+
+```yaml
+livenessProbe:  { httpGet: { path: /health, port: 8080 }, initialDelaySeconds: 5 }
+readinessProbe: { httpGet: { path: /ready,  port: 8080 }, periodSeconds: 5, failureThreshold: 3 }
+```
+
+### Graceful shutdown
+
+On `SIGINT`/`SIGTERM` (Ctrl+C, `docker stop`, Kubernetes pod termination) the
+process stops in a defined order: services are shut down by ascending
+`shutdownPriorityOf()`, so ordinary (`DEFAULT`) services wind down first and the
+`ProcessService` that manages child processes last, after which `start()`
+returns and the process exits. A request that is already being served is
+finished before the server socket is closed. Give the container a termination
+grace period (`docker stop -t`, `terminationGracePeriodSeconds`) that covers the
+slowest `onShutdown()`.
+
 ## Getting Started
 
 ### Prerequisites
@@ -280,6 +322,36 @@ The compose profiles are development defaults, not a production deployment:
 - **Database credentials**: `postgres` runs with user/password/db `test`/`test`/`test` and publishes port `5432` to the host, so it is reachable with guessable credentials. The app's default connection is SQLite (see [SQLite vs. PostgreSQL](#sqlite-vs-postgresql)), so this Postgres is only needed by the DB-backed tests.
 - **TLS**: the app terminates HTTPS, but with the **self-signed development certificate** in `cfg/certs/`, which is git-ignored and not shipped in the release tarball.
 - **For production**: do not publish `5432`, replace the credentials with real secrets, keep `require_tls="true"` in `cfg/bootstrap.xml` and point `cert_path`/`key_path` at real certificates. See [HTTP Server Configuration](#http-server-configuration) and [TLS](#tls).
+
+### Production profile
+
+`cfg/bootstrap_production.xml` is a ready-to-adapt starting point that does not
+carry the development conveniences. Select it without touching the default file:
+
+```bash
+export BOOTSTRAP_CONFIG_NAME=bootstrap_production
+export LOG_DIR=/var/log/lintel SHM_DIR=/dev/shm/lintel
+export DB_HOST=db.internal DB_PORT=5432 DB_USER=lintel DB_PASSWORD='<secret>' DB_NAME=lintel
+export TLS_CERT_FILE=/etc/lintel/tls/server.crt TLS_KEY_FILE=/etc/lintel/tls/server.key
+./bin/main
+```
+
+It differs from `cfg/bootstrap.xml` in the ways that matter for an operation:
+
+- TLS is mandatory (`require_tls="true"`) and reads the certificate/key from
+  `${TLS_CERT_FILE}` / `${TLS_KEY_FILE}` instead of the self-signed files under
+  `cfg/certs/`.
+- The default connection is **PostgreSQL** with credentials from the environment
+  (no SQLite fallback, no committed password).
+- The log directory and the shared-memory directory come from `${LOG_DIR}` and
+  `${SHM_DIR}` (put the latter on a tmpfs), not from the developer's `$HOME`.
+- The logger rotates at `info`.
+
+Every `${NAME}` is expanded from the environment; a variable that is not set
+stays literal, so a missing `${DB_*}`/`${TLS_*}` makes startup fail loudly
+instead of silently connecting somewhere unexpected. Adjust the file for your
+deployment (segment sizes, `trusted_proxies`, child `<Process>` entries) as
+needed.
 
 ## Testing
 

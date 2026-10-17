@@ -69,13 +69,14 @@ Readiness probe
 
 ##### Description
 
-Returns 200 with {"status":"ready"} when the process accepts traffic. Unauthenticated; lightweight liveness-style readiness check.
+Runs the dependency checks registered at startup (a "database:<name>" SELECT 1 ping per configured connection, "shared_memory" for the mapped segments) and returns 200 with {"status":"ready","checks":{"<name>":"ok",...}} when all pass. While a dependency is down it returns 503 with {"status":"not_ready","checks":{"<name>":"failed: <reason>",...}}. With no check registered it answers 200 with the legacy {"status":"ready"}. Unauthenticated; use it for Kubernetes readiness probes, /health for liveness.
 
 ##### Responses
 
 | Code | Description |
 | ---- | ----------- |
-| 200 | A successful response |
+| 200 | The process is ready to serve traffic |
+| 503 | A dependency check failed |
 
 ### /history/{processName}/{serviceName}/{label}
 

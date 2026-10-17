@@ -43,17 +43,46 @@ paths:
     get:
       summary: Readiness probe
       description: >
-        Returns 200 with {"status":"ready"} when the process accepts traffic.
-        Unauthenticated; lightweight liveness-style readiness check.
+        Runs the dependency checks registered at startup (a "database:<name>"
+        SELECT 1 ping per configured connection, "shared_memory" for the mapped
+        segments) and returns 200 with
+        {"status":"ready","checks":{"<name>":"ok",...}} when all pass. While a
+        dependency is down it returns 503 with
+        {"status":"not_ready","checks":{"<name>":"failed: <reason>",...}}. With no
+        check registered it answers 200 with the legacy {"status":"ready"}.
+        Unauthenticated; use it for Kubernetes readiness probes, /health for
+        liveness.
       responses:
         "200":
-          description: A successful response
+          description: The process is ready to serve traffic
           schema:
             type: object
             properties:
               status:
                 type: string
                 example: ready
+              checks:
+                type: object
+                additionalProperties:
+                  type: string
+                example:
+                  database:DEFAULT_PSQL: ok
+                  shared_memory: ok
+        "503":
+          description: A dependency check failed
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                example: not_ready
+              checks:
+                type: object
+                additionalProperties:
+                  type: string
+                example:
+                  database:DEFAULT_PSQL: "failed: connection refused"
+                  shared_memory: ok
   /history/{processName}/{serviceName}/{label}:
     get:
       summary: Get history

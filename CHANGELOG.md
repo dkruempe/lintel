@@ -52,6 +52,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   size at essentially unchanged build time, but workload-dependent throughput (a regex-heavy
   microbenchmark regresses ~15 %, the library's DTO paths are unchanged). `ENABLE_LTO` stays
   opt-in.
+- **Dependency-checked readiness probe and a production profile (`ROADMAP.md` item 18 / U4).**
+  `GET /ready` no longer answers unconditionally: it runs the checks of the new process-wide
+  `lintel::ReadinessRegistry` and answers `503` with the reasons while a dependency is down
+  (`DatabaseBootstrapPlugin` registers a `database:<name>` `SELECT 1` check per connection,
+  `SharedMemoryService` a `shared_memory` check; a throwing check counts as failed and the body
+  is serialized with rapidjson so an exception message cannot break it). With no check
+  registered the historical `200 {"status":"ready"}` is preserved; `/health` stays a
+  dependency-free liveness probe. `cfg/bootstrap_production.xml` is a new starting point that
+  forces TLS, reads PostgreSQL credentials and the log/shared-memory directories from the
+  environment, and ships no fallback credentials. The graceful-shutdown order (services are shut
+  down by ascending `shutdownPriorityOf()`, the process manager last) is now pinned by a test in
+  `tests/core/StartupBuilderTest.cpp` and documented in `docs/architecture.dox` and the README.
 
 ### Changed
 - **The public API moved into `namespace lintel` (breaking).** Every public class, free

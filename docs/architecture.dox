@@ -77,16 +77,36 @@
  *    `PersistableBean` to reload its state from persistent storage.
  * 9. **Service initialization.** `InitializeService::onInitialize()` calls
  *    `onInitialize()` on every resolved @ref lintel::AbstractServiceInterface, in
- *    reverse `shutdownPriorityOf()` order so that dependents come up before
- *    their dependencies.
+ *    container registration order.
  * 10. **Idle.** The builder waits on a condition variable until the signal
  *     thread sets the stop flag, then joins it. The destructor joins as well,
  *     so a `REQUIRE` failure that unwinds through a step cannot leave a
  *     joinable `std::thread` behind and abort the process.
  *
- * Shutdown mirrors this through `onShutdown()` and `shutdownPriorityOf()`
- * (`ShutdownPriority::PROCESS_SERVICE` tears down managed processes before
- * `ShutdownPriority::DEFAULT` services).
+ * @subsection arch_shutdown Graceful shutdown
+ *
+ * The `SIGINT`/`SIGTERM` that arrives in the `sigwait` thread (or a Windows
+ * console control event) calls `StartupBuilder::onShutdown()`. It sets the stop
+ * flag **under the same mutex** that `start()` waits on, so the wakeup cannot be
+ * lost, then sorts the resolved services by `shutdownPriorityOf()` **ascending**
+ * and calls `onShutdown()` on each in that order: `ShutdownPriority::DEFAULT`
+ * (0) services stop first, the `ShutdownPriority::PROCESS_SERVICE` (1)
+ * `ProcessService` stops last. Keeping the process manager alive to the end lets
+ * it keep reaping children (`SIGCHLD`) while the rest of the process winds down,
+ * and only then detach from/terminate the managed processes. When every
+ * `onShutdown()` has run, the condition variable is notified and `start()`
+ * returns, joining the signal thread. The order is pinned by
+ * `tests/core/StartupBuilderTest.cpp`.
+ *
+ * The HTTP server is deliberately *not* part of that sequence: it is created
+ * eagerly by `ServerProvider` while the container is built (phase 4) and held by
+ * the container, not by an `AbstractServiceInterface`. It therefore keeps
+ * accepting and serving for the whole lifetime of the process and is only
+ * stopped when the container - and with it `ServerProvider` - is destroyed
+ * after `start()` returned. `Server::Impl`'s destructor calls `stop()` and joins
+ * the listen thread, which lets an in-flight request finish instead of cutting
+ * the connection. A deployment that wants to stop taking new work before the
+ * services wind down has to do that at the infrastructure level (readiness below).
  *
  * @section arch_di Dependency injection
  *
@@ -186,8 +206,23 @@
  * API. The wire contract is `swagger.yaml` in the repository root; `swagger.md`
  * is a generated mirror of it. Server behavior worth knowing:
  *
- * - `/health` and `/ready` are unauthenticated and always answer `200` with a
- *    JSON status, so they are usable as container probes.
+ * - `/health` is unauthenticated and **always** answers `200` with
+ *    `{"status":"ok"}`: it is a liveness probe that must not consult any
+ *    dependency, otherwise a broken database would make the supervisor restart a
+ *    healthy process.
+ * - `/ready` is the readiness probe. It runs every check registered in
+ *    @ref lintel::ReadinessRegistry - a process-wide registry that components
+ *    owning a dependency fill during startup (`DatabaseBootstrapPlugin` registers
+ *    one `database:<name>` check per configured connection, `SharedMemoryService`
+ *    a `shared_memory` check). With no check registered it answers the historical
+ *    `200 {"status":"ready"}`; otherwise it answers `200` with
+ *    `{"status":"ready","checks":{"<name>":"ok",...}}` when every check passed,
+ *    or `503` with `{"status":"not_ready","checks":{"<name>":"failed: <reason>",...}}`.
+ *    A check that throws counts as failed; the body is written with rapidjson, so
+ *    a reason taken from an exception message is escaped and cannot break the
+ *    document. A check reconnects/pings its dependency per request, which is what
+ *    a load balancer or Kubernetes probe wants: it takes the process out of
+ *    rotation while a dependency is down.
  * - TLS is configured per `<HttpHost><Server>` in the bootstrap XML. With
  *    `require_tls="true"` the server refuses to start without a certificate and
  *    key, which keeps credentials from being served in clear text.
@@ -223,9 +258,13 @@
  * Conan 2; `CONAN_SYSREQUIRES_MODE` is what lets `conan install` satisfy
  * system requirements during CI.
  *
- * Platform support in practice: the code is POSIX-only (`sigwait`,
- * `localtime_r`, named POSIX FIFOs in the examples). The CI matrix covers GCC
- * and Clang on Ubuntu; macOS and Windows are not currently built in CI.
+ * Platform support in practice: the code is written against POSIX and the POSIX
+ * details (`sigwait`, `localtime_r`, named shared memory, FIFOs) are isolated
+ * behind `lintel/core/platform/Platform.h` and a handful of `#if defined(_WIN32)`
+ * branches. The blocking CI matrix covers GCC (Release, gate) and Clang with
+ * libstdc++ 14, plus one Debug/non-unity run, all on Ubuntu 24.04. The `macos`
+ * and `windows` jobs are **advisory**: they build and run the tests, but are not
+ * required checks and have no PostgreSQL coverage (see `ROADMAP.md` §8).
  */
 
 /**
