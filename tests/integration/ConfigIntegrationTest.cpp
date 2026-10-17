@@ -394,8 +394,13 @@ TEST_CASE("Configuration: the shipped production profile parses")
   ScopedEnvironmentVariable dbUser{ "DB_USER", "lintel" };
   ScopedEnvironmentVariable dbPassword{ "DB_PASSWORD", "placeholder" };
   ScopedEnvironmentVariable dbName{ "DB_NAME", "lintel" };
-  ScopedEnvironmentVariable tlsCert{ "TLS_CERT_FILE", "/etc/lintel/tls/server.crt" };
-  ScopedEnvironmentVariable tlsKey{ "TLS_KEY_FILE", "/etc/lintel/tls/server.key" };
+  // A platform-native absolute path. "/etc/..." is absolute on POSIX but not on Windows (a Windows
+  // absolute path needs a drive), so the component would resolve it against the config directory and
+  // the value would no longer round-trip. Paths under the scratch directory are absolute everywhere.
+  const std::filesystem::path tlsCertPath = scratch / "tls" / "server.crt";
+  const std::filesystem::path tlsKeyPath = scratch / "tls" / "server.key";
+  ScopedEnvironmentVariable tlsCert{ "TLS_CERT_FILE", tlsCertPath.string() };
+  ScopedEnvironmentVariable tlsKey{ "TLS_KEY_FILE", tlsKeyPath.string() };
 
   ConfigurationComponentBuilder builder(std::make_shared<EnvironmentConfiguration>());
   Configuration config(builder.build(), std::make_shared<EnvironmentConfiguration>());
@@ -420,8 +425,8 @@ TEST_CASE("Configuration: the shipped production profile parses")
     if (!httpEntry->isServer()) { continue; }
     const auto &serverConfiguration = httpEntry->getServerConfiguration();
     REQUIRE(serverConfiguration->isTlsRequired());
-    REQUIRE(serverConfiguration->getCertFile() == std::filesystem::path("/etc/lintel/tls/server.crt"));
-    REQUIRE(serverConfiguration->getKeyFile() == std::filesystem::path("/etc/lintel/tls/server.key"));
+    REQUIRE(serverConfiguration->getCertFile() == tlsCertPath);
+    REQUIRE(serverConfiguration->getKeyFile() == tlsKeyPath);
     foundServer = true;
   }
   REQUIRE(foundServer);
