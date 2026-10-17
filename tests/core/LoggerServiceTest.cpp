@@ -55,7 +55,14 @@ namespace {
       std::filesystem::create_directories(path);
     }
 
-    ~LoggerServiceLogDir() { std::filesystem::remove_all(path); }
+    // Removal is best effort: a LoggerService that is still alive (for example the configured
+    // singleton in the dispatch test) keeps its log file open, and Windows then refuses to delete
+    // the directory. A destructor must not throw, it would abort the test process.
+    ~LoggerServiceLogDir()
+    {
+      std::error_code error;
+      std::filesystem::remove_all(path, error);
+    }
 
     LoggerServiceLogDir(const LoggerServiceLogDir &) = delete;
     LoggerServiceLogDir &operator=(const LoggerServiceLogDir &) = delete;

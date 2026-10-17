@@ -74,13 +74,17 @@ void SharedMemoryService::shrinkOf(const std::shared_ptr<SharedMemorySegment> &s
   // segment while it is being resized and reopened (see growOf).
   shm::SegmentSemaphoreGuard gate(*found->second->m_remapSemaphore);
   const std::string filePath = segment->getPath().string();
-  if (!boost::interprocess::managed_mapped_file::shrink_to_fit(filePath.c_str())) {
-    throw std::runtime_error("failed to shrink shared memory segment '" + segment->getName() + "'");
-  }
-  // Reopen the segment so the new mapping covers the shrunk file.
+  // Windows refuses to truncate a file while a view of it is still mapped ("The
+  // requested operation cannot be performed on a file with a user-mapped section
+  // open"), so our own mapping has to go before the file is shrunk.
   found->second->m_segmentAllocator.reset();
+  found->second->m_managedMappedFile.reset();
+  const bool shrunk = boost::interprocess::managed_mapped_file::shrink_to_fit(filePath.c_str());
+  // Reopen the segment so the new mapping covers the shrunk file; this also restores a
+  // usable mapping when shrinking failed.
   found->second->m_managedMappedFile =
     std::make_shared<boost::interprocess::managed_mapped_file>(boost::interprocess::open_only, filePath.c_str());
+  if (!shrunk) { throw std::runtime_error("failed to shrink shared memory segment '" + segment->getName() + "'"); }
   ++m_generation;
 }
 
