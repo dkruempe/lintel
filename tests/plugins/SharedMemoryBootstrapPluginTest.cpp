@@ -215,14 +215,11 @@ TEST_CASE("SharedMemoryBootstrapPlugin: inserts missing database bookmark")
   createTable(dbPath);
   ShmPluginFixture fixture(true, false, sqliteEntry(dbPath));
   REQUIRE_NOTHROW(fixture.plugin->onStart());
-  db::Connection conn(db::ConnectionType::SQLite, dbPath.string());
-  db::Statement stmt(conn);
-  auto result = stmt.execute("SELECT count(*) FROM shared_memory_repositories");
-  REQUIRE(result.getValue(0, 0) == "1");
-  // ensure all connections/statements are dropped before removing the file on Windows
   {
     db::Connection conn(db::ConnectionType::SQLite, dbPath.string());
     db::Statement stmt(conn);
+    auto result = stmt.execute("SELECT count(*) FROM shared_memory_repositories");
+    REQUIRE(result.getValue(0, 0) == "1");
     stmt.execute("DELETE FROM shared_memory_repositories");
   }
   std::error_code ec;
