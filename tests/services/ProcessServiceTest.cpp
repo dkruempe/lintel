@@ -615,9 +615,7 @@ TEST_CASE("ProcessService resolves a bare command name through PATH", "[process_
 
   REQUIRE(service->of(process.getId()).has_value());
   service->terminateOf(process);
-  std::this_thread::sleep_for(std::chrono::milliseconds(50));
-  std::error_code ecPath{};
-  std::filesystem::remove_all(pathDirectory, ecPath{});
+  std::filesystem::remove_all(pathDirectory);
 }
 
 TEST_CASE("ProcessService::allGroupsOf rejects an invalid regex", "[process_service]")
