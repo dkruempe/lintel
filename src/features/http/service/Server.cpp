@@ -151,6 +151,11 @@ namespace {
       "HTTP server is running without TLS; credentials are transmitted "
       "in clear text. Configure cert/key files for production use.");
     std::shared_ptr<httplib::Server> server = std::make_shared<httplib::Server>();
+    // httplib leaves Nagle on (CPPHTTPLIB_TCP_NODELAY defaults to false), which
+    // adds a delayed-ack stall of up to 40 ms to small responses. An API server
+    // answers with small JSON bodies, so latency wins over the packing that
+    // Nagle does for bulk transfers - and Nagle never delays full segments.
+    server->set_tcp_nodelay(true);
     server->set_error_logger([](const httplib::Error &error, const httplib::Request *) {
       LOG_ERROR("httplib server error: {}", httplib::to_string(error));
     });
@@ -179,6 +184,9 @@ namespace {
     const std::string keyFile = serverConfiguration.getKeyFile().string();
     std::shared_ptr<httplib::SSLServer> sslServer =
       std::make_shared<httplib::SSLServer>(certFile.c_str(), keyFile.c_str());
+    // see initServer: Nagle off, or every small TLS record can wait for the
+    // peer's delayed acknowledgement
+    sslServer->set_tcp_nodelay(true);
     if (serverConfiguration.getWriteTimeOut().count() != 0) {
       sslServer->set_write_timeout(serverConfiguration.getWriteTimeOut());
     }

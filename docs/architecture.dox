@@ -256,6 +256,20 @@
  *    proxies in front of the process: a range that is too wide lets a client
  *    pick its own `X-Forwarded-For` and rotate it per request, which turns the
  *    per-address brute-force protection into no protection at all.
+ * - Request latency is a transport property, not an afterthought. The server
+ *    calls `set_tcp_nodelay(true)`: httplib leaves Nagle enabled
+ *    (`CPPHTTPLIB_TCP_NODELAY` defaults to `false`) and a TLS response then waits
+ *    for the peer's delayed acknowledgement, which cost ~40 ms per request and
+ *    dominated every response the API sent. `benchmarks/HttpBenchmark.cpp` and
+ *    `benchmarks/baseline.json` (checked by `scripts/check-benchmarks.sh`) pin
+ *    that: reverting the option shows up as a >20x regression in
+ *    `BM_Http_Health_TlsKeepAlive`. Nagle never delays a full segment, so the
+ *    option costs nothing for bulk responses. Keep-alive is httplib's default and
+ *    the client used by @ref lintel::Client sets the option for the same reason.
+ *    TLS session resumption is already effective (OpenSSL 1.3 session tickets,
+ *    verified with `openssl s_client -sess_out`/`-sess_in`), and the request body
+ *    is capped at 8 MiB by `set_payload_max_length`, which rejects larger
+ *    uploads instead of buffering them.
  *
  * @section arch_authentication Authentication and sessions
  *

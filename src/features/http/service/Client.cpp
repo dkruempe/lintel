@@ -45,6 +45,14 @@ Client::Client(const std::shared_ptr<ClientConfiguration> &clientConfiguration) 
   m_impl->client = m_impl->sslClient == nullptr
                      ? std::make_shared<httplib::Client>(clientConfiguration->getHost(), clientConfiguration->getPort())
                      : nullptr;
+  // httplib leaves Nagle on (CPPHTTPLIB_TCP_NODELAY defaults to false): a small
+  // request would wait for the peer's delayed acknowledgement. Service-to-service
+  // calls send small requests, so latency wins here too.
+  if (m_impl->isSslClient()) {
+    m_impl->sslClient->set_tcp_nodelay(true);
+  } else {
+    m_impl->client->set_tcp_nodelay(true);
+  }
   if (clientConfiguration->getReadTimeOut().count() != 0) {
     if (m_impl->isSslClient()) {
       m_impl->sslClient->set_read_timeout(clientConfiguration->getReadTimeOut());

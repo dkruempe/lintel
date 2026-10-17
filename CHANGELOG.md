@@ -85,6 +85,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   protections (per-address `m_maxLoginAttempts`/`m_rateLimitWindow` and
   `m_maxLoginFailures`/`m_loginLockout`), their NAT and `trusted_proxies` consequences and the
   limits of SQLite-side secret scrubbing are documented in `docs/architecture.dox`.
+- **A benchmark baseline with thresholds, and HTTP throughput benchmarks
+  (`ROADMAP.md` P2).** `benchmarks/HttpBenchmark.cpp` drives a real `lintel::Server` on an
+  ephemeral port with a keep-alive client and measures plain `GET`, a new connection per
+  request and TLS throughput; the TLS cases read `LINTEL_BENCH_TLS_CERT`/`_KEY`, fall back to
+  `cfg/certs/` and report themselves as skipped when no pair exists (the CI job generates one).
+  The new `scripts/check-benchmarks.sh` compares a run against `benchmarks/baseline.json` and
+  reports every benchmark that grew by more than a threshold (10% in CI). Because absolute
+  numbers belong to the machine, the comparison normalizes each benchmark by the geometric mean
+  of the run, so the machine-wide speed factor cancels out; real time is compared, not CPU time,
+  because the delayed-acknowledgement stall below was invisible in CPU time. The advisory CI job
+  `benchmarks` runs the suite with three repetitions and reports regressions.
+- **Nagle's algorithm is disabled on the HTTP server and client (`ROADMAP.md` P6).** httplib
+  leaves `CPPHTTPLIB_TCP_NODELAY` at `false`, so a TLS response waited for the peer's delayed
+  acknowledgement: a loopback TLS request took ~46 ms, of which ~0.8 ms was CPU time, and the
+  stall dominated every response the API sent. `Server` and `Client` now call
+  `set_tcp_nodelay(true)` (measured: 46 ms → 2 ms per TLS request, ~23x). Keep-alive, the
+  8 MiB request-body cap and TLS session resumption were verified as part of the same item:
+  resumption is already effective through OpenSSL 1.3 session tickets, and documented in
+  `docs/architecture.dox` together with the latency numbers.
+- **`PropertyServiceBenchmark` no longer writes to the process environment.** It pointed
+  `Configuration` at a directory without a `bootstrap.xml` via `::setenv("CONFIG_DIRECTORY",...)`
+  and left the variable set, so every later benchmark in the same process that resolves the
+  configuration directory (the HTTP benchmark, which looks for the development certificate)
+  silently saw the wrong path. It now uses `EnvironmentConfiguration::overrides()` on its own
+  instance.
 
 ### Changed
 - **The public API moved into `namespace lintel` (breaking).** Every public class, free
