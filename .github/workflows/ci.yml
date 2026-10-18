@@ -59,7 +59,7 @@ jobs:
             unity: OFF
 
     services:
-      # Ready for the [pg] tests that are still missing.
+      # Ready for PostgreSQL integration tests when enabled.
       # Credentials match docker-compose.yml.
       postgres:
         image: postgres:17
@@ -196,6 +196,21 @@ jobs:
     # the run is stable; the code paths are already shared with the Linux jobs.
     continue-on-error: true
 
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
     env:
       BUILD_TYPE: Release
       BUILD_DIR: build/build/Release
@@ -258,6 +273,21 @@ jobs:
 
     # Advisory - see the cross-platform comment above.
     continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     env:
       BUILD_TYPE: Release
@@ -369,6 +399,21 @@ jobs:
     #     (2000/month), and this job costs roughly 8-10 minutes per run.
     # Promote to blocking once a full run is green and LSan is investigated.
     continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     env:
       CC: clang-18
@@ -564,17 +609,20 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
 
-    # Advisory: the runtime numbers are tracked as an artifact, not gated. They
-    # are noisy on shared runners, so a regression must be reviewed by a human.
-    continue-on-error: true
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
-    env:
-      CC: gcc-14
-      CXX: g++-14
-      BUILD_TYPE: Release
-      BUILD_DIR: build/build/Release
-      CACHE_ID: benchmarks
-      CONAN_SYSREQUIRES_MODE: enabled
 
     steps:
       - uses: actions/checkout@v7
@@ -642,6 +690,21 @@ jobs:
       # the comparison, so this step keeps the job advisory.
       - name: Run benchmarks
         continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
         run: |
           timeout 20m ./bin/base_benchmarks \
             --benchmark_min_time=0.2s \
@@ -657,6 +720,21 @@ jobs:
       # removing continue-on-error once the numbers are stable.
       - name: Compare with the baseline
         continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
         run: ./scripts/check-benchmarks.sh --threshold 10 benchmark_results.json
 
       - name: Upload benchmark results
@@ -799,6 +877,21 @@ jobs:
     # (crash / sanitizer error) is uploaded as an artifact and should be reviewed
     # by a human; the job is promoted to blocking once the parsers stay quiet.
     continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     env:
       CC: clang-18
@@ -1008,6 +1101,21 @@ jobs:
     # Advisory: existing findings (e.g. in ProcessService.cpp) would turn every
     # PR that touches them red. Becomes blocking once those are cleaned up.
     continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - uses: actions/checkout@v7
