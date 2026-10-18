@@ -76,6 +76,7 @@ set(headers
     include/lintel/core/persistence/Connection.h
     include/lintel/core/persistence/ConnectionPool.h
     include/lintel/core/persistence/ConnectionPoolRegistry.h
+    include/lintel/core/persistence/ScopedConnection.h
     include/lintel/core/persistence/ConnectionType.h
     include/lintel/core/persistence/Cursor.h
     include/lintel/core/persistence/DatabaseConnectionConfigurations.h
@@ -329,6 +330,7 @@ set(sources
     core/persistence/Connection.cpp
     core/persistence/ConnectionPool.cpp
     core/persistence/ConnectionPoolRegistry.cpp
+    core/persistence/ScopedConnection.cpp
     core/persistence/Cursor.cpp
     core/persistence/DatabaseConnectionConfigurations.cpp
     core/persistence/Notify.cpp

@@ -3,6 +3,7 @@
 #include "lintel/core/persistence/Connection.h"
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 #include "lintel/core/persistence/ParameterBuilder.h"
+#include "lintel/core/persistence/ScopedConnection.h"
 #include "lintel/core/persistence/Transaction.h"
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/features/base/models/HistoryEntry.h"
@@ -249,9 +250,9 @@ void HistoryRepository::insertOf(const std::vector<HistoryEntry> &entries) const
 
 void HistoryRepository::cleanAllOlderThan(std::chrono::sys_time<std::chrono::microseconds> timestamp) const
 {
-  const db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::PreparedStatement preparedStatement(connection,
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::PreparedStatement preparedStatement(scopedConnection.connection(),
     R"(
     delete from history
     where created_timestamp < ?

@@ -8,6 +8,7 @@
 #include "lintel/core/persistence/Connection.h"
 #include "lintel/core/persistence/ConnectionPool.h"
 #include "lintel/core/persistence/ConnectionPoolRegistry.h"
+#include "lintel/core/persistence/ScopedConnection.h"
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/persistence/Transaction.h"
 #include "lintel/core/services/FileService.h"
@@ -46,8 +47,8 @@ void DatabaseBootstrapPlugin::registerReadinessCheck(const std::shared_ptr<Datab
           statement.execute("SELECT 1");
           return true;
         }
-        db::Connection connection(connectionEntry);
-        db::Statement statement(connection);
+        db::ScopedConnection scopedConnection(connectionEntry);
+        db::Statement statement(scopedConnection.connection());
         statement.execute("SELECT 1");
         return true;
       } catch (const std::exception &exception) {
@@ -80,7 +81,7 @@ void DatabaseBootstrapPlugin::handle(const std::shared_ptr<DatabaseConnectionEnt
 {
   if (connectionEntry->getType() == db::ConnectionType::SQLite) {
     // open close connection for indirectly create of sqlite database
-    db::Connection connection(connectionEntry);
+    db::ScopedConnection scopedConnection(connectionEntry);
   }
   auto optResult = hasSchemaVersionTable(connectionEntry);
   std::filesystem::path dbPath = m_configPath / connectionEntry->getName();
@@ -141,8 +142,8 @@ std::optional<db::Result> DatabaseBootstrapPlugin::hasSchemaVersionTable(
   const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
 {
   try {
-    db::Connection connection(connectionEntry);
-    db::Statement statement(connection);
+    db::ScopedConnection scopedConnection(connectionEntry);
+    db::Statement statement(scopedConnection.connection());
     db::Result result = statement.execute("select name, version from schema_version");
     return std::make_optional(result);
   } catch (std::exception &exception) {
@@ -156,8 +157,8 @@ void DatabaseBootstrapPlugin::createSchemaVersionTable(const std::shared_ptr<Dat
 {
   // don't handle for database exception to make sure that bootstrap procedure
   // aborts for database connection
-  db::Connection connection(connectionEntry);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(connectionEntry);
+  db::Statement statement(scopedConnection.connection());
   statement.execute(std::string(m_createSchemaVersion));
 }
 
@@ -206,7 +207,7 @@ void DatabaseBootstrapPlugin::initDatabase(const std::shared_ptr<DatabaseConnect
         if (a.m_version != b.m_version) { return a.m_version < b.m_version; }
         return a.m_isInitFile && !b.m_isInitFile;
       });
-    db::Connection connection(connectionEntry);
+    db::ScopedConnection scopedConnection(connectionEntry);
     // Continue from the recorded version so that higher-versioned files form a migration path
     // for an already initialised database. Starting at 0 made the first init file of an upgrade
     // look like a version jump and silently dropped the migration.
@@ -223,9 +224,10 @@ void DatabaseBootstrapPlugin::initDatabase(const std::shared_ptr<DatabaseConnect
           connectionEntry->getName());
         return;
       }
-      executeInitFile(connection, item, connectionEntry, currentSchemaVersion);
+      executeInitFile(scopedConnection.connection(), item, connectionEntry, currentSchemaVersion);
     }
-    updateSchemaVersion(connection, connectionEntry, schemaName, currentSchemaVersion, schemaVersionStart == 0);
+    updateSchemaVersion(
+      scopedConnection.connection(), connectionEntry, schemaName, currentSchemaVersion, schemaVersionStart == 0);
   }
 }
 

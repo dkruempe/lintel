@@ -6,6 +6,7 @@
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/utils/StringUtils.h"
 #include "lintel/features/base/provider/GroupProvider.h"
+#include <lintel/core/persistence/ScopedConnection.h>
 
 namespace lintel {
 VirtualGroupBootstrapPlugin::VirtualGroupBootstrapPlugin(
@@ -28,8 +29,8 @@ void VirtualGroupBootstrapPlugin::onStart()
     std::vector<Group> temp = groupProvider->provide();
     groups.insert(temp.begin(), temp.end());
   }
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
   {
     std::string stmt;
     switch (m_connectionEntry->getType()) {
@@ -46,7 +47,7 @@ void VirtualGroupBootstrapPlugin::onStart()
     default:
       throw std::runtime_error("unknown db type");
     }
-    db::PreparedStatement statement(connection, stmt, "insert_group");
+    db::PreparedStatement statement(scopedConnection.connection(), stmt, "insert_group");
     for (const auto &group : groups) {
       db::ParameterBuilder builder(m_connectionEntry);
       builder.add(group.getGroupName()).add(group.isVirtual());
@@ -99,7 +100,7 @@ void VirtualGroupBootstrapPlugin::onStart()
     default:
       throw std::runtime_error("unknown db type");
     }
-    db::PreparedStatement statement(connection, stmt, "add_relation");
+    db::PreparedStatement statement(scopedConnection.connection(), stmt, "add_relation");
     for (const auto &group : groups) {
       bool isAdminGroup = StringUtils::startsWith(group.getGroupName(), "Admin");
       if (isAdminGroup) {

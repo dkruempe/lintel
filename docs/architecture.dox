@@ -224,6 +224,26 @@
  * and WAL make parallel writers contend. A pool is not a replacement for an
  * external pooler (PgBouncer/pgcat); it is a documented, optional complement.
  *
+ * **ScopedConnection & lease lifetime:** All direct connection constructions
+ * are replaced by `db::ScopedConnection`. If `ConnectionPoolRegistry` has a
+ * pool for the entry's name, it acquires a `db::ConnectionPool::Lease`; otherwise
+ * it opens a direct `db::Connection` (fallback when `poolSize == 0` or no pool
+ * configured). The lease lives as long as the `ScopedConnection`.
+ *
+ * **Transactions:** `db::Transaction` must run within the `ScopedConnection`
+ * scope that supplies the connection. The connection must not return to the pool
+ * before commit or rollback; keep `ScopedConnection` alive for the entire
+ * transaction.
+ *
+ * **Cursors:** `db::Cursor` references `db::Connection &`, so the
+ * `ScopedConnection` that provides it must outlive the cursor. Repository
+ * cursors are method-local, which matches creating `ScopedConnection` in the
+ * same scope.
+ *
+ * **Bootstrap migrations:** Schema migrations (`initDatabase`/`executeInitFile`)
+ * keep a single connection over the entire `*_version_N.sql` run; when pooled,
+ * the holding `ScopedConnection` must span that loop.
+ *
  * @section arch_ipc Shared memory and the event bus
  *
  * Shared memory is `boost::interprocess` based and deliberately quarantined:

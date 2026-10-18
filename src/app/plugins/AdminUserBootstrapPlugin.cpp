@@ -10,6 +10,7 @@
 #include "lintel/core/persistence/Connection.h"
 #include "lintel/core/persistence/ParameterBuilder.h"
 #include "lintel/core/persistence/Result.h"
+#include "lintel/core/persistence/ScopedConnection.h"
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/persistence/Transaction.h"
 #include "lintel/core/services/LoggerService.h"
@@ -50,8 +51,8 @@ void AdminUserBootstrapPlugin::onStart()
     return;
   }
   try {
-    db::Connection connection(connectionEntry);
-    db::Statement statement(connection);
+    db::ScopedConnection scopedConnection(connectionEntry);
+    db::Statement statement(scopedConnection.connection());
     db::ParameterBuilder builder(connectionEntry);
     builder.add(userName);
     db::Result result = statement.execute("select user_name from users where user_name = ?", builder);
@@ -73,7 +74,7 @@ void AdminUserBootstrapPlugin::onStart()
       .add(std::string("Admin"))
       .add(std::string("User"))
       .add(std::chrono::time_point_cast<std::chrono::microseconds>(std::chrono::system_clock::now()));
-    db::Transaction transaction(connection);
+    db::Transaction transaction(scopedConnection.connection());
     statement.execute(R"(
       insert into users (user_name, password, e_mail, first_name, last_name,
                          created_timestamp)

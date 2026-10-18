@@ -7,6 +7,7 @@
 #include <lintel/core/persistence/DatabaseConnectionConfigurations.h>
 #include <lintel/core/persistence/ParameterBuilder.h>
 #include <lintel/core/persistence/PreparedStatement.h>
+#include <lintel/core/persistence/ScopedConnection.h>
 #include <lintel/core/persistence/Transaction.h>
 #include <lintel/core/services/LoggerService.h>
 #include <lintel/features/base/configuration/MessageQueueEntry.h>
@@ -21,9 +22,9 @@ MessageQueueRepository::MessageQueueRepository(
 
 void MessageQueueRepository::insertOf(const std::vector<MessageQueueEntry> &entries)
 {
-  const db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::PreparedStatement preparedStatement(connection,
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::PreparedStatement preparedStatement(scopedConnection.connection(),
     "insert into message_queues (name, process_name, max_messages) values (?, ?, ?)",
     "insert_message_queues");
   for (const auto &item : entries) {
@@ -38,10 +39,10 @@ void MessageQueueRepository::insertOf(const std::vector<MessageQueueEntry> &entr
 
 void MessageQueueRepository::deleteOf(const std::vector<MessageQueueEntry> &entries)
 {
-  const db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
   db::PreparedStatement preparedStatement(
-    connection, "delete from message_queues where name = ?", "delte_message_queues");
+    scopedConnection.connection(), "delete from message_queues where name = ?", "delte_message_queues");
   for (const auto &item : entries) {
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(item.get_message_queue_name());
@@ -78,8 +79,8 @@ std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &
   default:
     throw db::SQLException("DatabaseType currently not supported");
   }
-  const db::Connection connection(m_connectionEntry);
-  db::PreparedStatement preparedStatement(connection, stmt, "message_queue_all_select");
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::PreparedStatement preparedStatement(scopedConnection.connection(), stmt, "message_queue_all_select");
   std::vector<MessageQueueEntry> entries;
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(messageQueueName);
@@ -133,8 +134,8 @@ Page<MessageQueueEntry> MessageQueueRepository::pageOf(const std::string &proces
   }
   stmt += " order by name asc limit ?";
   builder.add(limit + 1);
-  const db::Connection connection(m_connectionEntry);
-  db::PreparedStatement preparedStatement(connection, stmt, "message_queue_page_select");
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::PreparedStatement preparedStatement(scopedConnection.connection(), stmt, "message_queue_page_select");
   auto result = preparedStatement.execute(builder);
   std::vector<MessageQueueEntry> entries;
   const bool hasMore = static_cast<std::size_t>(result.getSize()) > limit;
@@ -157,8 +158,8 @@ std::vector<MessageQueueEntry> MessageQueueRepository::allProcessNameOf(const st
                      max_messages
              from message_queues
               where process_name = ?)";
-  const db::Connection connection(m_connectionEntry);
-  db::PreparedStatement preparedStatement(connection, stmt, "message_queue_all_select");
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::PreparedStatement preparedStatement(scopedConnection.connection(), stmt, "message_queue_all_select");
   std::vector<MessageQueueEntry> entries;
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(processName);
@@ -194,8 +195,8 @@ MessageQueueEntry MessageQueueRepository::allMessageQueueNameOf(const std::strin
   default:
     throw db::SQLException("DatabaseType currently not supported");
   }
-  const db::Connection connection(m_connectionEntry);
-  db::PreparedStatement preparedStatement(connection, stmt, "message_queues_select");
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::PreparedStatement preparedStatement(scopedConnection.connection(), stmt, "message_queues_select");
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(name);
   auto result = preparedStatement.execute(builder);

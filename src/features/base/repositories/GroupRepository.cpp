@@ -9,6 +9,7 @@
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/utils/RegexUtils.h"
+#include <lintel/core/persistence/ScopedConnection.h>
 
 namespace lintel {
 GroupRepository::GroupRepository(std::shared_ptr<DatabaseConnectionConfigurations> connectionConfigurations)
@@ -22,8 +23,8 @@ void GroupRepository::initGroups()
     LOG_INFO("no default database connection - skip group initialization");
     return;
   }
-  db::Connection connection(m_connectionEntry);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Statement statement(scopedConnection.connection());
   // initialize virtual groups
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(true);
@@ -153,8 +154,9 @@ void GroupRepository::createOf(const Group &group)
   }
   auto found = m_groupMap.find(group.getGroupName());
   if (found != m_groupMap.end()) { throw std::runtime_error("There is an existing group with the mentioned name"); }
-  db::Connection connection(m_connectionEntry);
-  db::PreparedStatement preparedStatement(connection, "insert into groups(name, virtual) values(?, ?)", "insert_group");
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::PreparedStatement preparedStatement(
+    scopedConnection.connection(), "insert into groups(name, virtual) values(?, ?)", "insert_group");
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(group.getGroupName()).add(group.isVirtual());
   preparedStatement.execute(builder);
@@ -164,8 +166,8 @@ void GroupRepository::createOf(const Group &group)
 
 void GroupRepository::deleteOf(const Group &group)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(group.getGroupName());
   db::Result result = statement.execute(
@@ -195,8 +197,8 @@ void GroupRepository::addGroupOf(const Group &group, const Group &add)
     LOG_ERROR("{} is not a virtual group", add.getGroupName());
     return;
   }
-  db::Connection connection(m_connectionEntry);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(group.getGroupName()).add(add.getGroupName());
   db::Result result = statement.execute(R"(
@@ -220,8 +222,8 @@ void GroupRepository::removeGroupOf(const Group &group, const Group &remove)
     return b.getGroupName() == remove.getGroupName();
   });
   if (found == group.getGroups().end()) { return; }
-  db::Connection connection(m_connectionEntry);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(group.getGroupName()).add(remove.getGroupName());
   db::Result result = statement.execute(

@@ -11,6 +11,7 @@
 #include "lintel/core/persistence/ConnectionType.h"
 #include "lintel/core/persistence/ParameterBuilder.h"
 #include "lintel/core/persistence/PreparedStatement.h"
+#include "lintel/core/persistence/ScopedConnection.h"
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/persistence/Transaction.h"
 #include "lintel/core/services/LoggerService.h"
@@ -51,8 +52,8 @@ void DatabasePropertyRepository::save(const std::vector<std::shared_ptr<Property
 {
   LOG_TRACE("start persistence of properties");
   try {
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
+    db::ScopedConnection scopedConnection(m_connectionEntry);
+    db::Transaction transaction(scopedConnection.connection());
     std::string query;
     switch (m_connectionEntry->getType()) {
     case db::ConnectionType::PostgreSQL:
@@ -80,7 +81,7 @@ void DatabasePropertyRepository::save(const std::vector<std::shared_ptr<Property
     default:
       throw db::SQLException("not supported database type for query");
     }
-    db::PreparedStatement preparedStatement(connection, query, "update_properties");
+    db::PreparedStatement preparedStatement(scopedConnection.connection(), query, "update_properties");
     for (const auto &item : properties) {
       db::ParameterBuilder builder(m_connectionEntry);
       builder.add(item->getName())
@@ -116,9 +117,9 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::awake()
 {
   std::vector<std::shared_ptr<PropertyBase>> properties;
   try {
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
-    db::Statement query(connection);
+    db::ScopedConnection scopedConnection(m_connectionEntry);
+    db::Transaction transaction(scopedConnection.connection());
+    db::Statement query(scopedConnection.connection());
     std::string stmt = R"(
       select name,
              instance_name,
@@ -154,9 +155,9 @@ void DatabasePropertyRepository::deleteOf(const std::vector<std::shared_ptr<Prop
 {
   LOG_INFO("deleteOf properties with size {}", properties.size());
   try {
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
-    db::PreparedStatement stmt(connection,
+    db::ScopedConnection scopedConnection(m_connectionEntry);
+    db::Transaction transaction(scopedConnection.connection());
+    db::PreparedStatement stmt(scopedConnection.connection(),
       R"(delete from property
                                   where process_name = ? 
                                     and class_name = ? 
@@ -191,9 +192,9 @@ std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::allOf(con
   std::string nameLike = StringUtils::replaceAll(name, ".*", "%");
   std::vector<std::shared_ptr<PropertyBase>> properties;
   try {
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
-    db::Statement query(connection);
+    db::ScopedConnection scopedConnection(m_connectionEntry);
+    db::Transaction transaction(scopedConnection.connection());
+    db::Statement query(scopedConnection.connection());
     std::string stmt = R"(
             select name,
                    instance_name,

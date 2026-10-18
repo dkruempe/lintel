@@ -10,6 +10,7 @@
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/persistence/Transaction.h"
 #include "lintel/core/services/LoggerService.h"
+#include <lintel/core/persistence/ScopedConnection.h>
 
 namespace lintel {
 namespace {
@@ -82,9 +83,9 @@ UserRepository::UserRepository(std::shared_ptr<DatabaseConnectionConfigurations>
 
 std::optional<User> UserRepository::of(const std::string &userName)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(userName);
   db::Result result = statement.execute(R"(
@@ -124,9 +125,9 @@ std::optional<User> UserRepository::of(const std::string &userName)
 
 void UserRepository::deleteOf(const User &user)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(user.getUserName());
   statement.execute(R"(
@@ -145,9 +146,9 @@ void UserRepository::deleteOf(const User &user)
 void UserRepository::createOf(const User &user)
 {
   try {
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
-    db::Statement statement(connection);
+    db::ScopedConnection scopedConnection(m_connectionEntry);
+    db::Transaction transaction(scopedConnection.connection());
+    db::Statement statement(scopedConnection.connection());
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(user.getUserName())
       .add(user.getPassword())
@@ -177,9 +178,9 @@ void UserRepository::createOf(const User &user)
 
 void UserRepository::addGroupsOf(const User &user, const std::set<Group> &groups)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::PreparedStatement statement(connection,
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::PreparedStatement statement(scopedConnection.connection(),
     R"(
     insert into user_groups_relation(user_name, group_name) values(?, ?))",
     "insert_group_relations");
@@ -198,9 +199,9 @@ void UserRepository::addGroupOf(const User &user, const Group &group)
     return group.getGroupName() == b.getGroupName();
   });
   if (found != user.getGroups().end()) { return; }
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(user.getUserName()).add(group.getGroupName());
   statement.execute(R"(
@@ -212,9 +213,9 @@ void UserRepository::addGroupOf(const User &user, const Group &group)
 
 void UserRepository::removeGroupsOf(const User &user, const std::set<Group> &groups)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::PreparedStatement preparedStatement(connection,
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::PreparedStatement preparedStatement(scopedConnection.connection(),
     R"(
     delete from user_groups_relation where user_name = ? and group_name = ?)",
     "delete_user_group_relations");
@@ -230,9 +231,9 @@ void UserRepository::removeGroupsOf(const User &user, const std::set<Group> &gro
 void UserRepository::removeGroupOf(const User &user, const Group &group)
 {
   if (!user.has(group)) { return; }
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(user.getUserName()).add(group.getGroupName());
   statement.execute(R"(
@@ -246,9 +247,9 @@ std::vector<User> UserRepository::allOf(const std::string &userNameMatches)
 {
   std::vector<User> users;
   try {
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
-    db::Statement statement(connection);
+    db::ScopedConnection scopedConnection(m_connectionEntry);
+    db::Transaction transaction(scopedConnection.connection());
+    db::Statement statement(scopedConnection.connection());
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(userNameMatches);
     std::string statementString;
@@ -321,9 +322,9 @@ Page<User> UserRepository::pageOf(const std::string &userNameMatches,
     keyStatement += " order by u.user_name asc limit ?";
     keyBuilder.add(limit + 1);
 
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
-    db::Statement statement(connection);
+    db::ScopedConnection scopedConnection(m_connectionEntry);
+    db::Transaction transaction(scopedConnection.connection());
+    db::Statement statement(scopedConnection.connection());
     db::Result keysResult = statement.execute(keyStatement, keyBuilder);
     std::vector<std::string> pageUserNames;
     const bool hasMore = static_cast<std::size_t>(keysResult.getSize()) > limit;
@@ -375,9 +376,9 @@ std::vector<User> UserRepository::allOf()
 {
   std::vector<User> users;
   try {
-    db::Connection connection(m_connectionEntry);
-    db::Transaction transaction(connection);
-    db::Statement statement(connection);
+    db::ScopedConnection scopedConnection(m_connectionEntry);
+    db::Transaction transaction(scopedConnection.connection());
+    db::Statement statement(scopedConnection.connection());
     db::Result result = statement.execute(R"(
     select ru.group_name,
            u.first_name,
@@ -401,9 +402,9 @@ std::vector<User> UserRepository::allOf()
 
 void UserRepository::changeFirstNameOf(const User &user, const std::string &firstName)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(firstName).add(user.getUserName());
   statement.execute(R"(
@@ -417,9 +418,9 @@ void UserRepository::changeFirstNameOf(const User &user, const std::string &firs
 
 void UserRepository::changeLastNameOf(const User &user, const std::string &lastName)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(lastName).add(user.getUserName());
   statement.execute(R"(
@@ -433,9 +434,9 @@ void UserRepository::changeLastNameOf(const User &user, const std::string &lastN
 
 void UserRepository::changeUserNameOf(const User &user, const std::string &userName)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(userName).add(user.getUserName());
   statement.execute(R"(
@@ -449,9 +450,9 @@ void UserRepository::changeUserNameOf(const User &user, const std::string &userN
 
 void UserRepository::changePasswordOf(const User &user, const std::string &password)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(password).add(user.getUserName());
   statement.execute(R"(
@@ -465,9 +466,9 @@ void UserRepository::changePasswordOf(const User &user, const std::string &passw
 
 void UserRepository::changeEMailOf(const User &user, const std::string &eMail)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   db::ParameterBuilder builder(m_connectionEntry);
   builder.add(eMail).add(user.getUserName());
   statement.execute(R"(
@@ -481,9 +482,9 @@ void UserRepository::changeEMailOf(const User &user, const std::string &eMail)
 
 void UserRepository::deleteOf(const std::vector<std::string> &userNames)
 {
-  db::Connection connection(m_connectionEntry);
-  db::Transaction transaction(connection);
-  db::Statement statement(connection);
+  db::ScopedConnection scopedConnection(m_connectionEntry);
+  db::Transaction transaction(scopedConnection.connection());
+  db::Statement statement(scopedConnection.connection());
   for (auto &userName : userNames) {
     db::ParameterBuilder builder(m_connectionEntry);
     builder.add(userName);
