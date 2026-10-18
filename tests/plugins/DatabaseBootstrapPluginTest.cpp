@@ -154,8 +154,17 @@ namespace {
 
     ~DbpFixture()
     {
-      if (!sqlDirectory.empty()) { std::filesystem::remove_all(sqlDirectory); }
-      std::filesystem::remove(databaseFile);
+      // The pool the plugin registered keeps the SQLite file open until the
+      // process-wide registry releases it. On Windows an open file cannot be
+      // deleted (sharing violation), so the throwing std::filesystem::remove
+      // would escape this noexcept destructor and terminate the process with
+      // 0xc0000409. Close the pools first (like the poolSize test does before
+      // its own remove_all) and ignore removal errors - a leftover file in the
+      // temp directory must not fail a test teardown.
+      db::ConnectionPoolRegistry::instance().clear();
+      std::error_code errorCode;
+      if (!sqlDirectory.empty()) { std::filesystem::remove_all(sqlDirectory, errorCode); }
+      std::filesystem::remove(databaseFile, errorCode);
     }
 
     DbpFixture(const DbpFixture &) = delete;
