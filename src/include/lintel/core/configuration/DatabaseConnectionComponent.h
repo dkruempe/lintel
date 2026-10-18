@@ -29,6 +29,9 @@ private:
     const char *const CONNECTION_DATBASE_NAME = "database_name";
     const char *const CONNECTION_PORT = "port";
     const char *const CONNECTION_DEFAULT = "default";
+    const char *const CONNECTION_POOL_SIZE = "poolSize";
+    const char *const CONNECTION_POOL_ACQUIRE_TIMEOUT_MS = "poolAcquireTimeoutMs";
+    const char *const CONNECTION_ALLOW_MULTIPLE_SQLITE_CONNECTIONS = "allowMultipleSqliteConnections";
   } shape;
 
   /** Parse a single database connection entry from XML

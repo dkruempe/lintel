@@ -27,8 +27,19 @@ private:
   const std::string m_databaseName;
   /** Whether this is the default connection */
   bool m_isDefault;
+  /** Maximum number of pooled connections (0 = pooling disabled) */
+  int32_t m_poolSize;
+  /** How long an acquire waits for a free pooled connection, in milliseconds */
+  int32_t m_poolAcquireTimeoutMs;
 
 public:
+  /** Default pool size for PostgreSQL connections (parallel HTTP threads). */
+  static constexpr int32_t kDefaultPostgresPoolSize = 4;
+  /** Default pool size for SQLite connections (a single serialized connection). */
+  static constexpr int32_t kDefaultSqlitePoolSize = 1;
+  /** Default wait time of a pool acquire, in milliseconds. */
+  static constexpr int32_t kDefaultPoolAcquireTimeoutMs = 5000;
+
   /** Construct a database connection entry
    * @param component The configuration component name
    * @param connection The connection string
@@ -38,7 +49,11 @@ public:
    * @param name The connection name
    * @param port The connection port
    * @param databaseName The database name
-   * @param isDefault Whether this is the default connection */
+   * @param isDefault Whether this is the default connection
+   * @param poolSize Maximum pooled connections; a negative value selects the
+   *        type default (PostgreSQL 4, SQLite 1), 0 disables pooling
+   * @param poolAcquireTimeoutMs Acquire timeout in milliseconds; a negative
+   *        value selects the default (5000) */
   DatabaseConnectionEntry(std::string_view component,
     std::string connection,
     std::string userName,
@@ -47,7 +62,9 @@ public:
     std::string name,
     int32_t port,
     std::string databaseName,
-    bool isDefault);
+    bool isDefault,
+    int32_t poolSize = -1,
+    int32_t poolAcquireTimeoutMs = -1);
 
   /** Get the connection string
    * @return The connection string */
@@ -80,6 +97,14 @@ public:
   /** Check if this is the default connection
    * @return True if default */
   [[nodiscard]] constexpr bool isDefault() const { return m_isDefault; }
+
+  /** Get the maximum number of pooled connections
+   * @return The pool size; 0 disables pooling */
+  [[nodiscard]] constexpr int32_t getPoolSize() const { return m_poolSize; }
+
+  /** Get the pool acquire timeout
+   * @return The acquire timeout in milliseconds */
+  [[nodiscard]] constexpr int32_t getPoolAcquireTimeoutMs() const { return m_poolAcquireTimeoutMs; }
 
   /** Stream insertion operator for database connection entries
    * @param os The output stream

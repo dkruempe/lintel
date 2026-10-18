@@ -33,6 +33,9 @@ std::shared_ptr<Entry> DatabaseConnectionComponent::parseDatabaseEntry(tinyxml2:
   const char *portTemp = propertyElement->Attribute(shape.CONNECTION_PORT);
   const char *databaseName = propertyElement->Attribute(shape.CONNECTION_DATBASE_NAME);
   const char *defaultName = propertyElement->Attribute(shape.CONNECTION_DEFAULT);
+  const char *poolSizeTemp = propertyElement->Attribute(shape.CONNECTION_POOL_SIZE);
+  const char *poolAcquireTimeoutTemp = propertyElement->Attribute(shape.CONNECTION_POOL_ACQUIRE_TIMEOUT_MS);
+  const char *allowMultipleSqlite = propertyElement->Attribute(shape.CONNECTION_ALLOW_MULTIPLE_SQLITE_CONNECTIONS);
 
   int32_t lineNumber = propertyElement->GetLineNum() + lineOffset - 1;
 
@@ -75,6 +78,37 @@ std::shared_ptr<Entry> DatabaseConnectionComponent::parseDatabaseEntry(tinyxml2:
 
   if (databaseName == nullptr) { databaseName = ""; }
 
+  int32_t poolSize = -1;
+  if (poolSizeTemp != nullptr) {
+    poolSize = std::stoi(poolSizeTemp);
+    if (poolSize < 0) {
+      throw ConfigurationException(
+        configRoot, std::string(shape.CONNECTION_POOL_SIZE) + " must not be negative", lineNumber);
+    }
+  }
+
+  int32_t poolAcquireTimeoutMs = -1;
+  if (poolAcquireTimeoutTemp != nullptr) {
+    poolAcquireTimeoutMs = std::stoi(poolAcquireTimeoutTemp);
+    if (poolAcquireTimeoutMs < 0) {
+      throw ConfigurationException(
+        configRoot, std::string(shape.CONNECTION_POOL_ACQUIRE_TIMEOUT_MS) + " must not be negative", lineNumber);
+    }
+  }
+
+  if (type == db::ConnectionType::SQLite) {
+    const int32_t effectivePoolSize = poolSize >= 0 ? poolSize : DatabaseConnectionEntry::kDefaultSqlitePoolSize;
+    const bool allowMultipleConnections =
+      allowMultipleSqlite != nullptr
+      && (std::strcmp(allowMultipleSqlite, "true") == 0 || std::strcmp(allowMultipleSqlite, "t") == 0);
+    if (effectivePoolSize > 1 && !allowMultipleConnections) {
+      throw ConfigurationException(configRoot,
+        "poolSize > 1 for SQLite connection '" + std::string(name) + "' risks WAL/file-lock contention; "
+        "set allowMultipleSqliteConnections=\"true\" to override",
+        lineNumber);
+    }
+  }
+
   return std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
     connectionString,
     userName,
@@ -83,7 +117,9 @@ std::shared_ptr<Entry> DatabaseConnectionComponent::parseDatabaseEntry(tinyxml2:
     name,
     port,
     databaseName,
-    isDefault);
+    isDefault,
+    poolSize,
+    poolAcquireTimeoutMs);
 }
 
 std::vector<std::shared_ptr<Entry>>

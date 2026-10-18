@@ -1,4 +1,6 @@
 #include <lintel/core/configuration/ConfigurationException.h>
+#include <lintel/core/configuration/DatabaseConnectionComponent.h>
+#include <lintel/core/configuration/DatabaseConnectionEntry.h>
 #include <lintel/core/configuration/EnvironmentConfiguration.h>
 #include <lintel/core/configuration/LoggerComponent.h>
 #include <lintel/core/configuration/LoggerConfiguration.h>
@@ -712,5 +714,125 @@ TEST_CASE("LoggerComponent: parse Logger with SysLogSink")
   const auto sinks = config->getLoggerSinks();
   REQUIRE(sinks.size() == 1);
   REQUIRE(sinks[0].getType() == LoggerSinkConfiguration::SysLogSink);
+}
+
+TEST_CASE("DatabaseConnectionComponent: parses the pooling attributes")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  DatabaseConnectionComponent component(envConfig);
+
+  const std::string xml = R"(<DatabaseConnections>
+        <DatabaseConnection name="db" connection="/tmp/pool.db" type="SQLite" default="true"
+                            poolSize="3" poolAcquireTimeoutMs="250" allowMultipleSqliteConnections="true"/>
+    </DatabaseConnections>)";
+
+  auto entries = component.parse(xml, 0, "test.xml");
+  REQUIRE(entries.size() == 1);
+  auto entry = std::static_pointer_cast<DatabaseConnectionEntry>(entries[0]);
+  REQUIRE(entry->getPoolSize() == 3);
+  REQUIRE(entry->getPoolAcquireTimeoutMs() == 250);
+}
+
+TEST_CASE("DatabaseConnectionComponent: SQLite pool defaults are one and 5000 ms")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  DatabaseConnectionComponent component(envConfig);
+
+  const std::string xml = R"(<DatabaseConnections>
+        <DatabaseConnection name="db" connection="/tmp/pool.db" type="SQLite" default="true"/>
+    </DatabaseConnections>)";
+
+  auto entry = std::static_pointer_cast<DatabaseConnectionEntry>(component.parse(xml, 0, "test.xml")[0]);
+  REQUIRE(entry->getPoolSize() == DatabaseConnectionEntry::kDefaultSqlitePoolSize);
+  REQUIRE(entry->getPoolSize() == 1);
+  REQUIRE(entry->getPoolAcquireTimeoutMs() == DatabaseConnectionEntry::kDefaultPoolAcquireTimeoutMs);
+  REQUIRE(entry->getPoolAcquireTimeoutMs() == 5000);
+}
+
+TEST_CASE("DatabaseConnectionComponent: PostgreSQL pool defaults are four")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  DatabaseConnectionComponent component(envConfig);
+
+  const std::string xml = R"(<DatabaseConnections>
+        <DatabaseConnection name="db" connection="127.0.0.1" port="5432" database_name="temp"
+                            type="PostgreSQL" default="true"/>
+    </DatabaseConnections>)";
+
+  auto entry = std::static_pointer_cast<DatabaseConnectionEntry>(component.parse(xml, 0, "test.xml")[0]);
+  REQUIRE(entry->getPoolSize() == DatabaseConnectionEntry::kDefaultPostgresPoolSize);
+  REQUIRE(entry->getPoolSize() == 4);
+}
+
+TEST_CASE("DatabaseConnectionComponent: SQLite poolSize > 1 is rejected without the override")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  DatabaseConnectionComponent component(envConfig);
+
+  const std::string xml = R"(<DatabaseConnections>
+        <DatabaseConnection name="db" connection="/tmp/pool.db" type="SQLite" default="true" poolSize="2"/>
+    </DatabaseConnections>)";
+
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
+}
+
+TEST_CASE("DatabaseConnectionComponent: SQLite poolSize > 1 is allowed with the explicit override")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  DatabaseConnectionComponent component(envConfig);
+
+  const std::string xml = R"(<DatabaseConnections>
+        <DatabaseConnection name="db" connection="/tmp/pool.db" type="SQLite" default="true"
+                            poolSize="2" allowMultipleSqliteConnections="true"/>
+    </DatabaseConnections>)";
+
+  auto entry = std::static_pointer_cast<DatabaseConnectionEntry>(component.parse(xml, 0, "test.xml")[0]);
+  REQUIRE(entry->getPoolSize() == 2);
+}
+
+TEST_CASE("DatabaseConnectionComponent: poolSize zero disables pooling")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  DatabaseConnectionComponent component(envConfig);
+
+  const std::string xml = R"(<DatabaseConnections>
+        <DatabaseConnection name="db" connection="/tmp/pool.db" type="SQLite" default="true" poolSize="0"/>
+    </DatabaseConnections>)";
+
+  auto entry = std::static_pointer_cast<DatabaseConnectionEntry>(component.parse(xml, 0, "test.xml")[0]);
+  REQUIRE(entry->getPoolSize() == 0);
+}
+
+TEST_CASE("DatabaseConnectionComponent: a negative poolSize is rejected")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  DatabaseConnectionComponent component(envConfig);
+
+  const std::string xml = R"(<DatabaseConnections>
+        <DatabaseConnection name="db" connection="/tmp/pool.db" type="SQLite" default="true" poolSize="-1"/>
+    </DatabaseConnections>)";
+
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
+}
+
+TEST_CASE("DatabaseConnectionComponent: a negative poolAcquireTimeoutMs is rejected")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  DatabaseConnectionComponent component(envConfig);
+
+  const std::string xml = R"(<DatabaseConnections>
+        <DatabaseConnection name="db" connection="/tmp/pool.db" type="SQLite" default="true"
+                            poolAcquireTimeoutMs="-5"/>
+    </DatabaseConnections>)";
+
+  REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
 }// namespace lintel

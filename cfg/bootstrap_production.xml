@@ -46,12 +46,16 @@
     </HistoryServices>
 
     <!-- PostgreSQL is the authoritative store; the default connection drives the
-         schema bootstrap and the `database:<name>` readiness check. -->
+         schema bootstrap and the `database:<name>` readiness check. poolSize is
+         set explicitly because PostgreSQL is the parallel-access backend; raise
+         it to match the number of concurrent HTTP threads (keep it well below
+         the server's max_connections, e.g. 4 per process). -->
     <DatabaseConnections>
         <DatabaseConnection name="DEFAULT_PSQL"
                              user_name="${DB_USER}" password="${DB_PASSWORD}"
                              connection="${DB_HOST}" port="${DB_PORT}"
-                             database_name="${DB_NAME}" type="PostgreSQL" default="true"/>
+                             database_name="${DB_NAME}" type="PostgreSQL" default="true"
+                             poolSize="4" poolAcquireTimeoutMs="5000"/>
     </DatabaseConnections>
 
     <!-- Shared memory segments (sizes are deployment specific, ${SHM_DIR} should

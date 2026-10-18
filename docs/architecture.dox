@@ -176,6 +176,54 @@
  * is created under the user's home directory. A deployment that needs secrets
  * scrubbed from memory needs a backend that never returns them to the client.
  *
+ * @subsection arch_persistence_pool Connection pooling
+ *
+ * `db::ConnectionPool` opens a connection once per slot and hands it out through
+ * a movable, non-copyable `db::ConnectionPool::Lease` (RAII: the connection
+ * returns to the pool when the lease leaves scope, also while an exception
+ * unwinds). `Lease::connection()` exposes the `db::Connection &`. One
+ * implementation covers three operating modes, selected by the `poolSize`
+ * attribute of a `DatabaseConnection`:
+ *
+ * | `poolSize` | behaviour |
+ * |---|---|
+ * | `0` | pooling disabled - the historical connection per call, and **no** pool is registered |
+ * | `1` | one persistent, serialized connection (the SQLite default) |
+ * | `N>1` | bounded pool for parallel callers (the PostgreSQL default is 4) |
+ *
+ * The pool is thread safe (mutex plus condition variable). An `acquire()` waits
+ * at most `poolAcquireTimeoutMs` (default 5000); on expiry it throws
+ * `db::PoolTimeoutException` (a `db::SQLException`), which names the pool and its
+ * maximum and lists every outstanding lease with its `std::source_location`,
+ * thread id and age. A thread that already holds a lease of the same pool and
+ * acquires again fails **immediately** instead of waiting: the re-entrancy
+ * detector turns the typical `poolSize=1` nested-call deadlock into a fast,
+ * named error. On release the connection is probed by `db::Connection::isHealthy`
+ * (`PQstatus` for PostgreSQL, a `SELECT 1` probe for SQLite) and a broken
+ * connection is dropped, so the next acquire builds a fresh one.
+ *
+ * Pools are reachable by connection name through `db::ConnectionPoolRegistry`, a
+ * process-wide singleton (the `ReadinessRegistry` pattern - the DI container
+ * resolves by type, not by name, so several pools could not be addressed).
+ * `DatabaseBootstrapPlugin::onStart()` registers a pool for every configured
+ * entry with `poolSize > 0`. The registry never creates a pool implicitly: a
+ * process without database entries (the worker's `bootstrap_worker`) has an empty
+ * registry and `poolOf()` throws `db::PoolNotFoundException`. The
+ * `database:<name>` readiness check acquires a lease and runs `SELECT 1` on it,
+ * so it also exercises the pool health path; a connection without a pool keeps
+ * the direct probe.
+ *
+ * **Session state does not survive a release.** A reused connection keeps
+ * `SET`, temporary tables and prepared statements, so code that runs on a lease
+ * must not rely on connection-local state surviving a pool release. The
+ * PostgreSQL `postgresql::PreparedStatement` deallocates its named statement in
+ * its destructor for exactly this reason; prefer unnamed, per-call statements
+ * for anything that must not leak. A SQLite `poolSize > 1` is rejected at parse
+ * time (`ConfigurationException`) unless
+ * `allowMultipleSqliteConnections="true"` overrides it, because the file lock
+ * and WAL make parallel writers contend. A pool is not a replacement for an
+ * external pooler (PgBouncer/pgcat); it is a documented, optional complement.
+ *
  * @section arch_ipc Shared memory and the event bus
  *
  * Shared memory is `boost::interprocess` based and deliberately quarantined:

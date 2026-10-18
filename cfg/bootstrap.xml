@@ -45,8 +45,10 @@
     <!-- Database Connections Configuration -->
     <DatabaseConnections>
 	    <!--<DatabaseConnection name="DEFAULT_PSQL" user_name="example_user" password="${ADMIN_PASSWORD}" connection="127.0.0.1"
-	    database_name="temp" type="PostgreSQL"/>--><!-- NOTE: The old password is in the git history and must be rotated. Replace ${ADMIN_PASSWORD} with a real password. -->
-        <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true"/>
+	    database_name="temp" type="PostgreSQL" poolSize="4" poolAcquireTimeoutMs="5000"/>--><!-- NOTE: The old password is in the git history and must be rotated. Replace ${ADMIN_PASSWORD} with a real password. -->
+        <!-- poolSize: 1 = one persisted SQLite connection (WAL/file-lock friendly);
+             PostgreSQL defaults to 4, SQLite to 1; poolSize="0" disables pooling. -->
+        <DatabaseConnection name="DEFAULT_SQLITE" connection="~/temp.db" type="SQLite" default="true" poolSize="1"/>
     </DatabaseConnections>
 
     <!-- Shared Memory Segments Configuration -->
