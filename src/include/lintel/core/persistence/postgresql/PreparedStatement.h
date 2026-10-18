@@ -62,7 +62,23 @@ namespace postgresql {
      */
     PreparedStatement(const Connection &connection, const Definition &definition);
 
-    ~PreparedStatement() = default;
+    /**
+     * Destroys the object and deallocates the server-side prepared statement.
+     *
+     * A pooled connection is reused, so a prepared statement that survived the
+     * release would still be visible to the next lease (and a name collision
+     * would make the next prepare fail). The destructor deallocates it, and
+     * because destructors must not throw it swallows the failure of a
+     * connection that is already gone - the pool's health check drops such a
+     * connection anyway.
+     *
+     * The statement stays *named* rather than unnamed (`PQprepare` with `""`):
+     * the parameterized query path (`Statement::execute(query, builder)`) uses
+     * `PQexecParams`, which also targets the unnamed statement, so an unnamed
+     * prepared statement would be clobbered between its prepare and execute.
+     * Deallocating in the destructor is the deterministic equivalent for reuse.
+     */
+    ~PreparedStatement() noexcept;
 
     /**
      * Executes the prepared statement with the given parameters.

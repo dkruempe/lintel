@@ -236,6 +236,30 @@ TEST_CASE("PostgreSQL: prepared statement is reusable", "[pg]")
   REQUIRE(table.countRows() == 3);
 }
 
+TEST_CASE("PostgreSQL: a destroyed prepared statement leaves nothing on the connection", "[pg]")
+{
+  requirePg();
+  db::Connection connection = connectPg();
+  PgTable table(uniqueTableName());
+  const std::string statementName = "pg_leak_" + std::to_string(::getpid());
+
+  {
+    db::PreparedStatement statement(
+      connection, "insert into " + table.name() + " (name, value) values (?, ?)", statementName);
+    db::ParameterBuilder builder(pgEntry());
+    builder.add(std::string("row")).add(1);
+    statement.execute(builder);
+  }
+
+  // The destructor deallocates the named statement: nothing survives on the
+  // connection, which is what makes a pooled connection safe to reuse. Before
+  // the destructor deallocated, the name stayed in pg_prepared_statements (and
+  // a second prepare under the same name failed).
+  db::Statement check(connection);
+  db::Result result = check.execute("select count(*) from pg_prepared_statements where name = '" + statementName + "'");
+  REQUIRE(result.getValue(0, 0) == "0");
+}
+
 TEST_CASE("PostgreSQL: server-side cursor streams rows in batches", "[pg]")
 {
   requirePg();

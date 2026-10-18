@@ -56,5 +56,19 @@ namespace postgresql {
     }
     m_closed = true;
   }
+
+  PreparedStatement::~PreparedStatement() noexcept
+  {
+    // Deterministic deallocation: never let a named prepared statement survive
+    // the release of a pooled connection. Close is idempotent, so an explicit
+    // close() before destruction stays correct. Failures of an already broken
+    // connection are swallowed - a destructor must not throw, and the pool
+    // drops that connection on release anyway.
+    try {
+      close();
+    } catch (...) {
+      m_closed = true;
+    }
+  }
 }// namespace postgresql
 }// namespace lintel
