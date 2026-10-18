@@ -609,6 +609,7 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
 
+    services:
       postgres:
         image: postgres:17
         env:
@@ -690,21 +691,6 @@ jobs:
       # the comparison, so this step keeps the job advisory.
       - name: Run benchmarks
         continue-on-error: true
-
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
         run: |
           timeout 20m ./bin/base_benchmarks \
             --benchmark_min_time=0.2s \
@@ -720,21 +706,6 @@ jobs:
       # removing continue-on-error once the numbers are stable.
       - name: Compare with the baseline
         continue-on-error: true
-
-    services:
-      postgres:
-        image: postgres:17
-        env:
-          POSTGRES_USER: test
-          POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U test"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
         run: ./scripts/check-benchmarks.sh --threshold 10 benchmark_results.json
 
       - name: Upload benchmark results
