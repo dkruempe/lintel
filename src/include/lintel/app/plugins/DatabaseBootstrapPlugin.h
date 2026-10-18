@@ -84,12 +84,22 @@ private:
   /** Register a `GET /ready` check that pings this connection.
    *
    * The plugin owns the connection definitions, so it is the place that knows
-   * which databases the process depends on. The check re-connects on every
-   * readiness request (the persistence layer has no pool): a probe usually runs
-   * every few seconds, which is cheap compared to reporting ready while the
-   * database is gone.
+   * which databases the process depends on. When a pool is registered for the
+   * connection the check acquires a lease and runs `SELECT 1` on it, which also
+   * exercises the pool health path (a broken connection is dropped and rebuilt
+   * on the next acquire). Connections with pooling disabled fall back to the
+   * historical per-request connection.
    * @param connectionEntry the database connection to check */
   static void registerReadinessCheck(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
+
+  /** Register a connection pool for the entry unless pooling is disabled.
+   *
+   * A pool is created and registered in @ref db::ConnectionPoolRegistry only for
+   * a configured entry with `poolSize > 0`. `poolSize == 0` keeps the historical
+   * per-call connection and registers nothing, so a process without database
+   * entries ends up with an empty registry.
+   * @param connectionEntry the database connection to pool */
+  static void registerConnectionPool(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
   void handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 

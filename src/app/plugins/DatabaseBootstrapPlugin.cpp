@@ -1,8 +1,13 @@
 #include "lintel/app/plugins/DatabaseBootstrapPlugin.h"
 
+#include <chrono>
+#include <cstddef>
+
 #include <lintel/core/persistence/ConnectionType.h>
 
 #include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/ConnectionPool.h"
+#include "lintel/core/persistence/ConnectionPoolRegistry.h"
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/persistence/Transaction.h"
 #include "lintel/core/services/FileService.h"
@@ -16,6 +21,7 @@ void DatabaseBootstrapPlugin::onStart()
   for (const auto &connectionEntry : m_connectionConfigurations->allOf()) {
     // register before handling: a failing bootstrap must still show up as an
     // unready dependency instead of silently missing from `GET /ready`
+    registerConnectionPool(connectionEntry);
     registerReadinessCheck(connectionEntry);
     try {
       handle(connectionEntry);
@@ -33,6 +39,13 @@ void DatabaseBootstrapPlugin::registerReadinessCheck(const std::shared_ptr<Datab
     "database:" + connectionEntry->getName(), [connectionEntry](std::string &detail) {
       try {
         // SELECT 1 is portable across PostgreSQL and SQLite and needs no schema
+        auto &registry = db::ConnectionPoolRegistry::instance();
+        if (registry.hasPool(connectionEntry->getName())) {
+          auto lease = registry.poolOf(connectionEntry->getName())->acquire();
+          db::Statement statement(lease.connection());
+          statement.execute("SELECT 1");
+          return true;
+        }
         db::Connection connection(connectionEntry);
         db::Statement statement(connection);
         statement.execute("SELECT 1");
@@ -42,6 +55,25 @@ void DatabaseBootstrapPlugin::registerReadinessCheck(const std::shared_ptr<Datab
         return false;
       }
     });
+}
+
+void DatabaseBootstrapPlugin::registerConnectionPool(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
+{
+  const int32_t poolSize = connectionEntry->getPoolSize();
+  if (poolSize <= 0) {
+    LOG_INFO(
+      "{} - connection pooling disabled (poolSize={}); no pool registered", connectionEntry->getName(), poolSize);
+    return;
+  }
+  db::PoolSettings settings;
+  settings.maxConnections = static_cast<std::size_t>(poolSize);
+  settings.acquireTimeout = std::chrono::milliseconds(connectionEntry->getPoolAcquireTimeoutMs());
+  auto pool = std::make_shared<db::ConnectionPool>(connectionEntry, settings);
+  db::ConnectionPoolRegistry::instance().registerPool(connectionEntry->getName(), std::move(pool));
+  LOG_INFO("{} - connection pool registered (poolSize={}, acquireTimeout={} ms)",
+    connectionEntry->getName(),
+    poolSize,
+    connectionEntry->getPoolAcquireTimeoutMs());
 }
 
 void DatabaseBootstrapPlugin::handle(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)

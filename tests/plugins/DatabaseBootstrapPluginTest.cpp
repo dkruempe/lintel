@@ -14,8 +14,11 @@
 #include "lintel/core/configuration/DatabaseConnectionComponent.h"
 #include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/configuration/EnvironmentConfiguration.h"
+#include "lintel/core/exceptions/PoolNotFoundException.h"
 #include "lintel/core/models/BootstrapSequence.h"
 #include "lintel/core/persistence/Connection.h"
+#include "lintel/core/persistence/ConnectionPool.h"
+#include "lintel/core/persistence/ConnectionPoolRegistry.h"
 #include "lintel/core/persistence/ConnectionType.h"
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 #include "lintel/core/persistence/Statement.h"
@@ -234,6 +237,90 @@ TEST_CASE("DatabaseBootstrapPlugin: onStart registers one readiness check per co
 
   ReadinessRegistry::instance().clear();
 }
+
+TEST_CASE("DatabaseBootstrapPlugin: a config without database entries registers no pool", "[db_bootstrap_plugin]")
+{
+  // both registries are process-wide singletons, so a direct run of base_tests
+  // sees the entries of earlier cases; this one starts from an empty state
+  ReadinessRegistry::instance().clear();
+  db::ConnectionPoolRegistry::instance().clear();
+
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_dbp_cfg_empty");
+  auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+  configuration->setEntries({});
+  auto connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
+  DatabaseBootstrapPlugin plugin(connectionConfigurations);
+
+  REQUIRE_NOTHROW(plugin.onStart());
+
+  // no database connection means no pool and no lazily created default pool
+  REQUIRE(db::ConnectionPoolRegistry::instance().empty());
+  REQUIRE(db::ConnectionPoolRegistry::instance().size() == 0);
+  REQUIRE_THROWS_AS(db::ConnectionPoolRegistry::instance().poolOf("anything"), db::PoolNotFoundException);
+
+  db::ConnectionPoolRegistry::instance().clear();
+}
+
+TEST_CASE("DatabaseBootstrapPlugin: poolSize decides whether a pool is registered", "[db_bootstrap_plugin]")
+{
+  db::ConnectionPoolRegistry::instance().clear();
+  ReadinessRegistry::instance().clear();
+
+  const std::string databaseFile =
+    (std::filesystem::temp_directory_path() / dbpUnique("pool_off") / "pool.db").string();
+  std::filesystem::create_directories(std::filesystem::path(databaseFile).parent_path());
+
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_dbp_cfg_pool");
+  auto configuration = std::make_shared<Configuration>(std::vector<std::shared_ptr<Component>>{}, envConfig);
+  std::vector<std::shared_ptr<Entry>> entries;
+  // poolSize=0 keeps the historical per-call connection and registers nothing
+  entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+    databaseFile,
+    "",
+    "",
+    db::ConnectionType::SQLite,
+    "pool_disabled",
+    -1,
+    "",
+    true,
+    0));
+  // poolSize=1 registers a serialized pool
+  entries.push_back(std::make_shared<DatabaseConnectionEntry>(type_name<DatabaseConnectionComponent>(),
+    databaseFile,
+    "",
+    "",
+    db::ConnectionType::SQLite,
+    "pool_enabled",
+    -1,
+    "",
+    false,
+    1));
+  configuration->setEntries(entries);
+  auto connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(configuration);
+  DatabaseBootstrapPlugin plugin(connectionConfigurations);
+
+  REQUIRE_NOTHROW(plugin.onStart());
+
+  REQUIRE_FALSE(db::ConnectionPoolRegistry::instance().hasPool("pool_disabled"));
+  REQUIRE_THROWS_AS(db::ConnectionPoolRegistry::instance().poolOf("pool_disabled"), db::PoolNotFoundException);
+  REQUIRE(db::ConnectionPoolRegistry::instance().hasPool("pool_enabled"));
+  REQUIRE(db::ConnectionPoolRegistry::instance().poolOf("pool_enabled")->maxConnections() == 1);
+
+  // the pooled readiness check acquires a lease and stays ready
+  const std::vector<ReadinessRegistry::CheckResult> results = ReadinessRegistry::instance().run();
+  const auto enabled = std::find_if(results.begin(), results.end(), [](const ReadinessRegistry::CheckResult &result) {
+    return result.m_name == "database:pool_enabled";
+  });
+  REQUIRE(enabled != results.end());
+  REQUIRE(enabled->m_ready);
+
+  db::ConnectionPoolRegistry::instance().clear();
+  ReadinessRegistry::instance().clear();
+  std::filesystem::remove_all(std::filesystem::path(databaseFile).parent_path());
+}
+
 TEST_CASE("DatabaseBootstrapPlugin: valid configuration creates the schema and the tracking row",
   "[db_bootstrap_plugin]")
 {
