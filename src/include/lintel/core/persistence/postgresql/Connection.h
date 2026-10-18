@@ -101,6 +101,9 @@ namespace postgresql {
 
     Connection(Connection &connection) = delete;
 
+    /** @return true when libpq still reports a usable connection (`PQstatus == CONNECTION_OK`) */
+    [[nodiscard]] bool isHealthy() const;
+
     /** Destructor, closes the connection. */
     ~Connection();
   };

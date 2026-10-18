@@ -38,6 +38,8 @@ namespace postgresql {
 
   [[nodiscard]] std::string Connection::getErrorMessage() const { return PQerrorMessage(m_conn); }
 
+  [[nodiscard]] bool Connection::isHealthy() const { return m_conn != nullptr && PQstatus(m_conn) == CONNECTION_OK; }
+
   [[nodiscard]] std::string Connection::buildConnInfo(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry)
   {
     std::string connInfo;

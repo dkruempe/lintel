@@ -118,6 +118,16 @@ namespace sqlite {
 
     Connection(Connection &connection) = delete;
 
+    /**
+     * Lightweight liveness probe.
+     *
+     * Runs `SELECT 1` on the open handle instead of reading `sqlite3_errcode`,
+     * because the error code stays set after a non-fatal error (e.g. a
+     * constraint violation) and would wrongly report a healthy connection as
+     * broken.
+     * @return true when the connection answered `SELECT 1` */
+    [[nodiscard]] bool isHealthy() const;
+
     /** Destructor, closes the database. */
     ~Connection();
   };

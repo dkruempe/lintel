@@ -30,4 +30,17 @@ db::Connection::Connection(const std::shared_ptr<DatabaseConnectionEntry> &conne
     break;
   }
 }
+
+bool db::Connection::isHealthy() const
+{
+  switch (m_connectionType.value()) {
+  case ConnectionType::SQLite:
+    return m_connSQLite != nullptr && m_connSQLite->isHealthy();
+  case ConnectionType::PostgreSQL:
+    return m_conn != nullptr && m_conn->isHealthy();
+  case ConnectionType::UNDEFINED:
+    return false;
+  }
+  return false;
+}
 }// namespace lintel

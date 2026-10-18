@@ -34,6 +34,8 @@ ADD_EXECUTABLE(base_tests
     services/ExecutorServiceTest.cpp
     core/LoggerServiceTest.cpp
     core/ReadinessRegistryTest.cpp
+    core/ConnectionPoolTest.cpp
+    core/ConnectionPoolRegistryTest.cpp
     integration/SQLiteIntegrationTest.cpp
     integration/PostgreSqlIntegrationTest.cpp
     integration/ConfigIntegrationTest.cpp

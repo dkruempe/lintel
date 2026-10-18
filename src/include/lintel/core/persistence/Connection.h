@@ -54,6 +54,16 @@ namespace db {
     explicit Connection(const std::shared_ptr<DatabaseConnectionEntry> &connectionEntry);
 
     explicit Connection(Connection &connection) = delete;
+
+    /**
+     * Reports whether the underlying driver still considers the connection usable.
+     *
+     * PostgreSQL asks `PQstatus`; SQLite runs a lightweight `SELECT 1` probe
+     * (the recent error code is not a reliable health signal, because it stays
+     * set after a non-fatal error such as a constraint violation). Used by
+     * @ref lintel::db::ConnectionPool to drop broken connections on release.
+     * @return true when the connection may be reused */
+    [[nodiscard]] bool isHealthy() const;
   };
 }// namespace db
 

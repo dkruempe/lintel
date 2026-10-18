@@ -62,6 +62,8 @@ set(headers
     include/lintel/core/exceptions/FileServiceFileExists.h
     include/lintel/core/exceptions/FileServiceIsNotFileException.h
     include/lintel/core/exceptions/LoggerServiceNotInitialized.h
+    include/lintel/core/exceptions/PoolNotFoundException.h
+    include/lintel/core/exceptions/PoolTimeoutException.h
     include/lintel/core/exceptions/ShmSegmentNotFound.h
     include/lintel/core/exceptions/SQLException.h
     # core - models
@@ -72,6 +74,8 @@ set(headers
     # core - persistence
     include/lintel/core/persistence/Arguments.h
     include/lintel/core/persistence/Connection.h
+    include/lintel/core/persistence/ConnectionPool.h
+    include/lintel/core/persistence/ConnectionPoolRegistry.h
     include/lintel/core/persistence/ConnectionType.h
     include/lintel/core/persistence/Cursor.h
     include/lintel/core/persistence/DatabaseConnectionConfigurations.h
@@ -323,6 +327,8 @@ set(sources
     # core - persistence
     core/persistence/Arguments.cpp
     core/persistence/Connection.cpp
+    core/persistence/ConnectionPool.cpp
+    core/persistence/ConnectionPoolRegistry.cpp
     core/persistence/Cursor.cpp
     core/persistence/DatabaseConnectionConfigurations.cpp
     core/persistence/Notify.cpp
@@ -528,6 +534,7 @@ set(LINTEL_PCH_HEADERS
     <algorithm>
     <atomic>
     <chrono>
+    <condition_variable>
     <cstdint>
     <cstring>
     <exception>
@@ -542,6 +549,7 @@ set(LINTEL_PCH_HEADERS
     <ostream>
     <set>
     <shared_mutex>
+    <source_location>
     <sstream>
     <stdexcept>
     <string>

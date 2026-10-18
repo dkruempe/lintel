@@ -117,6 +117,12 @@ namespace sqlite {
 
   std::string Connection::getErrorMessage() const { return sqlite3_errmsg(m_db); }
 
+  bool Connection::isHealthy() const
+  {
+    if (m_db == nullptr) { return false; }
+    return sqlite3_exec(m_db, "SELECT 1", nullptr, nullptr, nullptr) == SQLITE_OK;
+  }
+
   Connection::~Connection()
   {
     if (!m_preparedStatements.empty()) {
