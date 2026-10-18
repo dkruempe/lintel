@@ -564,6 +564,18 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 60
 
+    # Advisory: the runtime numbers are tracked as an artifact, not gated. They
+    # are noisy on shared runners, so a regression must be reviewed by a human.
+    continue-on-error: true
+
+    env:
+      CC: gcc-14
+      CXX: g++-14
+      BUILD_TYPE: Release
+      BUILD_DIR: build/build/Release
+      CACHE_ID: benchmarks
+      CONAN_SYSREQUIRES_MODE: enabled
+
     services:
       postgres:
         image: postgres:17

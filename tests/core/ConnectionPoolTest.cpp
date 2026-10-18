@@ -25,9 +25,11 @@ namespace lintel {
 namespace db {
   namespace {
 
+    // Atomic: the connector lambda runs poolTestUnique() from several worker
+    // threads in the parallel-load test (TSan flagged the plain counter).
     std::string poolTestUnique(const std::string &tag)
     {
-      static unsigned int counter = 0;
+      static std::atomic<unsigned int> counter{ 0 };
       return "connpool_" + tag + "_" + std::to_string(::getpid()) + "_" + std::to_string(counter++);
     }
 
@@ -251,7 +253,10 @@ namespace db {
     ConnectionPool::Lease moved(std::move(lease));
     REQUIRE_FALSE(lease.valid());
     REQUIRE(moved.valid());
-    REQUIRE(&moved.connection() != nullptr);
+    // Calling connection() must not throw for a moved-to lease; comparing the
+    // address of the returned reference against nullptr is a tautology (Clang
+    // rejects it under -Werror), so exercise the reference instead.
+    REQUIRE(moved.connection().isHealthy());
     moved = ConnectionPool::Lease{};
 
     ConnectionPool::Lease empty;
