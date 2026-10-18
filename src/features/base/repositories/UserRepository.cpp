@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <chrono>
 #include <exception>
+#include <map>
+#include <set>
 #include <utility>
 
 #include "lintel/core/persistence/Connection.h"
@@ -30,15 +32,33 @@ namespace {
     std::string lastEMail;
     std::chrono::sys_time<std::chrono::microseconds> lastCreatedTimestamp;
     std::vector<std::string> lastGroupNames;
+
+    // Collect all group names that appear in the result to batch-load them
+    std::set<std::string> neededGroupNames;
+    for (std::size_t i = 0; i < static_cast<std::size_t>(result.getSize()); ++i) {
+      const std::string groupName = result.of(i).of(0).getValue();
+      if (!groupName.empty()) { neededGroupNames.insert(groupName); }
+    }
+    // Build map of name -> Group for all needed groups
+    std::map<std::string, Group> groupMap;
+    if (!neededGroupNames.empty()) {
+      const auto allGroups = groupRepository->allOf();
+      for (const auto &group : allGroups) {
+        if (neededGroupNames.find(group.getGroupName()) != neededGroupNames.end()) {
+          groupMap.insert(std::make_pair(group.getGroupName(), group));
+        }
+      }
+    }
+
     auto flush = [&]() {
       std::vector<Group> groups;
       for (const auto &groupName : lastGroupNames) {
-        auto optGroup = groupRepository->of(groupName);
-        if (!optGroup.has_value()) {
+        const auto it = groupMap.find(groupName);
+        if (it == groupMap.end()) {
           LOG_ERROR("{} not available", groupName);
           continue;
         }
-        groups.push_back(optGroup.value());
+        groups.push_back(it->second);
       }
       User user(lastFirstName,
         lastLastName,
