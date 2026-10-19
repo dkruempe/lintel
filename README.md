@@ -116,6 +116,34 @@ finished before the server socket is closed. Give the container a termination
 grace period (`docker stop -t`, `terminationGracePeriodSeconds`) that covers the
 slowest `onShutdown()`.
 
+### Logging
+
+The `<Loggers>` section of the bootstrap XML decides what a process writes:
+
+```xml
+<Path path="${LOG_DIR}/lintel" create_sub_dirs="true"/>
+<Logger process_name=".*" level="info" json="false">
+    <LoggerSink type="RotatingFileSink" size="5MB" max_files="10"/>
+</Logger>
+```
+
+- `level` is the effective floor (`critical|warn|err|info|debug|trace|off`);
+  a sink may lower it further with its own `level` attribute. The pattern lives
+  either on `<Logger>` or on the sink and follows spdlog's `%` flags.
+- `json="true"` formats every message as one JSON object per line
+  (`{"time":...,"level":...,"msg":...}`) for a log shipper. It applies only
+  when no explicit `pattern` is set; the message text itself is not escaped, so
+  keep structured data out of quotes there.
+- **Runtime level**: `POST /admin/log-level` with `{"level":"debug"}` changes
+  the level of a running process immediately (`401` outside the `Admin-Log`
+  group, `400` for an unknown name). The XML is not rewritten, so a restart
+  goes back to the deployed level.
+- **Request correlation**: every response carries an `X-Request-Id` header -
+  echoed when the client supplied one, generated otherwise - and the handling
+  thread writes the same id in front of the log lines it produces
+  (`[<id>] message`), so the log of one HTTP request can be filtered by a single
+  search.
+
 ## Getting Started
 
 ### Prerequisites

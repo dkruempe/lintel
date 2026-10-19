@@ -118,6 +118,51 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the 8 MiB request-body cap). Every command was run against `bin/main` and the results are the
   real responses; the page also records that `/hello` belongs to `lintel::ExampleController`
   and is not served by the reference app.
+- **Leak detection is enabled in the ASan+UBSan CI job (`ROADMAP.md` P4).** The job ran with
+  `detect_leaks=0`; it now runs with `detect_leaks=1`. A full local run of the unit suite
+  under ASan+UBSan+LSan (1122 cases) reports nothing unreachable: the boost interprocess
+  segments are memory mapped rather than `malloc`'d, and the spdlog registry no longer keeps
+  a test's logger alive (see *Fixed*). The job stays advisory - the `[pg]` cases only run
+  against the CI PostgreSQL service, so that path's verdict has to be observed in CI before
+  the job can block.
+- **Runtime feature-dependency check (`ROADMAP.md` A8).** `FeatureInterface` gained
+  `requiredFeatures()` and `StartupBuilder::verifyFeatureDependencies()` now rejects a
+  `start()` whose configuration does not declare every required feature at a **smaller** index
+  in the feature vector (the link chain `core → base → property → http → cli → app` is linear, so
+  a positional check is enough). `addFeature<PropertyFeature>()` without `addFeature<BaseFeature>()`
+  used to start and hand out a transient, empty `PropertyService` from the DI auto-registration -
+  a silent degradation that surfaced far away from its cause. The reference application was moved
+  to the canonical order (Base, Property, Http, Cli, TestFeature) and each feature now declares its
+  layer. Added before the 1.0 API freeze, because `requiredFeatures()` is an interface method.
+- **Observability: JSON logs, a runtime log level and request correlation (`ROADMAP.md` U5).**
+  - `<Logger json="true">` formats each message as one JSON object per line
+    (`{"time":...,"level":...,"msg":...}`) for a log shipper; an explicit `pattern` still wins.
+  - `LoggerService::setLevel()`/`levelOf()` change the effective level of a running process, and
+    `POST /admin/log-level` (`{"level":"debug"}`, admin group `Admin-Log`) exposes them:
+    `200 {"status":"changed","level":"debug"}`, `400 {"status":"invalid_level"}` for an unknown
+    name or a body that is not json, `401` outside the group, `403` for a wrong content type.
+    The bootstrap configuration is not rewritten, so a restart returns to the deployed level.
+  - Every response carries an `X-Request-Id` header - echoed when the client supplied one,
+    generated otherwise - and the handling thread prefixes the log lines it produces during that
+    request with the same id (`RequestIdGuard`). Documented in `swagger.yaml`/`swagger.md`, the
+    README and `docs/architecture.dox`.
+- **Automatic crash recovery for orphaned shared-memory locks (`ROADMAP.md` A6).** A bounded
+  wait alone only turns a deadlock into a timeout: without the identity of the holder it is
+  impossible to tell "a previous process crashed" from "a live process still holds it", and
+  reclaiming the second case would hand two processes independent mutexes for one critical
+  section. Each segment now keeps a `SegmentLockOwner` sidecar (`<name>_remap_own`, the holder's
+  pid, written while the lock is held and cleared before it is released);
+  `shm::recoverOrphanedSegmentLock()` combines it with the new `lintel::processIsAlive()` and
+  reclaims the lock only when the holder is provably gone. The check runs when a segment is
+  opened and again through the new `ISharedMemoryService::recover()`, which returns the number of
+  reclaimed locks. Tests cover a dead holder, a living holder (left alone) and the recovery at
+  open time.
+- **PostgreSQL behaviour coverage (`ROADMAP.md` A5).** Seven new `[pg]` test cases in
+  `tests/integration/PostgreSqlIntegrationTest.cpp`: parameterized and streaming cursors,
+  rollback on `Transaction` destruction, duplicate-key violation, connection-pool reuse after a
+  reset, `ScopedConnection` plus `ConnectionPoolRegistry`, and that `Notify` stops listening when
+  the destructor runs. They skip locally without a database (`requirePg()`), and run in CI against
+  the `postgres:17` service.
 
 ### Changed
 - **The public API moved into `namespace lintel` (breaking).** Every public class, free
@@ -198,7 +243,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `shm::SegmentSemaphoreGuard` acquired the segment's named remap semaphore with an unbounded
   `wait()`; a process that died while holding it left the count at zero, so every other process
   blocked forever. Acquisition is now bounded (default 30 s) and throws a descriptive
-  `std::runtime_error` on timeout, leaving the orphaned handle for out-of-band recovery.
+  `std::runtime_error` on timeout, and the orphaned semaphore is reclaimed automatically once the
+  recorded holder is gone (see `SegmentLockOwner`/`ISharedMemoryService::recover()` in
+  *Added*).
+- **The test logger leaked into spdlog's global registry.** `LoggerService` built its
+  non-singleton logger through `std::make_shared<spdlog::logger>(...)`, which registers in
+  `spdlog::registry::instance()` and keeps the logger (and its sinks) alive for the whole
+  process. It now uses an unregistered logger with a stdout color sink, so a logger created in a
+  test is destroyed with the test - one of the known non-bugs that had LSan switched off.
 - **`swagger.md` advertised the wrong version.** The mirror's heading still said `Version:
   0.1.0` while `swagger.yaml` had advanced to `0.2.0`; the CMake check only covers
   `swagger.yaml`. Corrected, and `scripts/check-swagger.sh` now keeps both in sync (`ROADMAP.md`
