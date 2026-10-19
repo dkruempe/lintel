@@ -43,21 +43,6 @@ namespace {
     return std::string(buffer.GetString(), buffer.GetSize());
   }
 
-  /** The level the log-level endpoint accepts, or nothing for an unknown name. */
-  std::optional<LogLevel> logLevelOf(const std::string &levelName)
-  {
-    // "err" is the name the bootstrap configuration uses; "error" is accepted as well
-    // because that is what callers of an endpoint reach for
-    if (levelName == "critical") { return LogLevel::critical; }
-    if (levelName == "warn") { return LogLevel::warn; }
-    if (levelName == "err" || levelName == "error") { return LogLevel::error; }
-    if (levelName == "debug") { return LogLevel::debug; }
-    if (levelName == "trace") { return LogLevel::trace; }
-    if (levelName == "off") { return LogLevel::off; }
-    if (levelName == "info") { return LogLevel::info; }
-    return std::nullopt;
-  }
-
   /** @return {"status":"<status>","level":"<level>"} */
   std::string logLevelBody(const char *status, const std::string &levelName)
   {
@@ -138,7 +123,7 @@ void AdminController::logLevelOfPost(const httplib::Request &request,
     response.set_content(logLevelBody("invalid_level", ""), contentType.getName());
     return;
   }
-  const std::optional<LogLevel> level = logLevelOf(levelName);
+  const std::optional<LogLevel> level = LoggerService::logLevelFrom(levelName);
   if (!level.has_value()) {
     response.status = HttpStatusCodes::BadRequest;
     response.set_content(logLevelBody("invalid_level", levelName), contentType.getName());

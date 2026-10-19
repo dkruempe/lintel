@@ -57,7 +57,7 @@ Change the log level of the running process
 
 Applies a new log level to every subsequent log call in this process, so a running system can be re-diagnosed without a restart. The bootstrap configuration is not rewritten, a restart therefore falls back to the level the operator deployed. Answers 400 for an unknown or mistyped level and 401 outside the Admin-Log group.
 
-Every response carries an X-Request-Id header (echoed from the request when supplied, generated otherwise) that the handling process also writes into its log lines for that request.
+Every response carries an X-Request-Id header (echoed from the request when it matches `[A-Za-z0-9._-]{1,64}`, generated otherwise) that the handling process also writes into its log lines for that request.
 
 ##### Parameters
 

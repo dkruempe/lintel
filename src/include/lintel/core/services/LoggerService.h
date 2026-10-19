@@ -11,10 +11,12 @@
  * std::make_format_args and forwards them to the non-template logImpl(), so
  * formatting and spdlog are compiled once instead of at every call site.
  */
+#include <atomic>
 #include <cstdint>
 #include <format>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
 #include <string_view>
 
@@ -55,7 +57,7 @@ private:
   std::shared_ptr<Configuration> m_configuration;
   std::shared_ptr<spdlog::logger> m_logger;
   /** Effective log level, kept so that levelOf() survives a runtime change */
-  LogLevel m_level = LogLevel::info;
+  std::atomic<LogLevel> m_level{ LogLevel::info };
 
   /** Initialize the spdlog logger instance. */
   std::shared_ptr<spdlog::logger> init();
@@ -131,6 +133,27 @@ public:
 
   /** @return the currently effective log level */
   [[nodiscard]] LogLevel levelOf() const;
+
+  /** Parse a configured level name.
+   *
+   * The single parser for both the XML configuration and the admin endpoint:
+   * the endpoint has to reject an unknown name, the configuration silently falls
+   * back to info - the caller decides with the returned optional.
+   *
+   * @param name critical|warn|err|error|info|debug|trace|off
+   * @return the level, std::nullopt for an unknown name */
+  static std::optional<LogLevel> logLevelFrom(std::string_view name) noexcept;
+
+  /** Validate a client supplied correlation id.
+   *
+   * The id ends up in every log line of the request, and the JSON format does
+   * not escape it, so an unchecked header could break the JSON of a line (and
+   * inject log content). Anything outside [A-Za-z0-9._-] or longer than 64
+   * characters is replaced by a freshly generated id.
+   *
+   * @param candidate the value of the X-Request-Id header
+   * @return the candidate when it is safe to log, a new id otherwise */
+  static std::string requestIdOf(const std::string &candidate);
 
   /** Generate an opaque correlation id for one request. */
   static std::string generateRequestId();

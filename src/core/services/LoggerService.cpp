@@ -7,10 +7,9 @@
 #include <spdlog/sinks/tcp_sink.h>
 
 #include <algorithm>
-#include <atomic>
+#include <cctype>
 #include <csignal>
 #include <iostream>
-#include <random>
 #include <regex>
 
 #include "lintel/config.h"
@@ -162,16 +161,14 @@ namespace {
    * handler picks it up without an explicit parameter. */
   thread_local std::string g_requestId;
 
-  /** The level enum value corresponding to a configured level string. */
-  LogLevel logLevelOf(const std::string &name)
+  /** Longest accepted client-supplied correlation id (see requestIdOf). */
+  constexpr std::size_t kMaxRequestIdLength = 64;
+
+  /** The configured level name as an enum; an unknown name stays at info,
+   *  because a typo in the XML must not keep the process from starting. */
+  LogLevel configuredLevelOf(const std::string &name)
   {
-    if (name == "critical") { return LogLevel::critical; }
-    if (name == "warn") { return LogLevel::warn; }
-    if (name == "err") { return LogLevel::error; }
-    if (name == "debug") { return LogLevel::debug; }
-    if (name == "trace") { return LogLevel::trace; }
-    if (name == "off") { return LogLevel::off; }
-    return LogLevel::info;
+    return LoggerService::logLevelFrom(name).value_or(LogLevel::info);
   }
 }// namespace
 
@@ -202,7 +199,11 @@ std::shared_ptr<spdlog::logger> LoggerService::init()
   applyLoggerLevel(logger, loggerLevel);
   // keep the configured level visible to levelOf()/setLevel(), even when the
   // configuration names an unknown level and applyLoggerLevel stays silent
-  m_level = logLevelOf(loggerLevel);
+  m_level.store(configuredLevelOf(loggerLevel), std::memory_order_relaxed);
+  // A pattern on the logger wins over a per-sink pattern (spdlog applies it to
+  // every attached sink), which is what a JSON log wants: the format belongs to
+  // the logger, not to the destination. %v is inserted verbatim, so callers and
+  // the request id must not carry quotes (see requestIdOf()).
   if (logConfig->isJson() && logConfig->getPattern().empty()) {
     logger->set_pattern("{\"time\":\"%Y-%m-%dT%H:%M:%S.%e%z\",\"name\":\"%n\",\"level\":\"%l\",\"msg\":\"%v\"}");
   } else if (!logConfig->getPattern().empty()) {
@@ -215,14 +216,37 @@ LoggerService::~LoggerService() = default;
 
 void LoggerService::setLevel(LogLevel level)
 {
-  m_level = level;
+  m_level.store(level, std::memory_order_relaxed);
   if (m_logger == nullptr) { return; }
   const auto spdlogLevel = static_cast<spdlog::level::level_enum>(static_cast<std::uint8_t>(level));
   m_logger->set_level(spdlogLevel);
   m_logger->flush_on(spdlogLevel);
 }
 
-LogLevel LoggerService::levelOf() const { return m_level; }
+LogLevel LoggerService::levelOf() const { return m_level.load(std::memory_order_relaxed); }
+
+std::optional<LogLevel> LoggerService::logLevelFrom(std::string_view name) noexcept
+{
+  if (name == "critical") { return LogLevel::critical; }
+  if (name == "warn") { return LogLevel::warn; }
+  if (name == "err" || name == "error") { return LogLevel::error; }
+  if (name == "info") { return LogLevel::info; }
+  if (name == "debug") { return LogLevel::debug; }
+  if (name == "trace") { return LogLevel::trace; }
+  if (name == "off") { return LogLevel::off; }
+  return std::nullopt;
+}
+
+std::string LoggerService::requestIdOf(const std::string &candidate)
+{
+  // keep the documented id alphabet; anything else is replaced instead of
+  // escaped, because the id is echoed back and lands in unescaped JSON
+  if (candidate.empty() || candidate.size() > kMaxRequestIdLength) { return generateRequestId(); }
+  const bool valid = std::all_of(candidate.begin(), candidate.end(), [](unsigned char character) {
+    return std::isalnum(character) != 0 || character == '.' || character == '_' || character == '-';
+  });
+  return valid ? candidate : generateRequestId();
+}
 
 std::string LoggerService::generateRequestId() { return UUID::generate(); }
 
