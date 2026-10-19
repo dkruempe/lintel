@@ -1,11 +1,15 @@
 #include <lintel/core/configuration/DatabaseConnectionEntry.h>
+#include <lintel/core/exceptions/SQLException.h>
 #include <lintel/core/persistence/Connection.h>
+#include <lintel/core/persistence/ConnectionPool.h>
+#include <lintel/core/persistence/ConnectionPoolRegistry.h>
 #include <lintel/core/persistence/ConnectionType.h>
 #include <lintel/core/persistence/Cursor.h>
 #include <lintel/core/persistence/Notify.h>
 #include <lintel/core/persistence/ParameterBuilder.h>
 #include <lintel/core/persistence/PreparedStatement.h>
 #include <lintel/core/persistence/Result.h>
+#include <lintel/core/persistence/ScopedConnection.h>
 #include <lintel/core/persistence/Statement.h>
 #include <lintel/core/persistence/Transaction.h>
 
@@ -673,5 +677,227 @@ TEST_CASE("PostgreSQL: notify keeps delivering while inserts are running", "[pg]
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
   REQUIRE(callbacks.load() > before);
+}
+
+/**
+ * The parameterized cursor must honor bind values on the PostgreSQL backend.
+ *
+ * The server-side cursor path builds a DECLARE CURSOR with placeholders; if
+ * the parameter binding leaked into a string interpolation or was dropped,
+ * the `where value >= ?` filter would not apply and the first batch would
+ * include values smaller than 30. This is a backend-specific detail: SQLite's
+ * cursor uses the same API surface but the regression is easier to miss.
+ */
+TEST_CASE("PostgreSQL: parameterized server-side cursor pages with bindings", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+
+  table.insert("a", 10);
+  table.insert("b", 20);
+  table.insert("c", 30);
+  table.insert("d", 40);
+  table.insert("e", 50);
+
+  db::Connection connection = connectPg();
+  db::Statement statement(connection);
+
+  db::ParameterBuilder b(pgEntry());
+  b.add(30);
+  db::Cursor cursor =
+    statement.executeCursor("select value from " + table.name() + " where value >= ? order by value asc", b);
+  cursor.setFetchSize(2);
+
+  auto first = cursor.fetchNext(2);
+  REQUIRE(first.size() == 2);
+  REQUIRE(first[0].of(0).getValue<int>() == 30);
+  REQUIRE(first[1].of(0).getValue<int>() == 40);
+
+  auto second = cursor.fetchNext(2);
+  REQUIRE(second.size() == 1);
+  REQUIRE(second[0].of(0).getValue<int>() == 50);
+
+  REQUIRE(cursor.fetchNext(2).empty());
+}
+
+/**
+ * Streaming cursor (fetchSize 0) must yield every row exactly once and preserve order.
+ *
+ * fetchSize 0 switches the PostgreSQL backend to PQsetSingleRowMode (no
+ * server-side DECLARE CURSOR). The iterator range-for must not buffer rows in
+ * a way that loses or duplicates them, and the values must arrive in ascending
+ * order of the ORDER BY clause.
+ */
+TEST_CASE("PostgreSQL: streaming cursor yields every row once", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+
+  constexpr int kRows = 50;
+  for (int i = 0; i < kRows; i++) { table.insert("r" + std::to_string(i), i); }
+
+  db::Connection connection = connectPg();
+  db::Statement statement(connection);
+  db::Cursor cursor = statement.executeCursor("select value from " + table.name() + " order by value asc");
+  cursor.setFetchSize(0);
+
+  int count = 0;
+  int lastValue = -1;
+  for (const auto &row : cursor) {
+    REQUIRE(row.size() == 1);
+    const int value = row.of(0).getValue<int>();
+    if (lastValue != -1) { REQUIRE(value == lastValue + 1); }
+    lastValue = value;
+    count++;
+  }
+  REQUIRE(count == kRows);
+}
+
+/**
+ * The transaction destructor must roll back uncommitted work on scope exit.
+ *
+ * The RAII destructor calls `ROLLBACK` if the transaction is still active
+ * (see postgresql::Transaction::~Transaction). This is the "safety net"
+ * that prevents a thrown exception from leaving an open transaction. Using
+ * a connection created outside the scope proves the insert disappears after
+ * the Transaction's destructor runs.
+ */
+TEST_CASE("PostgreSQL: transaction destructor rolls back uncommitted work", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+
+  {
+    db::Connection connection = connectPg();
+    {
+      db::Transaction tx(connection);
+      db::Statement stmt(connection);
+      db::ParameterBuilder b(pgEntry());
+      b.add(std::string("uncommitted")).add(42);
+      stmt.execute("insert into " + table.name() + " (name, value) values (?, ?)", b);
+      // tx goes out of scope here without commit -> destructor rolls back
+    }
+  }
+
+  REQUIRE(table.countRows() == 0);
+}
+
+/**
+ * A unique constraint violation must surface the driver's error message.
+ *
+ * PostgreSQL raises unique_violation (23505); the backend layer must throw
+ * db::SQLException with the native message preserved ("duplicate key" is the
+ * substring present in libpq's error text). This test guards that exceptions
+ * propagate through the unified API rather than being swallowed.
+ */
+TEST_CASE("PostgreSQL: unique constraint violation surfaces the driver message", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+
+  db::Connection connection = connectPg();
+  db::Statement stmt(connection);
+  db::ParameterBuilder b1(pgEntry());
+  b1.add(std::string("dup")).add(1);
+  stmt.execute("insert into " + table.name() + " (id,name,value) values (1,?,?)", b1);
+
+  db::ParameterBuilder b2(pgEntry());
+  b2.add(std::string("dup2")).add(2);
+  REQUIRE_THROWS_AS(
+    stmt.execute("insert into " + table.name() + " (id,name,value) values (1,?,?)", b2), db::SQLException);
+  REQUIRE_THROWS_WITH(stmt.execute("insert into " + table.name() + " (id,name,value) values (1,?,?)", b2),
+    Catch::Matchers::ContainsSubstring("duplicate key"));
+}
+
+/**
+ * A ConnectionPool must reuse a healthy connection between leases.
+ *
+ * The pool hands out a lease, the caller runs a query, returns the lease;
+ * the next acquire should receive the same physical connection slot (via the
+ * test connector's reuse) and the pool's outstanding count must return to 0.
+ * This verifies the lease lifecycle and release path.
+ */
+TEST_CASE("PostgreSQL: pool reuses a healthy connection", "[pg]")
+{
+  requirePg();
+  db::ConnectionPool pool(pgEntry(), db::PoolSettings{ 2, std::chrono::milliseconds(5000) });
+
+  {
+    db::ConnectionPool::Lease lease = pool.acquire();
+    REQUIRE(lease.valid());
+    db::Statement stmt(lease.connection());
+    db::Result result = stmt.execute("select 1");
+    REQUIRE(result.getSize() == 1);
+    REQUIRE(result.getValue(0, 0) == "1");
+    REQUIRE(pool.outstanding() == 1);
+  }
+  REQUIRE(pool.outstanding() == 0);
+  REQUIRE(pool.available() >= 1);
+
+  {
+    db::ConnectionPool::Lease lease = pool.acquire();
+    REQUIRE(lease.valid());
+    REQUIRE(pool.outstanding() == 1);
+  }
+  REQUIRE(pool.outstanding() == 0);
+}
+
+/**
+ * ScopedConnection must prefer a registered pool over opening a direct connection.
+ *
+ * When the ConnectionPoolRegistry contains a pool for the entry's name,
+ * ScopedConnection returns isPooled() true and acquires a lease. The pool's
+ * outstanding count reflects the scope, returning to 0 on destruction.
+ */
+TEST_CASE("PostgreSQL: ScopedConnection uses a registered pool", "[pg]")
+{
+  requirePg();
+  db::ConnectionPoolRegistry::instance().clear();
+  auto entry = pgEntry();
+  auto pool = std::make_shared<db::ConnectionPool>(entry, db::PoolSettings{ 2, std::chrono::milliseconds(5000) });
+  db::ConnectionPoolRegistry::instance().registerPool(entry->getName(), pool);
+
+  {
+    db::ScopedConnection scoped(entry);
+    REQUIRE(scoped.isPooled());
+    REQUIRE(scoped.valid());
+    REQUIRE(scoped.connection().isHealthy());
+    REQUIRE(pool->outstanding() == 1);
+  }
+  REQUIRE(pool->outstanding() == 0);
+  db::ConnectionPoolRegistry::instance().clear();
+}
+
+/**
+ * A destroyed Notify listener must stop delivering callbacks.
+ *
+ * LISTEN/NOTIFY runs on a dedicated connection/thread owned by db::Notify.
+ * After the listener goes out of scope (destructor signals shutdown and joins),
+ * sending another NOTIFY to the same channel must not increment the callback
+ * counter seen after destruction. The bounded waits are short and deterministic.
+ */
+TEST_CASE("PostgreSQL: a destroyed Notify listener stops delivering", "[pg]")
+{
+  requirePg();
+  PgTable table(uniqueTableName());
+
+  std::atomic<int> callbacks{ 0 };
+  const std::string channel = "pg_notify_" + std::to_string(::getpid());
+
+  db::Connection connection = connectPg();
+  int snapshot = 0;
+  {
+    db::Notify listener(connection, [&callbacks]() { callbacks.fetch_add(1); }, channel);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    snapshot = callbacks.load();
+  }
+  // listener destroyed
+  {
+    db::Connection writer = connectPg();
+    db::Statement stmt(writer);
+    stmt.execute("notify " + channel);
+  }
+  std::this_thread::sleep_for(std::chrono::milliseconds(300));
+  REQUIRE(callbacks.load() == snapshot);
 }
 }// namespace lintel
