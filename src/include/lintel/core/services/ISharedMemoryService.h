@@ -24,9 +24,9 @@ public:
    *
    * A process that crashes while holding a segment's remap semaphore leaves it
    * stuck, which would make every later acquirer wait for the bounded timeout
-   * and then fail. Called automatically when a segment is opened; operators can
-   * call it again (HTTP/CLI) for a segment that got stuck later on. It never
-   * touches a lock whose holder is still alive.
+   * and then fail. Called automatically when a segment is opened, so a segment
+   * that gets stuck later on is recovered at its next open. It never touches a
+   * lock whose holder is still alive.
    *
    * @return the number of locks that were reclaimed
    */

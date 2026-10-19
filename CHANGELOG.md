@@ -122,9 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `detect_leaks=0`; it now runs with `detect_leaks=1`. A full local run of the unit suite
   under ASan+UBSan+LSan (1122 cases) reports nothing unreachable: the boost interprocess
   segments are memory mapped rather than `malloc`'d, and the spdlog registry no longer keeps
-  a test's logger alive (see *Fixed*). The job stays advisory - the `[pg]` cases only run
-  against the CI PostgreSQL service, so that path's verdict has to be observed in CI before
-  the job can block.
+  a test's logger alive (see *Fixed*). The check is blocking, see *Changed*.
 - **Runtime feature-dependency check (`ROADMAP.md` A8).** `FeatureInterface` gained
   `requiredFeatures()` and `StartupBuilder::verifyFeatureDependencies()` now rejects a
   `start()` whose configuration does not declare every required feature at a **smaller** index
