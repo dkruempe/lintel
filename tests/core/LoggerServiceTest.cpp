@@ -413,6 +413,7 @@ TEST_CASE("LoggerService: every sink level string is mapped", "[logger_service]"
   const std::vector<LoggerSinkConfiguration> sinks = { loggerRotatingSink("critical_sink", "critical"),
     loggerRotatingSink("warn_sink", "warn"),
     loggerRotatingSink("err_sink", "err"),
+    loggerRotatingSink("error_sink", "error"),
     loggerRotatingSink("info_sink", "info"),
     loggerRotatingSink("debug_sink", "debug"),
     loggerRotatingSink("trace_sink", "trace"),
@@ -427,6 +428,8 @@ TEST_CASE("LoggerService: every sink level string is mapped", "[logger_service]"
 
   // the trace sink is the most permissive one and must have received the message
   REQUIRE(loggerContains(loggerFileContent(directory.path / "trace_sink.log"), "level marker"));
+  // "error" is the alias of "err" and must set the sink level just like it
+  REQUIRE(loggerContains(loggerFileContent(directory.path / "error_sink.log"), "level marker"));
   // the off sink must never receive the message (it may still have been created empty)
   const auto offSink = directory.path / "off_sink.log";
   if (std::filesystem::exists(offSink)) { REQUIRE_FALSE(loggerContains(loggerFileContent(offSink), "level marker")); }
@@ -436,7 +439,7 @@ TEST_CASE("LoggerService: every logger level string is mapped", "[logger_service
 {
   LoggerServiceLogDir directory;
   auto processName = std::make_shared<ProcessName>("main");
-  const std::vector<std::string> levels = { "critical", "warn", "err", "info", "debug", "trace", "off" };
+  const std::vector<std::string> levels = { "critical", "warn", "err", "error", "info", "debug", "trace", "off" };
 
   for (const auto &level : levels) {
     INFO("logger level: " << level);

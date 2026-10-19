@@ -237,8 +237,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     lock of its own (double lock). `shm::recoverOrphanedSegmentLock()` serializes itself with a
     file lock on the segment file now (released by the kernel when the holder dies, so it cannot
     become an orphan), probes the semaphore with a non-blocking acquire before it recreates
-    anything (a free lock is never removed - that would orphan every open handle), and rechecks a
-    lock whose holder is not recorded before reclaiming it. `SegmentLockOwner` records the process
+    anything (a free lock is never removed - that would orphan every open handle), and always
+    re-checks the holder record before reclaiming a taken lock - freshly re-read after
+    `shm::kRecoveryProbeDelay`, so a process that took the stuck lock over in that window is
+    left alone. The recovery mutex is time bounded (10 s, fail-safe: no reclaim on expiry), and a
+    reclaim whose recreate fails is still reported as reclaimed, so the caller reopens instead of
+    keeping the orphaned handle. `SegmentLockOwner` records the process
     id *and* its start ticks, so a recycled pid no longer looks like the holder, and a release
     uses `clearIf()` so it cannot wipe the record of the next holder. The start ticks
     come from `/proc/<pid>/stat` on Linux, `proc_pidinfo()` on macOS and
