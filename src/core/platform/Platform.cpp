@@ -14,6 +14,7 @@
 #elif defined(__APPLE__)
 // proc_pidinfo() is the supported way to read a process' start time; macOS has
 // no /proc, and sysctl() with KERN_PROC_PID is deprecated.
+#include <csignal>// kill
 #include <libproc.h>
 #include <sys/proc_info.h>
 #else
