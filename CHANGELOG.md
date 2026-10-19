@@ -165,6 +165,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `postgres:17` service.
 
 ### Changed
+- **Leak detection is a blocking check.** The `sanitizers` job (ASan+UBSan+LSan,
+  `detect_leaks=1`) is no longer `continue-on-error`: a full run including the `[pg]` cases is
+  green, so a leak regression stops the merge instead of being reported and ignored.
 - **The public API moved into `namespace lintel` (breaking).** Every public class, free
   function, enum and macro expansion that used to live in the global C++ namespace is now
   qualified with `lintel::`; the persistence layer sits one level deeper in `lintel::db` and the
@@ -230,6 +233,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **Review fixes on the pre-1.0 hardening items (A8/U5/A6/A5).**
+  - The shared-memory lock recovery could reclaim the same orphan twice: two processes that both
+    found a dead holder ran `remove()` + `open_or_create()` on the same semaphore and each kept a
+    lock of its own (double lock). `shm::recoverOrphanedSegmentLock()` serializes itself with a
+    file lock on the segment file now (released by the kernel when the holder dies, so it cannot
+    become an orphan), probes the semaphore with a non-blocking acquire before it recreates
+    anything (a free lock is never removed - that would orphan every open handle), and rechecks a
+    lock whose holder is not recorded before reclaiming it. `SegmentLockOwner` records the process
+    id *and* its start ticks, so a recycled pid no longer looks like the holder, and a release
+    uses `clearIf()` so it cannot wipe the record of the next holder.
+  - `processIsAlive()` treated `ERROR_ACCESS_DENIED` on Windows as "process is gone", which would
+    have reclaimed a lock that a living (but foreign or protected) process still holds. Only
+    `ERROR_INVALID_PARAMETER` - there is no such pid - counts as dead now; every other error stays
+    on the safe side, matching the POSIX branch where `EPERM` means "exists".
+  - A client supplied `X-Request-Id` was echoed and written into the log unchecked; in JSON mode a
+    quote or backslash in that header turned every log line of the request into invalid JSON. The
+    id is validated against `[A-Za-z0-9._-]{1,64}` now and replaced by a generated one when it
+    does not match (`LoggerService::requestIdOf()`).
+  - `LoggerService::m_level` was written by `POST /admin/log-level` on an httplib worker thread and
+    read by `levelOf()` unsynchronized; it is `std::atomic<LogLevel>` now. The two level parsers
+    (configuration and endpoint) became one, `LoggerService::logLevelFrom()`.
+  - The README Quickstart registered `PropertyFeature` before `BaseFeature`, which the new A8
+    dependency check rejects in `start()`; the order and the sentence behind it are fixed.
+  - `[pg]` tests: the unique-violation test pins the server language with `set lc_messages to 'C'`
+    instead of depending on the server's `lc_messages` default, the notify test waits bounded for
+    the first callback instead of racing the writer thread, and the pool test compares
+    `pg_backend_pid()` of two leases instead of asserting on the pool's counters.
 - **Lost wakeup when stopping a worker thread.** `ExecutorService`'s destructor set its `m_exit`
   flag and called `notify_all()` without holding the mutex that the worker's `wait(lock, pred)`
   reads the flag under. When the notification landed in the window between the worker's predicate

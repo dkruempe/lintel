@@ -287,17 +287,38 @@
  * semaphore alone carries no information about its holder. Each segment therefore keeps
  * a `SegmentLockOwner` sidecar (`<name>_remap_own`, same suffix length as
  * `_remap_sem` because macOS caps named object names at 31 characters): the guard
- * records the holder's pid while it holds the lock and clears it before posting.
- * `shm::recoverOrphanedSegmentLock()` reads it, asks @ref lintel::processIsAlive and
- * removes/recreates the semaphore only for a dead holder, then the handle reopens it so
- * this process talks to the new object. That runs once when a segment is opened
+ * records the holder's process id **and its start ticks** while it holds the lock and
+ * clears it again before posting (`clearIf`, so a release cannot wipe a record that
+ * already belongs to the next holder). The start ticks are what distinguishes a live
+ * holder from a recycled process id; if they cannot be determined, the id alone decides
+ * and the error direction is always "leave the lock alone". `shm::recoverOrphanedSegmentLock()`
+ * then closes every route to a double lock:
+ *
+ * - It serializes itself with `boost::interprocess::file_lock` on the segment file.
+ *   Two processes that both found a dead holder could otherwise each remove the
+ *   semaphore the other had just created and keep a lock of their own. A file lock is
+ *   released by the kernel when its holder dies, so this mutex cannot become an orphan.
+ * - It probes the semaphore with a non-blocking acquire: a free lock has nothing to
+ *   recover, and recreating it would orphan every open handle.
+ * - A lock that is taken without any recorded holder means a holder crashed between
+ *   taking the lock and recording itself, or a live holder is exactly in that two
+ *   instruction window - the re-check after `shm::kRecoveryProbeDelay` separates the
+ *   two.
+ *
+ * A reclaimed lock lets every waiter continue; a process that already opened the removed
+ * semaphore still talks to the orphaned one and times out with the usual error instead
+ * of racing. The recovery runs once when a segment is opened
  * (`SharedMemoryService::create()`) and again on demand through
  * `ISharedMemoryService::recover()`, which returns how many locks it reclaimed -
  * useful for an operator-facing trigger. `examples/cleanup.cpp` remains the manual
- * path for objects without a holder record, in particular **message queues**, which
- * have no liveness information and are therefore never reclaimed automatically.
+ * path when the automatic recovery cannot decide: given a segment name it removes the
+ * remap semaphore and the `SegmentLockOwner` sidecar (plus the named mutex of that
+ * name). **Message queues** have no holder record at all and are therefore never
+ * reclaimed automatically - removing them is always a manual decision.
  * Covered by `tests/features/SharedMemoryServiceTest.cpp` (dead holder is reclaimed,
- * living holder is left alone, recovery while opening).
+ * a free lock with a stale record is left alone, an unrecorded stuck lock is reclaimed,
+ * a living holder is left alone, a release cannot wipe the next holder's record,
+ * recovery while opening).
  *
  * Sizing semantics of @ref lintel::SharedMemoryService:
  *
@@ -355,7 +376,9 @@
  *    certificate before it validates the key, so a mismatched pair would
  *    otherwise leave the running server unable to complete a handshake.
  * - **Request correlation.** Every response carries an `X-Request-Id` header:
- *    the value the client sent is echoed, otherwise the server generates one
+ *    the value the client sent is echoed when it matches `[A-Za-z0-9._-]{1,64}`,
+ *    otherwise the server generates one - the id is written to the log
+ *    unescaped, so an unchecked header could break the JSON format
  *    (`ADD_HANDLER_METHOD`/`ADD_HANDLER_CONTENT_READER_METHOD` in
  *    @ref lintel::Controller install it for every handler). The same id is pushed
  *    onto the handling thread as a `RequestIdGuard`, so the log lines produced
