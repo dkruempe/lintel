@@ -26,6 +26,7 @@ private:
     const char *const LOGGER_LEVEL = "level";
     const char *const LOGGER_ASYNC = "async";
     const char *const LOGGER_PROCESS = "process_name";
+    const char *const LOGGER_JSON = "json";
     const char *const LOGGER_SINK_ROOT = "LoggerSink";
     const char *const LOGGER_SINK_TYPE = "type";
     const char *const LOGGER_SINK_LEVEL = "level";

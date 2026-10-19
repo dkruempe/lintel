@@ -7,8 +7,10 @@
 #include <spdlog/sinks/tcp_sink.h>
 
 #include <algorithm>
+#include <atomic>
 #include <csignal>
 #include <iostream>
+#include <random>
 #include <regex>
 
 #include "lintel/config.h"
@@ -17,6 +19,7 @@
 #include "lintel/core/exceptions/LoggerServiceNotInitialized.h"
 #include "lintel/core/services/DirectoryService.h"
 #include "lintel/core/services/FileService.h"
+#include "lintel/core/utils/UUID.h"
 
 // spdlog is used here only, never in the public header
 #include <spdlog/logger.h>
@@ -27,7 +30,11 @@ std::unique_ptr<LoggerService> LoggerService::m_instance = nullptr;
 std::mutex LoggerService::m_instanceMutex;
 
 LoggerService::LoggerService()
-  : m_processName(nullptr), m_configuration(nullptr), m_logger(spdlog::stdout_color_mt("test"))
+  : m_processName(nullptr), m_configuration(nullptr),
+    // A non-registered logger on purpose: spdlog::stdout_color_mt() would park the sink in
+    // spdlog's global registry for the whole process lifetime and show up as a leak (P4) in the
+    // LeakSanitizer job. This fallback logger is only used until DECLARE_LOGGER replaces it.
+    m_logger(std::make_shared<spdlog::logger>("test", std::make_shared<spdlog::sinks::stdout_color_sink_mt>()))
 {}
 
 LoggerService::LoggerService(std::shared_ptr<ProcessName> processName, std::shared_ptr<Configuration> configuration)
@@ -147,6 +154,25 @@ namespace {
       logger->flush_on(spdlog::level::off);
     }
   }
+
+  /** The request/correlation id of the calling thread.
+   *
+   * thread_local because an httplib worker thread handles one request at a time: the
+   * value is written once per request (see RequestIdGuard) and every LOG_* call in the
+   * handler picks it up without an explicit parameter. */
+  thread_local std::string g_requestId;
+
+  /** The level enum value corresponding to a configured level string. */
+  LogLevel logLevelOf(const std::string &name)
+  {
+    if (name == "critical") { return LogLevel::critical; }
+    if (name == "warn") { return LogLevel::warn; }
+    if (name == "err") { return LogLevel::error; }
+    if (name == "debug") { return LogLevel::debug; }
+    if (name == "trace") { return LogLevel::trace; }
+    if (name == "off") { return LogLevel::off; }
+    return LogLevel::info;
+  }
 }// namespace
 
 std::shared_ptr<spdlog::logger> LoggerService::init()
@@ -174,10 +200,35 @@ std::shared_ptr<spdlog::logger> LoggerService::init()
   auto logger = std::make_shared<spdlog::logger>(m_processName->getProcessName(), sinks.begin(), sinks.end());
   std::string loggerLevel = loggerConfigEntry->getLoggerConfiguration()->getLevel();
   applyLoggerLevel(logger, loggerLevel);
+  // keep the configured level visible to levelOf()/setLevel(), even when the
+  // configuration names an unknown level and applyLoggerLevel stays silent
+  m_level = logLevelOf(loggerLevel);
+  if (logConfig->isJson() && logConfig->getPattern().empty()) {
+    logger->set_pattern("{\"time\":\"%Y-%m-%dT%H:%M:%S.%e%z\",\"name\":\"%n\",\"level\":\"%l\",\"msg\":\"%v\"}");
+  } else if (!logConfig->getPattern().empty()) {
+    logger->set_pattern(logConfig->getPattern());
+  }
   return logger;
 }
 
 LoggerService::~LoggerService() = default;
+
+void LoggerService::setLevel(LogLevel level)
+{
+  m_level = level;
+  if (m_logger == nullptr) { return; }
+  const auto spdlogLevel = static_cast<spdlog::level::level_enum>(static_cast<std::uint8_t>(level));
+  m_logger->set_level(spdlogLevel);
+  m_logger->flush_on(spdlogLevel);
+}
+
+LogLevel LoggerService::levelOf() const { return m_level; }
+
+std::string LoggerService::generateRequestId() { return UUID::generate(); }
+
+void LoggerService::setRequestId(std::string requestId) { g_requestId = std::move(requestId); }
+
+std::string_view LoggerService::requestId() { return g_requestId; }
 
 LoggerService &LoggerService::getOrCreate(const std::shared_ptr<ProcessName> &processInfo,
   const std::shared_ptr<Configuration> &configuration)
@@ -220,6 +271,13 @@ void LoggerService::logImpl(const char *file,
   } catch (const std::exception &ex) {
     text = std::format("log formatting failed: {} [{}:{}]", ex.what(), file, line);
   }
+  if (g_requestId.empty()) {
+    m_logger->log(spdlog::source_loc{ file, line, function }, level, std::string_view(text));
+    return;
+  }
+  // the correlation id of the request the calling thread is serving: it ties the log lines
+  // of one request together and matches the X-Request-Id header the server answered with
+  text = std::format("[{}] {}", g_requestId, text);
   m_logger->log(spdlog::source_loc{ file, line, function }, level, std::string_view(text));
 }
 }// namespace lintel

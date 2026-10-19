@@ -835,4 +835,39 @@ TEST_CASE("DatabaseConnectionComponent: a negative poolAcquireTimeoutMs is rejec
 
   REQUIRE_THROWS_AS(component.parse(xml, 0, "test.xml"), ConfigurationException);
 }
+
+TEST_CASE("LoggerComponent: parse the optional json attribute of a Logger")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_cfg_test" };
+  auto envConfig = std::make_shared<EnvironmentConfiguration>();
+  LoggerComponent component(envConfig);
+
+  SECTION("json is set")
+  {
+    const std::string xml = R"(<Loggers>
+        <Logger process_name="main" level="info" async="false" json="true">
+            <LoggerSink type="ConsoleSink"/>
+        </Logger>
+    </Loggers>)";
+
+    auto entries = component.parse(xml, 0, "test.xml");
+    REQUIRE(entries.size() == 1);
+    auto loggerEntry = std::static_pointer_cast<LoggerEntry>(entries[0]);
+    REQUIRE(loggerEntry->getLoggerConfiguration()->isJson());
+  }
+
+  SECTION("json is absent - plain pattern formatting stays the default")
+  {
+    const std::string xml = R"(<Loggers>
+        <Logger process_name="main" level="info" async="false">
+            <LoggerSink type="ConsoleSink"/>
+        </Logger>
+    </Loggers>)";
+
+    auto entries = component.parse(xml, 0, "test.xml");
+    REQUIRE(entries.size() == 1);
+    auto loggerEntry = std::static_pointer_cast<LoggerEntry>(entries[0]);
+    REQUIRE_FALSE(loggerEntry->getLoggerConfiguration()->isJson());
+  }
+}
 }// namespace lintel

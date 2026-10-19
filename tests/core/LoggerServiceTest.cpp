@@ -74,7 +74,8 @@ namespace {
     const std::string &loggerLevel,
     const std::vector<LoggerSinkConfiguration> &sinks,
     bool withPathEntry = true,
-    bool createSubDirectories = false)
+    bool createSubDirectories = false,
+    bool isJson = false)
   {
     std::vector<std::shared_ptr<Entry>> entries;
     if (withPathEntry) {
@@ -82,7 +83,7 @@ namespace {
         type_name<LoggerComponent>(), std::make_shared<LoggerPathConfiguration>(baseDirectory, createSubDirectories)));
     }
     entries.push_back(std::make_shared<LoggerEntry>(type_name<LoggerComponent>(),
-      std::make_shared<LoggerConfiguration>(configuredProcess, "", loggerLevel, false, sinks)));
+      std::make_shared<LoggerConfiguration>(configuredProcess, "", loggerLevel, false, sinks, isJson)));
     auto envConfig = std::make_shared<EnvironmentConfiguration>();
     envConfig->overrides(EnvironmentConfiguration::ConfigDirectory, "/tmp/nonexistent_logger_service_cfg");
     envConfig->overrides(EnvironmentConfiguration::BootstrapConfigName, "nonexistent");
@@ -491,5 +492,72 @@ TEST_CASE("LoggerService: initSingleton installs a configured logger", "[logger_
   // initSingleton2 falls back to the default logger and must not throw
   REQUIRE_NOTHROW(LoggerService::initSingleton2());
   REQUIRE_NOTHROW(LoggerService::get());
+}
+
+TEST_CASE("LoggerService: setLevel changes the effective level without a restart", "[logger_service]")
+{
+  LoggerServiceLogDir directory;
+  auto processName = std::make_shared<ProcessName>("main");
+  auto configuration = loggerConfigurationOf(directory.path, "main", "info", { loggerRotatingSink("app") });
+  const auto file = directory.path / "app.log";
+
+  LoggerService service(processName, configuration);
+  REQUIRE(service.levelOf() == LogLevel::info);
+
+  // below the configured level: dropped, so the diagnosis starts from what the
+  // operator deployed and not from a silenced process
+  service.log(__FILE__, __LINE__, "test", LogLevel::debug, "before the runtime change");
+  REQUIRE_FALSE(loggerContains(loggerFileContent(file), "before the runtime change"));
+
+  service.setLevel(LogLevel::debug);
+  service.log(__FILE__, __LINE__, "test", LogLevel::debug, "after the runtime change");
+  REQUIRE(loggerContains(loggerFileContent(file), "after the runtime change"));
+  REQUIRE(service.levelOf() == LogLevel::debug);
+}
+
+TEST_CASE("LoggerService: a json logger writes one json object per message", "[logger_service]")
+{
+  LoggerServiceLogDir directory;
+  auto processName = std::make_shared<ProcessName>("main");
+  auto configuration =
+    loggerConfigurationOf(directory.path, "main", "info", { loggerRotatingSink("app") }, true, false, true);
+  const auto file = directory.path / "app.log";
+
+  LoggerService service(processName, configuration);
+  service.log(__FILE__, __LINE__, "test", LogLevel::info, "json message {}", 7);
+
+  const std::string content = loggerFileContent(file);
+  // the shape a log shipper parses: one line, object start first, the level and
+  // the already formatted message under their conventional keys
+  REQUIRE(content.find("{\"time\":") == 0);
+  REQUIRE(loggerContains(content, "\"level\":\"info\""));
+  REQUIRE(loggerContains(content, "\"msg\":\"json message 7\""));
+}
+
+TEST_CASE("LoggerService: the request correlation id is part of the message", "[logger_service]")
+{
+  LoggerServiceLogDir directory;
+  auto processName = std::make_shared<ProcessName>("main");
+  auto configuration = loggerConfigurationOf(directory.path, "main", "trace", { loggerRotatingSink("app") });
+  const auto file = directory.path / "app.log";
+
+  LoggerService service(processName, configuration);
+  LoggerService::setRequestId(std::string());
+  REQUIRE(LoggerService::requestId().empty());
+
+  service.log(__FILE__, __LINE__, "test", LogLevel::info, "outside a request");
+  REQUIRE_FALSE(loggerContains(loggerFileContent(file), "[req-123]"));
+
+  {
+    RequestIdGuard guard("req-123");
+    REQUIRE(LoggerService::requestId() == "req-123");
+    service.log(__FILE__, __LINE__, "test", LogLevel::info, "inside a request");
+    // ties the line to the X-Request-Id the server answered with
+    REQUIRE(loggerContains(loggerFileContent(file), "[req-123] inside a request"));
+  }
+
+  // the guard restores the previous id, otherwise a reused worker thread would
+  // tag the logs of the next request with the previous correlation id
+  REQUIRE(LoggerService::requestId().empty());
 }
 }// namespace lintel

@@ -49,6 +49,7 @@ std::shared_ptr<Entry>
   const char *pattern = loggerElement->Attribute(shape.LOGGER_PATTERN);
   const char *level = loggerElement->Attribute(shape.LOGGER_LEVEL);
   const char *async = loggerElement->Attribute(shape.LOGGER_ASYNC);
+  const char *jsonAttr = loggerElement->Attribute(shape.LOGGER_JSON);
   // validation of logger attributes
   if (processName == nullptr) {
     throw ConfigurationException(getConfigRoot(), "logger process_name is null", lineNumber);
@@ -56,6 +57,7 @@ std::shared_ptr<Entry>
   if (pattern == nullptr) { pattern = ""; }
   if (level == nullptr) { throw ConfigurationException(getConfigRoot(), "logger level is null", lineNumber); }
   if (async == nullptr) { throw ConfigurationException(getConfigRoot(), "logger async is null", lineNumber); }
+  bool isJson = jsonAttr != nullptr && std::string(jsonAttr) == "true";
   // iterate over childs of loggerEntry
   std::vector<LoggerSinkConfiguration> loggerSinks;
   for (tinyxml2::XMLElement *loggerSinkElement = loggerElement->FirstChildElement(); loggerSinkElement != nullptr;
@@ -66,7 +68,7 @@ std::shared_ptr<Entry>
   }
   if (loggerSinks.empty()) { throw ConfigurationException(getConfigRoot(), "logger sinks not defined", lineNumber); }
   std::shared_ptr<LoggerConfiguration> loggerConfiguration =
-    std::make_shared<LoggerConfiguration>(processName, pattern, level, async, loggerSinks);
+    std::make_shared<LoggerConfiguration>(processName, pattern, level, async, loggerSinks, isJson);
   auto loggerEntry = std::make_shared<LoggerEntry>(type_name<LoggerComponent>(), loggerConfiguration);
   return loggerEntry;
 }

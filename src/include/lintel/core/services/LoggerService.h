@@ -15,6 +15,7 @@
 #include <format>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <string_view>
 
 namespace lintel {
@@ -53,6 +54,8 @@ private:
   std::shared_ptr<ProcessName> m_processName;
   std::shared_ptr<Configuration> m_configuration;
   std::shared_ptr<spdlog::logger> m_logger;
+  /** Effective log level, kept so that levelOf() survives a runtime change */
+  LogLevel m_level = LogLevel::info;
 
   /** Initialize the spdlog logger instance. */
   std::shared_ptr<spdlog::logger> init();
@@ -118,6 +121,48 @@ public:
   {
     logImpl(file, line, function, lvl, message, std::make_format_args(args...));
   }
+
+  /** Change the log level at runtime.
+   *
+   * Thread-safe: spdlog keeps its level in an atomic, so a running process can be
+   * re-diagnosed without a restart (see the /admin/log-level endpoint).
+   * @param level the new level */
+  void setLevel(LogLevel level);
+
+  /** @return the currently effective log level */
+  [[nodiscard]] LogLevel levelOf() const;
+
+  /** Generate an opaque correlation id for one request. */
+  static std::string generateRequestId();
+
+  /** Set the request/correlation id of the calling thread.
+   * @param requestId the id, empty to clear */
+  static void setRequestId(std::string requestId);
+
+  /** @return the request/correlation id of the calling thread, empty when unset */
+  static std::string_view requestId();
+};
+
+/** RAII guard that keeps a request/correlation id on the calling thread.
+ *
+ * Restores the previous id so that a reused httplib worker thread cannot leak the
+ * correlation of one request into the next. */
+class RequestIdGuard
+{
+private:
+  std::string m_previous;
+
+public:
+  /** @param requestId the request id of the guarded scope */
+  explicit RequestIdGuard(const std::string &requestId) : m_previous(LoggerService::requestId())
+  {
+    LoggerService::setRequestId(requestId);
+  }
+
+  ~RequestIdGuard() { LoggerService::setRequestId(m_previous); }
+
+  RequestIdGuard(const RequestIdGuard &) = delete;
+  RequestIdGuard &operator=(const RequestIdGuard &) = delete;
 };
 
 #define DECLARE_LOGGER(processName, configuration) lintel::LoggerService::getOrCreate(processName, configuration)
