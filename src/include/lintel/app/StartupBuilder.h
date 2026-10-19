@@ -47,6 +47,14 @@ private:
   bool m_bootStrapServiceActive = true;
   std::mutex mutex;
 
+  /** Verify that every feature's required features were added before it.
+   *
+   * Throws std::runtime_error naming the offending feature when a required
+   * feature is missing or was added later (the layers form a linear chain).
+   * Called by start() before any type is registered, so a broken feature set
+   * fails fast instead of degrading silently. */
+  void verifyFeatureDependencies() const;
+
 public:
   /** Construct a StartupBuilder with a process name and command-line arguments.
    * @param processName the name identifying this process

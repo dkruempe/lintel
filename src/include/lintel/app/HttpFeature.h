@@ -20,6 +20,9 @@ public:
 
   /** Initialize the HTTP server from the container */
   void initialize(std::shared_ptr<lintel::di::Container> container) override;
+
+  /** The HTTP layer sits on top of the property layer */
+  std::vector<std::string_view> requiredFeatures() const override;
 };
 
 }// namespace lintel
