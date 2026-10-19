@@ -43,21 +43,13 @@ LoggerService::LoggerService(std::shared_ptr<ProcessName> processName, std::shar
 namespace {
   void setSinkLevelPattern(const LoggerSinkConfiguration &config, const spdlog::sink_ptr &sinkPtr)
   {
-    const std::string &level = config.getLevel();
-    if (level == "critical") {
-      sinkPtr->set_level(spdlog::level::critical);
-    } else if (level == "warn") {
-      sinkPtr->set_level(spdlog::level::warn);
-    } else if (level == "err") {
-      sinkPtr->set_level(spdlog::level::err);
-    } else if (level == "info") {
-      sinkPtr->set_level(spdlog::level::info);
-    } else if (level == "debug") {
-      sinkPtr->set_level(spdlog::level::debug);
-    } else if (level == "trace") {
-      sinkPtr->set_level(spdlog::level::trace);
-    } else if (level == "off") {
-      sinkPtr->set_level(spdlog::level::off);
+    // one parser for every level source (LoggerService::logLevelFrom), so a sink
+    // honours the same names as the logger and the admin endpoint - among them
+    // the "error" alias that the former strcmp chain dropped. An unknown name
+    // leaves the sink at its default level, exactly as before.
+    if (const std::optional<LogLevel> level = LoggerService::logLevelFrom(config.getLevel()); level.has_value()) {
+      // LogLevel intentionally has the values of spdlog::level::level_enum
+      sinkPtr->set_level(static_cast<spdlog::level::level_enum>(*level));
     }
     const std::string &pattern = config.getPattern();
     if (!pattern.empty()) { sinkPtr->set_pattern(config.getPattern()); }
@@ -130,28 +122,17 @@ namespace {
 
   void applyLoggerLevel(const std::shared_ptr<spdlog::logger> &logger, const std::string &loggerLevel)
   {
-    if (loggerLevel == "critical") {
-      logger->set_level(spdlog::level::critical);
-      logger->flush_on(spdlog::level::critical);
-    } else if (loggerLevel == "warn") {
-      logger->set_level(spdlog::level::warn);
-      logger->flush_on(spdlog::level::warn);
-    } else if (loggerLevel == "err") {
-      logger->set_level(spdlog::level::err);
-      logger->flush_on(spdlog::level::err);
-    } else if (loggerLevel == "info") {
-      logger->set_level(spdlog::level::info);
-      logger->flush_on(spdlog::level::info);
-    } else if (loggerLevel == "debug") {
-      logger->set_level(spdlog::level::debug);
-      logger->flush_on(spdlog::level::debug);
-    } else if (loggerLevel == "trace") {
-      logger->set_level(spdlog::level::trace);
-      logger->flush_on(spdlog::level::trace);
-    } else if (loggerLevel == "off") {
-      logger->set_level(spdlog::level::off);
-      logger->flush_on(spdlog::level::off);
-    }
+    // one parser for every level source (LoggerService::logLevelFrom): "error"
+    // and "err" are the same level here as in configuredLevelOf()/levelOf(), so
+    // the level the configuration reports is also the one the logger runs on.
+    // An unknown name keeps the spdlog defaults (level info), which is exactly
+    // what configuredLevelOf() reports for it.
+    const std::optional<LogLevel> level = LoggerService::logLevelFrom(loggerLevel);
+    if (!level.has_value()) { return; }
+    // LogLevel intentionally has the values of spdlog::level::level_enum
+    const auto spdlogLevel = static_cast<spdlog::level::level_enum>(*level);
+    logger->set_level(spdlogLevel);
+    logger->flush_on(spdlogLevel);
   }
 
   /** The request/correlation id of the calling thread.

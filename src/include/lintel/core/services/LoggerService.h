@@ -48,7 +48,14 @@ enum class LogLevel : std::uint8_t { trace = 0, debug = 1, info = 2, warn = 3, e
 #endif
 #endif
 
-/** Singleton service providing spdlog-based logging for the application. */
+/** Singleton service providing spdlog-based logging for the application.
+ *
+ * JSON output (`json="true"` on `<Logger>` in the bootstrap XML) formats every
+ * message as one JSON object per line with the message text as `msg`. That text
+ * is inserted verbatim, it is **not** escaped: a message containing a `"` or `\`
+ * (or a control character) ends or breaks the JSON line, so callers must keep
+ * structured data out of quotes. The request/correlation id is the only
+ * component that is filtered before it is written (see requestIdOf()). */
 class LoggerService
 {
 private:
