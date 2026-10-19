@@ -87,7 +87,7 @@ public:
   /** Override an environment configuration value.
    * @param environment the environment to override
    * @param value       the override value */
-  void overrides(EnvironmentConfiguration::Environment environment, std::string value);
+  void overrides(EnvironmentConfiguration::Environment environment, const std::string &value);
 
   /** Perform shutdown logic, notifying all registered services. */
   void onShutdown();

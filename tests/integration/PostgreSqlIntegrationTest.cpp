@@ -44,10 +44,22 @@
 namespace lintel {
 namespace {
 
+  /**
+   * The address a pool/ScopedConnection opens: DatabaseConnectionEntry's
+   * connection string *is* the libpq hostaddr, so it has to be filled in. An
+   * empty one leaves libpq on its default unix socket, which the CI service
+   * does not publish (only the TCP port), while the direct db::Connection
+   * tests pass one through pgConnInfo().
+   */
+  std::string pgHostaddr()
+  {
+    const char *host = std::getenv("PGHOST");
+    return (host != nullptr && *host != '\0') ? host : "127.0.0.1";
+  }
+
   /** Connection string built from the environment, empty when unset. */
   std::string pgConnInfo()
   {
-    const char *host = std::getenv("PGHOST");
     const char *port = std::getenv("PGPORT");
     const char *user = std::getenv("PGUSER");
     const char *password = std::getenv("PGPASSWORD");
@@ -56,7 +68,7 @@ namespace {
     // PGDATABASE alone is enough to opt in; the rest falls back to the CI
     // service credentials so a bare `PGDATABASE=x ctest` also works.
     std::string info = "hostaddr=";
-    info += (host != nullptr && *host != '\0') ? host : "127.0.0.1";
+    info += pgHostaddr();
     info += " port=";
     info += (port != nullptr && *port != '\0') ? port : "5432";
     info += " user=";
@@ -182,8 +194,10 @@ namespace {
 
   std::shared_ptr<DatabaseConnectionEntry> pgEntry()
   {
+    // the host has to be explicit: an empty connection string sends libpq to
+    // the unix socket, which only works where a server listens on one
     return std::make_shared<DatabaseConnectionEntry>(
-      "pg_test", "", "test", "test", db::ConnectionType::PostgreSQL, "pg_test", 5432, "test", true);
+      "pg_test", pgHostaddr(), "test", "test", db::ConnectionType::PostgreSQL, "pg_test", 5432, "test", true);
   }
 
 }// namespace

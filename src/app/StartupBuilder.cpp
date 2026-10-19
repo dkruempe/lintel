@@ -129,11 +129,11 @@ void StartupBuilder::withOutFeature(std::string_view nameOfFeature)
     m_featureVec.end());
 }
 
-void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment, std::string value)
+void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment, const std::string &value)
 {
-  // std::move avoids the second copy: EnvironmentConfiguration::overrides
-  // takes the value by value itself and moves it into its map.
-  m_environmentConfiguration->overrides(environment, std::move(value));
+  // EnvironmentConfiguration::overrides takes the value by value itself and
+  // moves it into its map; a reference here avoids the extra copy per call.
+  m_environmentConfiguration->overrides(environment, value);
 }
 
 void StartupBuilder::verifyFeatureDependencies() const
