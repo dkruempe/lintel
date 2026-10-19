@@ -362,12 +362,14 @@ jobs:
     timeout-minutes: 90
 
     # Advisory for now. Two known reasons it cannot be blocking yet:
-    #   - LSan is switched off (see below): the static spdlog registry,
-    #     boost::interprocess segments and the fork() in the signal test produce
-    #     leaks that are not bugs in this library.
+    #   - LSan is enabled (`detect_leaks=1`) and stayed green locally, but the
+    #     `[pg]` cases only run against the CI service, so the leak verdict of
+    #     that path has not been seen outside CI yet. A genuine third-party
+    #     finding gets a justification in a suppressions file wired through
+    #     LSAN_OPTIONS, never a blanket detect_leaks=0.
     #   - Budget: on a private repository the Actions minutes are limited
     #     (2000/month), and this job costs roughly 8-10 minutes per run.
-    # Promote to blocking once a full run is green and LSan is investigated.
+    # Promote to blocking once a full run including the pg tests is green.
     continue-on-error: true
 
     services:
@@ -445,11 +447,13 @@ jobs:
 
       - name: Run tests
         env:
-          # LSan off: the static spdlog registry, the boost::interprocess
-          # segments and the fork() in the signal test all look like leaks and
-          # would drown out a real finding. halt_on_error=1 makes ASan and
-          # UBSan stop at the first real error instead of continuing.
-          ASAN_OPTIONS: detect_leaks=0:halt_on_error=1
+          # Leak detection is on (ROADMAP P4): a full local run of the unit
+          # suite under ASan+UBSan+LSan reports no unreachable allocation - the
+          # static spdlog registry no longer keeps the loggers of a test alive
+          # and boost::interprocess segments are memory mapped, not malloc'd.
+          # halt_on_error=1 makes ASan and UBSan stop at the first real error
+          # instead of continuing.
+          ASAN_OPTIONS: detect_leaks=1:halt_on_error=1
           UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
           # Same reason as in the build job - see requirePg().
           LINTEL_REQUIRE_PG: "1"
