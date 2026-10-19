@@ -128,8 +128,9 @@ The `<Loggers>` section of the bootstrap XML decides what a process writes:
 ```
 
 - `level` is the effective floor (`critical|warn|err|error|info|debug|trace|off`);
-  `err` and `error` name the same level, and a sink may lower it further with its
-  own `level` attribute. An unknown name is reported by `/admin/log-level` as
+  `err` and `error` name the same level. The logger filters first, so a sink can only
+  make its own output stricter (raise the floor), never more verbose, with its own
+  `level` attribute. An unknown name is reported by `/admin/log-level` as
   `400`, while the XML silently falls back to `info`. The pattern lives either
   on `<Logger>` or on the sink and follows spdlog's `%` flags.
 - `json="true"` formats every message as one JSON object per line

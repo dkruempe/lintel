@@ -120,7 +120,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and is not served by the reference app.
 - **Leak detection is enabled in the ASan+UBSan CI job (`ROADMAP.md` P4).** The job ran with
   `detect_leaks=0`; it now runs with `detect_leaks=1`. A full local run of the unit suite
-  under ASan+UBSan+LSan (1122 cases) reports nothing unreachable: the boost interprocess
+  under ASan+UBSan+LSan reports nothing unreachable: the boost interprocess
   segments are memory mapped rather than `malloc`'d, and the spdlog registry no longer keeps
   a test's logger alive (see *Fixed*). The check is blocking, see *Changed*.
 - **Runtime feature-dependency check (`ROADMAP.md` A8).** `FeatureInterface` gained
