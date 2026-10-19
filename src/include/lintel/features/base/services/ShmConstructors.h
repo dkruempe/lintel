@@ -8,19 +8,23 @@
 #include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 #include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/sync/file_lock.hpp>
 #include <boost/interprocess/sync/named_semaphore.hpp>
+#include <boost/interprocess/sync/scoped_lock.hpp>
 
 #include <array>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <filesystem>
 #include <functional>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+#include <thread>
 #include <utility>
 
 #include "lintel/core/models/SharedMemorySegment.h"
@@ -37,9 +41,10 @@ namespace lintel {
  * leaves no trace: "a previous process crashed while holding it" and "a live
  * process still works on it" are indistinguishable. Reclaiming in the second
  * case would hand out two independent mutexes for one critical section, so the
- * holder writes its process id here while it holds the lock and clears it again
- * before releasing. `shm::recoverOrphanedSegmentLock()` combines this with
- * `processIsAlive()` and only reclaims when the holder is provably gone.
+ * holder records its process id and start ticks here while it holds the lock and
+ * clears the record again before releasing. `shm::recoverOrphanedSegmentLock()`
+ * combines that with `processIdentityIsAlive()` and only reclaims when the
+ * holder is provably gone.
  *
  * The name suffix has the same length as the semaphore's (`_remap_own` vs
  * `_remap_sem`): macOS caps named object names at 31 characters (PSEMNAMLEN) and
@@ -58,7 +63,7 @@ public:
     try {
       boost::interprocess::shared_memory_object object(
         boost::interprocess::open_or_create, m_name.c_str(), boost::interprocess::read_write);
-      object.truncate(static_cast<std::size_t>(sizeof(std::int64_t)));
+      object.truncate(static_cast<std::size_t>(kCellCount) * sizeof(std::int64_t));
       m_region = std::make_unique<boost::interprocess::mapped_region>(object, boost::interprocess::read_write);
     } catch (const boost::interprocess::interprocess_exception &error) {
       throw std::runtime_error(
@@ -71,21 +76,49 @@ public:
   SegmentLockOwner(const SegmentLockOwner &) = delete;
   SegmentLockOwner &operator=(const SegmentLockOwner &) = delete;
 
-  /** @return the id of the recorded holder, 0 when no holder is recorded */
-  [[nodiscard]] ProcessId pid() const noexcept
+  /** @return the recorded holder; processId is 0 when no holder is recorded */
+  [[nodiscard]] ProcessIdentity identity() const noexcept
   {
-    return std::atomic_ref<std::int64_t>(*cell()).load(std::memory_order_acquire);
+    return ProcessIdentity{ .processId = std::atomic_ref<std::int64_t>(*cell(kPidCell)).load(std::memory_order_acquire),
+      .startTicks = std::atomic_ref<std::int64_t>(*cell(kStartTicksCell)).load(std::memory_order_acquire) };
   }
+
+  /** @return the id of the recorded holder, 0 when no holder is recorded */
+  [[nodiscard]] ProcessId pid() const noexcept { return identity().processId; }
 
   /** Record a process as the current holder of the lock.
    * @param processId the holder, 0 clears the record */
   void set(ProcessId processId) noexcept
   {
-    std::atomic_ref<std::int64_t>(*cell()).store(processId, std::memory_order_release);
+    // The start ticks belong to the id: a process id is recycled eventually, so
+    // the pair is what tells "the recorded holder" from "some later process".
+    // Ticks are stored first, so a reader that sees the new id also sees them.
+    std::atomic_ref<std::int64_t>(*cell(kStartTicksCell))
+      .store(processStartTicksOf(processId), std::memory_order_release);
+    std::atomic_ref<std::int64_t>(*cell(kPidCell)).store(processId, std::memory_order_release);
   }
 
   /** Forget the recorded holder (called right before the lock is released). */
   void clear() noexcept { set(0); }
+
+  /**
+   * Forget the recorded holder only when it is still the given process.
+   *
+   * The record changes hands: the next holder writes its own id as soon as it
+   * has the lock. Clearing unconditionally would then wipe a *live* holder's
+   * record, and the next recovery would reclaim a lock that is in use.
+   *
+   * @param processId the process that wants to drop its own record
+   * @return true if the record still belonged to that process and is cleared
+   */
+  bool clearIf(ProcessId processId) noexcept
+  {
+    auto pidCell = std::atomic_ref<std::int64_t>(*cell(kPidCell));
+    std::int64_t expected = processId;
+    if (!pidCell.compare_exchange_strong(expected, 0, std::memory_order_acq_rel)) { return false; }
+    std::atomic_ref<std::int64_t>(*cell(kStartTicksCell)).store(0, std::memory_order_release);
+    return true;
+  }
 
   /** @return the sidecar name a segment is stored under */
   static std::string nameOf(const std::string &segmentName) { return segmentName + std::string(kNameSuffix); }
@@ -98,7 +131,15 @@ public:
   }
 
 private:
-  [[nodiscard]] std::int64_t *cell() const noexcept { return static_cast<std::int64_t *>(m_region->get_address()); }
+  /** One cell holds the holder's process id, the other its start ticks. */
+  static constexpr std::size_t kCellCount = 2;
+  static constexpr std::size_t kPidCell = 0;
+  static constexpr std::size_t kStartTicksCell = 1;
+
+  [[nodiscard]] std::int64_t *cell(std::size_t index) const noexcept
+  {
+    return static_cast<std::int64_t *>(m_region->get_address()) + index;
+  }
 
   std::string m_name;
   std::unique_ptr<boost::interprocess::mapped_region> m_region;
@@ -193,11 +234,14 @@ namespace shm {
 
     ~SegmentSemaphoreGuard()
     {
-      // A timed-out guard has neither the semaphore nor the owner record
-      // (acquireOrThrow cleared it): it must not post on destruction - that
-      // would hand the lock to the next waiter even though we never owned it.
+      // A timed-out guard never took the semaphore (acquireOrThrow cleared it):
+      // it must not post on destruction - that would hand the lock to the next
+      // waiter even though we never owned it.
       if (m_semaphore == nullptr) { return; }
-      if (m_owner != nullptr) { m_owner->clear(); }
+      // clearIf, not clear: the next holder writes its own record as soon as it
+      // owns the lock, so an unconditional clear could wipe a live holder and
+      // make the next recovery reclaim a lock that is in use.
+      if (m_owner != nullptr) { m_owner->clearIf(m_holderPid); }
       m_semaphore->post();
     }
 
@@ -218,42 +262,99 @@ namespace shm {
           "a previous process may have crashed while holding it "
           "(SharedMemoryService::recover() reclaims it once the holder is gone)");
       }
-      if (m_owner != nullptr) { m_owner->set(currentProcessId()); }
+      if (m_owner != nullptr) {
+        m_holderPid = currentProcessId();
+        m_owner->set(m_holderPid);
+      }
     }
 
     boost::interprocess::named_semaphore *m_semaphore;
     SegmentLockOwner *m_owner;
+    /** The id recorded in m_owner, so the release can check that the record is
+     *  still ours before clearing it. */
+    ProcessId m_holderPid = 0;
   };
+
+  /** Name of a segment's remap semaphore. Single source so the recovery, the
+   *  removal and the reopen cannot drift apart. */
+  inline std::string remapSemaphoreNameOf(const std::string &segmentName) { return segmentName + "_remap_sem"; }
+
+  /** How long the recovery waits before it decides that an unrecorded holder is
+   *  a crashed one - see recoverOrphanedSegmentLock(). */
+  inline constexpr std::chrono::milliseconds kRecoveryProbeDelay{ 200 };
 
   /**
    * Reclaim a segment's stuck remap semaphore when the process that held it is gone.
    *
    * Removing the semaphore while a live process still holds it would give two
-   * processes independent locks for one critical section, so the recorded
-   * holder is checked first and the lock is left alone while it is alive. A
-   * reclaimed lock lets every waiter continue; a process that already opened
-   * the removed semaphore still talks to the orphaned one and will time out
-   * with the usual error instead of racing.
+   * processes independent locks for one critical section, so this refuses to act
+   * unless it can rule that out:
+   *
+   * - The recovery itself is destructive (remove + recreate), so concurrent runs
+   *   are serialized with a file lock on the segment file. Two recoveries that
+   *   each removed the semaphore the other had just created would both keep a
+   *   lock of their own. A file lock is released by the kernel when its holder
+   *   dies, so this mutex cannot become an orphan itself.
+   * - A recorded holder that is still alive (compared by process id *and* start
+   *   time, because ids are recycled) means "leave it alone".
+   * - The semaphore is probed with a non-blocking acquire first: a free lock has
+   *   nothing to recover, and recreating it would orphan the handles of every
+   *   other process, which would then wait on an object nobody else uses.
+   * - No holder recorded while the lock is taken means the holder crashed
+   *   between taking the lock and recording itself - or a live holder is exactly
+   *   in that window. Recording happens directly after the acquisition, so a
+   *   short re-check separates the two.
+   *
+   * A reclaimed lock lets every waiter continue; a process that already opened
+   * the removed semaphore still talks to the orphaned one and will time out with
+   * the usual error instead of racing.
    *
    * @param segmentName the segment whose lock may be stuck
-   * @param owner       its holder record
+   * @param segmentPath the segment file, used as the recovery mutex
+   * @param owner       the segment's holder record
    * @return true if the lock was reclaimed
    */
-  inline bool recoverOrphanedSegmentLock(const std::string &segmentName, SegmentLockOwner &owner)
+  inline bool recoverOrphanedSegmentLock(const std::string &segmentName,
+    const std::filesystem::path &segmentPath,
+    SegmentLockOwner &owner)
   {
-    const ProcessId holder = owner.pid();
-    if (holder == 0) { return false; }
-    if (processIsAlive(holder)) { return false; }
-
-    const std::string semaphoreName = segmentName + "_remap_sem";
+    const std::string semaphoreName = remapSemaphoreNameOf(segmentName);
     try {
+      const std::string lockPath = segmentPath.string();
+      boost::interprocess::file_lock recoveryLock(lockPath.c_str());
+      boost::interprocess::scoped_lock<boost::interprocess::file_lock> serialized(recoveryLock);
+
+      const ProcessIdentity holder = owner.identity();
+      if (holder.processId > 0 && processIdentityIsAlive(holder)) { return false; }
+
+      // open_or_create: the semaphore may not exist yet when a segment is
+      // opened for the first time, and this probe must not fail on that.
+      boost::interprocess::named_semaphore lock(boost::interprocess::open_or_create, semaphoreName.c_str(), 1u);
+      if (lock.try_wait()) {
+        // The lock is free: nothing to recover. Hand it back untouched and drop
+        // the stale record of a holder that died after it released the lock.
+        owner.clearIf(holder.processId);
+        lock.post();
+        return false;
+      }
+      if (holder.processId <= 0) {
+        std::this_thread::sleep_for(kRecoveryProbeDelay);
+        if (owner.pid() > 0) { return false; }// a live holder caught up
+        if (lock.try_wait()) {
+          lock.post();
+          return false;
+        }
+      }
+
       boost::interprocess::named_semaphore::remove(semaphoreName.c_str());
       // open_or_create: another process may have recreated the lock in between,
       // in which case we open it instead of failing on a duplicate.
       boost::interprocess::named_semaphore(boost::interprocess::open_or_create, semaphoreName.c_str(), 1u);
-      owner.clear();
+      // clearIf, not clear: a process that took the lock in the meantime has
+      // recorded itself and must keep that record.
+      owner.clearIf(holder.processId);
       return true;
-    } catch (const boost::interprocess::interprocess_exception &error) {
+    } catch (const std::exception &error) {
       LOG_ERROR("cannot reclaim the orphaned lock of shared memory segment '{}': {}", segmentName, error.what());
       return false;
     }

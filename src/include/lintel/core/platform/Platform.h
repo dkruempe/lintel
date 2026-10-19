@@ -100,6 +100,46 @@ inline constexpr char pathListSeparator() noexcept
  */
 bool processIsAlive(ProcessId processId) noexcept;
 
+/**
+ * Platform ticks at which a process was started.
+ *
+ * Process ids are recycled, so a recorded id alone cannot answer "is this still
+ * the process that held the lock?". Comparing the start time as well turns that
+ * into a usable identity. The unit is platform specific (clock ticks since boot
+ * on POSIX, 100ns since 1601 on Windows) - only values from the same machine
+ * are comparable, which is exactly the use case.
+ *
+ * @param processId the process to inspect
+ * @return the start ticks, or 0 when the process does not exist or the value is
+ *         unavailable (a caller must then treat the identity as "unknown")
+ */
+std::int64_t processStartTicksOf(ProcessId processId) noexcept;
+
+/**
+ * Identity of one process: its id and the platform ticks it started at.
+ *
+ * A process id is recycled by the OS, so the pair is what identifies "the
+ * process that recorded itself" over time.
+ */
+struct ProcessIdentity
+{
+  ProcessId processId = 0;
+  std::int64_t startTicks = 0;
+};
+
+/**
+ * Check whether a recorded process identity still denotes a living process.
+ *
+ * A recorded start time of 0 means "unknown" and falls back to the process id
+ * alone, so a caller that cannot determine the ticks never turns a live holder
+ * into a dead one - the failure direction of a lock recovery must always be
+ * "leave the lock alone".
+ *
+ * @param identity the recorded process id and start ticks
+ * @return true if the recorded process is still alive
+ */
+bool processIdentityIsAlive(const ProcessIdentity &identity) noexcept;
+
 }// namespace lintel
 
 #endif// LINTEL_CORE_PLATFORM_PLATFORM_H

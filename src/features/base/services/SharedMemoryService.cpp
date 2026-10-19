@@ -129,9 +129,10 @@ std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> SharedMemorySe
       // first and the semaphore opened afterwards, so after a reclaim this
       // process maps the new semaphore instead of the orphaned one.
       handle->m_lockOwner = std::make_shared<SegmentLockOwner>(segment->getName());
-      const bool reclaimed = shm::recoverOrphanedSegmentLock(segment->getName(), *handle->m_lockOwner);
+      const bool reclaimed =
+        shm::recoverOrphanedSegmentLock(segment->getName(), segment->getPath(), *handle->m_lockOwner);
       handle->m_remapSemaphore = std::make_unique<boost::interprocess::named_semaphore>(
-        boost::interprocess::open_or_create, (segment->getName() + "_remap_sem").c_str(), 1u);
+        boost::interprocess::open_or_create, shm::remapSemaphoreNameOf(segment->getName()).c_str(), 1u);
       if (reclaimed) {
         LOG_WARN(
           "reclaimed the orphaned remap semaphore of shared memory segment '{}' - "
@@ -150,11 +151,20 @@ std::size_t SharedMemoryService::recover()
   std::size_t reclaimed = 0;
   for (const auto &[name, handle] : m_segments) {
     if (handle == nullptr || handle->m_lockOwner == nullptr) { continue; }
-    if (!shm::recoverOrphanedSegmentLock(name, *handle->m_lockOwner)) { continue; }
+    if (handle->m_sharedMemorySegment == nullptr) { continue; }
+    if (!shm::recoverOrphanedSegmentLock(name, handle->m_sharedMemorySegment->getPath(), *handle->m_lockOwner)) {
+      continue;
+    }
     // The old semaphore object is orphaned by the removal; reopen it so this
     // process keeps using the one every other process will see as well.
-    handle->m_remapSemaphore = std::make_unique<boost::interprocess::named_semaphore>(
-      boost::interprocess::open_only, (name + "_remap_sem").c_str());
+    try {
+      handle->m_remapSemaphore = std::make_unique<boost::interprocess::named_semaphore>(
+        boost::interprocess::open_or_create, shm::remapSemaphoreNameOf(name).c_str(), 1u);
+    } catch (const boost::interprocess::interprocess_exception &error) {
+      // Nothing else to do: the next open of the segment maps the new object.
+      LOG_ERROR("cannot reopen the reclaimed remap semaphore of segment '{}': {}", name, error.what());
+      continue;
+    }
     LOG_WARN(
       "reclaimed the orphaned remap semaphore of shared memory segment '{}' - "
       "the process that held it is gone",

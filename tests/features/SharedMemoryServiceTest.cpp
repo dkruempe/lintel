@@ -88,7 +88,7 @@ namespace {
         // leaves behind: a semaphore nobody will ever post again plus a holder
         // record pointing at a process that no longer exists.
         boost::interprocess::named_semaphore semaphore(
-          boost::interprocess::open_or_create, (name + "_remap_sem").c_str(), 1u);
+          boost::interprocess::open_or_create, shm::remapSemaphoreNameOf(name).c_str(), 1u);
         REQUIRE(semaphore.try_wait());
         SegmentLockOwner sidecar(name);
         sidecar.set(kDeadProcessId);
@@ -113,7 +113,7 @@ namespace {
       service.reset();
       scheduler.reset();
       std::filesystem::remove(path);
-      boost::interprocess::named_semaphore::remove((name + "_remap_sem").c_str());
+      boost::interprocess::named_semaphore::remove(shm::remapSemaphoreNameOf(name).c_str());
       // the holder record outlives the semaphore otherwise, and a recycled pid
       // of a later test run would then look like a living lock holder
       SegmentLockOwner::removeOf(name);
@@ -320,7 +320,8 @@ TEST_CASE("SharedMemoryService: recover reclaims the lock of a holder that is go
   SharedMemoryServiceFixture fixture;
   // take the lock and never give it back - the state a crashed holder leaves
   // behind; the fresh handle below refers to the same semaphore object
-  boost::interprocess::named_semaphore stuck(boost::interprocess::open_only, (fixture.name + "_remap_sem").c_str());
+  boost::interprocess::named_semaphore stuck(
+    boost::interprocess::open_only, shm::remapSemaphoreNameOf(fixture.name).c_str());
   REQUIRE(stuck.try_wait());
 
   SegmentLockOwner owner(fixture.name);
@@ -330,10 +331,12 @@ TEST_CASE("SharedMemoryService: recover reclaims the lock of a holder that is go
   REQUIRE(fixture.service->recover() == 1);
 
   // a new handle sees the recreated semaphore, so the next waiter gets the lock
-  boost::interprocess::named_semaphore fresh(boost::interprocess::open_only, (fixture.name + "_remap_sem").c_str());
+  boost::interprocess::named_semaphore fresh(
+    boost::interprocess::open_only, shm::remapSemaphoreNameOf(fixture.name).c_str());
   REQUIRE(fresh.try_wait());
   // still binary: reclaiming must not hand out two locks at once
   REQUIRE_FALSE(fresh.try_wait());
+  fresh.post();
 
   // the holder record is cleared with it, so a second run has nothing to do
   REQUIRE(fixture.service->recover() == 0);
@@ -342,7 +345,8 @@ TEST_CASE("SharedMemoryService: recover reclaims the lock of a holder that is go
 TEST_CASE("SharedMemoryService: recover leaves the lock of a living holder alone")
 {
   SharedMemoryServiceFixture fixture;
-  boost::interprocess::named_semaphore stuck(boost::interprocess::open_only, (fixture.name + "_remap_sem").c_str());
+  boost::interprocess::named_semaphore stuck(
+    boost::interprocess::open_only, shm::remapSemaphoreNameOf(fixture.name).c_str());
   REQUIRE(stuck.try_wait());
 
   SegmentLockOwner owner(fixture.name);
@@ -364,6 +368,75 @@ TEST_CASE("SharedMemoryService: opening a segment over a dead holder recovers it
   REQUIRE(fixture.service->recover() == 0);
   REQUIRE_NOTHROW(fixture.service->getSegmentAccessor(fixture.segment));
   REQUIRE(fixture.service->getGeneration() == 0);
+}
+
+TEST_CASE("SharedMemoryService: recover keeps a free lock that only has a stale record")
+{
+  SharedMemoryServiceFixture fixture;
+  boost::interprocess::named_semaphore free(
+    boost::interprocess::open_only, shm::remapSemaphoreNameOf(fixture.name).c_str());
+
+  SegmentLockOwner owner(fixture.name);
+  owner.set(kDeadProcessId);
+
+  // the holder died *after* it released the lock: the lock is free, so there is
+  // nothing to reclaim and recreating it would orphan every open handle
+  REQUIRE(fixture.service->recover() == 0);
+  REQUIRE(owner.pid() == 0);
+
+  REQUIRE(free.try_wait());
+  // same object as the caller's: recovery did not replace it behind our back
+  boost::interprocess::named_semaphore sameObject(
+    boost::interprocess::open_only, shm::remapSemaphoreNameOf(fixture.name).c_str());
+  REQUIRE_FALSE(sameObject.try_wait());
+  free.post();
+}
+
+TEST_CASE("SharedMemoryService: recover reclaims a stuck lock that has no holder record")
+{
+  SharedMemoryServiceFixture fixture;
+  // a process that crashed between taking the lock and recording itself
+  boost::interprocess::named_semaphore stuck(
+    boost::interprocess::open_only, shm::remapSemaphoreNameOf(fixture.name).c_str());
+  REQUIRE(stuck.try_wait());
+  SegmentLockOwner owner(fixture.name);
+  REQUIRE(owner.pid() == 0);
+
+  REQUIRE(fixture.service->recover() == 1);
+
+  boost::interprocess::named_semaphore fresh(
+    boost::interprocess::open_only, shm::remapSemaphoreNameOf(fixture.name).c_str());
+  REQUIRE(fresh.try_wait());
+  REQUIRE_FALSE(fresh.try_wait());
+}
+
+TEST_CASE("SharedMemoryService: releasing the lock keeps a record that is no longer ours")
+{
+  SharedMemoryServiceFixture fixture;
+  SegmentLockOwner owner(fixture.name);
+  auto &handle = fixture.service->segmentOf(fixture.name);
+  {
+    shm::SegmentSemaphoreGuard gate(handle, std::chrono::milliseconds(500));
+    REQUIRE(owner.pid() == currentProcessId());
+    // the next holder has recorded itself before this guard is destroyed
+    owner.set(kDeadProcessId);
+  }
+  // an unconditional clear would wipe a live holder and the next recovery would
+  // then reclaim a lock that is in use
+  REQUIRE(owner.pid() == kDeadProcessId);
+}
+
+TEST_CASE("SharedMemory lock recovery: a recycled process id is not the same holder")
+{
+  const ProcessId self = currentProcessId();
+  const std::int64_t ticks = processStartTicksOf(self);
+  REQUIRE(ticks > 0);
+  REQUIRE(processIdentityIsAlive(ProcessIdentity{ self, ticks }));
+  // same id, different start time: the recorded holder is gone
+  REQUIRE_FALSE(processIdentityIsAlive(ProcessIdentity{ self, ticks + 1 }));
+  // unknown start time falls back to the id - never reclaim from a live process
+  REQUIRE(processIdentityIsAlive(ProcessIdentity{ self, 0 }));
+  REQUIRE_FALSE(processIdentityIsAlive(ProcessIdentity{ kDeadProcessId, 0 }));
 }
 
 }// namespace lintel
