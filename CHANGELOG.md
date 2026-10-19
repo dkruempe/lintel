@@ -242,7 +242,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     anything (a free lock is never removed - that would orphan every open handle), and rechecks a
     lock whose holder is not recorded before reclaiming it. `SegmentLockOwner` records the process
     id *and* its start ticks, so a recycled pid no longer looks like the holder, and a release
-    uses `clearIf()` so it cannot wipe the record of the next holder.
+    uses `clearIf()` so it cannot wipe the record of the next holder. The start ticks
+    come from `/proc/<pid>/stat` on Linux, `proc_pidinfo()` on macOS and
+    `GetProcessTimes()` on Windows; where they are unavailable the id alone decides.
   - `processIsAlive()` treated `ERROR_ACCESS_DENIED` on Windows as "process is gone", which would
     have reclaimed a lock that a living (but foreign or protected) process still holds. Only
     `ERROR_INVALID_PARAMETER` - there is no such pid - counts as dead now; every other error stays

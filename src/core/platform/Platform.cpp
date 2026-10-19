@@ -11,6 +11,11 @@
 // <Windows.h>, which is why this lives in a translation unit instead of the
 // public header.
 #include <Windows.h>
+#elif defined(__APPLE__)
+// proc_pidinfo() is the supported way to read a process' start time; macOS has
+// no /proc, and sysctl() with KERN_PROC_PID is deprecated.
+#include <libproc.h>
+#include <sys/proc_info.h>
 #else
 #include <csignal>// kill
 #endif
@@ -84,6 +89,14 @@ std::int64_t processStartTicksOf(ProcessId processId) noexcept
   }
   ::CloseHandle(handle);
   return ticks;
+#elif defined(__APPLE__)
+  struct proc_bsdinfo info
+  {
+  };
+  const int received =
+    ::proc_pidinfo(static_cast<int>(processId), PROC_PIDTBSDINFO, 0, &info, static_cast<int>(sizeof(info)));
+  if (received != static_cast<int>(sizeof(info))) { return 0; }
+  return static_cast<std::int64_t>(info.pbi_start_tvsec) * 1000000 + static_cast<std::int64_t>(info.pbi_start_tvusec);
 #else
   // /proc/<pid>/stat: the comm field (2) is parenthesised and may contain
   // spaces and parentheses, so the parse starts after the *last* ')'. The
