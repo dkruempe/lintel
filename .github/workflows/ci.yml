@@ -361,16 +361,11 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
 
-    # Advisory for now. Two known reasons it cannot be blocking yet:
-    #   - LSan is enabled (`detect_leaks=1`) and stayed green locally, but the
-    #     `[pg]` cases only run against the CI service, so the leak verdict of
-    #     that path has not been seen outside CI yet. A genuine third-party
-    #     finding gets a justification in a suppressions file wired through
-    #     LSAN_OPTIONS, never a blanket detect_leaks=0.
-    #   - Budget: on a private repository the Actions minutes are limited
-    #     (2000/month), and this job costs roughly 8-10 minutes per run.
-    # Promote to blocking once a full run including the pg tests is green.
-    continue-on-error: true
+    # Blocking: LSan runs with `detect_leaks=1` and a full run including the
+    # [pg] cases has been green, so a leak regression stops the merge - which
+    # was the point of enabling leak detection in the first place. A genuine
+    # third-party finding gets a justification in a suppressions file wired
+    # through LSAN_OPTIONS, never a blanket detect_leaks=0.
 
     services:
       postgres:
