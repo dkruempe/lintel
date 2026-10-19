@@ -671,6 +671,10 @@ TEST_CASE("PostgreSQL: notify keeps delivering while inserts are running", "[pg]
   const auto firstDelivery = std::chrono::steady_clock::now() - start;
   writer.join();
 
+  // The loop above also ends when the writer is done, so the first callback may
+  // still be in flight - the listener wakes at most one poll interval after the
+  // notification reached the server.
+  for (int i = 0; i < 50 && callbacks.load() == 0; i++) { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }
   REQUIRE(callbacks.load() >= 1);
   // Generous deadline: the listener wakes at most one poll interval (1s) after
   // the notification reaches the server.
@@ -810,6 +814,10 @@ TEST_CASE("PostgreSQL: unique constraint violation surfaces the driver message",
   PgTable table(uniqueTableName());
 
   db::Connection connection = connectPg();
+  // the assertion matches the server text, so its language must be fixed here
+  // instead of relying on the server's default lc_messages
+  db::Statement setup(connection);
+  setup.execute("set lc_messages to 'C'");
   db::Statement stmt(connection);
   db::ParameterBuilder b1(pgEntry());
   b1.add(std::string("dup")).add(1);
@@ -826,23 +834,24 @@ TEST_CASE("PostgreSQL: unique constraint violation surfaces the driver message",
 /**
  * A ConnectionPool must reuse a healthy connection between leases.
  *
- * The pool hands out a lease, the caller runs a query, returns the lease;
- * the next acquire should receive the same physical connection slot (via the
- * test connector's reuse) and the pool's outstanding count must return to 0.
- * This verifies the lease lifecycle and release path.
+ * The pool hands out a lease, the caller uses it, returns it; the next acquire
+ * must reach the same backend server-side - pg_backend_pid() identifies the
+ * physical connection, so this checks the release path itself and not only the
+ * pool's counters.
  */
 TEST_CASE("PostgreSQL: pool reuses a healthy connection", "[pg]")
 {
   requirePg();
   db::ConnectionPool pool(pgEntry(), db::PoolSettings{ 2, std::chrono::milliseconds(5000) });
 
+  std::string backendId;
   {
     db::ConnectionPool::Lease lease = pool.acquire();
     REQUIRE(lease.valid());
     db::Statement stmt(lease.connection());
-    db::Result result = stmt.execute("select 1");
+    db::Result result = stmt.execute("select pg_backend_pid()");
     REQUIRE(result.getSize() == 1);
-    REQUIRE(result.getValue(0, 0) == "1");
+    backendId = result.getValue(0, 0);
     REQUIRE(pool.outstanding() == 1);
   }
   REQUIRE(pool.outstanding() == 0);
@@ -851,6 +860,10 @@ TEST_CASE("PostgreSQL: pool reuses a healthy connection", "[pg]")
   {
     db::ConnectionPool::Lease lease = pool.acquire();
     REQUIRE(lease.valid());
+    // the same backend: the lease really hands the connection back, it does
+    // not just report a free slot
+    db::Statement stmt(lease.connection());
+    REQUIRE(stmt.execute("select pg_backend_pid()").getValue(0, 0) == backendId);
     REQUIRE(pool.outstanding() == 1);
   }
   REQUIRE(pool.outstanding() == 0);
