@@ -378,7 +378,9 @@
  *    worked and puts it back when a renewal is rejected - the loader installs the
  *    certificate before it validates the key, so a mismatched pair would
  *    otherwise leave the running server unable to complete a handshake.
- * - **Request correlation.** Every response carries an `X-Request-Id` header:
+ * - **Request correlation.** Every response a controller handler produces carries
+ *    an `X-Request-Id` header (an unrouted request is answered by the server's
+ *    default `404` without one):
  *    the value the client sent is echoed when it matches `[A-Za-z0-9._-]{1,64}`,
  *    otherwise the server generates one - the id is written to the log
  *    unescaped, so an unchecked header could break the JSON format

@@ -140,10 +140,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     `200 {"status":"changed","level":"debug"}`, `400 {"status":"invalid_level"}` for an unknown
     name or a body that is not json, `401` outside the group, `403` for a wrong content type.
     The bootstrap configuration is not rewritten, so a restart returns to the deployed level.
-  - Every response carries an `X-Request-Id` header - echoed when the client supplied one,
-    generated otherwise - and the handling thread prefixes the log lines it produces during that
-    request with the same id (`RequestIdGuard`). Documented in `swagger.yaml`/`swagger.md`, the
-    README and `docs/architecture.dox`.
+  - Every response a controller handler produces carries an `X-Request-Id` header - echoed when the
+    client supplied one, generated otherwise - and the handling thread prefixes the log lines it
+    produces during that request with the same id (`RequestIdGuard`). Documented in
+    `swagger.yaml`/`swagger.md`, the README and `docs/architecture.dox`.
 - **Automatic crash recovery for orphaned shared-memory locks (`ROADMAP.md` A6).** A bounded
   wait alone only turns a deadlock into a timeout: without the identity of the holder it is
   impossible to tell "a previous process crashed" from "a live process still holds it", and

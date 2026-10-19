@@ -143,8 +143,10 @@ The `<Loggers>` section of the bootstrap XML decides what a process writes:
   the level of a running process immediately (`401` outside the `Admin-Log`
   group, `400` for an unknown name). The XML is not rewritten, so a restart
   goes back to the deployed level.
-- **Request correlation**: every response carries an `X-Request-Id` header -
-  echoed when the client supplied one, generated otherwise - and the handling
+- **Request correlation**: every response a controller handler produces carries
+  an `X-Request-Id` header - echoed when the client supplied one, generated
+  otherwise (a request to an unrouted path is answered by the server's default
+  `404`, which carries no header) - and the handling
   thread writes the same id in front of the log lines it produces
   (`[<id>] message`), so the log of one HTTP request can be filtered by a single
   search. A supplied id is only echoed when it matches `[A-Za-z0-9._-]{1,64}`,

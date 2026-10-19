@@ -424,12 +424,17 @@ TEST_CASE("LoggerService: every sink level string is mapped", "[logger_service]"
   {
     LoggerService service(processName, configuration);
     service.log(__FILE__, __LINE__, "test", LogLevel::error, "level marker");
+    // one level below the configured floor: a sink whose level string was
+    // dropped keeps spdlog's default (trace) and would log this as well
+    service.log(__FILE__, __LINE__, "test", LogLevel::warn, "below marker");
   }
 
   // the trace sink is the most permissive one and must have received the message
   REQUIRE(loggerContains(loggerFileContent(directory.path / "trace_sink.log"), "level marker"));
   // "error" is the alias of "err" and must set the sink level just like it
   REQUIRE(loggerContains(loggerFileContent(directory.path / "error_sink.log"), "level marker"));
+  REQUIRE_FALSE(loggerContains(loggerFileContent(directory.path / "err_sink.log"), "below marker"));
+  REQUIRE_FALSE(loggerContains(loggerFileContent(directory.path / "error_sink.log"), "below marker"));
   // the off sink must never receive the message (it may still have been created empty)
   const auto offSink = directory.path / "off_sink.log";
   if (std::filesystem::exists(offSink)) { REQUIRE_FALSE(loggerContains(loggerFileContent(offSink), "level marker")); }
@@ -495,6 +500,21 @@ TEST_CASE("LoggerService: initSingleton installs a configured logger", "[logger_
   // initSingleton2 falls back to the default logger and must not throw
   REQUIRE_NOTHROW(LoggerService::initSingleton2());
   REQUIRE_NOTHROW(LoggerService::get());
+}
+
+TEST_CASE("LoggerService: levelOf reports the configured level", "[logger_service]")
+{
+  LoggerServiceLogDir directory;
+  auto processName = std::make_shared<ProcessName>("main");
+
+  // init() records the configured level; m_level must outlive that construction,
+  // or every levelOf() falls back to the default (info)
+  for (const auto &level : { std::string("trace"), std::string("debug"), std::string("error"), std::string("off") }) {
+    INFO("configured level: " << level);
+    auto configuration = loggerConfigurationOf(directory.path, "main", level, { loggerRotatingSink("level_probe") });
+    LoggerService service(processName, configuration);
+    REQUIRE(service.levelOf() == LoggerService::logLevelFrom(level).value());
+  }
 }
 
 TEST_CASE("LoggerService: setLevel changes the effective level without a restart", "[logger_service]")

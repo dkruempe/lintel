@@ -62,9 +62,11 @@ private:
   // variables
   std::shared_ptr<ProcessName> m_processName;
   std::shared_ptr<Configuration> m_configuration;
-  std::shared_ptr<spdlog::logger> m_logger;
-  /** Effective log level, kept so that levelOf() survives a runtime change */
+  /** Effective log level, kept so that levelOf() survives a runtime change.
+   *  Declared before m_logger on purpose: init() writes it while m_logger is
+   *  being constructed, and members are initialized in declaration order. */
   std::atomic<LogLevel> m_level{ LogLevel::info };
+  std::shared_ptr<spdlog::logger> m_logger;
 
   /** Initialize the spdlog logger instance. */
   std::shared_ptr<spdlog::logger> init();
