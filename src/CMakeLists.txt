@@ -356,6 +356,8 @@ set(sources
     core/persistence/sqlite3/Result.cpp
     core/persistence/sqlite3/Statement.cpp
     core/persistence/sqlite3/Transaction.cpp
+    # core - platform
+    core/platform/Platform.cpp
     # core - plugins
     app/plugins/AdminUserBootstrapPlugin.cpp
     app/plugins/DatabaseBootstrapPlugin.cpp

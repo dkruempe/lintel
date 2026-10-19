@@ -77,6 +77,15 @@ public:
   /** shrinks the shared memory size to the minimum */
   void shrinkOf(const std::shared_ptr<SharedMemorySegment> &segment) override;
 
+  /** Reclaim the remap locks of segments whose holder process is gone.
+   *
+   * Opened segments are checked once when they are created (see
+   * SharedMemorySegmentComponent/`create()`); this is the repeat an operator
+   * needs for a segment that got stuck later on, and it never touches a lock
+   * whose holder is still alive.
+   * @return the number of locks that were reclaimed */
+  std::size_t recover() override;
+
   /**
    * shows state of the mentioned shared memory segment
    * @param segment

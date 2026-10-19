@@ -87,6 +87,19 @@ inline constexpr char pathListSeparator() noexcept
 #endif
 }
 
+/**
+ * Check whether a process id still refers to a living process.
+ *
+ * The crash recovery of the shared memory locks needs to tell "the holder of
+ * this lock went away" from "the holder is alive but slow"; only the first one
+ * may be reclaimed. The implementation lives in Platform.cpp because it needs
+ * <Windows.h>, which this header deliberately avoids pulling into public ones.
+ *
+ * @param processId the process to check, 0 or negative is never alive
+ * @return true if a process with that id exists
+ */
+bool processIsAlive(ProcessId processId) noexcept;
+
 }// namespace lintel
 
 #endif// LINTEL_CORE_PLATFORM_PLATFORM_H

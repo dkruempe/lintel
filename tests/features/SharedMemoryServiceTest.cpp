@@ -38,6 +38,10 @@ namespace {
   constexpr std::size_t kGrowSize = 1u << 20;
   constexpr std::size_t kMaxSize = 4u << 20;
 
+  /** A process id that provably does not exist: 2^30 is above Linux's PID_MAX_LIMIT
+   *  (2^22) and far above the Windows PID allocation granularity. */
+  constexpr ProcessId kDeadProcessId = static_cast<ProcessId>(1) << 30;
+
   std::filesystem::path uniqueSegmentPath()
   {
     static unsigned int counter = 0;
@@ -67,7 +71,9 @@ namespace {
     std::shared_ptr<SharedMemoryService> service;
     std::shared_ptr<SchedulerService> scheduler;
 
-    explicit SharedMemoryServiceFixture(std::size_t size = kInitialSize, std::size_t maxSize = 0)
+    explicit SharedMemoryServiceFixture(std::size_t size = kInitialSize,
+      std::size_t maxSize = 0,
+      bool withOrphanedLock = false)
       : path(uniqueSegmentPath()), name(uniqueSegmentName())
     {
       if (maxSize != 0) {
@@ -75,6 +81,17 @@ namespace {
           path, name, size, SharedMemorySegment::AutoExtendConfig{ kGrowSize, maxSize });
       } else {
         segment = std::make_shared<SharedMemorySegment>(path, name, size);
+      }
+
+      if (withOrphanedLock) {
+        // Exactly what a process that crashed while holding the remap lock
+        // leaves behind: a semaphore nobody will ever post again plus a holder
+        // record pointing at a process that no longer exists.
+        boost::interprocess::named_semaphore semaphore(
+          boost::interprocess::open_or_create, (name + "_remap_sem").c_str(), 1u);
+        REQUIRE(semaphore.try_wait());
+        SegmentLockOwner sidecar(name);
+        sidecar.set(kDeadProcessId);
       }
 
       auto config = std::make_shared<Configuration>(
@@ -97,6 +114,9 @@ namespace {
       scheduler.reset();
       std::filesystem::remove(path);
       boost::interprocess::named_semaphore::remove((name + "_remap_sem").c_str());
+      // the holder record outlives the semaphore otherwise, and a recycled pid
+      // of a later test run would then look like a living lock holder
+      SegmentLockOwner::removeOf(name);
     }
 
     [[nodiscard]] std::size_t currentSize() const { return service->showStateOf(segment).getCurrentSize(); }
@@ -293,6 +313,57 @@ TEST_CASE("SharedMemoryService: getSegmentAccessor throws for an unknown segment
   auto unknown = std::make_shared<SharedMemorySegment>(fixture.path, fixture.name + "_missing", kInitialSize);
 
   REQUIRE_THROWS_AS(fixture.service->getSegmentAccessor(unknown), ShmSegmentNotFound);
+}
+
+TEST_CASE("SharedMemoryService: recover reclaims the lock of a holder that is gone")
+{
+  SharedMemoryServiceFixture fixture;
+  // take the lock and never give it back - the state a crashed holder leaves
+  // behind; the fresh handle below refers to the same semaphore object
+  boost::interprocess::named_semaphore stuck(boost::interprocess::open_only, (fixture.name + "_remap_sem").c_str());
+  REQUIRE(stuck.try_wait());
+
+  SegmentLockOwner owner(fixture.name);
+  REQUIRE_FALSE(processIsAlive(kDeadProcessId));
+  owner.set(kDeadProcessId);
+
+  REQUIRE(fixture.service->recover() == 1);
+
+  // a new handle sees the recreated semaphore, so the next waiter gets the lock
+  boost::interprocess::named_semaphore fresh(boost::interprocess::open_only, (fixture.name + "_remap_sem").c_str());
+  REQUIRE(fresh.try_wait());
+  // still binary: reclaiming must not hand out two locks at once
+  REQUIRE_FALSE(fresh.try_wait());
+
+  // the holder record is cleared with it, so a second run has nothing to do
+  REQUIRE(fixture.service->recover() == 0);
+}
+
+TEST_CASE("SharedMemoryService: recover leaves the lock of a living holder alone")
+{
+  SharedMemoryServiceFixture fixture;
+  boost::interprocess::named_semaphore stuck(boost::interprocess::open_only, (fixture.name + "_remap_sem").c_str());
+  REQUIRE(stuck.try_wait());
+
+  SegmentLockOwner owner(fixture.name);
+  owner.set(currentProcessId());
+
+  // taking it away from a process that still runs would give two processes
+  // independent locks for one critical section
+  REQUIRE(fixture.service->recover() == 0);
+  REQUIRE_THROWS_AS(shm::SegmentSemaphoreGuard(stuck, std::chrono::milliseconds(50)), std::runtime_error);
+}
+
+TEST_CASE("SharedMemoryService: opening a segment over a dead holder recovers it at once")
+{
+  // the orphan exists before the service is built, so the recovery has to run
+  // while the segment is opened - without it the very first lock acquisition of
+  // this process would wait for the bounded timeout and then fail
+  SharedMemoryServiceFixture fixture(kInitialSize, 0, true);
+
+  REQUIRE(fixture.service->recover() == 0);
+  REQUIRE_NOTHROW(fixture.service->getSegmentAccessor(fixture.segment));
+  REQUIRE(fixture.service->getGeneration() == 0);
 }
 
 }// namespace lintel
