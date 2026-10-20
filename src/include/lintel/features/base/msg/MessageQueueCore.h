@@ -8,6 +8,9 @@
 #include <string>
 
 namespace lintel {
+/** Overflow/drop policy for message queues. */
+enum class MessageQueueOverflowPolicy { Fail = 0, DropNewest, DropOldest, BlockWithTimeout, DeadLetter };
+
 /**
  * Non-template core of MessageQueue. Owns the underlying POSIX message queue,
  * so translation units that use MessageQueue<T> do not have to parse the
@@ -99,6 +102,12 @@ public:
    * @return true if a message was received
    */
   bool tryReceiveOf(void *message, std::size_t size);
+  /** Configure overflow policy. */
+  void setOverflowPolicy(MessageQueueOverflowPolicy policy);
+  /** Configure timeout for BlockWithTimeout policy. */
+  void setOverflowTimeout(const std::chrono::milliseconds &timeout);
+  /** Configure dead letter queue name. */
+  void setDeadLetterQueueName(const std::string &name);
 };
 
 }// namespace lintel

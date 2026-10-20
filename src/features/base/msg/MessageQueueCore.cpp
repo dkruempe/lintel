@@ -1,4 +1,5 @@
 #include "lintel/features/base/msg/MessageQueueCore.h"
+#include <chrono>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/interprocess/creation_tags.hpp>
@@ -8,12 +9,17 @@ namespace lintel {
 struct MessageQueueCore::Impl
 {
   boost::interprocess::message_queue m_messageQueue;
+  std::string m_name;
+  MessageQueueOverflowPolicy m_policy = MessageQueueOverflowPolicy::BlockWithTimeout;
+  std::chrono::milliseconds m_timeout{ 100 };
+  std::string m_dlqName;
 
   Impl(const std::string &name, int32_t msgCount, std::size_t msgSize)
     : m_messageQueue(boost::interprocess::open_or_create,
         name.c_str(),
         static_cast<boost::interprocess::message_queue::size_type>(msgCount),
-        static_cast<boost::interprocess::message_queue::size_type>(msgSize))
+        static_cast<boost::interprocess::message_queue::size_type>(msgSize)),
+      m_name(name)
   {}
 };
 
@@ -75,3 +81,7 @@ bool MessageQueueCore::tryReceiveOf(void *message, std::size_t size)
   return m_impl->m_messageQueue.try_receive(message, size, recvSize, priority);
 }
 }// namespace lintel
+
+void MessageQueueCore::setOverflowPolicy(MessageQueueOverflowPolicy policy) { m_impl->m_policy = policy; }
+void MessageQueueCore::setOverflowTimeout(const std::chrono::milliseconds &timeout) { m_impl->m_timeout = timeout; }
+void MessageQueueCore::setDeadLetterQueueName(const std::string &name) { m_impl->m_dlqName = name; }
