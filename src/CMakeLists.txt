@@ -374,6 +374,7 @@ set(sources
     core/services/ReadinessRegistry.cpp
     features/base/services/ProcessService.cpp
     features/base/services/SharedMemoryService.cpp
+    features/base/services/SharedMemoryRepositoryRegistry.cpp
     core/services/StopWatchService.cpp
     # core - utils
     core/utils/Cryption.cpp
