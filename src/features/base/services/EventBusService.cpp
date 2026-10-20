@@ -37,6 +37,9 @@ EventBusConfig EventBusService::configOf(const std::shared_ptr<EventBusEntry> &e
   config.subscriberCapacity = entry->getSubscriberCapacity();
   config.maxTopics = entry->getMaxTopics();
   config.maxSubscribers = entry->getMaxSubscribers();
+  config.pubPolicy = entry->getPubPolicy();
+  config.sticky = entry->getSticky();
+  config.stickyTtlMs = entry->getStickyTtlMs();
   if (!config.isValid()) { throw std::runtime_error("invalid event bus configuration for '" + entry->getName() + "'"); }
   return config;
 }
