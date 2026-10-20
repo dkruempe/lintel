@@ -5,6 +5,7 @@
 #include <lintel/core/services/ReadinessRegistry.h>
 #include <lintel/core/shm/BoostSegmentAllocator.h>
 #include <lintel/features/base/services/ShmConstructors.h>
+#include "lintel/features/base/models/SharedMemorySegmentStats.h"
 
 namespace lintel {
 SharedMemoryService::SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager> &sharedMemorySegmentManager,
@@ -30,10 +31,11 @@ SharedMemoryService::SharedMemoryService(const std::shared_ptr<SharedMemorySegme
 
 void SharedMemoryService::growOf(const std::shared_ptr<SharedMemorySegment> &segment, std::size_t grow)
 {
+  notifyHooks(segment->getName(), SegmentLifecycle::BeforeGrow);
   std::lock_guard<std::mutex> lock(m_segmentsMutex);
   auto found = m_segments.find(segment->getName());
   if (found == m_segments.end()) { throw ShmSegmentNotFound(segment->getName()); }
-  if (grow == 0) { return; }
+  if (grow == 0) { notifyHooks(segment->getName(), SegmentLifecycle::AfterGrow); return; }
   const std::size_t maxSize = segment->getMaxSize();
   if (maxSize != 0) {
     const std::size_t currentSize = found->second->m_managedMappedFile->get_size();
@@ -64,10 +66,14 @@ void SharedMemoryService::growOf(const std::shared_ptr<SharedMemorySegment> &seg
   found->second->m_managedMappedFile =
     std::make_shared<boost::interprocess::managed_mapped_file>(boost::interprocess::open_only, filePath.c_str());
   ++m_generation;
+  m_growCount[segment->getName()]++;
+  notifyHooks(segment->getName(), SegmentLifecycle::OnRemap);
+  notifyHooks(segment->getName(), SegmentLifecycle::AfterGrow);
 }
 
 void SharedMemoryService::shrinkOf(const std::shared_ptr<SharedMemorySegment> &segment)
 {
+  notifyHooks(segment->getName(), SegmentLifecycle::BeforeShrink);
   std::lock_guard<std::mutex> lock(m_segmentsMutex);
   auto found = m_segments.find(segment->getName());
   if (found == m_segments.end()) { throw ShmSegmentNotFound(segment->getName()); }
@@ -87,6 +93,9 @@ void SharedMemoryService::shrinkOf(const std::shared_ptr<SharedMemorySegment> &s
     std::make_shared<boost::interprocess::managed_mapped_file>(boost::interprocess::open_only, filePath.c_str());
   if (!shrunk) { throw std::runtime_error("failed to shrink shared memory segment '" + segment->getName() + "'"); }
   ++m_generation;
+  m_growCount[segment->getName()]++;
+  notifyHooks(segment->getName(), SegmentLifecycle::OnRemap);
+  notifyHooks(segment->getName(), SegmentLifecycle::AfterGrow);
 }
 
 std::size_t SharedMemoryService::getGeneration() const
@@ -169,6 +178,7 @@ std::size_t SharedMemoryService::recover()
       "reclaimed the orphaned remap semaphore of shared memory segment '{}' - "
       "the process that held it is gone",
       name);
+    m_recoveryCount[name]++;
     ++reclaimed;
   }
   return reclaimed;
@@ -273,3 +283,38 @@ void SharedMemoryService::onCheck()
   }
 }
 }// namespace lintel
+
+void SharedMemoryService::notifyHooks(const std::string &segmentName, SegmentLifecycle action)
+{
+  std::lock_guard<std::mutex> lock(m_hooksMutex);
+  for (const auto &hook : m_lifecycleHooks) {
+    try {
+      hook(segmentName, action);
+    } catch (...) {
+      // Hooks must not throw
+    }
+  }
+}
+
+void SharedMemoryService::registerLifecycleHook(SegmentLifecycleHook hook)
+{
+  std::lock_guard<std::mutex> lock(m_hooksMutex);
+  m_lifecycleHooks.push_back(std::move(hook));
+}
+
+SharedMemorySegmentStats SharedMemoryService::statsOf(const std::shared_ptr<SharedMemorySegment> &segment) const
+{
+  std::lock_guard<std::mutex> lock(m_segmentsMutex);
+  auto found = m_segments.find(segment->getName());
+  if (found == m_segments.end()) { throw ShmSegmentNotFound(segment->getName()); }
+  SharedMemorySegmentStats stats;
+  stats.name = segment->getName();
+  stats.allocatedBytes = found->second->m_managedMappedFile->get_size();
+  stats.freeBytes = found->second->m_managedMappedFile->get_free_memory();
+  stats.capacityBytes = segment->getMaxSize() == 0 ? stats.allocatedBytes : segment->getMaxSize();
+  stats.growCount = m_growCount.count(segment->getName()) ? m_growCount.at(segment->getName()) : 0;
+  stats.shrinkCount = m_shrinkCount.count(segment->getName()) ? m_shrinkCount.at(segment->getName()) : 0;
+  stats.recoveryCount = m_recoveryCount.count(segment->getName()) ? m_recoveryCount.at(segment->getName()) : 0;
+  stats.generation = m_generation;
+  return stats;
+}
