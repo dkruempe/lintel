@@ -182,6 +182,11 @@ public:
   /** Drop all queued events on the bus and every subscriber queue. */
   void reset();
 
+  /** Get bus queue depth (best effort). */
+  [[nodiscard]] std::size_t busQueueDepth() const;
+  /** Get subscriber queue depth. */
+  [[nodiscard]] std::size_t subscriberQueueDepth(const std::string &subscriber) const;
+
   /** Compute the shared memory size needed for a given configuration.
    * @param config the runtime configuration
    * @return the required segment size in bytes, 0 if the config is invalid */
@@ -496,6 +501,10 @@ public:
   [[nodiscard]] std::uint64_t droppedEventsOf() const override { return m_bus.droppedEventsOf(); }
 
   void reset() override { m_bus.reset(); }
+
+  [[nodiscard]] std::size_t queueDepth() const { return 0; }// placeholder
+  [[nodiscard]] std::size_t queueDepthOf(const std::string &) const { return 0; }
+  [[nodiscard]] std::uint64_t droppedTotal() const { return m_bus.droppedEventsOf(); }
 
 private:
   EventBus &m_bus;

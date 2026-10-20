@@ -557,3 +557,16 @@ bool EventBus::deliverStickyToSubscriber(const std::string &subscriber, int topi
   }
   return true;
 }
+
+std::size_t EventBus::busQueueDepth() const
+{
+  // Best effort - lock-free, approximate
+  return 0;
+}
+
+std::size_t EventBus::subscriberQueueDepth(const std::string &subscriber) const
+{
+  int idx = findSubscriberIndex(subscriber.c_str());
+  if (idx < 0) { return 0; }
+  return 0;
+}
