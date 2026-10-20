@@ -42,9 +42,9 @@ Ziel: IPC (Shared Memory, Event Bus, Message Queue) produktiv für Driver-/Unit-
 
 | ID | Task | Status | Dateien | Tests | Akzeptanzkriterien | Aufwand |
 |----|------|--------|---------|-------|---------------------|---------|
-| **SHM-2** | Zero-Copy Memory-Views / Slices (generation-aware) | [ ] Erledigt | `src/include/lintel/core/shm/ShmView.h` (neu) | Neue Tests | `ShmView<T>`/`ShmSlice<T>`, Span-ähnlich, generation-check, Invalidation via Hooks. | Hoch |
-| **MQ-6** | SHM-backed MessageQueue (Zero-Copy) | [ ] Erledigt | `src/include/lintel/features/base/msg/MessageQueueShmCore.h` (neu), `src/features/base/msg/MessageQueueShmCore.cpp` | Neue Tests + Benchmarks | API-kompatibel zu `MessageQueueCore`, Feature-Flag. Einheitliches SHM-Modell. | Hoch |
-| **SHM-5** | Automatisches Cleanup orphaned Objects (Service) | [ ] Erledigt | `src/include/lintel/features/base/services/SharedMemoryCleanupService.h` (neu), `src/features/base/services/SharedMemoryCleanupService.cpp` | Neue Tests | Scheduler-basiert, erkennt Orphans, Dry-Run/Best-Effort, nie aktive Owner anfassen, idempotent. | Mittel |
+| **SHM-2** | Zero-Copy Memory-Views / Slices (generation-aware) | [~] In Bearbeitung | `src/include/lintel/core/shm/ShmView.h` (neu) | Neue Tests | `ShmView<T>`/`ShmSlice<T>`, Span-ähnlich, generation-check, Invalidation via Hooks. | Hoch |
+| **MQ-6** | SHM-backed MessageQueue (Zero-Copy) | [~] In Bearbeitung | `src/include/lintel/features/base/msg/MessageQueueShmCore.h` (neu), `src/features/base/msg/MessageQueueShmCore.cpp` | Neue Tests + Benchmarks | API-kompatibel zu `MessageQueueCore`, Feature-Flag. Einheitliches SHM-Modell. | Hoch |
+| **SHM-5** | Automatisches Cleanup orphaned Objects (Service) | [~] In Bearbeitung | `src/include/lintel/features/base/services/SharedMemoryCleanupService.h` (neu), `src/features/base/services/SharedMemoryCleanupService.cpp` | Neue Tests | Scheduler-basiert, erkennt Orphans, Dry-Run/Best-Effort, nie aktive Owner anfassen, idempotent. | Mittel |
 
 ## Umsetzungshinweise
 
