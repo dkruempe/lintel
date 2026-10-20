@@ -7,6 +7,7 @@
 #include <string_view>
 
 #include "lintel/core/configuration/Entry.h"
+#include "lintel/features/base/events/EventBus.h"
 
 namespace lintel {
 /** Configuration entry for an event bus */
@@ -25,6 +26,9 @@ private:
   const std::size_t maxTopics;
   /** The maximum number of subscribers that can be registered */
   const std::size_t maxSubscribers;
+  const DropPolicy pubPolicy;
+  const bool sticky;
+  const std::uint32_t stickyTtlMs;
 
 public:
   /** Construct an event bus entry
@@ -41,7 +45,10 @@ public:
     std::size_t busCapacity,
     std::size_t subscriberCapacity,
     std::size_t maxTopics,
-    std::size_t maxSubscribers);
+    std::size_t maxSubscribers,
+    DropPolicy pubPolicy = DropPolicy::Fail,
+    bool sticky = false,
+    std::uint32_t stickyTtlMs = 60000);
 
   /** Get the event bus name
    * @return The bus name */
@@ -66,6 +73,9 @@ public:
   /** Get the maximum subscriber count
    * @return The maximum subscribers */
   [[nodiscard]] constexpr std::size_t getMaxSubscribers() const { return maxSubscribers; }
+  [[nodiscard]] constexpr DropPolicy getPubPolicy() const { return pubPolicy; }
+  [[nodiscard]] constexpr bool getSticky() const { return sticky; }
+  [[nodiscard]] constexpr std::uint32_t getStickyTtlMs() const { return stickyTtlMs; }
 
   /** Stream insertion operator
    * @param os The output stream
