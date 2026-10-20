@@ -521,6 +521,7 @@ set(sources
     features/property/strategies/XMLConfigSerializationStrategy.cpp
     # features - base - events
     features/base/events/EventBus.cpp
+    features/base/events/TopicMatcher.cpp
     # features - base - configuration
     features/base/configuration/EventBusComponent.cpp
     features/base/configuration/EventBusEntry.cpp
