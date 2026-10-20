@@ -83,6 +83,27 @@
  *     so a `REQUIRE` failure that unwinds through a step cannot leave a
  *     joinable `std::thread` behind and abort the process.
  *
+ * @subsection arch_feature_deps Feature dependencies
+ *
+ * The link chain `core &rarr; base &rarr; property &rarr; http &rarr; cli &rarr; app` is a
+ * compile-time guarantee (`PUBLIC` in `src/CMakeLists.txt`), but *activation* runs through
+ * `addFeature<>()` and used to be unchecked: `addFeature<PropertyFeature>()` without
+ * `addFeature<BaseFeature>()` started, and the DI auto-registration resolved a transient,
+ * empty service object instead of failing - a silent degradation that surfaced far away
+ * from its cause.
+ *
+ * A feature therefore declares the layers it needs with
+ * `FeatureInterface::requiredFeatures()` (`PropertyFeature` &rarr; `Base`,
+ * `HttpFeature` &rarr; `Property`, `CommandLineFeature` &rarr; `Http`), and
+ * `StartupBuilder::verifyFeatureDependencies()` checks it **before** the types are
+ * registered (before phase 1 above). Every required feature has to be present in the
+ * feature vector *and* at a smaller index - the chain is linear, so a positional check
+ * covers the topology without a graph search - otherwise `start()` throws with the
+ * missing feature's name. Because the vector index also decides `initialize()` and
+ * `resolveAll()` order, "declared" and "ordered correctly" are the same condition here.
+ * The reference application in `examples/` shows the canonical order: `Base`, `Property`,
+ * `Http`, `Cli`, `TestFeature`.
+ *
  * @subsection arch_shutdown Graceful shutdown
  *
  * The `SIGINT`/`SIGTERM` that arrives in the `sigwait` thread (or a Windows
@@ -256,11 +277,51 @@
  * Cross-process access to a remapped segment is serialized by
  * `SegmentSemaphoreGuard`, which acquires and releases the segment's named
  * remap semaphore. The acquisition is bounded (`SegmentSemaphoreGuard::kDefaultWaitTimeout`
- * seconds): a process
- * that crashes while holding the semaphore leaves its count at zero, and an
- * unbounded wait would stall every other process. On timeout the guard throws
- * instead, and the orphaned handle can be inspected or removed out of band
- * (`examples/cleanup.cpp` shows the manual path).
+ * seconds): a process that crashes while holding the semaphore leaves its count at
+ * zero, and an unbounded wait would stall every other process. On timeout the guard
+ * throws instead of hanging.
+ *
+ * A bounded wait only moves the problem, so the orphaned lock is reclaimed as well -
+ * but only when the holder is provably gone. Reclaiming the lock of a *live* process
+ * would give two processes independent mutexes for one critical section, and a stuck
+ * semaphore alone carries no information about its holder. Each segment therefore keeps
+ * a `SegmentLockOwner` sidecar (`<name>_remap_own`, same suffix length as
+ * `_remap_sem` because macOS caps named object names at 31 characters): the guard
+ * records the holder's process id **and its start ticks** while it holds the lock and
+ * clears it again before posting (`clearIf`, so a release cannot wipe a record that
+ * already belongs to the next holder). The start ticks are what distinguishes a live
+ * holder from a recycled process id; if they cannot be determined, the id alone decides
+ * and the error direction is always "leave the lock alone". `shm::recoverOrphanedSegmentLock()`
+ * then closes the reachable routes to a double lock:
+ *
+ * - It serializes itself with `boost::interprocess::file_lock` on the segment file, with a
+ *   timeout (10 s) that makes a stalled holder give up instead of blocking the open path
+ *   forever. Two processes that both found a dead holder could otherwise each remove the
+ *   semaphore the other had just created and keep a lock of their own. A file lock is
+ *   released by the kernel when its holder dies, so this mutex cannot become an orphan.
+ * - It probes the semaphore with a non-blocking acquire: a free lock has nothing to
+ *   recover, and recreating it would orphan every open handle.
+ * - A taken lock is re-checked after `shm::kRecoveryProbeDelay` against the holder record,
+ *   freshly re-read from the shared cells: a crashed holder that recorded itself is
+ *   reclaimed, a live holder - whether it was recorded before or took the lock over during
+ *   the wait - is left alone. The remaining window is the acquisition and the recording of
+ *   it, which only a holder that is stalled for longer than the probe delay can expose; the
+ *   timeout path of the waiters stays the fallback for that.
+ *
+ * A reclaimed lock lets every waiter continue; a process that already opened the removed
+ * semaphore still talks to the orphaned one and times out with the usual error instead
+ * of racing. The recovery runs once when a segment is opened (`SharedMemoryService::create()`)
+ * and again when `ISharedMemoryService::recover()` is called for segments that are already
+ * mapped; it never makes a manual decision - if uncertain, it leaves the lock alone and
+ * the waiters time out. `examples/cleanup.cpp` remains the manual path when the automatic
+ * recovery cannot decide: given a segment name it removes the remap semaphore and the
+ * `SegmentLockOwner` sidecar (plus the named mutex of that name). **Message queues** have no
+ * holder record at all and are therefore never reclaimed automatically - removing them is
+ * always a manual decision.
+ * Covered by `tests/features/SharedMemoryServiceTest.cpp` (dead holder is reclaimed,
+ * a free lock with a stale record is left alone, an unrecorded stuck lock is reclaimed,
+ * a living holder is left alone, a release cannot wipe the next holder's record,
+ * recovery while opening).
  *
  * Sizing semantics of @ref lintel::SharedMemoryService:
  *
@@ -317,6 +378,30 @@
  *    worked and puts it back when a renewal is rejected - the loader installs the
  *    certificate before it validates the key, so a mismatched pair would
  *    otherwise leave the running server unable to complete a handshake.
+ * - **Request correlation.** Every response a controller handler produces carries
+ *    an `X-Request-Id` header (an unrouted request is answered by the server's
+ *    default `404` without one):
+ *    the value the client sent is echoed when it matches `[A-Za-z0-9._-]{1,64}`,
+ *    otherwise the server generates one - the id is written to the log
+ *    unescaped, so an unchecked header could break the JSON format
+ *    (`ADD_HANDLER_METHOD`/`ADD_HANDLER_CONTENT_READER_METHOD` in
+ *    @ref lintel::Controller install it for every handler). The same id is pushed
+ *    onto the handling thread as a `RequestIdGuard`, so the log lines produced
+ *    while the request is handled carry it as a prefix (`[<id>] message`) and a
+ *    single search of one process's log returns everything that belongs to one
+ *    request - on both sides of the wire. The thread-local id is restored when
+ *    the request finishes, so a pooled worker thread cannot tag a later request
+ *    with an earlier correlation id.
+ * - **Log level of a running process:** `POST /admin/log-level` (admin group
+ *    `Admin-Log`) applies `{"level":"<name>"}` to every subsequent log call,
+ *    answering `200 {"status":"changed","level":"debug"}`, `400
+ *    {"status":"invalid_level"}` for an unknown name or a body that is not json,
+ *    `401` outside the group and `403` for a wrong content type. The bootstrap
+ *    XML is *not* rewritten: a restart falls back to the level the operator
+ *    deployed, which keeps a temporary diagnosis from becoming the new default.
+ *    The level itself lives in @ref lintel::LoggerService (`setLevel()`/
+ *    `levelOf()`), so the same capability exists in-process; `<Logger json="true">`
+ *    switches the formatting to one JSON object per line for a log shipper.
  * - `trusted_proxies` lists the proxies whose `X-Forwarded-For` header is
  *    believed; without it the header is ignored and the peer address is used.
  *    That list decides which address a token is bound to and which address the

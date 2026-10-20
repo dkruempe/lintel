@@ -35,4 +35,6 @@ void PropertyFeature::initialize(std::shared_ptr<lintel::di::Container> containe
 {
   m_propertyService = container->resolve<PropertyService>();
 }
+
+std::vector<std::string_view> PropertyFeature::requiredFeatures() const { return { "Base" }; }
 }// namespace lintel

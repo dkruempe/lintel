@@ -5,6 +5,11 @@
 #include <lintel/core/Feature.h>
 #include <lintel/core/Features.h>
 
+#include <lintel/app/BaseFeature.h>
+#include <lintel/app/CommandLineFeature.h>
+#include <lintel/app/HttpFeature.h>
+#include <lintel/app/PropertyFeature.h>
+
 #include <atomic>
 #include <chrono>
 #include <csignal>
@@ -89,6 +94,16 @@ namespace {
   {
   public:
     explicit SbFeatureC(std::shared_ptr<Features> features) : SbCountingFeature(features, "SbFeatureC") {}
+  };
+
+  /** Feature that declares a dependency on SbFeatureA, to exercise the layer check. */
+  class SbDependentFeature : public SbCountingFeature
+  {
+  public:
+    explicit SbDependentFeature(std::shared_ptr<Features> features) : SbCountingFeature(features, "SbDependentFeature")
+    {}
+
+    std::vector<std::string_view> requiredFeatures() const override { return { "SbFeatureA" }; }
   };
 
   /**
@@ -300,6 +315,73 @@ TEST_CASE("StartupBuilder::withOutFeature removes a feature from the startup seq
   REQUIRE(sbFeatureLog() == expected);
 }
 
+TEST_CASE("StartupBuilder::start rejects a feature whose required feature was never added", "[startup_builder]")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_startup_builder_test_cfg" };
+  ScopedEnvironmentVariable bootstrapName{ "BOOTSTRAP_CONFIG_NAME", "no_such_bootstrap" };
+  sbForgetConfiguration();
+
+  auto builder = sbMakeBuilder();
+  REQUIRE(builder != nullptr);
+  builder->addFeature<SbDependentFeature>();
+
+  // the dependency check runs before phase I, so nothing was registered yet
+  REQUIRE_THROWS_AS(builder->start(), std::runtime_error);
+  REQUIRE_THROWS_WITH(builder->start(), Catch::Matchers::ContainsSubstring("requires 'SbFeatureA'"));
+  REQUIRE(sbFeatureLog().empty());
+}
+
+TEST_CASE("StartupBuilder::start rejects a required feature added after its dependent", "[startup_builder]")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_startup_builder_test_cfg" };
+  ScopedEnvironmentVariable bootstrapName{ "BOOTSTRAP_CONFIG_NAME", "no_such_bootstrap" };
+  sbForgetConfiguration();
+
+  auto builder = sbMakeBuilder();
+  REQUIRE(builder != nullptr);
+  builder->addFeature<SbDependentFeature>();
+  builder->addFeature<SbFeatureA>();
+
+  REQUIRE_THROWS_AS(builder->start(), std::runtime_error);
+  REQUIRE_THROWS_WITH(
+    builder->start(), Catch::Matchers::ContainsSubstring("must be added after its required feature 'SbFeatureA'"));
+  REQUIRE(sbFeatureLog().empty());
+}
+
+TEST_CASE("StartupBuilder::withOutFeature makes the dependent feature fail fast", "[startup_builder]")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_startup_builder_test_cfg" };
+  ScopedEnvironmentVariable bootstrapName{ "BOOTSTRAP_CONFIG_NAME", "no_such_bootstrap" };
+  sbForgetConfiguration();
+
+  auto builder = sbMakeBuilder();
+  REQUIRE(builder != nullptr);
+  builder->addFeature<SbFeatureA>();
+  builder->addFeature<SbDependentFeature>();
+  builder->withOutFeature("SbFeatureA");
+
+  REQUIRE_THROWS_WITH(builder->start(), Catch::Matchers::ContainsSubstring("requires 'SbFeatureA'"));
+  REQUIRE(sbFeatureLog().empty());
+}
+
+TEST_CASE("StartupBuilder::start accepts a dependency that is satisfied before its dependent", "[startup_builder]")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_startup_builder_test_cfg" };
+  ScopedEnvironmentVariable bootstrapName{ "BOOTSTRAP_CONFIG_NAME", "no_such_bootstrap" };
+  sbForgetConfiguration();
+
+  auto builder = sbMakeBuilder();
+  REQUIRE(builder != nullptr);
+  builder->addFeature<SbFeatureA>();
+  builder->addFeature<SbDependentFeature>();
+
+  // the check passes, so the run gets as far as the missing logger configuration
+  REQUIRE_THROWS_WITH(builder->start(), Catch::Matchers::ContainsSubstring("logger path"));
+
+  const std::vector<std::string> expected{ "SbFeatureA", "SbDependentFeature" };
+  REQUIRE(sbFeatureLog() == expected);
+}
+
 TEST_CASE("StartupBuilder::start reports a missing bootstrap configuration instead of hanging", "[startup_builder]")
 {
   ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_startup_builder_test_cfg" };
@@ -396,5 +478,18 @@ TEST_CASE("StartupBuilder::start shuts the services down in shutdown priority or
   // best effort: the logger still holds a file below the directory
   std::error_code errorCode;
   std::filesystem::remove_all(configDirectory, errorCode);
+}
+
+TEST_CASE("lintel features declare their layer dependencies", "[startup_builder]")
+{
+  // Guards the concrete declarations: StartupBuilder only sees them through
+  // FeatureInterface::requiredFeatures(), so a dropped override would silently
+  // turn the layer check off again.
+  auto features = std::make_shared<Features>();
+
+  REQUIRE(BaseFeature(features).requiredFeatures().empty());
+  REQUIRE(PropertyFeature(features).requiredFeatures() == std::vector<std::string_view>{ "Base" });
+  REQUIRE(HttpFeature(features).requiredFeatures() == std::vector<std::string_view>{ "Property" });
+  REQUIRE(CommandLineFeature(features).requiredFeatures() == std::vector<std::string_view>{ "Http" });
 }
 }// namespace lintel

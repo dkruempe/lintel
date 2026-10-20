@@ -46,6 +46,40 @@ Re-reads the certificate and private key files configured for the HTTP server an
 | --------------- | ------ |
 | bearerAuth |  |
 
+### /admin/log-level
+
+#### POST
+##### Summary
+
+Change the log level of the running process
+
+##### Description
+
+Applies a new log level to every subsequent log call in this process, so a running system can be re-diagnosed without a restart. The bootstrap configuration is not rewritten, a restart therefore falls back to the level the operator deployed. Answers 400 for an unknown or mistyped level and 401 outside the Admin-Log group.
+
+Every response of this route carries an X-Request-Id header (echoed from the request when it matches `[A-Za-z0-9._-]{1,64}`, generated otherwise) that the handling process also writes into its log lines for that request.
+
+##### Parameters
+
+| Name | In | Required | Type | Description |
+| ---- | -- | -------- | ---- | ----------- |
+| body | body | yes | object | `{"level":"debug"}` - trace, debug, info, warn, err (or error), critical or off |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Level applied |
+| 400 | Body is not json or the level name is unknown; the level is unchanged |
+| 401 | Unauthorized (missing token or not in the Admin group) |
+| 403 | Forbidden (wrong content type) |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
 ### /hello
 
 #### GET

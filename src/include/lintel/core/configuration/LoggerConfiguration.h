@@ -21,6 +21,8 @@ private:
   bool m_isAsync;
   /** The logger sink configurations */
   std::vector<LoggerSinkConfiguration> m_loggerSinks;
+  /** Whether to format log messages as JSON */
+  bool m_isJson;
 
 public:
   /** Construct a logger configuration
@@ -33,7 +35,8 @@ public:
     std::string pattern,
     std::string level,
     bool isAsync,
-    std::vector<LoggerSinkConfiguration> loggerSinks);
+    std::vector<LoggerSinkConfiguration> loggerSinks,
+    bool isJson = false);
 
   /** Get the process name
    * @return The process name */
@@ -54,6 +57,10 @@ public:
   /** Get the logger sink configurations
    * @return Vector of sink configurations */
   [[nodiscard]] const std::vector<LoggerSinkConfiguration> &getLoggerSinks() const;
+
+  /** Check if the logger should format messages as JSON
+   * @return True if JSON formatting is requested */
+  [[nodiscard]] bool isJson() const;
 };
 
 }// namespace lintel

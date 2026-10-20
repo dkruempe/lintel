@@ -20,6 +20,9 @@ public:
 
   /** Initialize the property service from the container */
   void initialize(std::shared_ptr<lintel::di::Container> container) override;
+
+  /** The property layer sits on top of the base services */
+  std::vector<std::string_view> requiredFeatures() const override;
 };
 
 }// namespace lintel

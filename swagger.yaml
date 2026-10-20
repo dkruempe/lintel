@@ -37,6 +37,53 @@ paths:
           description: Reload failed; the previous certificate stays active
           schema:
             $ref: "#/definitions/TlsReloadResultDto"
+  /admin/log-level:
+    post:
+      summary: Change the log level of the running process
+      description: |
+        Applies a new log level to every subsequent log call in this process,
+        so a running system can be re-diagnosed without a restart. The
+        bootstrap configuration is not rewritten, a restart therefore falls
+        back to the level the operator deployed. Answers 400 for an unknown or
+        mistyped level and 401 outside the Admin-Log group. Every response of
+        this route carries an X-Request-Id header (echoed from the request when it matches
+        [A-Za-z0-9._-]{1,64}, generated otherwise) that the handling process also
+        writes into its log lines for that request.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - level
+            properties:
+              level:
+                type: string
+                description: "trace, debug, info, warn, err (or error), critical or off"
+                example: debug
+      responses:
+        "200":
+          description: Level applied
+          schema:
+            $ref: "#/definitions/LogLevelResultDto"
+          headers:
+            X-Request-Id:
+              type: string
+              description: >-
+                Correlation id of this request, also written into the log lines;
+                a client supplied id that does not match [A-Za-z0-9._-]{1,64} is
+                replaced by a generated one
+        "400":
+          description: Body is not json or the level name is unknown; the level is unchanged
+          schema:
+            $ref: "#/definitions/LogLevelResultDto"
+        "401":
+          description: Unauthorized (missing token or not in the Admin group)
+        "403":
+          description: Forbidden (wrong content type)
   /hello:
     get:
       summary: Greets the user
@@ -997,6 +1044,18 @@ definitions:
           type: string
         example:
           tls: ok
+  LogLevelResultDto:
+    type: object
+    description: Result of POST /admin/log-level
+    properties:
+      status:
+        type: string
+        enum: [changed, invalid_level]
+        description: "'changed' when the level was applied, 'invalid_level' when it was rejected"
+      level:
+        type: string
+        description: "The level that was requested (empty for a malformed body)"
+        example: debug
 securityDefinitions:
   bearerAuth:
     type: apiKey

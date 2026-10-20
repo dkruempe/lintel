@@ -6,6 +6,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 
+#include <lintel/core/services/LoggerService.h>
 #include <lintel/features/base/models/Group.h>
 #include <lintel/features/base/models/User.h>
 #include <lintel/features/base/services/IAuthService.h>
@@ -19,6 +20,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include "../mocks/MockAuthService.h"
 
@@ -32,12 +34,15 @@ namespace {
   // would collide (and shadow local variables, Clang -Wshadow).
   constexpr std::chrono::milliseconds acStartupTimeout{ 5000 };
   constexpr char acTokenAdmin[] = "admin-token-admin";
+  constexpr char acTokenLogAdmin[] = "admin-token-log-admin";
   constexpr char acTokenOutsider[] = "admin-token-outsider";
 
   Group acAdminGroup{ "Admin-Tls", {}, true };
+  Group acLogGroup{ "Admin-Log", {}, true };
   Group acUnrelatedGroup{ "Some-Other-Group", {}, true };
 
   User acAdmin("Admin", "Tls", User::Male, "admin-tls@test.com", "tlsAdmin", "", { acAdminGroup });
+  User acLogAdmin("Admin", "Log", User::Male, "admin-log@test.com", "logAdmin", "", { acLogGroup });
   User acOutsider("Admin", "Outsider", User::Male, "admin-out@test.com", "tlsOut", "", { acUnrelatedGroup });
 
   UserToken acTokenOf(const User &user, const std::string &id)
@@ -304,5 +309,143 @@ TEST_CASE("AdminController::reloadTlsOfPost escapes a failure reason", "[admin_c
   const auto body = AdminControllerFixture::acParse(response->body);
   const std::string expected = "failed: " + reason;
   REQUIRE(std::string(body["results"]["tls"].GetString()) == expected);
+}
+
+/** Authorization plus an application/json body, as the log-level endpoint requires. */
+httplib::Headers acLevelJsonHeaders(const char *token)
+{
+  return httplib::Headers{ { "Authorization", std::string("Bearer ") + token },
+    { "Content-Type", "application/json" } };
+}
+
+TEST_CASE("AdminController::logLevelOfPost changes the level at runtime", "[admin_controller]")
+{
+  AdminControllerFixture fixture;
+  AdminController controller(fixture.m_authService);
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  // the level is process wide: put it back so a single-process run of the test
+  // binary does not carry debug into the tests that run after this one
+  const LogLevel previousLevel = LoggerService::get().levelOf();
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(acTokenOf(acLogAdmin, acTokenLogAdmin));
+
+  auto response = fixture.m_client->Post(
+    "/admin/log-level", acLevelJsonHeaders(acTokenLogAdmin), R"({"level":"debug"})", "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+  REQUIRE(LoggerService::get().levelOf() == LogLevel::debug);
+
+  const auto body = AdminControllerFixture::acParse(response->body);
+  REQUIRE(std::string(body["status"].GetString()) == "changed");
+  REQUIRE(std::string(body["level"].GetString()) == "debug");
+
+  LoggerService::get().setLevel(previousLevel);
+}
+
+TEST_CASE("AdminController::logLevelOfPost answers 401 outside the admin group", "[admin_controller]")
+{
+  AdminControllerFixture fixture;
+  AdminController controller(fixture.m_authService);
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(acTokenOf(acOutsider, acTokenOutsider));
+
+  auto response = fixture.m_client->Post(
+    "/admin/log-level", acLevelJsonHeaders(acTokenOutsider), R"({"level":"trace"})", "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 401);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("AdminController::logLevelOfPost answers 400 for an unknown or mistyped level", "[admin_controller]")
+{
+  AdminControllerFixture fixture;
+  AdminController controller(fixture.m_authService);
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  const LogLevel previousLevel = LoggerService::get().levelOf();
+
+  SECTION("unknown level name")
+  {
+    REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+      .TIMES(1)
+      .LR_RETURN(acTokenOf(acLogAdmin, acTokenLogAdmin));
+
+    auto response = fixture.m_client->Post(
+      "/admin/log-level", acLevelJsonHeaders(acTokenLogAdmin), R"({"level":"verbose"})", "application/json");
+    REQUIRE(response != nullptr);
+    REQUIRE(response->status == 400);
+
+    const auto body = AdminControllerFixture::acParse(response->body);
+    REQUIRE(std::string(body["status"].GetString()) == "invalid_level");
+    // a rejected level must not have touched the effective one
+    REQUIRE(LoggerService::get().levelOf() == previousLevel);
+  }
+
+  SECTION("level is not a string")
+  {
+    REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+      .TIMES(1)
+      .LR_RETURN(acTokenOf(acLogAdmin, acTokenLogAdmin));
+
+    auto response = fixture.m_client->Post(
+      "/admin/log-level", acLevelJsonHeaders(acTokenLogAdmin), R"({"level":42})", "application/json");
+    REQUIRE(response != nullptr);
+    REQUIRE(response->status == 400);
+    REQUIRE(LoggerService::get().levelOf() == previousLevel);
+  }
+
+  SECTION("body is not json")
+  {
+    REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+      .TIMES(1)
+      .LR_RETURN(acTokenOf(acLogAdmin, acTokenLogAdmin));
+
+    auto response = fixture.m_client->Post(
+      "/admin/log-level", acLevelJsonHeaders(acTokenLogAdmin), "not json at all", "application/json");
+    REQUIRE(response != nullptr);
+    REQUIRE(response->status == 400);
+  }
+}
+
+TEST_CASE("AdminController answers with an X-Request-Id correlation id", "[admin_controller]")
+{
+  AdminControllerFixture fixture;
+  AdminController controller(fixture.m_authService);
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  // both requests below run through the auth service, hence twice
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(2)
+    .LR_RETURN(acTokenOf(acLogAdmin, acTokenLogAdmin));
+
+  // a client supplied correlation id has to survive the round trip, otherwise a
+  // caller cannot tie the response back to the request it sent
+  auto echoed = fixture.m_client->Post("/admin/log-level",
+    httplib::Headers{ { "Authorization", std::string("Bearer ") + acTokenLogAdmin },
+      { "Content-Type", "application/json" },
+      { "X-Request-Id", "my-correlation-1" } },
+    R"({"level":"info"})",
+    "application/json");
+  REQUIRE(echoed != nullptr);
+  REQUIRE(echoed->get_header_value("X-Request-Id") == "my-correlation-1");
+
+  // without an id the server generates one, so every response carries a key to
+  // search for in the log of the handling process
+  auto generated = fixture.m_client->Post(
+    "/admin/log-level", acLevelJsonHeaders(acTokenLogAdmin), R"({"level":"info"})", "application/json");
+  REQUIRE(generated != nullptr);
+  const std::string generatedId = generated->get_header_value("X-Request-Id");
+  REQUIRE(!generatedId.empty());
+  REQUIRE(generatedId != "my-correlation-1");
 }
 }// namespace lintel

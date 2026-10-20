@@ -116,6 +116,44 @@ finished before the server socket is closed. Give the container a termination
 grace period (`docker stop -t`, `terminationGracePeriodSeconds`) that covers the
 slowest `onShutdown()`.
 
+### Logging
+
+The `<Loggers>` section of the bootstrap XML decides what a process writes:
+
+```xml
+<Path path="${LOG_DIR}/lintel" create_sub_dirs="true"/>
+<Logger process_name=".*" level="info" json="false">
+    <LoggerSink type="RotatingFileSink" size="5MB" max_files="10"/>
+</Logger>
+```
+
+- `level` is the effective floor (`critical|warn|err|error|info|debug|trace|off`);
+  `err` and `error` name the same level. The logger filters first, so a sink can only
+  make its own output stricter (raise the floor), never more verbose, with its own
+  `level` attribute. An unknown name is reported by `/admin/log-level` as
+  `400`, while the XML silently falls back to `info`. The pattern lives either
+  on `<Logger>` or on the sink and follows spdlog's `%` flags.
+- `json="true"` formats every message as one JSON object per line
+  (`{"time":...,"level":...,"msg":...}`) for a log shipper. It wins over a
+  `pattern` on a sink as well, because the format belongs to the logger, not to
+  the destination. The message text itself is not escaped, so keep structured
+  data out of quotes there: a `"` or `\` in the message ends or breaks the JSON
+  line, control characters do the same. The request id is the only component
+  that is filtered before it is written (see the request correlation bullet).
+- **Runtime level**: `POST /admin/log-level` with `{"level":"debug"}` changes
+  the level of a running process immediately (`401` outside the `Admin-Log`
+  group, `400` for an unknown name). The XML is not rewritten, so a restart
+  goes back to the deployed level.
+- **Request correlation**: every response a controller handler produces carries
+  an `X-Request-Id` header - echoed when the client supplied one, generated
+  otherwise (a request to an unrouted path is answered by the server's default
+  `404`, which carries no header) - and the handling
+  thread writes the same id in front of the log lines it produces
+  (`[<id>] message`), so the log of one HTTP request can be filtered by a single
+  search. A supplied id is only echoed when it matches `[A-Za-z0-9._-]{1,64}`,
+  because it is written to the log unescaped; anything else is replaced by a
+  generated id.
+
 ## Getting Started
 
 ### Prerequisites
@@ -186,14 +224,14 @@ This minimal example shows how to bootstrap an application using `StartupBuilder
 
 int main(int argc, char* argv[]) {
   auto builder = lintel::StartupBuilder::with(argc, argv);
-  builder->addFeature<lintel::PropertyFeature>();
   builder->addFeature<lintel::BaseFeature>();
+  builder->addFeature<lintel::PropertyFeature>();
   builder->start();
   return 0;
 }
 ```
 
-What this does: `lintel::StartupBuilder::with(argc, argv)` initializes the core, `addFeature<lintel::PropertyFeature>()` enables configuration/property support, `addFeature<lintel::BaseFeature>()` adds base services, and `start()` runs the application using the bootstrap configuration from `cfg/bootstrap.xml`. If TLS is enabled in that configuration, valid certificate/key files must exist under `cfg/certs/` (or the overridden `CONFIG_DIRECTORY`).
+What this does: `lintel::StartupBuilder::with(argc, argv)` initializes the core, `addFeature<lintel::BaseFeature>()` adds base services, `addFeature<lintel::PropertyFeature>()` enables configuration/property support on top of them, and `start()` runs the application using the bootstrap configuration from `cfg/bootstrap.xml`. The order matters: a feature may only be added after the features it requires (`Base` → `Property` → `Http` → `CommandLine`), and `start()` rejects a feature that is registered before its dependency. If TLS is enabled in that configuration, valid certificate/key files must exist under `cfg/certs/` (or the overridden `CONFIG_DIRECTORY`).
 
 ## Usage
 
@@ -219,7 +257,7 @@ Every example is built into `bin/` (`CMAKE_RUNTIME_OUTPUT_DIRECTORY` in the top-
 | `message_queue.cpp` | A thin wrapper around `boost::interprocess::message_queue`: blocking and non-blocking send/receive of a POD payload. | `./bin/message_queue` |
 | `db.cpp` | The persistence layer on its own — `db::Connection`, `PreparedStatement`, `ParameterBuilder`, `Result` — querying the `history` table. It connects to **PostgreSQL** with a connection entry built in code instead of reading the bootstrap configuration. | `./bin/db` |
 | `named_pipe_server.cpp` | A POSIX FIFO (`mkfifo`) service: creating the pipe, writing, blocking and non-blocking reads, callback-based reading and a small throughput loop. Does not use the library itself. | `./bin/named_pipe_server` |
-| `cleanup.cpp` | Removes leftover `boost::interprocess` named mutexes, e.g. after a crash, taking one or more mutex names as arguments. | `./bin/cleanup <mutex-name> [...]` |
+| `cleanup.cpp` | Removes leftover `boost::interprocess` named mutexes, e.g. after a crash. An argument is also treated as a shared-memory segment name, whose remap semaphore and lock-owner sidecar are removed as well — the manual path when the automatic lock recovery cannot decide. | `./bin/cleanup <mutex-or-segment-name> [...]` |
 
 ### Running the examples locally
 

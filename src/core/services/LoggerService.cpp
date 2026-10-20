@@ -7,6 +7,7 @@
 #include <spdlog/sinks/tcp_sink.h>
 
 #include <algorithm>
+#include <cctype>
 #include <csignal>
 #include <iostream>
 #include <regex>
@@ -17,6 +18,7 @@
 #include "lintel/core/exceptions/LoggerServiceNotInitialized.h"
 #include "lintel/core/services/DirectoryService.h"
 #include "lintel/core/services/FileService.h"
+#include "lintel/core/utils/UUID.h"
 
 // spdlog is used here only, never in the public header
 #include <spdlog/logger.h>
@@ -27,7 +29,11 @@ std::unique_ptr<LoggerService> LoggerService::m_instance = nullptr;
 std::mutex LoggerService::m_instanceMutex;
 
 LoggerService::LoggerService()
-  : m_processName(nullptr), m_configuration(nullptr), m_logger(spdlog::stdout_color_mt("test"))
+  : m_processName(nullptr), m_configuration(nullptr),
+    // A non-registered logger on purpose: spdlog::stdout_color_mt() would park the sink in
+    // spdlog's global registry for the whole process lifetime and show up as a leak (P4) in the
+    // LeakSanitizer job. This fallback logger is only used until DECLARE_LOGGER replaces it.
+    m_logger(std::make_shared<spdlog::logger>("test", std::make_shared<spdlog::sinks::stdout_color_sink_mt>()))
 {}
 
 LoggerService::LoggerService(std::shared_ptr<ProcessName> processName, std::shared_ptr<Configuration> configuration)
@@ -37,21 +43,13 @@ LoggerService::LoggerService(std::shared_ptr<ProcessName> processName, std::shar
 namespace {
   void setSinkLevelPattern(const LoggerSinkConfiguration &config, const spdlog::sink_ptr &sinkPtr)
   {
-    const std::string &level = config.getLevel();
-    if (level == "critical") {
-      sinkPtr->set_level(spdlog::level::critical);
-    } else if (level == "warn") {
-      sinkPtr->set_level(spdlog::level::warn);
-    } else if (level == "err") {
-      sinkPtr->set_level(spdlog::level::err);
-    } else if (level == "info") {
-      sinkPtr->set_level(spdlog::level::info);
-    } else if (level == "debug") {
-      sinkPtr->set_level(spdlog::level::debug);
-    } else if (level == "trace") {
-      sinkPtr->set_level(spdlog::level::trace);
-    } else if (level == "off") {
-      sinkPtr->set_level(spdlog::level::off);
+    // one parser for every level source (LoggerService::logLevelFrom), so a sink
+    // honours the same names as the logger and the admin endpoint - among them
+    // the "error" alias that the former strcmp chain dropped. An unknown name
+    // leaves the sink at its default level, exactly as before.
+    if (const std::optional<LogLevel> level = LoggerService::logLevelFrom(config.getLevel()); level.has_value()) {
+      // LogLevel intentionally has the values of spdlog::level::level_enum
+      sinkPtr->set_level(static_cast<spdlog::level::level_enum>(*level));
     }
     const std::string &pattern = config.getPattern();
     if (!pattern.empty()) { sinkPtr->set_pattern(config.getPattern()); }
@@ -124,28 +122,34 @@ namespace {
 
   void applyLoggerLevel(const std::shared_ptr<spdlog::logger> &logger, const std::string &loggerLevel)
   {
-    if (loggerLevel == "critical") {
-      logger->set_level(spdlog::level::critical);
-      logger->flush_on(spdlog::level::critical);
-    } else if (loggerLevel == "warn") {
-      logger->set_level(spdlog::level::warn);
-      logger->flush_on(spdlog::level::warn);
-    } else if (loggerLevel == "err") {
-      logger->set_level(spdlog::level::err);
-      logger->flush_on(spdlog::level::err);
-    } else if (loggerLevel == "info") {
-      logger->set_level(spdlog::level::info);
-      logger->flush_on(spdlog::level::info);
-    } else if (loggerLevel == "debug") {
-      logger->set_level(spdlog::level::debug);
-      logger->flush_on(spdlog::level::debug);
-    } else if (loggerLevel == "trace") {
-      logger->set_level(spdlog::level::trace);
-      logger->flush_on(spdlog::level::trace);
-    } else if (loggerLevel == "off") {
-      logger->set_level(spdlog::level::off);
-      logger->flush_on(spdlog::level::off);
-    }
+    // one parser for every level source (LoggerService::logLevelFrom): "error"
+    // and "err" are the same level here as in configuredLevelOf()/levelOf(), so
+    // the level the configuration reports is also the one the logger runs on.
+    // An unknown name keeps the spdlog defaults (level info), which is exactly
+    // what configuredLevelOf() reports for it.
+    const std::optional<LogLevel> level = LoggerService::logLevelFrom(loggerLevel);
+    if (!level.has_value()) { return; }
+    // LogLevel intentionally has the values of spdlog::level::level_enum
+    const auto spdlogLevel = static_cast<spdlog::level::level_enum>(*level);
+    logger->set_level(spdlogLevel);
+    logger->flush_on(spdlogLevel);
+  }
+
+  /** The request/correlation id of the calling thread.
+   *
+   * thread_local because an httplib worker thread handles one request at a time: the
+   * value is written once per request (see RequestIdGuard) and every LOG_* call in the
+   * handler picks it up without an explicit parameter. */
+  thread_local std::string g_requestId;
+
+  /** Longest accepted client-supplied correlation id (see requestIdOf). */
+  constexpr std::size_t kMaxRequestIdLength = 64;
+
+  /** The configured level name as an enum; an unknown name stays at info,
+   *  because a typo in the XML must not keep the process from starting. */
+  LogLevel configuredLevelOf(const std::string &name)
+  {
+    return LoggerService::logLevelFrom(name).value_or(LogLevel::info);
   }
 }// namespace
 
@@ -174,10 +178,62 @@ std::shared_ptr<spdlog::logger> LoggerService::init()
   auto logger = std::make_shared<spdlog::logger>(m_processName->getProcessName(), sinks.begin(), sinks.end());
   std::string loggerLevel = loggerConfigEntry->getLoggerConfiguration()->getLevel();
   applyLoggerLevel(logger, loggerLevel);
+  // keep the configured level visible to levelOf()/setLevel(), even when the
+  // configuration names an unknown level and applyLoggerLevel stays silent
+  m_level.store(configuredLevelOf(loggerLevel), std::memory_order_relaxed);
+  // A pattern on the logger wins over a per-sink pattern (spdlog applies it to
+  // every attached sink), which is what a JSON log wants: the format belongs to
+  // the logger, not to the destination. %v is inserted verbatim, so callers and
+  // the request id must not carry quotes (see requestIdOf()).
+  if (logConfig->isJson() && logConfig->getPattern().empty()) {
+    logger->set_pattern("{\"time\":\"%Y-%m-%dT%H:%M:%S.%e%z\",\"name\":\"%n\",\"level\":\"%l\",\"msg\":\"%v\"}");
+  } else if (!logConfig->getPattern().empty()) {
+    logger->set_pattern(logConfig->getPattern());
+  }
   return logger;
 }
 
 LoggerService::~LoggerService() = default;
+
+void LoggerService::setLevel(LogLevel level)
+{
+  m_level.store(level, std::memory_order_relaxed);
+  if (m_logger == nullptr) { return; }
+  const auto spdlogLevel = static_cast<spdlog::level::level_enum>(static_cast<std::uint8_t>(level));
+  m_logger->set_level(spdlogLevel);
+  m_logger->flush_on(spdlogLevel);
+}
+
+LogLevel LoggerService::levelOf() const { return m_level.load(std::memory_order_relaxed); }
+
+std::optional<LogLevel> LoggerService::logLevelFrom(std::string_view name) noexcept
+{
+  if (name == "critical") { return LogLevel::critical; }
+  if (name == "warn") { return LogLevel::warn; }
+  if (name == "err" || name == "error") { return LogLevel::error; }
+  if (name == "info") { return LogLevel::info; }
+  if (name == "debug") { return LogLevel::debug; }
+  if (name == "trace") { return LogLevel::trace; }
+  if (name == "off") { return LogLevel::off; }
+  return std::nullopt;
+}
+
+std::string LoggerService::requestIdOf(const std::string &candidate)
+{
+  // keep the documented id alphabet; anything else is replaced instead of
+  // escaped, because the id is echoed back and lands in unescaped JSON
+  if (candidate.empty() || candidate.size() > kMaxRequestIdLength) { return generateRequestId(); }
+  const bool valid = std::all_of(candidate.begin(), candidate.end(), [](unsigned char character) {
+    return std::isalnum(character) != 0 || character == '.' || character == '_' || character == '-';
+  });
+  return valid ? candidate : generateRequestId();
+}
+
+std::string LoggerService::generateRequestId() { return UUID::generate(); }
+
+void LoggerService::setRequestId(std::string requestId) { g_requestId = std::move(requestId); }
+
+std::string_view LoggerService::requestId() { return g_requestId; }
 
 LoggerService &LoggerService::getOrCreate(const std::shared_ptr<ProcessName> &processInfo,
   const std::shared_ptr<Configuration> &configuration)
@@ -220,6 +276,13 @@ void LoggerService::logImpl(const char *file,
   } catch (const std::exception &ex) {
     text = std::format("log formatting failed: {} [{}:{}]", ex.what(), file, line);
   }
+  if (g_requestId.empty()) {
+    m_logger->log(spdlog::source_loc{ file, line, function }, level, std::string_view(text));
+    return;
+  }
+  // the correlation id of the request the calling thread is serving: it ties the log lines
+  // of one request together and matches the X-Request-Id header the server answered with
+  text = std::format("[{}] {}", g_requestId, text);
   m_logger->log(spdlog::source_loc{ file, line, function }, level, std::string_view(text));
 }
 }// namespace lintel

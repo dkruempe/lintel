@@ -40,4 +40,6 @@ void HttpFeature::initialize(std::shared_ptr<lintel::di::Container> container)
 {
   m_ServerProvider = container->resolve<ServerProvider>();
 }
+
+std::vector<std::string_view> HttpFeature::requiredFeatures() const { return { "Property" }; }
 }// namespace lintel

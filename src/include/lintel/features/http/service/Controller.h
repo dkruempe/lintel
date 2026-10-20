@@ -22,40 +22,47 @@
 #include "lintel/features/http/service/HttpStatusCodes.h"
 
 
-#define ADD_HANDLER_METHOD(pattern, httpType, name)                                   \
-  void name##httpType(const httplib::Request &request,                                \
-    httplib::Response &response,                                                      \
-    const lintel::ContentType &contentType,                                           \
-    const std::optional<lintel::UserToken> &user);                                    \
-  Handler name##httpType##Function = addMethod<std::function<HandlerArgs>, httpType>( \
-    pattern, [&](const httplib::Request &request, httplib::Response &response) {      \
-      std::string auth = request.get_header_value("Authorization");                   \
-      std::string contentTypeString = request.get_header_value("Content-Type");       \
-      if (contentTypeString.empty()) { contentTypeString = "application/json"; }      \
-      lintel::ContentType contentType(contentTypeString);                             \
-      std::optional<lintel::UserToken> user = std::nullopt;                           \
-      try {                                                                           \
-        if (lintel::StringUtils::startsWith(auth, "Bearer ") && auth.size() > 7) {    \
-          std::string id = auth.substr(7);                                            \
-          lintel::UserTokenLogin userTokenLogin{ clientIpOf(request), id };           \
-          user = m_authService->onAccessOf(userTokenLogin);                           \
-        }                                                                             \
-        name##httpType(request, response, contentType, user);                         \
-      } catch (const lintel::HttpBadRequestException &e) {                            \
-        LOG_ERROR("{}: {}", #name, e.what());                                         \
-        response.status = lintel::HttpStatusCodes::BadRequest;                        \
-        response.set_content("bad request", "text/plain");                            \
-      } catch (const std::exception &e) {                                             \
-        LOG_ERROR("{}: {}", #name, e.what());                                         \
-        response.status = lintel::HttpStatusCodes::InternalServerError;               \
-        response.set_content("internal server error", "text/plain");                  \
-      }                                                                               \
+#define ADD_HANDLER_METHOD(pattern, httpType, name)                                                         \
+  void name##httpType(const httplib::Request &request,                                                      \
+    httplib::Response &response,                                                                            \
+    const lintel::ContentType &contentType,                                                                 \
+    const std::optional<lintel::UserToken> &user);                                                          \
+  Handler name##httpType##Function = addMethod<std::function<HandlerArgs>, httpType>(                       \
+    pattern, [&](const httplib::Request &request, httplib::Response &response) {                            \
+      /* correlate everything the handler logs with the request the client sent       */                    \
+      std::string requestId = lintel::LoggerService::requestIdOf(request.get_header_value("X-Request-Id")); \
+      lintel::RequestIdGuard requestIdGuard(requestId);                                                     \
+      response.set_header("X-Request-Id", requestId);                                                       \
+      std::string auth = request.get_header_value("Authorization");                                         \
+      std::string contentTypeString = request.get_header_value("Content-Type");                             \
+      if (contentTypeString.empty()) { contentTypeString = "application/json"; }                            \
+      lintel::ContentType contentType(contentTypeString);                                                   \
+      std::optional<lintel::UserToken> user = std::nullopt;                                                 \
+      try {                                                                                                 \
+        if (lintel::StringUtils::startsWith(auth, "Bearer ") && auth.size() > 7) {                          \
+          std::string id = auth.substr(7);                                                                  \
+          lintel::UserTokenLogin userTokenLogin{ clientIpOf(request), id };                                 \
+          user = m_authService->onAccessOf(userTokenLogin);                                                 \
+        }                                                                                                   \
+        name##httpType(request, response, contentType, user);                                               \
+      } catch (const lintel::HttpBadRequestException &e) {                                                  \
+        LOG_ERROR("{}: {}", #name, e.what());                                                               \
+        response.status = lintel::HttpStatusCodes::BadRequest;                                              \
+        response.set_content("bad request", "text/plain");                                                  \
+      } catch (const std::exception &e) {                                                                   \
+        LOG_ERROR("{}: {}", #name, e.what());                                                               \
+        response.status = lintel::HttpStatusCodes::InternalServerError;                                     \
+        response.set_content("internal server error", "text/plain");                                        \
+      }                                                                                                     \
     })
 
 #define ADD_HANDLER_CONTENT_READER_METHOD(pattern, httpType, name)                                                     \
   HandlerWithContentReader name##httpType##Function =                                                                  \
     addMethod<std::function<HandlerWithContentReaderArgs>, httpType>(pattern,                                          \
       [&](const httplib::Request &request, httplib::Response &response, const httplib::ContentReader &contentReader) { \
+        std::string requestId = lintel::LoggerService::requestIdOf(request.get_header_value("X-Request-Id"));          \
+        lintel::RequestIdGuard requestIdGuard(requestId);                                                              \
+        response.set_header("X-Request-Id", requestId);                                                                \
         const std::string contentTypeString = request.get_header_value("Content-Type");                                \
         lintel::ContentType contentType(contentTypeString);                                                            \
         try {                                                                                                          \

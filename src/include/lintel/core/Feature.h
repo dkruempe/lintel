@@ -6,6 +6,7 @@
 #include <string_view>
 #include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "lintel/core/Features.h"
 #include "lintel/core/utils/TypeName.h"
@@ -60,6 +61,20 @@ public:
 
   /** Get the name of this feature */
   virtual std::string_view getName() = 0;
+
+  /** Names of the features this feature depends on.
+   *
+   * StartupBuilder verifies before wiring the DI container that every required
+   * feature was added and appears earlier in the feature list. The feature
+   * layers form a linear chain (base -> property -> http -> cli), so a
+   * positional check is enough; a missing or misordered dependency is reported
+   * with a descriptive exception instead of degrading silently through the DI
+   * container's auto-registration.
+   *
+   * The default is empty: a feature without dependencies.
+   *
+   * @return the names of the required features */
+  virtual std::vector<std::string_view> requiredFeatures() const { return {}; }
 };
 
 /** Base template class for enum-based features that auto-register with the Features manager */

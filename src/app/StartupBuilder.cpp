@@ -4,7 +4,10 @@
 
 #include <algorithm>
 #include <csignal>
+#include <map>
 #include <memory>
+#include <stdexcept>
+#include <string>
 #include <thread>
 #include <utility>
 
@@ -126,15 +129,44 @@ void StartupBuilder::withOutFeature(std::string_view nameOfFeature)
     m_featureVec.end());
 }
 
-void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment, std::string value)
+void StartupBuilder::overrides(EnvironmentConfiguration::Environment environment, const std::string &value)
 {
-  // std::move avoids the second copy: EnvironmentConfiguration::overrides
-  // takes the value by value itself and moves it into its map.
-  m_environmentConfiguration->overrides(environment, std::move(value));
+  // EnvironmentConfiguration::overrides takes the value by value itself and
+  // moves it into its map; a reference here avoids the extra copy per call.
+  m_environmentConfiguration->overrides(environment, value);
+}
+
+void StartupBuilder::verifyFeatureDependencies() const
+{
+  std::map<std::string, std::size_t> positionOf;
+  for (std::size_t index = 0; index < m_featureVec.size(); ++index) {
+    positionOf.emplace(std::string(m_featureVec[index]->getName()), index);
+  }
+
+  for (std::size_t index = 0; index < m_featureVec.size(); ++index) {
+    const std::string name(m_featureVec[index]->getName());
+    for (const std::string_view required : m_featureVec[index]->requiredFeatures()) {
+      const auto found = positionOf.find(std::string(required));
+      if (found == positionOf.end()) {
+        throw std::runtime_error(
+          "feature '" + name + "' requires '" + std::string(required) + "', which was not added to the StartupBuilder");
+      }
+      if (found->second > index) {
+        throw std::runtime_error(
+          "feature '" + name + "' must be added after its required feature '" + std::string(required) + "'");
+      }
+    }
+  }
 }
 
 void StartupBuilder::start()
 {
+  // Fail fast on an inconsistent feature set: a feature that requires another
+  // one has to see it added before it, so the layer chain holds at runtime just
+  // as it does at link time. Runs before any type is registered, otherwise a
+  // missing feature would surface much later as a silently default-constructed
+  // (and therefore inert) service.
+  verifyFeatureDependencies();
   // I injection
   lintel::di::ContainerBuilder builder;
   m_configuration =

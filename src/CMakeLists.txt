@@ -356,6 +356,8 @@ set(sources
     core/persistence/sqlite3/Result.cpp
     core/persistence/sqlite3/Statement.cpp
     core/persistence/sqlite3/Transaction.cpp
+    # core - platform
+    core/platform/Platform.cpp
     # core - plugins
     app/plugins/AdminUserBootstrapPlugin.cpp
     app/plugins/DatabaseBootstrapPlugin.cpp
@@ -628,6 +630,10 @@ lintel_setup_module(lintel_core)
 target_link_libraries(lintel_core PUBLIC tinyxml2::tinyxml2 PostgreSQL::PostgreSQL SQLite::SQLite3
         Threads::Threads OpenSSL::SSL OpenSSL::Crypto rapidjson magic_enum::magic_enum
         spdlog::spdlog_header_only Boost::boost Boost::headers Boost::filesystem)
+if(APPLE)
+  # processStartTicksOf() reads the start time through proc_pidinfo().
+  target_link_libraries(lintel_core PRIVATE proc)
+endif()
 set_target_properties(lintel_core PROPERTIES EXPORT_NAME core)
 add_library(lintel::core ALIAS lintel_core)
 

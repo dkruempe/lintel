@@ -317,10 +317,13 @@ public:
 int main(int argc, char *argv[])
 {
   std::shared_ptr<lintel::StartupBuilder> builder = lintel::StartupBuilder::with(argc, argv);
-  builder->addFeature<lintel::PropertyFeature>();
+  // Features are added in layer order: every feature requires the ones below it
+  // (StartupBuilder verifies this before wiring the container), so the chain is
+  // base -> property -> http -> cli and the app-specific feature comes last.
   builder->addFeature<lintel::BaseFeature>();
-  builder->addFeature<lintel::CommandLineFeature>();
+  builder->addFeature<lintel::PropertyFeature>();
   builder->addFeature<lintel::HttpFeature>();
+  builder->addFeature<lintel::CommandLineFeature>();
   builder->addFeature<TestFeature>();
   builder->start();
   return 0;

@@ -50,7 +50,7 @@ void SharedMemoryService::growOf(const std::shared_ptr<SharedMemorySegment> &seg
   // mmap() time, so it must be reopened to observe the larger file.
   // Hold the cross-process remap semaphore so no other process references the
   // segment (find_or_construct / getSegmentAccessor) while it is being resized.
-  shm::SegmentSemaphoreGuard gate(*found->second->m_remapSemaphore);
+  shm::SegmentSemaphoreGuard gate(*found->second);
   // boost::interprocess takes a narrow file name; std::filesystem::path::c_str()
   // is wchar_t on Windows, so the conversion has to be explicit.
   const std::string filePath = segment->getPath().string();
@@ -73,7 +73,7 @@ void SharedMemoryService::shrinkOf(const std::shared_ptr<SharedMemorySegment> &s
   if (found == m_segments.end()) { throw ShmSegmentNotFound(segment->getName()); }
   // Hold the cross-process remap semaphore so no other process references the
   // segment while it is being resized and reopened (see growOf).
-  shm::SegmentSemaphoreGuard gate(*found->second->m_remapSemaphore);
+  shm::SegmentSemaphoreGuard gate(*found->second);
   const std::string filePath = segment->getPath().string();
   // Windows refuses to truncate a file while a view of it is still mapped ("The
   // requested operation cannot be performed on a file with a user-mapped section
@@ -123,12 +123,55 @@ std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> SharedMemorySe
       const std::string filePath = segment->getPath().string();
       handle->m_managedMappedFile = std::make_shared<boost::interprocess::managed_mapped_file>(
         boost::interprocess::open_or_create, filePath.c_str(), segment->getSize());
+      // Holder record of the remap semaphore, plus the automatic recovery: a
+      // previous run that crashed while holding the lock is visible here as a
+      // stuck semaphore whose recorded holder is gone. The record is created
+      // first and the semaphore opened afterwards, so after a reclaim this
+      // process maps the new semaphore instead of the orphaned one.
+      handle->m_lockOwner = std::make_shared<SegmentLockOwner>(segment->getName());
+      const bool reclaimed =
+        shm::recoverOrphanedSegmentLock(segment->getName(), segment->getPath(), *handle->m_lockOwner);
       handle->m_remapSemaphore = std::make_unique<boost::interprocess::named_semaphore>(
-        boost::interprocess::open_or_create, (segment->getName() + "_remap_sem").c_str(), 1u);
+        boost::interprocess::open_or_create, shm::remapSemaphoreNameOf(segment->getName()).c_str(), 1u);
+      if (reclaimed) {
+        LOG_WARN(
+          "reclaimed the orphaned remap semaphore of shared memory segment '{}' - "
+          "the process that held it is gone",
+          segment->getName());
+      }
       handle->m_sharedMemorySegment = segment;
       return std::make_pair(segment->getName(), handle);
     });
   return map;
+}
+
+std::size_t SharedMemoryService::recover()
+{
+  std::lock_guard<std::mutex> lock(m_segmentsMutex);
+  std::size_t reclaimed = 0;
+  for (const auto &[name, handle] : m_segments) {
+    if (handle == nullptr || handle->m_lockOwner == nullptr) { continue; }
+    if (handle->m_sharedMemorySegment == nullptr) { continue; }
+    if (!shm::recoverOrphanedSegmentLock(name, handle->m_sharedMemorySegment->getPath(), *handle->m_lockOwner)) {
+      continue;
+    }
+    // The old semaphore object is orphaned by the removal; reopen it so this
+    // process keeps using the one every other process will see as well.
+    try {
+      handle->m_remapSemaphore = std::make_unique<boost::interprocess::named_semaphore>(
+        boost::interprocess::open_or_create, shm::remapSemaphoreNameOf(name).c_str(), 1u);
+    } catch (const boost::interprocess::interprocess_exception &error) {
+      // Nothing else to do: the next open of the segment maps the new object.
+      LOG_ERROR("cannot reopen the reclaimed remap semaphore of segment '{}': {}", name, error.what());
+      continue;
+    }
+    LOG_WARN(
+      "reclaimed the orphaned remap semaphore of shared memory segment '{}' - "
+      "the process that held it is gone",
+      name);
+    ++reclaimed;
+  }
+  return reclaimed;
 }
 
 SharedMemorySegmentHandle &SharedMemoryService::segmentOf(const std::string &name)
@@ -142,7 +185,7 @@ ShmSegmentAccessor SharedMemoryService::getSegmentAccessor(const std::shared_ptr
 {
   std::lock_guard<std::mutex> lock(m_segmentsMutex);
   auto &handle = segmentOf(segment->getName());
-  shm::SegmentSemaphoreGuard gate(*handle.m_remapSemaphore);
+  shm::SegmentSemaphoreGuard gate(handle);
   if (handle.m_segmentAllocator == nullptr) {
     handle.m_segmentAllocator =
       std::make_shared<BoostSegmentAllocator>(*handle.m_managedMappedFile->get_segment_manager());

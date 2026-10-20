@@ -37,4 +37,6 @@ void CommandLineFeature::initialize(std::shared_ptr<lintel::di::Container> conta
 {
   m_commandLineService = container->resolve<CommandLineService>();
 }
+
+std::vector<std::string_view> CommandLineFeature::requiredFeatures() const { return { "Http" }; }
 }// namespace lintel
