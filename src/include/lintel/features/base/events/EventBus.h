@@ -2,6 +2,7 @@
 #define LINTEL_EVENTBUS_H
 
 #include <atomic>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -27,6 +28,9 @@ struct EventBusLimits
  * topic/subscriber counts are configured when the bus is created; the payload
  * size is fixed at compile time (see Event).
  */
+/** Drop policy for when queues are full. */
+enum class DropPolicy { Fail = 0, DropOldest, DropNewest, Block };
+
 struct EventBusConfig
 {
   /** Capacity of the point-to-point bus queue. */
@@ -37,6 +41,14 @@ struct EventBusConfig
   std::size_t maxTopics = EventBusLimits::MAX_TOPICS;
   /** Maximum number of subscribers that can be registered. */
   std::size_t maxSubscribers = EventBusLimits::MAX_SUBSCRIBERS;
+  /** Drop policy for publish operations when queues are full. */
+  DropPolicy pubPolicy = DropPolicy::Fail;
+  /** Timeout for Block policy in milliseconds. */
+  std::chrono::milliseconds pubTimeout{ 0 };
+  /** Enable sticky/last-value events for topics. */
+  bool sticky = false;
+  /** TTL for sticky events in milliseconds. */
+  std::uint32_t stickyTtlMs = 60000;
 
   /** @return true if all values are within their bounds */
   [[nodiscard]] bool isValid() const
@@ -305,11 +317,24 @@ private:
   TopicEntry m_topics[EventBusLimits::MAX_TOPICS]{};
   SubscriberEntry m_subscribers[EventBusLimits::MAX_SUBSCRIBERS]{};
   alignas(ShmRing) std::byte m_subscriberQueues[EventBusLimits::MAX_SUBSCRIBERS][sizeof(ShmRing)]{};
+  bool m_sticky = false;
+  std::uint32_t m_stickyTtlMs = 60000;
+  struct LastValueEntry
+  {
+    char topic[Event::NAME_SIZE]{};
+    Event value;
+    std::int64_t timestampMs = 0;
+    bool hasValue = false;
+  };
+  LastValueEntry m_lastValues[EventBusLimits::MAX_TOPICS]{};
+  std::atomic<std::size_t> m_lastValueCount{ 0 };
 
   [[nodiscard]] int findTopicIndex(const char *topic) const;
   [[nodiscard]] int findSubscriberIndex(const char *subscriber) const;
   [[nodiscard]] ShmRing &subscriberQueueOf(std::size_t index);
   [[nodiscard]] const ShmRing &subscriberQueueOf(std::size_t index) const;
+  void storeLastValue(const Event &event);
+  bool deliverStickyToSubscriber(const std::string &subscriber, int topicIndex);
 
   static void copyInto(char (&destination)[Event::NAME_SIZE], const std::string &value);
   [[nodiscard]] static bool nameEquals(const char *lhs, const char *rhs);

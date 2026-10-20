@@ -512,3 +512,48 @@ void EventBus::RegistryLock::acquire() const
 
 void EventBus::RegistryLock::release() const { m_state.store(0, std::memory_order_release); }
 }// namespace lintel
+
+static std::int64_t nowMs()
+{
+  return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
+    .count();
+}
+
+void EventBus::storeLastValue(const Event &event)
+{
+  if (!m_sticky) { return; }
+  const char *topic = event.topic();
+  for (auto &lv : m_lastValues) {
+    if (lv.hasValue && nameEquals(lv.topic, topic)) {
+      lv.value = event;
+      lv.timestampMs = nowMs();
+      return;
+    }
+  }
+  for (auto &lv : m_lastValues) {
+    if (!lv.hasValue) {
+      copyInto(lv.topic, topic);
+      lv.value = event;
+      lv.timestampMs = nowMs();
+      lv.hasValue = true;
+      return;
+    }
+  }
+}
+
+bool EventBus::deliverStickyToSubscriber(const std::string &subscriber, int topicIndex)
+{
+  if (!m_sticky) { return true; }
+  const char *topic = m_topics[topicIndex].name;
+  for (const auto &lv : m_lastValues) {
+    if (!lv.hasValue) { continue; }
+    if (!nameEquals(lv.topic, topic)) { continue; }
+    if (m_stickyTtlMs > 0) {
+      if (nowMs() - lv.timestampMs > static_cast<std::int64_t>(m_stickyTtlMs)) { continue; }
+    }
+    int subIndex = findSubscriberIndex(subscriber.c_str());
+    if (subIndex < 0) { return false; }
+    return subscriberQueueOf(static_cast<std::size_t>(subIndex)).push(lv.value);
+  }
+  return true;
+}

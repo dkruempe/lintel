@@ -1,11 +1,11 @@
 #include "lintel/features/base/services/SharedMemoryService.h"
 
+#include "lintel/features/base/models/SharedMemorySegmentStats.h"
 #include <lintel/core/models/SharedMemorySegment.h>
 #include <lintel/core/models/SharedMemorySegmentInfo.h>
 #include <lintel/core/services/ReadinessRegistry.h>
 #include <lintel/core/shm/BoostSegmentAllocator.h>
 #include <lintel/features/base/services/ShmConstructors.h>
-#include "lintel/features/base/models/SharedMemorySegmentStats.h"
 
 namespace lintel {
 SharedMemoryService::SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager> &sharedMemorySegmentManager,
@@ -35,7 +35,10 @@ void SharedMemoryService::growOf(const std::shared_ptr<SharedMemorySegment> &seg
   std::lock_guard<std::mutex> lock(m_segmentsMutex);
   auto found = m_segments.find(segment->getName());
   if (found == m_segments.end()) { throw ShmSegmentNotFound(segment->getName()); }
-  if (grow == 0) { notifyHooks(segment->getName(), SegmentLifecycle::AfterGrow); return; }
+  if (grow == 0) {
+    notifyHooks(segment->getName(), SegmentLifecycle::AfterGrow);
+    return;
+  }
   const std::size_t maxSize = segment->getMaxSize();
   if (maxSize != 0) {
     const std::size_t currentSize = found->second->m_managedMappedFile->get_size();

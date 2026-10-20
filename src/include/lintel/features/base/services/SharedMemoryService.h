@@ -2,23 +2,23 @@
 #define LINTEL_SHAREDMEMORYSERVICE_H
 
 #include <filesystem>
+#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <ostream>
 #include <set>
 #include <utility>
-#include <functional>
 #include <vector>
 
 #include "lintel/core/exceptions/ShmSegmentNotFound.h"
 #include "lintel/core/models/SharedMemorySegment.h"
 #include "lintel/core/models/SharedMemorySegmentInfo.h"
-#include "lintel/features/base/models/SharedMemorySegmentStats.h"
 #include "lintel/core/services/ISharedMemoryService.h"
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/PropertyRegistration.h"
 #include "lintel/core/shm/ShmSegmentAccessor.h"
+#include "lintel/features/base/models/SharedMemorySegmentStats.h"
 #include "lintel/features/base/services/SchedulerService.h"
 #include "lintel/features/base/services/SharedMemorySegmentManager.h"
 
@@ -28,14 +28,7 @@ namespace lintel {
 class SharedMemorySegmentHandle;
 
 /** Lifecycle events for shared memory segments. */
-enum class SegmentLifecycle
-{
-  BeforeGrow,
-  AfterGrow,
-  BeforeShrink,
-  AfterShrink,
-  OnRemap
-};
+enum class SegmentLifecycle { BeforeGrow, AfterGrow, BeforeShrink, AfterShrink, OnRemap };
 
 /** Callback invoked on segment lifecycle events. Callbacks must be short and non-blocking. */
 using SegmentLifecycleHook = std::function<void(const std::string &segmentName, SegmentLifecycle action)>;
