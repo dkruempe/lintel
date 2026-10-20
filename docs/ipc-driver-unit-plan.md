@@ -22,7 +22,7 @@ Ziel: IPC (Shared Memory, Event Bus, Message Queue) produktiv für Driver-/Unit-
 | **EB-1** | Typisierte/schema-basierte Events (Type-Tags + Version) | [x] Erledigt | `src/include/lintel/features/base/events/Event.h` (erweitern), `src/include/lintel/features/base/events/EventSchema.h` (neu), Beispiele aktualisieren | `tests/events/EventBusTest.cpp` | `schemaId` + `schemaVersion` (uint16) Felder vorhanden, Default-Werte rückwärtskompatibel, Roundtrip getestet. | Mittel |
 | **EB-2** | Sticky / Last-Value-Events | [x] Erledigt | `src/include/lintel/features/base/events/EventBus.h/cpp`, `src/include/lintel/features/base/configuration/EventBusEntry.h/cpp` (falls nötig), `src/include/lintel/features/base/services/EventBusService.h/cpp` | `tests/events/EventBusTest.cpp`, `tests/property/PropertyChangeTest.cpp` | Pro Topic letzter Event gecacht. Neuer Subscriber erhält letzten Wert (falls vorhanden). `sticky` + `stickyTtlMs` konfigurierbar. Reset löscht Cache. TTL verfällt korrekt. | Mittel |
 | **EB-4** | Backpressure & Drop-Policies (DropOldest/DropNewest/Fail/Block) | [x] Erledigt | `src/include/lintel/features/base/events/EventBus.h/cpp`, `src/include/lintel/features/base/configuration/EventBusEntry.h` | `tests/events/EventBusTest.cpp` | `DropPolicy` Enum, konfigurierbar per Bus. `publish`/`publishToSubscribers` respektieren Policy. `droppedEventsOf()` erweitert. Default = `Fail` (rückwärtskompatibel). | Mittel |
-| **EB-6** | Basis-Observability EventBus (Queue-Tiefen, Drops, Counts) | [ ] Erledigt | `src/include/lintel/features/base/events/EventBus.h/cpp`, `src/include/lintel/features/base/events/IEventBus.h` (falls benötigt) | `tests/events/EventBusTest.cpp` | Getter für Queue-Tiefen (bus + subscriber), Drop-Counts pro Topic optional, `sequenceOf()` bereits vorhanden. Keine Locks im Hotpath. | Niedrig-Mittel |
+| **EB-6** | Basis-Observability EventBus (Queue-Tiefen, Drops, Counts) | [x] Erledigt | `src/include/lintel/features/base/events/EventBus.h/cpp`, `src/include/lintel/features/base/events/IEventBus.h` (falls benötigt) | `tests/events/EventBusTest.cpp` | Getter für Queue-Tiefen (bus + subscriber), Drop-Counts pro Topic optional, `sequenceOf()` bereits vorhanden. Keine Locks im Hotpath. | Niedrig-Mittel |
 | **MQ-3** | Overflow-/Dead-Letter-Policy für MessageQueue | [ ] Erledigt | `src/include/lintel/features/base/msg/MessageQueueCore.h`, `src/features/base/msg/MessageQueueCore.cpp`, `src/include/lintel/features/base/msg/MessageQueue.h`, `src/include/lintel/features/base/services/MessageQueueService.h/cpp` | `tests/features/MessageQueue*` (erweitern) | `OverflowPolicy { Fail, DropNewest, DropOldest, BlockWithTimeout, DeadLetter }`. DLQ `<name>.dlq` konfigurierbar. Bestehende API kompatibel (Defaults unverändert). | Mittel |
 
 **Phase A DoD:** Driver kann State in SHM ablegen, typisierte Events mit Sticky+Backpressure publischen, Commands via MQ mit Overflow-Policy empfangen. Lifecycle-Hooks + Basis-Metriken vorhanden.
@@ -57,7 +57,7 @@ Ziel: IPC (Shared Memory, Event Bus, Message Queue) produktiv für Driver-/Unit-
 
 ## Fortschritt
 
-**Phase A:** 5/7 erledigt  
+**Phase A:** 6/7 erledigt  
 **Phase B:** 0/6 erledigt  
 **Phase C:** 0/3 erledigt  
 
