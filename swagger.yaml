@@ -360,6 +360,371 @@ paths:
           description: Forbidden (wrong content type)
         "500":
           description: Internal server error
+  /eventBus/buses:
+    get:
+      summary: List event buses
+      description: >
+        Returns every configured event bus with its validated bootstrap
+        configuration and, while the bus can be opened in its shared memory
+        segment (AVAILABLE), its runtime counters. A bus whose bootstrap
+        configuration is invalid is still listed, with AVAILABLE false and
+        without configuration fields; a bus whose segment is missing reports
+        AVAILABLE false but keeps its configuration. Reading requires a token
+        of a user in the "Admin-EventBus" or "User-EventBus" group.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All configured event buses
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/EventBusDto'
+        "401":
+          description: Unauthorized (missing token or not in an event bus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
+  /eventBus/bus/{name}:
+    get:
+      summary: Get one event bus
+      description: >
+        Returns the same object as one entry of /eventBus/buses for exactly one
+        bus. An unknown name answers 404. Reading requires a token of a user in
+        the "Admin-EventBus" or "User-EventBus" group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+      responses:
+        "200":
+          description: The event bus (EventBusDto JSON)
+          schema:
+            $ref: '#/definitions/EventBusDto'
+        "401":
+          description: Unauthorized (missing token or not in an event bus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+  /eventBus/publish/{name}:
+    post:
+      summary: Publish an event on a bus
+      description: >
+        Builds an Event from the JSON body and hands it to the bus. TOPIC and
+        TYPE are required, PAYLOAD is an optional string of at most 256 bytes,
+        PRIORITY is one of Critical, High, Normal or Low (default Normal) and
+        TARGET is BUS (default, the point-to-point queue) or SUBSCRIBERS (the
+        queues of every matching subscriber). Names longer than 31 bytes and
+        payloads longer than 256 bytes answer 400 instead of being truncated.
+        Publishing is open to the "Admin-EventBus" and "User-EventBus" groups.
+        A full queue is not an error: the answer carries PUBLISHED false and
+        the bus counts the event as dropped. With TARGET SUBSCRIBERS, PUBLISHED
+        is also false when no subscription matched the topic.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - TOPIC
+              - TYPE
+            properties:
+              TOPIC:
+                type: string
+                maxLength: 31
+                description: Topic of the event
+                example: orders.created
+              TYPE:
+                type: string
+                maxLength: 31
+                description: Type of the event
+                example: OrderCreated
+              PAYLOAD:
+                type: string
+                maxLength: 256
+                description: Payload of the event
+                example: "42"
+              PRIORITY:
+                type: string
+                enum: [Critical, High, Normal, Low]
+                description: Delivery priority inside the subscriber queues (default Normal)
+              TARGET:
+                type: string
+                enum: [BUS, SUBSCRIBERS]
+                description: BUS for the point-to-point queue (default), SUBSCRIBERS for a broadcast
+      responses:
+        "200":
+          description: The event was handed to the bus
+          schema:
+            type: object
+            required:
+              - BUS
+              - PRIORITY
+              - PUBLISHED
+              - SEQUENCE
+              - TARGET
+              - TOPIC
+              - TYPE
+            properties:
+              BUS:
+                type: string
+                example: orders
+              PRIORITY:
+                type: string
+                enum: [Critical, High, Normal, Low]
+              PUBLISHED:
+                type: boolean
+                description: False when every matching queue was full or no subscription matched
+              SEQUENCE:
+                type: integer
+                format: int64
+                description: Last sequence number assigned by the bus
+              TARGET:
+                type: string
+                enum: [BUS, SUBSCRIBERS]
+              TOPIC:
+                type: string
+              TYPE:
+                type: string
+        "400":
+          description: Body is not json, a required member is missing, a name or the payload is too long, or PRIORITY/TARGET is unknown
+        "401":
+          description: Unauthorized (missing token or not in an event bus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+  /eventBus/subscribe/{name}:
+    post:
+      summary: Subscribe a subscriber to a topic
+      description: >
+        Adds the named subscriber to the topic. An exact topic is registered
+        implicitly, so a subscriber can join a topic that was never published
+        before; wildcard patterns (`*` matches any sequence, `?` matches one
+        character) register themselves. The answer reports SUBSCRIBED false when
+        the topic or subscriber table of the bus is full. Subscribing requires a
+        token of a user in the "Admin-EventBus" group; a member of
+        "User-EventBus" alone gets 401.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - TOPIC
+              - SUBSCRIBER
+            properties:
+              TOPIC:
+                type: string
+                maxLength: 31
+                description: Topic name or wildcard pattern
+                example: orders.*
+              SUBSCRIBER:
+                type: string
+                maxLength: 31
+                description: Name of the subscriber
+                example: worker
+      responses:
+        "200":
+          description: The subscription was attempted
+          schema:
+            type: object
+            required:
+              - BUS
+              - SUBSCRIBER
+              - SUBSCRIBED
+              - TOPIC
+            properties:
+              BUS:
+                type: string
+              SUBSCRIBER:
+                type: string
+              SUBSCRIBED:
+                type: boolean
+                description: False when the topic or subscriber table is full
+              TOPIC:
+                type: string
+        "400":
+          description: Body is not json, a required member is missing or a name is too long
+        "401":
+          description: Unauthorized (missing token or not in the Admin-EventBus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+    delete:
+      summary: Unsubscribe a subscriber from a topic
+      description: >
+        Removes the subscription of the named subscriber from the topic and
+        answers with UNSUBSCRIBED false when there was no such subscription.
+        Unsubscribing requires a token of a user in the "Admin-EventBus" group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - TOPIC
+              - SUBSCRIBER
+            properties:
+              TOPIC:
+                type: string
+                maxLength: 31
+              SUBSCRIBER:
+                type: string
+                maxLength: 31
+      responses:
+        "200":
+          description: The subscription was removed or did not exist
+          schema:
+            type: object
+            required:
+              - BUS
+              - SUBSCRIBER
+              - TOPIC
+              - UNSUBSCRIBED
+            properties:
+              BUS:
+                type: string
+              SUBSCRIBER:
+                type: string
+              TOPIC:
+                type: string
+              UNSUBSCRIBED:
+                type: boolean
+                description: True when a subscription was removed
+        "400":
+          description: Body is not json, a required member is missing or a name is too long
+        "401":
+          description: Unauthorized (missing token or not in the Admin-EventBus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+  /eventBus/depth/{name}/{subscriber}:
+    get:
+      summary: Get the queue depth of one subscriber
+      description: >
+        Returns the best-effort number of events waiting in the queues of the
+        named subscriber. The value is approximate while other processes push
+        or pop events concurrently; an unknown subscriber reports 0. Reading
+        requires a token of a user in the "Admin-EventBus" or "User-EventBus"
+        group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+        - name: subscriber
+          in: path
+          required: true
+          type: string
+          description: Subscriber name (at most 31 bytes)
+      responses:
+        "200":
+          description: Queue depth of the subscriber
+          schema:
+            type: object
+            required:
+              - BUS
+              - DEPTH
+              - SUBSCRIBER
+            properties:
+              BUS:
+                type: string
+              DEPTH:
+                type: integer
+                format: int64
+              SUBSCRIBER:
+                type: string
+        "400":
+          description: Subscriber name is longer than 31 bytes
+        "401":
+          description: Unauthorized (missing token or not in an event bus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+  /eventBus/reset/{name}:
+    post:
+      summary: Reset an event bus
+      description: >
+        Drops every queued event of the bus and of all subscriber queues and
+        answers with RESET true. Resetting is destructive and requires a token
+        of a user in the "Admin-EventBus" group; a member of "User-EventBus"
+        alone gets 401.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+      responses:
+        "200":
+          description: The bus was reset
+          schema:
+            type: object
+            required:
+              - BUS
+              - RESET
+            properties:
+              BUS:
+                type: string
+              RESET:
+                type: boolean
+        "401":
+          description: Unauthorized (missing token or not in the Admin-EventBus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
   /process/processes/{groupName}:
     get:
       summary: Get all processes
@@ -1188,6 +1553,85 @@ paths:
         "500":
           description: Internal server error
 definitions:
+  EventBusDto:
+    type: object
+    description: >
+      One configured event bus. The configuration fields are omitted while the
+      bootstrap entry is invalid; the runtime counters are omitted while the bus
+      cannot be opened in its shared memory segment.
+    properties:
+      NAME:
+        type: string
+        description: Name of the bus
+        example: orders
+      AVAILABLE:
+        type: boolean
+        description: True while the bus can be opened in its shared memory segment
+      BUS_CAPACITY:
+        type: integer
+        format: int64
+        description: Capacity of the point-to-point bus queue
+        example: 128
+      SUBSCRIBER_CAPACITY:
+        type: integer
+        format: int64
+        description: Capacity of every per-subscriber queue
+        example: 128
+      MAX_TOPICS:
+        type: integer
+        format: int64
+        description: Maximum number of registerable topics
+        example: 16
+      MAX_SUBSCRIBERS:
+        type: integer
+        format: int64
+        description: Maximum number of registerable subscribers
+        example: 32
+      MAX_PRIORITIES:
+        type: integer
+        format: int64
+        description: Number of priority queues per subscriber
+        example: 4
+      PUB_POLICY:
+        type: string
+        enum: [Fail, DropOldest, DropNewest, Block]
+        description: Drop policy when a queue is full
+      STICKY:
+        type: boolean
+        description: Whether sticky/last-value events are enabled
+      STICKY_TTL_MS:
+        type: integer
+        format: int32
+        description: TTL of sticky events in milliseconds
+        example: 60000
+      DROPPED:
+        type: integer
+        format: int64
+        description: Number of events dropped because a queue was full
+        example: 0
+      TOPIC_COUNT:
+        type: integer
+        format: int64
+        description: Number of registered topics
+        example: 2
+      SUBSCRIBER_COUNT:
+        type: integer
+        format: int64
+        description: Number of reserved subscriber slots
+        example: 1
+      BUS_DEPTH:
+        type: integer
+        format: int64
+        description: Best-effort depth of the point-to-point queue
+        example: 0
+      SEQUENCE:
+        type: integer
+        format: int64
+        description: Last sequence number assigned by the bus
+        example: 7
+    required:
+      - NAME
+      - AVAILABLE
   ProcessInfoDto:
     type: object
     properties:

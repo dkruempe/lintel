@@ -3,6 +3,8 @@
 #include "lintel/core/di/Container.h"
 
 #include "lintel/features/http/controllers/AdminController.h"
+#include "lintel/features/http/controllers/EventBusApi.h"
+#include "lintel/features/http/controllers/EventBusController.h"
 #include "lintel/features/http/controllers/HistoryApi.h"
 #include "lintel/features/http/controllers/HistoryController.h"
 #include "lintel/features/http/controllers/MessageQueueApi.h"
@@ -34,6 +36,8 @@ void HttpFeature::registerTypes(lintel::di::ContainerBuilder &builder)
   builder.registerType<HistoryController>().as<Controller>().as<GroupProvider>().asSelf().singleInstance();
   builder.registerType<MesssageQueueApi>().singleInstance();
   builder.registerType<MessageQueueController>().as<Controller>().as<GroupProvider>().asSelf().singleInstance();
+  builder.registerType<EventBusApi>().singleInstance();
+  builder.registerType<EventBusController>().as<Controller>().as<GroupProvider>().asSelf().singleInstance();
 }
 
 void HttpFeature::initialize(std::shared_ptr<lintel::di::Container> container)

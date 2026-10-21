@@ -82,6 +82,7 @@ ADD_EXECUTABLE(base_tests
     cli/CliParserTest.cpp
     cli/HistoryCliComponentTest.cpp
     cli/MessageQueueCliComponentTest.cpp
+    cli/EventBusCliComponentTest.cpp
     cli/ProcessCliComponentTest.cpp
     cli/SharedMemoryCliComponentTest.cpp
     cli/PropertyCliComponentTest.cpp
@@ -104,6 +105,7 @@ ADD_EXECUTABLE(base_tests
     http/SharedMemoryControllerMockTest.cpp
     http/HistoryControllerTest.cpp
     http/MessageQueueControllerTest.cpp
+    http/EventBusControllerTest.cpp
     http/UserControllerTest.cpp
     http/ProcessControllerTest.cpp
     http/AdminControllerTest.cpp

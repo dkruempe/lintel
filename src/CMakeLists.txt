@@ -173,6 +173,7 @@ set(headers
     include/lintel/features/base/configuration/SharedMemorySegmentComponent.h
     include/lintel/features/base/configuration/SharedMemorySegmentEntry.h
     # features - base - controller
+    include/lintel/features/base/controller/EventBusDtos.h
     include/lintel/features/base/controller/GroupDto.h
     include/lintel/features/base/controller/HistoryDto.h
     include/lintel/features/base/controller/HistoryDtos.h
@@ -266,6 +267,7 @@ set(headers
     include/lintel/features/cli/services/InputService.h
     include/lintel/features/cli/services/TerminalService.h
     include/lintel/features/cli/utils/CommandLineUtils.h
+    include/lintel/features/cli/components/EventBusCliComponent.h
     include/lintel/features/cli/components/HistoryCliComponent.h
     include/lintel/features/cli/components/MessageQueueCliComponent.h
     include/lintel/features/cli/components/ProcessCliComponent.h
@@ -294,6 +296,8 @@ set(headers
     include/lintel/features/http/service/Server.h
     include/lintel/features/http/service/TlsReloadRegistry.h
     include/lintel/features/http/controllers/AdminController.h
+    include/lintel/features/http/controllers/EventBusApi.h
+    include/lintel/features/http/controllers/EventBusController.h
     include/lintel/features/http/controllers/HistoryApi.h
     include/lintel/features/http/controllers/HistoryController.h
     include/lintel/features/http/controllers/MessageQueueApi.h
@@ -425,6 +429,7 @@ set(sources
     features/base/configuration/SharedMemorySegmentComponent.cpp
     features/base/configuration/SharedMemorySegmentEntry.cpp
     # features - base - controller
+    features/base/controller/EventBusDtos.cpp
     features/base/controller/GroupDto.cpp
     features/base/controller/HistoryDto.cpp
     features/base/controller/HistoryDtos.cpp
@@ -488,6 +493,7 @@ set(sources
     features/cli/services/InputService.cpp
     features/cli/services/TerminalService.cpp
     features/cli/utils/CommandLineUtils.cpp
+    features/cli/components/EventBusCliComponent.cpp
     features/cli/components/HistoryCliComponent.cpp
     features/cli/components/MessageQueueCliComponent.cpp
     features/cli/components/ProcessCliComponent.cpp
@@ -511,6 +517,8 @@ set(sources
     features/http/service/Server.cpp
     features/http/service/TlsReloadRegistry.cpp
     features/http/controllers/AdminController.cpp
+    features/http/controllers/EventBusApi.cpp
+    features/http/controllers/EventBusController.cpp
     features/http/controllers/HistoryApi.cpp
     features/http/controllers/HistoryController.cpp
     features/http/controllers/MessageQueueApi.cpp

@@ -1,9 +1,11 @@
 #ifndef LINTEL_EVENTBUSSERVICE_H
 #define LINTEL_EVENTBUSSERVICE_H
 
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include "lintel/core/configuration/Configuration.h"
 #include "lintel/core/models/ProcessName.h"
@@ -39,7 +41,13 @@ private:
    * @param entry the configuration entry
    * @return the validated bus configuration
    * @throws std::runtime_error if the configuration is invalid */
-  EventBusConfig configOf(const std::shared_ptr<EventBusEntry> &entry);
+  static EventBusConfig configOfEntry(const std::shared_ptr<EventBusEntry> &entry);
+
+  /** Look up a configured bus entry.
+   * @param name the bus name
+   * @return the configuration entry
+   * @throws std::runtime_error if the bus is not configured */
+  [[nodiscard]] const std::shared_ptr<EventBusEntry> &entryOf(const std::string &name) const;
 
   /** Resolve the EventBus of an entry; re-resolves after a segment remap.
    * @param entry the configuration entry
@@ -62,6 +70,37 @@ public:
    * @return a view over the shared memory bus
    * @throws std::runtime_error if the bus is not configured */
   std::shared_ptr<IEventBus> of(const std::string &name);
+
+  /** Names of all configured event buses.
+   * @return the bus names in ascending order */
+  [[nodiscard]] std::vector<std::string> namesOf() const;
+
+  /** Runtime configuration of a configured event bus.
+   *
+   * The configuration is read from the bootstrap configuration and validated;
+   * the bus itself is not resolved, so a bus whose segment is missing still
+   * reports its configuration.
+   * @param name the bus name
+   * @return the validated bus configuration
+   * @throws std::runtime_error if the bus is not configured or its configuration is invalid */
+  [[nodiscard]] EventBusConfig configOf(const std::string &name) const;
+
+  /** Best-effort depth of the point-to-point queue of a bus.
+   *
+   * IEventBus does not expose the queue depth, so the view is bypassed here.
+   * @param name the bus name
+   * @return the number of queued events
+   * @throws std::runtime_error if the bus is not configured or cannot be resolved */
+  [[nodiscard]] std::size_t busQueueDepthOf(const std::string &name);
+
+  /** Best-effort depth of one subscriber queue of a bus.
+   *
+   * IEventBus does not expose the queue depth, so the view is bypassed here.
+   * @param name the bus name
+   * @param subscriber the subscriber name
+   * @return the number of queued events, 0 for an unknown subscriber
+   * @throws std::runtime_error if the bus is not configured or cannot be resolved */
+  [[nodiscard]] std::size_t subscriberQueueDepthOf(const std::string &name, const std::string &subscriber);
 
   /** Construct all configured event buses in their segments. */
   void onInitialize() override;
