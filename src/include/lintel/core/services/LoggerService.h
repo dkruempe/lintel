@@ -17,6 +17,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <source_location>
 #include <string>
 #include <string_view>
 
@@ -36,17 +37,6 @@ namespace lintel {
  * The values intentionally match spdlog::level::level_enum.
  */
 enum class LogLevel : std::uint8_t { trace = 0, debug = 1, info = 2, warn = 3, error = 4, critical = 5, off = 6 };
-
-/** Source location function name for the LOG_* macros, equivalent to spdlog's SPDLOG_FUNCTION. */
-#ifndef LINTEL_FUNCTION
-#if defined(_MSC_VER)
-#define LINTEL_FUNCTION __FUNCSIG__
-#elif defined(__GNUC__) || defined(__clang__)
-#define LINTEL_FUNCTION __PRETTY_FUNCTION__
-#else
-#define LINTEL_FUNCTION __func__
-#endif
-#endif
 
 /** Singleton service providing spdlog-based logging for the application.
  *
@@ -75,12 +65,7 @@ private:
    * Non-template formatting backend: filters the level and performs all fmt formatting.
    * spdlog is touched here only. Defined in LoggerService.cpp.
    */
-  void logImpl(const char *file,
-    int line,
-    const char *function,
-    LogLevel lvl,
-    std::string_view message,
-    std::format_args args);
+  void logImpl(const std::source_location &location, LogLevel lvl, std::string_view message, std::format_args args);
 
   static std::unique_ptr<LoggerService> m_instance;
   static std::mutex m_instanceMutex;
@@ -121,16 +106,14 @@ public:
    * Template-eliminated: boxes the arguments (std::make_format_args) and defers all formatting
    * to the non-template logImpl() in LoggerService.cpp.
    * @tparam Args the argument types
-   * @param file     the source file name
-   * @param line     the source line number
-   * @param function the source function name
+   * @param location the source location of the log statement
    * @param lvl      the log level
    * @param message  the format string
    * @param args     the format arguments */
   template<typename... Args>
-  void log(const char *file, int line, const char *function, LogLevel lvl, std::string_view message, Args &&...args)
+  void log(const std::source_location &location, LogLevel lvl, std::string_view message, Args &&...args)
   {
-    logImpl(file, line, function, lvl, message, std::make_format_args(args...));
+    logImpl(location, lvl, message, std::make_format_args(args...));
   }
 
   /** Change the log level at runtime.
@@ -199,17 +182,16 @@ public:
 
 #define DECLARE_LOGGER(processName, configuration) lintel::LoggerService::getOrCreate(processName, configuration)
 #define LOG_INFO(message, ...) \
-  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::info, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(std::source_location::current(), lintel::LogLevel::info, message, ##__VA_ARGS__)
 #define LOG_DEBUG(message, ...) \
-  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::debug, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(std::source_location::current(), lintel::LogLevel::debug, message, ##__VA_ARGS__)
 #define LOG_TRACE(message, ...) \
-  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::trace, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(std::source_location::current(), lintel::LogLevel::trace, message, ##__VA_ARGS__)
 #define LOG_ERROR(message, ...) \
-  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::error, message, ##__VA_ARGS__)
-#define LOG_FATAL(message, ...)     \
-  lintel::LoggerService::get().log( \
-    __FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::critical, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(std::source_location::current(), lintel::LogLevel::error, message, ##__VA_ARGS__)
+#define LOG_FATAL(message, ...) \
+  lintel::LoggerService::get().log(std::source_location::current(), lintel::LogLevel::critical, message, ##__VA_ARGS__)
 #define LOG_WARN(message, ...) \
-  lintel::LoggerService::get().log(__FILE__, __LINE__, LINTEL_FUNCTION, lintel::LogLevel::warn, message, ##__VA_ARGS__)
+  lintel::LoggerService::get().log(std::source_location::current(), lintel::LogLevel::warn, message, ##__VA_ARGS__)
 }// namespace lintel
 #endif// LOGGING_LOGGER_H

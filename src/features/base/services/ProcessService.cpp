@@ -64,13 +64,9 @@ ProcessService::ProcessService(std::shared_ptr<ProcessName> processName,
     m_historyService(std::move(historyService))
 {
   m_monitorWaitTime = registerProperty<std::chrono::seconds>(
-    "m_monitorWaitTime", std::chrono::seconds(1), "Wait time after monitor cycle", true, __FILE__, __LINE__);
-  m_processStopWaitTime = registerProperty<std::chrono::milliseconds>("m_processStopWaitTime",
-    std::chrono::milliseconds(200),
-    "Wait time for stopping a process",
-    true,
-    __FILE__,
-    __LINE__);
+    "m_monitorWaitTime", std::chrono::seconds(1), "Wait time after monitor cycle", true);
+  m_processStopWaitTime = registerProperty<std::chrono::milliseconds>(
+    "m_processStopWaitTime", std::chrono::milliseconds(200), "Wait time for stopping a process", true);
   // make sure that all variables are initialized for starting the thread
   m_process = std::make_shared<Process>(m_processName->getPath(), m_processName->getArgs());
   std::vector<std::shared_ptr<Entry>> entries = m_configuration->configurationOf<ProcessComponent>();

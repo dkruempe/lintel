@@ -14,19 +14,11 @@ SharedMemoryService::SharedMemoryService(const std::shared_ptr<SharedMemorySegme
   : PropertyRegistration(processName->getProcessName()), m_segments(create(sharedMemorySegmentManager->allOf())),
     m_schedulerService(std::move(schedulerService))
 {
-  m_scheduleRate = registerProperty<std::chrono::seconds>("m_scheduleRate",
-    std::chrono::seconds(2),
-    "schedule rate of user tokens checks in seconds",
-    true,
-    __FILE__,
-    __LINE__);
-  m_autoExtend = registerProperty<bool>("m_autoExtend", true, "auto extend shared memory", true, __FILE__, __LINE__);
-  m_autoExtendEpsilon = registerProperty<std::size_t>("m_autoExtendEpsilon",
-    static_cast<std::size_t>(1000),
-    "epsilon when auto extend gets triggered",
-    true,
-    __FILE__,
-    __LINE__);
+  m_scheduleRate = registerProperty<std::chrono::seconds>(
+    "m_scheduleRate", std::chrono::seconds(2), "schedule rate of user tokens checks in seconds", true);
+  m_autoExtend = registerProperty<bool>("m_autoExtend", true, "auto extend shared memory", true);
+  m_autoExtendEpsilon = registerProperty<std::size_t>(
+    "m_autoExtendEpsilon", static_cast<std::size_t>(1000), "epsilon when auto extend gets triggered", true);
 }
 
 void SharedMemoryService::growOf(const std::shared_ptr<SharedMemorySegment> &segment, std::size_t grow)
