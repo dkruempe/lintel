@@ -5,6 +5,7 @@
 
 
 #include <atomic>
+#include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
@@ -28,7 +29,21 @@ class CommandLineComponent;
 class CommandLineService : public AbstractService<CommandLineService>
 {
 private:
-  enum Commands { CommandHelp, CommandClear, CommandMenu, CommandHistory, CommandExit, CommandUndefined };
+  enum Commands : std::uint8_t {
+    CommandHelp,
+    CommandClear,
+    CommandMenu,
+    CommandHistory,
+    CommandExit,
+    CommandUndefined
+  };
+
+  /** Flags the prompt loop derives from one handled input symbol. */
+  struct InputOutcome
+  {
+    bool m_tabPressed = false;
+    bool m_printPrompt = true;
+  };
 
   AbstractCommandLineMenu m_menu;
   std::thread m_thread;
@@ -64,11 +79,19 @@ private:
   /** Display the input prompt */
   void onPrompt();
 
-  /** Handle a regular command input symbol */
-  void handleCommandInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt);
+  /**
+   * Handle a regular command input symbol.
+   * @return the prompt flags to continue with
+   */
+  InputOutcome handleCommandInput(const SymbolEvent &symbolEvent);
 
-  /** Handle tab key input for autocomplete */
-  void handleTabInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt);
+  /**
+   * Handle tab key input for autocomplete.
+   * @param symbolEvent the tab symbol, carrying the prefix typed so far
+   * @param tabPressed whether the previous tab press already completed a cycle
+   * @return the prompt flags to continue with
+   */
+  InputOutcome handleTabInput(const SymbolEvent &symbolEvent, bool tabPressed);
 
   /** Main CLI loop running in a background thread */
   void run();

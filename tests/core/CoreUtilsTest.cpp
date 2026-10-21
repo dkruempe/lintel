@@ -8,6 +8,7 @@
 
 #include <filesystem>
 #include <regex>
+#include <stdexcept>
 #include <string>
 
 #include "../helpers/PlatformCompat.h"
@@ -118,6 +119,23 @@ TEST_CASE("MemorySize: deserialize GB") { REQUIRE(MemorySize::deserialize("1GB")
 TEST_CASE("MemorySize: deserialize TB") { REQUIRE(MemorySize::deserialize("1TB") == 1000000000000); }
 
 TEST_CASE("MemorySize: deserialize byte suffix") { REQUIRE(MemorySize::deserialize("512B") == 512); }
+
+TEST_CASE("MemorySize: deserialize rejects invalid input")
+{
+  REQUIRE_THROWS_AS(MemorySize::deserialize(""), std::invalid_argument);
+  REQUIRE_THROWS_AS(MemorySize::deserialize("abc"), std::invalid_argument);
+  // trailing garbage behind the number
+  REQUIRE_THROWS_AS(MemorySize::deserialize("12XB"), std::invalid_argument);
+  REQUIRE_THROWS_AS(MemorySize::deserialize("1k5MB"), std::invalid_argument);
+}
+
+TEST_CASE("MemorySize: deserialize rejects overflow")
+{
+  // more digits than the numeric type can hold
+  REQUIRE_THROWS_AS(MemorySize::deserialize("99999999999999999999999999MB"), std::invalid_argument);
+  // fits the numeric type, but the unit multiplier overflows
+  REQUIRE_THROWS_AS(MemorySize::deserialize("18446744073709551615PB"), std::invalid_argument);
+}
 
 TEST_CASE("MemorySize: serialize bytes")
 {

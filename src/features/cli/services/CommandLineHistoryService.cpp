@@ -62,9 +62,8 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::previousOf(const s
   return std::nullopt;
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) - both are named arguments of the same type.
 std::optional<CommandHistoryEntry> CommandLineHistoryService::startsWith(const std::string &command,
-  const std::string &menu)
+  std::string_view menu)
 {
   if (m_history.empty()) { return std::nullopt; }
   for (std::size_t i = m_history.size(); i > 0; i--) {
