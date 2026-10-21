@@ -2,9 +2,10 @@
 
 Stand: 21. Oktober 2026 · Basis: `master` @ `1333386` · Bibliotheksversion 0.2.0
 
-Dieses Dokument ist ein **Arbeitsplan**, keine Beschreibung eines bereits erreichten
-Zustands. Jeder Schritt nennt die betroffenen Dateien, die konkrete Änderung und den
-Befehl, mit dem sich das Ergebnis prüfen lässt.
+Dieses Dokument war der Arbeitsplan für den Branch `refactor/nolint-cleanup`. Die
+Teile A und C sowie die Punkte B.2 (1–4) und B.3 sind umgesetzt; Abschnitt
+[7. Umsetzungsstand](#7-umsetzungsstand) ordnet jedem Punkt den Commit zu und listet,
+was bewusst offen bleibt.
 
 | Teil | Thema | Umfang | Ergebnis |
 |------|-------|--------|----------|
@@ -646,3 +647,75 @@ Die Änderungen aus A.1, A.3 und A.4 wurden in dieser Sitzung angewendet und gep
 Sie sind im Arbeitsbaum **nicht** enthalten – dieses Dokument ist der Plan, nicht der
 Patch. Auf Wunsch lassen sie sich als ein Commit „refactor: drop NOLINT suppressions in
 logging-adjacent helpers“ anwenden.
+
+---
+
+## 7. Umsetzungsstand
+
+Branch `refactor/nolint-cleanup`, aufgesetzt auf `master @ 1333386`.
+
+### Teil A — NOLINT-Marker: vollständig
+
+`grep -rn NOLINT --include="*.cpp" --include="*.h" src/ examples/ tests/` ist leer.
+
+| Paket | Commit | Anmerkung |
+|-------|--------|-----------|
+| A.1 `performance-no-int-to-ptr` (4) | `01e2856` | `std::bit_cast`; zusätzlich `RingBufferShm` auf das Offset-Muster zurückgeführt (`dff0ae7`) |
+| A.2a `startsWith`, `prepareStatement`, `parseAndScale` | `2f060d6` | `parseAndScale` nimmt jetzt eine `MemoryUnit`-Tabelle statt eines zweiten Strings |
+| A.2b `handleCommandInput`/`handleTabInput` | `2f060d6` | Rückgabe `InputOutcome` |
+| A.2c `sqlite3_exec`-Callback | `095b3e1` | `execute()` nutzt `prepare_v2`/`step` mit `pzTail`-Schleife; Regressionstest für mehrstellige Skripte |
+| A.2d `PropertyRepository::allOf` | `cbd7c36` | `PropertyFilter`-Aggregat, 21 Aufrufstellen + Mock |
+| A.3 `performance-unnecessary-value-param` | `c3717fd` | unbenutzter `GroupRepository`-Parameter entfernt |
+| A.4 `bugprone-exception-escape` | `c0356d2` | explizit gedefaulteter Destruktor |
+
+Verifikation: Build grün (GCC 14, `-Werror`), 1247/1247 Unit-Tests grün,
+`scripts/check-tidy.sh` ohne Findings auf den geänderten Dateien,
+`scripts/check-format.sh master` und `scripts/check-namespace.sh` grün.
+
+### Teil B — Integration
+
+| Punkt | Status | Commit |
+|-------|--------|--------|
+| B.2 #1 EventBus (Controller, Api, CLI, swagger) | **umgesetzt**, 7 Routen | `61e3b0f` |
+| B.2 #2 `SharedMemoryCleanupService` in der DI + `POST /shm/cleanup` | **umgesetzt** | `8a7a604` |
+| B.2 #3 `recoverOrphans` → `POST /messageQueue/recover` | **umgesetzt** | `8a7a604` |
+| B.2 #4 `statsOf` im `ISharedMemoryService` + `GET /shm/stats/{segment}` | **umgesetzt** | `8a7a604` |
+| B.3 sieben CLI-/Swagger-Defekte | **umgesetzt** | `6a3f960`, `fc6ad98` |
+| B.4 #3 `RingBufferShm` absolute Adresse | **umgesetzt**, mit Regressionstest | `dff0ae7` |
+| B.2 #5 `SharedMemoryService::recover()` ohne Aufrufer | offen | Entscheidung nötig: Endpoint bauen oder entfernen |
+| B.2 #6 MQ-Überlauf-/Dead-Letter-Policy nicht durchgereicht | offen | braucht Service-API-Erweiterung |
+| B.2 #7 `MessageQueueRequestReply` | offen | |
+| B.2 #8 `ProcessGroup`-Lifecycle-Überladungen | offen | vier Routen analog zu `/process/start` … |
+| B.2 #9 `HistoryController` umgeht `HistoryService` | offen | Architektur, kein Fehler |
+| B.2 #10 `SharedMemoryRepositoryRegistry` ohne Aufrufer | offen | verdrahten oder löschen |
+| B.2 #11 `ShmView`/`ShmSlice`, Lifecycle-Hooks, typisierte Payloads | offen | erst nach B.4 #1/#2 |
+| B.4 #1 `MessageQueueShmCore` nicht prozessübergreifend | offen | prozesslokales `g_registry`; eigenes Arbeitspaket |
+| B.4 #2 `ShmSegmentAccessor` zeigt auf den erzeugenden Prozess | offen | Voraussetzung für A.1.5 |
+
+### Teil C — `std::source_location`: vollständig
+
+`grep -rn __FILE__ src/ tests/ examples/ benchmarks/` ist leer.
+
+| Punkt | Commit |
+|-------|--------|
+| `LOG_*` + `log()`/`logImpl()` auf `std::source_location` | `80c1bdd` |
+| `registerProperty` mit Default-Argument `std::source_location::current()` (19 Aufrufstellen) | `80c1bdd` |
+| `DEFINE_PROPERTY` | `80c1bdd` |
+| `tests/core/LoggerServiceTest.cpp` (25 Aufrufe) | `80c1bdd` |
+
+`LINTEL_FUNCTION` ist entfallen; `TypeName.h` behält `__PRETTY_FUNCTION__`, weil ein
+Compile-Zeit-Typname nicht aus einem Laufzeitobjekt kommen kann.
+
+**Offen aus C:** der Eintrag in `CHANGELOG.md` unter `[Unreleased]`
+(Bruch von `registerProperty` und `PropertyRepository::allOf`).
+
+### Was beim Umbau zusätzlich aufgefallen ist
+
+- `MemorySize` ist strenger geworden: `from_chars` akzeptiert weder führende
+  Leerzeichen noch ein Vorzeichen, `std::stoul` akzeptierte beides. Zwei Tests pinnen
+  die Ablehnung.
+- `/messageQueue/stats/...` liefert dasselbe Payload wie `/messageQueue/...`; in
+  Paging-Items steht `MESSAGES` immer auf 0 (`MessageQueuesPageDto` reicht `0` durch).
+  Kein Fehler der Doku, aber ein Kandidat für einen eigenen Fix.
+- `POST /eventBus/publish/{bus}` erlaubt auch `User-EventBus`, Ereignisse zu
+  veröffentlichen — falls das zu weit geht, ist es eine Zeile im Controller.

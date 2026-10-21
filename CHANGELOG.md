@@ -8,6 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **EventBus over HTTP and in the CLI.** Seven routes (`/eventBus/buses`, `/eventBus/bus/{name}`,
+  `/eventBus/publish/{name}`, `POST`/`DELETE` `/eventBus/subscribe/{name}`,
+  `/eventBus/depth/{name}/{subscriber}`, `/eventBus/reset/{name}`) with an `EventBusApi` client and
+  an `EventBusCliComponent` (`show_event_buses`, `publish_event`, `subscribe_event`,
+  `unsubscribe_event`, `event_queue_depth`, `reset_event_bus`). Mutating routes need
+  `Admin-EventBus`, reading and publishing `User-EventBus`. The subsystem had no HTTP, API or CLI
+  surface before.
+- **Shared memory and message queue operations gained endpoints.** `GET /shm/stats/{segment}`
+  (`SharedMemoryService::statsOf`, now part of `ISharedMemoryService`), `POST /shm/cleanup`
+  (`SharedMemoryCleanupService`, now registered in the container) and `POST /messageQueue/recover`
+  (`MessageQueueService::recoverOrphans`), each with its API method and CLI command
+  (`show_stats`, `cleanup`, `recover_message_queues`).
+- **`/messageQueue/stats/...` and `/messageQueue/purge/...` documented** in `swagger.yaml` and
+  `swagger.md`; both routes existed in the controller but not in the published contract.
 - **`${ENV_VAR}` expansion for the bootstrap configuration.** `EnvironmentConfiguration::expand()`
   replaces every `${NAME}` (`NAME` = `[A-Za-z_][A-Za-z0-9_]*`) with the environment variable of
   that name; an unset variable stays literal and `$${NAME}` escapes to `${NAME}`.
@@ -163,6 +177,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `postgres:17` service.
 
 ### Changed
+- **Logging and property registration use `std::source_location` (breaking).**
+  `LoggerService::log()`/`logImpl()` take a `std::source_location` instead of
+  `(file, line, function)`, and `PropertyRegistration::registerProperty()` replaces its
+  `fileName`/`position` parameters with a `std::source_location` defaulted to
+  `std::source_location::current()`. The reported file, line and function, and the persisted
+  `"<basename>:<line>"` `DataStorage` identifier are unchanged; only callers that pass the two
+  arguments explicitly have to drop them. `LINTEL_FUNCTION` is gone.
+- **`PropertyRepository::allOf()` takes a `PropertyFilter` (breaking).** The four regular
+  expressions (`processName`, `className`, `instanceName`, `name`) are one aggregate with the
+  previous `".*"` defaults, so `allOf()` and short calls keep their meaning. Follows the
+  `MessageQueueFilter`/`EventBusCapacities` pattern from `a4c1c59`.
+- **`Connection::prepareStatement()` takes the statement name as `std::string_view`.**
+  `Connection::execute()` runs its script through `sqlite3_prepare_v2`/`sqlite3_step` instead of
+  `sqlite3_exec` and follows the `pzTail` remainder, so multi-statement scripts keep working.
+- **`MemorySize` rejects leading whitespace and a sign.** `std::from_chars` replaced `std::stoul`;
+  `" 1024"` and `"-1"` now throw instead of being accepted.
+- **All `NOLINT` suppressions are gone.** `handleCommandInput()`/`handleTabInput()` return an
+  `InputOutcome` instead of two `bool &` out-parameters, `parseAndScale()` takes a unit table,
+  `startsWith()` takes the menu as a `std::string_view`, `HistoryController` dropped its unused
+  `GroupRepository` parameter, and the shared-memory address arithmetic uses `std::bit_cast`.
 - **Leak detection is a blocking check.** The `sanitizers` job (ASan+UBSan+LSan,
   `detect_leaks=1`) is no longer `continue-on-error`: a full run including the `[pg]` cases is
   green, so a leak regression stops the merge instead of being reported and ignored.
@@ -231,6 +265,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **`RingBufferShm` addressed its slots with an absolute pointer.** Commit `a4c1c59` replaced the
+  byte offset with a `std::byte *` to drop an int-to-pointer cast, which only works while the ring
+  lives at the same virtual address in every process - a repository payload inside a shared memory
+  segment does not. Back to the offset, materialised with `std::bit_cast`; a regression test copies
+  the region holding the ring and its slots and reuses the ring at the second address.
+- **CLI fixes.** `grow_segment` was described as "Shrink segment"; `export_repository` never bound
+  `--file` although it writes the file (`m_type` was dead and is gone); `PropertyCliComponent`
+  mixed `--process-name` and `--process_name`; `UserManagementCliComponent` declared
+  `AddGroup`/`RemoveGroup`/`UpdateGroup` without a command or handler (the HTTP API cannot create
+  groups, so the enum slots are gone); `HistoryCliComponent` had an `n_name` typo and a stray `)`
+  in its help text.
 - **Review fixes on the pre-1.0 hardening items (A8/U5/A6/A5).**
   - The shared-memory lock recovery could reclaim the same orphan twice: two processes that both
     found a dead holder ran `remove()` + `open_or_create()` on the same semaphore and each kept a
