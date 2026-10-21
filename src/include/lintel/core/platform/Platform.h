@@ -88,6 +88,18 @@ inline constexpr char pathListSeparator() noexcept
 }
 
 /**
+ * Host name of the machine the process runs on.
+ *
+ * Used by the owner/liveness tracking of message queues and shared memory to
+ * tell "the same process on another host" from "another process here". The
+ * implementation lives in Platform.cpp because the POSIX variant needs
+ * <unistd.h>, which this header does not pull into public ones.
+ *
+ * @return the host name, or "unknown" when it cannot be resolved
+ */
+std::string hostName();
+
+/**
  * Check whether a process id still refers to a living process.
  *
  * The crash recovery of the shared memory locks needs to tell "the holder of

@@ -87,7 +87,7 @@ public:
       }
       aligned = static_cast<std::byte *>(alignedRaw);
     }
-    m_bufferOffset = aligned - reinterpret_cast<std::byte *>(this);
+    m_buffer = aligned;
     Slot *slots = buffer();
     for (std::size_t i = 0; i < capacity; ++i) {
       new (&slots[i]) Slot();
@@ -209,28 +209,14 @@ private:
   /** First byte of the slot array allocation; nullptr when construction of
    *  the array failed (the ring then never gets used). */
   std::byte *m_allocation = nullptr;
-  /** Byte offset from this object to the aligned slot array. */
-  std::intptr_t m_bufferOffset = 0;
+  /** Aligned base of the slot array in this process' mapping. A plain byte
+   *  pointer, so addressing needs neither an integer-to-pointer cast nor a
+   *  byte count scaled by a wider element type. */
+  std::byte *m_buffer = nullptr;
 
-  [[nodiscard]] Slot *buffer()
-  {
-    // The slot array lives in the shared segment, not inside this object, and is addressed by the
-    // byte offset m_bufferOffset. The addition runs in the integer domain instead of as
-    // `reinterpret_cast<std::byte *>(this) + m_bufferOffset`: that byte pointer arithmetic is
-    // exactly the intent, yet CodeQL reports it as cpp/suspicious-pointer-scaling (a RingBufferShm *
-    // scaled by bytes). The aligned buffer is not necessarily a multiple of sizeof(Slot), so
-    // element arithmetic is not an option either.
-    const std::intptr_t bufferAddress = reinterpret_cast<std::intptr_t>(this) + m_bufferOffset;
-    // NOLINTNEXTLINE(performance-no-int-to-ptr) — address in this process' mapping, restored verbatim.
-    return reinterpret_cast<Slot *>(bufferAddress);
-  }
+  [[nodiscard]] Slot *buffer() { return reinterpret_cast<Slot *>(m_buffer); }
 
-  [[nodiscard]] const Slot *buffer() const
-  {
-    const std::intptr_t bufferAddress = reinterpret_cast<std::intptr_t>(this) + m_bufferOffset;
-    // NOLINTNEXTLINE(performance-no-int-to-ptr) — see the non-const overload.
-    return reinterpret_cast<const Slot *>(bufferAddress);
-  }
+  [[nodiscard]] const Slot *buffer() const { return reinterpret_cast<const Slot *>(m_buffer); }
 };
 
 }// namespace lintel

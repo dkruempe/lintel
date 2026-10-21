@@ -9,18 +9,17 @@ MessageQueueEntry::MessageQueueEntry(const std::string_view &component,
     maxMessages(_maxMessages)
 {}
 
+// The two std::optional<time_point> timestamps (started_at / last_heartbeat_at)
+// share their type, so both constructors take a single MessageQueueOwnerColumns
+// aggregate instead of five adjacent optionals.
 MessageQueueEntry::MessageQueueEntry(const std::string_view &component,
   std::string _processName,
   std::string _messageQueueName,
   int32_t _maxMessages,
-  std::optional<std::uint64_t> ownerPid,
-  std::optional<std::string> ownerHost,
-  std::optional<std::chrono::system_clock::time_point> startedAt,
-  std::optional<std::chrono::system_clock::time_point> lastHeartbeatAt,
-  std::optional<std::string> ownerState)
+  MessageQueueOwnerColumns owner)
   : Entry(component), processName(std::move(_processName)), messageQueueName(std::move(_messageQueueName)),
-    maxMessages(_maxMessages), m_ownerPid(ownerPid), m_ownerHost(std::move(ownerHost)), m_startedAt(startedAt),
-    m_lastHeartbeatAt(lastHeartbeatAt), m_ownerState(std::move(ownerState))
+    maxMessages(_maxMessages), m_ownerPid(owner.pid), m_ownerHost(std::move(owner.host)), m_startedAt(owner.startedAt),
+    m_lastHeartbeatAt(owner.lastHeartbeatAt), m_ownerState(std::move(owner.state))
 {}
 
 const std::string &MessageQueueEntry::get_process_name() const { return processName; }

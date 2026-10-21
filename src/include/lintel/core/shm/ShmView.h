@@ -32,6 +32,16 @@ namespace shm {
     const std::shared_ptr<SharedMemorySegment> &segment,
     const std::string &name);
 
+  /**
+   * Opaque segment generation token. Wrapping the raw counter in a distinct
+   * type keeps it from being swapped with a plain element count wherever a
+   * view is constructed.
+   */
+  struct ShmGeneration
+  {
+    std::size_t value = 0;
+  };
+
   /** @return the current generation of the service, kInvalid when it is gone */
   std::size_t generationOf(const std::weak_ptr<SharedMemoryService> &service) noexcept;
 
@@ -90,8 +100,8 @@ public:
    * @param size       number of elements
    * @param generation segment generation the pointer was obtained from
    */
-  ShmView(pointer data, size_type size, std::size_t generation) noexcept
-    : m_data(data), m_size(data == nullptr ? 0 : size), m_generation(generation)
+  ShmView(pointer data, size_type size, shm::ShmGeneration generation) noexcept
+    : m_data(data), m_size(data == nullptr ? 0 : size), m_generation(generation.value)
   {}
 
   /**
@@ -101,8 +111,8 @@ public:
    * @param generation       segment generation the pointer was obtained from
    * @param generationProvider callable returning the segment's current generation
    */
-  ShmView(pointer data, size_type size, std::size_t generation, GenerationProvider generationProvider)
-    : m_data(data), m_size(data == nullptr ? 0 : size), m_generation(generation),
+  ShmView(pointer data, size_type size, shm::ShmGeneration generation, GenerationProvider generationProvider)
+    : m_data(data), m_size(data == nullptr ? 0 : size), m_generation(generation.value),
       m_generationProvider(std::move(generationProvider))
   {}
 
@@ -115,7 +125,7 @@ public:
   ShmView(pointer data, size_type size, const std::shared_ptr<SharedMemoryService> &service)
     : ShmView(data,
         size,
-        service == nullptr ? kInvalidGeneration : shm::generationOf(service),
+        shm::ShmGeneration{ service == nullptr ? kInvalidGeneration : shm::generationOf(service) },
         [weakService = std::weak_ptr<SharedMemoryService>(service)]() { return shm::generationOf(weakService); })
   {}
 
@@ -253,7 +263,8 @@ public:
       throw std::out_of_range("shared memory view slice (" + std::to_string(offset) + ", " + std::to_string(count)
                               + ") exceeds the view size " + std::to_string(m_size));
     }
-    return ShmView(m_data == nullptr ? nullptr : m_data + offset, count, m_generation, m_generationProvider);
+    return ShmView(
+      m_data == nullptr ? nullptr : m_data + offset, count, shm::ShmGeneration{ m_generation }, m_generationProvider);
   }
 
 private:
@@ -306,11 +317,9 @@ namespace shm {
         "shared memory object '" + name + "' does not exist in segment '" + segment->getName() + "'");
     }
     std::weak_ptr<SharedMemoryService> weakService = service;
-    auto provider = [weakService]() -> std::size_t {
-      const std::shared_ptr<SharedMemoryService> locked = weakService.lock();
-      return locked == nullptr ? ShmView<T>::kInvalidGeneration : locked->getGeneration();
-    };
-    return ShmView<T>(static_cast<T *>(address), count, service->getGeneration(), std::move(provider));
+    auto provider = [weakService]() -> std::size_t { return shm::generationOf(weakService); };
+    return ShmView<T>(
+      static_cast<T *>(address), count, shm::ShmGeneration{ shm::generationOf(weakService) }, std::move(provider));
   }
 }// namespace shm
 

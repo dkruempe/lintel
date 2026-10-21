@@ -90,10 +90,8 @@ namespace {
       auto busEntry = std::make_shared<EventBusEntry>(type_name<EventBusComponent>(),
         busName,
         segmentName,
-        busConfig.busCapacity,
-        busConfig.subscriberCapacity,
-        busConfig.maxTopics,
-        busConfig.maxSubscribers);
+        EventBusCapacities{
+          busConfig.busCapacity, busConfig.subscriberCapacity, busConfig.maxTopics, busConfig.maxSubscribers });
       config->setEntries(
         { std::make_shared<SharedMemorySegmentEntry>(type_name<SharedMemorySegmentComponent>(), segment), busEntry });
 

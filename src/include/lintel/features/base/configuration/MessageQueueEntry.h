@@ -11,6 +11,24 @@
 #include "lintel/core/configuration/Entry.h"
 
 namespace lintel {
+/** The owner columns of a message queue row as they are stored: all optional,
+ *  because a row written before the owner schema existed has none of them, and
+ *  because clearing the owner writes NULLs back. Grouping them also keeps the
+ *  two same-typed timestamps from being swapped at the call site. */
+struct MessageQueueOwnerColumns
+{
+  /** PID of the owning process */
+  std::optional<std::uint64_t> pid;
+  /** Host the owner runs on */
+  std::optional<std::string> host;
+  /** When the owner registered the queue */
+  std::optional<std::chrono::system_clock::time_point> startedAt;
+  /** When the owner last checked in */
+  std::optional<std::chrono::system_clock::time_point> lastHeartbeatAt;
+  /** Liveness state reported by the owner */
+  std::optional<std::string> state;
+};
+
 /** Configuration entry for a message queue */
 class MessageQueueEntry : public Entry
 {
@@ -38,15 +56,17 @@ public:
     std::string messageQueueName,
     int32_t maxMessages);
 
+  /** Construct a message queue entry including its owner record
+   * @param component The configuration component name
+   * @param processName The owning process name
+   * @param messageQueueName The queue name
+   * @param maxMessages The maximum message count
+   * @param owner Who owns the queue and since when it is alive */
   MessageQueueEntry(const std::string_view &component,
     std::string processName,
     std::string messageQueueName,
     int32_t maxMessages,
-    std::optional<std::uint64_t> ownerPid,
-    std::optional<std::string> ownerHost,
-    std::optional<std::chrono::system_clock::time_point> startedAt,
-    std::optional<std::chrono::system_clock::time_point> lastHeartbeatAt,
-    std::optional<std::string> ownerState);
+    MessageQueueOwnerColumns owner);
 
   /** Get the process name
    * @return The process name */

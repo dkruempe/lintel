@@ -19,7 +19,15 @@ namespace lintel {
 namespace mqshm_detail {
 
   constexpr std::size_t kCacheLine = 64;
-  /** Per slot header: sequence number, stored byte count and padding. */
+  /**
+   * Per slot header: sequence number, stored byte count and padding.
+   *
+   * Kept at its natural alignment (16 bytes). Slots are separated by a
+   * cache-line-padded stride instead of an `alignas` on the header: the stride
+   * already guarantees that consecutive sequence handshakes live on different
+   * cache lines, and MSVC warns (C4324, promoted to an error here) when a small
+   * struct is padded by an alignment specifier.
+   */
   constexpr std::size_t kSlotHeaderSize = 16;
   /** Granularity of the wait used by the blocking operations. */
   constexpr std::chrono::milliseconds kWaitSlice{ 1 };
@@ -44,12 +52,13 @@ namespace mqshm_detail {
   class ShmRing
   {
   public:
-    struct alignas(kCacheLine) SlotHeader
+    struct SlotHeader
     {
       std::atomic<std::uint64_t> sequence{ 0 };
       std::uint32_t length{ 0 };
       std::uint32_t padding{ 0 };
     };
+    static_assert(sizeof(SlotHeader) == kSlotHeaderSize, "SlotHeader size must match kSlotHeaderSize");
 
     ShmRing(std::size_t capacity, std::size_t slotSize, ShmSegmentAccessor segment)
       : m_capacity(capacity), m_slotSize(slotSize), m_segment(segment)
@@ -214,9 +223,13 @@ namespace mqshm_detail {
     static constexpr std::uint8_t kSingleBusy = 2;
 
     std::atomic<std::uint64_t> m_head{ 0 };
-    std::byte m_headPadding[kCacheLine - sizeof(std::uint64_t)]{};
+    // Padding keeps m_head and m_tail on separate cache lines to avoid false
+    // sharing between producer and consumer. Clang's -Wunused-private-field
+    // would flag the arrays, so the intent is documented here and the
+    // attributes keep the layout while silencing the warning.
+    [[maybe_unused]] std::byte m_headPadding[kCacheLine - sizeof(std::uint64_t)]{};
     std::atomic<std::uint64_t> m_tail{ 0 };
-    std::byte m_tailPadding[kCacheLine - sizeof(std::uint64_t)]{};
+    [[maybe_unused]] std::byte m_tailPadding[kCacheLine - sizeof(std::uint64_t)]{};
     std::atomic<std::uint8_t> m_singleState{ kSingleEmpty };
     std::size_t m_capacity = 0;
     std::size_t m_slotSize = 0;
@@ -225,15 +238,23 @@ namespace mqshm_detail {
     std::byte *m_allocation = nullptr;
     std::intptr_t m_bufferOffset = 0;
 
-    [[nodiscard]] SlotHeader *slotAt(std::uint64_t position) const
+    /** Base of the aligned slot array in this process' mapping. Derived from
+     *  `this` by pointer arithmetic on std::byte (element size 1), so it needs
+     *  neither an integer-to-pointer cast nor a byte count scaled by a wider
+     *  element type. */
+    [[nodiscard]] std::byte *buffer() const
     {
-      const std::intptr_t address = reinterpret_cast<std::intptr_t>(this) + m_bufferOffset
-                                    + static_cast<std::intptr_t>((position % m_capacity) * m_stride);
-      // NOLINTNEXTLINE(performance-no-int-to-ptr) — relative offset into this process' mapping.
-      return reinterpret_cast<SlotHeader *>(address);
+      return reinterpret_cast<std::byte *>(const_cast<ShmRing *>(this)) + m_bufferOffset;
     }
 
-    [[nodiscard]] static void *payloadOf(SlotHeader *slot)
+    [[nodiscard]] SlotHeader *slotAt(std::uint64_t position) const
+    {
+      return reinterpret_cast<SlotHeader *>(buffer() + (position % m_capacity) * m_stride);
+    }
+
+    /** Payload of a slot lives directly behind its header; byte arithmetic
+     *  keeps the offset unambiguous. */
+    [[nodiscard]] static std::byte *payloadOf(SlotHeader *slot)
     {
       return reinterpret_cast<std::byte *>(slot) + kSlotHeaderSize;
     }
@@ -425,7 +446,7 @@ struct MessageQueueShmCore::Impl
   /** Kept open so the forwarded messages stay visible/receivable after this call. */
   std::shared_ptr<QueueState> deadLetterState;
 
-  Impl(std::string name, int32_t msgCount, std::size_t msgSize, ShmSegmentAccessor segment)
+  Impl(const std::string &name, int32_t msgCount, std::size_t msgSize, ShmSegmentAccessor segment)
     : state(openOrCreateState(name, msgCount, msgSize, segment))
   {}
 
@@ -472,11 +493,11 @@ struct MessageQueueShmCore::Impl
   }
 };
 
-MessageQueueShmCore::MessageQueueShmCore(std::string name,
+MessageQueueShmCore::MessageQueueShmCore(const std::string &name,
   int32_t msgCount,
   std::size_t msgSize,
   ShmSegmentAccessor segment)
-  : m_impl(std::make_unique<Impl>(std::move(name), msgCount, msgSize, segment))
+  : m_impl(std::make_unique<Impl>(name, msgCount, msgSize, segment))
 {}
 
 MessageQueueShmCore::~MessageQueueShmCore() = default;

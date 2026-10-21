@@ -230,6 +230,7 @@ set(headers
     include/lintel/features/base/repositories/GroupRepository.h
     include/lintel/features/base/repositories/HistoryRepository.h
     include/lintel/features/base/repositories/IMessageQueueRepository.h
+    include/lintel/features/base/repositories/MessageQueueQuery.h
     include/lintel/features/base/repositories/MessageQueueRepository.h
     include/lintel/features/base/repositories/SharedMemoryRepository.h
     include/lintel/features/base/repositories/UserRepository.h

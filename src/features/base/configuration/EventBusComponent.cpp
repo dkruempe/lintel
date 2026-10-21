@@ -56,10 +56,7 @@ std::vector<std::shared_ptr<Entry>>
     entries.push_back(std::make_shared<EventBusEntry>(type_name<EventBusComponent>(),
       std::string(name),
       std::string(segment),
-      busCapacity,
-      subscriberCapacity,
-      maxTopics,
-      maxSubscribers));
+      EventBusCapacities{ busCapacity, subscriberCapacity, maxTopics, maxSubscribers }));
   }
   return entries;
 }

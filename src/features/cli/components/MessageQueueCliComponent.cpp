@@ -14,6 +14,8 @@ namespace {
   {
     return value.has_value() ? std::to_string(value.value()) : "-";
   }
+
+  std::string valueOrDash(const std::optional<std::string> &value) { return value.has_value() ? value.value() : "-"; }
 }// namespace
 
 MessageQueueCliComponent::MessageQueueCliComponent(std::shared_ptr<MesssageQueueApi> messsageQueueApi)
@@ -40,7 +42,7 @@ void MessageQueueCliComponent::onCommand(const UserDto &userDto,
     if (cmd == ShowMessageQueues) {
       const std::string processNameTemp = m_processName.has_value() ? m_processName.value() : ".*";
       const std::string messageQueueNameTemp = m_messageQueueName.has_value() ? m_messageQueueName.value() : ".*";
-      auto messageQueues = m_messageQueueApi->allOf(processNameTemp, messageQueueNameTemp);
+      auto messageQueues = m_messageQueueApi->allOf(MessageQueueFilter{ processNameTemp, messageQueueNameTemp });
       printMessageQueues(messageQueues);
     } else if (cmd == PurgeMessageQueue) {
       if (!m_purgeMessageQueueName.has_value()) {
@@ -83,8 +85,8 @@ void MessageQueueCliComponent::printMessageQueues(const std::vector<MessageQueue
       std::to_string(messageQueue.getMessages()),
       std::to_string(messageQueue.getConsumerLag()),
       valueOrDash(messageQueue.getOwnerPid()),
-      messageQueue.getOwnerHost().has_value() ? messageQueue.getOwnerHost().value() : "-",
-      messageQueue.getOwnerState().has_value() ? messageQueue.getOwnerState().value() : "-",
+      valueOrDash(messageQueue.getOwnerHost()),
+      valueOrDash(messageQueue.getOwnerState()),
       valueOrDash(messageQueue.getHeartbeatAgeMs()),
       messageQueue.isAlive() ? "alive" : "stale",
       valueOrDash(messageQueue.getDeadLetterQueueSize()) });

@@ -11,7 +11,7 @@
 namespace lintel {
 
 /** Event priority levels. */
-enum class EventPriority { Critical = 0, High = 1, Normal = 2, Low = 3 };
+enum class EventPriority : std::uint8_t { Critical = 0, High = 1, Normal = 2, Low = 3 };
 
 /**
  * A fixed-size, trivially copyable event that is exchanged over the EventBus.

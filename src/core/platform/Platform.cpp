@@ -131,4 +131,18 @@ bool processIdentityIsAlive(const ProcessIdentity &identity) noexcept
   // that a living process holds would be the far worse mistake.
   return current == 0 || current == identity.startTicks;
 }
+
+std::string hostName()
+{
+#if defined(_WIN32)
+  char buffer[256] = {};
+  DWORD size = static_cast<DWORD>(sizeof(buffer));
+  if (::GetComputerNameA(buffer, &size) == 0) { return "unknown"; }
+  return std::string(buffer, size);
+#else
+  char buffer[256] = {};
+  if (::gethostname(buffer, sizeof(buffer)) != 0) { return "unknown"; }
+  return std::string(buffer);
+#endif
+}
 }// namespace lintel

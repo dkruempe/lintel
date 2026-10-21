@@ -294,8 +294,12 @@ void SharedMemoryService::notifyHooks(const std::string &segmentName, SegmentLif
   for (const auto &hook : m_lifecycleHooks) {
     try {
       hook(segmentName, action);
+    } catch (const std::exception &exception) {
+      // A misbehaving lifecycle hook must not take the service down, but it
+      // must not be invisible either.
+      LOG_WARN("shared memory lifecycle hook for '{}' failed: {}", segmentName, exception.what());
     } catch (...) {
-      // Hooks must not throw
+      LOG_WARN("shared memory lifecycle hook for '{}' failed with an unknown exception", segmentName);
     }
   }
 }

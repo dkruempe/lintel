@@ -42,10 +42,10 @@ namespace {
     RpcQueueCleanup(std::string requestQueueName, std::string replyQueueName)
       : m_requestQueueName(std::move(requestQueueName)), m_replyQueueName(std::move(replyQueueName))
     {
-      RpcEndpoint::removeOf(m_requestQueueName, m_replyQueueName);
+      RpcEndpoint::removeOf(RequestReplyQueues{ m_requestQueueName, m_replyQueueName });
     }
 
-    ~RpcQueueCleanup() { RpcEndpoint::removeOf(m_requestQueueName, m_replyQueueName); }
+    ~RpcQueueCleanup() { RpcEndpoint::removeOf(RequestReplyQueues{ m_requestQueueName, m_replyQueueName }); }
 
     RpcQueueCleanup(const RpcQueueCleanup &) = delete;
     RpcQueueCleanup &operator=(const RpcQueueCleanup &) = delete;
@@ -59,7 +59,8 @@ namespace {
   std::unique_ptr<RpcEndpoint> rpcEndpointOf(const std::string &requestQueueName, const std::string &replyQueueName)
   {
     auto processName = std::make_shared<ProcessName>("rpcTest");
-    return std::make_unique<RpcEndpoint>("rpcTest", requestQueueName, replyQueueName, 8, processName);
+    return std::make_unique<RpcEndpoint>(
+      "rpcTest", RequestReplyQueues{ requestQueueName, replyQueueName }, 8, processName);
   }
 }// namespace
 

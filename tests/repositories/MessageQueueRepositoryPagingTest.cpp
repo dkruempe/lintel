@@ -108,7 +108,7 @@ TEST_CASE("MessageQueueRepository::pageOf walks through all queues", "[message_q
     fixture.insertQueue("proc1", queue);
   }
 
-  const Page<MessageQueueEntry> page1 = fixture.repository->pageOf(".*", ".*", std::nullopt, 2);
+  const Page<MessageQueueEntry> page1 = fixture.repository->pageOf(MessageQueueFilter{ ".*", ".*" }, std::nullopt, 2);
   REQUIRE(page1.getItems().size() == 2);
   REQUIRE(page1.getItems()[0].get_message_queue_name() == "queue_a");
   REQUIRE(page1.getItems()[1].get_message_queue_name() == "queue_b");
@@ -116,13 +116,15 @@ TEST_CASE("MessageQueueRepository::pageOf walks through all queues", "[message_q
   REQUIRE(page1.getNextAfter().has_value());
   REQUIRE(page1.getNextAfter().value() == "queue_b");
 
-  const Page<MessageQueueEntry> page2 = fixture.repository->pageOf(".*", ".*", page1.getNextAfter(), 2);
+  const Page<MessageQueueEntry> page2 =
+    fixture.repository->pageOf(MessageQueueFilter{ ".*", ".*" }, page1.getNextAfter(), 2);
   REQUIRE(page2.getItems().size() == 2);
   REQUIRE(page2.getItems()[0].get_message_queue_name() == "queue_c");
   REQUIRE(page2.getItems()[1].get_message_queue_name() == "queue_d");
   REQUIRE(page2.hasMore());
 
-  const Page<MessageQueueEntry> page3 = fixture.repository->pageOf(".*", ".*", page2.getNextAfter(), 2);
+  const Page<MessageQueueEntry> page3 =
+    fixture.repository->pageOf(MessageQueueFilter{ ".*", ".*" }, page2.getNextAfter(), 2);
   REQUIRE(page3.getItems().size() == 1);
   REQUIRE(page3.getItems()[0].get_message_queue_name() == "queue_e");
   REQUIRE_FALSE(page3.hasMore());
@@ -136,7 +138,8 @@ TEST_CASE("MessageQueueRepository::pageOf respects process filter", "[message_qu
   fixture.insertQueue("proc2", "queue_b");
   fixture.insertQueue("proc1", "queue_c");
 
-  const Page<MessageQueueEntry> page = fixture.repository->pageOf("proc1", ".*", std::nullopt, 10);
+  const Page<MessageQueueEntry> page =
+    fixture.repository->pageOf(MessageQueueFilter{ "proc1", ".*" }, std::nullopt, 10);
   REQUIRE(page.getItems().size() == 2);
   REQUIRE_FALSE(page.hasMore());
 }
@@ -148,7 +151,8 @@ TEST_CASE("MessageQueueRepository::pageOf respects queue name filter", "[message
   fixture.insertQueue("proc1", "beta_1");
   fixture.insertQueue("proc1", "beta_2");
 
-  const Page<MessageQueueEntry> page = fixture.repository->pageOf(".*", "beta_.*", std::nullopt, 10);
+  const Page<MessageQueueEntry> page =
+    fixture.repository->pageOf(MessageQueueFilter{ ".*", "beta_.*" }, std::nullopt, 10);
   REQUIRE(page.getItems().size() == 2);
   REQUIRE(page.getItems()[0].get_message_queue_name() == "beta_1");
   REQUIRE(page.getItems()[1].get_message_queue_name() == "beta_2");
@@ -159,7 +163,8 @@ TEST_CASE("MessageQueueRepository::pageOf returns empty page without matches", "
   MessageQueuePagingFixture fixture;
   fixture.insertQueue("proc1", "queue_a");
 
-  const Page<MessageQueueEntry> page = fixture.repository->pageOf("unknown_proc", ".*", std::nullopt, 5);
+  const Page<MessageQueueEntry> page =
+    fixture.repository->pageOf(MessageQueueFilter{ "unknown_proc", ".*" }, std::nullopt, 5);
   REQUIRE(page.getItems().empty());
   REQUIRE_FALSE(page.hasMore());
   REQUIRE_FALSE(page.getNextAfter().has_value());
@@ -175,7 +180,7 @@ TEST_CASE("MessageQueueRepository::deleteOf removes the given queues", "[message
   fixture.repository->deleteOf(
     { MessageQueueEntry("test", "proc1", "queue_a", 10), MessageQueueEntry("test", "proc1", "queue_b", 10) });
 
-  const auto remaining = fixture.repository->allOf(".*", ".*");
+  const auto remaining = fixture.repository->allOf(MessageQueueFilter{ ".*", ".*" });
   REQUIRE(remaining.size() == 1);
   REQUIRE(remaining[0].get_message_queue_name() == "queue_c");
 }
@@ -185,14 +190,14 @@ TEST_CASE("MessageQueueRepository: queries without a default connection return e
   MessageQueueConfigFixture fixture;
   fixture.withEntries({});
 
-  REQUIRE(fixture.repository->allOf(".*", ".*").empty());
+  REQUIRE(fixture.repository->allOf(MessageQueueFilter{ ".*", ".*" }).empty());
 
-  const Page<MessageQueueEntry> page = fixture.repository->pageOf(".*", ".*", std::nullopt, 10);
+  const Page<MessageQueueEntry> page = fixture.repository->pageOf(MessageQueueFilter{ ".*", ".*" }, std::nullopt, 10);
   REQUIRE(page.getItems().empty());
   REQUIRE_FALSE(page.hasMore());
 
   // a limit of zero short-circuits before the connection is even consulted
-  const Page<MessageQueueEntry> zero = fixture.repository->pageOf(".*", ".*", std::nullopt, 0);
+  const Page<MessageQueueEntry> zero = fixture.repository->pageOf(MessageQueueFilter{ ".*", ".*" }, std::nullopt, 0);
   REQUIRE(zero.getItems().empty());
   REQUIRE_FALSE(zero.hasMore());
 }
@@ -211,8 +216,8 @@ TEST_CASE("MessageQueueRepository: an unsupported connection type throws", "[mes
     true);
   fixture.withEntries({ entry });
 
-  REQUIRE_THROWS_AS(fixture.repository->allOf(".*", ".*"), db::SQLException);
-  REQUIRE_THROWS_AS(fixture.repository->pageOf(".*", ".*", std::nullopt, 5), db::SQLException);
+  REQUIRE_THROWS_AS(fixture.repository->allOf(MessageQueueFilter{ ".*", ".*" }), db::SQLException);
+  REQUIRE_THROWS_AS(fixture.repository->pageOf(MessageQueueFilter{ ".*", ".*" }, std::nullopt, 5), db::SQLException);
   REQUIRE_THROWS_AS(fixture.repository->allMessageQueueNameOf("queue_a"), db::SQLException);
 }
 }// namespace lintel

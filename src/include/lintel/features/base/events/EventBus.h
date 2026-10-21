@@ -31,7 +31,7 @@ struct EventBusLimits
  * size is fixed at compile time (see Event).
  */
 /** Drop policy for when queues are full. */
-enum class DropPolicy { Fail = 0, DropOldest, DropNewest, Block };
+enum class DropPolicy : std::uint8_t { Fail = 0, DropOldest, DropNewest, Block };
 
 struct EventBusConfig
 {

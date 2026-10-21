@@ -49,7 +49,7 @@ public:
    * @throws std::invalid_argument on invalid size/capacity or when an existing
    *         queue with the same name uses a different layout
    */
-  MessageQueueShmCore(std::string name, int32_t msgCount, std::size_t msgSize, ShmSegmentAccessor segment);
+  MessageQueueShmCore(const std::string &name, int32_t msgCount, std::size_t msgSize, ShmSegmentAccessor segment);
 
   ~MessageQueueShmCore();
 

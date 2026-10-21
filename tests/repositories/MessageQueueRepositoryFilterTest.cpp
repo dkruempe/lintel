@@ -100,7 +100,7 @@ TEST_CASE("MessageQueueRepository::allOf binds the queue regex to the name colum
 
   // The queue regex has to be evaluated against `name`, so only alpha_1 survives - although the
   // process filter `proc1` alone would also have admitted beta_1.
-  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf("proc1", "alpha_.*");
+  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf(MessageQueueFilter{ "proc1", "alpha_.*" });
   REQUIRE(entries.size() == 1);
   REQUIRE(entries[0].get_message_queue_name() == "alpha_1");
   REQUIRE(entries[0].get_process_name() == "proc1");
@@ -108,7 +108,7 @@ TEST_CASE("MessageQueueRepository::allOf binds the queue regex to the name colum
 
   // A queue regex that matches no queue at all yields an empty result, even for a process that owns
   // queues of its own.
-  REQUIRE(fixture.repository->allOf("proc1", "missing_.*").empty());
+  REQUIRE(fixture.repository->allOf(MessageQueueFilter{ "proc1", "missing_.*" }).empty());
 }
 
 TEST_CASE("MessageQueueRepository::allOf binds the process regex to the process_name column")
@@ -120,14 +120,14 @@ TEST_CASE("MessageQueueRepository::allOf binds the process regex to the process_
 
   // The process regex has to be evaluated against `process_name`, so only gamma_1 survives -
   // although the queue regex `gamma_.*` alone would also have admitted alpha_1 and beta_1.
-  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf("proc2", "gamma_.*");
+  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf(MessageQueueFilter{ "proc2", "gamma_.*" });
   REQUIRE(entries.size() == 1);
   REQUIRE(entries[0].get_message_queue_name() == "gamma_1");
   REQUIRE(entries[0].get_process_name() == "proc2");
 
   // A process regex that matches no process at all yields an empty result, even for a queue name
   // that does exist.
-  REQUIRE(fixture.repository->allOf("proc3", "gamma_.*").empty());
+  REQUIRE(fixture.repository->allOf(MessageQueueFilter{ "proc3", "gamma_.*" }).empty());
 }
 
 TEST_CASE("MessageQueueRepository::allOf separates a queue named like a process")
@@ -139,14 +139,16 @@ TEST_CASE("MessageQueueRepository::allOf separates a queue named like a process"
   fixture.insertQueue("proc1", "proc1");
   fixture.insertQueue("proc2", "alpha_1_backup");
 
-  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf("proc1", "alpha_1|proc1");
+  const std::vector<MessageQueueEntry> entries =
+    fixture.repository->allOf(MessageQueueFilter{ "proc1", "alpha_1|proc1" });
   REQUIRE(entries.size() == 2);
   REQUIRE(queueNamesOf(entries) == std::set<std::string>{ "alpha_1", "proc1" });
   // With the filters swapped the query becomes `name REGEXP 'proc1' and process_name REGEXP
   // 'alpha_1|proc1'` and returns the single queue named `proc1` instead of both.
-  // The same holds for the unfiltered queue regex: `allOf("proc1", ".*")` owns both of proc1's
+  // The same holds for the unfiltered queue regex: `allOf({"proc1", ".*"})` owns both of proc1's
   // queues, while the swapped query collapses to the queue that happens to be named `proc1`.
-  REQUIRE(queueNamesOf(fixture.repository->allOf("proc1", ".*")) == std::set<std::string>{ "alpha_1", "proc1" });
+  REQUIRE(queueNamesOf(fixture.repository->allOf(MessageQueueFilter{ "proc1", ".*" }))
+          == std::set<std::string>{ "alpha_1", "proc1" });
 }
 
 TEST_CASE("MessageQueueRepository::allProcessNameOf filters on the process_name column")
@@ -192,7 +194,8 @@ TEST_CASE("MessageQueueRepository: registerOwner and updateHeartbeat persist the
   fixture.insertQueue("proc1", "alpha_1");
 
   const auto startedAt = std::chrono::system_clock::now() - std::chrono::minutes(5);
-  fixture.repository->registerOwner("alpha_1", "proc1", "host-a", 4242, startedAt, "active");
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "alpha_1", "proc1", "host-a", 4242, startedAt, "active" });
 
   const MessageQueueEntry entry = fixture.repository->allMessageQueueNameOf("alpha_1");
   REQUIRE(entry.get_owner_pid().has_value());
@@ -219,8 +222,10 @@ TEST_CASE("MessageQueueRepository: findOrphans returns stale owners only")
   fixture.insertQueue("proc1", "never_owned_1");
 
   const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
-  fixture.repository->registerOwner("stale_1", "proc1", "host-a", 111, longAgo, "active");
-  fixture.repository->registerOwner("fresh_1", "proc1", "host-a", 222, std::chrono::system_clock::now(), "active");
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "stale_1", "proc1", "host-a", 111, longAgo, "active" });
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "fresh_1", "proc1", "host-a", 222, std::chrono::system_clock::now(), "active" });
 
   const std::vector<MessageQueueEntry> orphans = fixture.repository->findOrphans(std::chrono::seconds(60));
   REQUIRE(queueNamesOf(orphans) == std::set<std::string>{ "stale_1" });
@@ -235,7 +240,8 @@ TEST_CASE("MessageQueueRepository: reclaimOrphans clears the owner fields")
   fixture.insertQueue("proc1", "stale_1");
 
   const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
-  fixture.repository->registerOwner("stale_1", "proc1", "host-a", 111, longAgo, "active");
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "stale_1", "proc1", "host-a", 111, longAgo, "active" });
 
   fixture.repository->reclaimOrphans(fixture.repository->findOrphans(std::chrono::seconds(60)));
 
@@ -253,7 +259,8 @@ TEST_CASE("MessageQueueRepository: updateHeartbeat makes a stale owner healthy a
   fixture.insertQueue("proc1", "beat_1");
 
   const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
-  fixture.repository->registerOwner("beat_1", "proc1", "host-a", 111, longAgo, "active");
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "beat_1", "proc1", "host-a", 111, longAgo, "active" });
   REQUIRE(fixture.repository->findOrphans(std::chrono::seconds(60)).size() == 1);
 
   fixture.repository->updateHeartbeat("beat_1", std::chrono::system_clock::now());

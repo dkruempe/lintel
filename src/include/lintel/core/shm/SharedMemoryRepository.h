@@ -54,21 +54,38 @@ public:
    *  only while the payload alignment does not exceed one page. */
   static constexpr std::size_t kMaxAlignment = 4096;
 
+  /** Payload size and alignment of a cell. Grouping the two same-typed sizes
+   *  keeps them from being swapped at every construction and lookup. */
+  struct Layout
+  {
+    /** payload size in bytes (> 0) */
+    std::size_t size = 0;
+    /** payload alignment in bytes (power of two, <= kMaxAlignment) */
+    std::size_t alignment = 1;
+  };
+
+  /** Type-erased pointer to the payload constructor's arguments. Wrapping the
+   *  raw pointer in a distinct type keeps the two pointer parameters of
+   *  InitFunction from being swapped by mistake. */
+  struct InitArgument
+  {
+    const void *value = nullptr;
+  };
+
   /** Runs the payload constructor of T. Invoked exactly once - by the process
    *  that creates the cell, while the segment's construct lock is held - and
    *  never by a process that only finds the cell again.
    *  @param payload      raw, not yet constructed payload memory
    *  @param initArgument type erased constructor arguments; the binding keeps
    *                      them alive for as long as it exists */
-  using InitFunction = void (*)(void *payload, const void *initArgument);
+  using InitFunction = void (*)(void *payload, InitArgument initArgument);
 
   /** Bind to the named cell without touching the segment yet; the first
    *  resolve() finds the cell or creates it (record + payload constructor).
    *  @param service       shared memory service owning the segment
    *  @param segment       segment the cell lives in
    *  @param name          name of the cell inside the segment
-   *  @param payloadSize   payload size in bytes
-   *  @param alignment     payload alignment in bytes (1..kMaxAlignment)
+   *  @param layout        payload size and alignment
    *  @param init          payload constructor, run when the cell is created
    *  @param initArgument  constructor arguments for init, kept alive by this binding
    *  @throws std::invalid_argument on null service/segment, empty name, empty
@@ -76,8 +93,7 @@ public:
   ShmCell(std::shared_ptr<SharedMemoryService> service,
     std::shared_ptr<SharedMemorySegment> segment,
     std::string name,
-    std::size_t payloadSize,
-    std::size_t alignment,
+    Layout layout,
     InitFunction init,
     std::shared_ptr<void> initArgument);
 
@@ -166,8 +182,7 @@ namespace shm {
       : m_cell(std::move(service),
           std::move(segment),
           std::move(name),
-          sizeof(T),
-          alignof(T),
+          ShmCell::Layout{ sizeof(T), alignof(T) },
           &SharedMemoryRepository<T>::template construct<Args...>,
           std::make_shared<std::tuple<std::decay_t<Args>...>>(std::forward<Args>(args)...))
     {
@@ -215,10 +230,10 @@ namespace shm {
      *  @param payload      raw payload memory of the cell
      *  @param initArgument the tuple of constructor arguments this repository
      *                      built at construction time */
-    template<typename... Args> static void construct(void *payload, const void *initArgument)
+    template<typename... Args> static void construct(void *payload, ShmCell::InitArgument initArgument)
     {
-      const auto &arguments = *static_cast<const std::tuple<std::decay_t<Args>...> *>(initArgument);
-      std::apply([payload](const auto &...args) { ::new (payload) T(args...); }, arguments);
+      const auto &arguments = *static_cast<const std::tuple<std::decay_t<Args>...> *>(initArgument.value);
+      std::apply([payload](const auto &...constructorArgs) { ::new (payload) T(constructorArgs...); }, arguments);
     }
 
     ShmCell m_cell;

@@ -9,7 +9,7 @@
 
 namespace lintel {
 /** Overflow/drop policy for message queues. */
-enum class MessageQueueOverflowPolicy { Fail = 0, DropNewest, DropOldest, BlockWithTimeout, DeadLetter };
+enum class MessageQueueOverflowPolicy : std::uint8_t { Fail = 0, DropNewest, DropOldest, BlockWithTimeout, DeadLetter };
 
 /**
  * Non-template core of MessageQueue. Owns the underlying POSIX message queue,
@@ -31,7 +31,7 @@ public:
    * @param msgCount limit of queue itself
    * @param msgSize maximum size of a single message in bytes
    */
-  MessageQueueCore(std::string name, int32_t msgCount, std::size_t msgSize);
+  MessageQueueCore(const std::string &name, int32_t msgCount, std::size_t msgSize);
 
   ~MessageQueueCore();
 

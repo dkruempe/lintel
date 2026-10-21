@@ -13,12 +13,11 @@ MesssageQueueApi::MesssageQueueApi(const std::shared_ptr<ClientProvider> &client
   : m_client(clientProvider->provide())
 {}
 
-std::vector<MessageQueueDto> MesssageQueueApi::allOf(const std::string &processName,
-  const std::string &messageQueueName)
+std::vector<MessageQueueDto> MesssageQueueApi::allOf(const MessageQueueFilter &filter)
 {
   httplib::Headers headers{};
   headers.insert({ "Content-Type", "application/json" });
-  const auto &result = m_client->get("/messageQueue/" + processName + "/" + messageQueueName, headers);
+  const auto &result = m_client->get("/messageQueue/" + filter.processName + "/" + filter.queueName, headers);
   if (!HttpClientHelper::hasResponse(result)) { return {}; }
   HttpStatusCodes const status(result->status);
   switch (status) {

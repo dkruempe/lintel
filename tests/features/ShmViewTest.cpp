@@ -196,7 +196,7 @@ TEST_CASE("ShmView: slices keep generation and provider")
 TEST_CASE("ShmView: a manual view uses an explicit generation")
 {
   int values[] = { 1, 2, 3 };
-  ShmView<int> view(values, 3, 7);
+  ShmView<int> view(values, 3, shm::ShmGeneration{ 7 });
 
   REQUIRE(view.valid(7));
   REQUIRE_FALSE(view.valid(8));

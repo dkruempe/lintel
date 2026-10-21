@@ -14,6 +14,7 @@
 #include "lintel/features/base/msg/Message.h"
 #include "lintel/features/base/msg/MessageQueue.h"
 #include "lintel/features/base/services/SchedulerService.h"
+#include <atomic>
 
 namespace lintel {
 /**
@@ -29,6 +30,8 @@ private:
   std::map<std::string, std::shared_ptr<MessageQueue<Message>>> m_messageQueues{};
   std::string m_hostName;
   std::chrono::milliseconds m_heartbeatInterval{ 1000 };
+  /** False once onShutdown() ran; the heartbeat task captures it to stop. */
+  std::atomic<bool> m_running{ false };
 
   static std::map<std::string, std::shared_ptr<MessageQueueEntry>> init(
     const std::shared_ptr<Configuration> &configuration);

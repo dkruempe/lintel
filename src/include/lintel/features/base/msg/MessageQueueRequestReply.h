@@ -47,6 +47,17 @@ template<typename TPayload> struct RequestReplyEnvelope
   TPayload payload{};
 };
 
+/** The two queue names of a request/reply endpoint. Grouping them keeps the
+ *  two same-typed strings from being swapped wherever an endpoint is built or
+ *  removed. */
+struct RequestReplyQueues
+{
+  /** queue carrying requests, caller -> handler */
+  std::string request;
+  /** queue carrying responses, handler -> caller */
+  std::string reply;
+};
+
 /**
  * Higher level request/reply API on top of two MessageQueue instances:
  * - the request queue carries RequestReplyEnvelope<TReq> from caller to handler
@@ -83,31 +94,28 @@ public:
   /**
    * remove of both message queues (also drops messages still in flight)
    *
-   * @param requestQueueName queue carrying requests
-   * @param replyQueueName queue carrying responses
+   * @param queues the request and reply queue names
    */
-  static void removeOf(const std::string &requestQueueName, const std::string &replyQueueName)
+  static void removeOf(const RequestReplyQueues &queues)
   {
-    MessageQueue<RequestEnvelope>::removeOf(requestQueueName);
-    MessageQueue<ResponseEnvelope>::removeOf(replyQueueName);
+    MessageQueue<RequestEnvelope>::removeOf(queues.request);
+    MessageQueue<ResponseEnvelope>::removeOf(queues.reply);
   }
 
   /**
    * open or create both queues of this endpoint
    *
    * @param processName name of the owning process
-   * @param requestQueueName queue carrying requests, caller -> handler
-   * @param replyQueueName queue carrying responses, handler -> caller
+   * @param queues the request and reply queue names
    * @param msgCount limit of each queue
    * @param realProcessName shared handle used to resolve the process name
    */
   MessageQueueRequestReply(std::string processName,
-    std::string requestQueueName,
-    std::string replyQueueName,
+    RequestReplyQueues queues,
     int32_t msgCount,
     std::shared_ptr<ProcessName> realProcessName)
-    : m_requestQueue(processName, requestQueueName, msgCount, realProcessName),
-      m_replyQueue(std::move(processName), std::move(replyQueueName), msgCount, std::move(realProcessName))
+    : m_requestQueue(processName, queues.request, msgCount, realProcessName),
+      m_replyQueue(std::move(processName), std::move(queues.reply), msgCount, std::move(realProcessName))
   {}
 
   /**

@@ -10,7 +10,6 @@
 #include "lintel/features/base/repositories/MessageQueueRepository.h"
 #include <map>
 #include <memory>
-#include <unistd.h>
 #include <utility>
 
 namespace lintel {
@@ -18,13 +17,6 @@ namespace {
   std::string messageQueueKey(const MessageQueueEntry &entry)
   {
     return entry.get_process_name() + "/" + entry.get_message_queue_name();
-  }
-
-  std::string getHostName()
-  {
-    char buf[256];
-    if (::gethostname(buf, sizeof(buf)) == 0) { return std::string(buf); }
-    return "unknown";
   }
 }// namespace
 
@@ -34,7 +26,7 @@ MessageQueueService::MessageQueueService(const std::shared_ptr<Configuration> &c
   std::shared_ptr<SchedulerService> schedulerService)
   : AbstractService<MessageQueueService>(processName->getProcessName()), m_processName(std::move(processName)),
     m_messageQueueRepository(std::move(messageQueueRepository)), m_schedulerService(std::move(schedulerService)),
-    m_configurationMap(init(configuration)), m_hostName(getHostName())
+    m_configurationMap(init(configuration)), m_hostName(hostName())
 {}
 
 std::map<std::string, std::shared_ptr<MessageQueueEntry>> MessageQueueService::init(
@@ -53,18 +45,22 @@ std::map<std::string, std::shared_ptr<MessageQueueEntry>> MessageQueueService::i
 
 void MessageQueueService::onInitialize()
 {
-  for (const auto &iter : m_messageQueueRepository->allOf(".*", ".*")) {
+  m_running.store(true);
+  for (const auto &iter : m_messageQueueRepository->allOf(MessageQueueFilter{ ".*", ".*" })) {
     m_messageQueues.insert({ messageQueueKey(iter),
       std::make_shared<MessageQueue<Message>>(
         iter.get_process_name(), iter.get_message_queue_name(), iter.get_max_messages(), m_processName) });
   }
   if (m_schedulerService && !m_configurationMap.empty()) {
     m_schedulerService->schedule_at_fixed_rate(m_heartbeatInterval, m_heartbeatInterval, [this] {
+      if (!m_running.load()) { return; }
       for (const auto &[name, entry] : m_configurationMap) {
         if (entry->get_process_name() == m_processName->getProcessName()) {
           try {
             updateHeartbeat(name);
-          } catch (...) {}
+          } catch (const std::exception &exception) {
+            LOG_WARN("message queue heartbeat for '{}' failed: {}", name, exception.what());
+          }
         }
       }
     });
@@ -73,9 +69,10 @@ void MessageQueueService::onInitialize()
 
 void MessageQueueService::onShutdown()
 {
-  if (m_schedulerService) {
-    // best effort - scheduler will be cleaned up
-  }
+  // The scheduler has no cancellation API, so the heartbeat task stays
+  // registered for the process lifetime; the flag makes it a no-op once the
+  // service shut down.
+  m_running.store(false);
 }
 
 void MessageQueueService::registerOwner(const std::string &queueName)
@@ -83,11 +80,11 @@ void MessageQueueService::registerOwner(const std::string &queueName)
   auto found = m_configurationMap.find(queueName);
   if (found == m_configurationMap.end()) { return; }
   if (found->second->get_process_name() != m_processName->getProcessName()) { return; }
-  m_messageQueueRepository->registerOwner(queueName,
+  m_messageQueueRepository->registerOwner(MessageQueueOwnerRegistration{ queueName,
     m_processName->getProcessName(),
     m_hostName,
     static_cast<std::uint64_t>(currentProcessId()),
-    std::chrono::system_clock::now());
+    std::chrono::system_clock::now() });
 }
 
 void MessageQueueService::updateHeartbeat(const std::string &queueName)

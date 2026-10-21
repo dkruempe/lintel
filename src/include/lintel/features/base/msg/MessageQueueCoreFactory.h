@@ -36,8 +36,8 @@ public:
 class BoostMessageQueueCore final : public IMessageQueueCore
 {
 public:
-  BoostMessageQueueCore(std::string name, int32_t msgCount, std::size_t msgSize)
-    : m_core(std::move(name), msgCount, msgSize)
+  BoostMessageQueueCore(const std::string &name, int32_t msgCount, std::size_t msgSize)
+    : m_core(name, msgCount, msgSize)
   {}
 
   void sendOf(const void *message, std::size_t size) override { m_core.sendOf(message, size); }
@@ -74,8 +74,8 @@ private:
 class ShmMessageQueueCore final : public IMessageQueueCore
 {
 public:
-  ShmMessageQueueCore(std::string name, int32_t msgCount, std::size_t msgSize, ShmSegmentAccessor segment)
-    : m_core(std::move(name), msgCount, msgSize, segment)
+  ShmMessageQueueCore(const std::string &name, int32_t msgCount, std::size_t msgSize, ShmSegmentAccessor segment)
+    : m_core(name, msgCount, msgSize, segment)
   {}
 
   void sendOf(const void *message, std::size_t size) override { m_core.sendOf(message, size); }
@@ -118,16 +118,16 @@ public:
    *  @param segment shared memory segment (used by the Shm backend only)
    *  @param backend backend selection, defaults to the process wide config
    *  @return the created core */
-  static std::unique_ptr<IMessageQueueCore> create(std::string name,
+  static std::unique_ptr<IMessageQueueCore> create(const std::string &name,
     int32_t msgCount,
     std::size_t msgSize,
     ShmSegmentAccessor segment,
     MessageQueueBackend backend = MessageQueueBackendConfig::backend())
   {
     if (backend == MessageQueueBackend::Shm) {
-      return std::make_unique<ShmMessageQueueCore>(std::move(name), msgCount, msgSize, segment);
+      return std::make_unique<ShmMessageQueueCore>(name, msgCount, msgSize, segment);
     }
-    return std::make_unique<BoostMessageQueueCore>(std::move(name), msgCount, msgSize);
+    return std::make_unique<BoostMessageQueueCore>(name, msgCount, msgSize);
   }
 
   /** @param backend backend of the queue

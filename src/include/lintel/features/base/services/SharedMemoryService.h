@@ -1,6 +1,7 @@
 #ifndef LINTEL_SHAREDMEMORYSERVICE_H
 #define LINTEL_SHAREDMEMORYSERVICE_H
 
+#include <cstdint>
 #include <filesystem>
 #include <functional>
 #include <map>
@@ -28,7 +29,7 @@ namespace lintel {
 class SharedMemorySegmentHandle;
 
 /** Lifecycle events for shared memory segments. */
-enum class SegmentLifecycle { BeforeGrow, AfterGrow, BeforeShrink, AfterShrink, OnRemap };
+enum class SegmentLifecycle : std::uint8_t { BeforeGrow, AfterGrow, BeforeShrink, AfterShrink, OnRemap };
 
 /** Callback invoked on segment lifecycle events. Callbacks must be short and non-blocking. */
 using SegmentLifecycleHook = std::function<void(const std::string &segmentName, SegmentLifecycle action)>;

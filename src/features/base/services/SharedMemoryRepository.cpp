@@ -45,24 +45,22 @@ namespace {
 
     /** Allocate the payload from the segment and run the payload constructor.
      *  @param segment       accessor of the segment the payload is allocated from
-     *  @param payloadSize   payload size in bytes (> 0)
-     *  @param alignment     payload alignment in bytes (power of two)
+     *  @param layout        payload size (> 0) and alignment (power of two)
      *  @param init          payload constructor, run on the allocated memory
      *  @param initArgument  constructor arguments for init
      *  @throws std::bad_alloc when the segment cannot hold the payload
      *  @throws anything init throws (the payload allocation is released first) */
     ShmCellRecord(ShmSegmentAccessor segment,
-      std::size_t payloadSize,
-      std::size_t alignment,
+      ShmCell::Layout layout,
       ShmCell::InitFunction init,
-      const void *initArgument)
+      ShmCell::InitArgument initArgument)
     {
-      const std::size_t bytes = payloadSize + alignment - 1u;
+      const std::size_t bytes = layout.size + layout.alignment - 1u;
       void *raw = segment.allocate(bytes);
       if (raw == nullptr) { throw std::bad_alloc(); }
       void *aligned = raw;
       std::size_t space = bytes;
-      if (std::align(alignment, payloadSize, aligned, space) == nullptr) {
+      if (std::align(layout.alignment, layout.size, aligned, space) == nullptr) {
         segment.deallocate(raw);
         throw std::bad_alloc();
       }
@@ -70,8 +68,8 @@ namespace {
       // constructor runs, so the offset is stable for the lifetime of the
       // cell - and identical in every other mapping of the segment.
       m_payloadOffset = reinterpret_cast<std::intptr_t>(aligned) - reinterpret_cast<std::intptr_t>(this);
-      m_payloadSize = payloadSize;
-      m_alignment = alignment;
+      m_payloadSize = layout.size;
+      m_alignment = layout.alignment;
       try {
         init(aligned, initArgument);
       } catch (...) {
@@ -87,9 +85,11 @@ namespace {
     /** @return pointer to the payload in this process' mapping */
     [[nodiscard]] void *payload() const
     {
-      const std::intptr_t address = reinterpret_cast<std::intptr_t>(this) + m_payloadOffset;
-      // NOLINTNEXTLINE(performance-no-int-to-ptr) — relative offset into this process' mapping.
-      return reinterpret_cast<void *>(address);
+      // The payload offset is stored in the record inside the segment (its
+      // address differs per mapping), so it has to be materialised here. The
+      // base is a std::byte pointer: byte arithmetic has element size 1, so
+      // neither an integer-to-pointer cast nor a widened scale is involved.
+      return reinterpret_cast<std::byte *>(const_cast<ShmCellRecord *>(this)) + m_payloadOffset;
     }
 
     [[nodiscard]] std::uint64_t magic() const { return m_magic; }
@@ -115,8 +115,7 @@ namespace {
    * @param service       service owning the segment
    * @param segment       segment the cell lives in
    * @param name          name of the cell inside the segment
-   * @param payloadSize   payload size in bytes
-   * @param alignment     payload alignment in bytes
+   * @param layout        payload size and alignment
    * @param init          payload constructor, run when the cell is created
    * @param initArgument  constructor arguments for init
    * @return the record, valid until the segment is remapped
@@ -126,10 +125,9 @@ namespace {
   ShmCellRecord *findRecordOf(SharedMemoryService &service,
     const std::shared_ptr<SharedMemorySegment> &segment,
     const std::string &name,
-    std::size_t payloadSize,
-    std::size_t alignment,
+    ShmCell::Layout layout,
     ShmCell::InitFunction init,
-    const void *initArgument)
+    ShmCell::InitArgument initArgument)
   {
     std::lock_guard<std::mutex> lock(service.segmentsMutexOf());
     auto &handle = service.segmentOf(segment->getName());
@@ -141,14 +139,14 @@ namespace {
         std::make_shared<BoostSegmentAllocator>(*handle.m_managedMappedFile->get_segment_manager());
     }
     const ShmSegmentAccessor accessor(*handle.m_segmentAllocator);
-    auto *record = handle.m_managedMappedFile->find_or_construct<ShmCellRecord>(name.c_str())(
-      accessor, payloadSize, alignment, init, initArgument);
+    auto *record =
+      handle.m_managedMappedFile->find_or_construct<ShmCellRecord>(name.c_str())(accessor, layout, init, initArgument);
     // Only reached with a freshly built record trivially, but also - after a
     // restart or from a second process - with one that was found again: the
     // constructor arguments of the finder are ignored there, so the layout
     // has to be compared instead of trusted.
-    if (record->magic() != ShmCellRecord::kMagic || record->payloadSize() != payloadSize
-        || record->alignment() != alignment) {
+    if (record->magic() != ShmCellRecord::kMagic || record->payloadSize() != layout.size
+        || record->alignment() != layout.alignment) {
       throw std::invalid_argument("shared memory cell '" + name + "' of segment '" + segment->getName()
                                   + "' already exists with an incompatible payload layout");
     }
@@ -160,12 +158,11 @@ namespace {
 ShmCell::ShmCell(std::shared_ptr<SharedMemoryService> service,
   std::shared_ptr<SharedMemorySegment> segment,
   std::string name,
-  std::size_t payloadSize,
-  std::size_t alignment,
+  Layout layout,
   InitFunction init,
   std::shared_ptr<void> initArgument)
-  : m_service(std::move(service)), m_segment(std::move(segment)), m_name(std::move(name)), m_payloadSize(payloadSize),
-    m_alignment(alignment), m_init(init), m_initArgument(std::move(initArgument))
+  : m_service(std::move(service)), m_segment(std::move(segment)), m_name(std::move(name)), m_payloadSize(layout.size),
+    m_alignment(layout.alignment), m_init(init), m_initArgument(std::move(initArgument))
 {
   if (m_service == nullptr) { throw std::invalid_argument("ShmCell needs a shared memory service"); }
   if (m_segment == nullptr) { throw std::invalid_argument("ShmCell '" + m_name + "' needs a shared memory segment"); }
@@ -189,7 +186,12 @@ void *ShmCell::resolve() const
   // the old mapping as up to date, which is the dangerous direction.
   const std::size_t observed = m_service->getGeneration();
   if (m_record != nullptr && observed == m_generation) { return static_cast<ShmCellRecord *>(m_record)->payload(); }
-  auto *record = findRecordOf(*m_service, m_segment, m_name, m_payloadSize, m_alignment, m_init, m_initArgument.get());
+  auto *record = findRecordOf(*m_service,
+    m_segment,
+    m_name,
+    Layout{ m_payloadSize, m_alignment },
+    m_init,
+    ShmCell::InitArgument{ m_initArgument.get() });
   m_record = record;
   m_generation = observed;
   return record->payload();

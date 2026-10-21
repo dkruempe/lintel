@@ -15,9 +15,9 @@ class MockMessageQueueRepository : public IMessageQueueRepository
 {
 public:
   MAKE_MOCK1(allMessageQueueNameOf, MessageQueueEntry(const std::string &), override);
-  MAKE_MOCK2(allOf, std::vector<MessageQueueEntry>(const std::string &, const std::string &), override);
-  MAKE_MOCK4(pageOf,
-    Page<MessageQueueEntry>(const std::string &, const std::string &, const std::optional<std::string> &, std::size_t),
+  MAKE_MOCK1(allOf, std::vector<MessageQueueEntry>(const MessageQueueFilter &), override);
+  MAKE_MOCK3(pageOf,
+    Page<MessageQueueEntry>(const MessageQueueFilter &, const std::optional<std::string> &, std::size_t),
     override);
   MAKE_MOCK1(allProcessNameOf, std::vector<MessageQueueEntry>(const std::string &), override);
   MAKE_MOCK1(insertOf, void(const std::vector<MessageQueueEntry> &), override);
@@ -31,14 +31,9 @@ public:
   std::vector<std::string> reclaimedQueues;
   std::vector<MessageQueueEntry> orphansToFind;
 
-  void registerOwner(const std::string &queueName,
-    const std::string &processName,
-    const std::string &hostName,
-    std::uint64_t,
-    const std::chrono::system_clock::time_point &,
-    const std::string &) override
+  void registerOwner(const MessageQueueOwnerRegistration &registration) override
   {
-    registeredOwners.push_back(queueName + "/" + processName + "/" + hostName);
+    registeredOwners.push_back(registration.queueName + "/" + registration.processName + "/" + registration.hostName);
   }
 
   void updateHeartbeat(const std::string &queueName, const std::chrono::system_clock::time_point &) override
@@ -46,7 +41,7 @@ public:
     heartbeats.push_back(queueName);
   }
 
-  void updateOwnerState(const std::string &, const std::string &) override {}
+  void updateOwnerState(const MessageQueueOwnerStateUpdate &) override {}
 
   std::vector<MessageQueueEntry> findOrphans(const std::chrono::seconds &) override { return orphansToFind; }
 

@@ -52,10 +52,9 @@ namespace {
       return MessageQueueEntry(type_name<MessageQueueComponent>(), "", "", 0);
     }
 
-    std::vector<MessageQueueEntry> allOf(const std::string &, const std::string &) override { return {}; }
+    std::vector<MessageQueueEntry> allOf(const MessageQueueFilter &) override { return {}; }
 
-    Page<MessageQueueEntry>
-      pageOf(const std::string &, const std::string &, const std::optional<std::string> &, std::size_t) override
+    Page<MessageQueueEntry> pageOf(const MessageQueueFilter &, const std::optional<std::string> &, std::size_t) override
     {
       return Page<MessageQueueEntry>({}, false, std::nullopt);
     }
@@ -78,15 +77,9 @@ namespace {
       for (const auto &entry : entries) { deleted.push_back(entry); }
     }
 
-    void registerOwner(const std::string &,
-      const std::string &,
-      const std::string &,
-      std::uint64_t,
-      const std::chrono::system_clock::time_point &,
-      const std::string &) override
-    {}
+    void registerOwner(const MessageQueueOwnerRegistration &) override {}
     void updateHeartbeat(const std::string &, const std::chrono::system_clock::time_point &) override {}
-    void updateOwnerState(const std::string &, const std::string &) override {}
+    void updateOwnerState(const MessageQueueOwnerStateUpdate &) override {}
     std::vector<MessageQueueEntry> findOrphans(const std::chrono::seconds &staleThreshold) override
     {
       ++findOrphansCalls;

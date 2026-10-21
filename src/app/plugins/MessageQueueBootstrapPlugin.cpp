@@ -38,8 +38,10 @@ void MessageQueueBootstrapPlugin::onStart()
       LOG_INFO("reclaiming {} orphaned message queue entries", orphans.size());
       m_messageQueueRepository->reclaimOrphans(orphans);
     }
-  } catch (...) {
-    // best effort, do not block bootstrap
+    // Best effort: a bootstrap must not be blocked by an unavailable database
+    // or a repository that rejects the stale-owner query.
+  } catch (const std::exception &exception) {
+    LOG_WARN("message queue orphan recovery skipped: {}", exception.what());
   }
   auto entries = m_configuration->configurationOf<MessageQueueComponent>();
   std::map<std::string, std::shared_ptr<MessageQueueEntry>> messageQueueEntries;

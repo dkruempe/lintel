@@ -4,6 +4,7 @@
 #include "lintel/features/cli/models/CommandParser.h"
 #include "lintel/features/http/controllers/MessageQueueApi.h"
 #include "lintel/features/http/service/Controller.h"
+#include <cstdint>
 
 namespace lintel {
 /** CLI component that displays message queue statistics */
@@ -15,7 +16,7 @@ private:
   static constexpr std::string_view m_description = "The component can be used to show the message queue statistics";
   std::shared_ptr<MesssageQueueApi> m_messageQueueApi;
 
-  enum Commands { Undefined, ShowMessageQueues, PurgeMessageQueue };
+  enum Commands : std::uint8_t { Undefined, ShowMessageQueues, PurgeMessageQueue };
 
   // Flags
   std::optional<std::string> m_processName;

@@ -31,7 +31,7 @@ TEST_CASE("MessageQueueService: can be constructed without db access")
   auto processName = std::make_shared<ProcessName>("testProcess");
   auto configuration = createTestConfiguration();
 
-  ALLOW_CALL(*mockRepo, allOf(".*", ".*")).LR_RETURN(std::vector<MessageQueueEntry>{});
+  ALLOW_CALL(*mockRepo, allOf(ANY(MessageQueueFilter))).LR_RETURN(std::vector<MessageQueueEntry>{});
 
   REQUIRE_NOTHROW(MessageQueueService(configuration, processName, mockRepo));
 }
@@ -42,7 +42,7 @@ TEST_CASE("MessageQueueService: repository is queried on onInitialize")
   auto processName = std::make_shared<ProcessName>("testProcess");
   auto configuration = createTestConfiguration();
 
-  REQUIRE_CALL(*mockRepo, allOf(".*", ".*")).LR_RETURN(std::vector<MessageQueueEntry>{});
+  REQUIRE_CALL(*mockRepo, allOf(ANY(MessageQueueFilter))).LR_RETURN(std::vector<MessageQueueEntry>{});
 
   MessageQueueService service(configuration, processName, mockRepo);
   service.onInitialize();
@@ -68,7 +68,7 @@ TEST_CASE("MessageQueueService: of() registers this process as the queue owner")
   auto processName = std::make_shared<ProcessName>("testProcess");
   auto configuration = createQueueConfiguration();
 
-  ALLOW_CALL(*mockRepo, allOf(".*", ".*")).LR_RETURN(std::vector<MessageQueueEntry>{});
+  ALLOW_CALL(*mockRepo, allOf(ANY(MessageQueueFilter))).LR_RETURN(std::vector<MessageQueueEntry>{});
 
   MessageQueueService service(configuration, processName, mockRepo);
   auto queue = service.of("mq1");
@@ -83,7 +83,7 @@ TEST_CASE("MessageQueueService: updateHeartbeat writes the heartbeat to the repo
   auto processName = std::make_shared<ProcessName>("testProcess");
   auto configuration = createTestConfiguration();
 
-  ALLOW_CALL(*mockRepo, allOf(".*", ".*")).LR_RETURN(std::vector<MessageQueueEntry>{});
+  ALLOW_CALL(*mockRepo, allOf(ANY(MessageQueueFilter))).LR_RETURN(std::vector<MessageQueueEntry>{});
 
   MessageQueueService service(configuration, processName, mockRepo);
   service.updateHeartbeat("mq1");
@@ -97,7 +97,7 @@ TEST_CASE("MessageQueueService: recoverOrphans reclaims the entries the reposito
   auto processName = std::make_shared<ProcessName>("testProcess");
   auto configuration = createTestConfiguration();
 
-  ALLOW_CALL(*mockRepo, allOf(".*", ".*")).LR_RETURN(std::vector<MessageQueueEntry>{});
+  ALLOW_CALL(*mockRepo, allOf(ANY(MessageQueueFilter))).LR_RETURN(std::vector<MessageQueueEntry>{});
   // MessageQueueEntry is copyable but not assignable (const members), so no initializer-list assign
   mockRepo->orphansToFind.push_back(
     MessageQueueEntry(type_name<MessageQueueComponent>(), "otherProcess", "orphan1", 5));
@@ -116,7 +116,7 @@ TEST_CASE("MessageQueueService: recoverOrphans without stale owners reclaims not
   auto processName = std::make_shared<ProcessName>("testProcess");
   auto configuration = createTestConfiguration();
 
-  ALLOW_CALL(*mockRepo, allOf(".*", ".*")).LR_RETURN(std::vector<MessageQueueEntry>{});
+  ALLOW_CALL(*mockRepo, allOf(ANY(MessageQueueFilter))).LR_RETURN(std::vector<MessageQueueEntry>{});
 
   MessageQueueService service(configuration, processName, mockRepo);
 

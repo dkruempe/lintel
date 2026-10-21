@@ -32,6 +32,43 @@ namespace {
       return std::nullopt;
     }
   }
+
+  /** Read column `attribute` of `row` as a string, or nullopt when the column
+   *  is NULL / missing / holds an unexpected type. The persistence layer
+   *  signals all three by throwing, so the failure is mapped to nullopt here
+   *  instead of being swallowed at the call site. */
+  std::optional<std::string> optionalStringColumn(db::Result &result, std::size_t row, std::size_t attribute)
+  {
+    if (result.of(row).size() <= attribute) { return std::nullopt; }
+    try {
+      std::string value = result.of(row).of(attribute).getValue<std::string>();
+      if (value.empty()) { return std::nullopt; }
+      return value;
+    } catch (const std::exception &) {
+      return std::nullopt;
+    }
+  }
+
+  /** Read column `attribute` of `row` as an unsigned 64-bit value. The column
+   *  may be stored either as text or as a native integer depending on the
+   *  backend, so both representations are tried; any failure means nullopt. */
+  std::optional<std::uint64_t> optionalUint64Column(db::Result &result, std::size_t row, std::size_t attribute)
+  {
+    if (const std::optional<std::string> text = optionalStringColumn(result, row, attribute)) {
+      try {
+        return static_cast<std::uint64_t>(std::stoull(*text));
+      } catch (const std::exception &) {
+        return std::nullopt;
+      }
+    }
+    try {
+      const std::int64_t value = result.of(row).of(attribute).getValue<std::int64_t>();
+      if (value < 0) { return std::nullopt; }
+      return static_cast<std::uint64_t>(value);
+    } catch (const std::exception &) {
+      return std::nullopt;
+    }
+  }
 }// namespace
 
 MessageQueueRepository::MessageQueueRepository(
@@ -44,42 +81,23 @@ MessageQueueEntry MessageQueueRepository::entryFromResult(db::Result &result, st
   auto name = result.of(row).of(0).getValue<std::string>();
   auto processName = result.of(row).of(1).getValue<std::string>();
   auto maxMessages = result.of(row).of(2).getValue<int32_t>();
-  std::optional<std::uint64_t> ownerPid;
-  std::optional<std::string> ownerHost;
-  std::optional<std::chrono::system_clock::time_point> startedAt;
-  std::optional<std::chrono::system_clock::time_point> lastHeartbeatAt;
-  std::optional<std::string> ownerState;
-  try {
-    if (result.of(row).size() > 3) {
-      try {
-        auto v = result.of(row).of(3).getValue<std::string>();
-        if (!v.empty()) { ownerPid = static_cast<std::uint64_t>(std::stoull(v)); }
-      } catch (...) {
-        try {
-          auto v = result.of(row).of(3).getValue<std::int64_t>();
-          if (v >= 0) { ownerPid = static_cast<std::uint64_t>(v); }
-        } catch (...) {}
-      }
-      try {
-        auto v = result.of(row).of(4).getValue<std::string>();
-        if (!v.empty()) { ownerHost = v; }
-      } catch (...) {}
-      try {
-        auto v = result.of(row).of(5).getValue<std::string>();
-        if (!v.empty()) { startedAt = parseTime(v); }
-      } catch (...) {}
-      try {
-        auto v = result.of(row).of(6).getValue<std::string>();
-        if (!v.empty()) { lastHeartbeatAt = parseTime(v); }
-      } catch (...) {}
-      try {
-        auto v = result.of(row).of(7).getValue<std::string>();
-        if (!v.empty()) { ownerState = v; }
-      } catch (...) {}
+
+  // The owner columns were added after the table existed, so a row may either
+  // predate them (fewer columns) or hold NULL. Both mean "no owner recorded";
+  // the helpers map every such case to std::nullopt.
+  MessageQueueOwnerColumns owner;
+  if (result.of(row).size() > 3) {
+    owner.pid = optionalUint64Column(result, row, 3);
+    owner.host = optionalStringColumn(result, row, 4);
+    if (const std::optional<std::string> started = optionalStringColumn(result, row, 5)) {
+      owner.startedAt = parseTime(*started);
     }
-  } catch (...) {}
-  return MessageQueueEntry(
-    "", processName, name, maxMessages, ownerPid, ownerHost, startedAt, lastHeartbeatAt, ownerState);
+    if (const std::optional<std::string> heartbeat = optionalStringColumn(result, row, 6)) {
+      owner.lastHeartbeatAt = parseTime(*heartbeat);
+    }
+    owner.state = optionalStringColumn(result, row, 7);
+  }
+  return MessageQueueEntry("", processName, name, maxMessages, owner);
 }
 
 void MessageQueueRepository::insertOf(const std::vector<MessageQueueEntry> &entries)
@@ -130,8 +148,7 @@ void MessageQueueRepository::deleteOf(const std::vector<MessageQueueEntry> &entr
 }
 
 
-std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &processName,
-  const std::string &messageQueueName)
+std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const MessageQueueFilter &filter)
 {
   if (m_connectionEntry == nullptr) {
     LOG_INFO("no default database connection - skip message queue sync from database");
@@ -172,8 +189,8 @@ std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &
   db::PreparedStatement preparedStatement(scopedConnection.connection(), stmt, "message_queue_all_select");
   std::vector<MessageQueueEntry> entries;
   db::ParameterBuilder builder(m_connectionEntry);
-  builder.add(messageQueueName);
-  builder.add(processName);
+  builder.add(filter.queueName);
+  builder.add(filter.processName);
   auto result = preparedStatement.execute(builder);
   for (std::size_t row = 0; row < static_cast<std::size_t>(result.getSize()); ++row) {
     entries.push_back(entryFromResult(result, row));
@@ -181,8 +198,7 @@ std::vector<MessageQueueEntry> MessageQueueRepository::allOf(const std::string &
   return entries;
 }
 
-Page<MessageQueueEntry> MessageQueueRepository::pageOf(const std::string &processName,
-  const std::string &messageQueueName,
+Page<MessageQueueEntry> MessageQueueRepository::pageOf(const MessageQueueFilter &filter,
   const std::optional<std::string> &afterName,
   std::size_t limit)
 {
@@ -223,8 +239,8 @@ Page<MessageQueueEntry> MessageQueueRepository::pageOf(const std::string &proces
     throw db::SQLException("DatabaseType currently not supported");
   }
   db::ParameterBuilder builder(m_connectionEntry);
-  builder.add(messageQueueName);
-  builder.add(processName);
+  builder.add(filter.queueName);
+  builder.add(filter.processName);
   if (afterName.has_value()) {
     stmt += " and name > ?";
     builder.add(afterName.value());
@@ -309,12 +325,7 @@ MessageQueueEntry MessageQueueRepository::allMessageQueueNameOf(const std::strin
   return entryFromResult(result, 0);
 }
 
-void MessageQueueRepository::registerOwner(const std::string &queueName,
-  const std::string &processName,
-  const std::string &hostName,
-  std::uint64_t pid,
-  const std::chrono::system_clock::time_point &startedAt,
-  const std::string &ownerState)
+void MessageQueueRepository::registerOwner(const MessageQueueOwnerRegistration &registration)
 {
   if (m_connectionEntry == nullptr) { return; }
   db::ScopedConnection scopedConnection(m_connectionEntry);
@@ -324,13 +335,13 @@ void MessageQueueRepository::registerOwner(const std::string &queueName,
     "where name = ?",
     "update_message_queue_owner");
   db::ParameterBuilder builder(m_connectionEntry);
-  builder.add(static_cast<std::int64_t>(pid));
-  builder.add(hostName);
-  builder.add(systemTimeToString(startedAt));
+  builder.add(static_cast<std::int64_t>(registration.pid));
+  builder.add(registration.hostName);
+  builder.add(systemTimeToString(registration.startedAt));
   // the initial heartbeat is the registration itself - a later updateHeartbeat() refreshes it
-  builder.add(systemTimeToString(startedAt));
-  builder.add(ownerState);
-  builder.add(queueName);
+  builder.add(systemTimeToString(registration.startedAt));
+  builder.add(registration.state);
+  builder.add(registration.queueName);
   preparedStatement.execute(builder);
   transaction.commit();
 }
@@ -351,7 +362,7 @@ void MessageQueueRepository::updateHeartbeat(const std::string &queueName,
   transaction.commit();
 }
 
-void MessageQueueRepository::updateOwnerState(const std::string &queueName, const std::string &ownerState)
+void MessageQueueRepository::updateOwnerState(const MessageQueueOwnerStateUpdate &update)
 {
   if (m_connectionEntry == nullptr) { return; }
   db::ScopedConnection scopedConnection(m_connectionEntry);
@@ -360,8 +371,8 @@ void MessageQueueRepository::updateOwnerState(const std::string &queueName, cons
     "update message_queues set owner_state = ? where name = ?",
     "update_message_queue_owner_state");
   db::ParameterBuilder builder(m_connectionEntry);
-  builder.add(ownerState);
-  builder.add(queueName);
+  builder.add(update.state);
+  builder.add(update.queueName);
   preparedStatement.execute(builder);
   transaction.commit();
 }

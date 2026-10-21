@@ -2,12 +2,13 @@
 #define LINTEL_MESSAGEQUEUEBACKEND_H
 
 #include <atomic>
+#include <cstdint>
 #include <cstdlib>
 #include <string_view>
 
 namespace lintel {
 /** Selectable transport backend of a message queue. */
-enum class MessageQueueBackend { Boost = 0, Shm };
+enum class MessageQueueBackend : std::uint8_t { Boost = 0, Shm };
 
 /**
  * Process wide default backend selection for message queues.

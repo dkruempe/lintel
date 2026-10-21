@@ -23,7 +23,7 @@ struct MessageQueueCore::Impl
   {}
 };
 
-MessageQueueCore::MessageQueueCore(std::string name, int32_t msgCount, std::size_t msgSize)
+MessageQueueCore::MessageQueueCore(const std::string &name, int32_t msgCount, std::size_t msgSize)
   : m_impl(std::make_unique<Impl>(name, msgCount, msgSize))
 {}
 

@@ -41,10 +41,10 @@ int main(int /*argc*/, char ** /*argv[]*/)
     constexpr const char *replyQueueName = "rpc_example_replies";
 
     // start clean: queues of an earlier run would still carry their messages
-    Rpc::removeOf(requestQueueName, replyQueueName);
+    Rpc::removeOf(lintel::RequestReplyQueues{ requestQueueName, replyQueueName });
 
     auto processName = std::make_shared<lintel::ProcessName>("rpc_example");
-    Rpc rpc("rpc_example", requestQueueName, replyQueueName, 8, processName);
+    Rpc rpc("rpc_example", lintel::RequestReplyQueues{ requestQueueName, replyQueueName }, 8, processName);
 
     rpc.registerHandler([](const AddRequest &request, const std::string &correlationId) {
       std::cout << "server: handling request correlation_id=" << correlationId << "\n";
@@ -60,7 +60,7 @@ int main(int /*argc*/, char ** /*argv[]*/)
         std::cerr << "request timed out\n";
         rpc.stopServing();
         server.join();
-        Rpc::removeOf(requestQueueName, replyQueueName);
+        Rpc::removeOf(lintel::RequestReplyQueues{ requestQueueName, replyQueueName });
         return 1;
       }
       std::cout << request.lhs << " + " << request.rhs << " = " << response->sum << "\n";
@@ -70,7 +70,7 @@ int main(int /*argc*/, char ** /*argv[]*/)
     server.join();
     std::cout << "requests dropped by the server: " << rpc.droppedRequestsOf() << "\n";
 
-    Rpc::removeOf(requestQueueName, replyQueueName);
+    Rpc::removeOf(lintel::RequestReplyQueues{ requestQueueName, replyQueueName });
   } catch (const std::exception &ex) {
     std::cerr << ex.what() << "\n";
     return 1;

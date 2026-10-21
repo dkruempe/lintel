@@ -33,25 +33,21 @@ public:
   MessageQueueEntry allMessageQueueNameOf(const std::string &name) override;
 
   /**
-   * @param processName process name filter
-   * @param messageQueueName queue name filter
+   * @param filter process/queue name patterns
    * @return matching entries
    */
-  std::vector<MessageQueueEntry> allOf(const std::string &processName, const std::string &messageQueueName) override;
+  std::vector<MessageQueueEntry> allOf(const MessageQueueFilter &filter) override;
 
   /**
    * Keyset-paginated queue query ordered by queue name ascending.
-   * @param processName process name filter
-   * @param messageQueueName queue name filter
+   * @param filter process/queue name patterns
    * @param afterName exclusive lower bound on the queue name; pass the
    *                  previous page's nextAfter value (nullopt for first page)
    * @param limit maximum number of entries per page
    * @return one page of entries plus continuation info
    */
-  Page<MessageQueueEntry> pageOf(const std::string &processName,
-    const std::string &messageQueueName,
-    const std::optional<std::string> &afterName,
-    std::size_t limit) override;
+  Page<MessageQueueEntry>
+    pageOf(const MessageQueueFilter &filter, const std::optional<std::string> &afterName, std::size_t limit) override;
 
   /**
    * @param processName filter by process name
@@ -71,14 +67,13 @@ public:
    */
   void deleteOf(const std::vector<MessageQueueEntry> &entries) override;
 
-  void registerOwner(const std::string &queueName,
-    const std::string &processName,
-    const std::string &hostName,
-    std::uint64_t pid,
-    const std::chrono::system_clock::time_point &startedAt,
-    const std::string &ownerState) override;
+  /**
+   * Register the owner of a queue (or refresh its registration).
+   * @param registration the owner record incl. its identity and timestamps
+   */
+  void registerOwner(const MessageQueueOwnerRegistration &registration) override;
   void updateHeartbeat(const std::string &queueName, const std::chrono::system_clock::time_point &heartbeatAt) override;
-  void updateOwnerState(const std::string &queueName, const std::string &ownerState) override;
+  void updateOwnerState(const MessageQueueOwnerStateUpdate &update) override;
   std::vector<MessageQueueEntry> findOrphans(const std::chrono::seconds &staleThreshold) override;
   void reclaimOrphans(const std::vector<MessageQueueEntry> &entries) override;
   void clearOwner(const std::string &queueName) override;

@@ -52,11 +52,11 @@ MessageQueueStats messageQueueStatsOf(const MessageQueueEntry &entry,
   stats.ownerPid = entry.get_owner_pid();
   stats.ownerHost = entry.get_owner_host();
   stats.ownerState = entry.get_owner_state();
-  if (entry.get_started_at().has_value()) {
-    stats.startedAtEpochMs = epochMillisecondsOf(entry.get_started_at().value());
-  }
-  if (entry.get_last_heartbeat_at().has_value()) {
-    const auto heartbeat = entry.get_last_heartbeat_at().value();
+  const std::optional<std::chrono::system_clock::time_point> startedAt = entry.get_started_at();
+  if (startedAt.has_value()) { stats.startedAtEpochMs = epochMillisecondsOf(startedAt.value()); }
+  const std::optional<std::chrono::system_clock::time_point> lastHeartbeatAt = entry.get_last_heartbeat_at();
+  if (lastHeartbeatAt.has_value()) {
+    const auto heartbeat = lastHeartbeatAt.value();
     stats.lastHeartbeatAtEpochMs = epochMillisecondsOf(heartbeat);
     const auto age = std::chrono::duration_cast<std::chrono::milliseconds>(now - heartbeat);
     stats.heartbeatAgeMs = std::max<std::int64_t>(age.count(), 0);

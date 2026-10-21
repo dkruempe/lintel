@@ -166,10 +166,9 @@ TEST_CASE("MessageQueueController::messageQueueOfGet returns 401 without a beare
   // without a bearer token the wrapper never asks the auth service, and the
   // request never reaches the repository
   FORBID_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)));
-  FORBID_CALL(*fixture.m_repository, allOf(ANY(const std::string &), ANY(const std::string &)));
-  FORBID_CALL(*fixture.m_repository,
-    pageOf(
-      ANY(const std::string &), ANY(const std::string &), ANY(const std::optional<std::string> &), ANY(std::size_t)));
+  FORBID_CALL(*fixture.m_repository, allOf(ANY(MessageQueueFilter)));
+  FORBID_CALL(
+    *fixture.m_repository, pageOf(ANY(MessageQueueFilter), ANY(const std::optional<std::string> &), ANY(std::size_t)));
 
   auto response = fixture.m_client->Get("/messageQueue/worker/.*");
   REQUIRE(response != nullptr);
@@ -190,7 +189,7 @@ TEST_CASE(
   REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcOutsider, mqcTokenOutsider));
-  FORBID_CALL(*fixture.m_repository, allOf(ANY(const std::string &), ANY(const std::string &)));
+  FORBID_CALL(*fixture.m_repository, allOf(ANY(MessageQueueFilter)));
 
   auto response = fixture.m_client->Get("/messageQueue/worker/.*", mqcAuthHeaders(mqcTokenOutsider));
   REQUIRE(response != nullptr);
@@ -209,7 +208,7 @@ TEST_CASE("MessageQueueController::messageQueueOfGet returns 403 for a non json 
   REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
-  FORBID_CALL(*fixture.m_repository, allOf(ANY(const std::string &), ANY(const std::string &)));
+  FORBID_CALL(*fixture.m_repository, allOf(ANY(MessageQueueFilter)));
 
   auto headers = mqcAuthHeaders(mqcTokenAdmin);
   headers.emplace("Content-Type", "text/plain");
@@ -230,7 +229,7 @@ TEST_CASE("MessageQueueController::messageQueueOfGet serializes the repository e
   REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
-  REQUIRE_CALL(*fixture.m_repository, allOf("worker", "queue_.*"))
+  REQUIRE_CALL(*fixture.m_repository, allOf(MessageQueueFilter{ "worker", "queue_.*" }))
     .TIMES(1)
     .LR_RETURN(
       std::vector<MessageQueueEntry>{ mqcEntry("worker", "mqc-alpha", 10), mqcEntry("worker", "mqc-beta", 20) });
@@ -263,7 +262,9 @@ TEST_CASE(
   REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
-  REQUIRE_CALL(*fixture.m_repository, allOf("nobody", "nothing")).TIMES(1).LR_RETURN(std::vector<MessageQueueEntry>{});
+  REQUIRE_CALL(*fixture.m_repository, allOf(MessageQueueFilter{ "nobody", "nothing" }))
+    .TIMES(1)
+    .LR_RETURN(std::vector<MessageQueueEntry>{});
 
   auto response = fixture.m_client->Get("/messageQueue/nobody/nothing", mqcAuthHeaders(mqcTokenAdmin));
   REQUIRE(response != nullptr);
@@ -286,9 +287,11 @@ TEST_CASE(
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
   // the unpaged allOf() must not be used once paging is active
-  FORBID_CALL(*fixture.m_repository, allOf(ANY(const std::string &), ANY(const std::string &)));
+  FORBID_CALL(*fixture.m_repository, allOf(ANY(MessageQueueFilter)));
   REQUIRE_CALL(*fixture.m_repository,
-    pageOf("worker", "mqc-page", std::optional<std::string>{ "mqc-page-0" }, static_cast<std::size_t>(1)))
+    pageOf(MessageQueueFilter{ "worker", "mqc-page" },
+      std::optional<std::string>{ "mqc-page-0" },
+      static_cast<std::size_t>(1)))
     .TIMES(1)
     .LR_RETURN(Page<MessageQueueEntry>(
       { mqcEntry("worker", "mqc-page-0", 5) }, true, std::optional<std::string>{ "mqc-page-0" }));
@@ -317,10 +320,9 @@ TEST_CASE("MessageQueueController::messageQueueOfGet returns 400 for a limit of 
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
   // pagingParamsOf() rejects the request before any repository access happens
-  FORBID_CALL(*fixture.m_repository, allOf(ANY(const std::string &), ANY(const std::string &)));
-  FORBID_CALL(*fixture.m_repository,
-    pageOf(
-      ANY(const std::string &), ANY(const std::string &), ANY(const std::optional<std::string> &), ANY(std::size_t)));
+  FORBID_CALL(*fixture.m_repository, allOf(ANY(MessageQueueFilter)));
+  FORBID_CALL(
+    *fixture.m_repository, pageOf(ANY(MessageQueueFilter), ANY(const std::optional<std::string> &), ANY(std::size_t)));
 
   auto response = fixture.m_client->Get("/messageQueue/worker/.*?limit=0", mqcAuthHeaders(mqcTokenAdmin));
   REQUIRE(response != nullptr);
@@ -338,7 +340,7 @@ TEST_CASE("MessageQueueController::messageQueueOfGet returns 400 for a non numer
   REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
-  FORBID_CALL(*fixture.m_repository, allOf(ANY(const std::string &), ANY(const std::string &)));
+  FORBID_CALL(*fixture.m_repository, allOf(ANY(MessageQueueFilter)));
 
   auto response = fixture.m_client->Get("/messageQueue/worker/.*?limit=abc", mqcAuthHeaders(mqcTokenAdmin));
   REQUIRE(response != nullptr);
@@ -358,7 +360,7 @@ TEST_CASE("MessageQueueController::messageQueueOfGet accepts a user of the User-
   REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(plainUser, mqcTokenAdmin));
-  REQUIRE_CALL(*fixture.m_repository, allOf("worker", "mqc-plain"))
+  REQUIRE_CALL(*fixture.m_repository, allOf(MessageQueueFilter{ "worker", "mqc-plain" }))
     .TIMES(1)
     .LR_RETURN(std::vector<MessageQueueEntry>{ mqcEntry("worker", "mqc-plain", 3) });
 
@@ -380,15 +382,15 @@ TEST_CASE("MessageQueueController::statisticsOfGet returns depth, lag and owner 
     "worker",
     "mqc-stats",
     10,
-    static_cast<std::uint64_t>(777),
-    std::string("stats-host"),
-    now - std::chrono::seconds(10),
-    now - std::chrono::seconds(1),
-    std::string("active"));
+    MessageQueueOwnerColumns{ static_cast<std::uint64_t>(777),
+      std::string("stats-host"),
+      now - std::chrono::seconds(10),
+      now - std::chrono::seconds(1),
+      std::string("active") });
   REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
-  REQUIRE_CALL(*fixture.m_repository, allOf("worker", "mqc-stats"))
+  REQUIRE_CALL(*fixture.m_repository, allOf(MessageQueueFilter{ "worker", "mqc-stats" }))
     .TIMES(1)
     .LR_RETURN(std::vector<MessageQueueEntry>{ ownedEntry });
 
@@ -420,7 +422,7 @@ TEST_CASE("MessageQueueController::statisticsOfGet marks a missing heartbeat as 
   REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
     .TIMES(1)
     .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
-  REQUIRE_CALL(*fixture.m_repository, allOf("worker", "mqc-stale"))
+  REQUIRE_CALL(*fixture.m_repository, allOf(MessageQueueFilter{ "worker", "mqc-stale" }))
     .TIMES(1)
     .LR_RETURN(std::vector<MessageQueueEntry>{ mqcEntry("worker", "mqc-stale", 4) });
 

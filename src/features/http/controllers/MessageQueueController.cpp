@@ -52,13 +52,14 @@ void MessageQueueController::writeMessageQueuesOf(const httplib::Request &reques
   }
   PagingParams paging = pagingParamsOf(request);
   if (paging.m_enabled) {
-    Page<MessageQueueEntry> page =
-      m_messageQueueRepository->pageOf(processName, messageQueueName, paging.m_after, paging.m_limit);
+    Page<MessageQueueEntry> page = m_messageQueueRepository->pageOf(
+      MessageQueueFilter{ processName, messageQueueName }, paging.m_after, paging.m_limit);
     MessageQueuesPageDto messageQueuesPageDto(page);
     response.set_content(messageQueuesPageDto.JsonSerializable::serialize(), contentType.getName());
     return;
   }
-  std::vector<MessageQueueEntry> entries = m_messageQueueRepository->allOf(processName, messageQueueName);
+  std::vector<MessageQueueEntry> entries =
+    m_messageQueueRepository->allOf(MessageQueueFilter{ processName, messageQueueName });
   std::vector<std::pair<MessageQueueEntry, int32_t>> messageQueueInformation;
   messageQueueInformation.reserve(entries.size());
   for (const auto &entry : entries) {
