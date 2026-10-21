@@ -265,6 +265,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **The examples could not be started.** `Feature::m_name` was a `std::string_view` initialised from
+  a temporary `std::string`, so `getName()` returned freed stack bytes as soon as the constructor
+  returned. `StartupBuilder::verifyFeatureDependencies()` compared that garbage against the
+  configured names and aborted every process at startup with `terminate called ... feature '\x01'`
+  - `scripts/run-example.sh` never got past `bin/main`. The name is stored by value now, and a
+  regression test scribbles over the stack before it reads the name back.
+- **`export_repository --file` expanded every tilde, not just a leading one.** A Windows short name
+  (`C:\Users\RUNNER~1\...`) was rewritten into `C:\Users\RUNNERC:\Users\...`, so the CLI
+  failed to create the directory. The new `lintel::expandHomeDirectory()` only replaces `~` at the
+  start of the path.
 - **`RingBufferShm` addressed its slots with an absolute pointer.** Commit `a4c1c59` replaced the
   byte offset with a `std::byte *` to drop an int-to-pointer cast, which only works while the ring
   lives at the same virtual address in every process - a repository payload inside a shared memory
