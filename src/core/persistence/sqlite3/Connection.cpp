@@ -12,8 +12,8 @@
 
 #include "lintel/core/persistence/sqlite3/Connection.h"
 
-#include <functional>
 #include <regex>
+#include <string_view>
 
 #include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/exceptions/SQLException.h"
@@ -27,6 +27,12 @@ namespace {
 
   /// In-memory databases (and empty paths) must not switch to WAL.
   constexpr const char *kInMemoryDatabase = ":memory:";
+
+  /// Releases a prepared statement; used as unique_ptr deleter so every path finalizes.
+  struct StatementFinalizer
+  {
+    void operator()(sqlite3_stmt *stmt) const noexcept { sqlite3_finalize(stmt); }
+  };
 
   void execPragma(sqlite3 *db, const std::string &pragma)
   {
@@ -137,10 +143,10 @@ namespace sqlite {
     }
   }
 
-  // NOLINTNEXTLINE(bugprone-easily-swappable-parameters) — distinct names (queryName, query); signature is public API.
-  std::shared_ptr<Result> Connection::prepareStatement(const std::string &queryName, const std::string &query)
+  std::shared_ptr<Result> Connection::prepareStatement(std::string_view queryName, const std::string &query)
   {
-    auto found = m_preparedStatements.find(queryName);
+    std::string const name(queryName);
+    auto found = m_preparedStatements.find(name);
     if (found != m_preparedStatements.end()) { throw db::SQLException("SQLite sqlite3_stmt is initialized => abort"); }
 
     sqlite3_stmt *stmt = nullptr;
@@ -148,7 +154,7 @@ namespace sqlite {
 
     if (rc != SQLITE_OK) { throw db::SQLException("SQLite prepare exception: " + getErrorMessage()); }
 
-    m_preparedStatements.insert({ queryName, stmt });
+    m_preparedStatements.insert({ name, stmt });
 
     return std::make_shared<Result>();
   }
@@ -252,35 +258,45 @@ namespace sqlite {
 
   std::shared_ptr<Result> Connection::execute(const std::string &statement) const
   {
-    char *errorMessage = nullptr;
     std::shared_ptr<Result> result = std::make_shared<Result>();
-    // NOLINTNEXTLINE(bugprone-easily-swappable-parameters) — sqlite3_exec callback signature is fixed by the C API.
-    std::function<void(int argc, char **argv, char **column)> func = [&](int argc, char **argv, char **column) {
-      db::Arguments arguments(db::ConnectionType::SQLite);
-      for (int i = 0; i < argc; i++) {
-        std::string value;
-        if (argv[i] != nullptr) { value = argv[i]; }
-        db::Argument argument(value, column[i]);
-        arguments.add(argument);
-      }
-      result->add(arguments);
-    };
-    void *funcPtr = static_cast<void *>(&func);
-    const int rc = sqlite3_exec(m_db, statement.c_str(), callBack, funcPtr, &errorMessage);
 
-    if (rc != SQLITE_OK) {
-      std::string const errMsg = (errorMessage);
-      sqlite3_free(errorMessage);
-      throw db::SQLException("SQLite execution error: " + errMsg);
+    // sqlite3_exec ran every statement of the script. sqlite3_prepare_v2 only prepares the first
+    // one and returns the rest of the script in `tail`, so the script has to be walked statement
+    // by statement until no input is left.
+    const char *tail = statement.c_str();
+    while (tail != nullptr && *tail != '\0') {
+      const char *const current = tail;
+      sqlite3_stmt *stmt = nullptr;
+      const int prepareRc = sqlite3_prepare_v2(m_db, current, -1, &stmt, &tail);
+      if (prepareRc != SQLITE_OK) { throw db::SQLException("SQLite execution error: " + getErrorMessage()); }
+      // A successful prepare yields no statement for trailing whitespace or comments only.
+      if (stmt == nullptr) { break; }
+      // finalize on every path, including the throwing ones
+      std::unique_ptr<sqlite3_stmt, StatementFinalizer> const guard(stmt);
+
+      int step = SQLITE_ROW;
+      while (step == SQLITE_ROW) {
+        step = sqlite3_step(stmt);
+        if (step != SQLITE_ROW) { continue; }
+        db::Arguments arguments(db::ConnectionType::SQLite);
+        const int count = sqlite3_column_count(stmt);
+        for (int i = 0; i < count; i++) {
+          const unsigned char *text = sqlite3_column_text(stmt, i);
+          const char *name = sqlite3_column_name(stmt, i);
+          std::string value;
+          if (text != nullptr) { value = std::string(reinterpret_cast<const char *>(text)); }
+          if (name == nullptr) { continue; }
+          db::Argument argument(value, name);
+          arguments.add(argument);
+        }
+        result->add(arguments);
+      }
+      if (step != SQLITE_DONE) { throw db::SQLException("SQLite execution error: " + getErrorMessage()); }
+
+      // Guard against a prepare that reports success without consuming any input.
+      if (tail <= current) { break; }
     }
     return result;
-  }
-
-  int Connection::callBack(void *funcPtr, int argc, char **argv, char **column)
-  {
-    auto *func = static_cast<std::function<void(int argc, char **argv, char **column)> *>(funcPtr);
-    func->operator()(argc, argv, column);
-    return 0;
   }
 }// namespace sqlite
 }// namespace lintel

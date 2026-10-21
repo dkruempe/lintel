@@ -6,6 +6,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <string_view>
 
 #include "lintel/core/configuration/DatabaseConnectionEntry.h"
 #include "lintel/core/persistence/Parameter.h"
@@ -73,7 +74,7 @@ namespace sqlite {
      * @param query the SQL query
      * @return shared pointer to the result
      */
-    std::shared_ptr<Result> prepareStatement(const std::string &queryName, const std::string &query);
+    std::shared_ptr<Result> prepareStatement(std::string_view queryName, const std::string &query);
 
     /**
      * Executes a previously prepared statement.
@@ -89,16 +90,6 @@ namespace sqlite {
      * @param queryName the name of the prepared statement
      */
     void finalizePreparedStatement(const std::string &queryName);
-
-    /**
-     * Static callback for sqlite3_exec results.
-     * @param funcPtr user data pointer
-     * @param argc number of columns
-     * @param argv column values
-     * @param column column names
-     * @return 0 on success
-     */
-    static int callBack(void *funcPtr, int argc, char **argv, char **column);
 
     /** @return the last error message from SQLite */
     [[nodiscard]] std::string getErrorMessage() const;
