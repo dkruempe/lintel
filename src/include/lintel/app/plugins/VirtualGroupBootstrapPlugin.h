@@ -13,7 +13,11 @@ namespace lintel {
 class VirtualGroupBootstrapPlugin : public BootstrapPlugin
 {
 private:
-  std::shared_ptr<lintel::di::Container> m_container;
+  /** Weak on purpose: the plugin is a singleton *inside* the container, so a
+   *  shared_ptr here would close a reference cycle (container -> plugin ->
+   *  container) and the container would never be destroyed - which in turn kept
+   *  every service alive, so no service destructor ever ran. */
+  std::weak_ptr<lintel::di::Container> m_container;
   std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
 
 public:

@@ -23,7 +23,12 @@ void VirtualGroupBootstrapPlugin::onStart()
     LOG_INFO("no default database connection - skip virtual group bootstrap");
     return;
   }
-  auto groupProviders = m_container->resolveAll<GroupProvider>();
+  const std::shared_ptr<lintel::di::Container> container = m_container.lock();
+  if (container == nullptr) {
+    LOG_ERROR("container is gone - skip virtual group bootstrap");
+    return;
+  }
+  auto groupProviders = container->resolveAll<GroupProvider>();
   std::set<Group> groups;
   for (const auto &groupProvider : groupProviders) {
     std::vector<Group> temp = groupProvider->provide();
