@@ -26,7 +26,7 @@
 #include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
 #include "lintel/features/base/repositories/SharedMemoryRepository.h"
 #include "lintel/features/base/services/SchedulerService.h"
-#include "lintel/features/base/services/SharedMemoryRepositoryRegistry.h"
+#include "lintel/core/shm/SharedMemoryRepositoryRegistry.h"
 #include "lintel/features/base/services/SharedMemorySegmentManager.h"
 #include "lintel/features/base/services/SharedMemoryService.h"
 #include "lintel/features/base/services/ShmConstructors.h"
@@ -518,6 +518,56 @@ TEST_CASE("SharedMemoryRepositoryRegistry keeps typed repositories")
   REQUIRE(registry.remove("test-registry-cell"));
   REQUIRE_FALSE(registry.contains("test-registry-cell"));
   REQUIRE_FALSE(registry.remove("test-registry-cell"));
+}
+
+TEST_CASE("shm::SharedMemoryRepository::of reuses one instance per segment and name")
+{
+  ShmRepositoryFixture fixture;
+  auto &registry = SharedMemoryRepositoryRegistry::instance();
+  const std::string cellKey = fixture.segment->getName() + ":of-cell";
+  const std::string otherKey = fixture.segment->getName() + ":of-other";
+  REQUIRE_FALSE(registry.contains(cellKey));
+
+  auto first =
+    shm::SharedMemoryRepository<CellPayload>::of(fixture.service, fixture.segment, "of-cell", CellPayload{ 5, 6 });
+  REQUIRE(registry.contains(cellKey));
+  REQUIRE(first->get().m_value == 5);
+
+  // same segment and name: the registered instance comes back, the constructor
+  // arguments of the second call are not used again
+  auto second =
+    shm::SharedMemoryRepository<CellPayload>::of(fixture.service, fixture.segment, "of-cell", CellPayload{ 9, 9 });
+  REQUIRE(first.get() == second.get());
+  REQUIRE(second->get().m_value == 5);
+
+  // another name in the same segment is another instance
+  auto other =
+    shm::SharedMemoryRepository<CellPayload>::of(fixture.service, fixture.segment, "of-other", CellPayload{ 1, 2 });
+  REQUIRE(other.get() != first.get());
+  REQUIRE(other->get().m_value == 1);
+
+  // the key belongs to one payload type: a second type is refused instead of
+  // being handed a reinterpreted instance
+  REQUIRE_THROWS_AS(
+    (shm::SharedMemoryRepository<int>::of(fixture.service, fixture.segment, "of-cell", 1)), std::invalid_argument);
+
+  // remove() releases the entry; a later factory call builds a new instance
+  second.reset();
+  const long referencesBeforeRemove = first.use_count();// first + the registry
+  REQUIRE(registry.remove(cellKey));
+  REQUIRE_FALSE(registry.contains(cellKey));
+  REQUIRE(first.use_count() == referencesBeforeRemove - 1);
+  auto third =
+    shm::SharedMemoryRepository<CellPayload>::of(fixture.service, fixture.segment, "of-cell", CellPayload{ 7, 8 });
+  REQUIRE(third.get() != first.get());
+  // the binding is new, the cell is not: it still lives in the segment with the
+  // value the first construction stored
+  REQUIRE(third->get().m_value == 5);
+
+  // do not leave entries behind: they would keep the fixture's service (and
+  // with it the segment mapping) alive beyond the test
+  REQUIRE(registry.remove(cellKey));
+  REQUIRE(registry.remove(otherKey));
 }
 
 }// namespace lintel

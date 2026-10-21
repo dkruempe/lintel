@@ -1,4 +1,4 @@
-#include "lintel/features/base/services/SharedMemoryRepositoryRegistry.h"
+#include "lintel/core/shm/SharedMemoryRepositoryRegistry.h"
 
 namespace lintel {
 

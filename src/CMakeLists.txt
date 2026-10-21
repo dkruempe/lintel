@@ -128,7 +128,6 @@ set(headers
     include/lintel/core/services/ISharedMemoryService.h
     include/lintel/core/services/PropertyRegistration.h
     include/lintel/features/base/services/SharedMemoryService.h
-    include/lintel/features/base/services/SharedMemoryRepositoryRegistry.h
     include/lintel/features/base/services/ShmConstructors.h
     include/lintel/core/services/SignalService.h
     include/lintel/core/services/StopWatchService.h
@@ -222,6 +221,7 @@ set(headers
     include/lintel/core/shm/ShmSegmentAccessor.h
     include/lintel/core/shm/ShmView.h
     include/lintel/core/shm/SharedMemoryRepository.h
+    include/lintel/core/shm/SharedMemoryRepositoryRegistry.h
     include/lintel/core/shm/containers/ArrayShm.h
     include/lintel/core/shm/containers/QueueShm.h
     include/lintel/core/shm/containers/RingBufferShm.h

@@ -4,14 +4,17 @@
 #include <cstddef>
 #include <memory>
 #include <new>
+#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <type_traits>
 #include <utility>
 
+#include "lintel/core/models/SharedMemorySegment.h"
+#include "lintel/core/shm/SharedMemoryRepositoryRegistry.h"
+
 namespace lintel {
 
-class SharedMemorySegment;
 class SharedMemoryService;
 
 /**
@@ -194,6 +197,44 @@ namespace shm {
 
     SharedMemoryRepository(const SharedMemoryRepository &) = delete;
     SharedMemoryRepository &operator=(const SharedMemoryRepository &) = delete;
+
+    /** Bind to the named cell, reusing the instance this process already holds.
+     *
+     * The registry key is `<segment name>:<cell name>`, so a second call with
+     * the same segment and cell name returns the instance created first: the
+     * segment keeps one cell and one payload instead of a second binding - and
+     * a second ShmCell - to the same name. The registry keeps the returned
+     * repository alive; remove() it from SharedMemoryRepositoryRegistry to
+     * release it again.
+     *
+     * @param service shared memory service of the segment
+     * @param segment segment the object lives in
+     * @param name    name of the object inside the segment
+     * @param args    constructor arguments, used only when the cell is created
+     * @return the repository bound to the cell
+     * @throws std::invalid_argument on invalid arguments, or when the key is
+     *         already registered with another payload type
+     * @throws ShmSegmentNotFound when the service does not know the segment */
+    template<typename... Args>
+    static std::shared_ptr<SharedMemoryRepository<T>> of(std::shared_ptr<SharedMemoryService> service,
+      std::shared_ptr<SharedMemorySegment> segment,
+      std::string name,
+      Args &&...args)
+    {
+      if (service == nullptr || segment == nullptr) {
+        throw std::invalid_argument("shared memory repository factory needs a service and a segment");
+      }
+      const std::string key = segment->getName() + ":" + name;
+      SharedMemoryRepositoryRegistry &registry = SharedMemoryRepositoryRegistry::instance();
+      // Throws std::invalid_argument when the key holds another payload type:
+      // handing that instance out would fail somewhere inside get()/set().
+      std::shared_ptr<SharedMemoryRepository<T>> existing = registry.getAs<SharedMemoryRepository<T>>(key);
+      if (existing != nullptr) { return existing; }
+      std::shared_ptr<SharedMemoryRepository<T>> repository = std::make_shared<SharedMemoryRepository<T>>(
+        std::move(service), std::move(segment), std::move(name), std::forward<Args>(args)...);
+      registry.registerRepository(key, repository);
+      return repository;
+    }
 
     /** @return const reference to the object in shared memory; the reference
      *  is re-resolved when the segment was remapped */
