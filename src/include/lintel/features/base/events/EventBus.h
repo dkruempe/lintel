@@ -19,6 +19,8 @@ struct EventBusLimits
   static constexpr std::size_t MAX_TOPICS = 16;
   /** Maximum number of subscriber slots available on one bus. */
   static constexpr std::size_t MAX_SUBSCRIBERS = 32;
+  /** Maximum number of priority levels (Critical, High, Normal, Low). */
+  static constexpr std::size_t MAX_PRIORITIES = 4;
   /** Maximum queue capacity; boost::lockfree uses a 16 bit index. */
   static constexpr std::size_t MAX_CAPACITY = 65534;
 };
@@ -41,6 +43,16 @@ struct EventBusConfig
   std::size_t maxTopics = EventBusLimits::MAX_TOPICS;
   /** Maximum number of subscribers that can be registered. */
   std::size_t maxSubscribers = EventBusLimits::MAX_SUBSCRIBERS;
+  /**
+   * Number of priority queues used per subscriber (1..MAX_PRIORITIES).
+   *
+   * The subscriber queues of priority index 0 (Critical) are always drained
+   * first, index 1 (High) second, then Normal and Low. Events whose priority
+   * index is not available are queued at the lowest configured priority.
+   * A value of 1 therefore gives a pure FIFO queue, which matches the
+   * behaviour of an unprioritised bus.
+   */
+  std::size_t maxPriorities = EventBusLimits::MAX_PRIORITIES;
   /** Drop policy for publish operations when queues are full. */
   DropPolicy pubPolicy = DropPolicy::Fail;
   /** Timeout for Block policy in milliseconds. */
@@ -56,7 +68,8 @@ struct EventBusConfig
     return busCapacity > 0 && busCapacity <= EventBusLimits::MAX_CAPACITY && subscriberCapacity > 0
            && subscriberCapacity <= EventBusLimits::MAX_CAPACITY && maxTopics > 0
            && maxTopics <= EventBusLimits::MAX_TOPICS && maxSubscribers > 0
-           && maxSubscribers <= EventBusLimits::MAX_SUBSCRIBERS;
+           && maxSubscribers <= EventBusLimits::MAX_SUBSCRIBERS && maxPriorities > 0
+           && maxPriorities <= EventBusLimits::MAX_PRIORITIES;
   }
 };
 
@@ -68,6 +81,17 @@ struct EventBusConfig
  *   multi-consumer queue and received by calling receive(),
  * - publish/subscribe: events are pushed into the queue of every subscriber
  *   of the event topic (broadcast).
+ *
+ * Subscribers are prioritised: every subscriber owns one queue per configured
+ * priority level (Critical, High, Normal, Low). receiveOf() drains Critical
+ * before High before Normal before Low and stays FIFO within one priority.
+ * The point-to-point bus queue is a single FIFO queue; the event priority is
+ * ignored there, because the consumer explicitly pulls the next event.
+ *
+ * Topic subscriptions support the wildcard patterns of TopicMatcher
+ * (`*` matches any sequence, `?` matches a single character). A subscriber of
+ * `gpio.*` therefore receives events published to `gpio.1`. Exact topic names
+ * are matched without running the wildcard matcher.
  *
  * All queues are strictly bounded, lock-free MPMC ring buffers with fixed
  * capacity that live inside the shared memory segment. They are IPC-safe:
@@ -112,7 +136,7 @@ public:
   [[nodiscard]] bool isLockFree() const;
 
   /** Register a topic on the bus (idempotent).
-   * @param topic the topic name
+   * @param topic the topic name or a wildcard pattern
    * @return false if the topic table is full */
   bool registerTopic(const std::string &topic);
 
@@ -124,7 +148,13 @@ public:
   [[nodiscard]] std::size_t topicCount() const;
 
   /** Subscribe a named subscriber to a topic.
-   * @param topic the topic name
+   *
+   * The topic may be a wildcard pattern (`*` matches any sequence, `?` matches
+   * a single character); such a subscription receives every event whose topic
+   * matches the pattern. Wildcard patterns are registered implicitly, while
+   * exact topic names still have to be registered with registerTopic() first.
+   *
+   * @param topic the topic name or wildcard pattern
    * @param subscriber the subscriber name
    * @return false if the topic does not exist or the table is full */
   bool subscribe(const std::string &topic, const std::string &subscriber);
@@ -152,7 +182,8 @@ public:
    * @return false if the bus queue is full */
   bool publish(const Event &event);
 
-  /** Publish an event to every subscriber of the event topic.
+  /** Publish an event to every subscriber whose subscription matches the
+   * event topic (exact name or wildcard pattern).
    * @param event the event to publish
    * @return false if no subscriber received the event */
   bool publishToSubscribers(const Event &event);
@@ -161,9 +192,10 @@ public:
    * @return the event or std::nullopt if the queue is empty */
   [[nodiscard]] std::optional<Event> receive();
 
-  /** Receive the next event of a subscriber queue.
+  /** Receive the next event of a subscriber queue, highest priority first
+   * (Critical, High, Normal, Low) and FIFO within one priority.
    * @param subscriber the subscriber name
-   * @return the event or std::nullopt if the queue is empty */
+   * @return the event or std::nullopt if all queues are empty */
   [[nodiscard]] std::optional<Event> receiveOf(const std::string &subscriber);
 
   /** @return true if the point-to-point bus queue is empty */
@@ -247,6 +279,11 @@ private:
      * @return true if the ring is (likely) empty */
     [[nodiscard]] bool empty() const;
 
+    /** Best-effort number of queued elements; an in-flight push may be
+     * invisible, so the value is approximate under concurrency.
+     * @return the (likely) current ring depth */
+    [[nodiscard]] std::size_t size() const;
+
     /** @return true if the queue operations are lock-free */
     [[nodiscard]] static bool isLockFree();
 
@@ -313,6 +350,7 @@ private:
   std::size_t m_subscriberCapacity = 0;
   std::size_t m_maxTopics = 0;
   std::size_t m_maxSubscribers = 0;
+  std::size_t m_maxPriorities = 0;
   std::atomic<std::int64_t> m_sequence{ 0 };
   std::atomic<std::uint64_t> m_droppedEvents{ 0 };
   std::atomic<std::size_t> m_topicCount{ 0 };
@@ -321,7 +359,8 @@ private:
   ShmRing m_bus;
   TopicEntry m_topics[EventBusLimits::MAX_TOPICS]{};
   SubscriberEntry m_subscribers[EventBusLimits::MAX_SUBSCRIBERS]{};
-  alignas(ShmRing) std::byte m_subscriberQueues[EventBusLimits::MAX_SUBSCRIBERS][sizeof(ShmRing)]{};
+  alignas(ShmRing) std::byte
+    m_subscriberQueues[EventBusLimits::MAX_SUBSCRIBERS][EventBusLimits::MAX_PRIORITIES][sizeof(ShmRing)]{};
   bool m_sticky = false;
   std::uint32_t m_stickyTtlMs = 60000;
   struct LastValueEntry
@@ -336,8 +375,19 @@ private:
 
   [[nodiscard]] int findTopicIndex(const char *topic) const;
   [[nodiscard]] int findSubscriberIndex(const char *subscriber) const;
-  [[nodiscard]] ShmRing &subscriberQueueOf(std::size_t index);
-  [[nodiscard]] const ShmRing &subscriberQueueOf(std::size_t index) const;
+  /** Register a topic while the registry lock is held.
+   * @param topic the topic name or pattern
+   * @return the topic index or -1 if the table is full */
+  [[nodiscard]] int registerTopicLocked(const std::string &topic);
+  /** @return the queue index of the event priority, clamped to the configured levels */
+  [[nodiscard]] std::size_t priorityIndexOf(const Event &event) const;
+  [[nodiscard]] ShmRing &subscriberQueueOf(std::size_t index, std::size_t priority);
+  [[nodiscard]] const ShmRing &subscriberQueueOf(std::size_t index, std::size_t priority) const;
+  /** Push an event into the priority queue of a subscriber.
+   * @return true if the event was queued */
+  bool pushToSubscriber(std::size_t index, const Event &event);
+  /** @return true if the name contains a wildcard character ('*' or '?') */
+  [[nodiscard]] static bool isPattern(const char *topic);
   void storeLastValue(const Event &event);
   bool deliverStickyToSubscriber(const std::string &subscriber, int topicIndex);
 
@@ -365,7 +415,7 @@ public:
   [[nodiscard]] virtual bool isLockFree() const = 0;
 
   /** Register a topic on the bus (idempotent).
-   * @param topic the topic name
+   * @param topic the topic name or a wildcard pattern
    * @return false if the topic table is full */
   virtual bool registerTopic(const std::string &topic) = 0;
 
@@ -376,8 +426,8 @@ public:
   /** @return the number of registered topics */
   [[nodiscard]] virtual std::size_t topicCount() const = 0;
 
-  /** Subscribe a named subscriber to a topic.
-   * @param topic the topic name
+  /** Subscribe a named subscriber to a topic or wildcard pattern.
+   * @param topic the topic name or wildcard pattern
    * @param subscriber the subscriber name
    * @return false if the topic does not exist or the table is full */
   virtual bool subscribe(const std::string &topic, const std::string &subscriber) = 0;
@@ -405,7 +455,8 @@ public:
    * @return false if the bus queue is full */
   virtual bool publish(const Event &event) = 0;
 
-  /** Publish an event to every subscriber of the event topic.
+  /** Publish an event to every subscriber whose subscription matches the
+   * event topic (exact name or wildcard pattern).
    * @param event the event to publish
    * @return false if no subscriber received the event */
   virtual bool publishToSubscribers(const Event &event) = 0;
@@ -414,9 +465,9 @@ public:
    * @return the event or std::nullopt if the queue is empty */
   [[nodiscard]] virtual std::optional<Event> receive() = 0;
 
-  /** Receive the next event of a subscriber queue.
+  /** Receive the next event of a subscriber queue, highest priority first.
    * @param subscriber the subscriber name
-   * @return the event or std::nullopt if the queue is empty */
+   * @return the event or std::nullopt if all queues are empty */
   [[nodiscard]] virtual std::optional<Event> receiveOf(const std::string &subscriber) = 0;
 
   /** @return true if the point-to-point bus queue is empty */
@@ -502,8 +553,11 @@ public:
 
   void reset() override { m_bus.reset(); }
 
-  [[nodiscard]] std::size_t queueDepth() const { return 0; }// placeholder
-  [[nodiscard]] std::size_t queueDepthOf(const std::string &) const { return 0; }
+  [[nodiscard]] std::size_t queueDepth() const { return m_bus.busQueueDepth(); }
+  [[nodiscard]] std::size_t queueDepthOf(const std::string &subscriber) const
+  {
+    return m_bus.subscriberQueueDepth(subscriber);
+  }
   [[nodiscard]] std::uint64_t droppedTotal() const { return m_bus.droppedEventsOf(); }
 
 private:

@@ -72,6 +72,18 @@ public:
   /** @return the creation timestamp (Unix epoch seconds) */
   [[nodiscard]] std::int64_t timestamp() const { return m_timestamp; }
 
+  /** Set the delivery priority of the event (default: EventPriority::Normal).
+   * @param priority the priority used by the EventBus subscriber queues */
+  void setPriority(EventPriority priority) { m_priority = static_cast<std::uint8_t>(priority); }
+
+  /** @return the delivery priority of the event; values outside the enum are
+   *          reported as EventPriority::Normal */
+  [[nodiscard]] EventPriority priority() const
+  {
+    return m_priority <= static_cast<std::uint8_t>(EventPriority::Low) ? static_cast<EventPriority>(m_priority)
+                                                                       : EventPriority::Normal;
+  }
+
   /**
    * Copy a payload of given size into the content buffer.
    * @param data pointer to the payload (may be nullptr when size is zero)
@@ -128,6 +140,7 @@ private:
   std::size_t m_contentLength = 0;
   std::int64_t m_sequence = 0;
   std::int64_t m_timestamp = 0;
+  std::uint8_t m_priority = static_cast<std::uint8_t>(EventPriority::Normal);
 
   static constexpr void copyInto(char (&destination)[NAME_SIZE], std::string_view value)
   {

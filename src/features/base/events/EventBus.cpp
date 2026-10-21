@@ -2,6 +2,7 @@
 
 #include "lintel/core/platform/Platform.h"
 #include "lintel/core/shm/ShmSegmentAccessor.h"
+#include "lintel/features/base/events/TopicMatcher.h"
 
 #include <chrono>
 #include <cstring>
@@ -16,25 +17,31 @@ static_assert(std::atomic<std::size_t>::is_always_lock_free, "EventBus requires 
 
 EventBus::EventBus(const std::string &name, const EventBusConfig &config, ShmSegmentAccessor segment)
   : m_busCapacity(config.busCapacity), m_subscriberCapacity(config.subscriberCapacity), m_maxTopics(config.maxTopics),
-    m_maxSubscribers(config.maxSubscribers), m_bus(config.busCapacity, segment)
+    m_maxSubscribers(config.maxSubscribers), m_maxPriorities(config.maxPriorities), m_bus(config.busCapacity, segment)
 {
   if (!config.isValid()) { throw std::invalid_argument("invalid event bus configuration"); }
   copyInto(m_name, name);
   std::size_t built = 0;
   try {
-    for (; built < EventBusLimits::MAX_SUBSCRIBERS; ++built) {
-      new (&m_subscriberQueues[built]) ShmRing(config.subscriberCapacity, segment);
+    for (std::size_t subscriber = 0; subscriber < EventBusLimits::MAX_SUBSCRIBERS; ++subscriber) {
+      for (std::size_t priority = 0; priority < m_maxPriorities; ++priority) {
+        new (static_cast<void *>(&m_subscriberQueues[subscriber][priority]))
+          ShmRing(config.subscriberCapacity, segment);
+        ++built;
+      }
     }
   } catch (...) {
-    for (std::size_t i = 0; i < built; ++i) { reinterpret_cast<ShmRing *>(&m_subscriberQueues[i])->~ShmRing(); }
+    for (std::size_t i = 0; i < built; ++i) { subscriberQueueOf(i / m_maxPriorities, i % m_maxPriorities).~ShmRing(); }
     throw;
   }
 }
 
 EventBus::~EventBus()
 {
-  for (std::size_t i = 0; i < EventBusLimits::MAX_SUBSCRIBERS; ++i) {
-    reinterpret_cast<ShmRing *>(&m_subscriberQueues[i])->~ShmRing();
+  for (std::size_t subscriber = 0; subscriber < EventBusLimits::MAX_SUBSCRIBERS; ++subscriber) {
+    for (std::size_t priority = 0; priority < m_maxPriorities; ++priority) {
+      subscriberQueueOf(subscriber, priority).~ShmRing();
+    }
   }
 }
 
@@ -47,6 +54,7 @@ EventBusConfig EventBus::getConfig() const
   config.subscriberCapacity = m_subscriberCapacity;
   config.maxTopics = m_maxTopics;
   config.maxSubscribers = m_maxSubscribers;
+  config.maxPriorities = m_maxPriorities;
   return config;
 }
 
@@ -72,15 +80,30 @@ int EventBus::findSubscriberIndex(const char *subscriber) const
   return -1;
 }
 
-EventBus::ShmRing &EventBus::subscriberQueueOf(std::size_t index)
+EventBus::ShmRing &EventBus::subscriberQueueOf(std::size_t index, std::size_t priority)
 {
-  return *reinterpret_cast<ShmRing *>(&m_subscriberQueues[index]);
+  return *reinterpret_cast<ShmRing *>(&m_subscriberQueues[index][priority]);
 }
 
-const EventBus::ShmRing &EventBus::subscriberQueueOf(std::size_t index) const
+const EventBus::ShmRing &EventBus::subscriberQueueOf(std::size_t index, std::size_t priority) const
 {
-  return *reinterpret_cast<const ShmRing *>(&m_subscriberQueues[index]);
+  return *reinterpret_cast<const ShmRing *>(&m_subscriberQueues[index][priority]);
 }
+
+std::size_t EventBus::priorityIndexOf(const Event &event) const
+{
+  const auto priority = static_cast<std::size_t>(event.priority());
+  return priority < m_maxPriorities ? priority : m_maxPriorities - 1u;
+}
+
+bool EventBus::pushToSubscriber(std::size_t index, const Event &event)
+{
+  if (subscriberQueueOf(index, priorityIndexOf(event)).push(event)) { return true; }
+  m_droppedEvents.fetch_add(1u, std::memory_order_relaxed);
+  return false;
+}
+
+bool EventBus::isPattern(const char *topic) { return std::strpbrk(topic, "*?") != nullptr; }
 
 void EventBus::copyInto(char (&destination)[Event::NAME_SIZE], const std::string &value)
 {
@@ -194,21 +217,27 @@ bool EventBus::ShmRing::empty() const
   return m_tail.load(std::memory_order_acquire) == m_head.load(std::memory_order_acquire);
 }
 
+std::size_t EventBus::ShmRing::size() const
+{
+  const std::uint64_t head = m_head.load(std::memory_order_acquire);
+  const std::uint64_t tail = m_tail.load(std::memory_order_acquire);
+  if (head <= tail) { return 0; }
+  const std::uint64_t depth = head - tail;
+  // Depth can never exceed the configured capacity (which is a std::size_t and
+  // <= MAX_CAPACITY), so the conversion below is safe; the explicit clamp keeps
+  // it warning-free on 32-bit targets as well.
+  return depth > static_cast<std::uint64_t>(-1) ? static_cast<std::size_t>(-1) : static_cast<std::size_t>(depth);
+}
+
 bool EventBus::ShmRing::isLockFree() { return std::atomic<std::uint64_t>::is_always_lock_free; }
 
-bool EventBus::registerTopic(const std::string &topic)
+int EventBus::registerTopicLocked(const std::string &topic)
 {
-  if (topic.empty()) { return false; }
-  m_registryLock.acquire();
-  if (findTopicIndex(topic.c_str()) >= 0) {
-    m_registryLock.release();
-    return true;
-  }
+  if (topic.empty()) { return -1; }
+  const int existing = findTopicIndex(topic.c_str());
+  if (existing >= 0) { return existing; }
   const std::size_t count = m_topicCount.load(std::memory_order_relaxed);
-  if (count >= m_maxTopics) {
-    m_registryLock.release();
-    return false;
-  }
+  if (count >= m_maxTopics) { return -1; }
   std::size_t slot = EventBusLimits::MAX_TOPICS;
   for (std::size_t i = 0; i < EventBusLimits::MAX_TOPICS; ++i) {
     if (m_topics[i].name[0] == '\0') {
@@ -216,15 +245,19 @@ bool EventBus::registerTopic(const std::string &topic)
       break;
     }
   }
-  if (slot == EventBusLimits::MAX_TOPICS) {
-    m_registryLock.release();
-    return false;
-  }
+  if (slot == EventBusLimits::MAX_TOPICS) { return -1; }
   copyInto(m_topics[slot].name, topic);
   m_topics[slot].subscriberCount.store(0u, std::memory_order_relaxed);
   m_topicCount.store(count + 1u, std::memory_order_relaxed);
+  return static_cast<int>(slot);
+}
+
+bool EventBus::registerTopic(const std::string &topic)
+{
+  m_registryLock.acquire();
+  const int index = registerTopicLocked(topic);
   m_registryLock.release();
-  return true;
+  return index >= 0;
 }
 
 bool EventBus::isTopicRegistered(const std::string &topic) const
@@ -247,7 +280,12 @@ bool EventBus::subscribe(const std::string &topic, const std::string &subscriber
 {
   if (topic.empty() || subscriber.empty()) { return false; }
   m_registryLock.acquire();
-  const int topicIndex = findTopicIndex(topic.c_str());
+  int topicIndex = findTopicIndex(topic.c_str());
+  if (topicIndex < 0 && isPattern(topic.c_str())) {
+    // Wildcard subscriptions register their pattern implicitly, so callers do
+    // not have to know the topic beforehand.
+    topicIndex = registerTopicLocked(topic);
+  }
   if (topicIndex < 0) {
     m_registryLock.release();
     return false;
@@ -393,23 +431,35 @@ bool EventBus::publishToSubscribers(const Event &event)
   Event copy = event;
   copy.setSequence(m_sequence.fetch_add(1, std::memory_order_relaxed) + 1);
   m_registryLock.acquire();
-  const int topicIndex = findTopicIndex(copy.topic());
-  if (topicIndex < 0) {
-    m_registryLock.release();
-    return false;
-  }
-  TopicEntry &topicEntry = m_topics[static_cast<std::size_t>(topicIndex)];
-  const std::size_t subscriberCount = topicEntry.subscriberCount.load(std::memory_order_acquire);
   std::size_t indices[EventBusLimits::MAX_SUBSCRIBERS]{};
-  for (std::size_t k = 0; k < subscriberCount; ++k) { indices[k] = topicEntry.subscribers[k]; }
+  bool seen[EventBusLimits::MAX_SUBSCRIBERS]{};
+  std::size_t matches = 0;
+  const auto collect = [&](const TopicEntry &entry) {
+    const std::size_t subscriberCount = entry.subscriberCount.load(std::memory_order_acquire);
+    for (std::size_t k = 0; k < subscriberCount; ++k) {
+      const std::size_t index = entry.subscribers[k];
+      if (index >= EventBusLimits::MAX_SUBSCRIBERS || seen[index]) { continue; }
+      seen[index] = true;
+      indices[matches] = index;
+      ++matches;
+    }
+  };
+  // Exact topic match is the common case and avoids running the wildcard matcher.
+  const int exactIndex = findTopicIndex(copy.topic());
+  if (exactIndex >= 0) { collect(m_topics[static_cast<std::size_t>(exactIndex)]); }
+  const std::size_t topicCount = m_topicCount.load(std::memory_order_relaxed);
+  const std::size_t limit = topicCount < EventBusLimits::MAX_TOPICS ? topicCount : EventBusLimits::MAX_TOPICS;
+  for (std::size_t i = 0; i < limit; ++i) {
+    if (static_cast<int>(i) == exactIndex) { continue; }
+    const TopicEntry &entry = m_topics[i];
+    if (!isPattern(entry.name)) { continue; }
+    if (!TopicMatcher::matches(entry.name, copy.topic())) { continue; }
+    collect(entry);
+  }
   m_registryLock.release();
   bool delivered = false;
-  for (std::size_t k = 0; k < subscriberCount; ++k) {
-    if (subscriberQueueOf(indices[k]).push(copy)) {
-      delivered = true;
-    } else {
-      m_droppedEvents.fetch_add(1u, std::memory_order_relaxed);
-    }
+  for (std::size_t k = 0; k < matches; ++k) {
+    if (pushToSubscriber(indices[k], copy)) { delivered = true; }
   }
   return delivered;
 }
@@ -427,8 +477,11 @@ std::optional<Event> EventBus::receiveOf(const std::string &subscriber)
   const int subscriberIndex = findSubscriberIndex(subscriber.c_str());
   m_registryLock.release();
   if (subscriberIndex < 0) { return std::nullopt; }
-  Event out{};
-  if (subscriberQueueOf(static_cast<std::size_t>(subscriberIndex)).pop(out)) { return out; }
+  const std::size_t index = static_cast<std::size_t>(subscriberIndex);
+  for (std::size_t priority = 0; priority < m_maxPriorities; ++priority) {
+    Event out{};
+    if (subscriberQueueOf(index, priority).pop(out)) { return out; }
+  }
   return std::nullopt;
 }
 
@@ -440,7 +493,11 @@ bool EventBus::isEmptyOf(const std::string &subscriber) const
   const int subscriberIndex = findSubscriberIndex(subscriber.c_str());
   m_registryLock.release();
   if (subscriberIndex < 0) { return true; }
-  return subscriberQueueOf(static_cast<std::size_t>(subscriberIndex)).empty();
+  const std::size_t index = static_cast<std::size_t>(subscriberIndex);
+  for (std::size_t priority = 0; priority < m_maxPriorities; ++priority) {
+    if (!subscriberQueueOf(index, priority).empty()) { return false; }
+  }
+  return true;
 }
 
 std::int64_t EventBus::sequenceOf() const { return m_sequence.load(std::memory_order_relaxed); }
@@ -452,8 +509,10 @@ void EventBus::reset()
   m_registryLock.acquire();
   Event drop{};
   while (m_bus.pop(drop)) {}
-  for (std::size_t i = 0; i < EventBusLimits::MAX_SUBSCRIBERS; ++i) {
-    while (subscriberQueueOf(i).pop(drop)) {}
+  for (std::size_t subscriber = 0; subscriber < EventBusLimits::MAX_SUBSCRIBERS; ++subscriber) {
+    for (std::size_t priority = 0; priority < m_maxPriorities; ++priority) {
+      while (subscriberQueueOf(subscriber, priority).pop(drop)) {}
+    }
   }
   m_registryLock.release();
 }
@@ -466,7 +525,8 @@ std::size_t EventBus::requiredSize(const EventBusConfig &config)
     (sizeof(Event) + sizeof(std::atomic<std::uint64_t>) + CACHELINE - 1u) & ~(CACHELINE - 1u);
   const std::size_t busRing = config.busCapacity * slotSize + CACHELINE;
   const std::size_t subscriberRing = config.subscriberCapacity * slotSize + CACHELINE;
-  const std::size_t total = sizeof(EventBus) + busRing + EventBusLimits::MAX_SUBSCRIBERS * subscriberRing;
+  const std::size_t total =
+    sizeof(EventBus) + busRing + EventBusLimits::MAX_SUBSCRIBERS * config.maxPriorities * subscriberRing;
   static constexpr std::size_t OVERHEAD = std::size_t{ 256 } * 1024;
   return total + OVERHEAD;
 }
@@ -513,6 +573,7 @@ void EventBus::RegistryLock::acquire() const
 void EventBus::RegistryLock::release() const { m_state.store(0, std::memory_order_release); }
 }// namespace lintel
 
+namespace lintel {
 static std::int64_t nowMs()
 {
   return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch())
@@ -553,20 +614,24 @@ bool EventBus::deliverStickyToSubscriber(const std::string &subscriber, int topi
     }
     int subIndex = findSubscriberIndex(subscriber.c_str());
     if (subIndex < 0) { return false; }
-    return subscriberQueueOf(static_cast<std::size_t>(subIndex)).push(lv.value);
+    return pushToSubscriber(static_cast<std::size_t>(subIndex), lv.value);
   }
   return true;
 }
 
-std::size_t EventBus::busQueueDepth() const
-{
-  // Best effort - lock-free, approximate
-  return 0;
-}
+std::size_t EventBus::busQueueDepth() const { return m_bus.size(); }
 
 std::size_t EventBus::subscriberQueueDepth(const std::string &subscriber) const
 {
-  int idx = findSubscriberIndex(subscriber.c_str());
-  if (idx < 0) { return 0; }
-  return 0;
+  m_registryLock.acquire();
+  const int subscriberIndex = findSubscriberIndex(subscriber.c_str());
+  m_registryLock.release();
+  if (subscriberIndex < 0) { return 0; }
+  const std::size_t index = static_cast<std::size_t>(subscriberIndex);
+  std::size_t depth = 0;
+  for (std::size_t priority = 0; priority < m_maxPriorities; ++priority) {
+    depth += subscriberQueueOf(index, priority).size();
+  }
+  return depth;
 }
+}// namespace lintel

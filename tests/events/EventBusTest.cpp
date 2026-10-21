@@ -6,6 +6,7 @@
 #include <filesystem>
 #include <string>
 #include <type_traits>
+#include <vector>
 
 #include <boost/interprocess/managed_mapped_file.hpp>
 
@@ -176,10 +177,13 @@ TEST_CASE("EventBus: publish to subscribers broadcasts per topic")
   Event sensor("sensor", "reading");
   sensor.assign(36.5);
   REQUIRE(bus->publishToSubscribers(sensor));
+  REQUIRE(bus->subscriberQueueDepth("worker") == 1);
+  REQUIRE(bus->subscriberQueueDepth("archiver") == 1);
 
   Event alarm("alarm", "critical");
   alarm.assign(true);
   REQUIRE(bus->publishToSubscribers(alarm));
+  REQUIRE(bus->subscriberQueueDepth("worker") == 2);
 
   // worker gets sensor + alarm, archiver only sensor
   auto workerFirst = bus->receiveOf("worker");
@@ -287,9 +291,162 @@ TEST_CASE("EventBus: requiredSize")
   REQUIRE(required > 0);
   REQUIRE(required > sizeof(EventBus));
 
+  EventBusConfig fewerPriorities = config;
+  fewerPriorities.maxPriorities = 1;
+  REQUIRE(EventBus::requiredSize(fewerPriorities) < required);
+
   EventBusConfig invalid;
   invalid.busCapacity = 0;
   REQUIRE(EventBus::requiredSize(invalid) == 0);
+
+  invalid = config;
+  invalid.maxPriorities = 0;
+  REQUIRE(EventBus::requiredSize(invalid) == 0);
+
+  invalid = config;
+  invalid.maxPriorities = EventBusLimits::MAX_PRIORITIES + 1u;
+  REQUIRE(EventBus::requiredSize(invalid) == 0);
+}
+
+TEST_CASE("EventBus: subscriber queues drain highest priority first, FIFO within a priority")
+{
+  EventBusConfig config = defaultConfig();
+  config.maxPriorities = EventBusLimits::MAX_PRIORITIES;
+  BusFixture fixture(config);
+  auto *bus = fixture.bus;
+
+  REQUIRE(bus->registerTopic("control"));
+  REQUIRE(bus->subscribe("control", "worker"));
+
+  const auto publish = [&](EventPriority priority, int payload) {
+    Event event("control", "command");
+    event.setPriority(priority);
+    event.assign(payload);
+    REQUIRE(bus->publishToSubscribers(event));
+  };
+  publish(EventPriority::Low, 1);
+  publish(EventPriority::Normal, 2);
+  publish(EventPriority::Critical, 3);
+  publish(EventPriority::High, 4);
+  publish(EventPriority::Critical, 5);
+  publish(EventPriority::Low, 6);
+
+  const std::vector<int> expected{ 3, 5, 4, 2, 1, 6 };
+  for (const int payload : expected) {
+    auto event = bus->receiveOf("worker");
+    REQUIRE(event.has_value());
+    REQUIRE(event->as<int>() == payload);
+  }
+  REQUIRE_FALSE(bus->receiveOf("worker").has_value());
+  REQUIRE(bus->isEmptyOf("worker"));
+}
+
+TEST_CASE("EventBus: events default to Normal priority and clamp to configured levels")
+{
+  EventBusConfig config = defaultConfig();
+  config.maxPriorities = 1;
+  BusFixture fixture(config);
+  auto *bus = fixture.bus;
+
+  Event defaultEvent("t", "x");
+  REQUIRE(defaultEvent.priority() == EventPriority::Normal);
+  defaultEvent.setPriority(EventPriority::Critical);
+  REQUIRE(defaultEvent.priority() == EventPriority::Critical);
+
+  REQUIRE(bus->registerTopic("t"));
+  REQUIRE(bus->subscribe("t", "sub"));
+  const std::vector<EventPriority> priorities{
+    EventPriority::Low, EventPriority::Critical, EventPriority::High, EventPriority::Normal
+  };
+  for (std::size_t i = 0; i < priorities.size(); ++i) {
+    Event event("t", "x");
+    event.setPriority(priorities[i]);
+    event.assign(static_cast<int>(i));
+    REQUIRE(bus->publishToSubscribers(event));
+  }
+  // With a single priority level every event lands in the same FIFO queue.
+  for (std::size_t i = 0; i < priorities.size(); ++i) {
+    auto event = bus->receiveOf("sub");
+    REQUIRE(event.has_value());
+    REQUIRE(event->as<int>() == static_cast<int>(i));
+  }
+  REQUIRE_FALSE(bus->receiveOf("sub").has_value());
+}
+
+TEST_CASE("EventBus: wildcard topic subscriptions")
+{
+  BusFixture fixture(defaultConfig());
+  auto *bus = fixture.bus;
+
+  REQUIRE(bus->registerTopic("gpio.1"));
+  REQUIRE_FALSE(bus->subscribe("gpio.1", ""));// empty subscriber
+  // Exact topics still require registerTopic(), patterns register themselves.
+  REQUIRE_FALSE(bus->subscribe("gpio.2", "exact"));
+  REQUIRE(bus->subscribe("gpio.*", "wildcard"));
+  REQUIRE(bus->subscribe("gpio.1", "exact"));
+  REQUIRE(bus->isTopicRegistered("gpio.*"));
+  REQUIRE(bus->isSubscribed("gpio.*", "wildcard"));
+  REQUIRE(bus->numberOfSubscribersOf("gpio.*") == 1);
+
+  Event gpio1("gpio.1", "changed");
+  gpio1.assign(11);
+  REQUIRE(bus->publishToSubscribers(gpio1));
+  auto wildcard = bus->receiveOf("wildcard");
+  REQUIRE(wildcard.has_value());
+  REQUIRE(wildcard->as<int>() == 11);
+  auto exact = bus->receiveOf("exact");
+  REQUIRE(exact.has_value());
+  REQUIRE(exact->as<int>() == 11);
+
+  // gpio.2 is not registered as an exact topic, but the pattern matches it.
+  Event gpio2("gpio.2", "changed");
+  gpio2.assign(22);
+  REQUIRE(bus->publishToSubscribers(gpio2));
+  auto matched = bus->receiveOf("wildcard");
+  REQUIRE(matched.has_value());
+  REQUIRE(matched->as<int>() == 22);
+  REQUIRE_FALSE(bus->receiveOf("exact").has_value());
+
+  // A non-matching topic is not delivered.
+  REQUIRE_FALSE(bus->publishToSubscribers(Event("adc.1", "changed")));
+  REQUIRE(bus->isEmptyOf("wildcard"));
+
+  // Unsubscribing the pattern stops the wildcard delivery.
+  REQUIRE(bus->unsubscribe("gpio.*", "wildcard"));
+  REQUIRE_FALSE(bus->isSubscribed("gpio.*", "wildcard"));
+  REQUIRE_FALSE(bus->publishToSubscribers(Event("gpio.3", "changed")));
+}
+
+TEST_CASE("EventBus: wildcard single character subscriptions and duplicate matches")
+{
+  BusFixture fixture(defaultConfig());
+  auto *bus = fixture.bus;
+
+  REQUIRE(bus->registerTopic("gpio.1"));
+  REQUIRE(bus->subscribe("gpio.?", "single"));
+  REQUIRE(bus->subscribe("gpio.*", "both"));
+  REQUIRE(bus->subscribe("gpio.1", "both"));// same subscriber on pattern and exact topic
+
+  Event event("gpio.1", "changed");
+  event.assign(7);
+  REQUIRE(bus->publishToSubscribers(event));
+
+  auto single = bus->receiveOf("single");
+  REQUIRE(single.has_value());
+  REQUIRE(single->as<int>() == 7);
+
+  // The subscriber matched both its exact and its wildcard subscription, but
+  // receives the event only once.
+  auto both = bus->receiveOf("both");
+  REQUIRE(both.has_value());
+  REQUIRE(both->as<int>() == 7);
+  REQUIRE_FALSE(bus->receiveOf("both").has_value());
+
+  // '?' matches exactly one character: "gpio.?" does not match "gpio.42",
+  // while "gpio.*" still does.
+  REQUIRE(bus->publishToSubscribers(Event("gpio.42", "changed")));
+  REQUIRE(bus->receiveOf("both").has_value());
+  REQUIRE_FALSE(bus->receiveOf("single").has_value());
 }
 
 TEST_CASE("EventBus: invalid configuration is rejected")
@@ -336,5 +493,24 @@ TEST_CASE("Event: content size limits and round trip")
 
   REQUIRE(std::is_trivially_copyable_v<Event>);
   REQUIRE(std::is_trivially_copyable_v<Payload>);
+}
+
+TEST_CASE("EventBus: queue depth accessors report queued events")
+{
+  BusFixture fixture(defaultConfig());
+  auto *bus = fixture.bus;
+
+  REQUIRE(bus->busQueueDepth() == 0);
+  REQUIRE(bus->publish(Event("p2p", "one")));
+  REQUIRE(bus->publish(Event("p2p", "two")));
+  REQUIRE(bus->busQueueDepth() == 2);
+
+  REQUIRE(bus->receive().has_value());
+  REQUIRE(bus->busQueueDepth() == 1);
+  REQUIRE(bus->receive().has_value());
+  REQUIRE(bus->busQueueDepth() == 0);
+
+  // Unknown subscriber reports depth 0 instead of throwing.
+  REQUIRE(bus->subscriberQueueDepth("unknown") == 0);
 }
 }// namespace lintel
