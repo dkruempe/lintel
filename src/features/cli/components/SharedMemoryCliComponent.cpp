@@ -20,6 +20,10 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(std::shared_ptr<SharedMemoryA
       .addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name or pattern matching")
       .addArgument({ "--repository-name", "-r" }, &m_repositoryName, "Repository Name or pattern matching"),
     ShowRepositories);
+  m_commandParser.addCommand(Command("show_stats", "Show the runtime statistics of one segment")
+                               .addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name"),
+    ShowStats);
+  m_commandParser.addCommand(Command("cleanup", "Remove shared memory objects whose owner process is gone"), Cleanup);
   m_commandParser.addCommand(
     Command("shrink_segment", "Shrink segment").addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name"),
     ShrinkSegment);
@@ -56,6 +60,31 @@ void SharedMemoryCliComponent::onCommand(const UserDto & /*userDto*/,
       printRepositories(res);
       m_segmentName->clear();
       m_repositoryName->clear();
+      break;
+    }
+    case ShowStats: {
+      if (!m_segmentName.has_value()) {
+        std::cout << "ERROR: please set segment name\n";
+        return;
+      }
+      const std::optional<SharedMemorySegmentStats> stats = m_sharedMemoryApi->statsOf(m_segmentName.value());
+      if (!stats.has_value()) {
+        std::cout << "ERROR: no statistics for segment " << m_segmentName.value() << "\n";
+        m_segmentName->clear();
+        return;
+      }
+      printStats(stats.value());
+      m_segmentName->clear();
+      break;
+    }
+    case Cleanup: {
+      const std::optional<SharedMemoryCleanupSummary> summary = m_sharedMemoryApi->cleanupOf();
+      if (!summary.has_value()) {
+        std::cout << "ERROR: cleanup was rejected\n";
+        return;
+      }
+      std::cout << "Cleanup scanned " << summary->scanned << " entries: " << summary->orphans << " orphans, "
+                << summary->removed << " removed, " << summary->failed << " failures\n";
       break;
     }
     case ShrinkSegment: {
@@ -178,6 +207,21 @@ void SharedMemoryCliComponent::printRepositories(const std::vector<SharedMemoryR
       std::string(magic_enum::enum_name<>(iter.getType())),
       std::to_string(iter.getCurrentVersion()) });
   }
+  std::cout << builder.build() << "\n";
+}
+
+void SharedMemoryCliComponent::printStats(const SharedMemorySegmentStats &stats)
+{
+  TableBuilder<2> builder;
+  builder.add({ "Field", "Value" });
+  builder.add({ "Name", stats.name });
+  builder.add({ "AllocatedBytes", std::to_string(stats.allocatedBytes) });
+  builder.add({ "CapacityBytes", std::to_string(stats.capacityBytes) });
+  builder.add({ "FreeBytes", std::to_string(stats.freeBytes) });
+  builder.add({ "GrowCount", std::to_string(stats.growCount) });
+  builder.add({ "ShrinkCount", std::to_string(stats.shrinkCount) });
+  builder.add({ "RecoveryCount", std::to_string(stats.recoveryCount) });
+  builder.add({ "Generation", std::to_string(stats.generation) });
   std::cout << builder.build() << "\n";
 }
 

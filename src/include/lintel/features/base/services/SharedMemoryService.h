@@ -124,8 +124,11 @@ public:
   /** Register a lifecycle hook. Hook must be short and non-blocking. */
   void registerLifecycleHook(SegmentLifecycleHook hook);
 
-  /** Get statistics for a segment. */
-  [[nodiscard]] SharedMemorySegmentStats statsOf(const std::shared_ptr<SharedMemorySegment> &segment) const;
+  /** Get statistics for a segment.
+   * @param segment the segment to inspect
+   * @return size, capacity, free bytes, lifecycle counters and generation
+   * @throws ShmSegmentNotFound if the segment is not mapped by this service */
+  [[nodiscard]] SharedMemorySegmentStats statsOf(const std::shared_ptr<SharedMemorySegment> &segment) const override;
 
   /** Get the allocated state of the named shared memory segment.
    *  Internal: the caller has to hold segmentsMutexOf().

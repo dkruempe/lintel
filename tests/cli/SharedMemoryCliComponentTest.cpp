@@ -250,20 +250,77 @@ TEST_CASE("SharedMemoryCliComponent: printCommandList appends the sub-menu alias
   REQUIRE(shmCliList.find("help") != std::string::npos);
 }
 
-TEST_CASE("SharedMemoryCliComponent: allCommandsOf returns the five registered commands")
+TEST_CASE("SharedMemoryCliComponent: show_stats forwards the segment name and prints the statistics")
+{
+  shmCliBackend shmCliServer;
+  shmCliServer.answerWith(R"({"NAME":"stats-seg","ALLOCATED_BYTES":1024,"CAPACITY_BYTES":4096,)"
+                          R"("FREE_BYTES":512,"GROW_COUNT":2,"SHRINK_COUNT":1,"RECOVERY_COUNT":3,"GENERATION":7})");
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+  SharedMemoryCliComponent shmCliComponent(shmCliApi);
+
+  shmCliCoutCapture shmCliOut;
+  shmCliComponent.onCommand(UserDto{}, "show_stats", { "-s", "stats-seg" });
+  const std::string shmCliPrinted = shmCliOut.str();
+
+  REQUIRE(shmCliServer.paths.size() == 1);
+  REQUIRE(shmCliServer.paths[0] == "/shm/stats/stats-seg");
+  REQUIRE(shmCliServer.methods[0] == "GET");
+  REQUIRE(shmCliPrinted.find("stats-seg") != std::string::npos);
+  REQUIRE(shmCliPrinted.find("AllocatedBytes") != std::string::npos);
+  REQUIRE(shmCliPrinted.find("1024") != std::string::npos);
+}
+
+TEST_CASE("SharedMemoryCliComponent: show_stats without a segment name prints an error")
+{
+  shmCliBackend shmCliServer;
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+  SharedMemoryCliComponent shmCliComponent(shmCliApi);
+
+  shmCliCoutCapture shmCliOut;
+  shmCliComponent.onCommand(UserDto{}, "show_stats", {});
+  const std::string shmCliPrinted = shmCliOut.str();
+
+  REQUIRE(shmCliServer.paths.empty());
+  REQUIRE(shmCliPrinted.find("ERROR") != std::string::npos);
+  REQUIRE(shmCliPrinted.find("please set segment name") != std::string::npos);
+}
+
+TEST_CASE("SharedMemoryCliComponent: cleanup posts to the cleanup endpoint and prints the counts")
+{
+  shmCliBackend shmCliServer;
+  shmCliServer.answerWith(R"({"DRY_RUN":false,"SCANNED":3,"ORPHANS":1,"REMOVED":1,"FAILED":0})");
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+  SharedMemoryCliComponent shmCliComponent(shmCliApi);
+
+  shmCliCoutCapture shmCliOut;
+  shmCliComponent.onCommand(UserDto{}, "cleanup", {});
+  const std::string shmCliPrinted = shmCliOut.str();
+
+  REQUIRE(shmCliServer.paths.size() == 1);
+  REQUIRE(shmCliServer.paths[0] == "/shm/cleanup");
+  REQUIRE(shmCliServer.methods[0] == "POST");
+  REQUIRE(shmCliPrinted.find("1 removed") != std::string::npos);
+}
+
+TEST_CASE("SharedMemoryCliComponent: allCommandsOf returns the seven registered commands")
 {
   auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(1));
   SharedMemoryCliComponent shmCliComponent(shmCliApi);
 
   const std::vector<std::string> shmCliCommands = shmCliComponent.allCommandsOf();
   bool shmCliHasAll = true;
-  for (const char *shmCliExpected :
-    { "show_segments", "show_repositories", "shrink_segment", "grow_segment", "export_repository" }) {
+  for (const char *shmCliExpected : { "show_segments",
+         "show_repositories",
+         "show_stats",
+         "cleanup",
+         "shrink_segment",
+         "grow_segment",
+         "export_repository" }) {
     shmCliHasAll =
       shmCliHasAll && std::find(shmCliCommands.begin(), shmCliCommands.end(), shmCliExpected) != shmCliCommands.end();
   }
 
-  REQUIRE(shmCliCommands.size() == 5);
+  REQUIRE(shmCliCommands.size() == 7);
   REQUIRE(shmCliHasAll);
 }
 

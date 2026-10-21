@@ -276,6 +276,32 @@ Removes every message that is currently in the named queue and answers with the 
 | --------------- | ------ |
 | bearerAuth |  |
 
+### /messageQueue/recover
+
+#### POST
+##### Summary
+
+Recover orphaned message queues
+
+##### Description
+
+Reclaims the message queue entries whose recorded owner process is gone and answers with the number of reclaimed entries ({"RECOVERED":2}). An entry whose owner is still alive is never touched, no matter how old its heartbeat is. Reclaiming mutates queue state and requires a token of a user in the "Admin-MessageQueue" group; a member of "User-MessageQueue" alone gets 401.
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Entries reclaimed ({"RECOVERED":n}) |
+| 401 | Unauthorized (missing token or not in the Admin-MessageQueue group) |
+| 403 | Forbidden (wrong content type) |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
 ### /process/processes/{groupName}
 
 #### GET
@@ -508,6 +534,65 @@ Terminate a process
 | 401 | Unauthorized |
 | 403 | Forbidden (wrong content type) |
 | 404 | Unknown process id |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
+### /shm/stats/{segmentName}
+
+#### GET
+##### Summary
+
+Get the runtime statistics of one segment
+
+##### Description
+
+Returns the statistics of exactly one shared memory segment as a JSON object with the fields NAME, ALLOCATED_BYTES, CAPACITY_BYTES, FREE_BYTES, GROW_COUNT, SHRINK_COUNT, RECOVERY_COUNT and GENERATION. CAPACITY_BYTES is the configured maximum size, or ALLOCATED_BYTES when the segment has no maximum. Reading requires a token of a user in the "Admin-Shm" or "User-Shm" group; an unknown segment answers 404.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| segmentName | path | Exact segment name | Yes | string |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Segment statistics (JSON object) |
+| 401 | Unauthorized (missing token or neither in the Admin-Shm nor the User-Shm group) |
+| 403 | Forbidden (wrong content type) |
+| 404 | Unknown segment |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
+### /shm/cleanup
+
+#### POST
+##### Summary
+
+Remove orphaned shared memory objects
+
+##### Description
+
+Runs the cleanup service in apply mode: every registered shared memory object whose recorded owner process is gone is removed from its segment and answers with the counts of the run as a JSON object with the fields DRY_RUN, SCANNED, ORPHANS, REMOVED and FAILED. DRY_RUN is always false because this endpoint applies; the scan-only mode of the service is not exposed. An object whose owner is still alive is never touched, no matter how old its heartbeat is. A failed removal keeps its registration and is retried by the next run, so FAILED may be non-zero while the request still answers 200. Cleanup is destructive and requires a token of a user in the "Admin-Shm" group; a member of "User-Shm" alone gets 401.
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Cleanup applied (JSON object with the run counts) |
+| 401 | Unauthorized (missing token or not in the Admin-Shm group) |
+| 403 | Forbidden (wrong content type) |
 | 500 | Internal server error |
 
 ##### Security

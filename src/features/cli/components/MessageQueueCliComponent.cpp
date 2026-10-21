@@ -30,6 +30,9 @@ MessageQueueCliComponent::MessageQueueCliComponent(std::shared_ptr<MesssageQueue
     Command("purge_message_queue", "Remove all messages currently queued in one message queue")
       .addArgument({ "--message-queue-name", "-mq" }, &m_purgeMessageQueueName, "Name of the message queue to purge"),
     PurgeMessageQueue);
+  m_commandParser.addCommand(
+    Command("recover_message_queues", "Reclaim message queue entries whose owner process is gone"),
+    RecoverMessageQueues);
 }
 
 
@@ -55,6 +58,13 @@ void MessageQueueCliComponent::onCommand(const UserDto &userDto,
         return;
       }
       std::cout << "Purged " << purged.value() << " messages from message queue " << messageQueueName << "\n";
+    } else if (cmd == RecoverMessageQueues) {
+      const std::optional<std::size_t> recovered = m_messageQueueApi->recoverOf();
+      if (!recovered.has_value()) {
+        std::cout << "ERROR: orphaned message queue entries could not be reclaimed\n";
+        return;
+      }
+      std::cout << "Recovered " << recovered.value() << " orphaned message queue entries\n";
     }
   } catch (const std::exception &exception) {
     std::cerr << "ERROR: " << exception.what() << "\n";

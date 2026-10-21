@@ -15,7 +15,9 @@
 #include "lintel/core/models/SharedMemorySegment.h"
 #include "lintel/core/models/SharedMemorySegmentInfo.h"
 #include "lintel/features/base/models/Group.h"
+#include "lintel/features/base/models/SharedMemorySegmentStats.h"
 #include "lintel/features/base/models/User.h"
+#include "lintel/features/base/services/SharedMemoryCleanupService.h"
 #include "lintel/features/http/controllers/SharedMemoryController.h"
 
 namespace lintel {
@@ -100,7 +102,7 @@ TEST_CASE("SharedMemoryController can be constructed with mocks")
   auto mockAuth = std::make_shared<MockAuthService>();
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
-  REQUIRE_NOTHROW(TestSharedMemoryController(mockAuth, mockShmService, mockShmManager, {}));
+  REQUIRE_NOTHROW(TestSharedMemoryController(mockAuth, mockShmService, mockShmManager, {}, nullptr));
 }
 
 TEST_CASE("SharedMemoryController::allSegmentsOfGet calls allOf and showStateOf")
@@ -117,7 +119,7 @@ TEST_CASE("SharedMemoryController::allSegmentsOfGet calls allOf and showStateOf"
     .LR_RETURN(std::vector<std::shared_ptr<SharedMemorySegment>>{ segment });
   REQUIRE_CALL(*mockShmService, showStateOf(segment)).TIMES(1).LR_RETURN(info);
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   httplib::Request request;
   std::smatch m;
@@ -142,7 +144,7 @@ TEST_CASE("SharedMemoryController::shrinkSegmentOfPut calls of and shrinkOf")
   REQUIRE_CALL(*mockShmManager, of("test")).TIMES(1).LR_RETURN(segment);
   REQUIRE_CALL(*mockShmService, shrinkOf(segment)).TIMES(1);
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   httplib::Request request;
   std::smatch m;
@@ -167,7 +169,7 @@ TEST_CASE("SharedMemoryController::growSegmentOfPut calls of and growOf")
   REQUIRE_CALL(*mockShmManager, of("test")).TIMES(1).LR_RETURN(segment);
   REQUIRE_CALL(*mockShmService, growOf(segment, 4096)).TIMES(1);
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   httplib::Request request;
   std::smatch m;
@@ -187,7 +189,7 @@ TEST_CASE("SharedMemoryController returns 401 for unauthenticated requests")
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   httplib::Request request;
   httplib::Response response;
@@ -205,7 +207,7 @@ TEST_CASE("SharedMemoryController::shrinkSegmentOfPut returns 403 for unknown se
 
   REQUIRE_CALL(*mockShmManager, of("unknown")).TIMES(1).LR_RETURN(nullptr);
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   httplib::Request request;
   std::smatch m;
@@ -227,7 +229,7 @@ TEST_CASE("SharedMemoryController::allSegmentsOfGet returns 403 for non-json")
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test" });
   httplib::Response response;
@@ -243,7 +245,7 @@ TEST_CASE("SharedMemoryController::allSegmentsOfGet returns 401 for user without
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test" });
   httplib::Response response;
@@ -262,7 +264,7 @@ TEST_CASE("SharedMemoryController::allRepositoriesOfGet lists matching repositor
   auto segment = std::make_shared<SharedMemorySegment>("/tmp/test", "mySeg", 1024);
   auto repo = std::make_shared<ShmCtlFakeRepository>(segment, "myRepo", "uuid-1");
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, { repo });
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, { repo }, nullptr);
 
   auto request = requestWithMatches({ "myRepo.*", "mySeg.*" });
   httplib::Response response;
@@ -281,7 +283,7 @@ TEST_CASE("SharedMemoryController::allRepositoriesOfGet skips non-matching repos
   auto segment = std::make_shared<SharedMemorySegment>("/tmp/test", "mySeg", 1024);
   auto repo = std::make_shared<ShmCtlFakeRepository>(segment, "myRepo", "uuid-1");
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, { repo });
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, { repo }, nullptr);
 
   auto request = requestWithMatches({ "nope.*", "nope.*" });
   httplib::Response response;
@@ -297,7 +299,7 @@ TEST_CASE("SharedMemoryController::allRepositoriesOfGet returns 400 for invalid 
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "[", ".*" });
   httplib::Response response;
@@ -313,7 +315,7 @@ TEST_CASE("SharedMemoryController::allRepositoriesOfGet returns 403 for non-json
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ ".*", ".*" });
   httplib::Response response;
@@ -329,7 +331,7 @@ TEST_CASE("SharedMemoryController::allRepositoriesOfGet returns 401 without user
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ ".*", ".*" });
   httplib::Response response;
@@ -348,7 +350,7 @@ TEST_CASE("SharedMemoryController::exportRepositoryOfGet serializes a known repo
   auto segment = std::make_shared<SharedMemorySegment>("/tmp/test", "mySeg", 1024);
   auto repo = std::make_shared<ShmCtlFakeRepository>(segment, "myRepo", "uuid-1");
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, { repo });
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, { repo }, nullptr);
 
   auto request = requestWithMatches({ "uuid-1" });
   httplib::Response response;
@@ -364,7 +366,7 @@ TEST_CASE("SharedMemoryController::exportRepositoryOfGet returns 404 for unknown
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "missing" });
   httplib::Response response;
@@ -380,7 +382,7 @@ TEST_CASE("SharedMemoryController::exportRepositoryOfGet returns 403 for non-jso
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "uuid-1" });
   httplib::Response response;
@@ -396,7 +398,7 @@ TEST_CASE("SharedMemoryController::exportRepositoryOfGet returns 401 without use
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "uuid-1" });
   httplib::Response response;
@@ -412,7 +414,7 @@ TEST_CASE("SharedMemoryController::growSegmentOfPut returns 400 for invalid size
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test", "notasize" });
   httplib::Response response;
@@ -430,7 +432,7 @@ TEST_CASE("SharedMemoryController::growSegmentOfPut returns 403 for unknown segm
 
   REQUIRE_CALL(*mockShmManager, of("unknown")).TIMES(1).LR_RETURN(nullptr);
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "unknown", "4096" });
   httplib::Response response;
@@ -446,7 +448,7 @@ TEST_CASE("SharedMemoryController::exportRepositoryOfGet returns 401 for a user 
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "uuid-1" });
   httplib::Response response;
@@ -462,7 +464,7 @@ TEST_CASE("SharedMemoryController::allRepositoriesOfGet returns 401 for a user w
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ ".*", ".*" });
   httplib::Response response;
@@ -478,7 +480,7 @@ TEST_CASE("SharedMemoryController::shrinkSegmentOfPut returns 401 without a user
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test" });
   httplib::Response response;
@@ -494,7 +496,7 @@ TEST_CASE("SharedMemoryController::shrinkSegmentOfPut returns 401 for a user wit
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test" });
   httplib::Response response;
@@ -510,7 +512,7 @@ TEST_CASE("SharedMemoryController::shrinkSegmentOfPut returns 403 for non-json")
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test" });
   httplib::Response response;
@@ -526,7 +528,7 @@ TEST_CASE("SharedMemoryController::growSegmentOfPut returns 401 without a user")
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test", "4096" });
   httplib::Response response;
@@ -542,7 +544,7 @@ TEST_CASE("SharedMemoryController::growSegmentOfPut returns 401 for a user witho
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test", "4096" });
   httplib::Response response;
@@ -558,7 +560,7 @@ TEST_CASE("SharedMemoryController::growSegmentOfPut returns 403 for non-json")
   auto mockShmService = std::make_shared<MockSharedMemoryService>();
   auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
 
-  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {});
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
 
   auto request = requestWithMatches({ "test", "4096" });
   httplib::Response response;
@@ -566,5 +568,125 @@ TEST_CASE("SharedMemoryController::growSegmentOfPut returns 403 for non-json")
 
   controller.growSegmentOfPut(request, response, contentType, makeToken());
   REQUIRE(response.status == 403);
+}
+
+TEST_CASE("SharedMemoryController::statsOfGet serializes the statistics of one segment")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<MockSharedMemoryService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+
+  auto segment = std::make_shared<SharedMemorySegment>("/tmp/test", "test", 1024);
+  SharedMemorySegmentStats stats;
+  stats.name = "test";
+  stats.allocatedBytes = 1024;
+  stats.capacityBytes = 4096;
+  stats.freeBytes = 512;
+  stats.growCount = 2;
+  stats.shrinkCount = 1;
+  stats.recoveryCount = 3;
+  stats.generation = 7;
+
+  REQUIRE_CALL(*mockShmManager, of("test")).TIMES(1).LR_RETURN(segment);
+  REQUIRE_CALL(*mockShmService, statsOf(segment)).TIMES(1).LR_RETURN(stats);
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
+
+  auto request = requestWithMatches({ "test" });
+  httplib::Response response;
+  ContentType contentType("application/json");
+
+  controller.statsOfGet(request, response, contentType, makeToken());
+  // the handler does not set the status on success - the server does
+  REQUIRE(response.body.find("\"NAME\":\"test\"") != std::string::npos);
+  REQUIRE(response.body.find("\"ALLOCATED_BYTES\":1024") != std::string::npos);
+  REQUIRE(response.body.find("\"GENERATION\":7") != std::string::npos);
+}
+
+TEST_CASE("SharedMemoryController::statsOfGet returns 404 for an unknown segment")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<MockSharedMemoryService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+
+  REQUIRE_CALL(*mockShmManager, of("unknown")).TIMES(1).LR_RETURN(nullptr);
+  FORBID_CALL(*mockShmService, statsOf(ANY(std::shared_ptr<SharedMemorySegment>)));
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
+
+  auto request = requestWithMatches({ "unknown" });
+  httplib::Response response;
+  ContentType contentType("application/json");
+
+  controller.statsOfGet(request, response, contentType, makeToken());
+  REQUIRE(response.status == 404);
+}
+
+TEST_CASE("SharedMemoryController::statsOfGet returns 401 for a user without groups")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<MockSharedMemoryService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
+
+  auto request = requestWithMatches({ "test" });
+  httplib::Response response;
+  ContentType contentType("application/json");
+
+  controller.statsOfGet(request, response, contentType, tokenForGroups({ Group{ "Other", {}, true } }));
+  REQUIRE(response.status == 401);
+}
+
+TEST_CASE("SharedMemoryController::statsOfGet returns 403 for non-json")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<MockSharedMemoryService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
+
+  auto request = requestWithMatches({ "test" });
+  httplib::Response response;
+  ContentType contentType("text/plain");
+
+  controller.statsOfGet(request, response, contentType, makeToken());
+  REQUIRE(response.status == 403);
+}
+
+TEST_CASE("SharedMemoryController::cleanupOfPost serializes the counts of the apply run")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<MockSharedMemoryService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+  // an empty registry: the run scans nothing and finds nothing
+  auto cleanup = std::make_shared<SharedMemoryCleanupService>(nullptr, nullptr);
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, cleanup);
+
+  httplib::Request request;
+  httplib::Response response;
+  ContentType contentType("application/json");
+
+  controller.cleanupOfPost(request, response, contentType, makeToken());
+  // the handler does not set the status on success - the server does
+  REQUIRE(response.body == R"({"DRY_RUN":false,"SCANNED":0,"ORPHANS":0,"REMOVED":0,"FAILED":0})");
+}
+
+TEST_CASE("SharedMemoryController::cleanupOfPost returns 401 for a non-admin user")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<MockSharedMemoryService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+  auto cleanup = std::make_shared<SharedMemoryCleanupService>(nullptr, nullptr);
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, cleanup);
+
+  httplib::Request request;
+  httplib::Response response;
+  ContentType contentType("application/json");
+
+  controller.cleanupOfPost(request, response, contentType, tokenForGroups({ kUserGroup }));
+  REQUIRE(response.status == 401);
 }
 }// namespace lintel

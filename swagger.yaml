@@ -329,6 +329,37 @@ paths:
           description: Unknown queue name (the name matches no queue exactly)
         "500":
           description: Internal server error (queue could not be opened or drained)
+  /messageQueue/recover:
+    post:
+      summary: Recover orphaned message queues
+      description: >
+        Reclaims the message queue entries whose recorded owner process is gone
+        and answers with the number of reclaimed entries ({"RECOVERED":2}). An
+        entry whose owner is still alive is never touched, no matter how old its
+        heartbeat is. Reclaiming mutates queue state and requires a token of a
+        user in the "Admin-MessageQueue" group; a member of "User-MessageQueue"
+        alone gets 401.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Entries reclaimed ({"RECOVERED":n})
+          schema:
+            type: object
+            required:
+              - RECOVERED
+            properties:
+              RECOVERED:
+                type: integer
+                format: int64
+                description: Number of reclaimed queue entries
+                example: 2
+        "401":
+          description: Unauthorized (missing token or not in the Admin-MessageQueue group)
+        "403":
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
   /process/processes/{groupName}:
     get:
       summary: Get all processes
@@ -508,6 +539,145 @@ paths:
           description: Forbidden (wrong content type)
         "404":
           description: Unknown process id
+        "500":
+          description: Internal server error
+  /shm/stats/{segmentName}:
+    get:
+      summary: Get the runtime statistics of one segment
+      description: >
+        Returns the statistics of exactly one shared memory segment as a JSON
+        object with the fields NAME, ALLOCATED_BYTES, CAPACITY_BYTES,
+        FREE_BYTES, GROW_COUNT, SHRINK_COUNT, RECOVERY_COUNT and GENERATION.
+        CAPACITY_BYTES is the configured maximum size, or ALLOCATED_BYTES when
+        the segment has no maximum. Reading requires a token of a user in the
+        "Admin-Shm" or "User-Shm" group; an unknown segment answers 404.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: segmentName
+          in: path
+          required: true
+          type: string
+          description: Exact segment name
+      responses:
+        "200":
+          description: Segment statistics (JSON object)
+          schema:
+            type: object
+            required:
+              - NAME
+              - ALLOCATED_BYTES
+              - CAPACITY_BYTES
+              - FREE_BYTES
+              - GROW_COUNT
+              - SHRINK_COUNT
+              - RECOVERY_COUNT
+              - GENERATION
+            properties:
+              NAME:
+                type: string
+                description: Name of the segment
+                example: user
+              ALLOCATED_BYTES:
+                type: integer
+                format: int64
+                description: Currently allocated size of the segment
+                example: 67108864
+              CAPACITY_BYTES:
+                type: integer
+                format: int64
+                description: Configured maximum size, or the allocated size when there is no maximum
+                example: 268435456
+              FREE_BYTES:
+                type: integer
+                format: int64
+                description: Free bytes inside the segment
+                example: 12345678
+              GROW_COUNT:
+                type: integer
+                format: int64
+                description: Number of grow operations on this segment
+                example: 2
+              SHRINK_COUNT:
+                type: integer
+                format: int64
+                description: Number of shrink operations on this segment
+                example: 0
+              RECOVERY_COUNT:
+                type: integer
+                format: int64
+                description: Number of reclaimed remap locks of this segment
+                example: 1
+              GENERATION:
+                type: integer
+                format: int64
+                description: Generation counter of the segment mapping
+                example: 3
+        "401":
+          description: Unauthorized (missing token or neither in the Admin-Shm nor the User-Shm group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown segment
+        "500":
+          description: Internal server error
+  /shm/cleanup:
+    post:
+      summary: Remove orphaned shared memory objects
+      description: >
+        Runs the cleanup service in apply mode: every registered shared memory
+        object whose recorded owner process is gone is removed from its segment
+        and answers with the counts of the run as a JSON object with the fields
+        DRY_RUN, SCANNED, ORPHANS, REMOVED and FAILED. DRY_RUN is always false
+        because this endpoint applies; the scan-only mode of the service is not
+        exposed. An object whose owner is still alive is never touched, no
+        matter how old its heartbeat is. A failed removal keeps its registration
+        and is retried by the next run, so FAILED may be non-zero while the
+        request still answers 200. Cleanup is destructive and requires a token
+        of a user in the "Admin-Shm" group; a member of "User-Shm" alone gets
+        401.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cleanup applied (JSON object with the run counts)
+          schema:
+            type: object
+            required:
+              - DRY_RUN
+              - SCANNED
+              - ORPHANS
+              - REMOVED
+              - FAILED
+            properties:
+              DRY_RUN:
+                type: boolean
+                description: Always false - this endpoint applies the cleanup
+                example: false
+              SCANNED:
+                type: integer
+                format: int64
+                description: Number of registered objects inspected
+                example: 3
+              ORPHANS:
+                type: integer
+                format: int64
+                description: Number of orphaned objects found
+                example: 1
+              REMOVED:
+                type: integer
+                format: int64
+                description: Number of orphaned objects actually removed
+                example: 1
+              FAILED:
+                type: integer
+                format: int64
+                description: Number of removals that failed and are retried by the next run
+                example: 0
+        "401":
+          description: Unauthorized (missing token or not in the Admin-Shm group)
+        "403":
+          description: Forbidden (wrong content type)
         "500":
           description: Internal server error
   /shm/segments/{segmentName}:

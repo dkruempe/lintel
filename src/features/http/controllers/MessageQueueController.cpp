@@ -3,8 +3,13 @@
 #include "lintel/features/base/controller/MessageQueueDtos.h"
 #include "lintel/features/base/models/MessageQueueStats.h"
 
+#include <cstddef>
 #include <exception>
 #include <memory>
+#include <string>
+
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 namespace lintel {
 MessageQueueController::MessageQueueController(const std::shared_ptr<IAuthService> &authService,
@@ -125,5 +130,37 @@ void MessageQueueController::purgeOfPost(const httplib::Request &request,
   const int32_t purged = purgeMessageQueueOf(entry->get_message_queue_name(), entry->get_max_messages());
   MessageQueuePurgeDto result(entry->get_message_queue_name(), purged);
   response.set_content(result.JsonSerializable::serialize(), contentType.getName());
+}
+
+void MessageQueueController::recoverOfPost(const httplib::Request & /*request*/,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  // reclaiming entries of dead owners mutates queue state, so only administrators may do it
+  if (!canAdminister(user)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const std::size_t recovered = m_messageQueueService->recoverOrphans();
+  LOG_INFO("recoverOf: reclaimed {} orphaned message queue entries", recovered);
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer writer(buffer);
+  writer.StartObject();
+  writer.String("RECOVERED");
+  writer.Uint64(recovered);
+  writer.EndObject();
+  response.set_content(std::string(buffer.GetString()), contentType.getName());
 }
 }// namespace lintel

@@ -7,6 +7,7 @@
 namespace lintel {
 class SharedMemorySegment;
 class SharedMemorySegmentInfo;
+struct SharedMemorySegmentStats;
 
 class ISharedMemoryService
 {
@@ -14,6 +15,15 @@ public:
   virtual ~ISharedMemoryService() = default;
 
   virtual SharedMemorySegmentInfo showStateOf(const std::shared_ptr<SharedMemorySegment> &segment) const = 0;
+
+  /**
+   * Collect the runtime statistics of a segment.
+   *
+   * @param segment the segment to inspect
+   * @return size, capacity, free bytes, lifecycle counters and generation
+   * @throws ShmSegmentNotFound if the service does not map the segment
+   */
+  [[nodiscard]] virtual SharedMemorySegmentStats statsOf(const std::shared_ptr<SharedMemorySegment> &segment) const = 0;
 
   virtual void growOf(const std::shared_ptr<SharedMemorySegment> &segment, std::size_t grow) = 0;
 
