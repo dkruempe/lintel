@@ -33,12 +33,7 @@ void HistoryController::historyOfGet(const httplib::Request &request,
   }
 }
 
-// groupRepository is not evaluated - the groups are hardcoded in the
-// member init list (m_adminGroup/m_userGroup). The signature stays unchanged
-// because the constructor is resolved by the DI container; removing the
-// parameter would be a wiring and API topic of its own.
 HistoryController::HistoryController(const std::shared_ptr<IAuthService> &authService,
-  std::shared_ptr<GroupRepository> groupRepository,// NOLINT(performance-unnecessary-value-param)
   std::shared_ptr<HistoryRepository> historyRepository)
   : Controller(authService), m_historyRepository(std::move(historyRepository)), m_adminGroup("Admin-History", {}, true),
     m_userGroup("User-History", {}, true)
