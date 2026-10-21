@@ -603,12 +603,17 @@ TEST_CASE("SharedMemoryCliComponent: export_repository writes the export to the 
   REQUIRE(shmCliPrinted.find("Exported SharedMemory to >") != std::string::npos);
 
   REQUIRE(std::filesystem::exists(shmCliTarget));
-  std::ifstream shmCliFile(shmCliTarget);
-  std::string shmCliContent;
-  std::getline(shmCliFile, shmCliContent);
-  REQUIRE(shmCliContent.find("exported") != std::string::npos);
+  {
+    // scoped: Windows refuses to delete a file that is still open
+    std::ifstream shmCliFile(shmCliTarget);
+    std::string shmCliContent;
+    std::getline(shmCliFile, shmCliContent);
+    REQUIRE(shmCliContent.find("exported") != std::string::npos);
+  }
 
-  std::filesystem::remove(shmCliTarget);
+  std::error_code shmCliRemoveError;
+  std::filesystem::remove(shmCliTarget, shmCliRemoveError);
+  REQUIRE_FALSE(shmCliRemoveError);
 }
 
 TEST_CASE("SharedMemoryCliComponent: an unknown command never reaches the api")

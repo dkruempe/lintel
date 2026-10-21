@@ -599,7 +599,16 @@ void ProcessService::stopAllProcesses()
 
 void ProcessService::onShutdown() { stopAllProcesses(); }
 
-ProcessService::~ProcessService() { stopAllProcesses(); }
+ProcessService::~ProcessService()
+{
+  // a destructor must not throw: stopAllProcesses() logs and locks, and both
+  // can fail when the logger or the history service is already gone
+  try {
+    stopAllProcesses();
+  } catch (const std::exception &exception) {
+    static_cast<void>(exception);
+  }
+}
 
 bool ProcessService::stopOf(const Process &process)
 {

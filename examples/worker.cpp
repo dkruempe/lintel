@@ -45,8 +45,9 @@ private:
   std::thread m_historyThread;
 
 public:
-  WorkerService(std::shared_ptr<lintel::di::Container> container, std::shared_ptr<lintel::ProcessName> processName)
-    : AbstractService<WorkerService>(processName->getProcessName()), m_container(std::move(container)),
+  WorkerService(const std::shared_ptr<lintel::di::Container> &container,
+    std::shared_ptr<lintel::ProcessName> processName)
+    : AbstractService<WorkerService>(processName->getProcessName()), m_container(container),
       m_processName(std::move(processName))
   {}
 

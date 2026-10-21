@@ -26,7 +26,7 @@ public:
    * @param container                the dependency injection container */
   explicit VirtualGroupBootstrapPlugin(
     const std::shared_ptr<DatabaseConnectionConfigurations> &connectionConfigurations,
-    std::shared_ptr<lintel::di::Container> container);
+    const std::shared_ptr<lintel::di::Container> &container);
 
   /** Load virtual group configuration from the database. */
   void onStart() override;
