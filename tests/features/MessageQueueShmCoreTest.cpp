@@ -1,3 +1,4 @@
+#include <boost/interprocess/managed_mapped_file.hpp>
 #include <boost/interprocess/sync/named_semaphore.hpp>
 
 #include "../helpers/PlatformCompat.h"
@@ -6,6 +7,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <filesystem>
 #include <memory>
 #include <stdexcept>
@@ -14,10 +16,15 @@
 #include <utility>
 #include <vector>
 
+#if !defined(_WIN32)
+#include <sys/wait.h>// waitpid (the cross-process test needs fork)
+#endif
+
 #include "lintel/core/configuration/Configuration.h"
 #include "lintel/core/configuration/EnvironmentConfiguration.h"
 #include "lintel/core/models/ProcessName.h"
 #include "lintel/core/models/SharedMemorySegment.h"
+#include "lintel/core/shm/BoostSegmentAllocator.h"
 #include "lintel/core/utils/TypeName.h"
 #include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
@@ -52,9 +59,11 @@ namespace {
 
   std::atomic<unsigned int> g_queueCounter{ 0 };
 
+  /** Queue names stay short: the shared memory object that holds the queue
+   *  header is named "lintel_mq_" + queue name and limited to 32 characters. */
   std::string uniqueQueueName()
   {
-    return "shm_queue_core_" + std::to_string(::getpid()) + "_" + std::to_string(++g_queueCounter);
+    return "shm_q_" + std::to_string(::getpid()) + "_" + std::to_string(++g_queueCounter);
   }
 
   struct TestMessage
@@ -111,6 +120,20 @@ namespace {
 
   private:
     std::string m_name;
+  };
+
+  /** Allocator that cannot serve a single request.
+   *
+   *  The cross-process test hands an accessor that captured this allocator to
+   *  the queue: everything the queue does in the segment has to go through the
+   *  name binding instead, exactly like an accessor that was copied into the
+   *  segment by another process and carries a pointer into that process. */
+  class DeadEndAllocator : public ShmSegmentAccessor::Allocator
+  {
+  public:
+    void *allocate(std::size_t /*bytes*/) override { return nullptr; }
+
+    void deallocate(void * /*pointer*/) override {}
   };
 
 }// namespace
@@ -319,6 +342,65 @@ TEST_CASE("MessageQueueShmCore is visible to a second core of the same segment")
 
   REQUIRE_THROWS_AS((MessageQueueShmCore(name, 8, sizeof(TestMessage), accessor)), std::invalid_argument);
 }
+
+#if !defined(_WIN32)
+TEST_CASE("MessageQueueShmCore is found by a forked second process")
+{
+  QueueFixture fixture;
+  const std::string name = uniqueQueueName();
+  QueueCleanup cleanup(name);
+
+  // The parent creates the queue and therefore owns its ring.
+  MessageQueueShmCore queue(name, 4, sizeof(TestMessage), fixture.accessor());
+  REQUIRE(queue.numberMessagesOf() == 0);
+
+  const pid_t pid = ::fork();
+  REQUIRE(pid >= 0);
+  if (pid == 0) {
+    // Child: act like a second process that only knows the segment name. The
+    // fork copied the parent's process local queue cache, so drop it first -
+    // otherwise the child would find the parent's state and the test would not
+    // prove that the queue is discovered through the segment.
+    MessageQueueShmCore::removeOf(name);
+    int result = 1;
+    try {
+      // A fresh mapping and a fresh allocator: nothing is shared with the
+      // parent except the segment file itself. The accessor deliberately
+      // captured an allocator that cannot allocate - only the name binding
+      // below makes it usable, just as in a process that holds an accessor
+      // copied into the segment by somebody else.
+      boost::interprocess::managed_mapped_file mapping(boost::interprocess::open_only, fixture.path.string().c_str());
+      BoostSegmentAllocator allocator(*mapping.get_segment_manager());
+      DeadEndAllocator deadEnd;
+      const ShmSegmentAccessor accessor(fixture.segmentName, deadEnd);
+      ShmSegmentAccessor::bind(fixture.segmentName, allocator);
+      // The same capacity and slot size have to be accepted (no layout
+      // conflict) and the message has to land in the ring of the parent.
+      MessageQueueShmCore second(name, 4, sizeof(TestMessage), accessor);
+      const TestMessage message{ 4711, 12 };
+      result = second.trySendOf(&message, sizeof(message)) ? 0 : 1;
+    } catch (...) {
+      result = 1;
+    }
+    // _exit, not return: the inherited spdlog and history state of the parent
+    // must not run its destructors (and take locks) in the child.
+    ::_exit(result);
+  }
+
+  int status = 0;
+  REQUIRE(::waitpid(pid, &status, 0) == pid);
+  REQUIRE(WIFEXITED(status));
+  REQUIRE(WEXITSTATUS(status) == 0);
+
+  // Generous timeout: the send of the child is already done, the receive only
+  // has to observe it in the shared ring.
+  TestMessage received{};
+  REQUIRE(queue.receiveOfWithTimeout(&received, sizeof(received), std::chrono::milliseconds(5000)));
+  REQUIRE(received.value == 4711);
+  REQUIRE(received.sequence == 12);
+  REQUIRE(queue.numberMessagesOf() == 0);
+}
+#endif// !_WIN32
 
 TEST_CASE("MessageQueueShmCore removeOf drops the queue association")
 {

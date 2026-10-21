@@ -3,6 +3,8 @@
 
 #include <boost/interprocess/managed_mapped_file.hpp>
 
+#include <cstddef>
+
 #include "lintel/core/shm/ShmSegmentAccessor.h"
 
 namespace lintel {
@@ -26,6 +28,25 @@ public:
   void *allocate(std::size_t bytes) override { return m_segment->allocate(bytes); }
 
   void deallocate(void *pointer) override { m_segment->deallocate(pointer); }
+
+  /**
+   * Find or construct a named byte array of the requested size.
+   *
+   * `find_or_construct<char>(name)[count]()` is the array form of the boost
+   * named construct: it allocates `count` elements of `char` and value
+   * initialises them, so a freshly created array is zeroed. The lookup and the
+   * construction run under the segment manager's cross-process mutex, so a
+   * caller in another process either finds the finished array or creates it
+   * itself - never both.
+   *
+   * @param name  name of the array inside the segment
+   * @param bytes size of the array in bytes
+   * @return pointer to the array
+   */
+  void *findOrConstructArray(const char *name, std::size_t bytes) override
+  {
+    return m_segment->find_or_construct<char>(name)[bytes]();
+  }
 
 private:
   boost::interprocess::managed_mapped_file::segment_manager *m_segment;

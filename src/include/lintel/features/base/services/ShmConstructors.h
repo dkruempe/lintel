@@ -185,7 +185,10 @@ public:
   std::shared_ptr<SegmentLockOwner> m_lockOwner;
   // Typed allocator adapter of this segment. Created on demand and reset
   // whenever the mapping is replaced, so accessors always refer to the
-  // segment manager of the current mapping.
+  // segment manager of the current mapping. Accessors handed out by
+  // SharedMemoryService::getSegmentAccessor() carry the segment name and bind
+  // this allocator to it (ShmSegmentAccessor::bind), which is what makes a
+  // copy of an accessor inside the segment usable from another process.
   std::shared_ptr<ShmSegmentAccessor::Allocator> m_segmentAllocator;
 };
 
