@@ -22,7 +22,8 @@ namespace lintel {
  * the segment, later processes find it again and use it through their own
  * accessor-backed view of the same bytes.
  *
- * Not copyable (RingBufferShm is not, see there for the reason).
+ * Not movable and not copyable (RingBufferShm is neither, see there for the
+ * reason: its slot array is addressed relative to the ring object).
  *
  * Requirements on T are RingBufferShm's: default constructible, copy
  * assignable, copy constructible, identical in every sharing process.

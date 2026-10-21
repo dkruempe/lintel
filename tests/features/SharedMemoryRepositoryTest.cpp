@@ -2,10 +2,13 @@
 
 #include "../helpers/PlatformCompat.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <memory>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -147,6 +150,42 @@ namespace {
   {
     int m_value = 0;
     int m_counter = 0;
+  };
+
+  /** Bump allocator over one externally owned buffer. The whole "segment" is
+   *  therefore contiguous memory that can be copied to another address in one
+   *  memcpy - the situation of a segment mapped at a different virtual address
+   *  by another process. */
+  class RegionAllocator : public ShmSegmentAccessor::Allocator
+  {
+  public:
+    RegionAllocator(std::byte *base, std::size_t size) : m_base(base), m_size(size) {}
+
+    void *allocate(std::size_t bytes) override
+    {
+      if (m_used > m_size) { return nullptr; }
+      void *candidate = m_base + m_used;
+      std::size_t space = m_size - m_used;
+      // Cache line alignment, like the segment allocator gives the slot array.
+      if (std::align(RingBufferShm<int>::CACHE_LINE, bytes, candidate, space) == nullptr) { return nullptr; }
+      m_used = static_cast<std::size_t>(static_cast<std::byte *>(candidate) - m_base) + bytes;
+      return candidate;
+    }
+
+    void deallocate(void * /*pointer*/) override {}
+
+  private:
+    std::byte *m_base;
+    std::size_t m_size;
+    std::size_t m_used = 0;
+  };
+
+  /** Bytes of one simulated segment mapping; cache line aligned so a relocated
+   *  ring still holds its cache line aligned slots. */
+  struct alignas(RingBufferShm<int>::CACHE_LINE) SegmentRegion
+  {
+    static constexpr std::size_t SIZE = 4096;
+    std::byte bytes[SIZE]{};
   };
 
   std::string repositoryToJson(const JsonSerializable &repository)
@@ -387,6 +426,41 @@ TEST_CASE("RingBufferShm in shared memory pushes and pops in order")
 
   auto popped = ring.tryPop();
   REQUIRE_FALSE(popped.has_value());
+}
+
+TEST_CASE("RingBufferShm addresses its slots relative to the ring object")
+{
+  using Ring = RingBufferShm<int>;
+
+  // Emulate the second mapping of a segment: ring and slot array live in one
+  // contiguous region, that region is copied to another address and the
+  // original is wiped. An address cached inside the ring would keep pointing
+  // at the wiped region; the offset travels with the copy.
+  auto firstRegion = std::make_unique<SegmentRegion>();
+  RegionAllocator firstAllocator(firstRegion->bytes, SegmentRegion::SIZE);
+  auto *ring = static_cast<Ring *>(firstAllocator.allocate(sizeof(Ring)));
+  REQUIRE(ring != nullptr);
+  ::new (static_cast<void *>(ring)) Ring(4, ShmSegmentAccessor(firstAllocator));
+  REQUIRE(ring->push(7));
+  REQUIRE(ring->push(8));
+
+  const std::ptrdiff_t ringOffset = reinterpret_cast<std::byte *>(ring) - firstRegion->bytes;
+  auto secondRegion = std::make_unique<SegmentRegion>();
+  std::memcpy(secondRegion->bytes, firstRegion->bytes, SegmentRegion::SIZE);
+
+  // The original mapping is gone: only the relocated bytes are still valid.
+  std::fill_n(firstRegion->bytes, SegmentRegion::SIZE, std::byte{ 0 });
+
+  auto *relocated = std::launder(reinterpret_cast<Ring *>(secondRegion->bytes + ringOffset));
+  int value = 0;
+  REQUIRE(relocated->pop(value));
+  REQUIRE(value == 7);
+  REQUIRE(relocated->push(9));
+  REQUIRE(relocated->pop(value));
+  REQUIRE(value == 8);
+  REQUIRE(relocated->pop(value));
+  REQUIRE(value == 9);
+  REQUIRE(relocated->empty());
 }
 
 TEST_CASE("QueueShm in shared memory is FIFO")
