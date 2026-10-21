@@ -267,6 +267,7 @@ set(headers
     include/lintel/features/cli/services/InputService.h
     include/lintel/features/cli/services/TerminalService.h
     include/lintel/features/cli/utils/CommandLineUtils.h
+    include/lintel/features/cli/components/AdminCliComponent.h
     include/lintel/features/cli/components/EventBusCliComponent.h
     include/lintel/features/cli/components/HistoryCliComponent.h
     include/lintel/features/cli/components/MessageQueueCliComponent.h
@@ -295,6 +296,7 @@ set(headers
     include/lintel/features/http/service/HttpClientHelper.h
     include/lintel/features/http/service/Server.h
     include/lintel/features/http/service/TlsReloadRegistry.h
+    include/lintel/features/http/controllers/AdminApi.h
     include/lintel/features/http/controllers/AdminController.h
     include/lintel/features/http/controllers/EventBusApi.h
     include/lintel/features/http/controllers/EventBusController.h
@@ -493,6 +495,7 @@ set(sources
     features/cli/services/InputService.cpp
     features/cli/services/TerminalService.cpp
     features/cli/utils/CommandLineUtils.cpp
+    features/cli/components/AdminCliComponent.cpp
     features/cli/components/EventBusCliComponent.cpp
     features/cli/components/HistoryCliComponent.cpp
     features/cli/components/MessageQueueCliComponent.cpp
@@ -516,6 +519,7 @@ set(sources
     features/http/service/HttpStatusCode.cpp
     features/http/service/Server.cpp
     features/http/service/TlsReloadRegistry.cpp
+    features/http/controllers/AdminApi.cpp
     features/http/controllers/AdminController.cpp
     features/http/controllers/EventBusApi.cpp
     features/http/controllers/EventBusController.cpp

@@ -79,6 +79,7 @@ ADD_EXECUTABLE(base_tests
     plugins/VirtualGroupBootstrapPluginTest.cpp
     plugins/SharedMemoryBootstrapPluginTest.cpp
     plugins/SingleInstanceBootstrapPluginTest.cpp
+    cli/AdminCliComponentTest.cpp
     cli/CliParserTest.cpp
     cli/HistoryCliComponentTest.cpp
     cli/MessageQueueCliComponentTest.cpp
