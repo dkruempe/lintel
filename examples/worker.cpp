@@ -62,7 +62,8 @@ public:
     // property is registered, so that a stale default is never written back
     int32_t initialValue = 2;
     try {
-      auto mirrored = sharedMemoryRepository->allOf("main", "SchedulerService", "__DEFAULT", "numberOfThreads");
+      auto mirrored = sharedMemoryRepository->allOf(
+        lintel::PropertyFilter{ "main", "SchedulerService", "__DEFAULT", "numberOfThreads" });
       if (!mirrored.empty()) { initialValue = std::stoi(mirrored.front()->toString()); }
     } catch (const std::exception &exception) {
       LOG_WARN("cannot read numberOfThreads from shared memory: {}", exception.what());
@@ -75,7 +76,8 @@ public:
     // change made over HTTP is applied by the worker through the event bus
     int32_t loginTimeout = 5;
     try {
-      auto mirrored = sharedMemoryRepository->allOf("main", "AuthService", "__DEFAULT", "m_timeoutLogin");
+      auto mirrored =
+        sharedMemoryRepository->allOf(lintel::PropertyFilter{ "main", "AuthService", "__DEFAULT", "m_timeoutLogin" });
       if (!mirrored.empty()) { loginTimeout = std::stoi(mirrored.front()->toString()); }
     } catch (const std::exception &exception) {
       LOG_WARN("cannot read m_timeoutLogin from shared memory: {}", exception.what());

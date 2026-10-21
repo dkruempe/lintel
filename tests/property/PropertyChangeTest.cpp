@@ -296,8 +296,8 @@ TEST_CASE("shared memory property repository round-trips saved properties")
   REQUIRE(awake.size() == 1);
   REQUIRE(awake.front()->getName() == "value");
 
-  REQUIRE(fixture.repository->allOf("testProcess", "className", "instance", "value").size() == 1);
-  REQUIRE(fixture.repository->allOf("otherProcess", ".*", ".*", ".*").empty());
+  REQUIRE(fixture.repository->allOf(PropertyFilter{ "testProcess", "className", "instance", "value" }).size() == 1);
+  REQUIRE(fixture.repository->allOf(PropertyFilter{ "otherProcess", ".*", ".*", ".*" }).empty());
 
   // deliberate no-op migration hook
   fixture.repository->onMigrate(0);

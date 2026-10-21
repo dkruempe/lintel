@@ -83,18 +83,14 @@ std::vector<std::shared_ptr<PropertyBase>> SharedMemoryPropertyRepository::awake
   return properties;
 }
 
-std::vector<std::shared_ptr<PropertyBase>>
-  // four identically typed parameters are part of the pure
-  // PropertyRepository interface; the order follows the
-  // process/property hierarchy and is shared by all implementations and
-  // callers. A change would be a breaking change of the interface.
-  // clang-format does not expect a line break here, hence NOLINT instead of a break.
-  // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
-  SharedMemoryPropertyRepository::allOf(const std::string &processName,
-    const std::string &className,
-    const std::string &instanceName,
-    const std::string &name)
+std::vector<std::shared_ptr<PropertyBase>> SharedMemoryPropertyRepository::allOf(const PropertyFilter &filter)
 {
+  // the filter is passed as one named aggregate; bind its fields so that the
+  // matching code below reads like the individual regexes
+  const std::string &processName = filter.m_processName;
+  const std::string &className = filter.m_className;
+  const std::string &instanceName = filter.m_instanceName;
+  const std::string &name = filter.m_name;
   boost::interprocess::sharable_lock<boost::interprocess::named_upgradable_mutex> lock(m_upgradableMutex);
   LOG_TRACE("start awake {}", getMap().size());
   std::vector<std::shared_ptr<PropertyBase>> properties;

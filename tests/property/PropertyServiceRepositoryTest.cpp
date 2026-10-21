@@ -85,8 +85,7 @@ TEST_CASE("PropertyService: allOf delegates to the shadow repository when one is
 
   ALLOW_CALL(*shadowRepository, awake()).LR_RETURN(PropertyVector{});
   ALLOW_CALL(*shadowRepository, save(ANY(std::vector<std::shared_ptr<PropertyBase>>)));
-  ALLOW_CALL(*shadowRepository, allOf(trompeloeil::_, trompeloeil::_, trompeloeil::_, trompeloeil::_))
-    .LR_RETURN(PropertyVector{ propSvcProperty("shadowed") });
+  ALLOW_CALL(*shadowRepository, allOf(trompeloeil::_)).LR_RETURN(PropertyVector{ propSvcProperty("shadowed") });
 
   PropertyService service({ shadowRepository }, {});
   service.onAwake();

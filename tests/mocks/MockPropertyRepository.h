@@ -16,12 +16,7 @@ public:
   MAKE_MOCK1(save, void(std::shared_ptr<PropertyBase>), override);
   MAKE_MOCK1(deleteOf, void(const std::vector<std::shared_ptr<PropertyBase>> &), override);
   MAKE_MOCK0(awake, std::vector<std::shared_ptr<PropertyBase>>(), override);
-  MAKE_MOCK4(allOf,
-    std::vector<std::shared_ptr<PropertyBase>>(const std::string &,
-      const std::string &,
-      const std::string &,
-      const std::string &),
-    override);
+  MAKE_MOCK1(allOf, std::vector<std::shared_ptr<PropertyBase>>(const PropertyFilter &), override);
 };
 
 }// namespace lintel

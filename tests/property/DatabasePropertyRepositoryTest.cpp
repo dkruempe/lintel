@@ -192,16 +192,16 @@ TEST_CASE("DatabasePropertyRepository::allOf filters by process, class, instance
     fixture.makeProperty("dprDelta", "__DEFAULT", "DprService", "otherProcess", 4) });
 
   // all four filters are passed explicitly so that the individual LIKE clauses are pinned here;
-  // the defaults of the header are exercised by the regression test below
-  REQUIRE(fixture.m_repository->allOf(".*", ".*", ".*", ".*").size() == 4);
-  REQUIRE(fixture.m_repository->allOf("dprProcess", ".*", ".*", ".*").size() == 3);
-  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService", ".*", ".*").size() == 2);
-  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService", "second").size() == 1);
-  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService", ".*", "dprAlpha").size() == 1);
-  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService", ".*", "dprA.*").size() == 1);
-  REQUIRE(fixture.m_repository->allOf("nobody", ".*", ".*", ".*").empty());
+  // the aggregate defaults are exercised by the regression test below
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ ".*", ".*", ".*", ".*" }).size() == 4);
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ "dprProcess", ".*", ".*", ".*" }).size() == 3);
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ "dprProcess", "DprService", ".*", ".*" }).size() == 2);
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ "dprProcess", "DprService", "second" }).size() == 1);
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ "dprProcess", "DprService", ".*", "dprAlpha" }).size() == 1);
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ "dprProcess", "DprService", ".*", "dprA.*" }).size() == 1);
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ "nobody", ".*", ".*", ".*" }).empty());
 
-  const auto alpha = fixture.m_repository->allOf("dprProcess", "DprService", ".*", "dprAlpha");
+  const auto alpha = fixture.m_repository->allOf(PropertyFilter{ "dprProcess", "DprService", ".*", "dprAlpha" });
   REQUIRE(alpha.size() == 1);
   REQUIRE(alpha[0]->toString() == "1");
 }
@@ -215,9 +215,11 @@ TEST_CASE("DatabasePropertyRepository::allOf matches every instance for the defa
   fixture.m_repository->save(fixture.makeProperty("dprAlpha", "__DEFAULT", "DprService", "dprProcess", 1));
   fixture.m_repository->save(fixture.makeProperty("dprBeta", "second", "DprService", "dprProcess", 2));
 
-  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService").size() == 2);
-  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService", ".*", ".*").size() == 2);
-  REQUIRE(fixture.m_repository->allOf().size() == 2);
+  REQUIRE(
+    fixture.m_repository->allOf(PropertyFilter{ .m_processName = "dprProcess", .m_className = "DprService" }).size()
+    == 2);
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ "dprProcess", "DprService", ".*", ".*" }).size() == 2);
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{}).size() == 2);
 }
 
 TEST_CASE("DatabasePropertyRepository::deleteOf removes the given properties", "[database_property_repository]")
@@ -287,9 +289,9 @@ TEST_CASE("DatabasePropertyRepository::allOf returns an empty result for a broke
   fixture.breakConnection();
 
   std::vector<std::shared_ptr<PropertyBase>> allOfResult;
-  REQUIRE_NOTHROW(allOfResult = fixture.m_repository->allOf());
+  REQUIRE_NOTHROW(allOfResult = fixture.m_repository->allOf(PropertyFilter{}));
   REQUIRE(allOfResult.empty());
-  REQUIRE(fixture.m_repository->allOf("dprProcess", "DprService", ".*", "dpr.*").empty());
+  REQUIRE(fixture.m_repository->allOf(PropertyFilter{ "dprProcess", "DprService", ".*", "dpr.*" }).empty());
 }
 
 TEST_CASE("DatabasePropertyRepository::deleteOf swallows a db::SQLException of a broken connection",

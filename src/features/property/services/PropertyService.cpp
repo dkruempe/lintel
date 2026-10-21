@@ -200,7 +200,7 @@ std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::str
       });
     return propertiesVector;
   }
-  return m_shadowPropertyRepositories[0]->allOf(processName);
+  return m_shadowPropertyRepositories[0]->allOf(PropertyFilter{ .m_processName = processName });
 }
 
 std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::string &processName,
@@ -217,7 +217,8 @@ std::vector<std::shared_ptr<PropertyBase>> PropertyService::allOf(const std::str
     }
     return propertiesVector;
   }
-  return m_shadowPropertyRepositories[0]->allOf(processName, className);
+  return m_shadowPropertyRepositories[0]->allOf(
+    PropertyFilter{ .m_processName = processName, .m_className = className });
 }
 
 std::vector<std::shared_ptr<PropertyBase>>
@@ -238,7 +239,8 @@ std::vector<std::shared_ptr<PropertyBase>>
     }
     return propertiesVector;
   }
-  return m_shadowPropertyRepositories[0]->allOf(processName, className, instanceName);
+  return m_shadowPropertyRepositories[0]->allOf(
+    PropertyFilter{ .m_processName = processName, .m_className = className, .m_instanceName = instanceName });
 }
 
 std::string PropertyService::createIdentifier(const std::string &name,
@@ -376,7 +378,8 @@ std::optional<std::string> PropertyService::resolveChangeValue(const PropertyCha
     if (repository->getType() != PropertyRepositoryType::SHM_REPOSITORY) { continue; }
     std::vector<std::shared_ptr<PropertyBase>> candidates;
     try {
-      candidates = repository->allOf(change.processName, change.className, change.instanceName, change.name);
+      candidates =
+        repository->allOf(PropertyFilter{ change.processName, change.className, change.instanceName, change.name });
     } catch (const std::exception &exception) {
       LOG_ERROR("cannot resolve value of {}: {}", change.identifier(), exception.what());
       return std::nullopt;
