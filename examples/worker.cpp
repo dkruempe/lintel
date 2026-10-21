@@ -36,7 +36,9 @@
 class WorkerService : public lintel::AbstractService<WorkerService>
 {
 private:
-  std::shared_ptr<lintel::di::Container> m_container;
+  /** Weak on purpose: the container owns this service, so a shared_ptr here
+   *  would close a cycle and the container would never be destroyed. */
+  std::weak_ptr<lintel::di::Container> m_container;
   std::shared_ptr<lintel::ProcessName> m_processName;
   std::atomic_bool m_running = true;
   std::thread m_listener;
@@ -50,9 +52,14 @@ public:
 
   void onInitialize() override
   {
-    auto propertyService = m_container->resolve<lintel::PropertyService>();
-    auto sharedMemoryRepository = m_container->resolve<lintel::SharedMemoryPropertyRepository>();
-    auto eventBusService = m_container->resolve<lintel::EventBusService>();
+    const std::shared_ptr<lintel::di::Container> container = m_container.lock();
+    if (container == nullptr) {
+      LOG_ERROR("container is gone - worker cannot initialize");
+      return;
+    }
+    auto propertyService = container->resolve<lintel::PropertyService>();
+    auto sharedMemoryRepository = container->resolve<lintel::SharedMemoryPropertyRepository>();
+    auto eventBusService = container->resolve<lintel::EventBusService>();
 
     // unique subscriber name per worker instance (pid based)
     const std::string subscriber = m_processName->getProcessName() + "-" + std::to_string(lintel::currentProcessId());
@@ -114,7 +121,7 @@ public:
 
     // produce a few test history entries every 3 seconds so that main
     // picks them up from the IPC queue and persists them
-    auto historyService = m_container->resolve<lintel::IHistoryService>();
+    auto historyService = container->resolve<lintel::IHistoryService>();
     const std::string workerPid = std::to_string(lintel::currentProcessId());
     m_historyThread = std::thread([this, historyService, subscriber, workerPid]() {
       int counter = 0;
