@@ -135,7 +135,7 @@ header that feature consumers include.
 |---------|--------|-----------|
 | `ProcessResourceReader`, `ProcessInfo`, `ProcessInfoDto`, `ProcessService` | `boost::process::v1::pid_t` → `pid_t` (`<unistd.h>`), `child` only forward-declared | `getProcessId()` now returns `pid_t` by value |
 | `MessageQueue<T>` | non-template core `MessageQueueCore` (Pimpl), Boost in `MessageQueueCore.cpp` | no (template API unchanged) |
-| `EventBus` | `ShmSegmentAccessor` (Boost-free, 1 pointer) + `ShmSegmentAccessor::Allocator` interface; Boost-bound in `BoostSegmentAllocator.h` | constructor takes `ShmSegmentAccessor` instead of `segment_manager*` |
+| `EventBus` | `ShmSegmentAccessor` (Boost-free, segment name + allocator pointer, 40 bytes) + `ShmSegmentAccessor::Allocator` interface; Boost-bound in `BoostSegmentAllocator.h` | constructor takes `ShmSegmentAccessor` instead of `segment_manager*` |
 | `SingleInstanceBootstrapPlugin` | `Lock` class (Boost `file_lock`) as private Pimpl in the `.cpp` | no |
 | `SharedMemoryService` | Boost-bound free functions in `shm::` (`ShmConstructors.h`), segment state in `SharedMemorySegmentHandle` | **yes**: `constructX()` → `shm::constructX(service, …)`, `ShmString` → `shm::String`, `getSegmentManager()` → `shm::segmentManagerOf()` |
 

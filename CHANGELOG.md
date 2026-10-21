@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Admin API client and CLI component.** The two `/admin/*` routes (`reload-tls`, `log-level`) had
+  no `AdminApi` and no CLI command; `reload_tls` and `log_level --level` fill that gap.
+- **`POST /shm/recover`.** `SharedMemoryService::recover()` reclaims remap locks whose holder is
+  gone but had no caller. The route (admin only) answers `{"RECOVERED":n}`, with
+  `SharedMemoryApi::recoverOf()` and the CLI command `recover_segments`.
+- **`SharedMemoryRepository<T>::of()`.** The typed repositories can be created through a
+  process-wide factory that deduplicates by `segment:name` through
+  `SharedMemoryRepositoryRegistry` instead of building a second cell for the same name.
+- **`Publisher-EventBus` group.** Publishing no longer rides on the read group.
 - **EventBus over HTTP and in the CLI.** Seven routes (`/eventBus/buses`, `/eventBus/bus/{name}`,
   `/eventBus/publish/{name}`, `POST`/`DELETE` `/eventBus/subscribe/{name}`,
   `/eventBus/depth/{name}/{subscriber}`, `/eventBus/reset/{name}`) with an `EventBusApi` client and
@@ -177,6 +186,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `postgres:17` service.
 
 ### Changed
+- **Publishing on the event bus needs its own right (breaking).** `POST /eventBus/publish/{name}`
+  accepts a token of `Publisher-EventBus` or `Admin-EventBus`; `User-EventBus` is read-only and
+  gets 401. The group is a virtual group like the other two, so it is seeded automatically.
+- **The shared memory process model is cross-process now (breaking).** `ShmSegmentAccessor`
+  carries the *name* of its segment (40 bytes instead of one pointer) and resolves it to the
+  allocator of the calling process, so an accessor copied into a segment is usable from every
+  process. `MessageQueueShmCore` keeps its header and ring in the segment under a stable name
+  instead of a process-local map, which means two processes now really share one queue. Segments
+  written by an older build are recognised by a layout marker and recreated on open (the previous
+  layout would be reinterpreted and corrupted).
+- **`SharedMemoryRepositoryRegistry.h` moved** from `features/base/services/` to `core/shm/`; the
+  typed repository header may not depend on a feature header.
 - **Logging and property registration use `std::source_location` (breaking).**
   `LoggerService::log()`/`logImpl()` take a `std::source_location` instead of
   `(file, line, function)`, and `PropertyRegistration::registerProperty()` replaces its
@@ -265,6 +286,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **The SHM message queue was not an IPC mechanism.** Every process built its own ring in the
+  segment, so `MessageQueueShmCore` only worked inside one process. A fork-based test now proves
+  that a child process finds the queue by name and that a message crosses the boundary.
 - **The worker processes outlived `bin/main`.** Two defects added up:
   `VirtualGroupBootstrapPlugin` is a singleton *inside* the DI container and held a `shared_ptr`
   to that container, so container → plugin → container never dropped to zero - the container was

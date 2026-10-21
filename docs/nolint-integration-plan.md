@@ -675,7 +675,7 @@ Branch `refactor/nolint-cleanup`, aufgesetzt auf `master @ 1333386`, 20 Commits.
 `LINTEL_FUNCTION` ist entfallen; `TypeName.h` behält `__PRETTY_FUNCTION__`, weil ein
 Compile-Zeit-Typname nicht aus einem Laufzeitobjekt kommen kann.
 
-### Teil B — Integration: 5 von 14 Punkten umgesetzt
+### Teil B — Integration: 9 von 14 Punkten umgesetzt
 
 | Punkt | Status | Commit |
 |-------|--------|--------|
@@ -683,9 +683,24 @@ Compile-Zeit-Typname nicht aus einem Laufzeitobjekt kommen kann.
 | B.2 #2 `SharedMemoryCleanupService` in der DI + `POST /shm/cleanup` | **umgesetzt** | `8a7a604` |
 | B.2 #3 `recoverOrphans` → `POST /messageQueue/recover` | **umgesetzt** | `8a7a604` |
 | B.2 #4 `statsOf` im `ISharedMemoryService` + `GET /shm/stats/{segment}` | **umgesetzt** | `8a7a604` |
+| B.2 #5 `SharedMemoryService::recover()` | **umgesetzt**: `POST /shm/recover` (nur Admin), `SharedMemoryApi::recoverOf()`, CLI `recover_segments`, Doc-Kommentar korrigiert | `d1c8253` |
+| B.2 #10 `SharedMemoryRepositoryRegistry` | **umgesetzt**: `SharedMemoryRepository<T>::of()` dedupliziert über die Registry; Header nach `core/shm/` verschoben | `7419464` |
 | B.3 sieben CLI-/Swagger-Defekte | **umgesetzt** | `6a3f960`, `fc6ad98` |
+| B.4 #2 Accessor-Rebinding | **umgesetzt**: `ShmSegmentAccessor` trägt den Segmentnamen (40 B) und löst ihn prozesslokal auf | `475c822` |
+| B.4 #1 `MessageQueueShmCore` prozessübergreifend | **umgesetzt**: Header + Ring liegen unter einem Namen im Segment, Claim-Protokoll, Fork-Test | `475c822` |
 | B.4 #3 `RingBufferShm` absolute Adresse | **umgesetzt**, mit Regressionstest | `dff0ae7` |
-| übrige B.2/B.4-Punkte | offen | siehe Backlog unten |
+| übrige Punkte | offen | siehe Backlog |
+
+Entscheidungen aus §5, wie umgesetzt:
+
+1. `SharedMemoryService::recover()` → **Endpoint gebaut** (`POST /shm/recover`).
+2. `SharedMemoryRepositoryRegistry` → **verdrahtet** über `SharedMemoryRepository<T>::of()`.
+3. EventBus-Publish → **eigenes Recht** `Publisher-EventBus`; `User-EventBus` ist nur noch lesend.
+4. B.4 → **behoben** (Accessor-Bindung + geteilter Queue-Header).
+
+Zusätzlich, weil es im Plan fehlte: `AdminController` hatte weder Api noch CLI. Neu sind
+`AdminApi` und `AdminCliComponent` (`reload_tls`, `log_level --level`), Commit `4da3f2e`.
+Das Publish-Recht ist `2b04cbf`.
 
 ### Nicht im ursprünglichen Plan: drei Fehler, die beim Testen auffielen
 
@@ -697,31 +712,21 @@ Alle drei blockierten `scripts/run-example.sh` bzw. hinterließen Prozesse und s
 | `export_repository --file` scheiterte auf Windows | jede `~` wurde durch das Home-Verzeichnis ersetzt, auch in Kurznamen wie `RUNNER~1` | `de3be99` |
 | beide `worker` überlebten das Beenden von `main` | Container-Zyklus (`VirtualGroupBootstrapPlugin` hielt die Container-`shared_ptr`, in der sie selbst als Singleton lebt) → kein Destruktor lief; `ProcessService` stoppte seine Kinder nur im Destruktor | `d0aff6c`, `e283f41`, `fbc17c6` |
 
-### Backlog — die neun offenen Punkte
-
-Reihenfolge nach Nutzen pro Aufwand; „Voraussetzung" nennt, was zuerst da sein muss.
+### Backlog — die verbleibenden Punkte
 
 | Prio | Punkt | Ziel | Aufwand | Voraussetzung |
 |------|-------|------|---------|---------------|
-| 1 | **B.2 #8** `ProcessGroup`-Lifecycle | fünf Routen (`start`, `restart`, `stop`, `terminate`, `detach`) analog zu den bestehenden `Process`-Routen in `ProcessController`; `ProcessService` hat alle Methoden bereits, `ProcessApi`/`ProcessCliComponent` ziehen nach | mittel | – |
-| 2 | **B.2 #6** MQ-Überlauf-/Dead-Letter-Policy | `MessageQueue<T>` und `MessageQueueService` reichen `setOverflowPolicy`/`setOverflowTimeout`/`setDeadLetterQueueName` an den Core durch; `PUT /messageQueue/policy/{name}` + CLI | mittel | – |
-| 3 | **B.2 #5** `SharedMemoryService::recover()` | entweder `POST /shm/recover` (Doku-Kommentar zuerst korrigieren) oder Methode samt Interface-Default entfernen | klein | Entscheidung 1 |
-| 4 | **B.2 #10** `SharedMemoryRepositoryRegistry` | verdrahten (dann in `BaseFeature` registrieren und von `SharedMemoryService` nutzen) oder löschen (Test `SharedMemoryRepositoryTest.cpp:499` entfällt mit) | klein | Entscheidung 2 |
-| 5 | **B.2 #9** `HistoryController` → `HistoryService` | Controller fragt den Service statt des Repositories; die Service-Überladungen (`allOf(process, service, label)`) sind vorhanden | klein | – |
-| 6 | **B.2 #7** `MessageQueueRequestReply` | API + Route (`POST /messageQueue/requestReply/{name}`), Timeout als Property | mittel | – |
-| 7 | **B.4 #2** Accessor-Rebinding | `ShmSegmentAccessor` darf nicht mehr auf den Allocator des erzeugenden Prozesses zeigen: prozesslokale Registry je Segmentname (Muster: `mqshm_detail::g_registry`), Rebinding in `constructObjectWith`/`find_or_construct`-Pfad | groß | – |
-| 8 | **B.4 #1** `MessageQueueShmCore` prozessübergreifend | `QueueState` (Ring-Zeiger, Mutex, Condition) liegt heute prozesslokal; für echte IPC muss der Ring samt Kopfdaten im Segment liegen und über Offsets gefunden werden. Ohne das liefert das SHM-Backend keine IPC, obwohl `docs/ipc-driver-unit-plan.md` MQ-6 als erledigt führt – dortigen Status korrigieren | groß | B.4 #2 |
-| 9 | **B.2 #11 + A.1.5** `ShmView`/`ShmSlice`, Lifecycle-Hooks, typisierte Payloads, Segmentbasis-Adressierung | exponiert die restlichen SHM-Bausteine; ersetzt `std::bit_cast` durch `reinterpret_cast<T *>(segmentBase + offset)` und entfernt damit die formale Unsicherheit aus A.1 | groß | B.4 #1/#2 |
+| 1 | **B.2 #6** MQ-Überlauf-/Dead-Letter-Policy | `MessageQueue<T>` und `MessageQueueService` reichen `setOverflowPolicy`/`setOverflowTimeout`/`setDeadLetterQueueName` an den Core durch; `PUT /messageQueue/policy/{name}` + CLI | mittel | – |
+| 2 | **B.2 #8** `ProcessGroup`-Lifecycle | fünf Routen (`start`, `restart`, `stop`, `terminate`, `detach`) analog zu den `Process`-Routen; `ProcessService` hat alle Methoden, `ProcessApi`/`ProcessCliComponent` ziehen nach | mittel | – |
+| 3 | **B.2 #9** `HistoryController` → `HistoryService` | Controller fragt den Service statt des Repositories | klein | – |
+| 4 | **B.2 #7** `MessageQueueRequestReply` | API + Route (`POST /messageQueue/requestReply/{name}`), Timeout als Property | mittel | – |
+| 5 | **B.2 #11 + A.1.5** `ShmView`/`ShmSlice`, Lifecycle-Hooks, typisierte Payloads, Segmentbasis-Adressierung | exponiert die restlichen SHM-Bausteine; ersetzt `std::bit_cast` durch `reinterpret_cast<T *>(segmentBase + offset)` und entfernt die formale Unsicherheit aus A.1 | groß | B.4 (erledigt) |
 | – | *Kandidat, nicht im Plan* | Paging-Items von `/messageQueue` liefern `MESSAGES = 0` (`MessageQueuesPageDto` reicht `0` durch), obwohl `/messageQueue/stats` dasselbe Payload mit echten Werten verspricht | klein | – |
 
 ### Offene Entscheidungen
 
-1. `SharedMemoryService::recover()` — Endpoint bauen oder löschen? (Backlog #3)
-2. `SharedMemoryRepositoryRegistry` — verdrahten oder entfernen? (Backlog #4)
-3. `POST /eventBus/publish/{bus}` erlaubt auch `User-EventBus` zu publizieren. Falls das zu
-   weit geht: eine Zeile im Controller (`canPublish()` statt `canRead()`).
-4. Reihenfolge B.4 gegen den Rest: #7/#8/#9 sind die einzigen Punkte, die ein eigenes
-   Prozessmodell brauchen; alles darüber ist unabhängig mergebar.
+Keine aus §5 mehr offen. Neu zu entscheiden, sobald #5 angegangen wird: ob die
+Segmentbasis-Adressierung den Accessor-Namen ersetzt oder nur ergänzt.
 
 ### Verifikationsstand
 
@@ -729,8 +734,9 @@ Reihenfolge nach Nutzen pro Aufwand; „Voraussetzung" nennt, was zuerst da sein
 |---------|----------|
 | Build `build/build/Release` (GCC 14, `-Werror`) | grün |
 | Build `build/debug-nonunity` (Debug, Unity aus) | grün |
-| `ctest --label-regex unit` | 1250/1250 grün (22 PostgreSQL-Tests übersprungen) |
-| `ctest` im TSan-Build (`build/tsan`) | 1247/1247 grün (Stand vor den letzten drei Fixes) |
+| `ctest --label-regex unit` | 1276/1276 grün (22 PostgreSQL-Tests übersprungen) |
+| `ctest` im TSan-Build (`build/tsan`) | 1247/1247 grün (Stand vor den letzten Fixes) |
 | `clang-tidy` mit CI-Checkliste auf allen geänderten Quellen | 0 Findings |
-| `scripts/check-format.sh master`, `check-namespace.sh`, `check-swagger.sh` (47 Pfade), `check-secrets.sh` | grün |
+| `scripts/check-format.sh master`, `check-namespace.sh`, `check-swagger.sh` (48 Pfade), `check-secrets.sh` | grün |
 | `scripts/run-example.sh` (main, worker) | startet, beendet Kinder sauber |
+| Alte Segmentdateien | werden über den Layout-Marker erkannt und neu angelegt (im Log verifiziert) |
