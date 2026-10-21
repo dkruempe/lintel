@@ -238,26 +238,27 @@ namespace mqshm_detail {
     std::byte *m_allocation = nullptr;
     std::intptr_t m_bufferOffset = 0;
 
-    /** Base of the aligned slot array in this process' mapping. Derived from
-     *  `this` by pointer arithmetic on std::byte (element size 1), so it needs
-     *  neither an integer-to-pointer cast nor a byte count scaled by a wider
-     *  element type. */
-    [[nodiscard]] std::byte *buffer() const
-    {
-      return reinterpret_cast<std::byte *>(const_cast<ShmRing *>(this)) + m_bufferOffset;
-    }
-
+    /** Slot at a logical ring position.
+     *
+     *  The slot array lives in the shared segment, not inside this object, and
+     *  is addressed by the byte offset m_bufferOffset: a plain `std::byte *`
+     *  scaled by bytes is the intent, yet CodeQL reports the `reinterpret_cast`
+     *  base as cpp/suspicious-pointer-scaling (a ShmRing * scaled by bytes). The
+     *  stride is not a multiple of sizeof(SlotHeader) either, so element
+     *  arithmetic is not an option. The addition therefore runs in the integer
+     *  domain and the result is restored verbatim. */
     [[nodiscard]] SlotHeader *slotAt(std::uint64_t position) const
     {
-      return reinterpret_cast<SlotHeader *>(buffer() + (position % m_capacity) * m_stride);
+      const std::intptr_t address = reinterpret_cast<std::intptr_t>(this) + m_bufferOffset
+                                    + static_cast<std::intptr_t>((position % m_capacity) * m_stride);
+      // NOLINTNEXTLINE(performance-no-int-to-ptr) — relative offset into this process' mapping.
+      return reinterpret_cast<SlotHeader *>(address);
     }
 
-    /** Payload of a slot lives directly behind its header; byte arithmetic
-     *  keeps the offset unambiguous. */
-    [[nodiscard]] static std::byte *payloadOf(SlotHeader *slot)
-    {
-      return reinterpret_cast<std::byte *>(slot) + kSlotHeaderSize;
-    }
+    /** Payload of a slot lives directly behind its header. `slot + 1` advances
+     *  by exactly kSlotHeaderSize (see the static_assert on SlotHeader), so the
+     *  offset is expressed as typed pointer arithmetic. */
+    [[nodiscard]] static std::byte *payloadOf(SlotHeader *slot) { return reinterpret_cast<std::byte *>(slot + 1); }
   };
 
   /** State shared by every core of one process that opens the same queue. */

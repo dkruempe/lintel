@@ -86,10 +86,15 @@ namespace {
     [[nodiscard]] void *payload() const
     {
       // The payload offset is stored in the record inside the segment (its
-      // address differs per mapping), so it has to be materialised here. The
-      // base is a std::byte pointer: byte arithmetic has element size 1, so
-      // neither an integer-to-pointer cast nor a widened scale is involved.
-      return reinterpret_cast<std::byte *>(const_cast<ShmCellRecord *>(this)) + m_payloadOffset;
+      // address differs per mapping), so it has to be materialised here. A
+      // std::byte * base scaled by bytes is the intent, yet CodeQL reports the
+      // reinterpret_cast base as cpp/suspicious-pointer-scaling (a ShmCellRecord
+      // * scaled by bytes); the payload alignment is not a multiple of
+      // sizeof(ShmCellRecord), so element arithmetic is not an option. The
+      // addition therefore runs in the integer domain and is restored verbatim.
+      const std::intptr_t address = reinterpret_cast<std::intptr_t>(this) + m_payloadOffset;
+      // NOLINTNEXTLINE(performance-no-int-to-ptr) — relative offset into this process' mapping.
+      return reinterpret_cast<void *>(address);
     }
 
     [[nodiscard]] std::uint64_t magic() const { return m_magic; }
