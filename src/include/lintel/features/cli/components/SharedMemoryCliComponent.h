@@ -24,7 +24,6 @@ private:
   std::optional<std::string> m_segmentName;
   std::optional<std::string> m_size;
   std::optional<std::string> m_repositoryName;
-  std::optional<std::string> m_type;
   std::optional<std::string> m_file;
   std::optional<std::string> m_uuid;
 

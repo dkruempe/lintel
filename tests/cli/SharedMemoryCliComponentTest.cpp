@@ -2,6 +2,8 @@
 
 #include <algorithm>
 #include <chrono>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <sstream>
@@ -212,6 +214,10 @@ TEST_CASE("SharedMemoryCliComponent: onHelp prints the header and every command 
   REQUIRE(shmCliHelp.find("--segment-name, -s") != std::string::npos);
   REQUIRE(shmCliHelp.find("--grow-size, -g") != std::string::npos);
   REQUIRE(shmCliHelp.find("--uuid, -u") != std::string::npos);
+  REQUIRE(shmCliHelp.find("--file, -f") != std::string::npos);
+  // grow_segment must not be described as the opposite operation
+  REQUIRE(shmCliHelp.find("Grow segment") != std::string::npos);
+  REQUIRE(shmCliHelp.find("Shrink segment") != std::string::npos);
 }
 
 TEST_CASE("SharedMemoryCliComponent: printCommandList lists every registered command")
@@ -481,6 +487,35 @@ TEST_CASE("SharedMemoryCliComponent: export_repository asks the api for the uuid
   REQUIRE(shmCliServer.paths[0] == "/shm/repository/export-uuid");
   REQUIRE(shmCliServer.methods[0] == "GET");
   REQUIRE(shmCliPrinted.find("exported") != std::string::npos);
+}
+
+TEST_CASE("SharedMemoryCliComponent: export_repository writes the export to the given file")
+{
+  shmCliBackend shmCliServer;
+  shmCliServer.answerWith("{\"exported\":1}");
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+  SharedMemoryCliComponent shmCliComponent(shmCliApi);
+
+  const std::filesystem::path shmCliTarget =
+    std::filesystem::temp_directory_path() / "lintel_shm_export_cli_component_test.json";
+  std::filesystem::remove(shmCliTarget);
+
+  shmCliCoutCapture shmCliOut;
+  shmCliComponent.onCommand(
+    UserDto{}, "export_repository", { "--uuid", "export-uuid", "--file", shmCliTarget.string() });
+  const std::string shmCliPrinted = shmCliOut.str();
+
+  REQUIRE(shmCliServer.paths.size() == 1);
+  REQUIRE(shmCliServer.paths[0] == "/shm/repository/export-uuid");
+  REQUIRE(shmCliPrinted.find("Exported SharedMemory to >") != std::string::npos);
+
+  REQUIRE(std::filesystem::exists(shmCliTarget));
+  std::ifstream shmCliFile(shmCliTarget);
+  std::string shmCliContent;
+  std::getline(shmCliFile, shmCliContent);
+  REQUIRE(shmCliContent.find("exported") != std::string::npos);
+
+  std::filesystem::remove(shmCliTarget);
 }
 
 TEST_CASE("SharedMemoryCliComponent: an unknown command never reaches the api")

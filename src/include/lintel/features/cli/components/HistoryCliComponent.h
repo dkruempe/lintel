@@ -9,7 +9,7 @@ namespace lintel {
 /** CLI component that displays command history */
 class HistoryCliComponent : public CommandLineComponent
 {
-  static constexpr std::string_view n_name = "History";
+  static constexpr std::string_view m_name = "History";
   static constexpr std::string_view m_alias = "Hist";
   static constexpr std::string_view m_description = "The Component can be used to show the history of components";
   std::shared_ptr<HistoryApi> m_historyApi;

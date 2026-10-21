@@ -195,6 +195,11 @@ TEST_CASE("PropertyCliComponent: onHelp prints the header and every command")
   REQUIRE(help.find("show_properties") != std::string::npos);
   REQUIRE(help.find("show_property") != std::string::npos);
   REQUIRE(help.find("update_property") != std::string::npos);
+  // all three commands must use the same dash spelling for the option
+  REQUIRE(help.find("--process-name, -p") != std::string::npos);
+  REQUIRE(help.find("--class-name, -c") != std::string::npos);
+  REQUIRE(help.find("--process_name") == std::string::npos);
+  REQUIRE(help.find("--class_name") == std::string::npos);
 }
 
 TEST_CASE("PropertyCliComponent: printCommandList lists every registered command")
@@ -288,7 +293,7 @@ TEST_CASE("PropertyCliComponent: show_property prints the requested property")
   propCliCoutCapture out;
   component.onCommand(UserDto{},
     "show_property",
-    { "--process_name", "proc", "--class_name", "cls", "--instance-name", "inst", "--name", "myProp" });
+    { "--process-name", "proc", "--class-name", "cls", "--instance-name", "inst", "--name", "myProp" });
   const std::string printed = out.str();
 
   REQUIRE(server.paths.size() == 1);
@@ -308,7 +313,7 @@ TEST_CASE("PropertyCliComponent: show_property reports an absent property on std
   propCliCerrCapture err;
   component.onCommand(UserDto{},
     "show_property",
-    { "--process_name", "proc", "--class_name", "cls", "--instance-name", "inst", "--name", "missing" });
+    { "--process-name", "proc", "--class-name", "cls", "--instance-name", "inst", "--name", "missing" });
 
   REQUIRE(err.str().find("not preset") != std::string::npos);
 }
@@ -324,9 +329,9 @@ TEST_CASE("PropertyCliComponent: update_property updates and prints before/after
   propCliCoutCapture out;
   component.onCommand(UserDto{},
     "update_property",
-    { "--process_name",
+    { "--process-name",
       "proc",
-      "--class_name",
+      "--class-name",
       "cls",
       "--instance-name",
       "inst",
@@ -356,9 +361,9 @@ TEST_CASE("PropertyCliComponent: update_property reports an absent property on s
   propCliCerrCapture err;
   component.onCommand(UserDto{},
     "update_property",
-    { "--process_name",
+    { "--process-name",
       "proc",
-      "--class_name",
+      "--class-name",
       "cls",
       "--instance-name",
       "inst",

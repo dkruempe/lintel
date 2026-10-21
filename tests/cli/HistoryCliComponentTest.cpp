@@ -204,6 +204,9 @@ TEST_CASE("HistoryCliComponent: onHelp prints the header and every command with 
   REQUIRE(histCliHelp.find("--process-name, -p") != std::string::npos);
   REQUIRE(histCliHelp.find("--service-name, -s") != std::string::npos);
   REQUIRE(histCliHelp.find("--label, -l") != std::string::npos);
+  // the argument description must not end with a stray closing parenthesis
+  REQUIRE(histCliHelp.find("Service Name of history entries") != std::string::npos);
+  REQUIRE(histCliHelp.find("history entries)") == std::string::npos);
 }
 
 TEST_CASE("HistoryCliComponent: printCommandList lists the registered commands")

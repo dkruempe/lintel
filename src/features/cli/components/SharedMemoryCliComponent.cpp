@@ -23,13 +23,15 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(std::shared_ptr<SharedMemoryA
   m_commandParser.addCommand(
     Command("shrink_segment", "Shrink segment").addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name"),
     ShrinkSegment);
-  m_commandParser.addCommand(Command("grow_segment", "Shrink segment")
+  m_commandParser.addCommand(Command("grow_segment", "Grow segment")
                                .addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name")
                                .addArgument({ "--grow-size", "-g" }, &m_size, "Grow Size"),
     GrowSegment);
-  m_commandParser.addCommand(Command("export_repository", "Export Repository to json")
-                               .addArgument({ "--repository-name", "-r" }, &m_repositoryName, "Repository name")
-                               .addArgument({ "--uuid", "-u" }, &m_uuid, "UUID"),
+  m_commandParser.addCommand(
+    Command("export_repository", "Export Repository to json")
+      .addArgument({ "--repository-name", "-r" }, &m_repositoryName, "Repository name")
+      .addArgument({ "--uuid", "-u" }, &m_uuid, "UUID")
+      .addArgument({ "--file", "-f" }, &m_file, "File to write the export to (default: stdout)"),
     ExportRepository);
 }
 
@@ -116,7 +118,6 @@ void SharedMemoryCliComponent::handleExportRepository()
   if (m_file.has_value()) { m_file->clear(); }
   if (m_repositoryName.has_value()) { m_repositoryName->clear(); }
   if (m_segmentName.has_value()) { m_segmentName->clear(); }
-  if (m_type.has_value()) { m_type->clear(); }
 }
 
 void SharedMemoryCliComponent::printSegments(const std::vector<SharedMemorySegmentDto> &segments)
