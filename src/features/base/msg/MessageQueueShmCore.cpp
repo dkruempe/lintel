@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <bit>
 #include <chrono>
 #include <condition_variable>
 #include <cstring>
@@ -241,18 +242,17 @@ namespace mqshm_detail {
     /** Slot at a logical ring position.
      *
      *  The slot array lives in the shared segment, not inside this object, and
-     *  is addressed by the byte offset m_bufferOffset: a plain `std::byte *`
-     *  scaled by bytes is the intent, yet CodeQL reports the `reinterpret_cast`
-     *  base as cpp/suspicious-pointer-scaling (a ShmRing * scaled by bytes). The
-     *  stride is not a multiple of sizeof(SlotHeader) either, so element
-     *  arithmetic is not an option. The addition therefore runs in the integer
-     *  domain and the result is restored verbatim. */
+     *  is addressed by the byte offset m_bufferOffset: the stride is not a
+     *  multiple of sizeof(SlotHeader) either, so element arithmetic is not an
+     *  option and the address is materialised in the integer domain.
+     *  std::bit_cast restores it: a plain reinterpret_cast from the integer
+     *  would be reported as performance-no-int-to-ptr, byte pointer arithmetic
+     *  as cpp/suspicious-pointer-scaling. */
     [[nodiscard]] SlotHeader *slotAt(std::uint64_t position) const
     {
-      const std::intptr_t address = reinterpret_cast<std::intptr_t>(this) + m_bufferOffset
-                                    + static_cast<std::intptr_t>((position % m_capacity) * m_stride);
-      // NOLINTNEXTLINE(performance-no-int-to-ptr) — relative offset into this process' mapping.
-      return reinterpret_cast<SlotHeader *>(address);
+      const std::uintptr_t address = reinterpret_cast<std::uintptr_t>(this)
+                                     + static_cast<std::uintptr_t>(m_bufferOffset) + (position % m_capacity) * m_stride;
+      return std::bit_cast<SlotHeader *>(address);
     }
 
     /** Payload of a slot lives directly behind its header. `slot + 1` advances

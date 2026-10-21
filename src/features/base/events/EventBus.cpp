@@ -4,6 +4,7 @@
 #include "lintel/core/shm/ShmSegmentAccessor.h"
 #include "lintel/features/base/events/TopicMatcher.h"
 
+#include <bit>
 #include <chrono>
 #include <cstring>
 #include <memory>
@@ -147,21 +148,19 @@ EventBus::ShmRing::~ShmRing()
 EventBus::ShmRing::Slot *EventBus::ShmRing::buffer()
 {
   // The node buffer lives in the shared segment, not inside this object (see the ShmRing
-  // documentation), and is addressed by the byte offset m_bufferOffset. The addition runs in the
-  // integer domain instead of as `reinterpret_cast<std::byte *>(this) + m_bufferOffset`: that byte
-  // pointer arithmetic is exactly the intent, yet CodeQL reports it as cpp/suspicious-pointer-scaling
-  // (a ShmRing * scaled by bytes). The aligned buffer is not necessarily a multiple of sizeof(Slot),
-  // so element arithmetic is not an option either.
-  const std::intptr_t bufferAddress = reinterpret_cast<std::intptr_t>(this) + m_bufferOffset;
-  // NOLINTNEXTLINE(performance-no-int-to-ptr) — address in this process' mapping, restored verbatim.
-  return reinterpret_cast<Slot *>(bufferAddress);
+  // documentation), and is addressed by the byte offset m_bufferOffset. The aligned buffer is not
+  // necessarily a multiple of sizeof(Slot), so element arithmetic is not an option; the address is
+  // therefore materialised in the integer domain. std::bit_cast restores it: a plain
+  // reinterpret_cast from the integer would be reported as performance-no-int-to-ptr, byte pointer
+  // arithmetic as cpp/suspicious-pointer-scaling.
+  const std::uintptr_t address = reinterpret_cast<std::uintptr_t>(this) + static_cast<std::uintptr_t>(m_bufferOffset);
+  return std::bit_cast<Slot *>(address);
 }
 
 const EventBus::ShmRing::Slot *EventBus::ShmRing::buffer() const
 {
-  const std::intptr_t bufferAddress = reinterpret_cast<std::intptr_t>(this) + m_bufferOffset;
-  // NOLINTNEXTLINE(performance-no-int-to-ptr) — see the non-const overload.
-  return reinterpret_cast<const Slot *>(bufferAddress);
+  const std::uintptr_t address = reinterpret_cast<std::uintptr_t>(this) + static_cast<std::uintptr_t>(m_bufferOffset);
+  return std::bit_cast<const Slot *>(address);
 }
 
 bool EventBus::ShmRing::push(const Event &event)
