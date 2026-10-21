@@ -205,6 +205,77 @@ Returns message queues matching the given name patterns as a JSON array. With th
 | --------------- | ------ |
 | bearerAuth |  |
 
+### /messageQueue/stats/{processName}/{messageQueueName}
+
+#### GET
+##### Summary
+
+Get message queue statistics
+
+##### Description
+
+Returns the message queues matching the given name patterns with their operational state as a JSON array. The payload is built by the same code path as /messageQueue/{processName}/{messageQueueName}: every entry carries NAME, PROCESS, MAX_MESSAGES, MESSAGES and CONSUMER_LAG plus ALIVE, and - only while an owner is registered - OWNER_PID, OWNER_HOST, OWNER_STATE, STARTED_AT, LAST_HEARTBEAT_AT and HEARTBEAT_AGE_MS, as well as DEAD_LETTER_QUEUE and DEAD_LETTER_SIZE when a dead-letter queue is configured. Absent optional fields are omitted from the JSON object. CONSUMER_LAG is the number of messages still waiting for a consumer; the queue has no consumer cursor of its own, so it equals MESSAGES.
+
+With the optional query parameters 'after' and 'limit' the result is keyset-paginated (ordered by queue name ascending) and returned as an envelope object {items, has_more, next_after} whose entries are built without a queue reading, i.e. with MESSAGES and CONSUMER_LAG set to 0. Follow next_after to retrieve the next page. Reading requires a token of a user in the "Admin-MessageQueue" or "User-MessageQueue" group.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| processName | path |  | Yes | string |
+| messageQueueName | path |  | Yes | string |
+| after | query | Exclusive lower bound on queue name; use next_after of the previous page. | No | string |
+| limit | query | Maximum number of entries per page (default 100). | No | integer |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | A successful response (array of message queues with their statistics, or paging envelope when after/limit is given) |
+| 400 | Bad request (invalid limit) |
+| 401 | Unauthorized |
+| 403 | Forbidden (wrong content type) |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
+### /messageQueue/purge/{processName}
+
+#### POST
+##### Summary
+
+Purge a message queue
+
+##### Description
+
+Removes every message that is currently in the named queue and answers with the queue name and the number of removed messages ({"NAME":"orders","PURGED":42}). The queue name is looked up through a repository API that treats it as a pattern, so only an exact name match is purged: a name that merely matches a queue as a pattern (for example "mq-.*") answers 404, one call can therefore never drain several queues. If opening the queue or deleting its messages fails, the handler answers 500. Purging is destructive and requires a token of a user in the "Admin-MessageQueue" group; a member of "User-MessageQueue" alone gets 401.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| processName | path | Exact message queue name to drain; patterns are rejected with 404. | Yes | string |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Queue purged (MessageQueuePurgeDto JSON) |
+| 401 | Unauthorized (missing token or not in the Admin-MessageQueue group) |
+| 403 | Forbidden (wrong content type) |
+| 404 | Unknown queue name (the name matches no queue exactly) |
+| 500 | Internal server error (queue could not be opened or drained) |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
 ### /process/processes/{groupName}
 
 #### GET
