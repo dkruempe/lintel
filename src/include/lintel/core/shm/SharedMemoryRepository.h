@@ -233,7 +233,7 @@ namespace shm {
     template<typename... Args> static void construct(void *payload, ShmCell::InitArgument initArgument)
     {
       const auto &arguments = *static_cast<const std::tuple<std::decay_t<Args>...> *>(initArgument.value);
-      std::apply([payload](const auto &...constructorArgs) { ::new (payload) T(constructorArgs...); }, arguments);
+      std::apply([payload](const auto &...ctorArgs) { ::new (payload) T(ctorArgs...); }, arguments);
     }
 
     ShmCell m_cell;
