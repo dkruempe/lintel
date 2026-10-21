@@ -51,6 +51,11 @@ namespace {
                 name text NOT NULL,
                 process_name text NOT NULL,
                 max_messages integer NOT NULL,
+                owner_pid INTEGER,
+                owner_host text,
+                started_at timestamp,
+                last_heartbeat_at timestamp,
+                owner_state text,
                 CONSTRAINT message_queues_pk PRIMARY KEY (name)
             );
         )");
@@ -95,7 +100,7 @@ TEST_CASE("MessageQueueRepository::allOf binds the queue regex to the name colum
 
   // The queue regex has to be evaluated against `name`, so only alpha_1 survives - although the
   // process filter `proc1` alone would also have admitted beta_1.
-  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf("proc1", "alpha_.*");
+  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf(MessageQueueFilter{ "proc1", "alpha_.*" });
   REQUIRE(entries.size() == 1);
   REQUIRE(entries[0].get_message_queue_name() == "alpha_1");
   REQUIRE(entries[0].get_process_name() == "proc1");
@@ -103,7 +108,7 @@ TEST_CASE("MessageQueueRepository::allOf binds the queue regex to the name colum
 
   // A queue regex that matches no queue at all yields an empty result, even for a process that owns
   // queues of its own.
-  REQUIRE(fixture.repository->allOf("proc1", "missing_.*").empty());
+  REQUIRE(fixture.repository->allOf(MessageQueueFilter{ "proc1", "missing_.*" }).empty());
 }
 
 TEST_CASE("MessageQueueRepository::allOf binds the process regex to the process_name column")
@@ -115,14 +120,14 @@ TEST_CASE("MessageQueueRepository::allOf binds the process regex to the process_
 
   // The process regex has to be evaluated against `process_name`, so only gamma_1 survives -
   // although the queue regex `gamma_.*` alone would also have admitted alpha_1 and beta_1.
-  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf("proc2", "gamma_.*");
+  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf(MessageQueueFilter{ "proc2", "gamma_.*" });
   REQUIRE(entries.size() == 1);
   REQUIRE(entries[0].get_message_queue_name() == "gamma_1");
   REQUIRE(entries[0].get_process_name() == "proc2");
 
   // A process regex that matches no process at all yields an empty result, even for a queue name
   // that does exist.
-  REQUIRE(fixture.repository->allOf("proc3", "gamma_.*").empty());
+  REQUIRE(fixture.repository->allOf(MessageQueueFilter{ "proc3", "gamma_.*" }).empty());
 }
 
 TEST_CASE("MessageQueueRepository::allOf separates a queue named like a process")
@@ -134,14 +139,16 @@ TEST_CASE("MessageQueueRepository::allOf separates a queue named like a process"
   fixture.insertQueue("proc1", "proc1");
   fixture.insertQueue("proc2", "alpha_1_backup");
 
-  const std::vector<MessageQueueEntry> entries = fixture.repository->allOf("proc1", "alpha_1|proc1");
+  const std::vector<MessageQueueEntry> entries =
+    fixture.repository->allOf(MessageQueueFilter{ "proc1", "alpha_1|proc1" });
   REQUIRE(entries.size() == 2);
   REQUIRE(queueNamesOf(entries) == std::set<std::string>{ "alpha_1", "proc1" });
   // With the filters swapped the query becomes `name REGEXP 'proc1' and process_name REGEXP
   // 'alpha_1|proc1'` and returns the single queue named `proc1` instead of both.
-  // The same holds for the unfiltered queue regex: `allOf("proc1", ".*")` owns both of proc1's
+  // The same holds for the unfiltered queue regex: `allOf({"proc1", ".*"})` owns both of proc1's
   // queues, while the swapped query collapses to the queue that happens to be named `proc1`.
-  REQUIRE(queueNamesOf(fixture.repository->allOf("proc1", ".*")) == std::set<std::string>{ "alpha_1", "proc1" });
+  REQUIRE(queueNamesOf(fixture.repository->allOf(MessageQueueFilter{ "proc1", ".*" }))
+          == std::set<std::string>{ "alpha_1", "proc1" });
 }
 
 TEST_CASE("MessageQueueRepository::allProcessNameOf filters on the process_name column")
@@ -175,5 +182,89 @@ TEST_CASE("MessageQueueRepository::allMessageQueueNameOf matches the queue name 
   // wrongly hand out alpha_1 here instead of reporting that nothing matched.
   REQUIRE_THROWS_AS(fixture.repository->allMessageQueueNameOf("proc1"), db::SQLException);
   REQUIRE_THROWS_AS(fixture.repository->allMessageQueueNameOf("nothing_.*"), db::SQLException);
+}
+
+// Owner/liveness (MQ-1): the register/heartbeat/scan/reclaim round trip through the database.
+// findOrphans() must only return rows that have an owner but no fresh heartbeat, and
+// reclaimOrphans() must clear the owner columns so a later scan cannot return them again.
+
+TEST_CASE("MessageQueueRepository: registerOwner and updateHeartbeat persist the owner fields")
+{
+  MessageQueueFilterFixture fixture;
+  fixture.insertQueue("proc1", "alpha_1");
+
+  const auto startedAt = std::chrono::system_clock::now() - std::chrono::minutes(5);
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "alpha_1", "proc1", "host-a", 4242, startedAt, "active" });
+
+  const MessageQueueEntry entry = fixture.repository->allMessageQueueNameOf("alpha_1");
+  REQUIRE(entry.get_owner_pid().has_value());
+  REQUIRE(*entry.get_owner_pid() == 4242);
+  REQUIRE(entry.get_owner_host().has_value());
+  REQUIRE(*entry.get_owner_host() == "host-a");
+  REQUIRE(entry.get_started_at().has_value());
+  REQUIRE(entry.get_owner_state().has_value());
+  REQUIRE(*entry.get_owner_state() == "active");
+
+  // a queue that was never registered carries no owner at all
+  fixture.insertQueue("proc1", "beta_1");
+  const MessageQueueEntry unowned = fixture.repository->allMessageQueueNameOf("beta_1");
+  REQUIRE_FALSE(unowned.get_owner_pid().has_value());
+  REQUIRE_FALSE(unowned.get_owner_host().has_value());
+  REQUIRE_FALSE(unowned.get_owner_state().has_value());
+}
+
+TEST_CASE("MessageQueueRepository: findOrphans returns stale owners only")
+{
+  MessageQueueFilterFixture fixture;
+  fixture.insertQueue("proc1", "stale_1");
+  fixture.insertQueue("proc1", "fresh_1");
+  fixture.insertQueue("proc1", "never_owned_1");
+
+  const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "stale_1", "proc1", "host-a", 111, longAgo, "active" });
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "fresh_1", "proc1", "host-a", 222, std::chrono::system_clock::now(), "active" });
+
+  const std::vector<MessageQueueEntry> orphans = fixture.repository->findOrphans(std::chrono::seconds(60));
+  REQUIRE(queueNamesOf(orphans) == std::set<std::string>{ "stale_1" });
+
+  // a longer threshold ages the same row back in as healthy - the threshold decides, not the state
+  REQUIRE(fixture.repository->findOrphans(std::chrono::minutes(30)).empty());
+}
+
+TEST_CASE("MessageQueueRepository: reclaimOrphans clears the owner fields")
+{
+  MessageQueueFilterFixture fixture;
+  fixture.insertQueue("proc1", "stale_1");
+
+  const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "stale_1", "proc1", "host-a", 111, longAgo, "active" });
+
+  fixture.repository->reclaimOrphans(fixture.repository->findOrphans(std::chrono::seconds(60)));
+
+  REQUIRE(fixture.repository->findOrphans(std::chrono::seconds(60)).empty());
+  const MessageQueueEntry reclaimed = fixture.repository->allMessageQueueNameOf("stale_1");
+  REQUIRE_FALSE(reclaimed.get_owner_pid().has_value());
+  REQUIRE_FALSE(reclaimed.get_owner_state().has_value());
+  // the queue row itself survives the reclaim - only the owner is dropped
+  REQUIRE(reclaimed.get_message_queue_name() == "stale_1");
+}
+
+TEST_CASE("MessageQueueRepository: updateHeartbeat makes a stale owner healthy again")
+{
+  MessageQueueFilterFixture fixture;
+  fixture.insertQueue("proc1", "beat_1");
+
+  const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
+  fixture.repository->registerOwner(
+    MessageQueueOwnerRegistration{ "beat_1", "proc1", "host-a", 111, longAgo, "active" });
+  REQUIRE(fixture.repository->findOrphans(std::chrono::seconds(60)).size() == 1);
+
+  fixture.repository->updateHeartbeat("beat_1", std::chrono::system_clock::now());
+
+  REQUIRE(fixture.repository->findOrphans(std::chrono::seconds(60)).empty());
 }
 }// namespace lintel

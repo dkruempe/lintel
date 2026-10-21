@@ -75,6 +75,7 @@ namespace {
       m_server.set_pre_routing_handler([this](const httplib::Request &request, httplib::Response &response) {
         paths.push_back(request.path);
         methods.emplace_back(request.method);
+        response.status = m_status;
         response.set_content(m_responseBody, "application/json");
         return httplib::Server::HandlerResponse::Handled;
       });
@@ -100,6 +101,8 @@ namespace {
 
     void answerWith(const std::string &body) { m_responseBody = body; }
 
+    void setStatus(int status) { m_status = status; }
+
     [[nodiscard]] int port() const { return m_port; }
 
     /** @return true once the accept loop is up, so stop() can shut the server down */
@@ -113,6 +116,7 @@ namespace {
     std::thread m_thread;
     int m_port{ -1 };
     std::string m_responseBody{ "[]" };
+    int m_status{ 200 };
   };
 
   /** Client provider whose only client entry points at the loopback backend. */
@@ -188,6 +192,7 @@ TEST_CASE("MessageQueueCliComponent: onHelp prints the header and every command 
   REQUIRE(mqCliHelp.find("show_message_queues") != std::string::npos);
   REQUIRE(mqCliHelp.find("--process-name, -p") != std::string::npos);
   REQUIRE(mqCliHelp.find("--message-queue-name, -mq") != std::string::npos);
+  REQUIRE(mqCliHelp.find("purge_message_queue") != std::string::npos);
 }
 
 TEST_CASE("MessageQueueCliComponent: printCommandList lists the registered commands")
@@ -216,7 +221,7 @@ TEST_CASE("MessageQueueCliComponent: printCommandList appends the sub-menu alias
   REQUIRE(mqCliList.find("help") != std::string::npos);
 }
 
-TEST_CASE("MessageQueueCliComponent: allCommandsOf returns the single registered command")
+TEST_CASE("MessageQueueCliComponent: allCommandsOf returns the registered commands")
 {
   auto mqCliApi = std::make_shared<MesssageQueueApi>(mqCliProviderOf(1));
   MessageQueueCliComponent mqCliComponent(mqCliApi);
@@ -224,9 +229,12 @@ TEST_CASE("MessageQueueCliComponent: allCommandsOf returns the single registered
   const std::vector<std::string> mqCliCommands = mqCliComponent.allCommandsOf();
   const bool mqCliHasShowMessageQueues =
     std::find(mqCliCommands.begin(), mqCliCommands.end(), "show_message_queues") != mqCliCommands.end();
+  const bool mqCliHasPurgeMessageQueue =
+    std::find(mqCliCommands.begin(), mqCliCommands.end(), "purge_message_queue") != mqCliCommands.end();
 
-  REQUIRE(mqCliCommands.size() == 1);
+  REQUIRE(mqCliCommands.size() == 2);
   REQUIRE(mqCliHasShowMessageQueues);
+  REQUIRE(mqCliHasPurgeMessageQueue);
 }
 
 TEST_CASE("MessageQueueCliComponent: the component registers itself under name and alias")
@@ -356,5 +364,109 @@ TEST_CASE("MessageQueueCliComponent: show_message_queues without a value for -p 
 
   REQUIRE(mqCliServer.paths.empty());
   REQUIRE(mqCliReported.find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("MessageQueueCliComponent: show_message_queues prints depth, lag, owner liveness and dead letters")
+{
+  mqCliBackend mqCliServer;
+  mqCliServer.answerWith(R"([{)"
+                         R"("NAME":"stats-queue",)"
+                         R"("PROCESS":"stats-process",)"
+                         R"("MAX_MESSAGES":10,)"
+                         R"("MESSAGES":4,)"
+                         R"("CONSUMER_LAG":4,)"
+                         R"("ALIVE":true,)"
+                         R"("OWNER_PID":4242,)"
+                         R"("OWNER_HOST":"stats-host",)"
+                         R"("OWNER_STATE":"active",)"
+                         R"("HEARTBEAT_AGE_MS":250,)"
+                         R"("DEAD_LETTER_QUEUE":"stats-queue.dlq",)"
+                         R"("DEAD_LETTER_SIZE":2)"
+                         R"(}])");
+  auto mqCliApi = std::make_shared<MesssageQueueApi>(mqCliProviderOf(mqCliServer.port()));
+  MessageQueueCliComponent mqCliComponent(mqCliApi);
+
+  mqCliCoutCapture mqCliOut;
+  mqCliComponent.onCommand(UserDto{}, "show_message_queues", {});
+  const std::string mqCliPrinted = mqCliOut.str();
+
+  REQUIRE(mqCliPrinted.find("Lag") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("stats-queue") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("stats-process") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("4242") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("stats-host") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("active") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("250") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("alive") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("2") != std::string::npos);
+}
+
+TEST_CASE("MessageQueueCliComponent: show_message_queues prints stale owners without heartbeat")
+{
+  mqCliBackend mqCliServer;
+  mqCliServer.answerWith(R"([{)"
+                         R"("NAME":"stale-queue",)"
+                         R"("PROCESS":"stale-process",)"
+                         R"("MAX_MESSAGES":5,)"
+                         R"("MESSAGES":0,)"
+                         R"("CONSUMER_LAG":0,)"
+                         R"("ALIVE":false)"
+                         R"(}])");
+  auto mqCliApi = std::make_shared<MesssageQueueApi>(mqCliProviderOf(mqCliServer.port()));
+  MessageQueueCliComponent mqCliComponent(mqCliApi);
+
+  mqCliCoutCapture mqCliOut;
+  mqCliComponent.onCommand(UserDto{}, "show_message_queues", {});
+  const std::string mqCliPrinted = mqCliOut.str();
+
+  REQUIRE(mqCliPrinted.find("stale-queue") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("stale") != std::string::npos);
+}
+
+TEST_CASE("MessageQueueCliComponent: purge_message_queue posts the queue name and prints the count")
+{
+  mqCliBackend mqCliServer;
+  mqCliServer.answerWith(R"({"NAME":"purge-me","PURGED":3})");
+  auto mqCliApi = std::make_shared<MesssageQueueApi>(mqCliProviderOf(mqCliServer.port()));
+  MessageQueueCliComponent mqCliComponent(mqCliApi);
+
+  mqCliCoutCapture mqCliOut;
+  mqCliComponent.onCommand(UserDto{}, "purge_message_queue", { "--message-queue-name", "purge-me" });
+  const std::string mqCliPrinted = mqCliOut.str();
+
+  REQUIRE(mqCliServer.paths.size() == 1);
+  REQUIRE(mqCliServer.paths[0] == "/messageQueue/purge/purge-me");
+  REQUIRE(mqCliServer.methods[0] == "POST");
+  REQUIRE(mqCliPrinted.find("Purged 3 messages from message queue purge-me") != std::string::npos);
+}
+
+TEST_CASE("MessageQueueCliComponent: purge_message_queue without a queue name prints an error")
+{
+  mqCliBackend mqCliServer;
+  auto mqCliApi = std::make_shared<MesssageQueueApi>(mqCliProviderOf(mqCliServer.port()));
+  MessageQueueCliComponent mqCliComponent(mqCliApi);
+
+  mqCliCerrCapture mqCliErr;
+  mqCliComponent.onCommand(UserDto{}, "purge_message_queue", {});
+  const std::string mqCliReported = mqCliErr.str();
+
+  REQUIRE(mqCliServer.paths.empty());
+  REQUIRE(mqCliReported.find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("MessageQueueCliComponent: purge_message_queue reports a rejected purge")
+{
+  mqCliBackend mqCliServer;
+  mqCliServer.answerWith(R"({"NAME":"unknown","PURGED":0})");
+  mqCliServer.setStatus(404);
+  auto mqCliApi = std::make_shared<MesssageQueueApi>(mqCliProviderOf(mqCliServer.port()));
+  MessageQueueCliComponent mqCliComponent(mqCliApi);
+
+  mqCliCoutCapture mqCliOut;
+  mqCliComponent.onCommand(UserDto{}, "purge_message_queue", { "-mq", "unknown" });
+  const std::string mqCliPrinted = mqCliOut.str();
+
+  REQUIRE(mqCliPrinted.find("ERROR") != std::string::npos);
+  REQUIRE(mqCliPrinted.find("unknown") != std::string::npos);
 }
 }// namespace lintel

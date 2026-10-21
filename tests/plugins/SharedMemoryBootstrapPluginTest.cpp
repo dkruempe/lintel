@@ -95,7 +95,8 @@ namespace {
         entries.push_back(
           eventBusOverride != nullptr
             ? eventBusOverride
-            : std::make_shared<EventBusEntry>(type_name<EventBusComponent>(), "main", "shm_eventbus", 128, 128, 8, 8));
+            : std::make_shared<EventBusEntry>(
+                type_name<EventBusComponent>(), "main", "shm_eventbus", EventBusCapacities{ 128, 128, 8, 8 }));
       }
       if (dbEntry != nullptr) { entries.push_back(dbEntry); }
       config = std::make_shared<Configuration>(
@@ -203,8 +204,8 @@ TEST_CASE("SharedMemoryBootstrapPlugin: event bus with different config throws")
 
 TEST_CASE("SharedMemoryBootstrapPlugin: invalid event bus config throws")
 {
-  auto badEntry =
-    std::make_shared<EventBusEntry>(type_name<EventBusComponent>(), "main", "shm_eventbus", 128, 128, 0, 8);
+  auto badEntry = std::make_shared<EventBusEntry>(
+    type_name<EventBusComponent>(), "main", "shm_eventbus", EventBusCapacities{ 128, 128, 0, 8 });
   ShmPluginFixture fixture(true, true, nullptr, badEntry);
   REQUIRE_THROWS_AS(fixture.plugin->onStart(), std::runtime_error);
 }

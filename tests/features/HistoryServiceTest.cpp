@@ -116,6 +116,7 @@ namespace {
     std::shared_ptr<MessageQueueService> messageQueueService(const std::string &queueProcess) const
     {
       auto repository = std::make_shared<MockMessageQueueRepository>();
+      ALLOW_CALL(*repository, allOf(ANY(MessageQueueFilter))).LR_RETURN(std::vector<MessageQueueEntry>{});
       return std::make_shared<MessageQueueService>(
         m_configuration, std::make_shared<ProcessName>(queueProcess), repository);
     }

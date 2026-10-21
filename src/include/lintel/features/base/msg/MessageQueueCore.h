@@ -8,6 +8,9 @@
 #include <string>
 
 namespace lintel {
+/** Overflow/drop policy for message queues. */
+enum class MessageQueueOverflowPolicy : std::uint8_t { Fail = 0, DropNewest, DropOldest, BlockWithTimeout, DeadLetter };
+
 /**
  * Non-template core of MessageQueue. Owns the underlying POSIX message queue,
  * so translation units that use MessageQueue<T> do not have to parse the
@@ -28,7 +31,7 @@ public:
    * @param msgCount limit of queue itself
    * @param msgSize maximum size of a single message in bytes
    */
-  MessageQueueCore(std::string name, int32_t msgCount, std::size_t msgSize);
+  MessageQueueCore(const std::string &name, int32_t msgCount, std::size_t msgSize);
 
   ~MessageQueueCore();
 
@@ -99,6 +102,24 @@ public:
    * @return true if a message was received
    */
   bool tryReceiveOf(void *message, std::size_t size);
+
+  /**
+   * receives message with a bounded wait. No message within the timeout =>
+   * return false.
+   *
+   * @param message buffer receiving the message
+   * @param size maximum size of the received message in bytes
+   * @param timeout maximum time to wait for a message
+   * @return true if a message was received
+   */
+  bool receiveOfWithTimeout(void *message, std::size_t size, const std::chrono::milliseconds &timeout);
+
+  /** Configure overflow policy. */
+  void setOverflowPolicy(MessageQueueOverflowPolicy policy);
+  /** Configure timeout for BlockWithTimeout policy. */
+  void setOverflowTimeout(const std::chrono::milliseconds &timeout);
+  /** Configure dead letter queue name. */
+  void setDeadLetterQueueName(const std::string &name);
 };
 
 }// namespace lintel

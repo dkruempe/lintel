@@ -1,13 +1,16 @@
 #ifndef LINTEL_SHAREDMEMORYSERVICE_H
 #define LINTEL_SHAREDMEMORYSERVICE_H
 
+#include <cstdint>
 #include <filesystem>
+#include <functional>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <ostream>
 #include <set>
 #include <utility>
+#include <vector>
 
 #include "lintel/core/exceptions/ShmSegmentNotFound.h"
 #include "lintel/core/models/SharedMemorySegment.h"
@@ -16,6 +19,7 @@
 #include "lintel/core/services/LoggerService.h"
 #include "lintel/core/services/PropertyRegistration.h"
 #include "lintel/core/shm/ShmSegmentAccessor.h"
+#include "lintel/features/base/models/SharedMemorySegmentStats.h"
 #include "lintel/features/base/services/SchedulerService.h"
 #include "lintel/features/base/services/SharedMemorySegmentManager.h"
 
@@ -23,6 +27,12 @@ namespace lintel {
 /** Allocated state of a mapped shared memory segment. Defined in
  *  ShmConstructors.h, because it exposes the boost interprocess types. */
 class SharedMemorySegmentHandle;
+
+/** Lifecycle events for shared memory segments. */
+enum class SegmentLifecycle : std::uint8_t { BeforeGrow, AfterGrow, BeforeShrink, AfterShrink, OnRemap };
+
+/** Callback invoked on segment lifecycle events. Callbacks must be short and non-blocking. */
+using SegmentLifecycleHook = std::function<void(const std::string &segmentName, SegmentLifecycle action)>;
 
 /** Service for managing shared memory segments and constructing data structures
  *  within them.
@@ -41,6 +51,13 @@ private:
   mutable std::mutex m_segmentsMutex;
   std::size_t m_generation = 0;
   std::shared_ptr<SchedulerService> m_schedulerService;
+  /** grow/shrink/reclaim counters per segment name (for statsOf) */
+  std::map<std::string, std::size_t> m_growCount;
+  std::map<std::string, std::size_t> m_shrinkCount;
+  std::map<std::string, std::size_t> m_recoveryCount;
+  /** registered lifecycle hooks and their mutex */
+  mutable std::mutex m_hooksMutex;
+  std::vector<SegmentLifecycleHook> m_lifecycleHooks;
   // properties
   std::shared_ptr<Property<std::chrono::seconds>> m_scheduleRate;
   std::shared_ptr<Property<bool>> m_autoExtend;
@@ -49,6 +66,8 @@ private:
   // initializer function
   static std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> create(
     const std::vector<std::shared_ptr<SharedMemorySegment>> &set);
+
+  void notifyHooks(const std::string &segmentName, SegmentLifecycle action);
 
   void onCheck();
 
@@ -101,6 +120,12 @@ public:
    *  construct helpers of ShmConstructors.h, which take the lock before
    *  calling segmentOf. */
   std::mutex &segmentsMutexOf() { return m_segmentsMutex; }
+
+  /** Register a lifecycle hook. Hook must be short and non-blocking. */
+  void registerLifecycleHook(SegmentLifecycleHook hook);
+
+  /** Get statistics for a segment. */
+  [[nodiscard]] SharedMemorySegmentStats statsOf(const std::shared_ptr<SharedMemorySegment> &segment) const;
 
   /** Get the allocated state of the named shared memory segment.
    *  Internal: the caller has to hold segmentsMutexOf().

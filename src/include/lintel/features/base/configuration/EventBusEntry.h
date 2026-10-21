@@ -7,8 +7,24 @@
 #include <string_view>
 
 #include "lintel/core/configuration/Entry.h"
+#include "lintel/features/base/events/EventBus.h"
 
 namespace lintel {
+/** The four independent capacities of an event bus. Grouping them into one
+ *  aggregate keeps the constructor unambiguous (see EventBusEntry) and is the
+ *  natural unit: all four are read from the same configuration block. */
+struct EventBusCapacities
+{
+  /** Capacity of the point-to-point bus queue */
+  std::size_t bus = 0;
+  /** Capacity of every per-subscriber queue */
+  std::size_t subscriber = 0;
+  /** Maximum number of registerable topics */
+  std::size_t topics = 0;
+  /** Maximum number of registerable subscribers */
+  std::size_t subscribers = 0;
+};
+
 /** Configuration entry for an event bus */
 class EventBusEntry : public Entry
 {
@@ -25,23 +41,23 @@ private:
   const std::size_t maxTopics;
   /** The maximum number of subscribers that can be registered */
   const std::size_t maxSubscribers;
+  const DropPolicy pubPolicy;
+  const bool sticky;
+  const std::uint32_t stickyTtlMs;
 
 public:
   /** Construct an event bus entry
    * @param component The configuration component name
    * @param eventBusName The bus name
    * @param segmentName The shared memory segment name
-   * @param busCapacity The point-to-point queue capacity
-   * @param subscriberCapacity The per-subscriber queue capacity
-   * @param maxTopics The maximum topic count
-   * @param maxSubscribers The maximum subscriber count */
+   * @param capacities The bus/subscriber/topic/subscriber limits */
   EventBusEntry(const std::string_view &component,
     std::string eventBusName,
     std::string segmentName,
-    std::size_t busCapacity,
-    std::size_t subscriberCapacity,
-    std::size_t maxTopics,
-    std::size_t maxSubscribers);
+    EventBusCapacities capacities,
+    DropPolicy pubPolicy = DropPolicy::Fail,
+    bool sticky = false,
+    std::uint32_t stickyTtlMs = 60000);
 
   /** Get the event bus name
    * @return The bus name */
@@ -66,6 +82,9 @@ public:
   /** Get the maximum subscriber count
    * @return The maximum subscribers */
   [[nodiscard]] constexpr std::size_t getMaxSubscribers() const { return maxSubscribers; }
+  [[nodiscard]] constexpr DropPolicy getPubPolicy() const { return pubPolicy; }
+  [[nodiscard]] constexpr bool getSticky() const { return sticky; }
+  [[nodiscard]] constexpr std::uint32_t getStickyTtlMs() const { return stickyTtlMs; }
 
   /** Stream insertion operator
    * @param os The output stream

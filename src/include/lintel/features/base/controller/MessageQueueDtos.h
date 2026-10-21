@@ -87,5 +87,48 @@ public:
   [[nodiscard]] const std::optional<std::string> &getNextAfter() const;
 };
 
+/** DTO describing the result of a purge operation on a single queue */
+class MessageQueuePurgeDto : public JsonSerializable
+{
+private:
+  /** Name of the purged queue */
+  std::string m_name;
+  /** Number of messages that were removed */
+  int32_t m_purged = 0;
+
+  /** JSON field name constants */
+  static struct Shapes
+  {
+    const char *const NAME = "NAME";
+    const char *const PURGED = "PURGED";
+  } shape;
+
+public:
+  /** Default constructor */
+  MessageQueuePurgeDto() = default;
+
+  /** Construct from a queue name and the number of removed messages
+   * @param name queue name
+   * @param purged number of removed messages */
+  MessageQueuePurgeDto(std::string name, int32_t purged);
+
+  /** @return the purged queue name */
+  [[nodiscard]] const std::string &getName() const;
+
+  /** @return the number of removed messages */
+  [[nodiscard]] int32_t getPurged() const;
+
+  using JsonSerializable::deserialize;
+
+  /** Serialize to JSON
+   * @param writer The rapidjson writer */
+  void serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const override;
+
+  /** Deserialize from JSON
+   * @param obj The JSON value
+   * @return True on success */
+  bool deserialize(const rapidjson::Value &obj) override;
+};
+
 }// namespace lintel
 #endif// MESSAGEQUEUEDTOS_H

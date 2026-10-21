@@ -59,6 +59,8 @@ ADD_EXECUTABLE(base_tests
     features/SharedMemorySegmentComponentTest.cpp
     features/SharedMemoryServiceTest.cpp
     features/SharedMemoryRepositoryTest.cpp
+    features/ShmViewTest.cpp
+    features/SharedMemoryCleanupServiceTest.cpp
     features/UserDtoTest.cpp
     features/UserLoginDtoTest.cpp
     features/GroupTest.cpp
@@ -68,6 +70,7 @@ ADD_EXECUTABLE(base_tests
     features/SharedMemorySegmentDtoTest.cpp
     features/EventBusServiceTest.cpp
     features/HistoryServiceTest.cpp
+    features/MessageQueueShmCoreTest.cpp
     events/EventBusTest.cpp
     app/AppFeatureTest.cpp
     plugins/AdminUserBootstrapPluginTest.cpp
@@ -90,6 +93,7 @@ ADD_EXECUTABLE(base_tests
     services/AuthServiceTest.cpp
     services/MessageQueueServiceMockTest.cpp
     services/MessageQueueOverflowTest.cpp
+    MessageQueueRpcTest.cpp
     cli/CommandLineComponentMockTest.cpp
     cli/CommandLineHistoryServiceTest.cpp
     cli/AuthCliServiceMockTest.cpp
