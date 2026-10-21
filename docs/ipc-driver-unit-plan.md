@@ -31,20 +31,20 @@ Ziel: IPC (Shared Memory, Event Bus, Message Queue) produktiv für Driver-/Unit-
 
 | ID | Task | Status | Dateien | Tests | Akzeptanzkriterien | Aufwand |
 |----|------|--------|---------|-------|---------------------|---------|
-| **MQ-1** | Owner-/Liveness-Tracking + Orphan-Recovery (analog SHM) | [~] In Bearbeitung | `src/include/lintel/features/base/models/MessageQueueOwner.h` (neu), `src/include/lintel/features/base/repositories/MessageQueueRepository.h/cpp`, `src/features/base/services/MessageQueueService.cpp`, `src/features/base/msg/MessageQueueCore.cpp`, `src/app/plugins/MessageQueueBootstrapPlugin.cpp`, DB-Schema (`cfg/database/*/init_schema*.sql`) | `tests/plugins/MessageQueueBootstrapPluginTest.cpp` (erweitern) | Owner (PID/Host/Process/Start/Heartbeat), Heartbeat-Timer. Stale Owner → Recovery (bereinigt Orphans). Einheitlicher Mechanismus wie SHM. DB-Felder erweitert. | Mittel-Hoch |
-| **MQ-2** | Höheres API-Level (Request/Reply, Correlation-ID, Timeout, typed Payload) | [~] In Bearbeitung | `src/include/lintel/features/base/msg/CorrelationId.h` (neu), `src/include/lintel/features/base/msg/MessageQueueRequestReply.h` (neu), Beispiele | Neue Tests `tests/features/MessageQueueRpcTest.cpp` | `Request<TReq,TResp>`, Correlation-ID, ReplyTo, `call()` sync mit Timeout, Handler-Registry. Typensicher, parallele Calls. | Hoch |
-| **SHM-1** | Typed SHM-Repositories (Object/Array/RingBuffer/Queue) | [~] In Bearbeitung | `src/include/lintel/core/shm/SharedMemoryRepository.h` (neu), `src/include/lintel/core/shm/containers/*.h` (neu), `src/include/lintel/features/base/services/SharedMemoryRepositoryRegistry.h` (neu) | Neue Tests `tests/features/SharedMemoryRepositoryTest.cpp` | Generisch `SharedMemoryRepository<T>`, generation-aware, nutzt SHM-3 Hooks. DB-Shadow konsistent. | Mittel |
-| **EB-3** | Prioritäten / Ordering-Garantien | [~] In Bearbeitung | `src/include/lintel/features/base/events/Event.h` (Priorität), `src/include/lintel/features/base/events/EventBus.h/cpp` | `tests/events/EventBusTest.cpp` | `Priority { Critical,High,Normal,Low }`, separate Ringe oder Prioritätslisten. Höchste Prio zuerst, FIFO innerhalb Prio. Konfigurierbar. | Mittel |
-| **EB-5** | Topic-Filter / Hierarchie (Wildcard) | [~] In Bearbeitung | `src/include/lintel/features/base/events/TopicMatcher.h` (neu), `src/include/lintel/features/base/events/EventBus.h/cpp` | `tests/events/EventBusTest.cpp` | Wildcards `*`, `?` oder Prefix `gpio.*`. Pattern-Subscriptions, abwärtskompatibel zu exakten Topics. | Mittel |
-| **MQ-5** | Ops-Endpoints (HTTP/CLI) - Stats/Depth/Lag/Purge | [~] In Bearbeitung | `src/features/cli/components/MessageQueueCliComponent.cpp`, `src/include/lintel/features/http/controllers/MessageQueue*`, `src/features/http/controllers/MessageQueue*`, DTOs | `tests/cli/MessageQueueCliComponentTest.cpp`, `tests/http/MessageQueueControllerTest.cpp` | CLI erweitert (Depth, Owner/Liveness, DLQ), HTTP GET/POST Stats/Purge. Read-first, Mutationen konservativ. | Niedrig-Mittel |
+| **MQ-1** | Owner-/Liveness-Tracking + Orphan-Recovery (analog SHM) | [x] Erledigt | `src/include/lintel/features/base/models/MessageQueueOwner.h` (neu), `src/include/lintel/features/base/repositories/MessageQueueRepository.h/cpp`, `src/features/base/services/MessageQueueService.cpp`, `src/features/base/msg/MessageQueueCore.cpp`, `src/app/plugins/MessageQueueBootstrapPlugin.cpp`, DB-Schema (`cfg/database/*/init_schema*.sql`) | `tests/plugins/MessageQueueBootstrapPluginTest.cpp`, `tests/services/MessageQueueServiceMockTest.cpp`, `tests/repositories/MessageQueueRepositoryFilterTest.cpp` | Owner (PID/Host/Process/Start/Heartbeat), Heartbeat-Timer. Stale Owner → Recovery (bereinigt Orphans). Einheitlicher Mechanismus wie SHM. DB-Felder erweitert. | Mittel-Hoch |
+| **MQ-2** | Höheres API-Level (Request/Reply, Correlation-ID, Timeout, typed Payload) | [x] Erledigt | `src/include/lintel/features/base/msg/CorrelationId.h` (neu), `src/include/lintel/features/base/msg/MessageQueueRequestReply.h` (neu), Beispiele | Neue Tests `tests/features/MessageQueueRpcTest.cpp` | `Request<TReq,TResp>`, Correlation-ID, ReplyTo, `call()` sync mit Timeout, Handler-Registry. Typensicher, parallele Calls. | Hoch |
+| **SHM-1** | Typed SHM-Repositories (Object/Array/RingBuffer/Queue) | [x] Erledigt | `src/include/lintel/core/shm/SharedMemoryRepository.h` (neu), `src/include/lintel/core/shm/containers/*.h` (neu), `src/include/lintel/features/base/services/SharedMemoryRepositoryRegistry.h` (neu) | Neue Tests `tests/features/SharedMemoryRepositoryTest.cpp` | Generisch `SharedMemoryRepository<T>`, generation-aware, nutzt SHM-3 Hooks. DB-Shadow konsistent. | Mittel |
+| **EB-3** | Prioritäten / Ordering-Garantien | [x] Erledigt | `src/include/lintel/features/base/events/Event.h` (Priorität), `src/include/lintel/features/base/events/EventBus.h/cpp` | `tests/events/EventBusTest.cpp` | `Priority { Critical,High,Normal,Low }`, separate Ringe oder Prioritätslisten. Höchste Prio zuerst, FIFO innerhalb Prio. Konfigurierbar. | Mittel |
+| **EB-5** | Topic-Filter / Hierarchie (Wildcard) | [x] Erledigt | `src/include/lintel/features/base/events/TopicMatcher.h` (neu), `src/include/lintel/features/base/events/EventBus.h/cpp` | `tests/events/EventBusTest.cpp` | Wildcards `*`, `?` oder Prefix `gpio.*`. Pattern-Subscriptions, abwärtskompatibel zu exakten Topics. | Mittel |
+| **MQ-5** | Ops-Endpoints (HTTP/CLI) - Stats/Depth/Lag/Purge | [x] Erledigt | `src/features/cli/components/MessageQueueCliComponent.cpp`, `src/include/lintel/features/http/controllers/MessageQueue*`, `src/features/http/controllers/MessageQueue*`, DTOs | `tests/cli/MessageQueueCliComponentTest.cpp`, `tests/http/MessageQueueControllerTest.cpp` | CLI erweitert (Depth, Owner/Liveness, DLQ), HTTP GET/POST Stats/Purge. Read-first, Mutationen konservativ. | Niedrig-Mittel |
 
 ## Phase C - Später / bei Bedarf
 
 | ID | Task | Status | Dateien | Tests | Akzeptanzkriterien | Aufwand |
 |----|------|--------|---------|-------|---------------------|---------|
-| **SHM-2** | Zero-Copy Memory-Views / Slices (generation-aware) | [~] In Bearbeitung | `src/include/lintel/core/shm/ShmView.h` (neu) | Neue Tests | `ShmView<T>`/`ShmSlice<T>`, Span-ähnlich, generation-check, Invalidation via Hooks. | Hoch |
-| **MQ-6** | SHM-backed MessageQueue (Zero-Copy) | [~] In Bearbeitung | `src/include/lintel/features/base/msg/MessageQueueShmCore.h` (neu), `src/features/base/msg/MessageQueueShmCore.cpp` | Neue Tests + Benchmarks | API-kompatibel zu `MessageQueueCore`, Feature-Flag. Einheitliches SHM-Modell. | Hoch |
-| **SHM-5** | Automatisches Cleanup orphaned Objects (Service) | [~] In Bearbeitung | `src/include/lintel/features/base/services/SharedMemoryCleanupService.h` (neu), `src/features/base/services/SharedMemoryCleanupService.cpp` | Neue Tests | Scheduler-basiert, erkennt Orphans, Dry-Run/Best-Effort, nie aktive Owner anfassen, idempotent. | Mittel |
+| **SHM-2** | Zero-Copy Memory-Views / Slices (generation-aware) | [x] Erledigt | `src/include/lintel/core/shm/ShmView.h` (neu) | Neue Tests | `ShmView<T>`/`ShmSlice<T>`, Span-ähnlich, generation-check, Invalidation via Hooks. | Hoch |
+| **MQ-6** | SHM-backed MessageQueue (Zero-Copy) | [x] Erledigt | `src/include/lintel/features/base/msg/MessageQueueShmCore.h` (neu), `src/features/base/msg/MessageQueueShmCore.cpp` | Neue Tests + Benchmarks | API-kompatibel zu `MessageQueueCore`, Feature-Flag. Einheitliches SHM-Modell. | Hoch |
+| **SHM-5** | Automatisches Cleanup orphaned Objects (Service) | [x] Erledigt | `src/include/lintel/features/base/services/SharedMemoryCleanupService.h` (neu), `src/features/base/services/SharedMemoryCleanupService.cpp` | Neue Tests | Scheduler-basiert, erkennt Orphans, Dry-Run/Best-Effort, nie aktive Owner anfassen, idempotent. | Mittel |
 
 ## Umsetzungshinweise
 
@@ -58,7 +58,7 @@ Ziel: IPC (Shared Memory, Event Bus, Message Queue) produktiv für Driver-/Unit-
 ## Fortschritt
 
 **Phase A:** 7/7 erledigt  
-**Phase B:** 0/6 erledigt  
-**Phase C:** 0/3 erledigt  
+**Phase B:** 6/6 erledigt  
+**Phase C:** 3/3 erledigt  
 
-Letztes Update: 2026-10-20
+Letztes Update: 2026-10-21
