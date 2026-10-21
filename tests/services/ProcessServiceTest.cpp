@@ -688,6 +688,34 @@ TEST_CASE("ProcessService restarts a whole process group", "[process_service]")
 #if !defined(_WIN32)
 // Windows has no SIGINT trap in a child process (SignalService::kill terminates the process outright),
 // so the scenario this test proves only exists on POSIX.
+TEST_CASE("ProcessService::onShutdown stops the processes it started", "[process_service]")
+{
+  // Regression: the children were only stopped in the destructor, and the
+  // destructor never ran because a bootstrap plugin kept the DI container (and
+  // with it every service) alive. Shutdown now stops them itself.
+  ProcessServiceFixture fixture;
+  auto service = fixture.createService();
+
+  Process process = fixture.makeSleepProcess();
+  service->startOf(process);
+  std::this_thread::sleep_for(std::chrono::milliseconds(150));
+
+  const auto before = service->allActiveOf();
+  REQUIRE(before.size() == 2);// sleep + self
+  lintel::ProcessId childId = 0;
+  for (const auto &info : before) {
+    if (info.getProcessId() != service->currentOf().getProcessId()) { childId = info.getProcessId(); }
+  }
+  REQUIRE(childId > 0);
+
+  service->onShutdown();
+
+  // the child must be gone, not merely marked stopped
+  for (const auto &info : service->allActiveOf()) {
+    if (info.getProcessId() == childId) { REQUIRE_FALSE(info.isRunning()); }
+  }
+}
+
 TEST_CASE("ProcessService destructor force-terminates a process that ignores SIGINT", "[process_service]")
 {
   ProcessServiceFixture fixture;

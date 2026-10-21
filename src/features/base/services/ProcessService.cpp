@@ -557,32 +557,49 @@ void ProcessService::monitorProcessGroups()
   }
 }
 
-ProcessService::~ProcessService()
+void ProcessService::stopAllProcesses()
 {
-  try {
-    m_running.store(false);
-    m_condition.notify_all();
-    if (m_monitorThread.joinable()) { m_monitorThread.join(); }
-    std::vector<ProcessExecutes> runningProcesses;
-    {
-      std::lock_guard<std::mutex> locker(m_processesMutex);
-      for (auto &[id, process] : m_processes) {
-        if (!process.getChild()->running()) { continue; }
-        runningProcesses.push_back(process);
-      }
+  // stop the monitor first, otherwise an autoRestart child that just exited
+  // would be spawned again between the stop and the terminate pass
+  m_running.store(false);
+  m_condition.notify_all();
+  if (m_monitorThread.joinable()) { m_monitorThread.join(); }
+  std::vector<ProcessExecutes> runningProcesses;
+  {
+    std::lock_guard<std::mutex> locker(m_processesMutex);
+    for (auto &[id, process] : m_processes) {
+      if (!process.getChild()->running()) { continue; }
+      runningProcesses.push_back(process);
     }
-    for (auto &item : runningProcesses) {
-      if (!item.getChild()->running()) { continue; }
-      stopOf(*item.getProcess());
+  }
+  // one failing process must not keep the others alive, so every call is
+  // guarded on its own (stopOf() writes a history entry, and the history
+  // service may already be shut down when this runs last)
+  for (auto &item : runningProcesses) {
+    try {
+      if (item.getChild()->running()) { stopOf(*item.getProcess()); }
+    } catch (const std::exception &exception) {
+      LOG_WARN("stop of {}/{} failed: {}",
+        item.getProcess()->getId(),
+        item.getProcess()->getPath().filename().string(),
+        exception.what());
     }
-    for (auto &item : runningProcesses) {
-      if (!item.getChild()->running()) { continue; }
-      terminateOf(*item.getProcess());
+  }
+  for (auto &item : runningProcesses) {
+    try {
+      if (item.getChild()->running()) { terminateOf(*item.getProcess()); }
+    } catch (const std::exception &exception) {
+      LOG_WARN("terminate of {}/{} failed: {}",
+        item.getProcess()->getId(),
+        item.getProcess()->getPath().filename().string(),
+        exception.what());
     }
-  } catch (const std::exception &e) {
-    static_cast<void>(e);
   }
 }
+
+void ProcessService::onShutdown() { stopAllProcesses(); }
+
+ProcessService::~ProcessService() { stopAllProcesses(); }
 
 bool ProcessService::stopOf(const Process &process)
 {

@@ -39,6 +39,10 @@ namespace lintel {
 class ProcessService : public PropertyRegistration<ProcessService>
 {
 private:
+  /** Stop and, if a child ignores SIGINT, terminate every process this service
+   *  started. Idempotent, so onShutdown() and the destructor can both call it. */
+  void stopAllProcesses();
+
   /** Internal wrapper holding a running process, its child handle, and an exit-code promise. */
   class ProcessExecutes
   {
@@ -287,6 +291,12 @@ public:
   ShutdownPriority shutdownPriorityOf() const override { return ShutdownPriority::PROCESS_SERVICE; }
 
   void onInitialize() override;
+
+  /** Stop and, if a child ignores SIGINT, terminate every process this service
+   *  started. Idempotent: the destructor calls it again, where it finds nothing
+   *  left to do. Runs during shutdown so the children never outlive their
+   *  parent, even when the container outlives the builder. */
+  void onShutdown() override;
 };
 
 }// namespace lintel
