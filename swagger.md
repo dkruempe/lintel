@@ -370,7 +370,7 @@ Publish an event on a bus
 
 ##### Description
 
-Builds an Event from the JSON body and hands it to the bus. TOPIC and TYPE are required, PAYLOAD is an optional string of at most 256 bytes, PRIORITY is one of Critical, High, Normal or Low (default Normal) and TARGET is BUS (default, the point-to-point queue) or SUBSCRIBERS (the queues of every matching subscriber). Names longer than 31 bytes and payloads longer than 256 bytes answer 400 instead of being truncated. Publishing is open to the "Admin-EventBus" and "User-EventBus" groups. A full queue is not an error: the answer carries PUBLISHED false and the bus counts the event as dropped. With TARGET SUBSCRIBERS, PUBLISHED is also false when no subscription matched the topic.
+Builds an Event from the JSON body and hands it to the bus. TOPIC and TYPE are required, PAYLOAD is an optional string of at most 256 bytes, PRIORITY is one of Critical, High, Normal or Low (default Normal) and TARGET is BUS (default, the point-to-point queue) or SUBSCRIBERS (the queues of every matching subscriber). Names longer than 31 bytes and payloads longer than 256 bytes answer 400 instead of being truncated. Publishing requires the "Publisher-EventBus" group (or "Admin-EventBus"); "User-EventBus" is read-only and gets 401. A full queue is not an error: the answer carries PUBLISHED false and the bus counts the event as dropped. With TARGET SUBSCRIBERS, PUBLISHED is also false when no subscription matched the topic.
 
 ##### Parameters
 
@@ -821,6 +821,32 @@ Runs the cleanup service in apply mode: every registered shared memory object wh
 | Code | Description |
 | ---- | ----------- |
 | 200 | Cleanup applied (JSON object with the run counts) |
+| 401 | Unauthorized (missing token or not in the Admin-Shm group) |
+| 403 | Forbidden (wrong content type) |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
+### /shm/recover
+
+#### POST
+##### Summary
+
+Reclaim the remap locks of segments whose holder is gone
+
+##### Description
+
+Reclaims the remap semaphore of every shared memory segment this process maps whose recorded holder process no longer exists and answers with the number of reclaimed locks ({"RECOVERED":1}). A lock whose holder is still alive is never touched, no matter how long it has been held. Opening a segment already runs the same check once, so this endpoint is the repeat an operator needs for a segment that got stuck later on. Reclaiming changes the lock state of a segment and requires a token of a user in the "Admin-Shm" group; a member of "User-Shm" alone gets 401.
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | Locks reclaimed ({"RECOVERED":n}) |
 | 401 | Unauthorized (missing token or not in the Admin-Shm group) |
 | 403 | Forbidden (wrong content type) |
 | 500 | Internal server error |
