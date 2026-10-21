@@ -45,6 +45,12 @@ target_compile_features(message_queue PUBLIC cxx_std_20)
 target_include_directories(message_queue PRIVATE ${magic_enum_INCLUDE_DIRS})
 target_link_libraries(message_queue PRIVATE lintel::lintel project_warnings lintel_options)
 
+# message queue request/reply example (typed call()/serve() over MessageQueue)
+add_executable(message_queue_rpc message_queue_rpc.cpp)
+target_compile_features(message_queue_rpc PUBLIC cxx_std_20)
+target_include_directories(message_queue_rpc PRIVATE ${magic_enum_INCLUDE_DIRS})
+target_link_libraries(message_queue_rpc PRIVATE lintel::lintel project_warnings lintel_options)
+
 # named pipe example (POSIX fifo via mkfifo(), no library dependency)
 if(UNIX)
   add_executable(named_pipe_server named_pipe_server.cpp)

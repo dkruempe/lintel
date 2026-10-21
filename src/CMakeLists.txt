@@ -128,6 +128,7 @@ set(headers
     include/lintel/core/services/ISharedMemoryService.h
     include/lintel/core/services/PropertyRegistration.h
     include/lintel/features/base/services/SharedMemoryService.h
+    include/lintel/features/base/services/SharedMemoryRepositoryRegistry.h
     include/lintel/features/base/services/ShmConstructors.h
     include/lintel/core/services/SignalService.h
     include/lintel/core/services/StopWatchService.h
@@ -199,19 +200,30 @@ set(headers
     include/lintel/features/base/models/Process.h
     include/lintel/features/base/models/ProcessGroup.h
     include/lintel/features/base/models/ProcessInfo.h
+    include/lintel/features/base/models/MessageQueueStats.h
     include/lintel/core/models/ProcessName.h
     include/lintel/core/models/SharedMemorySegmentInfo.h
     include/lintel/features/base/models/User.h
     # features - base - msg
+    include/lintel/features/base/msg/CorrelationId.h
     include/lintel/features/base/msg/Message.h
     include/lintel/features/base/msg/MessageQueue.h
+    include/lintel/features/base/msg/MessageQueueBackend.h
     include/lintel/features/base/msg/MessageQueueCore.h
+    include/lintel/features/base/msg/MessageQueueCoreFactory.h
+    include/lintel/features/base/msg/MessageQueueRequestReply.h
+    include/lintel/features/base/msg/MessageQueueShmCore.h
     include/lintel/features/base/msg/MessageQueues.h
     # features - base - events
     include/lintel/features/base/events/Event.h
     include/lintel/features/base/events/EventBus.h
     include/lintel/core/shm/BoostSegmentAllocator.h
     include/lintel/core/shm/ShmSegmentAccessor.h
+    include/lintel/core/shm/ShmView.h
+    include/lintel/core/shm/SharedMemoryRepository.h
+    include/lintel/core/shm/containers/ArrayShm.h
+    include/lintel/core/shm/containers/QueueShm.h
+    include/lintel/core/shm/containers/RingBufferShm.h
     # features - base - provider
     include/lintel/features/base/provider/GroupProvider.h
     # features - base - repositories
@@ -234,6 +246,7 @@ set(headers
     include/lintel/features/base/services/NoopHistoryService.h
     include/lintel/features/base/services/ProcessArgumentService.h
     include/lintel/features/base/services/SchedulerService.h
+    include/lintel/features/base/services/SharedMemoryCleanupService.h
     include/lintel/features/base/services/SharedMemorySegmentManager.h
     # features - cli
     include/lintel/app/CommandLineFeature.h
@@ -325,6 +338,8 @@ set(sources
     app/StartupBuilder.cpp
     # core - models
     core/models/SharedMemorySegment.cpp
+    # core - shm
+    core/shm/ShmView.cpp
     # core - persistence
     core/persistence/Arguments.cpp
     core/persistence/Connection.cpp
@@ -374,6 +389,7 @@ set(sources
     core/services/ReadinessRegistry.cpp
     features/base/services/ProcessService.cpp
     features/base/services/SharedMemoryService.cpp
+    features/base/services/SharedMemoryRepository.cpp
     features/base/services/SharedMemoryRepositoryRegistry.cpp
     core/services/StopWatchService.cpp
     # core - utils
@@ -435,11 +451,13 @@ set(sources
     features/base/models/Process.cpp
     features/base/models/ProcessGroup.cpp
     features/base/models/ProcessInfo.cpp
+    features/base/models/MessageQueueStats.cpp
     core/models/SharedMemorySegmentInfo.cpp
     features/base/models/User.cpp
     # features - base - msg
     features/base/msg/Message.cpp
     features/base/msg/MessageQueueCore.cpp
+    features/base/msg/MessageQueueShmCore.cpp
     # features - base - repositories
     features/base/repositories/GroupRepository.cpp
     features/base/repositories/HistoryRepository.cpp
@@ -454,6 +472,7 @@ set(sources
     features/base/services/MessageQueueService.cpp
     features/base/services/ProcessArgumentService.cpp
     features/base/services/SchedulerService.cpp
+    features/base/services/SharedMemoryCleanupService.cpp
     features/base/services/SharedMemorySegmentManager.cpp
     # features - cli
     app/CommandLineFeature.cpp
@@ -541,6 +560,7 @@ set(LINTEL_PCH_HEADERS
     <atomic>
     <chrono>
     <condition_variable>
+    <cstddef>
     <cstdint>
     <cstring>
     <exception>
@@ -551,6 +571,7 @@ set(LINTEL_PCH_HEADERS
     <map>
     <memory>
     <mutex>
+    <new>
     <optional>
     <ostream>
     <set>
@@ -561,6 +582,7 @@ set(LINTEL_PCH_HEADERS
     <string>
     <string_view>
     <thread>
+    <typeindex>
     <type_traits>
     <utility>
     <vector>

@@ -127,6 +127,19 @@ public:
     return std::make_optional(temp);
   }
 
+  /**
+   * receive with a bounded wait. No message within the timeout => return nullopt
+   *
+   * @param timeout maximum time to wait for a message
+   * @return optional of received message
+   */
+  std::optional<T> receiveOfWithTimeout(const std::chrono::milliseconds &timeout)
+  {
+    T temp{};
+    if (!m_messageQueue.receiveOfWithTimeout(&temp, m_msgSize, timeout)) { return std::nullopt; }
+    return std::make_optional(temp);
+  }
+
   /** @return true if this queue is less than rhs */
   bool operator<(const MessageQueue &rhs) const
   {

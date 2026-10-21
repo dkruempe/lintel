@@ -80,8 +80,21 @@ bool MessageQueueCore::tryReceiveOf(void *message, std::size_t size)
   unsigned int priority;
   return m_impl->m_messageQueue.try_receive(message, size, recvSize, priority);
 }
+
+bool MessageQueueCore::receiveOfWithTimeout(void *message, std::size_t size, const std::chrono::milliseconds &timeout)
+{
+  boost::interprocess::message_queue::size_type recvSize;
+  unsigned int priority;
+  return m_impl->m_messageQueue.timed_receive(message,
+    size,
+    recvSize,
+    priority,
+    boost::posix_time::microsec_clock::universal_time() + boost::posix_time::milliseconds(timeout.count()));
+}
 }// namespace lintel
 
+namespace lintel {
 void MessageQueueCore::setOverflowPolicy(MessageQueueOverflowPolicy policy) { m_impl->m_policy = policy; }
 void MessageQueueCore::setOverflowTimeout(const std::chrono::milliseconds &timeout) { m_impl->m_timeout = timeout; }
 void MessageQueueCore::setDeadLetterQueueName(const std::string &name) { m_impl->m_dlqName = name; }
+}// namespace lintel

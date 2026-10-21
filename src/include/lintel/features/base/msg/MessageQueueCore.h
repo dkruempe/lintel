@@ -102,6 +102,18 @@ public:
    * @return true if a message was received
    */
   bool tryReceiveOf(void *message, std::size_t size);
+
+  /**
+   * receives message with a bounded wait. No message within the timeout =>
+   * return false.
+   *
+   * @param message buffer receiving the message
+   * @param size maximum size of the received message in bytes
+   * @param timeout maximum time to wait for a message
+   * @return true if a message was received
+   */
+  bool receiveOfWithTimeout(void *message, std::size_t size, const std::chrono::milliseconds &timeout);
+
   /** Configure overflow policy. */
   void setOverflowPolicy(MessageQueueOverflowPolicy policy);
   /** Configure timeout for BlockWithTimeout policy. */
