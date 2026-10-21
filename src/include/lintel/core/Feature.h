@@ -84,15 +84,21 @@ private:
   std::shared_ptr<Features> m_features;
 
 protected:
-  /** The name of this feature derived from the enum value */
-  std::string_view m_name;
+  /** The name of this feature derived from the enum value.
+   *
+   * Stored by value on purpose: magic_enum::enum_name() returns a view into
+   * static storage, but the initialiser below used to build a temporary
+   * std::string and store a std::string_view of it. That view dangled as soon
+   * as the constructor returned, so getName() handed out freed stack bytes -
+   * which StartupBuilder::verifyFeatureDependencies() then compared against. */
+  std::string m_name;
 
 public:
   /** Construct a feature and register it with the central Features manager
    * @param type The enum value identifying this feature
    * @param features The central Features manager instance */
   Feature(T type, std::shared_ptr<Features> features)
-    : m_name(std::string(magic_enum::enum_name(type))), m_features(std::move(features))
+    : m_name(magic_enum::enum_name(type)), m_features(std::move(features))
   {
     m_features->registerFeature(
       type,
