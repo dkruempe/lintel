@@ -4,6 +4,7 @@
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 #include "lintel/core/plugins/BootstrapPlugin.h"
 #include "lintel/features/base/provider/GroupProvider.h"
+#include <chrono>
 #include <lintel/core/configuration/Configuration.h>
 #include <lintel/core/models/ProcessName.h>
 #include <lintel/features/base/repositories/IMessageQueueRepository.h>
@@ -17,6 +18,7 @@ private:
   std::shared_ptr<Configuration> m_configuration;
   std::shared_ptr<DatabaseConnectionEntry> m_connectionEntry;
   std::shared_ptr<ProcessName> m_processName;
+  std::chrono::seconds m_orphanStaleThreshold{ 60 };
 
 public:
   /** Construct a MessageQueueBootstrapPlugin.

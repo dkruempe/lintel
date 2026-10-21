@@ -55,6 +55,11 @@ namespace {
                 name text NOT NULL,
                 process_name text NOT NULL,
                 max_messages integer NOT NULL,
+                owner_pid INTEGER,
+                owner_host text,
+                started_at timestamp,
+                last_heartbeat_at timestamp,
+                owner_state text,
                 CONSTRAINT message_queues_pk PRIMARY KEY (name)
             );
         )");

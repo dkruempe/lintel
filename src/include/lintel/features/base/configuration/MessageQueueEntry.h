@@ -1,7 +1,9 @@
 #ifndef LINTEL_MESSAGEQUEUEENTRY_H
 #define LINTEL_MESSAGEQUEUEENTRY_H
 
+#include <chrono>
 #include <cstdint>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -19,6 +21,11 @@ private:
   const std::string messageQueueName;
   /** The maximum number of messages the queue can hold */
   const int32_t maxMessages;
+  std::optional<std::uint64_t> m_ownerPid;
+  std::optional<std::string> m_ownerHost;
+  std::optional<std::chrono::system_clock::time_point> m_startedAt;
+  std::optional<std::chrono::system_clock::time_point> m_lastHeartbeatAt;
+  std::optional<std::string> m_ownerState;
 
 public:
   /** Construct a message queue entry
@@ -31,6 +38,16 @@ public:
     std::string messageQueueName,
     int32_t maxMessages);
 
+  MessageQueueEntry(const std::string_view &component,
+    std::string processName,
+    std::string messageQueueName,
+    int32_t maxMessages,
+    std::optional<std::uint64_t> ownerPid,
+    std::optional<std::string> ownerHost,
+    std::optional<std::chrono::system_clock::time_point> startedAt,
+    std::optional<std::chrono::system_clock::time_point> lastHeartbeatAt,
+    std::optional<std::string> ownerState);
+
   /** Get the process name
    * @return The process name */
   [[nodiscard]] const std::string &get_process_name() const;
@@ -42,6 +59,24 @@ public:
   /** Get the maximum message count
    * @return The max messages */
   [[nodiscard]] constexpr int32_t get_max_messages() const { return maxMessages; }
+
+  [[nodiscard]] const std::optional<std::uint64_t> &get_owner_pid() const { return m_ownerPid; }
+  [[nodiscard]] const std::optional<std::string> &get_owner_host() const { return m_ownerHost; }
+  [[nodiscard]] const std::optional<std::chrono::system_clock::time_point> &get_started_at() const
+  {
+    return m_startedAt;
+  }
+  [[nodiscard]] const std::optional<std::chrono::system_clock::time_point> &get_last_heartbeat_at() const
+  {
+    return m_lastHeartbeatAt;
+  }
+  [[nodiscard]] const std::optional<std::string> &get_owner_state() const { return m_ownerState; }
+
+  void set_owner_pid(std::optional<std::uint64_t> pid) { m_ownerPid = pid; }
+  void set_owner_host(std::optional<std::string> host) { m_ownerHost = std::move(host); }
+  void set_started_at(std::optional<std::chrono::system_clock::time_point> t) { m_startedAt = t; }
+  void set_last_heartbeat_at(std::optional<std::chrono::system_clock::time_point> t) { m_lastHeartbeatAt = t; }
+  void set_owner_state(std::optional<std::string> state) { m_ownerState = std::move(state); }
 
   /** Stream insertion operator
    * @param os The output stream

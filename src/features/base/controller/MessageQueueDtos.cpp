@@ -1,5 +1,8 @@
 #include "lintel/features/base/controller/MessageQueueDtos.h"
 
+#include "lintel/core/services/LoggerService.h"
+#include "lintel/core/utils/JsonUtils.h"
+
 namespace lintel {
 MessageQueueDtos::MessageQueueDtos(const std::vector<std::pair<MessageQueueEntry, int32_t>> &messageQueueDtos)
   : m_messageQueueDtos(build(messageQueueDtos))
@@ -84,5 +87,38 @@ void MessageQueuesPageDto::deserialize(const std::string &json)
   if (doc.HasMember(shape.NEXT_AFTER) && doc[shape.NEXT_AFTER].IsString()) {
     m_nextAfter = std::make_optional(doc[shape.NEXT_AFTER].GetString());
   }
+}
+
+MessageQueuePurgeDto::Shapes MessageQueuePurgeDto::shape{};
+
+MessageQueuePurgeDto::MessageQueuePurgeDto(std::string name, int32_t purged) : m_name(std::move(name)), m_purged(purged)
+{}
+
+const std::string &MessageQueuePurgeDto::getName() const { return m_name; }
+
+int32_t MessageQueuePurgeDto::getPurged() const { return m_purged; }
+
+void MessageQueuePurgeDto::serialize(rapidjson::Writer<rapidjson::StringBuffer> *writer) const
+{
+  writer->StartObject();
+  writer->String(shape.NAME);
+  writer->String(m_name.c_str());
+  writer->String(shape.PURGED);
+  writer->Int(m_purged);
+  writer->EndObject();
+}
+
+bool MessageQueuePurgeDto::deserialize(const rapidjson::Value &obj)
+{
+  bool success = true;
+  if (!json::getString(obj, shape.NAME, m_name)) {
+    success = false;
+    LOG_ERROR("{} not defined in json serialization", shape.NAME);
+  }
+  if (!json::getInt(obj, shape.PURGED, m_purged)) {
+    success = false;
+    LOG_ERROR("{} not defined in json serialization", shape.PURGED);
+  }
+  return success;
 }
 }// namespace lintel

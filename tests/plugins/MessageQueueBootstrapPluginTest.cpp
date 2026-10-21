@@ -78,6 +78,36 @@ namespace {
       for (const auto &entry : entries) { deleted.push_back(entry); }
     }
 
+    void registerOwner(const std::string &,
+      const std::string &,
+      const std::string &,
+      std::uint64_t,
+      const std::chrono::system_clock::time_point &,
+      const std::string &) override
+    {}
+    void updateHeartbeat(const std::string &, const std::chrono::system_clock::time_point &) override {}
+    void updateOwnerState(const std::string &, const std::string &) override {}
+    std::vector<MessageQueueEntry> findOrphans(const std::chrono::seconds &staleThreshold) override
+    {
+      ++findOrphansCalls;
+      lastStaleThreshold = staleThreshold;
+      return orphans;
+    }
+    void reclaimOrphans(const std::vector<MessageQueueEntry> &entries) override
+    {
+      for (const auto &entry : entries) { reclaimed.push_back(entry); }
+    }
+    void clearOwner(const std::string &) override {}
+
+    /** orphans the stub reports for findOrphans() */
+    std::vector<MessageQueueEntry> orphans;
+    /** entries passed to reclaimOrphans() */
+    std::vector<MessageQueueEntry> reclaimed;
+    /** number of findOrphans() calls */
+    int findOrphansCalls = 0;
+    /** stale threshold of the last findOrphans() call */
+    std::chrono::seconds lastStaleThreshold{ 0 };
+
     /** rows the next allProcessNameOf() call shall report
      * @param rows the rows of the message_queues table of the current process */
     void setRows(const std::vector<MessageQueueEntry> &rows)
@@ -283,5 +313,46 @@ TEST_CASE("MessageQueueBootstrapPlugin: a mixed configuration inserts replaces a
   REQUIRE(mqBootstrapNames(fixture.repository->deleted) == std::vector<std::string>{ "resized", "gone" });
   REQUIRE(fixture.repository->inserted[0].get_max_messages() == 99);
   REQUIRE(fixture.repository->deleted[0].get_max_messages() == 1);
+}
+
+TEST_CASE("MessageQueueBootstrapPlugin: stale owners are reclaimed before the reconciliation", "[mq_bootstrap_plugin]")
+{
+  MqBootstrapFixture fixture("main", true, { mqBootstrapQueue("main", "history", 10) });
+  fixture.repository->orphans.push_back(MessageQueueEntry(type_name<MessageQueueComponent>(), "main", "stale", 5));
+
+  fixture.plugin->onStart();
+
+  REQUIRE(fixture.repository->findOrphansCalls == 1);
+  REQUIRE(mqBootstrapNames(fixture.repository->reclaimed) == std::vector<std::string>{ "stale" });
+}
+
+TEST_CASE("MessageQueueBootstrapPlugin: a healthy owner is never reclaimed", "[mq_bootstrap_plugin]")
+{
+  MqBootstrapFixture fixture("main", true, { mqBootstrapQueue("main", "history", 10) });
+
+  fixture.plugin->onStart();
+
+  REQUIRE(fixture.repository->findOrphansCalls == 1);
+  REQUIRE(fixture.repository->reclaimed.empty());
+}
+
+TEST_CASE("MessageQueueBootstrapPlugin: a failing orphan scan does not block the bootstrap", "[mq_bootstrap_plugin]")
+{
+  // the reconciliation must survive a database that cannot answer the scan
+  class ThrowingOrphanRepository : public MqBootstrapRepositoryStub
+  {
+  public:
+    std::vector<MessageQueueEntry> findOrphans(const std::chrono::seconds &) override
+    {
+      throw std::runtime_error("connection gone");
+    }
+  };
+  MqBootstrapFixture fixture("main", true, { mqBootstrapQueue("main", "history", 10) });
+  auto throwing = std::make_shared<ThrowingOrphanRepository>();
+  auto plugin = std::make_shared<MessageQueueBootstrapPlugin>(
+    fixture.connectionConfigurations, fixture.configuration, throwing, fixture.processName);
+
+  REQUIRE_NOTHROW(plugin->onStart());
+  REQUIRE(mqBootstrapNames(throwing->inserted) == std::vector<std::string>{ "history" });
 }
 }// namespace lintel

@@ -1,6 +1,8 @@
 #ifndef LINTEL_IMESSAGEQUEUEREPOSITORY_H
 #define LINTEL_IMESSAGEQUEUEREPOSITORY_H
 
+#include <chrono>
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -63,6 +65,19 @@ public:
    * @param entries entries to delete
    */
   virtual void deleteOf(const std::vector<MessageQueueEntry> &entries) = 0;
+
+  virtual void registerOwner(const std::string &queueName,
+    const std::string &processName,
+    const std::string &hostName,
+    std::uint64_t pid,
+    const std::chrono::system_clock::time_point &startedAt,
+    const std::string &ownerState = "active") = 0;
+  virtual void updateHeartbeat(const std::string &queueName,
+    const std::chrono::system_clock::time_point &heartbeatAt) = 0;
+  virtual void updateOwnerState(const std::string &queueName, const std::string &ownerState) = 0;
+  virtual std::vector<MessageQueueEntry> findOrphans(const std::chrono::seconds &staleThreshold) = 0;
+  virtual void reclaimOrphans(const std::vector<MessageQueueEntry> &entries) = 0;
+  virtual void clearOwner(const std::string &queueName) = 0;
 };
 
 }// namespace lintel

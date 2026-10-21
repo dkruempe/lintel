@@ -32,6 +32,15 @@ void MessageQueueBootstrapPlugin::onStart()
     LOG_INFO("no default database connection - skip message queue bootstrap");
     return;
   }
+  try {
+    auto orphans = m_messageQueueRepository->findOrphans(m_orphanStaleThreshold);
+    if (!orphans.empty()) {
+      LOG_INFO("reclaiming {} orphaned message queue entries", orphans.size());
+      m_messageQueueRepository->reclaimOrphans(orphans);
+    }
+  } catch (...) {
+    // best effort, do not block bootstrap
+  }
   auto entries = m_configuration->configurationOf<MessageQueueComponent>();
   std::map<std::string, std::shared_ptr<MessageQueueEntry>> messageQueueEntries;
   for (const auto &entry : entries) {

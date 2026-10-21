@@ -9,6 +9,20 @@ MessageQueueEntry::MessageQueueEntry(const std::string_view &component,
     maxMessages(_maxMessages)
 {}
 
+MessageQueueEntry::MessageQueueEntry(const std::string_view &component,
+  std::string _processName,
+  std::string _messageQueueName,
+  int32_t _maxMessages,
+  std::optional<std::uint64_t> ownerPid,
+  std::optional<std::string> ownerHost,
+  std::optional<std::chrono::system_clock::time_point> startedAt,
+  std::optional<std::chrono::system_clock::time_point> lastHeartbeatAt,
+  std::optional<std::string> ownerState)
+  : Entry(component), processName(std::move(_processName)), messageQueueName(std::move(_messageQueueName)),
+    maxMessages(_maxMessages), m_ownerPid(ownerPid), m_ownerHost(std::move(ownerHost)), m_startedAt(startedAt),
+    m_lastHeartbeatAt(lastHeartbeatAt), m_ownerState(std::move(ownerState))
+{}
+
 const std::string &MessageQueueEntry::get_process_name() const { return processName; }
 
 const std::string &MessageQueueEntry::get_message_queue_name() const { return messageQueueName; }

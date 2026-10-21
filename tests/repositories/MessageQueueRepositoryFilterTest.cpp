@@ -51,6 +51,11 @@ namespace {
                 name text NOT NULL,
                 process_name text NOT NULL,
                 max_messages integer NOT NULL,
+                owner_pid INTEGER,
+                owner_host text,
+                started_at timestamp,
+                last_heartbeat_at timestamp,
+                owner_state text,
                 CONSTRAINT message_queues_pk PRIMARY KEY (name)
             );
         )");
@@ -175,5 +180,84 @@ TEST_CASE("MessageQueueRepository::allMessageQueueNameOf matches the queue name 
   // wrongly hand out alpha_1 here instead of reporting that nothing matched.
   REQUIRE_THROWS_AS(fixture.repository->allMessageQueueNameOf("proc1"), db::SQLException);
   REQUIRE_THROWS_AS(fixture.repository->allMessageQueueNameOf("nothing_.*"), db::SQLException);
+}
+
+// Owner/liveness (MQ-1): the register/heartbeat/scan/reclaim round trip through the database.
+// findOrphans() must only return rows that have an owner but no fresh heartbeat, and
+// reclaimOrphans() must clear the owner columns so a later scan cannot return them again.
+
+TEST_CASE("MessageQueueRepository: registerOwner and updateHeartbeat persist the owner fields")
+{
+  MessageQueueFilterFixture fixture;
+  fixture.insertQueue("proc1", "alpha_1");
+
+  const auto startedAt = std::chrono::system_clock::now() - std::chrono::minutes(5);
+  fixture.repository->registerOwner("alpha_1", "proc1", "host-a", 4242, startedAt, "active");
+
+  const MessageQueueEntry entry = fixture.repository->allMessageQueueNameOf("alpha_1");
+  REQUIRE(entry.get_owner_pid().has_value());
+  REQUIRE(*entry.get_owner_pid() == 4242);
+  REQUIRE(entry.get_owner_host().has_value());
+  REQUIRE(*entry.get_owner_host() == "host-a");
+  REQUIRE(entry.get_started_at().has_value());
+  REQUIRE(entry.get_owner_state().has_value());
+  REQUIRE(*entry.get_owner_state() == "active");
+
+  // a queue that was never registered carries no owner at all
+  fixture.insertQueue("proc1", "beta_1");
+  const MessageQueueEntry unowned = fixture.repository->allMessageQueueNameOf("beta_1");
+  REQUIRE_FALSE(unowned.get_owner_pid().has_value());
+  REQUIRE_FALSE(unowned.get_owner_host().has_value());
+  REQUIRE_FALSE(unowned.get_owner_state().has_value());
+}
+
+TEST_CASE("MessageQueueRepository: findOrphans returns stale owners only")
+{
+  MessageQueueFilterFixture fixture;
+  fixture.insertQueue("proc1", "stale_1");
+  fixture.insertQueue("proc1", "fresh_1");
+  fixture.insertQueue("proc1", "never_owned_1");
+
+  const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
+  fixture.repository->registerOwner("stale_1", "proc1", "host-a", 111, longAgo, "active");
+  fixture.repository->registerOwner("fresh_1", "proc1", "host-a", 222, std::chrono::system_clock::now(), "active");
+
+  const std::vector<MessageQueueEntry> orphans = fixture.repository->findOrphans(std::chrono::seconds(60));
+  REQUIRE(queueNamesOf(orphans) == std::set<std::string>{ "stale_1" });
+
+  // a longer threshold ages the same row back in as healthy - the threshold decides, not the state
+  REQUIRE(fixture.repository->findOrphans(std::chrono::minutes(30)).empty());
+}
+
+TEST_CASE("MessageQueueRepository: reclaimOrphans clears the owner fields")
+{
+  MessageQueueFilterFixture fixture;
+  fixture.insertQueue("proc1", "stale_1");
+
+  const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
+  fixture.repository->registerOwner("stale_1", "proc1", "host-a", 111, longAgo, "active");
+
+  fixture.repository->reclaimOrphans(fixture.repository->findOrphans(std::chrono::seconds(60)));
+
+  REQUIRE(fixture.repository->findOrphans(std::chrono::seconds(60)).empty());
+  const MessageQueueEntry reclaimed = fixture.repository->allMessageQueueNameOf("stale_1");
+  REQUIRE_FALSE(reclaimed.get_owner_pid().has_value());
+  REQUIRE_FALSE(reclaimed.get_owner_state().has_value());
+  // the queue row itself survives the reclaim - only the owner is dropped
+  REQUIRE(reclaimed.get_message_queue_name() == "stale_1");
+}
+
+TEST_CASE("MessageQueueRepository: updateHeartbeat makes a stale owner healthy again")
+{
+  MessageQueueFilterFixture fixture;
+  fixture.insertQueue("proc1", "beat_1");
+
+  const auto longAgo = std::chrono::system_clock::now() - std::chrono::minutes(10);
+  fixture.repository->registerOwner("beat_1", "proc1", "host-a", 111, longAgo, "active");
+  REQUIRE(fixture.repository->findOrphans(std::chrono::seconds(60)).size() == 1);
+
+  fixture.repository->updateHeartbeat("beat_1", std::chrono::system_clock::now());
+
+  REQUIRE(fixture.repository->findOrphans(std::chrono::seconds(60)).empty());
 }
 }// namespace lintel
