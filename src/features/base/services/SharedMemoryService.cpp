@@ -287,6 +287,7 @@ void SharedMemoryService::onCheck()
 }
 }// namespace lintel
 
+namespace lintel {
 void SharedMemoryService::notifyHooks(const std::string &segmentName, SegmentLifecycle action)
 {
   std::lock_guard<std::mutex> lock(m_hooksMutex);
@@ -321,3 +322,5 @@ SharedMemorySegmentStats SharedMemoryService::statsOf(const std::shared_ptr<Shar
   stats.generation = m_generation;
   return stats;
 }
+
+}// namespace lintel

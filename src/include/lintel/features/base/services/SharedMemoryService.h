@@ -50,6 +50,13 @@ private:
   mutable std::mutex m_segmentsMutex;
   std::size_t m_generation = 0;
   std::shared_ptr<SchedulerService> m_schedulerService;
+  /** grow/shrink/reclaim counters per segment name (for statsOf) */
+  std::map<std::string, std::size_t> m_growCount;
+  std::map<std::string, std::size_t> m_shrinkCount;
+  std::map<std::string, std::size_t> m_recoveryCount;
+  /** registered lifecycle hooks and their mutex */
+  mutable std::mutex m_hooksMutex;
+  std::vector<SegmentLifecycleHook> m_lifecycleHooks;
   // properties
   std::shared_ptr<Property<std::chrono::seconds>> m_scheduleRate;
   std::shared_ptr<Property<bool>> m_autoExtend;
