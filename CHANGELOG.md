@@ -265,6 +265,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **The worker processes outlived `bin/main`.** Two defects added up:
+  `VirtualGroupBootstrapPlugin` is a singleton *inside* the DI container and held a `shared_ptr`
+  to that container, so container → plugin → container never dropped to zero - the container was
+  never destroyed and no service destructor ever ran. And `ProcessService` only stopped its
+  children in its destructor. The plugin (and the worker example's own service) hold the container
+  weakly now, and `ProcessService::onShutdown()` stops and, if needed, terminates every process it
+  started, so a shutdown no longer depends on destruction order.
 - **The examples could not be started.** `Feature::m_name` was a `std::string_view` initialised from
   a temporary `std::string`, so `getName()` returned freed stack bytes as soon as the constructor
   returned. `StartupBuilder::verifyFeatureDependencies()` compared that garbage against the
