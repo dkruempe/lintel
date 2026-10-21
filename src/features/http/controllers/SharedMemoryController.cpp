@@ -363,4 +363,39 @@ void SharedMemoryController::cleanupOfPost(const httplib::Request & /*request*/,
     report.failed);
   response.set_content(shmCleanupJsonOf(report), contentType.getName());
 }
+
+void SharedMemoryController::recoverOfPost(const httplib::Request & /*request*/,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  // reclaiming a stuck remap lock changes the lock state of a segment, so only
+  // administrators may run it
+  if (!canAdminister(user)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  // One pass over the segments this process maps: locks whose holder is gone
+  // are reclaimed, locks of a living holder stay untouched.
+  const std::size_t recovered = m_sharedMemoryService->recover();
+  LOG_INFO("recoverOf: reclaimed {} orphaned remap locks", recovered);
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer writer(buffer);
+  writer.StartObject();
+  writer.String("RECOVERED");
+  writer.Uint64(recovered);
+  writer.EndObject();
+  response.set_content(std::string(buffer.GetString()), contentType.getName());
+}
 }// namespace lintel

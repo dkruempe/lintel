@@ -211,6 +211,7 @@ TEST_CASE("SharedMemoryCliComponent: onHelp prints the header and every command 
   REQUIRE(shmCliHelp.find("shrink_segment") != std::string::npos);
   REQUIRE(shmCliHelp.find("grow_segment") != std::string::npos);
   REQUIRE(shmCliHelp.find("export_repository") != std::string::npos);
+  REQUIRE(shmCliHelp.find("recover_segments") != std::string::npos);
   REQUIRE(shmCliHelp.find("--segment-name, -s") != std::string::npos);
   REQUIRE(shmCliHelp.find("--grow-size, -g") != std::string::npos);
   REQUIRE(shmCliHelp.find("--uuid, -u") != std::string::npos);
@@ -234,6 +235,7 @@ TEST_CASE("SharedMemoryCliComponent: printCommandList lists every registered com
   REQUIRE(shmCliList.find("shrink_segment") != std::string::npos);
   REQUIRE(shmCliList.find("grow_segment") != std::string::npos);
   REQUIRE(shmCliList.find("export_repository") != std::string::npos);
+  REQUIRE(shmCliList.find("recover_segments") != std::string::npos);
 }
 
 TEST_CASE("SharedMemoryCliComponent: printCommandList appends the sub-menu aliases")
@@ -302,7 +304,40 @@ TEST_CASE("SharedMemoryCliComponent: cleanup posts to the cleanup endpoint and p
   REQUIRE(shmCliPrinted.find("1 removed") != std::string::npos);
 }
 
-TEST_CASE("SharedMemoryCliComponent: allCommandsOf returns the seven registered commands")
+TEST_CASE("SharedMemoryCliComponent: recover_segments posts to the recover endpoint and prints the count")
+{
+  shmCliBackend shmCliServer;
+  shmCliServer.answerWith(R"({"RECOVERED":2})");
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+  SharedMemoryCliComponent shmCliComponent(shmCliApi);
+
+  shmCliCoutCapture shmCliOut;
+  shmCliComponent.onCommand(UserDto{}, "recover_segments", {});
+  const std::string shmCliPrinted = shmCliOut.str();
+
+  REQUIRE(shmCliServer.paths.size() == 1);
+  REQUIRE(shmCliServer.paths[0] == "/shm/recover");
+  REQUIRE(shmCliServer.methods[0] == "POST");
+  REQUIRE(shmCliPrinted.find("Recovered 2 orphaned remap locks") != std::string::npos);
+}
+
+TEST_CASE("SharedMemoryCliComponent: recover_segments reports a rejected recover")
+{
+  shmCliBackend shmCliServer;
+  shmCliServer.answerWithStatus(500, "{}");
+  auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(shmCliServer.port()));
+  SharedMemoryCliComponent shmCliComponent(shmCliApi);
+
+  shmCliCoutCapture shmCliOut;
+  shmCliComponent.onCommand(UserDto{}, "recover_segments", {});
+  const std::string shmCliPrinted = shmCliOut.str();
+
+  REQUIRE(shmCliServer.paths.size() == 1);
+  REQUIRE(shmCliPrinted.find("ERROR") != std::string::npos);
+  REQUIRE(shmCliPrinted.find("recover was rejected") != std::string::npos);
+}
+
+TEST_CASE("SharedMemoryCliComponent: allCommandsOf returns the eight registered commands")
 {
   auto shmCliApi = std::make_shared<SharedMemoryApi>(shmCliProviderOf(1));
   SharedMemoryCliComponent shmCliComponent(shmCliApi);
@@ -313,6 +348,7 @@ TEST_CASE("SharedMemoryCliComponent: allCommandsOf returns the seven registered 
          "show_repositories",
          "show_stats",
          "cleanup",
+         "recover_segments",
          "shrink_segment",
          "grow_segment",
          "export_repository" }) {
@@ -320,7 +356,7 @@ TEST_CASE("SharedMemoryCliComponent: allCommandsOf returns the seven registered 
       shmCliHasAll && std::find(shmCliCommands.begin(), shmCliCommands.end(), shmCliExpected) != shmCliCommands.end();
   }
 
-  REQUIRE(shmCliCommands.size() == 7);
+  REQUIRE(shmCliCommands.size() == 8);
   REQUIRE(shmCliHasAll);
 }
 
@@ -618,6 +654,7 @@ TEST_CASE("SharedMemoryApi: an unauthorized response throws for every endpoint")
   REQUIRE_THROWS_AS(shmCliApi->allRepositoriesOf(".*", ".*"), HttpUnauthorizedException);
   REQUIRE_THROWS_AS(shmCliApi->growOf("seg", "1024"), HttpUnauthorizedException);
   REQUIRE_THROWS_AS(shmCliApi->repositoryOf("uuid"), HttpUnauthorizedException);
+  REQUIRE_THROWS_AS(shmCliApi->recoverOf(), HttpUnauthorizedException);
 }
 
 TEST_CASE("SharedMemoryApi: a server error is tolerated per endpoint")
@@ -631,6 +668,7 @@ TEST_CASE("SharedMemoryApi: a server error is tolerated per endpoint")
   REQUIRE(shmCliApi->allRepositoriesOf(".*", ".*").empty());
   REQUIRE_NOTHROW(shmCliApi->growOf("seg", "1024"));
   REQUIRE(shmCliApi->repositoryOf("uuid").empty());
+  REQUIRE_FALSE(shmCliApi->recoverOf().has_value());
 }
 
 TEST_CASE("SharedMemoryApi: a malformed body is tolerated")
@@ -641,6 +679,7 @@ TEST_CASE("SharedMemoryApi: a malformed body is tolerated")
 
   REQUIRE(shmCliApi->allSegmentsOf(".*").empty());
   REQUIRE(shmCliApi->allRepositoriesOf(".*", ".*").empty());
+  REQUIRE_FALSE(shmCliApi->recoverOf().has_value());
 }
 
 TEST_CASE("SharedMemoryApi: a missing server is tolerated per endpoint")
@@ -653,5 +692,6 @@ TEST_CASE("SharedMemoryApi: a missing server is tolerated per endpoint")
   REQUIRE(shmCliApi->allRepositoriesOf(".*", ".*").empty());
   REQUIRE_NOTHROW(shmCliApi->growOf("seg", "1024"));
   REQUIRE(shmCliApi->repositoryOf("uuid").empty());
+  REQUIRE_FALSE(shmCliApi->recoverOf().has_value());
 }
 }// namespace lintel

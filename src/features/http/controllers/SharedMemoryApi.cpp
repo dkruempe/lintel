@@ -178,6 +178,30 @@ std::optional<SharedMemoryCleanupSummary> SharedMemoryApi::cleanupOf()
   return summary;
 }
 
+std::optional<std::size_t> SharedMemoryApi::recoverOf()
+{
+  httplib::Headers headers{};
+  headers.insert({ "Content-Type", "application/json" });
+  const httplib::Result &result = m_client->post("/shm/recover", headers, "", "application/json");
+  if (!HttpClientHelper::hasResponse(result)) { return std::nullopt; }
+  HttpStatusCodes status(result->status);
+  switch (status) {
+  case HttpStatusCodes::Unauthorized:
+    throw HttpUnauthorizedException();
+  case HttpStatusCodes::OK:
+    break;
+  default:
+    LOG_ERROR("error {}", status.getCode());
+    return std::nullopt;
+  }
+  rapidjson::Document document;
+  document.Parse(result->body.c_str());
+  if (document.HasParseError() || !document.IsObject()) { return std::nullopt; }
+  std::uint64_t recovered = 0;
+  if (!json::getUint64(document, "RECOVERED", recovered)) { return std::nullopt; }
+  return static_cast<std::size_t>(recovered);
+}
+
 std::string SharedMemoryApi::repositoryOf(const std::string &uuid)
 {
   httplib::Headers headers{};

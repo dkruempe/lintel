@@ -59,6 +59,12 @@ public:
    */
   std::optional<SharedMemoryCleanupSummary> cleanupOf();
 
+  /**
+   * Reclaim the remap locks of segments whose holder process is gone.
+   * @return the number of reclaimed locks, or nullopt when the request was rejected
+   */
+  std::optional<std::size_t> recoverOf();
+
   // repositories
   /** @return all repositories matching the given filters */
   std::vector<SharedMemoryRepositoryDto> allRepositoriesOf(const std::string &repositoryName = ".*",

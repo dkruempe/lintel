@@ -46,6 +46,14 @@ namespace {
     using SharedMemoryController::SharedMemoryController;
   };
 
+  /** MockSharedMemoryService inherits the interface default of recover() (0);
+   *  this variant makes the call observable for the /shm/recover handler. */
+  class ShmRecoverMockService : public MockSharedMemoryService
+  {
+  public:
+    MAKE_MOCK0(recover, std::size_t(), override);
+  };
+
   class ShmCtlFakeRepository : public SharedMemoryRepository
   {
   public:
@@ -688,5 +696,62 @@ TEST_CASE("SharedMemoryController::cleanupOfPost returns 401 for a non-admin use
 
   controller.cleanupOfPost(request, response, contentType, tokenForGroups({ kUserGroup }));
   REQUIRE(response.status == 401);
+}
+
+TEST_CASE("SharedMemoryController::recoverOfPost answers with the number of reclaimed locks")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<ShmRecoverMockService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+
+  REQUIRE_CALL(*mockShmService, recover()).TIMES(1).LR_RETURN(std::size_t{ 2 });
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
+
+  httplib::Request request;
+  httplib::Response response;
+  ContentType contentType("application/json");
+
+  controller.recoverOfPost(request, response, contentType, makeToken());
+  // the handler does not set the status on success - the server does
+  REQUIRE(response.body == R"({"RECOVERED":2})");
+}
+
+TEST_CASE("SharedMemoryController::recoverOfPost returns 401 for a non-admin user")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<ShmRecoverMockService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+
+  // recovery mutates the lock state of a segment: a user without the admin
+  // group must not reach the service at all
+  FORBID_CALL(*mockShmService, recover());
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
+
+  httplib::Request request;
+  httplib::Response response;
+  ContentType contentType("application/json");
+
+  controller.recoverOfPost(request, response, contentType, tokenForGroups({ kUserGroup }));
+  REQUIRE(response.status == 401);
+}
+
+TEST_CASE("SharedMemoryController::recoverOfPost returns 403 for non-json")
+{
+  auto mockAuth = std::make_shared<MockAuthService>();
+  auto mockShmService = std::make_shared<ShmRecoverMockService>();
+  auto mockShmManager = std::make_shared<MockSharedMemorySegmentManager>();
+
+  FORBID_CALL(*mockShmService, recover());
+
+  TestSharedMemoryController controller(mockAuth, mockShmService, mockShmManager, {}, nullptr);
+
+  httplib::Request request;
+  httplib::Response response;
+  ContentType contentType("text/plain");
+
+  controller.recoverOfPost(request, response, contentType, makeToken());
+  REQUIRE(response.status == 403);
 }
 }// namespace lintel

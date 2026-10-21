@@ -24,6 +24,7 @@ private:
     ShowRepositories,
     ShowStats,
     Cleanup,
+    RecoverSegments,
     ShrinkSegment,
     GrowSegment,
     ExportRepository

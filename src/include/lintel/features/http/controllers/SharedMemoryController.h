@@ -45,6 +45,7 @@ public:
   // Shared Memory Operations handler methods
   ADD_HANDLER_METHOD(R"(/shm/stats/([^\/]+))", Get, statsOf);
   ADD_HANDLER_METHOD(R"(/shm/cleanup)", Post, cleanupOf);
+  ADD_HANDLER_METHOD(R"(/shm/recover)", Post, recoverOf);
 
 
   SharedMemoryController(const std::shared_ptr<IAuthService> &authServicie,

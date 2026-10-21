@@ -25,6 +25,8 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(std::shared_ptr<SharedMemoryA
     ShowStats);
   m_commandParser.addCommand(Command("cleanup", "Remove shared memory objects whose owner process is gone"), Cleanup);
   m_commandParser.addCommand(
+    Command("recover_segments", "Reclaim the remap locks of segments whose holder process is gone"), RecoverSegments);
+  m_commandParser.addCommand(
     Command("shrink_segment", "Shrink segment").addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name"),
     ShrinkSegment);
   m_commandParser.addCommand(Command("grow_segment", "Grow segment")
@@ -85,6 +87,15 @@ void SharedMemoryCliComponent::onCommand(const UserDto & /*userDto*/,
       }
       std::cout << "Cleanup scanned " << summary->scanned << " entries: " << summary->orphans << " orphans, "
                 << summary->removed << " removed, " << summary->failed << " failures\n";
+      break;
+    }
+    case RecoverSegments: {
+      const std::optional<std::size_t> recovered = m_sharedMemoryApi->recoverOf();
+      if (!recovered.has_value()) {
+        std::cout << "ERROR: recover was rejected\n";
+        return;
+      }
+      std::cout << "Recovered " << recovered.value() << " orphaned remap locks\n";
       break;
     }
     case ShrinkSegment: {
