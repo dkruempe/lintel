@@ -113,10 +113,11 @@ namespace {
 EventBusController::EventBusController(const std::shared_ptr<IAuthService> &authService,
   std::shared_ptr<EventBusService> eventBusService)
   : Controller(authService), m_eventBusService(std::move(eventBusService)), m_adminGroup("Admin-EventBus", {}, true),
-    m_userGroup("User-EventBus", {}, true)
+    m_userGroup("User-EventBus", {}, true), m_publisherGroup("Publisher-EventBus", {}, true)
 {
   add(m_adminGroup);
   add(m_userGroup);
+  add(m_publisherGroup);
 }
 
 bool EventBusController::authorize(httplib::Response &response,
@@ -132,8 +133,12 @@ bool EventBusController::authorize(httplib::Response &response,
     return false;
   }
   const bool isAdmin = user->m_user.has(m_adminGroup);
-  const bool permitted = access == Access::Administer ? isAdmin : (isAdmin || user->m_user.has(m_userGroup));
+  bool permitted = isAdmin;
+  if (access == Access::Read) { permitted = permitted || user->m_user.has(m_userGroup); }
+  if (access == Access::Publish) { permitted = permitted || user->m_user.has(m_publisherGroup); }
   if (!permitted) {
+    // A valid token of a user outside the required group is answered like a
+    // missing token on purpose.
     response.status = HttpStatusCodes::Unauthorized;
     response.set_content("", contentType.getName());
     return false;

@@ -17,10 +17,13 @@ namespace lintel {
 /**
  * HTTP controller that exposes the configured event buses.
  *
- * Reading (list, details, subscriber depth) and publishing are open to the
- * "User-EventBus" and "Admin-EventBus" groups. Subscribing, unsubscribing and
- * resetting mutate the bus registry or drop queued events, so they require
- * the "Admin-EventBus" group.
+ * Reading (list, details, subscriber depth) is open to the "User-EventBus" and
+ * "Admin-EventBus" groups. Publishing requires the "Publisher-EventBus" or
+ * "Admin-EventBus" group, so a plain reader cannot inject events. Subscribing,
+ * unsubscribing and resetting mutate the bus registry or drop queued events, so
+ * they require the "Admin-EventBus" group. A missing token and a token of a user
+ * outside the required group both answer 401, which keeps the endpoints from
+ * confirming their existence to an anonymous caller.
  */
 class EventBusController : public Controller
 {
@@ -28,19 +31,21 @@ private:
   std::shared_ptr<EventBusService> m_eventBusService;
   Group m_adminGroup;
   Group m_userGroup;
+  Group m_publisherGroup;
 
   /** Required permission of a route. */
   enum class Access : std::uint8_t {
     /** read bus information - user or admin */
     Read,
-    /** publish an event - user or admin */
+    /** publish an event - publisher or admin */
     Publish,
     /** mutate subscriptions or drop queued events - admin only */
     Administer
   };
 
   /** Check the token, the group membership and the content type of a request.
-   * @param response receives 401 or 403 when the request is rejected
+   * @param response receives 401 (missing token or wrong group) or 403
+   *                 (unsupported content type) when the request is rejected
    * @param contentType negotiated content type
    * @param user authenticated user, if any
    * @param access required permission of the route

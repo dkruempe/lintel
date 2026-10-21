@@ -47,9 +47,17 @@ namespace {
 
   Group ebcAdminGroup{ "Admin-EventBus", {}, true };
   Group ebcUserGroup{ "User-EventBus", {}, true };
+  Group ebcPublisherGroup{ "Publisher-EventBus", {}, true };
 
   User ebcAdmin("EventBus", "Admin", User::Male, "eventbus-admin@test.com", "eventbusAdmin", "", { ebcAdminGroup });
   User ebcUser("EventBus", "User", User::Male, "eventbus-user@test.com", "eventbusUser", "", { ebcUserGroup });
+  User ebcPublisher("EventBus",
+    "Publisher",
+    User::Male,
+    "eventbus-publisher@test.com",
+    "eventbusPublisher",
+    "",
+    { ebcPublisherGroup });
 
   UserToken ebcTokenOf(const User &user)
   {
@@ -252,8 +260,8 @@ TEST_CASE("EventBusController: publishOfPost queues the event on the bus")
   ebcReq.body = ebcPublishBody;
   httplib::Response ebcRes;
 
-  // a plain user may publish
-  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcUser));
+  // a member of the publisher group may publish
+  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcPublisher));
 
   REQUIRE(ebcRes.body.find("\"PUBLISHED\":true") != std::string::npos);
   REQUIRE(ebcRes.body.find("\"PRIORITY\":\"High\"") != std::string::npos);
@@ -268,6 +276,61 @@ TEST_CASE("EventBusController: publishOfPost queues the event on the bus")
   REQUIRE(ebcEvent->contentLength() == 2);
 }
 
+TEST_CASE("EventBusController: publishing needs the publisher or admin group")
+{
+  EventBusControllerFixture ebcFixture;
+  EventBusController &ebcController = *ebcFixture.m_controller;
+  auto ebcReq = ebcRequestWithMatches({ "orders" });
+  ebcReq.body = ebcPublishBody;
+
+  // a reader is not a publisher
+  httplib::Response ebcUserRes;
+  ebcController.publishOfPost(ebcReq, ebcUserRes, ebcJson(), ebcTokenOf(ebcUser));
+  REQUIRE(ebcUserRes.status == 401);
+  REQUIRE(ebcFixture.bus()->isEmpty());
+
+  // no token at all
+  httplib::Response ebcAnonymousRes;
+  ebcController.publishOfPost(ebcReq, ebcAnonymousRes, ebcJson(), std::nullopt);
+  REQUIRE(ebcAnonymousRes.status == 401);
+  REQUIRE(ebcFixture.bus()->isEmpty());
+}
+
+TEST_CASE("EventBusController: an admin may publish")
+{
+  EventBusControllerFixture ebcFixture;
+  EventBusController &ebcController = *ebcFixture.m_controller;
+  auto ebcReq = ebcRequestWithMatches({ "orders" });
+  ebcReq.body = ebcPublishBody;
+  httplib::Response ebcRes;
+
+  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcAdmin));
+
+  REQUIRE(ebcRes.body.find("\"PUBLISHED\":true") != std::string::npos);
+  REQUIRE(ebcRes.body.find("\"TOPIC\":\"orders.created\"") != std::string::npos);
+  REQUIRE(!ebcFixture.bus()->isEmpty());
+}
+
+TEST_CASE("EventBusController: a publisher may not read")
+{
+  EventBusControllerFixture ebcFixture;
+  EventBusController &ebcController = *ebcFixture.m_controller;
+  httplib::Request ebcListReq;
+  httplib::Response ebcListRes;
+  ebcController.busesOfGet(ebcListReq, ebcListRes, ebcJson(), ebcTokenOf(ebcPublisher));
+  REQUIRE(ebcListRes.status == 401);
+
+  auto ebcBusReq = ebcRequestWithMatches({ "orders" });
+  httplib::Response ebcBusRes;
+  ebcController.busOfGet(ebcBusReq, ebcBusRes, ebcJson(), ebcTokenOf(ebcPublisher));
+  REQUIRE(ebcBusRes.status == 401);
+
+  auto ebcDepthReq = ebcRequestWithMatches({ "orders", "worker" });
+  httplib::Response ebcDepthRes;
+  ebcController.depthOfGet(ebcDepthReq, ebcDepthRes, ebcJson(), ebcTokenOf(ebcPublisher));
+  REQUIRE(ebcDepthRes.status == 401);
+}
+
 TEST_CASE("EventBusController: publishOfPost broadcasts to the subscribers")
 {
   EventBusControllerFixture ebcFixture;
@@ -277,7 +340,7 @@ TEST_CASE("EventBusController: publishOfPost broadcasts to the subscribers")
   ebcReq.body = R"({"TOPIC":"orders.created","TYPE":"OrderCreated","TARGET":"SUBSCRIBERS"})";
   httplib::Response ebcRes;
 
-  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcUser));
+  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcPublisher));
 
   REQUIRE(ebcRes.body.find("\"PUBLISHED\":true") != std::string::npos);
   REQUIRE(ebcRes.body.find("\"TARGET\":\"SUBSCRIBERS\"") != std::string::npos);
@@ -295,7 +358,7 @@ TEST_CASE("EventBusController: publishOfPost rejects a topic that does not fit i
   ebcReq.body = std::string(R"({"TOPIC":")") + std::string(Event::NAME_SIZE, 'x') + R"(","TYPE":"T"})";
   httplib::Response ebcRes;
 
-  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcUser));
+  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcPublisher));
   REQUIRE(ebcRes.status == 400);
 }
 
@@ -307,7 +370,7 @@ TEST_CASE("EventBusController: publishOfPost rejects an unknown priority")
   ebcReq.body = R"({"TOPIC":"orders.created","TYPE":"T","PRIORITY":"urgent"})";
   httplib::Response ebcRes;
 
-  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcUser));
+  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcPublisher));
   REQUIRE(ebcRes.status == 400);
 }
 
@@ -319,7 +382,7 @@ TEST_CASE("EventBusController: publishOfPost returns 404 for an unknown bus")
   ebcReq.body = ebcPublishBody;
   httplib::Response ebcRes;
 
-  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcUser));
+  ebcController.publishOfPost(ebcReq, ebcRes, ebcJson(), ebcTokenOf(ebcPublisher));
   REQUIRE(ebcRes.status == 404);
 }
 
