@@ -1,3 +1,4 @@
+#include <lintel/core/platform/Platform.h>
 #include <lintel/core/services/FileService.h>
 #include <lintel/core/utils/Cryption.h>
 #include <lintel/core/utils/MemorySize.h>
@@ -290,4 +291,25 @@ TEST_CASE("Cryption: verifyOf supports legacy SHA-512 hash")
   REQUIRE(Cryption::verifyOf("test", legacy));
   REQUIRE_FALSE(Cryption::verifyOf("wrong", legacy));
 }
+
+TEST_CASE("Platform: expandHomeDirectory only expands a leading tilde")
+{
+  const std::string home = homeDirectory();
+  if (home.empty()) { SKIP("no home directory in this environment"); }
+
+  REQUIRE(expandHomeDirectory("~") == home);
+  REQUIRE(expandHomeDirectory("~/config.xml") == home + "/config.xml");
+  REQUIRE(expandHomeDirectory("~\\config.xml") == home + "\\config.xml");
+
+  // A tilde that is not the first character is a literal. Windows short names
+  // ("C:\Users\RUNNER~1\Temp\x.json") contain one, and replacing it
+  // everywhere turned that path into "C:\Users\RUNNERC:\Users\...".
+  const std::string shortName = "C:\\Users\\RUNNER~1\\Temp\\x.json";
+  REQUIRE(expandHomeDirectory(shortName) == shortName);
+  REQUIRE(expandHomeDirectory("/tmp/RUNNER~1/x.json") == "/tmp/RUNNER~1/x.json");
+  // a leading tilde followed by a name is another user's home, not ours
+  REQUIRE(expandHomeDirectory("~runner/x") == "~runner/x");
+  REQUIRE(expandHomeDirectory("") == "");
+}
+
 }// namespace lintel

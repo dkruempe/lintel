@@ -129,7 +129,7 @@ void SharedMemoryCliComponent::handleExportRepository()
   }
   std::string result = m_sharedMemoryApi->repositoryOf(m_uuid.value());
   if (m_file.has_value()) {
-    std::string file = StringUtils::replaceAll(m_file.value(), "~", lintel::homeDirectory());
+    const std::string file = lintel::expandHomeDirectory(m_file.value());
     std::filesystem::path path(file);
     bool parentPathExits = std::filesystem::exists(path.parent_path());
     if (!parentPathExits) { std::filesystem::create_directories(path.parent_path()); }
