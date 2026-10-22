@@ -726,13 +726,21 @@ Alle drei blockierten `scripts/run-example.sh` bzw. hinterließen Prozesse und s
 ### Layout-Marker: Verwerfen statt Migrieren
 
 Der Marker (`lintel_segment_layout`, Wert 2) verhindert, dass ein Segment aus einem älteren
-Build mit dem neuen Objektlayout fehlinterpretiert wird. Bewusst **keine Migration**: die
-Objekte im Segment tragen keine eigene Layoutversion, ein byteweiser Umbau wäre nicht
-verifizierbar. Verworfen wird nur flüchtiger Zustand (EventBus-Ringe, Sticky-Werte,
-Inhalte von SHM-Queues); Properties (DB bzw. Bootstrap-XML — der SHM-Repository ist ein
-Spiegel, der neu aufgebaut wird), Users, Groups und History liegen außerhalb des Segments.
-Der Test `SharedMemoryService discards a segment written with an older layout` pinnt beides:
-alte Segmente werden ersetzt, Segmente mit aktuellem Marker bleiben unangetastet.
+Build mit dem neuen Objektlayout fehlinterpretiert wird. Die Entscheidung liegt beim
+Betreiber (`docs/shm-migration-strategy.md`):
+
+- **Default: Startabbruch.** `std::runtime_error` mit Segmentnamen und Pfad, die Datei
+  bleibt unangetastet.
+- **`LINTEL_SHM_RECREATE=1`** oder `SegmentLayoutPolicy::set(Recreate)`: Inhalt verwerfen.
+- **`SegmentLayoutPolicy::setMigrator(...)`**: der Hook läuft, *bevor* etwas gelöscht wird,
+  sieht die unveränderte Datei und entscheidet per Rückgabewert; er kann die Payloads
+  vorher exportieren.
+
+Betroffen ist nur, was ausschließlich im Segment lebt (Payloads von
+`shm::SharedMemoryRepository<T>`, EventBus-Ringe, SHM-Queue-Inhalte). Properties (DB bzw.
+XML — der SHM-Repository ist ein Spiegel), Users, Groups und History liegen außerhalb.
+Vier Tests pinnen das Verhalten: Abbruch, Recreate per Env-Variable, Migrator aufgerufen
+mit Pfad/Versionen, Migrator verweigert (Datei bleibt erhalten).
 
 ### Offene Entscheidungen
 

@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Migration hook for shared memory segments.** `lintel::shm::SegmentLayoutPolicy` lets the
+  application decide what happens when a segment was written with another object layout: refuse
+  (default), recreate, or run a registered migrator that sees the untouched segment file and can
+  export its payloads before it is replaced. `LINTEL_SHM_RECREATE=1` selects "recreate" without
+  recompiling. See `docs/shm-migration-strategy.md`.
 - **Admin API client and CLI component.** The two `/admin/*` routes (`reload-tls`, `log-level`) had
   no `AdminApi` and no CLI command; `reload_tls` and `log_level --level` fill that gap.
 - **`POST /shm/recover`.** `SharedMemoryService::recover()` reclaims remap locks whose holder is
@@ -194,11 +199,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   allocator of the calling process, so an accessor copied into a segment is usable from every
   process. `MessageQueueShmCore` keeps its header and ring in the segment under a stable name
   instead of a process-local map, which means two processes now really share one queue. Segments
-  written by an older build are recognised by a layout marker and recreated on open; the previous
-  layout cannot be reinterpreted safely and is **not** migrated. What that costs is the volatile
-  state only - event bus rings and sticky values, and the contents of shared memory queues - while
-  properties (database or bootstrap XML, the shared memory repository is a mirror that is rebuilt),
-  users, groups and history live outside the segment and are untouched.
+  written by an older build are recognised by a layout marker; the previous layout cannot be
+  reinterpreted, so the operator decides what happens (`docs/shm-migration-strategy.md`): the
+  default refuses to open the segment and names the file, `LINTEL_SHM_RECREATE=1` discards it, and
+  a migrator registered through `shm::SegmentLayoutPolicy::setMigrator()` runs **before** anything
+  is removed and may export the payloads first. Data that only lives in a segment - the payloads of
+  `shm::SharedMemoryRepository<T>` and the containers it stores - is exactly what such a migrator is
+  for; properties (database or bootstrap XML, the shared memory repository is a mirror that is
+  rebuilt), users, groups and history live outside the segment and stay untouched.
 - **`SharedMemoryRepositoryRegistry.h` moved** from `features/base/services/` to `core/shm/`; the
   typed repository header may not depend on a feature header.
 - **Logging and property registration use `std::source_location` (breaking).**
