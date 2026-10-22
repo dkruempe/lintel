@@ -219,6 +219,7 @@ set(headers
     include/lintel/features/base/events/EventBus.h
     include/lintel/core/shm/BoostSegmentAllocator.h
     include/lintel/core/shm/ShmSegmentAccessor.h
+    include/lintel/core/shm/SegmentLayoutPolicy.h
     include/lintel/core/shm/ShmView.h
     include/lintel/core/shm/SharedMemoryRepository.h
     include/lintel/core/shm/SharedMemoryRepositoryRegistry.h
