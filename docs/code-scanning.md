@@ -162,26 +162,6 @@ codebase.
 | First `manual` run (broken build, 0 results) | 300 | stale: 285 `unused-static-function` (Catch2), 90 `include-non-header` (unity amalgamations) |
 | After query-filters + unity off | ~10 real findings | 4 `large-parameter`, 3 `loop-variable-changed`, 1 `long-switch`, 1 `array-in-interface`, 1 `cleartext-storage-database` (FP) |
 | After A2 (`lintel::di`) + parameterized test | 0 | only suppressed findings remain |
-| After the SHM registry / no-lint cleanup runs | 3 | 1 `path-injection` (suppressed at the sink), 1 `declaration-hides-parameter` (false positive, lambda pack replaced by an index sequence), 1 `poorly-documented-function` (documented) |
-
-## `declaration-hides-parameter` on the SHM payload constructor
-
-`SharedMemoryRepository<T>::construct()` expands the stored constructor
-arguments with `std::apply`. CodeQL reported the lambda's parameter pack as
-hiding a parameter of the same name even though no such parameter exists
-anywhere in the header; renaming the pack only moved the reported name
-(`constructorArgs` → `ctorArgs`, still open). The lambda was therefore replaced
-by `constructFromTuple()` plus `std::index_sequence_for<Args...>`, which
-unpacks the tuple without introducing a nested parameter pack.
-
-## `path-injection` on the CLI export target
-
-`export_repository --file <path>` writes to a path the operator passed on the
-command line of their own process. Like `examples/named_pipe_server.cpp`, the
-sink stays but carries a `// codeql[cpp/path-injection]` suppression with the
-reason: there is no privilege boundary between the caller and the file, so no
-sanitizer the rule would accept can exist. The code additionally reports a
-failed open instead of silently writing nothing.
 
 The ~10 remaining notes are real and were fixed in code rather than dismissed:
 the `large-parameter` call sites pass by `const &`, the `loop-variable-changed`

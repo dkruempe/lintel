@@ -6,7 +6,6 @@
 #include <lintel/core/utils/StringUtils.h>
 #include <lintel/core/utils/TableBuilder.h>
 #include <rapidjson/prettywriter.h>
-#include <stdexcept>
 
 namespace lintel {
 SharedMemoryCliComponent::SharedMemoryCliComponent(std::shared_ptr<SharedMemoryApi> sharedMemoryApi)
@@ -145,14 +144,7 @@ void SharedMemoryCliComponent::handleExportRepository()
     std::filesystem::path path(file);
     bool parentPathExits = std::filesystem::exists(path.parent_path());
     if (!parentPathExits) { std::filesystem::create_directories(path.parent_path()); }
-    // codeql[cpp/path-injection] The export target is the operator's own
-    // --file argument processed in the operator's own process, so it grants no
-    // access that the caller does not already have. Every other component
-    // (segment, repository, UUID) is resolved by the service; this output path
-    // is the single deliberate user choice. There is no privileged boundary to
-    // enforce here, hence no sanitizer the rule could accept.
     std::ofstream out = std::ofstream(path, std::ofstream::trunc | std::ofstream::out);
-    if (!out.is_open()) { throw std::runtime_error("cannot open export file " + path.string()); }
     out << result;
     std::cout << "Exported SharedMemory to >" << path.filename() << "<\n";
   } else {

@@ -267,31 +267,14 @@ namespace shm {
     [[nodiscard]] const std::shared_ptr<SharedMemorySegment> &getSegment() const { return m_cell.getSegment(); }
 
   private:
-    /** Placement-construct the payload from the stored constructor arguments.
-     *
-     *  Unpacking through an index sequence instead of a variadic lambda keeps
-     *  the argument names out of the scope of construct(): CodeQL reports the
-     *  lambda's parameter pack as hiding the repository's constructor
-     *  parameter pack, regardless of how it is named.
-     *  @tparam Arguments decayed tuple type of the constructor arguments
-     *  @param payload   raw payload memory of the cell
-     *  @param arguments stored constructor arguments
-     *  @param indices   index sequence selecting the tuple elements */
-    template<typename Arguments, std::size_t... Indices>
-    static void constructFromTuple(void *payload, const Arguments &arguments, std::index_sequence<Indices...>)
-    {
-      ::new (payload) T(std::get<Indices>(arguments)...);
-    }
-
     /** Payload constructor handed to the cell as a plain function pointer.
      *  @param payload      raw payload memory of the cell
      *  @param initArgument the tuple of constructor arguments this repository
      *                      built at construction time */
     template<typename... Args> static void construct(void *payload, ShmCell::InitArgument initArgument)
     {
-      using Arguments = std::tuple<std::decay_t<Args>...>;
-      const auto &arguments = *static_cast<const Arguments *>(initArgument.value);
-      constructFromTuple(payload, arguments, std::index_sequence_for<Args...>{});
+      const auto &arguments = *static_cast<const std::tuple<std::decay_t<Args>...> *>(initArgument.value);
+      std::apply([payload](const auto &...ctorArgs) { ::new (payload) T(ctorArgs...); }, arguments);
     }
 
     ShmCell m_cell;
