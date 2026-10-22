@@ -1,6 +1,7 @@
 #ifndef LINTEL_USERMANAGEMENTCLICOMPONENT_H
 #define LINTEL_USERMANAGEMENTCLICOMPONENT_H
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <string>
@@ -20,7 +21,7 @@ private:
     "This component is responsible for the total user and group management";
   std::shared_ptr<UserApi> m_userApi;
 
-  enum Commands {
+  enum Commands : std::uint8_t {
     Undefined,
     // group operations
     AllGroups,
