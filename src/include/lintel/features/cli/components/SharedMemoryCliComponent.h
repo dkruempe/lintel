@@ -18,13 +18,22 @@ private:
   std::shared_ptr<SharedMemoryApi> m_sharedMemoryApi;
 
   // Commands
-  enum Commands { Undefined, ShowSegments, ShowRepositories, ShrinkSegment, GrowSegment, ExportRepository };
+  enum Commands {
+    Undefined,
+    ShowSegments,
+    ShowRepositories,
+    ShowStats,
+    Cleanup,
+    RecoverSegments,
+    ShrinkSegment,
+    GrowSegment,
+    ExportRepository
+  };
 
   // Flags
   std::optional<std::string> m_segmentName;
   std::optional<std::string> m_size;
   std::optional<std::string> m_repositoryName;
-  std::optional<std::string> m_type;
   std::optional<std::string> m_file;
   std::optional<std::string> m_uuid;
 
@@ -35,6 +44,9 @@ private:
 
   /** Print formatted repository DTOs to console */
   static void printRepositories(const std::vector<SharedMemoryRepositoryDto> &repositories);
+
+  /** Print the statistics of one segment to console */
+  static void printStats(const SharedMemorySegmentStats &stats);
 
   /** Handle the export repository command */
   void handleExportRepository();

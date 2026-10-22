@@ -5,28 +5,67 @@
 #include <lintel/core/models/SharedMemorySegmentInfo.h>
 #include <lintel/core/services/ReadinessRegistry.h>
 #include <lintel/core/shm/BoostSegmentAllocator.h>
+#include <lintel/core/shm/SegmentLayoutPolicy.h>
 #include <lintel/features/base/services/ShmConstructors.h>
 
 namespace lintel {
+namespace {
+  /** Layout marker of the objects stored inside a segment.
+   *
+   * Bumped whenever the in-segment layout of a lintel object changes (the
+   * ShmSegmentAccessor grew from one pointer to a named 40 byte value in 0.2,
+   * for example). A segment written by an older build is recreated instead of
+   * being reinterpreted with the new layout, which would corrupt it silently.
+   */
+  constexpr std::uint64_t kSegmentLayoutVersion = 2;
+  constexpr char kSegmentLayoutName[] = "lintel_segment_layout";
+
+  /** @param file mapped segment
+   *  @return the layout version stored in the segment; empty for a segment that
+   *          was never used, 0 for one written before the marker existed */
+  std::optional<std::uint64_t> layoutVersionOf(boost::interprocess::managed_mapped_file &file)
+  {
+    const auto found = file.find<std::uint64_t>(kSegmentLayoutName);
+    if (found.first != nullptr) { return *found.first; }
+    // No marker: either a segment that was never used, or one written before
+    // the marker existed (which always has named objects by then).
+    if (file.get_num_named_objects() == 0) { return std::nullopt; }
+    return 0;
+  }
+
+  /** @return true when the operator allowed a segment with an older layout to be discarded
+   *
+   * Recreating a segment throws its contents away, and only the operator can
+   * decide whether that is acceptable. The default therefore refuses and names
+   * the file, so data loss never happens silently.
+   */
+  bool recreateAllowed()
+  {
+    const char *value = std::getenv("LINTEL_SHM_RECREATE");
+    if (value == nullptr) { return false; }
+    const std::string_view flag(value);
+    return flag == "1" || flag == "true" || flag == "TRUE" || flag == "yes" || flag == "YES";
+  }
+
+  /** Write the layout marker into a freshly created segment. */
+  void stampLayout(boost::interprocess::managed_mapped_file &file)
+  {
+    if (file.find<std::uint64_t>(kSegmentLayoutName).first != nullptr) { return; }
+    file.construct<std::uint64_t>(kSegmentLayoutName)(kSegmentLayoutVersion);
+  }
+}// namespace
+
 SharedMemoryService::SharedMemoryService(const std::shared_ptr<SharedMemorySegmentManager> &sharedMemorySegmentManager,
   std::shared_ptr<SchedulerService> schedulerService,
   const std::shared_ptr<ProcessName> &processName)
   : PropertyRegistration(processName->getProcessName()), m_segments(create(sharedMemorySegmentManager->allOf())),
     m_schedulerService(std::move(schedulerService))
 {
-  m_scheduleRate = registerProperty<std::chrono::seconds>("m_scheduleRate",
-    std::chrono::seconds(2),
-    "schedule rate of user tokens checks in seconds",
-    true,
-    __FILE__,
-    __LINE__);
-  m_autoExtend = registerProperty<bool>("m_autoExtend", true, "auto extend shared memory", true, __FILE__, __LINE__);
-  m_autoExtendEpsilon = registerProperty<std::size_t>("m_autoExtendEpsilon",
-    static_cast<std::size_t>(1000),
-    "epsilon when auto extend gets triggered",
-    true,
-    __FILE__,
-    __LINE__);
+  m_scheduleRate = registerProperty<std::chrono::seconds>(
+    "m_scheduleRate", std::chrono::seconds(2), "schedule rate of user tokens checks in seconds", true);
+  m_autoExtend = registerProperty<bool>("m_autoExtend", true, "auto extend shared memory", true);
+  m_autoExtendEpsilon = registerProperty<std::size_t>(
+    "m_autoExtendEpsilon", static_cast<std::size_t>(1000), "epsilon when auto extend gets triggered", true);
 }
 
 void SharedMemoryService::growOf(const std::shared_ptr<SharedMemorySegment> &segment, std::size_t grow)
@@ -135,6 +174,50 @@ std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> SharedMemorySe
       const std::string filePath = segment->getPath().string();
       handle->m_managedMappedFile = std::make_shared<boost::interprocess::managed_mapped_file>(
         boost::interprocess::open_or_create, filePath.c_str(), segment->getSize());
+      const std::optional<std::uint64_t> storedVersion = layoutVersionOf(*handle->m_managedMappedFile);
+      if (storedVersion.has_value() && *storedVersion != kSegmentLayoutVersion) {
+        // The objects in a segment have no layout version of their own, so
+        // their bytes cannot be reinterpreted safely - but only the operator
+        // knows whether the contents can be recomputed. So the operator
+        // decides: an explicit migrator, an explicit policy, or
+        // LINTEL_SHM_RECREATE=1. Without either of them nothing is discarded.
+        // See docs/shm-migration-strategy.md.
+        bool mayDiscard = false;
+        if (shm::SegmentLayoutPolicy::hasMigrator()) {
+          LOG_WARN(
+            "shared memory segment '{}' was written with layout {} (current {}) - asking the registered "
+            "migrator for '{}'",
+            segment->getName(),
+            *storedVersion,
+            kSegmentLayoutVersion,
+            filePath);
+          mayDiscard = shm::SegmentLayoutPolicy::migrate(segment->getPath(), *storedVersion, kSegmentLayoutVersion);
+          if (!mayDiscard) {
+            throw std::runtime_error("the migrator refused to hand over shared memory segment '" + segment->getName()
+                                     + "' at '" + filePath + "'");
+          }
+        } else if (shm::SegmentLayoutPolicy::policy() == shm::LayoutMismatchPolicy::Recreate || recreateAllowed()) {
+          mayDiscard = true;
+        }
+        if (!mayDiscard) {
+          throw std::runtime_error("shared memory segment '" + segment->getName() + "' at '" + filePath
+                                   + "' was written with an older object layout and cannot be opened. Delete the "
+                                     "file to start with an empty segment, register a migrator "
+                                     "(lintel::shm::SegmentLayoutPolicy) or set LINTEL_SHM_RECREATE=1 to have it "
+                                     "discarded automatically.");
+        }
+        LOG_WARN(
+          "shared memory segment '{}' was written with an older object layout - recreating '{}' because "
+          "LINTEL_SHM_RECREATE is set (its contents are discarded, not migrated)",
+          segment->getName(),
+          filePath);
+        handle->m_managedMappedFile.reset();
+        std::error_code removeError;
+        std::filesystem::remove(segment->getPath(), removeError);
+        handle->m_managedMappedFile = std::make_shared<boost::interprocess::managed_mapped_file>(
+          boost::interprocess::open_or_create, filePath.c_str(), segment->getSize());
+      }
+      stampLayout(*handle->m_managedMappedFile);
       // Holder record of the remap semaphore, plus the automatic recovery: a
       // previous run that crashed while holding the lock is visible here as a
       // stuck semaphore whose recorded holder is gone. The record is created
@@ -203,7 +286,13 @@ ShmSegmentAccessor SharedMemoryService::getSegmentAccessor(const std::shared_ptr
     handle.m_segmentAllocator =
       std::make_shared<BoostSegmentAllocator>(*handle.m_managedMappedFile->get_segment_manager());
   }
-  return ShmSegmentAccessor(*handle.m_segmentAllocator);
+  // Bind the name to *this* process' allocator and hand out an accessor that
+  // carries the name: a copy of it that is stored inside the segment resolves
+  // to the allocator of whichever process reads it, instead of pointing at the
+  // heap of the process that created the object (see ShmSegmentAccessor).
+  ShmSegmentAccessor accessor(segment->getName(), *handle.m_segmentAllocator);
+  ShmSegmentAccessor::bind(segment->getName(), *handle.m_segmentAllocator);
+  return accessor;
 }
 
 void SharedMemoryService::onInitialize()

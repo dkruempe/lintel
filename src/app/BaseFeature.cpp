@@ -36,6 +36,7 @@
 #include "lintel/features/base/services/ProcessArgumentService.h"
 #include "lintel/features/base/services/ProcessService.h"
 #include "lintel/features/base/services/SchedulerService.h"
+#include "lintel/features/base/services/SharedMemoryCleanupService.h"
 #include "lintel/features/base/services/SharedMemorySegmentManager.h"
 #include "lintel/features/base/services/SharedMemoryService.h"
 
@@ -152,6 +153,11 @@ void BaseFeature::registerTypes(lintel::di::ContainerBuilder &builder,
     .as<ISharedMemoryService>()
     .asSelf()
     .singleInstance();
+  // The cleanup service only needs the scheduler and the shared memory service;
+  // its optional database connection stays unset (the container cannot inject
+  // DatabaseConnectionEntry), so an orphan is removed from the segment but a
+  // matching row in shared_memory_repositories is not reconciled.
+  builder.registerType<SharedMemoryCleanupService>().as<AbstractServiceInterface>().asSelf().singleInstance();
   builder.registerType<ProcessService>().as<AbstractServiceInterface>().asSelf().singleInstance();
   builder.registerType<HistoryRepository>().singleInstance();
   builder.registerType<MessageQueueService>().as<AbstractServiceInterface>().asSelf().singleInstance();

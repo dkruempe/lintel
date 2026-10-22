@@ -121,11 +121,6 @@ public:
   bool deserialize(const rapidjson::Value &obj) override { return hasAllRecordKeys(obj, m_shape); }
 };
 
-// The implicitly generated assignment can theoretically throw for shm::String
-// (bad_alloc). In this example the DTOs are filled exactly once and only read /
-// serialized afterwards - a dedicated operator= with noexcept signature would
-// only document a falsehood here.
-// NOLINTNEXTLINE(bugprone-exception-escape)
 struct TestDataDto
 {
   lintel::shm::String m_name;
@@ -133,6 +128,13 @@ struct TestDataDto
   lintel::shm::String m_plz;
   lintel::shm::String m_location;
   int32_t m_age = 0;
+
+  // The shm::String members allocate from the segment, so a move cannot promise
+  // not to throw either. Declaring the destructor suppresses the implicitly
+  // generated move constructor / move assignment (moving would then silently
+  // terminate on bad_alloc); copies fall back to the copy operations, which is
+  // what every use in this example does anyway.
+  ~TestDataDto() = default;
 
   bool operator==(const TestDataDto &rhs) const
   {

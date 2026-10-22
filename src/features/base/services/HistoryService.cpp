@@ -17,19 +17,15 @@ HistoryService::HistoryService(std::shared_ptr<ProcessName> processName,
     m_historyMessageQueueReceive(
       m_messageQueueSerivice->of(static_cast<MessageQueues>(MessageQueues::HISTORY).getMessageQueueName()))
 {
-  m_duration = registerProperty<std::chrono::seconds>(
-    "m_duration", std::chrono::seconds(1), "Duration of scheduling", true, __FILE__, __LINE__);
-  m_period = registerProperty<std::chrono::seconds>(
-    "m_period", std::chrono::seconds(1), "Period of scheduling", true, __FILE__, __LINE__);
-  m_forceQueue = registerProperty<bool>("m_forceQueue", false, "Force usage of queue", true, __FILE__, __LINE__);
-  m_commitRate = registerProperty<std::size_t>(
-    "m_commitRate", static_cast<std::size_t>(100), "Commit Rate", true, __FILE__, __LINE__);
+  m_duration =
+    registerProperty<std::chrono::seconds>("m_duration", std::chrono::seconds(1), "Duration of scheduling", true);
+  m_period = registerProperty<std::chrono::seconds>("m_period", std::chrono::seconds(1), "Period of scheduling", true);
+  m_forceQueue = registerProperty<bool>("m_forceQueue", false, "Force usage of queue", true);
+  m_commitRate = registerProperty<std::size_t>("m_commitRate", static_cast<std::size_t>(100), "Commit Rate", true);
   m_sendTimeout = registerProperty<std::chrono::milliseconds>("m_sendTimeout",
     std::chrono::milliseconds(100),
     "max time to wait for queue space before dropping a history message",
-    true,
-    __FILE__,
-    __LINE__);
+    true);
 }
 
 const std::string &HistoryService::getProcessName() const { return m_ownProcessName; }

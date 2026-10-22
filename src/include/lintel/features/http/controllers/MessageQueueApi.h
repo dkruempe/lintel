@@ -4,6 +4,7 @@
 #include "lintel/features/base/repositories/MessageQueueQuery.h"
 #include "lintel/features/http/provider/ClientProvider.h"
 
+#include <cstddef>
 #include <optional>
 
 namespace lintel {
@@ -27,6 +28,12 @@ public:
    * @return number of removed messages, nullopt if the purge was rejected
    */
   std::optional<std::int32_t> purgeOf(const std::string &messageQueueName);
+
+  /**
+   * Reclaim the queue entries whose owner process is gone.
+   * @return number of reclaimed entries, nullopt if the request was rejected
+   */
+  std::optional<std::size_t> recoverOf();
 };
 
 }// namespace lintel

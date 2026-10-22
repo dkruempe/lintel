@@ -38,6 +38,7 @@ private:
   ADD_HANDLER_METHOD(R"(/messageQueue/([^\/]+)/([^\/]+))", Get, messageQueueOf);
   ADD_HANDLER_METHOD(R"(/messageQueue/stats/([^\/]+)/([^\/]+))", Get, statisticsOf);
   ADD_HANDLER_METHOD(R"(/messageQueue/purge/([^\/]+))", Post, purgeOf);
+  ADD_HANDLER_METHOD(R"(/messageQueue/recover)", Post, recoverOf);
 
 public:
   explicit MessageQueueController(const std::shared_ptr<IAuthService> &authService,

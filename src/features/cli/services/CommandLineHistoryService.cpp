@@ -19,11 +19,9 @@ CommandLineHistoryService::CommandLineHistoryService(const std::shared_ptr<Proce
   m_maxCommandHistoryEntries = registerProperty<std::size_t>("m_maxCommandHistoryEntries",
     static_cast<std::size_t>(1000),
     "Maximal count of history command entries per local save file",
-    true,
-    __FILE__,
-    __LINE__);
+    true);
   m_historyFileName = registerProperty<std::string>(
-    "m_historyFileName", std::string(".history"), "Filename of local history file", false, __FILE__, __LINE__);
+    "m_historyFileName", std::string(".history"), "Filename of local history file", false);
 }
 
 std::optional<CommandHistoryEntry> CommandLineHistoryService::nextOf(const std::string &menu)
@@ -64,9 +62,8 @@ std::optional<CommandHistoryEntry> CommandLineHistoryService::previousOf(const s
   return std::nullopt;
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) - both are named arguments of the same type.
 std::optional<CommandHistoryEntry> CommandLineHistoryService::startsWith(const std::string &command,
-  const std::string &menu)
+  std::string_view menu)
 {
   if (m_history.empty()) { return std::nullopt; }
   for (std::size_t i = m_history.size(); i > 0; i--) {

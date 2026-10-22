@@ -60,7 +60,7 @@ UserManagementCliComponent::UserManagementCliComponent(std::shared_ptr<UserApi> 
  * Dispatches an entered CLI command to the UserApi.
  *
  * Flow: the parser splits the input into a command and its parameters, then a
- * switch over the nine commands executes the matching UserApi operation and
+ * switch over the eight commands executes the matching UserApi operation and
  * prints the result. All filters (group name, virtual group) are taken from the
  * previously set session context, not from the parameters - the CLI session
  * carries them.

@@ -13,6 +13,7 @@
 #include <atomic>
 #include <chrono>
 #include <csignal>
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -83,6 +84,24 @@ namespace {
   public:
     explicit SbFeatureA(std::shared_ptr<Features> features) : SbCountingFeature(features, "SbFeatureA") {}
   };
+
+  /** Feature<T> derives its name from the enum value; this subclass only makes
+   *  the template instantiable in a test. */
+  class SbEnumNamedFeature : public Feature<Features::Value>
+  {
+  public:
+    SbEnumNamedFeature(Features::Value value, std::shared_ptr<Features> features) : Feature(value, std::move(features))
+    {}
+    void registerTypes(lintel::di::ContainerBuilder & /*builder*/) override {}
+    void initialize(std::shared_ptr<lintel::di::Container> /*container*/) override {}
+  };
+
+  /** Overwrite the stack region a just-returned constructor used. */
+  void SbScribbleStack()
+  {
+    volatile std::byte sbStackBuffer[512];
+    for (std::size_t i = 0; i < sizeof(sbStackBuffer); ++i) { sbStackBuffer[i] = std::byte{ 0xA5 }; }
+  }
 
   class SbFeatureB : public SbCountingFeature
   {
@@ -478,6 +497,20 @@ TEST_CASE("StartupBuilder::start shuts the services down in shutdown priority or
   // best effort: the logger still holds a file below the directory
   std::error_code errorCode;
   std::filesystem::remove_all(configDirectory, errorCode);
+}
+
+TEST_CASE("Feature::getName owns the name it returns", "[startup_builder]")
+{
+  // Regression: the name used to be a std::string_view initialised from a
+  // temporary std::string, so getName() handed out freed stack bytes once the
+  // constructor returned. StartupBuilder::verifyFeatureDependencies() then
+  // compared that garbage against the configured feature names and aborted the
+  // process at startup. Scribbling over the stack makes the dangling view
+  // visible even without a sanitizer.
+  auto features = std::make_shared<Features>();
+  SbEnumNamedFeature feature(Features::Value::Property, features);
+  SbScribbleStack();
+  REQUIRE(feature.getName() == "Property");
 }
 
 TEST_CASE("lintel features declare their layer dependencies", "[startup_builder]")

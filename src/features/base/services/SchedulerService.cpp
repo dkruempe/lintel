@@ -72,8 +72,7 @@ void SchedulerService::onShutdown()
 SchedulerService::SchedulerService(const std::shared_ptr<ProcessName> &processName)
   : PropertyRegistration(processName->getProcessName()), m_exit(false)
 {
-  numberOfThreads =
-    registerProperty<int>("numberOfThreads", 40, "Number of Scheduler Threads", false, __FILE__, __LINE__);
+  numberOfThreads = registerProperty<int>("numberOfThreads", 40, "Number of Scheduler Threads", false);
 }
 
 SchedulerService::~SchedulerService()

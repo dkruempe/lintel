@@ -15,15 +15,15 @@ PropertyCliComponent::PropertyCliComponent(std::shared_ptr<PropertyApi> property
     ShowProperties);
   // Command: show property
   m_commandParser.addCommand(Command("show_property", "Show given property")
-                               .addArgument({ "--process_name", "-p" }, &m_processName, "Process Name of property!")
-                               .addArgument({ "--class_name", "-c" }, &m_className, "Class Name of property!")
+                               .addArgument({ "--process-name", "-p" }, &m_processName, "Process Name of property!")
+                               .addArgument({ "--class-name", "-c" }, &m_className, "Class Name of property!")
                                .addArgument({ "--instance-name", "-i" }, &m_instanceName, "Instance Name of property")
                                .addArgument({ "--name", "-n" }, &m_propertyName, "Name of property!"),
     ShowProperty);
   // Command: update property
   m_commandParser.addCommand(Command("update_property", "Update given property")
-                               .addArgument({ "--process_name", "-p" }, &m_processName, "Process Name of property!")
-                               .addArgument({ "--class_name", "-c" }, &m_className, "Class Name of property!")
+                               .addArgument({ "--process-name", "-p" }, &m_processName, "Process Name of property!")
+                               .addArgument({ "--class-name", "-c" }, &m_className, "Class Name of property!")
                                .addArgument({ "--instance-name", "-i" }, &m_instanceName, "Instance Name of property")
                                .addArgument({ "--value", "-v" }, &m_value, "Value of property!")
                                .addArgument({ "--name", "-n" }, &m_propertyName, "Name of property!"),

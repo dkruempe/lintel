@@ -2,10 +2,13 @@
 
 #include "../helpers/PlatformCompat.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <memory>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -15,6 +18,7 @@
 #include "lintel/core/models/ProcessName.h"
 #include "lintel/core/models/SharedMemorySegment.h"
 #include "lintel/core/shm/SharedMemoryRepository.h"
+#include "lintel/core/shm/SharedMemoryRepositoryRegistry.h"
 #include "lintel/core/shm/containers/ArrayShm.h"
 #include "lintel/core/shm/containers/QueueShm.h"
 #include "lintel/core/shm/containers/RingBufferShm.h"
@@ -23,7 +27,6 @@
 #include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
 #include "lintel/features/base/repositories/SharedMemoryRepository.h"
 #include "lintel/features/base/services/SchedulerService.h"
-#include "lintel/features/base/services/SharedMemoryRepositoryRegistry.h"
 #include "lintel/features/base/services/SharedMemorySegmentManager.h"
 #include "lintel/features/base/services/SharedMemoryService.h"
 #include "lintel/features/base/services/ShmConstructors.h"
@@ -147,6 +150,42 @@ namespace {
   {
     int m_value = 0;
     int m_counter = 0;
+  };
+
+  /** Bump allocator over one externally owned buffer. The whole "segment" is
+   *  therefore contiguous memory that can be copied to another address in one
+   *  memcpy - the situation of a segment mapped at a different virtual address
+   *  by another process. */
+  class RegionAllocator : public ShmSegmentAccessor::Allocator
+  {
+  public:
+    RegionAllocator(std::byte *base, std::size_t size) : m_base(base), m_size(size) {}
+
+    void *allocate(std::size_t bytes) override
+    {
+      if (m_used > m_size) { return nullptr; }
+      void *candidate = m_base + m_used;
+      std::size_t space = m_size - m_used;
+      // Cache line alignment, like the segment allocator gives the slot array.
+      if (std::align(RingBufferShm<int>::CACHE_LINE, bytes, candidate, space) == nullptr) { return nullptr; }
+      m_used = static_cast<std::size_t>(static_cast<std::byte *>(candidate) - m_base) + bytes;
+      return candidate;
+    }
+
+    void deallocate(void * /*pointer*/) override {}
+
+  private:
+    std::byte *m_base;
+    std::size_t m_size;
+    std::size_t m_used = 0;
+  };
+
+  /** Bytes of one simulated segment mapping; cache line aligned so a relocated
+   *  ring still holds its cache line aligned slots. */
+  struct alignas(RingBufferShm<int>::CACHE_LINE) SegmentRegion
+  {
+    static constexpr std::size_t SIZE = 4096;
+    std::byte bytes[SIZE]{};
   };
 
   std::string repositoryToJson(const JsonSerializable &repository)
@@ -389,6 +428,41 @@ TEST_CASE("RingBufferShm in shared memory pushes and pops in order")
   REQUIRE_FALSE(popped.has_value());
 }
 
+TEST_CASE("RingBufferShm addresses its slots relative to the ring object")
+{
+  using Ring = RingBufferShm<int>;
+
+  // Emulate the second mapping of a segment: ring and slot array live in one
+  // contiguous region, that region is copied to another address and the
+  // original is wiped. An address cached inside the ring would keep pointing
+  // at the wiped region; the offset travels with the copy.
+  auto firstRegion = std::make_unique<SegmentRegion>();
+  RegionAllocator firstAllocator(firstRegion->bytes, SegmentRegion::SIZE);
+  auto *ring = static_cast<Ring *>(firstAllocator.allocate(sizeof(Ring)));
+  REQUIRE(ring != nullptr);
+  ::new (static_cast<void *>(ring)) Ring(4, ShmSegmentAccessor(firstAllocator));
+  REQUIRE(ring->push(7));
+  REQUIRE(ring->push(8));
+
+  const std::ptrdiff_t ringOffset = reinterpret_cast<std::byte *>(ring) - firstRegion->bytes;
+  auto secondRegion = std::make_unique<SegmentRegion>();
+  std::memcpy(secondRegion->bytes, firstRegion->bytes, SegmentRegion::SIZE);
+
+  // The original mapping is gone: only the relocated bytes are still valid.
+  std::fill_n(firstRegion->bytes, SegmentRegion::SIZE, std::byte{ 0 });
+
+  auto *relocated = std::launder(reinterpret_cast<Ring *>(secondRegion->bytes + ringOffset));
+  int value = 0;
+  REQUIRE(relocated->pop(value));
+  REQUIRE(value == 7);
+  REQUIRE(relocated->push(9));
+  REQUIRE(relocated->pop(value));
+  REQUIRE(value == 8);
+  REQUIRE(relocated->pop(value));
+  REQUIRE(value == 9);
+  REQUIRE(relocated->empty());
+}
+
 TEST_CASE("QueueShm in shared memory is FIFO")
 {
   ShmRepositoryFixture fixture;
@@ -444,6 +518,56 @@ TEST_CASE("SharedMemoryRepositoryRegistry keeps typed repositories")
   REQUIRE(registry.remove("test-registry-cell"));
   REQUIRE_FALSE(registry.contains("test-registry-cell"));
   REQUIRE_FALSE(registry.remove("test-registry-cell"));
+}
+
+TEST_CASE("shm::SharedMemoryRepository::of reuses one instance per segment and name")
+{
+  ShmRepositoryFixture fixture;
+  auto &registry = SharedMemoryRepositoryRegistry::instance();
+  const std::string cellKey = fixture.segment->getName() + ":of-cell";
+  const std::string otherKey = fixture.segment->getName() + ":of-other";
+  REQUIRE_FALSE(registry.contains(cellKey));
+
+  auto first =
+    shm::SharedMemoryRepository<CellPayload>::of(fixture.service, fixture.segment, "of-cell", CellPayload{ 5, 6 });
+  REQUIRE(registry.contains(cellKey));
+  REQUIRE(first->get().m_value == 5);
+
+  // same segment and name: the registered instance comes back, the constructor
+  // arguments of the second call are not used again
+  auto second =
+    shm::SharedMemoryRepository<CellPayload>::of(fixture.service, fixture.segment, "of-cell", CellPayload{ 9, 9 });
+  REQUIRE(first.get() == second.get());
+  REQUIRE(second->get().m_value == 5);
+
+  // another name in the same segment is another instance
+  auto other =
+    shm::SharedMemoryRepository<CellPayload>::of(fixture.service, fixture.segment, "of-other", CellPayload{ 1, 2 });
+  REQUIRE(other.get() != first.get());
+  REQUIRE(other->get().m_value == 1);
+
+  // the key belongs to one payload type: a second type is refused instead of
+  // being handed a reinterpreted instance
+  REQUIRE_THROWS_AS(
+    (shm::SharedMemoryRepository<int>::of(fixture.service, fixture.segment, "of-cell", 1)), std::invalid_argument);
+
+  // remove() releases the entry; a later factory call builds a new instance
+  second.reset();
+  const long referencesBeforeRemove = first.use_count();// first + the registry
+  REQUIRE(registry.remove(cellKey));
+  REQUIRE_FALSE(registry.contains(cellKey));
+  REQUIRE(first.use_count() == referencesBeforeRemove - 1);
+  auto third =
+    shm::SharedMemoryRepository<CellPayload>::of(fixture.service, fixture.segment, "of-cell", CellPayload{ 7, 8 });
+  REQUIRE(third.get() != first.get());
+  // the binding is new, the cell is not: it still lives in the segment with the
+  // value the first construction stored
+  REQUIRE(third->get().m_value == 5);
+
+  // do not leave entries behind: they would keep the fixture's service (and
+  // with it the segment mapping) alive beyond the test
+  REQUIRE(registry.remove(cellKey));
+  REQUIRE(registry.remove(otherKey));
 }
 
 }// namespace lintel

@@ -16,7 +16,7 @@ private:
   static constexpr std::string_view m_description = "The component can be used to show the message queue statistics";
   std::shared_ptr<MesssageQueueApi> m_messageQueueApi;
 
-  enum Commands : std::uint8_t { Undefined, ShowMessageQueues, PurgeMessageQueue };
+  enum Commands : std::uint8_t { Undefined, ShowMessageQueues, PurgeMessageQueue, RecoverMessageQueues };
 
   // Flags
   std::optional<std::string> m_processName;

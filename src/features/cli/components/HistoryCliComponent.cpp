@@ -6,12 +6,12 @@
 
 namespace lintel {
 HistoryCliComponent::HistoryCliComponent(std::shared_ptr<HistoryApi> historyApi)
-  : CommandLineComponent(n_name, m_alias), m_historyApi(std::move(historyApi))
+  : CommandLineComponent(m_name, m_alias), m_historyApi(std::move(historyApi))
 {
   m_commandParser.addCommand(
     Command("show_histories", "Shows all histories for set parameters")
       .addArgument({ "--process-name", "-p" }, &m_processName, "Process Name of history entries")
-      .addArgument({ "--service-name", "-s" }, &m_serviceName, "Service Name of history entries)")
+      .addArgument({ "--service-name", "-s" }, &m_serviceName, "Service Name of history entries")
       .addArgument({ "--label", "-l" }, &m_label, "Label Name of history entries"),
     ShowHistories);
 }

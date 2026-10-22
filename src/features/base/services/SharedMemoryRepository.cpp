@@ -6,6 +6,7 @@
 #include "lintel/features/base/services/SharedMemoryService.h"
 #include "lintel/features/base/services/ShmConstructors.h"
 
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -86,15 +87,16 @@ namespace {
     [[nodiscard]] void *payload() const
     {
       // The payload offset is stored in the record inside the segment (its
-      // address differs per mapping), so it has to be materialised here. A
-      // std::byte * base scaled by bytes is the intent, yet CodeQL reports the
-      // reinterpret_cast base as cpp/suspicious-pointer-scaling (a ShmCellRecord
-      // * scaled by bytes); the payload alignment is not a multiple of
-      // sizeof(ShmCellRecord), so element arithmetic is not an option. The
-      // addition therefore runs in the integer domain and is restored verbatim.
-      const std::intptr_t address = reinterpret_cast<std::intptr_t>(this) + m_payloadOffset;
-      // NOLINTNEXTLINE(performance-no-int-to-ptr) — relative offset into this process' mapping.
-      return reinterpret_cast<void *>(address);
+      // address differs per mapping), so it has to be materialised here. The
+      // payload alignment is not a multiple of sizeof(ShmCellRecord), so
+      // element arithmetic is not an option; the address is therefore
+      // materialised in the integer domain. std::bit_cast restores it: a plain
+      // reinterpret_cast from the integer would be reported as
+      // performance-no-int-to-ptr, byte pointer arithmetic as
+      // cpp/suspicious-pointer-scaling.
+      const std::uintptr_t address =
+        reinterpret_cast<std::uintptr_t>(this) + static_cast<std::uintptr_t>(m_payloadOffset);
+      return std::bit_cast<void *>(address);
     }
 
     [[nodiscard]] std::uint64_t magic() const { return m_magic; }

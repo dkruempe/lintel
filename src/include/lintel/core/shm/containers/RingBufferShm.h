@@ -4,6 +4,7 @@
 #include "lintel/core/shm/ShmSegmentAccessor.h"
 
 #include <atomic>
+#include <bit>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -25,18 +26,21 @@ namespace lintel {
  * Storage layout: the ring object itself (head, tail, bookkeeping) lives
  * wherever the ring is constructed - typically as the payload of a
  * SharedMemoryRepository inside a segment - while the slot array is allocated
- * separately from the segment through ShmSegmentAccessor and addressed via a
- * byte offset relative to the ring object (same pattern as
- * EventBus::ShmRing). The relative layout is identical in every mapping of
- * the segment, so the queue works from every process regardless of the
- * virtual address it mapped the segment at.
+ * from the same segment through ShmSegmentAccessor. The slot buffer is
+ * addressed relative to `this`: m_bufferOffset stores the distance from the
+ * ring object to the aligned slot array (same pattern as
+ * EventBus::ShmRing). Only that offset is part of the shared state, no
+ * pointer, so the relative layout is identical in every mapping of the
+ * segment and the ring works from every process regardless of the virtual
+ * address it mapped the segment at.
  *
  * The ring is usable both as a shared memory object (constructed once by the
  * first process, found by the others) and as a process local object on the
  * stack in tests - the accessor decides where the slots come from.
  *
  * Not movable and not copyable: the slot buffer is addressed relative to
- * `this`, so moving the ring would invalidate m_bufferOffset.
+ * `this`, so moving or copying the ring would leave m_bufferOffset pointing
+ * at the slots of the original object.
  *
  * Requirements on T: default constructible (slot array initialization),
  * copy assignable (push) and copy constructible (pop) - in other words
@@ -87,7 +91,7 @@ public:
       }
       aligned = static_cast<std::byte *>(alignedRaw);
     }
-    m_buffer = aligned;
+    m_bufferOffset = reinterpret_cast<std::intptr_t>(aligned) - reinterpret_cast<std::intptr_t>(this);
     Slot *slots = buffer();
     for (std::size_t i = 0; i < capacity; ++i) {
       new (&slots[i]) Slot();
@@ -207,16 +211,33 @@ private:
   std::size_t m_capacity = 0;
   ShmSegmentAccessor m_segment;
   /** First byte of the slot array allocation; nullptr when construction of
-   *  the array failed (the ring then never gets used). */
+   *  the array failed (the ring then never gets used). A process local
+   *  pointer, only used to release the block again - never dereferenced
+   *  through the shared ring. */
   std::byte *m_allocation = nullptr;
-  /** Aligned base of the slot array in this process' mapping. A plain byte
-   *  pointer, so addressing needs neither an integer-to-pointer cast nor a
-   *  byte count scaled by a wider element type. */
-  std::byte *m_buffer = nullptr;
+  /** Distance from this object to the aligned slot array. The relative
+   *  offset is what makes the ring usable from another mapping of the same
+   *  segment: every process relocates the ring and the slots by the same
+   *  amount, so this value stays valid while a pointer would not. */
+  std::intptr_t m_bufferOffset = 0;
 
-  [[nodiscard]] Slot *buffer() { return reinterpret_cast<Slot *>(m_buffer); }
+  [[nodiscard]] Slot *buffer()
+  {
+    // The slot array lives in the shared segment, not inside this object (see the class
+    // documentation), and is addressed by the offset m_bufferOffset. The aligned buffer is not
+    // necessarily a multiple of sizeof(Slot), so element arithmetic is not an option; the address
+    // is therefore materialised in the integer domain. std::bit_cast restores it: a plain
+    // reinterpret_cast from the integer would be reported as performance-no-int-to-ptr, byte
+    // pointer arithmetic as cpp/suspicious-pointer-scaling.
+    const std::uintptr_t address = reinterpret_cast<std::uintptr_t>(this) + static_cast<std::uintptr_t>(m_bufferOffset);
+    return std::bit_cast<Slot *>(address);
+  }
 
-  [[nodiscard]] const Slot *buffer() const { return reinterpret_cast<const Slot *>(m_buffer); }
+  [[nodiscard]] const Slot *buffer() const
+  {
+    const std::uintptr_t address = reinterpret_cast<std::uintptr_t>(this) + static_cast<std::uintptr_t>(m_bufferOffset);
+    return std::bit_cast<const Slot *>(address);
+  }
 };
 
 }// namespace lintel

@@ -18,6 +18,7 @@
 #include "lintel/core/models/ProcessName.h"
 #include "lintel/core/models/SharedMemorySegment.h"
 #include "lintel/core/services/ReadinessRegistry.h"
+#include "lintel/core/shm/SegmentLayoutPolicy.h"
 #include "lintel/core/utils/TypeName.h"
 #include "lintel/features/base/configuration/SharedMemorySegmentComponent.h"
 #include "lintel/features/base/configuration/SharedMemorySegmentEntry.h"
@@ -543,6 +544,197 @@ TEST_CASE("SharedMemory lock recovery: a holder that releases during the probe k
     boost::interprocess::open_only, shm::remapSemaphoreNameOf(fixture.name).c_str());
   REQUIRE(same.try_wait());
   same.post();
+}
+
+TEST_CASE("SharedMemoryService refuses a segment written with an older layout")
+{
+  // Default policy: nothing is discarded, the operator has to decide. The
+  // exception names the file so the decision can be made deliberately.
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_shm_service_cfg" };
+  const std::filesystem::path path = uniqueSegmentPath();
+  const std::string name = uniqueSegmentName();
+
+  {
+    boost::interprocess::managed_mapped_file old(boost::interprocess::create_only, path.c_str(), kInitialSize);
+    old.construct<int>("stale_object")(42);
+  }
+
+  auto segment = std::make_shared<SharedMemorySegment>(path, name, kInitialSize);
+  auto config = std::make_shared<Configuration>(
+    std::vector<std::shared_ptr<Component>>{}, std::make_shared<EnvironmentConfiguration>());
+  config->setEntries(
+    { std::make_shared<SharedMemorySegmentEntry>(type_name<SharedMemorySegmentComponent>(), segment) });
+  auto segmentManager = std::make_shared<SharedMemorySegmentManager>(config);
+  auto scheduler = std::make_shared<SchedulerService>(std::make_shared<ProcessName>("shm-service-test"));
+
+  REQUIRE_THROWS_AS(
+    std::make_shared<SharedMemoryService>(segmentManager, scheduler, std::make_shared<ProcessName>("shm-service-test")),
+    std::runtime_error);
+
+  // the file is untouched: the operator still has it for a migration
+  {
+    boost::interprocess::managed_mapped_file current(boost::interprocess::open_only, path.c_str());
+    REQUIRE(current.find<int>("stale_object").first != nullptr);
+  }
+
+  scheduler.reset();
+  std::filesystem::remove(path);
+  boost::interprocess::named_semaphore::remove(shm::remapSemaphoreNameOf(name).c_str());
+  SegmentLockOwner::removeOf(name);
+}
+
+TEST_CASE("SharedMemoryService recreates a segment when the policy allows it")
+{
+  // LINTEL_SHM_RECREATE=1 is the explicit opt-in for a developer machine; the
+  // contents are discarded, not migrated.
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_shm_service_cfg" };
+  ScopedEnvironmentVariable recreate{ "LINTEL_SHM_RECREATE", "1" };
+  const std::filesystem::path path = uniqueSegmentPath();
+  const std::string name = uniqueSegmentName();
+
+  {
+    // exactly what an older build leaves behind: named objects, no marker
+    boost::interprocess::managed_mapped_file old(boost::interprocess::create_only, path.c_str(), kInitialSize);
+    old.construct<int>("stale_object")(42);
+    REQUIRE(old.find<int>("stale_object").first != nullptr);
+  }
+
+  auto segment = std::make_shared<SharedMemorySegment>(path, name, kInitialSize);
+  auto config = std::make_shared<Configuration>(
+    std::vector<std::shared_ptr<Component>>{}, std::make_shared<EnvironmentConfiguration>());
+  config->setEntries(
+    { std::make_shared<SharedMemorySegmentEntry>(type_name<SharedMemorySegmentComponent>(), segment) });
+  auto segmentManager = std::make_shared<SharedMemorySegmentManager>(config);
+  auto scheduler = std::make_shared<SchedulerService>(std::make_shared<ProcessName>("shm-service-test"));
+
+  auto service =
+    std::make_shared<SharedMemoryService>(segmentManager, scheduler, std::make_shared<ProcessName>("shm-service-test"));
+
+  {
+    boost::interprocess::managed_mapped_file current(boost::interprocess::open_only, path.c_str());
+    REQUIRE(current.find<int>("stale_object").first == nullptr);
+    const auto marker = current.find<std::uint64_t>("lintel_segment_layout");
+    REQUIRE(marker.first != nullptr);
+    REQUIRE(*marker.first == 2);
+    current.construct<int>("survivor")(7);
+  }
+
+  // a segment that already carries the current marker is kept, not recreated
+  auto reopened =
+    std::make_shared<SharedMemoryService>(segmentManager, scheduler, std::make_shared<ProcessName>("shm-service-test"));
+  {
+    boost::interprocess::managed_mapped_file current(boost::interprocess::open_only, path.c_str());
+    REQUIRE(current.find<int>("survivor").first != nullptr);
+  }
+
+  reopened.reset();
+  service.reset();
+  scheduler.reset();
+  std::filesystem::remove(path);
+  boost::interprocess::named_semaphore::remove(shm::remapSemaphoreNameOf(name).c_str());
+  SegmentLockOwner::removeOf(name);
+}
+
+TEST_CASE("SharedMemoryService lets a registered migrator decide what happens")
+{
+  // The migrator runs while the stale segment is still on disk, so it can read
+  // the payloads and carry them somewhere durable before anything is removed.
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_shm_service_cfg" };
+  const std::filesystem::path path = uniqueSegmentPath();
+  const std::string name = uniqueSegmentName();
+
+  {
+    boost::interprocess::managed_mapped_file old(boost::interprocess::create_only, path.c_str(), kInitialSize);
+    old.construct<int>("stale_object")(42);
+  }
+
+  struct Seen
+  {
+    std::filesystem::path path;
+    std::uint64_t found = 0;
+    std::uint64_t current = 0;
+    int value = 0;
+  };
+  Seen seen;
+  shm::SegmentLayoutPolicy::setMigrator(
+    [&seen](const std::filesystem::path &stale, std::uint64_t found, std::uint64_t current) {
+      seen.path = stale;
+      seen.found = found;
+      seen.current = current;
+      // the old segment is still intact, so its payload can be read
+      boost::interprocess::managed_mapped_file old(boost::interprocess::open_only, stale.c_str());
+      const auto object = old.find<int>("stale_object");
+      if (object.first == nullptr) { return false; }
+      seen.value = *object.first;
+      return true;// "carried over, you may start empty"
+    });
+
+  auto segment = std::make_shared<SharedMemorySegment>(path, name, kInitialSize);
+  auto config = std::make_shared<Configuration>(
+    std::vector<std::shared_ptr<Component>>{}, std::make_shared<EnvironmentConfiguration>());
+  config->setEntries(
+    { std::make_shared<SharedMemorySegmentEntry>(type_name<SharedMemorySegmentComponent>(), segment) });
+  auto segmentManager = std::make_shared<SharedMemorySegmentManager>(config);
+  auto scheduler = std::make_shared<SchedulerService>(std::make_shared<ProcessName>("shm-service-test"));
+
+  auto service =
+    std::make_shared<SharedMemoryService>(segmentManager, scheduler, std::make_shared<ProcessName>("shm-service-test"));
+
+  REQUIRE(seen.path == path);
+  REQUIRE(seen.found == 0);// a segment from before the marker existed
+  REQUIRE(seen.current == 2);
+  REQUIRE(seen.value == 42);
+
+  {
+    boost::interprocess::managed_mapped_file current(boost::interprocess::open_only, path.c_str());
+    REQUIRE(current.find<int>("stale_object").first == nullptr);
+  }
+
+  service.reset();
+  scheduler.reset();
+  std::filesystem::remove(path);
+  boost::interprocess::named_semaphore::remove(shm::remapSemaphoreNameOf(name).c_str());
+  SegmentLockOwner::removeOf(name);
+  shm::SegmentLayoutPolicy::reset();
+}
+
+TEST_CASE("SharedMemoryService aborts when the migrator refuses")
+{
+  ScopedEnvironmentVariable configDirectory{ "CONFIG_DIRECTORY", "/tmp/nonexistent_shm_service_cfg" };
+  const std::filesystem::path path = uniqueSegmentPath();
+  const std::string name = uniqueSegmentName();
+
+  {
+    boost::interprocess::managed_mapped_file old(boost::interprocess::create_only, path.c_str(), kInitialSize);
+    old.construct<int>("stale_object")(42);
+  }
+
+  shm::SegmentLayoutPolicy::setMigrator(
+    [](const std::filesystem::path & /*stale*/, std::uint64_t /*found*/, std::uint64_t /*current*/) { return false; });
+
+  auto segment = std::make_shared<SharedMemorySegment>(path, name, kInitialSize);
+  auto config = std::make_shared<Configuration>(
+    std::vector<std::shared_ptr<Component>>{}, std::make_shared<EnvironmentConfiguration>());
+  config->setEntries(
+    { std::make_shared<SharedMemorySegmentEntry>(type_name<SharedMemorySegmentComponent>(), segment) });
+  auto segmentManager = std::make_shared<SharedMemorySegmentManager>(config);
+  auto scheduler = std::make_shared<SchedulerService>(std::make_shared<ProcessName>("shm-service-test"));
+
+  REQUIRE_THROWS_WITH(
+    std::make_shared<SharedMemoryService>(segmentManager, scheduler, std::make_shared<ProcessName>("shm-service-test")),
+    Catch::Matchers::ContainsSubstring("migrator refused"));
+
+  {
+    // nothing was removed: the operator can still migrate offline
+    boost::interprocess::managed_mapped_file current(boost::interprocess::open_only, path.c_str());
+    REQUIRE(current.find<int>("stale_object").first != nullptr);
+  }
+
+  scheduler.reset();
+  std::filesystem::remove(path);
+  boost::interprocess::named_semaphore::remove(shm::remapSemaphoreNameOf(name).c_str());
+  SegmentLockOwner::removeOf(name);
+  shm::SegmentLayoutPolicy::reset();
 }
 
 }// namespace lintel

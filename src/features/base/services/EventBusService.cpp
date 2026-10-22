@@ -30,7 +30,7 @@ std::map<std::string, std::shared_ptr<EventBusEntry>> EventBusService::init(
   return map;
 }
 
-EventBusConfig EventBusService::configOf(const std::shared_ptr<EventBusEntry> &entry)
+EventBusConfig EventBusService::configOfEntry(const std::shared_ptr<EventBusEntry> &entry)
 {
   EventBusConfig config;
   config.busCapacity = entry->getBusCapacity();
@@ -54,7 +54,7 @@ EventBus &EventBusService::resolve(const std::shared_ptr<EventBusEntry> &entry)
     LOG_ERROR("segment '{}' not found for event bus '{}'", entry->getSegment(), entry->getName());
     throw std::runtime_error("segment not found for event bus " + entry->getName());
   }
-  const EventBusConfig config = configOf(entry);
+  const EventBusConfig config = configOfEntry(entry);
   const std::size_t required = EventBus::requiredSize(config);
   if (segment->getSize() < required) {
     LOG_WARN(
@@ -73,15 +73,37 @@ EventBus &EventBusService::resolve(const std::shared_ptr<EventBusEntry> &entry)
   return bus;
 }
 
-std::shared_ptr<IEventBus> EventBusService::of(const std::string &name)
+const std::shared_ptr<EventBusEntry> &EventBusService::entryOf(const std::string &name) const
 {
-  auto found = m_configurationMap.find(name);
+  const auto found = m_configurationMap.find(name);
   if (found == m_configurationMap.end()) {
     LOG_ERROR("no event bus found for {}", name);
     throw std::runtime_error("no event bus found for " + name);
   }
-  EventBus &bus = resolve(found->second);
+  return found->second;
+}
+
+std::shared_ptr<IEventBus> EventBusService::of(const std::string &name)
+{
+  EventBus &bus = resolve(entryOf(name));
   return std::make_shared<EventBusView>(bus);
+}
+
+std::vector<std::string> EventBusService::namesOf() const
+{
+  std::vector<std::string> names;
+  names.reserve(m_configurationMap.size());
+  for (const auto &entry : m_configurationMap) { names.push_back(entry.first); }
+  return names;
+}
+
+EventBusConfig EventBusService::configOf(const std::string &name) const { return configOfEntry(entryOf(name)); }
+
+std::size_t EventBusService::busQueueDepthOf(const std::string &name) { return resolve(entryOf(name)).busQueueDepth(); }
+
+std::size_t EventBusService::subscriberQueueDepthOf(const std::string &name, const std::string &subscriber)
+{
+  return resolve(entryOf(name)).subscriberQueueDepth(subscriber);
 }
 
 void EventBusService::onInitialize()

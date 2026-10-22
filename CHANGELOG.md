@@ -8,6 +8,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Migration hook for shared memory segments.** `lintel::shm::SegmentLayoutPolicy` lets the
+  application decide what happens when a segment was written with another object layout: refuse
+  (default), recreate, or run a registered migrator that sees the untouched segment file and can
+  export its payloads before it is replaced. `LINTEL_SHM_RECREATE=1` selects "recreate" without
+  recompiling. See `docs/shm-migration-strategy.md`.
+- **Admin API client and CLI component.** The two `/admin/*` routes (`reload-tls`, `log-level`) had
+  no `AdminApi` and no CLI command; `reload_tls` and `log_level --level` fill that gap.
+- **`POST /shm/recover`.** `SharedMemoryService::recover()` reclaims remap locks whose holder is
+  gone but had no caller. The route (admin only) answers `{"RECOVERED":n}`, with
+  `SharedMemoryApi::recoverOf()` and the CLI command `recover_segments`.
+- **`SharedMemoryRepository<T>::of()`.** The typed repositories can be created through a
+  process-wide factory that deduplicates by `segment:name` through
+  `SharedMemoryRepositoryRegistry` instead of building a second cell for the same name.
+- **`Publisher-EventBus` group.** Publishing no longer rides on the read group.
+- **EventBus over HTTP and in the CLI.** Seven routes (`/eventBus/buses`, `/eventBus/bus/{name}`,
+  `/eventBus/publish/{name}`, `POST`/`DELETE` `/eventBus/subscribe/{name}`,
+  `/eventBus/depth/{name}/{subscriber}`, `/eventBus/reset/{name}`) with an `EventBusApi` client and
+  an `EventBusCliComponent` (`show_event_buses`, `publish_event`, `subscribe_event`,
+  `unsubscribe_event`, `event_queue_depth`, `reset_event_bus`). Mutating routes need
+  `Admin-EventBus`, reading and publishing `User-EventBus`. The subsystem had no HTTP, API or CLI
+  surface before.
+- **Shared memory and message queue operations gained endpoints.** `GET /shm/stats/{segment}`
+  (`SharedMemoryService::statsOf`, now part of `ISharedMemoryService`), `POST /shm/cleanup`
+  (`SharedMemoryCleanupService`, now registered in the container) and `POST /messageQueue/recover`
+  (`MessageQueueService::recoverOrphans`), each with its API method and CLI command
+  (`show_stats`, `cleanup`, `recover_message_queues`).
+- **`/messageQueue/stats/...` and `/messageQueue/purge/...` documented** in `swagger.yaml` and
+  `swagger.md`; both routes existed in the controller but not in the published contract.
 - **`${ENV_VAR}` expansion for the bootstrap configuration.** `EnvironmentConfiguration::expand()`
   replaces every `${NAME}` (`NAME` = `[A-Za-z_][A-Za-z0-9_]*`) with the environment variable of
   that name; an unset variable stays literal and `$${NAME}` escapes to `${NAME}`.
@@ -163,6 +191,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `postgres:17` service.
 
 ### Changed
+- **Publishing on the event bus needs its own right (breaking).** `POST /eventBus/publish/{name}`
+  accepts a token of `Publisher-EventBus` or `Admin-EventBus`; `User-EventBus` is read-only and
+  gets 401. The group is a virtual group like the other two, so it is seeded automatically.
+- **The shared memory process model is cross-process now (breaking).** `ShmSegmentAccessor`
+  carries the *name* of its segment (40 bytes instead of one pointer) and resolves it to the
+  allocator of the calling process, so an accessor copied into a segment is usable from every
+  process. `MessageQueueShmCore` keeps its header and ring in the segment under a stable name
+  instead of a process-local map, which means two processes now really share one queue. Segments
+  written by an older build are recognised by a layout marker; the previous layout cannot be
+  reinterpreted, so the operator decides what happens (`docs/shm-migration-strategy.md`): the
+  default refuses to open the segment and names the file, `LINTEL_SHM_RECREATE=1` discards it, and
+  a migrator registered through `shm::SegmentLayoutPolicy::setMigrator()` runs **before** anything
+  is removed and may export the payloads first. Data that only lives in a segment - the payloads of
+  `shm::SharedMemoryRepository<T>` and the containers it stores - is exactly what such a migrator is
+  for; properties (database or bootstrap XML, the shared memory repository is a mirror that is
+  rebuilt), users, groups and history live outside the segment and stay untouched.
+- **`SharedMemoryRepositoryRegistry.h` moved** from `features/base/services/` to `core/shm/`; the
+  typed repository header may not depend on a feature header.
+- **Logging and property registration use `std::source_location` (breaking).**
+  `LoggerService::log()`/`logImpl()` take a `std::source_location` instead of
+  `(file, line, function)`, and `PropertyRegistration::registerProperty()` replaces its
+  `fileName`/`position` parameters with a `std::source_location` defaulted to
+  `std::source_location::current()`. The reported file, line and function, and the persisted
+  `"<basename>:<line>"` `DataStorage` identifier are unchanged; only callers that pass the two
+  arguments explicitly have to drop them. `LINTEL_FUNCTION` is gone.
+- **`PropertyRepository::allOf()` takes a `PropertyFilter` (breaking).** The four regular
+  expressions (`processName`, `className`, `instanceName`, `name`) are one aggregate with the
+  previous `".*"` defaults, so `allOf()` and short calls keep their meaning. Follows the
+  `MessageQueueFilter`/`EventBusCapacities` pattern from `a4c1c59`.
+- **`Connection::prepareStatement()` takes the statement name as `std::string_view`.**
+  `Connection::execute()` runs its script through `sqlite3_prepare_v2`/`sqlite3_step` instead of
+  `sqlite3_exec` and follows the `pzTail` remainder, so multi-statement scripts keep working.
+- **`MemorySize` rejects leading whitespace and a sign.** `std::from_chars` replaced `std::stoul`;
+  `" 1024"` and `"-1"` now throw instead of being accepted.
+- **All `NOLINT` suppressions are gone.** `handleCommandInput()`/`handleTabInput()` return an
+  `InputOutcome` instead of two `bool &` out-parameters, `parseAndScale()` takes a unit table,
+  `startsWith()` takes the menu as a `std::string_view`, `HistoryController` dropped its unused
+  `GroupRepository` parameter, and the shared-memory address arithmetic uses `std::bit_cast`.
 - **Leak detection is a blocking check.** The `sanitizers` job (ASan+UBSan+LSan,
   `detect_leaks=1`) is no longer `continue-on-error`: a full run including the `[pg]` cases is
   green, so a leak regression stops the merge instead of being reported and ignored.
@@ -231,6 +297,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **The SHM message queue was not an IPC mechanism.** Every process built its own ring in the
+  segment, so `MessageQueueShmCore` only worked inside one process. A fork-based test now proves
+  that a child process finds the queue by name and that a message crosses the boundary.
+- **The worker processes outlived `bin/main`.** Two defects added up:
+  `VirtualGroupBootstrapPlugin` is a singleton *inside* the DI container and held a `shared_ptr`
+  to that container, so container → plugin → container never dropped to zero - the container was
+  never destroyed and no service destructor ever ran. And `ProcessService` only stopped its
+  children in its destructor. The plugin (and the worker example's own service) hold the container
+  weakly now, and `ProcessService::onShutdown()` stops and, if needed, terminates every process it
+  started, so a shutdown no longer depends on destruction order.
+- **The examples could not be started.** `Feature::m_name` was a `std::string_view` initialised from
+  a temporary `std::string`, so `getName()` returned freed stack bytes as soon as the constructor
+  returned. `StartupBuilder::verifyFeatureDependencies()` compared that garbage against the
+  configured names and aborted every process at startup with `terminate called ... feature '\x01'`
+  - `scripts/run-example.sh` never got past `bin/main`. The name is stored by value now, and a
+  regression test scribbles over the stack before it reads the name back.
+- **`export_repository --file` expanded every tilde, not just a leading one.** A Windows short name
+  (`C:\Users\RUNNER~1\...`) was rewritten into `C:\Users\RUNNERC:\Users\...`, so the CLI
+  failed to create the directory. The new `lintel::expandHomeDirectory()` only replaces `~` at the
+  start of the path.
+- **`RingBufferShm` addressed its slots with an absolute pointer.** Commit `a4c1c59` replaced the
+  byte offset with a `std::byte *` to drop an int-to-pointer cast, which only works while the ring
+  lives at the same virtual address in every process - a repository payload inside a shared memory
+  segment does not. Back to the offset, materialised with `std::bit_cast`; a regression test copies
+  the region holding the ring and its slots and reuses the ring at the second address.
+- **CLI fixes.** `grow_segment` was described as "Shrink segment"; `export_repository` never bound
+  `--file` although it writes the file (`m_type` was dead and is gone); `PropertyCliComponent`
+  mixed `--process-name` and `--process_name`; `UserManagementCliComponent` declared
+  `AddGroup`/`RemoveGroup`/`UpdateGroup` without a command or handler (the HTTP API cannot create
+  groups, so the enum slots are gone); `HistoryCliComponent` had an `n_name` typo and a stray `)`
+  in its help text.
 - **Review fixes on the pre-1.0 hardening items (A8/U5/A6/A5).**
   - The shared-memory lock recovery could reclaim the same orphan twice: two processes that both
     found a dead holder ran `remove()` + `open_or_create()` on the same semaphore and each kept a

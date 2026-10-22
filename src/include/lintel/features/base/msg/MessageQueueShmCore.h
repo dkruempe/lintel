@@ -25,12 +25,21 @@ namespace lintel {
  * allocation is involved per send/receive; the bytes stay in the shared
  * segment (hence "zero-copy" in the sense of the SHM storage model).
  *
- * Instances of one process that use the same queue name share the same ring:
+ * The queue is shared across processes: a header that describes the ring
+ * layout is stored in the segment under a name derived from the queue name, so
+ * the second process finds the ring the first one created instead of building
+ * one of its own. The segment accessor therefore has to be a *named* one (see
+ * SharedMemoryService::getSegmentAccessor) - an unnamed accessor is bound to a
+ * single process and is rejected.
+ *
+ * Instances of one process that use the same queue name share the same state:
  * a queue created by one core is found by every later core until the last one
  * is destroyed (or removeOf() is called). Queue names are process wide unique,
- * matching the naming of the Boost backend. The implementation keeps the
- * ring-offset bookkeeping in the segment and only the process local registry
- * and wait coordination outside of it.
+ * matching the naming of the Boost backend.
+ *
+ * Waiters poll in slices of about a millisecond: the condition variable only
+ * reaches the threads of one process, and a producer in another process cannot
+ * signal it (see QueueState::waitForProgress).
  */
 class MessageQueueShmCore
 {
@@ -42,12 +51,19 @@ public:
   /**
    * open or create the shared memory message queue
    *
-   * @param name of the message queue. No filepath just name.
+   * The queue is looked up in the segment by name: a core created by another
+   * process is found and adopted, including its layout. The ring is destroyed
+   * by the process that created it.
+   *
+   * @param name of the message queue. No filepath just name; at most 21
+   *        characters, because the segment object name adds the "lintel_mq_"
+   *        prefix and is limited to 32 characters including its NUL.
    * @param msgCount capacity of the queue in messages (must be positive)
    * @param msgSize maximum size of a single message in bytes (must be positive)
-   * @param segment accessor of the shared memory segment holding the queue
-   * @throws std::invalid_argument on invalid size/capacity or when an existing
-   *         queue with the same name uses a different layout
+   * @param segment named accessor of the shared memory segment holding the queue
+   * @throws std::invalid_argument on invalid size/capacity, on an unnamed
+   *         segment accessor, on a queue name that is too long, or when an
+   *         existing queue with the same name uses a different layout
    */
   MessageQueueShmCore(const std::string &name, int32_t msgCount, std::size_t msgSize, ShmSegmentAccessor segment);
 
@@ -61,12 +77,21 @@ public:
    * remove of message queue (drops the process local association; the segment
    * itself owns the memory)
    *
+   * The ring stays in the segment as long as a core of the creating process is
+   * alive; that core marks the header uninitialised when it goes away, so a
+   * later open re-creates the ring instead of adopting a destroyed one.
+   *
    * @param messageQueueName name of the queue to remove
    */
   static void removeOf(const std::string &messageQueueName);
 
   /**
    * Look up an existing queue without creating it and read its message count.
+   *
+   * The lookup is process local: it answers for the cores this process has
+   * open. A queue that another process created and this one never opened is
+   * reported as 0, because the count lives behind an accessor this call does
+   * not have.
    *
    * @param messageQueueName name of the queue to inspect
    * @return number of messages, 0 if the queue does not exist

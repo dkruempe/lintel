@@ -1,6 +1,7 @@
 #include <filesystem>
 #include <fstream>
 #include <memory>
+#include <source_location>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -143,7 +144,7 @@ TEST_CASE("LoggerService: the process name is matched as a regular expression", 
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "regex matched {}", 1);
+    service.log(std::source_location::current(), LogLevel::info, "regex matched {}", 1);
   }
 
   REQUIRE(loggerContains(loggerFileContent(file), "regex matched 1"));
@@ -160,7 +161,7 @@ TEST_CASE("LoggerService: an empty sink file name falls back to <process name>.l
   REQUIRE_FALSE(std::filesystem::exists(file));
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "fallback name");
+    service.log(std::source_location::current(), LogLevel::info, "fallback name");
   }
 
   REQUIRE(std::filesystem::exists(file));
@@ -177,7 +178,7 @@ TEST_CASE("LoggerService: a configured sink file name is used", "[logger_service
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "named file");
+    service.log(std::source_location::current(), LogLevel::info, "named file");
   }
 
   REQUIRE(std::filesystem::exists(file));
@@ -195,7 +196,7 @@ TEST_CASE("LoggerService: create sub directories puts the log into a per process
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "in sub directory");
+    service.log(std::source_location::current(), LogLevel::info, "in sub directory");
   }
 
   REQUIRE(std::filesystem::exists(file));
@@ -236,7 +237,7 @@ TEST_CASE("LoggerService: a daily sink creates a dated log file", "[logger_servi
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "daily entry");
+    service.log(std::source_location::current(), LogLevel::info, "daily entry");
   }
 
   // a daily sink names its file after the current date, so only the shape of the name is stable
@@ -257,9 +258,9 @@ TEST_CASE("LoggerService: messages below the logger level are dropped", "[logger
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::debug, "debug marker");
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "info marker");
-    service.log(__FILE__, __LINE__, "test", LogLevel::error, "error marker");
+    service.log(std::source_location::current(), LogLevel::debug, "debug marker");
+    service.log(std::source_location::current(), LogLevel::info, "info marker");
+    service.log(std::source_location::current(), LogLevel::error, "error marker");
   }
 
   const std::string content = loggerFileContent(file);
@@ -278,8 +279,8 @@ TEST_CASE("LoggerService: messages below the sink level are dropped", "[logger_s
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::warn, "warn marker");
-    service.log(__FILE__, __LINE__, "test", LogLevel::error, "error marker");
+    service.log(std::source_location::current(), LogLevel::warn, "warn marker");
+    service.log(std::source_location::current(), LogLevel::error, "error marker");
   }
 
   const std::string content = loggerFileContent(file);
@@ -299,7 +300,7 @@ TEST_CASE("LoggerService: a configured sink pattern replaces the default pattern
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::error, "only the message");
+    service.log(std::source_location::current(), LogLevel::error, "only the message");
   }
 
   const std::string content = loggerFileContent(file);
@@ -315,7 +316,7 @@ TEST_CASE("LoggerService: a broken format string is reported instead of throwing
 
   {
     LoggerService service(processName, configuration);
-    REQUIRE_NOTHROW(service.log(__FILE__, __LINE__, "test", LogLevel::error, "missing {}"));
+    REQUIRE_NOTHROW(service.log(std::source_location::current(), LogLevel::error, "missing {}"));
   }
 
   const std::string content = loggerFileContent(file);
@@ -336,7 +337,7 @@ TEST_CASE("LoggerService: a syslog sink is skipped next to a file sink", "[logge
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "next to syslog");
+    service.log(std::source_location::current(), LogLevel::info, "next to syslog");
   }
 
   REQUIRE(loggerContains(loggerFileContent(file), "next to syslog"));
@@ -354,7 +355,7 @@ TEST_CASE("LoggerService: a console sink next to a file sink keeps the file sink
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "with console");
+    service.log(std::source_location::current(), LogLevel::info, "with console");
   }
 
   REQUIRE(loggerContains(loggerFileContent(file), "with console"));
@@ -373,7 +374,7 @@ TEST_CASE("LoggerService: the rotating sink rolls over when the size limit is ex
 
   {
     LoggerService service(processName, configuration);
-    for (int i = 0; i < 40; i++) { service.log(__FILE__, __LINE__, "test", LogLevel::info, "marker {}", i); }
+    for (int i = 0; i < 40; i++) { service.log(std::source_location::current(), LogLevel::info, "marker {}", i); }
   }
 
   REQUIRE(std::filesystem::exists(file));
@@ -423,10 +424,10 @@ TEST_CASE("LoggerService: every sink level string is mapped", "[logger_service]"
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::error, "level marker");
+    service.log(std::source_location::current(), LogLevel::error, "level marker");
     // one level below the configured floor: a sink whose level string was
     // dropped keeps spdlog's default (trace) and would log this as well
-    service.log(__FILE__, __LINE__, "test", LogLevel::warn, "below marker");
+    service.log(std::source_location::current(), LogLevel::warn, "below marker");
   }
 
   // the trace sink is the most permissive one and must have received the message
@@ -450,7 +451,7 @@ TEST_CASE("LoggerService: every logger level string is mapped", "[logger_service
     INFO("logger level: " << level);
     auto configuration = loggerConfigurationOf(directory.path, "main", level, { loggerRotatingSink("app") });
     LoggerService service(processName, configuration);
-    REQUIRE_NOTHROW(service.log(__FILE__, __LINE__, "test", LogLevel::error, "level {}", level));
+    REQUIRE_NOTHROW(service.log(std::source_location::current(), LogLevel::error, "level {}", level));
   }
 }
 
@@ -481,7 +482,7 @@ TEST_CASE("LoggerService: a tcp sink is constructed and used", "[logger_service]
 
   {
     LoggerService service(processName, configuration);
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "tcp marker");
+    service.log(std::source_location::current(), LogLevel::info, "tcp marker");
   }
 
   ::close(serverFd);
@@ -495,7 +496,7 @@ TEST_CASE("LoggerService: initSingleton installs a configured logger", "[logger_
   auto configuration = loggerConfigurationOf(directory.path, "main", "trace", { loggerRotatingSink("app") });
 
   LoggerService::initSingleton(std::make_shared<ProcessName>("main"), configuration);
-  REQUIRE_NOTHROW(LoggerService::get().log(__FILE__, __LINE__, "test", LogLevel::error, "singleton"));
+  REQUIRE_NOTHROW(LoggerService::get().log(std::source_location::current(), LogLevel::error, "singleton"));
 
   // initSingleton2 falls back to the default logger and must not throw
   REQUIRE_NOTHROW(LoggerService::initSingleton2());
@@ -529,11 +530,11 @@ TEST_CASE("LoggerService: setLevel changes the effective level without a restart
 
   // below the configured level: dropped, so the diagnosis starts from what the
   // operator deployed and not from a silenced process
-  service.log(__FILE__, __LINE__, "test", LogLevel::debug, "before the runtime change");
+  service.log(std::source_location::current(), LogLevel::debug, "before the runtime change");
   REQUIRE_FALSE(loggerContains(loggerFileContent(file), "before the runtime change"));
 
   service.setLevel(LogLevel::debug);
-  service.log(__FILE__, __LINE__, "test", LogLevel::debug, "after the runtime change");
+  service.log(std::source_location::current(), LogLevel::debug, "after the runtime change");
   REQUIRE(loggerContains(loggerFileContent(file), "after the runtime change"));
   REQUIRE(service.levelOf() == LogLevel::debug);
 }
@@ -547,7 +548,7 @@ TEST_CASE("LoggerService: a json logger writes one json object per message", "[l
   const auto file = directory.path / "app.log";
 
   LoggerService service(processName, configuration);
-  service.log(__FILE__, __LINE__, "test", LogLevel::info, "json message {}", 7);
+  service.log(std::source_location::current(), LogLevel::info, "json message {}", 7);
 
   const std::string content = loggerFileContent(file);
   // the shape a log shipper parses: one line, object start first, the level and
@@ -568,13 +569,13 @@ TEST_CASE("LoggerService: the request correlation id is part of the message", "[
   LoggerService::setRequestId(std::string());
   REQUIRE(LoggerService::requestId().empty());
 
-  service.log(__FILE__, __LINE__, "test", LogLevel::info, "outside a request");
+  service.log(std::source_location::current(), LogLevel::info, "outside a request");
   REQUIRE_FALSE(loggerContains(loggerFileContent(file), "[req-123]"));
 
   {
     RequestIdGuard guard("req-123");
     REQUIRE(LoggerService::requestId() == "req-123");
-    service.log(__FILE__, __LINE__, "test", LogLevel::info, "inside a request");
+    service.log(std::source_location::current(), LogLevel::info, "inside a request");
     // ties the line to the X-Request-Id the server answered with
     REQUIRE(loggerContains(loggerFileContent(file), "[req-123] inside a request"));
   }

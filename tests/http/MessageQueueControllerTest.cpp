@@ -529,4 +529,43 @@ TEST_CASE("MessageQueueController::purgeOfPost refuses a pattern that only match
   REQUIRE(response != nullptr);
   REQUIRE(response->status == 404);
 }
+
+TEST_CASE("MessageQueueController::recoverOfPost reclaims the orphaned entries", "[messagequeue_controller]")
+{
+  MessageQueueControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  // MessageQueueEntry is copyable but not assignable (const members), so no initializer-list assign
+  fixture.m_repository->orphansToFind.push_back(mqcEntry("worker", "mqc-orphan", 8));
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(mqcTokenOf(mqcAdmin, mqcTokenAdmin));
+
+  auto response = fixture.m_client->Post("/messageQueue/recover", mqcAuthHeaders(mqcTokenAdmin));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+  REQUIRE(response->body == R"({"RECOVERED":1})");
+  REQUIRE(fixture.m_repository->reclaimedQueues == std::vector<std::string>{ "mqc-orphan" });
+}
+
+TEST_CASE("MessageQueueController::recoverOfPost returns 401 for a non-admin user", "[messagequeue_controller]")
+{
+  MessageQueueControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  // MessageQueueEntry is copyable but not assignable (const members), so no initializer-list assign
+  fixture.m_repository->orphansToFind.push_back(mqcEntry("worker", "mqc-orphan", 8));
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(mqcTokenOf(mqcOutsider, mqcTokenOutsider));
+
+  auto response = fixture.m_client->Post("/messageQueue/recover", mqcAuthHeaders(mqcTokenOutsider));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 401);
+  REQUIRE(fixture.m_repository->reclaimedQueues.empty());
+}
 }// namespace lintel

@@ -231,10 +231,13 @@ TEST_CASE("MessageQueueCliComponent: allCommandsOf returns the registered comman
     std::find(mqCliCommands.begin(), mqCliCommands.end(), "show_message_queues") != mqCliCommands.end();
   const bool mqCliHasPurgeMessageQueue =
     std::find(mqCliCommands.begin(), mqCliCommands.end(), "purge_message_queue") != mqCliCommands.end();
+  const bool mqCliHasRecoverMessageQueues =
+    std::find(mqCliCommands.begin(), mqCliCommands.end(), "recover_message_queues") != mqCliCommands.end();
 
-  REQUIRE(mqCliCommands.size() == 2);
+  REQUIRE(mqCliCommands.size() == 3);
   REQUIRE(mqCliHasShowMessageQueues);
   REQUIRE(mqCliHasPurgeMessageQueue);
+  REQUIRE(mqCliHasRecoverMessageQueues);
 }
 
 TEST_CASE("MessageQueueCliComponent: the component registers itself under name and alias")
@@ -468,5 +471,37 @@ TEST_CASE("MessageQueueCliComponent: purge_message_queue reports a rejected purg
 
   REQUIRE(mqCliPrinted.find("ERROR") != std::string::npos);
   REQUIRE(mqCliPrinted.find("unknown") != std::string::npos);
+}
+
+TEST_CASE("MessageQueueCliComponent: recover_message_queues posts and prints the reclaimed count")
+{
+  mqCliBackend mqCliServer;
+  mqCliServer.answerWith(R"({"RECOVERED":2})");
+  auto mqCliApi = std::make_shared<MesssageQueueApi>(mqCliProviderOf(mqCliServer.port()));
+  MessageQueueCliComponent mqCliComponent(mqCliApi);
+
+  mqCliCoutCapture mqCliOut;
+  mqCliComponent.onCommand(UserDto{}, "recover_message_queues", {});
+  const std::string mqCliPrinted = mqCliOut.str();
+
+  REQUIRE(mqCliServer.paths.size() == 1);
+  REQUIRE(mqCliServer.paths[0] == "/messageQueue/recover");
+  REQUIRE(mqCliServer.methods[0] == "POST");
+  REQUIRE(mqCliPrinted.find("Recovered 2") != std::string::npos);
+}
+
+TEST_CASE("MessageQueueCliComponent: recover_message_queues reports a rejected recover")
+{
+  mqCliBackend mqCliServer;
+  mqCliServer.answerWith(R"({"RECOVERED":0})");
+  mqCliServer.setStatus(403);
+  auto mqCliApi = std::make_shared<MesssageQueueApi>(mqCliProviderOf(mqCliServer.port()));
+  MessageQueueCliComponent mqCliComponent(mqCliApi);
+
+  mqCliCoutCapture mqCliOut;
+  mqCliComponent.onCommand(UserDto{}, "recover_message_queues", {});
+  const std::string mqCliPrinted = mqCliOut.str();
+
+  REQUIRE(mqCliPrinted.find("ERROR") != std::string::npos);
 }
 }// namespace lintel

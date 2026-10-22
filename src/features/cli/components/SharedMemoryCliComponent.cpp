@@ -20,16 +20,24 @@ SharedMemoryCliComponent::SharedMemoryCliComponent(std::shared_ptr<SharedMemoryA
       .addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name or pattern matching")
       .addArgument({ "--repository-name", "-r" }, &m_repositoryName, "Repository Name or pattern matching"),
     ShowRepositories);
+  m_commandParser.addCommand(Command("show_stats", "Show the runtime statistics of one segment")
+                               .addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name"),
+    ShowStats);
+  m_commandParser.addCommand(Command("cleanup", "Remove shared memory objects whose owner process is gone"), Cleanup);
+  m_commandParser.addCommand(
+    Command("recover_segments", "Reclaim the remap locks of segments whose holder process is gone"), RecoverSegments);
   m_commandParser.addCommand(
     Command("shrink_segment", "Shrink segment").addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name"),
     ShrinkSegment);
-  m_commandParser.addCommand(Command("grow_segment", "Shrink segment")
+  m_commandParser.addCommand(Command("grow_segment", "Grow segment")
                                .addArgument({ "--segment-name", "-s" }, &m_segmentName, "Segment Name")
                                .addArgument({ "--grow-size", "-g" }, &m_size, "Grow Size"),
     GrowSegment);
-  m_commandParser.addCommand(Command("export_repository", "Export Repository to json")
-                               .addArgument({ "--repository-name", "-r" }, &m_repositoryName, "Repository name")
-                               .addArgument({ "--uuid", "-u" }, &m_uuid, "UUID"),
+  m_commandParser.addCommand(
+    Command("export_repository", "Export Repository to json")
+      .addArgument({ "--repository-name", "-r" }, &m_repositoryName, "Repository name")
+      .addArgument({ "--uuid", "-u" }, &m_uuid, "UUID")
+      .addArgument({ "--file", "-f" }, &m_file, "File to write the export to (default: stdout)"),
     ExportRepository);
 }
 
@@ -54,6 +62,40 @@ void SharedMemoryCliComponent::onCommand(const UserDto & /*userDto*/,
       printRepositories(res);
       m_segmentName->clear();
       m_repositoryName->clear();
+      break;
+    }
+    case ShowStats: {
+      if (!m_segmentName.has_value()) {
+        std::cout << "ERROR: please set segment name\n";
+        return;
+      }
+      const std::optional<SharedMemorySegmentStats> stats = m_sharedMemoryApi->statsOf(m_segmentName.value());
+      if (!stats.has_value()) {
+        std::cout << "ERROR: no statistics for segment " << m_segmentName.value() << "\n";
+        m_segmentName->clear();
+        return;
+      }
+      printStats(stats.value());
+      m_segmentName->clear();
+      break;
+    }
+    case Cleanup: {
+      const std::optional<SharedMemoryCleanupSummary> summary = m_sharedMemoryApi->cleanupOf();
+      if (!summary.has_value()) {
+        std::cout << "ERROR: cleanup was rejected\n";
+        return;
+      }
+      std::cout << "Cleanup scanned " << summary->scanned << " entries: " << summary->orphans << " orphans, "
+                << summary->removed << " removed, " << summary->failed << " failures\n";
+      break;
+    }
+    case RecoverSegments: {
+      const std::optional<std::size_t> recovered = m_sharedMemoryApi->recoverOf();
+      if (!recovered.has_value()) {
+        std::cout << "ERROR: recover was rejected\n";
+        return;
+      }
+      std::cout << "Recovered " << recovered.value() << " orphaned remap locks\n";
       break;
     }
     case ShrinkSegment: {
@@ -98,7 +140,7 @@ void SharedMemoryCliComponent::handleExportRepository()
   }
   std::string result = m_sharedMemoryApi->repositoryOf(m_uuid.value());
   if (m_file.has_value()) {
-    std::string file = StringUtils::replaceAll(m_file.value(), "~", lintel::homeDirectory());
+    const std::string file = lintel::expandHomeDirectory(m_file.value());
     std::filesystem::path path(file);
     bool parentPathExits = std::filesystem::exists(path.parent_path());
     if (!parentPathExits) { std::filesystem::create_directories(path.parent_path()); }
@@ -116,7 +158,6 @@ void SharedMemoryCliComponent::handleExportRepository()
   if (m_file.has_value()) { m_file->clear(); }
   if (m_repositoryName.has_value()) { m_repositoryName->clear(); }
   if (m_segmentName.has_value()) { m_segmentName->clear(); }
-  if (m_type.has_value()) { m_type->clear(); }
 }
 
 void SharedMemoryCliComponent::printSegments(const std::vector<SharedMemorySegmentDto> &segments)
@@ -177,6 +218,21 @@ void SharedMemoryCliComponent::printRepositories(const std::vector<SharedMemoryR
       std::string(magic_enum::enum_name<>(iter.getType())),
       std::to_string(iter.getCurrentVersion()) });
   }
+  std::cout << builder.build() << "\n";
+}
+
+void SharedMemoryCliComponent::printStats(const SharedMemorySegmentStats &stats)
+{
+  TableBuilder<2> builder;
+  builder.add({ "Field", "Value" });
+  builder.add({ "Name", stats.name });
+  builder.add({ "AllocatedBytes", std::to_string(stats.allocatedBytes) });
+  builder.add({ "CapacityBytes", std::to_string(stats.capacityBytes) });
+  builder.add({ "FreeBytes", std::to_string(stats.freeBytes) });
+  builder.add({ "GrowCount", std::to_string(stats.growCount) });
+  builder.add({ "ShrinkCount", std::to_string(stats.shrinkCount) });
+  builder.add({ "RecoveryCount", std::to_string(stats.recoveryCount) });
+  builder.add({ "Generation", std::to_string(stats.generation) });
   std::cout << builder.build() << "\n";
 }
 

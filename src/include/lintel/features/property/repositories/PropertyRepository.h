@@ -2,6 +2,7 @@
 #define LOGGING_PROPERTYREPOSITORY_H
 
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "lintel/core/configuration/Configuration.h"
@@ -12,6 +13,31 @@
 
 namespace lintel {
 class PropertyBase;
+
+/**
+ * Filter for PropertyRepository::allOf; every field is a regular expression.
+ * The four coordinates are same-typed and follow the process/property
+ * hierarchy, so a named aggregate keeps them from being swapped at the call
+ * site.
+ */
+struct PropertyFilter
+{
+  /** Process name pattern; pass ".*" to match every process */
+  std::string m_processName{ ".*" };
+  /** Class name pattern; pass ".*" to match every class */
+  std::string m_className{ ".*" };
+  /** Instance name pattern; pass ".*" to match every instance */
+  std::string m_instanceName{ ".*" };
+  /** Property name pattern; pass ".*" to match every property */
+  std::string m_name{ ".*" };
+
+  /** Equality so the filter can be matched by value (trompeloeil, tests). */
+  friend bool operator==(const PropertyFilter &lhs, const PropertyFilter &rhs)
+  {
+    return lhs.m_processName == rhs.m_processName && lhs.m_className == rhs.m_className
+           && lhs.m_instanceName == rhs.m_instanceName && lhs.m_name == rhs.m_name;
+  }
+};
 
 /** Abstract base class for property repositories */
 class PropertyRepository
@@ -103,18 +129,9 @@ public:
    * "keep the configured default". The default is only reached for
    * `FilePropertyRepository`, whose values come from the XML configuration
    * and are never queried at runtime.
-   * @param processName regex for process name
-   * @param className regex for class name
-   * @param instanceName regex for instance name
-   * @param name regex for property name
+   * @param filter regexes for process, class, instance and property name
    */
-  virtual std::vector<std::shared_ptr<PropertyBase>> allOf(const std::string &processName = ".*",
-    const std::string &className = ".*",
-    const std::string &instanceName = ".*",
-    const std::string &name = ".*")
-  {
-    return {};
-  }
+  virtual std::vector<std::shared_ptr<PropertyBase>> allOf(const PropertyFilter &filter = {}) { return {}; }
 };
 
 }// namespace lintel

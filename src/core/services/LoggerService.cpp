@@ -260,9 +260,7 @@ void LoggerService::initSingleton(const std::shared_ptr<ProcessName> &processInf
 
 void LoggerService::initSingleton2() { m_instance = std::make_unique<LoggerService>(); }
 
-void LoggerService::logImpl(const char *file,
-  int line,
-  const char *function,
+void LoggerService::logImpl(const std::source_location &location,
   LogLevel lvl,
   std::string_view message,
   std::format_args args)
@@ -274,15 +272,16 @@ void LoggerService::logImpl(const char *file,
   try {
     text = std::vformat(message, args);
   } catch (const std::exception &ex) {
-    text = std::format("log formatting failed: {} [{}:{}]", ex.what(), file, line);
+    text = std::format("log formatting failed: {} [{}:{}]", ex.what(), location.file_name(), location.line());
   }
+  const spdlog::source_loc source{ location.file_name(), static_cast<int>(location.line()), location.function_name() };
   if (g_requestId.empty()) {
-    m_logger->log(spdlog::source_loc{ file, line, function }, level, std::string_view(text));
+    m_logger->log(source, level, std::string_view(text));
     return;
   }
   // the correlation id of the request the calling thread is serving: it ties the log lines
   // of one request together and matches the X-Request-Id header the server answered with
   text = std::format("[{}] {}", g_requestId, text);
-  m_logger->log(spdlog::source_loc{ file, line, function }, level, std::string_view(text));
+  m_logger->log(source, level, std::string_view(text));
 }
 }// namespace lintel

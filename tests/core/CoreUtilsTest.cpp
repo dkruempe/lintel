@@ -1,3 +1,4 @@
+#include <lintel/core/platform/Platform.h>
 #include <lintel/core/services/FileService.h>
 #include <lintel/core/utils/Cryption.h>
 #include <lintel/core/utils/MemorySize.h>
@@ -8,6 +9,7 @@
 
 #include <filesystem>
 #include <regex>
+#include <stdexcept>
 #include <string>
 
 #include "../helpers/PlatformCompat.h"
@@ -118,6 +120,23 @@ TEST_CASE("MemorySize: deserialize GB") { REQUIRE(MemorySize::deserialize("1GB")
 TEST_CASE("MemorySize: deserialize TB") { REQUIRE(MemorySize::deserialize("1TB") == 1000000000000); }
 
 TEST_CASE("MemorySize: deserialize byte suffix") { REQUIRE(MemorySize::deserialize("512B") == 512); }
+
+TEST_CASE("MemorySize: deserialize rejects invalid input")
+{
+  REQUIRE_THROWS_AS(MemorySize::deserialize(""), std::invalid_argument);
+  REQUIRE_THROWS_AS(MemorySize::deserialize("abc"), std::invalid_argument);
+  // trailing garbage behind the number
+  REQUIRE_THROWS_AS(MemorySize::deserialize("12XB"), std::invalid_argument);
+  REQUIRE_THROWS_AS(MemorySize::deserialize("1k5MB"), std::invalid_argument);
+}
+
+TEST_CASE("MemorySize: deserialize rejects overflow")
+{
+  // more digits than the numeric type can hold
+  REQUIRE_THROWS_AS(MemorySize::deserialize("99999999999999999999999999MB"), std::invalid_argument);
+  // fits the numeric type, but the unit multiplier overflows
+  REQUIRE_THROWS_AS(MemorySize::deserialize("18446744073709551615PB"), std::invalid_argument);
+}
 
 TEST_CASE("MemorySize: serialize bytes")
 {
@@ -272,4 +291,25 @@ TEST_CASE("Cryption: verifyOf supports legacy SHA-512 hash")
   REQUIRE(Cryption::verifyOf("test", legacy));
   REQUIRE_FALSE(Cryption::verifyOf("wrong", legacy));
 }
+
+TEST_CASE("Platform: expandHomeDirectory only expands a leading tilde")
+{
+  const std::string home = homeDirectory();
+  if (home.empty()) { SKIP("no home directory in this environment"); }
+
+  REQUIRE(expandHomeDirectory("~") == home);
+  REQUIRE(expandHomeDirectory("~/config.xml") == home + "/config.xml");
+  REQUIRE(expandHomeDirectory("~\\config.xml") == home + "\\config.xml");
+
+  // A tilde that is not the first character is a literal. Windows short names
+  // ("C:\Users\RUNNER~1\Temp\x.json") contain one, and replacing it
+  // everywhere turned that path into "C:\Users\RUNNERC:\Users\...".
+  const std::string shortName = "C:\\Users\\RUNNER~1\\Temp\\x.json";
+  REQUIRE(expandHomeDirectory(shortName) == shortName);
+  REQUIRE(expandHomeDirectory("/tmp/RUNNER~1/x.json") == "/tmp/RUNNER~1/x.json");
+  // a leading tilde followed by a name is another user's home, not ours
+  REQUIRE(expandHomeDirectory("~runner/x") == "~runner/x");
+  REQUIRE(expandHomeDirectory("") == "");
+}
+
 }// namespace lintel

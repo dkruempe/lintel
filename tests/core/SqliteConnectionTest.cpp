@@ -26,14 +26,14 @@ namespace {
   {
     std::string m_dbPath;
 
-    PragmaFixture() : m_dbPath(kPragmaTestDb()) { std::remove(m_dbPath.c_str()); }
+    PragmaFixture() : m_dbPath(kPragmaTestDb()) { static_cast<void>(std::remove(m_dbPath.c_str())); }
 
     ~PragmaFixture()
     {
-      std::remove(m_dbPath.c_str());
+      static_cast<void>(std::remove(m_dbPath.c_str()));
       // WAL mode creates -wal/-shm sidecar files next to the DB file
-      std::remove((m_dbPath + "-wal").c_str());
-      std::remove((m_dbPath + "-shm").c_str());
+      static_cast<void>(std::remove((m_dbPath + "-wal").c_str()));
+      static_cast<void>(std::remove((m_dbPath + "-shm").c_str()));
     }
 
     [[nodiscard]] std::shared_ptr<DatabaseConnectionEntry> connectionEntry() const
@@ -99,6 +99,37 @@ TEST_CASE("SQLite: foreign_keys ON rejects violating inserts", "[sqlite][pragma]
   REQUIRE_NOTHROW(statement.execute("insert into child (id, parent_id) values (1, 1)"));
   // missing parent must fail with a constraint violation
   REQUIRE_THROWS_AS(statement.execute("insert into child (id, parent_id) values (2, 999)"), db::SQLException);
+}
+
+TEST_CASE("SQLite: execute runs every statement of a script", "[sqlite][execute]")
+{
+  db::Connection connection(db::ConnectionType::SQLite, ":memory:");
+  db::Statement statement(connection);
+
+  // DDL plus DML in a single call: only the first statement would run if the prepare tail were ignored
+  statement.execute(
+    "create table multi (id integer primary key, name text);\n"
+    "insert into multi (id, name) values (1, 'first');\n"
+    "insert into multi (id, name) values (2, 'second');");
+
+  db::Result rows = statement.execute("select name from multi order by id");
+  REQUIRE(rows.getSize() == 2);
+  REQUIRE(rows.of(0).of(0).getValue<std::string>() == "first");
+  REQUIRE(rows.of(1).of(0).getValue<std::string>() == "second");
+
+  // the rows of all statements end up in the same result
+  db::Result combined = statement.execute("select 1 as value; select 2 as value");
+  REQUIRE(combined.getSize() == 2);
+}
+
+TEST_CASE("SQLite: execute reports a failure in a later statement", "[sqlite][execute]")
+{
+  db::Connection connection(db::ConnectionType::SQLite, ":memory:");
+  db::Statement statement(connection);
+  statement.execute("create table later (id integer primary key)");
+
+  REQUIRE_THROWS_AS(
+    statement.execute("insert into later (id) values (1); insert into missing (id) values (2);"), db::SQLException);
 }
 
 TEST_CASE("SQLite: foreign_keys ON applies to DatabaseConnectionEntry connections", "[sqlite][pragma]")

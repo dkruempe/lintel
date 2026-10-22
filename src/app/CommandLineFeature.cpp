@@ -2,6 +2,8 @@
 
 #include "lintel/core/di/Container.h"
 
+#include "lintel/features/cli/components/AdminCliComponent.h"
+#include "lintel/features/cli/components/EventBusCliComponent.h"
 #include "lintel/features/cli/components/HistoryCliComponent.h"
 #include "lintel/features/cli/components/MessageQueueCliComponent.h"
 #include "lintel/features/cli/components/ProcessCliComponent.h"
@@ -30,7 +32,9 @@ void CommandLineFeature::registerTypes(lintel::di::ContainerBuilder &builder)
   builder.registerType<ProcessCliComponent>().as<CommandLineComponent>().asSelf().singleInstance();
   builder.registerType<SharedMemoryCliComponent>().as<CommandLineComponent>().asSelf().singleInstance();
   builder.registerType<MessageQueueCliComponent>().as<CommandLineComponent>().asSelf().singleInstance();
+  builder.registerType<EventBusCliComponent>().as<CommandLineComponent>().asSelf().singleInstance();
   builder.registerType<HistoryCliComponent>().as<CommandLineComponent>().asSelf().singleInstance();
+  builder.registerType<AdminCliComponent>().as<CommandLineComponent>().asSelf().singleInstance();
 }
 
 void CommandLineFeature::initialize(std::shared_ptr<lintel::di::Container> container)

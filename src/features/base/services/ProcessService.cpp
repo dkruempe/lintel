@@ -64,13 +64,9 @@ ProcessService::ProcessService(std::shared_ptr<ProcessName> processName,
     m_historyService(std::move(historyService))
 {
   m_monitorWaitTime = registerProperty<std::chrono::seconds>(
-    "m_monitorWaitTime", std::chrono::seconds(1), "Wait time after monitor cycle", true, __FILE__, __LINE__);
-  m_processStopWaitTime = registerProperty<std::chrono::milliseconds>("m_processStopWaitTime",
-    std::chrono::milliseconds(200),
-    "Wait time for stopping a process",
-    true,
-    __FILE__,
-    __LINE__);
+    "m_monitorWaitTime", std::chrono::seconds(1), "Wait time after monitor cycle", true);
+  m_processStopWaitTime = registerProperty<std::chrono::milliseconds>(
+    "m_processStopWaitTime", std::chrono::milliseconds(200), "Wait time for stopping a process", true);
   // make sure that all variables are initialized for starting the thread
   m_process = std::make_shared<Process>(m_processName->getPath(), m_processName->getArgs());
   std::vector<std::shared_ptr<Entry>> entries = m_configuration->configurationOf<ProcessComponent>();
@@ -561,30 +557,56 @@ void ProcessService::monitorProcessGroups()
   }
 }
 
+void ProcessService::stopAllProcesses()
+{
+  // stop the monitor first, otherwise an autoRestart child that just exited
+  // would be spawned again between the stop and the terminate pass
+  m_running.store(false);
+  m_condition.notify_all();
+  if (m_monitorThread.joinable()) { m_monitorThread.join(); }
+  std::vector<ProcessExecutes> runningProcesses;
+  {
+    std::lock_guard<std::mutex> locker(m_processesMutex);
+    for (auto &[id, process] : m_processes) {
+      if (!process.getChild()->running()) { continue; }
+      runningProcesses.push_back(process);
+    }
+  }
+  // one failing process must not keep the others alive, so every call is
+  // guarded on its own (stopOf() writes a history entry, and the history
+  // service may already be shut down when this runs last)
+  for (auto &item : runningProcesses) {
+    try {
+      if (item.getChild()->running()) { stopOf(*item.getProcess()); }
+    } catch (const std::exception &exception) {
+      LOG_WARN("stop of {}/{} failed: {}",
+        item.getProcess()->getId(),
+        item.getProcess()->getPath().filename().string(),
+        exception.what());
+    }
+  }
+  for (auto &item : runningProcesses) {
+    try {
+      if (item.getChild()->running()) { terminateOf(*item.getProcess()); }
+    } catch (const std::exception &exception) {
+      LOG_WARN("terminate of {}/{} failed: {}",
+        item.getProcess()->getId(),
+        item.getProcess()->getPath().filename().string(),
+        exception.what());
+    }
+  }
+}
+
+void ProcessService::onShutdown() { stopAllProcesses(); }
+
 ProcessService::~ProcessService()
 {
+  // a destructor must not throw: stopAllProcesses() logs and locks, and both
+  // can fail when the logger or the history service is already gone
   try {
-    m_running.store(false);
-    m_condition.notify_all();
-    if (m_monitorThread.joinable()) { m_monitorThread.join(); }
-    std::vector<ProcessExecutes> runningProcesses;
-    {
-      std::lock_guard<std::mutex> locker(m_processesMutex);
-      for (auto &[id, process] : m_processes) {
-        if (!process.getChild()->running()) { continue; }
-        runningProcesses.push_back(process);
-      }
-    }
-    for (auto &item : runningProcesses) {
-      if (!item.getChild()->running()) { continue; }
-      stopOf(*item.getProcess());
-    }
-    for (auto &item : runningProcesses) {
-      if (!item.getChild()->running()) { continue; }
-      terminateOf(*item.getProcess());
-    }
-  } catch (const std::exception &e) {
-    static_cast<void>(e);
+    stopAllProcesses();
+  } catch (const std::exception &exception) {
+    static_cast<void>(exception);
   }
 }
 

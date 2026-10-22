@@ -181,11 +181,13 @@ void DatabasePropertyRepository::deleteOf(const std::vector<std::shared_ptr<Prop
   }
 }
 
-std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::allOf(const std::string &processName,
-  const std::string &className,
-  const std::string &instanceName,
-  const std::string &name)
+std::vector<std::shared_ptr<PropertyBase>> DatabasePropertyRepository::allOf(const PropertyFilter &filter)
 {
+  // SQL only understands LIKE, so the regex default ".*" becomes "%"
+  const std::string &processName = filter.m_processName;
+  const std::string &className = filter.m_className;
+  const std::string &instanceName = filter.m_instanceName;
+  const std::string &name = filter.m_name;
   std::string processNameLike = StringUtils::replaceAll(processName, ".*", "%");
   std::string classNameLike = StringUtils::replaceAll(className, ".*", "%");
   std::string instanceNameLike = StringUtils::replaceAll(instanceName, ".*", "%");

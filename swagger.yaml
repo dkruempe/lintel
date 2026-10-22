@@ -227,6 +227,505 @@ paths:
           description: Forbidden (wrong content type)
         "500":
           description: Internal server error
+  /messageQueue/stats/{processName}/{messageQueueName}:
+    get:
+      summary: Get message queue statistics
+      description: >
+        Returns the message queues matching the given name patterns with their
+        operational state as a JSON array. The payload is built by the same code
+        path as /messageQueue/{processName}/{messageQueueName}: every entry
+        carries NAME, PROCESS, MAX_MESSAGES, MESSAGES and CONSUMER_LAG plus
+        ALIVE, and - only while an owner is registered - OWNER_PID, OWNER_HOST,
+        OWNER_STATE, STARTED_AT, LAST_HEARTBEAT_AT and HEARTBEAT_AGE_MS, as well
+        as DEAD_LETTER_QUEUE and DEAD_LETTER_SIZE when a dead-letter queue is
+        configured. Absent optional fields are omitted from the JSON object.
+        CONSUMER_LAG is the number of messages still waiting for a consumer; the
+        queue has no consumer cursor of its own, so it equals MESSAGES.
+        With the optional query parameters 'after' and 'limit' the result is
+        keyset-paginated (ordered by queue name ascending) and returned as an
+        envelope object {items, has_more, next_after} whose entries are built
+        without a queue reading, i.e. with MESSAGES and CONSUMER_LAG set to 0.
+        Follow next_after to retrieve the next page. Reading requires a token of
+        a user in the "Admin-MessageQueue" or "User-MessageQueue" group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: processName
+          in: path
+          required: true
+          type: string
+        - name: messageQueueName
+          in: path
+          required: true
+          type: string
+        - name: after
+          in: query
+          required: false
+          type: string
+          description: Exclusive lower bound on queue name; use next_after of the previous page.
+        - name: limit
+          in: query
+          required: false
+          type: integer
+          minimum: 1
+          maximum: 1000
+          description: Maximum number of entries per page (default 100).
+      responses:
+        "200":
+          description: A successful response (array of message queues with their statistics, or paging envelope when after/limit is given)
+        "400":
+          description: Bad request (invalid limit)
+        "401":
+          description: Unauthorized
+        "403":
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
+  /messageQueue/purge/{processName}:
+    post:
+      summary: Purge a message queue
+      description: >
+        Removes every message that is currently in the named queue and answers
+        with the queue name and the number of removed messages
+        ({"NAME":"orders","PURGED":42}). The queue name is
+        looked up through a repository API that treats it as a pattern, so only an
+        exact name match is purged: a name that merely matches a queue as a
+        pattern (for example "mq-.*") answers 404, one call can therefore never
+        drain several queues. If opening the queue or deleting its messages fails,
+        the handler answers 500. Purging is destructive and requires a token of a
+        user in the "Admin-MessageQueue" group; a member of "User-MessageQueue"
+        alone gets 401.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: processName
+          in: path
+          required: true
+          type: string
+          description: Exact message queue name to drain; patterns are rejected with 404.
+      responses:
+        "200":
+          description: Queue purged (MessageQueuePurgeDto JSON)
+          schema:
+            type: object
+            required:
+              - NAME
+              - PURGED
+            properties:
+              NAME:
+                type: string
+                description: Name of the purged queue
+                example: orders
+              PURGED:
+                type: integer
+                format: int32
+                description: Number of messages that were removed
+                example: 42
+        "401":
+          description: Unauthorized (missing token or not in the Admin-MessageQueue group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown queue name (the name matches no queue exactly)
+        "500":
+          description: Internal server error (queue could not be opened or drained)
+  /messageQueue/recover:
+    post:
+      summary: Recover orphaned message queues
+      description: >
+        Reclaims the message queue entries whose recorded owner process is gone
+        and answers with the number of reclaimed entries ({"RECOVERED":2}). An
+        entry whose owner is still alive is never touched, no matter how old its
+        heartbeat is. Reclaiming mutates queue state and requires a token of a
+        user in the "Admin-MessageQueue" group; a member of "User-MessageQueue"
+        alone gets 401.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Entries reclaimed ({"RECOVERED":n})
+          schema:
+            type: object
+            required:
+              - RECOVERED
+            properties:
+              RECOVERED:
+                type: integer
+                format: int64
+                description: Number of reclaimed queue entries
+                example: 2
+        "401":
+          description: Unauthorized (missing token or not in the Admin-MessageQueue group)
+        "403":
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
+  /eventBus/buses:
+    get:
+      summary: List event buses
+      description: >
+        Returns every configured event bus with its validated bootstrap
+        configuration and, while the bus can be opened in its shared memory
+        segment (AVAILABLE), its runtime counters. A bus whose bootstrap
+        configuration is invalid is still listed, with AVAILABLE false and
+        without configuration fields; a bus whose segment is missing reports
+        AVAILABLE false but keeps its configuration. Reading requires a token
+        of a user in the "Admin-EventBus" or "User-EventBus" group.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All configured event buses
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/EventBusDto'
+        "401":
+          description: Unauthorized (missing token or not in an event bus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
+  /eventBus/bus/{name}:
+    get:
+      summary: Get one event bus
+      description: >
+        Returns the same object as one entry of /eventBus/buses for exactly one
+        bus. An unknown name answers 404. Reading requires a token of a user in
+        the "Admin-EventBus" or "User-EventBus" group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+      responses:
+        "200":
+          description: The event bus (EventBusDto JSON)
+          schema:
+            $ref: '#/definitions/EventBusDto'
+        "401":
+          description: Unauthorized (missing token or not in an event bus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+  /eventBus/publish/{name}:
+    post:
+      summary: Publish an event on a bus
+      description: >
+        Builds an Event from the JSON body and hands it to the bus. TOPIC and
+        TYPE are required, PAYLOAD is an optional string of at most 256 bytes,
+        PRIORITY is one of Critical, High, Normal or Low (default Normal) and
+        TARGET is BUS (default, the point-to-point queue) or SUBSCRIBERS (the
+        queues of every matching subscriber). Names longer than 31 bytes and
+        payloads longer than 256 bytes answer 400 instead of being truncated.
+        Publishing requires the "Publisher-EventBus" group (or "Admin-EventBus");
+        "User-EventBus" is read-only and gets 401.
+        A full queue is not an error: the answer carries PUBLISHED false and
+        the bus counts the event as dropped. With TARGET SUBSCRIBERS, PUBLISHED
+        is also false when no subscription matched the topic.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - TOPIC
+              - TYPE
+            properties:
+              TOPIC:
+                type: string
+                maxLength: 31
+                description: Topic of the event
+                example: orders.created
+              TYPE:
+                type: string
+                maxLength: 31
+                description: Type of the event
+                example: OrderCreated
+              PAYLOAD:
+                type: string
+                maxLength: 256
+                description: Payload of the event
+                example: "42"
+              PRIORITY:
+                type: string
+                enum: [Critical, High, Normal, Low]
+                description: Delivery priority inside the subscriber queues (default Normal)
+              TARGET:
+                type: string
+                enum: [BUS, SUBSCRIBERS]
+                description: BUS for the point-to-point queue (default), SUBSCRIBERS for a broadcast
+      responses:
+        "200":
+          description: The event was handed to the bus
+          schema:
+            type: object
+            required:
+              - BUS
+              - PRIORITY
+              - PUBLISHED
+              - SEQUENCE
+              - TARGET
+              - TOPIC
+              - TYPE
+            properties:
+              BUS:
+                type: string
+                example: orders
+              PRIORITY:
+                type: string
+                enum: [Critical, High, Normal, Low]
+              PUBLISHED:
+                type: boolean
+                description: False when every matching queue was full or no subscription matched
+              SEQUENCE:
+                type: integer
+                format: int64
+                description: Last sequence number assigned by the bus
+              TARGET:
+                type: string
+                enum: [BUS, SUBSCRIBERS]
+              TOPIC:
+                type: string
+              TYPE:
+                type: string
+        "400":
+          description: Body is not json, a required member is missing, a name or the payload is too long, or PRIORITY/TARGET is unknown
+        "401":
+          description: Unauthorized (missing token or not in an event bus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+  /eventBus/subscribe/{name}:
+    post:
+      summary: Subscribe a subscriber to a topic
+      description: >
+        Adds the named subscriber to the topic. An exact topic is registered
+        implicitly, so a subscriber can join a topic that was never published
+        before; wildcard patterns (`*` matches any sequence, `?` matches one
+        character) register themselves. The answer reports SUBSCRIBED false when
+        the topic or subscriber table of the bus is full. Subscribing requires a
+        token of a user in the "Admin-EventBus" group; a member of
+        "User-EventBus" alone gets 401.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - TOPIC
+              - SUBSCRIBER
+            properties:
+              TOPIC:
+                type: string
+                maxLength: 31
+                description: Topic name or wildcard pattern
+                example: orders.*
+              SUBSCRIBER:
+                type: string
+                maxLength: 31
+                description: Name of the subscriber
+                example: worker
+      responses:
+        "200":
+          description: The subscription was attempted
+          schema:
+            type: object
+            required:
+              - BUS
+              - SUBSCRIBER
+              - SUBSCRIBED
+              - TOPIC
+            properties:
+              BUS:
+                type: string
+              SUBSCRIBER:
+                type: string
+              SUBSCRIBED:
+                type: boolean
+                description: False when the topic or subscriber table is full
+              TOPIC:
+                type: string
+        "400":
+          description: Body is not json, a required member is missing or a name is too long
+        "401":
+          description: Unauthorized (missing token or not in the Admin-EventBus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+    delete:
+      summary: Unsubscribe a subscriber from a topic
+      description: >
+        Removes the subscription of the named subscriber from the topic and
+        answers with UNSUBSCRIBED false when there was no such subscription.
+        Unsubscribing requires a token of a user in the "Admin-EventBus" group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+        - name: body
+          in: body
+          required: true
+          schema:
+            type: object
+            required:
+              - TOPIC
+              - SUBSCRIBER
+            properties:
+              TOPIC:
+                type: string
+                maxLength: 31
+              SUBSCRIBER:
+                type: string
+                maxLength: 31
+      responses:
+        "200":
+          description: The subscription was removed or did not exist
+          schema:
+            type: object
+            required:
+              - BUS
+              - SUBSCRIBER
+              - TOPIC
+              - UNSUBSCRIBED
+            properties:
+              BUS:
+                type: string
+              SUBSCRIBER:
+                type: string
+              TOPIC:
+                type: string
+              UNSUBSCRIBED:
+                type: boolean
+                description: True when a subscription was removed
+        "400":
+          description: Body is not json, a required member is missing or a name is too long
+        "401":
+          description: Unauthorized (missing token or not in the Admin-EventBus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+  /eventBus/depth/{name}/{subscriber}:
+    get:
+      summary: Get the queue depth of one subscriber
+      description: >
+        Returns the best-effort number of events waiting in the queues of the
+        named subscriber. The value is approximate while other processes push
+        or pop events concurrently; an unknown subscriber reports 0. Reading
+        requires a token of a user in the "Admin-EventBus" or "User-EventBus"
+        group.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+        - name: subscriber
+          in: path
+          required: true
+          type: string
+          description: Subscriber name (at most 31 bytes)
+      responses:
+        "200":
+          description: Queue depth of the subscriber
+          schema:
+            type: object
+            required:
+              - BUS
+              - DEPTH
+              - SUBSCRIBER
+            properties:
+              BUS:
+                type: string
+              DEPTH:
+                type: integer
+                format: int64
+              SUBSCRIBER:
+                type: string
+        "400":
+          description: Subscriber name is longer than 31 bytes
+        "401":
+          description: Unauthorized (missing token or not in an event bus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
+  /eventBus/reset/{name}:
+    post:
+      summary: Reset an event bus
+      description: >
+        Drops every queued event of the bus and of all subscriber queues and
+        answers with RESET true. Resetting is destructive and requires a token
+        of a user in the "Admin-EventBus" group; a member of "User-EventBus"
+        alone gets 401.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: name
+          in: path
+          required: true
+          type: string
+          description: Exact bus name
+      responses:
+        "200":
+          description: The bus was reset
+          schema:
+            type: object
+            required:
+              - BUS
+              - RESET
+            properties:
+              BUS:
+                type: string
+              RESET:
+                type: boolean
+        "401":
+          description: Unauthorized (missing token or not in the Admin-EventBus group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown bus name
+        "500":
+          description: Internal server error
   /process/processes/{groupName}:
     get:
       summary: Get all processes
@@ -406,6 +905,179 @@ paths:
           description: Forbidden (wrong content type)
         "404":
           description: Unknown process id
+        "500":
+          description: Internal server error
+  /shm/stats/{segmentName}:
+    get:
+      summary: Get the runtime statistics of one segment
+      description: >
+        Returns the statistics of exactly one shared memory segment as a JSON
+        object with the fields NAME, ALLOCATED_BYTES, CAPACITY_BYTES,
+        FREE_BYTES, GROW_COUNT, SHRINK_COUNT, RECOVERY_COUNT and GENERATION.
+        CAPACITY_BYTES is the configured maximum size, or ALLOCATED_BYTES when
+        the segment has no maximum. Reading requires a token of a user in the
+        "Admin-Shm" or "User-Shm" group; an unknown segment answers 404.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: segmentName
+          in: path
+          required: true
+          type: string
+          description: Exact segment name
+      responses:
+        "200":
+          description: Segment statistics (JSON object)
+          schema:
+            type: object
+            required:
+              - NAME
+              - ALLOCATED_BYTES
+              - CAPACITY_BYTES
+              - FREE_BYTES
+              - GROW_COUNT
+              - SHRINK_COUNT
+              - RECOVERY_COUNT
+              - GENERATION
+            properties:
+              NAME:
+                type: string
+                description: Name of the segment
+                example: user
+              ALLOCATED_BYTES:
+                type: integer
+                format: int64
+                description: Currently allocated size of the segment
+                example: 67108864
+              CAPACITY_BYTES:
+                type: integer
+                format: int64
+                description: Configured maximum size, or the allocated size when there is no maximum
+                example: 268435456
+              FREE_BYTES:
+                type: integer
+                format: int64
+                description: Free bytes inside the segment
+                example: 12345678
+              GROW_COUNT:
+                type: integer
+                format: int64
+                description: Number of grow operations on this segment
+                example: 2
+              SHRINK_COUNT:
+                type: integer
+                format: int64
+                description: Number of shrink operations on this segment
+                example: 0
+              RECOVERY_COUNT:
+                type: integer
+                format: int64
+                description: Number of reclaimed remap locks of this segment
+                example: 1
+              GENERATION:
+                type: integer
+                format: int64
+                description: Generation counter of the segment mapping
+                example: 3
+        "401":
+          description: Unauthorized (missing token or neither in the Admin-Shm nor the User-Shm group)
+        "403":
+          description: Forbidden (wrong content type)
+        "404":
+          description: Unknown segment
+        "500":
+          description: Internal server error
+  /shm/cleanup:
+    post:
+      summary: Remove orphaned shared memory objects
+      description: >
+        Runs the cleanup service in apply mode: every registered shared memory
+        object whose recorded owner process is gone is removed from its segment
+        and answers with the counts of the run as a JSON object with the fields
+        DRY_RUN, SCANNED, ORPHANS, REMOVED and FAILED. DRY_RUN is always false
+        because this endpoint applies; the scan-only mode of the service is not
+        exposed. An object whose owner is still alive is never touched, no
+        matter how old its heartbeat is. A failed removal keeps its registration
+        and is retried by the next run, so FAILED may be non-zero while the
+        request still answers 200. Cleanup is destructive and requires a token
+        of a user in the "Admin-Shm" group; a member of "User-Shm" alone gets
+        401.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Cleanup applied (JSON object with the run counts)
+          schema:
+            type: object
+            required:
+              - DRY_RUN
+              - SCANNED
+              - ORPHANS
+              - REMOVED
+              - FAILED
+            properties:
+              DRY_RUN:
+                type: boolean
+                description: Always false - this endpoint applies the cleanup
+                example: false
+              SCANNED:
+                type: integer
+                format: int64
+                description: Number of registered objects inspected
+                example: 3
+              ORPHANS:
+                type: integer
+                format: int64
+                description: Number of orphaned objects found
+                example: 1
+              REMOVED:
+                type: integer
+                format: int64
+                description: Number of orphaned objects actually removed
+                example: 1
+              FAILED:
+                type: integer
+                format: int64
+                description: Number of removals that failed and are retried by the next run
+                example: 0
+        "401":
+          description: Unauthorized (missing token or not in the Admin-Shm group)
+        "403":
+          description: Forbidden (wrong content type)
+        "500":
+          description: Internal server error
+  /shm/recover:
+    post:
+      summary: Reclaim the remap locks of segments whose holder is gone
+      description: >
+        Reclaims the remap semaphore of every shared memory segment this
+        process maps whose recorded holder process no longer exists and answers
+        with the number of reclaimed locks ({"RECOVERED":1}). A lock whose
+        holder is still alive is never touched, no matter how long it has been
+        held. Opening a segment already runs the same check once, so this
+        endpoint is the repeat an operator needs for a segment that got stuck
+        later on. Reclaiming changes the lock state of a segment and requires a
+        token of a user in the "Admin-Shm" group; a member of "User-Shm" alone
+        gets 401.
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Locks reclaimed ({"RECOVERED":n})
+          schema:
+            type: object
+            required:
+              - RECOVERED
+            properties:
+              RECOVERED:
+                type: integer
+                format: int64
+                description: Number of reclaimed remap locks
+                example: 1
+        "401":
+          description: Unauthorized (missing token or not in the Admin-Shm group)
+        "403":
+          description: Forbidden (wrong content type)
         "500":
           description: Internal server error
   /shm/segments/{segmentName}:
@@ -916,6 +1588,85 @@ paths:
         "500":
           description: Internal server error
 definitions:
+  EventBusDto:
+    type: object
+    description: >
+      One configured event bus. The configuration fields are omitted while the
+      bootstrap entry is invalid; the runtime counters are omitted while the bus
+      cannot be opened in its shared memory segment.
+    properties:
+      NAME:
+        type: string
+        description: Name of the bus
+        example: orders
+      AVAILABLE:
+        type: boolean
+        description: True while the bus can be opened in its shared memory segment
+      BUS_CAPACITY:
+        type: integer
+        format: int64
+        description: Capacity of the point-to-point bus queue
+        example: 128
+      SUBSCRIBER_CAPACITY:
+        type: integer
+        format: int64
+        description: Capacity of every per-subscriber queue
+        example: 128
+      MAX_TOPICS:
+        type: integer
+        format: int64
+        description: Maximum number of registerable topics
+        example: 16
+      MAX_SUBSCRIBERS:
+        type: integer
+        format: int64
+        description: Maximum number of registerable subscribers
+        example: 32
+      MAX_PRIORITIES:
+        type: integer
+        format: int64
+        description: Number of priority queues per subscriber
+        example: 4
+      PUB_POLICY:
+        type: string
+        enum: [Fail, DropOldest, DropNewest, Block]
+        description: Drop policy when a queue is full
+      STICKY:
+        type: boolean
+        description: Whether sticky/last-value events are enabled
+      STICKY_TTL_MS:
+        type: integer
+        format: int32
+        description: TTL of sticky events in milliseconds
+        example: 60000
+      DROPPED:
+        type: integer
+        format: int64
+        description: Number of events dropped because a queue was full
+        example: 0
+      TOPIC_COUNT:
+        type: integer
+        format: int64
+        description: Number of registered topics
+        example: 2
+      SUBSCRIBER_COUNT:
+        type: integer
+        format: int64
+        description: Number of reserved subscriber slots
+        example: 1
+      BUS_DEPTH:
+        type: integer
+        format: int64
+        description: Best-effort depth of the point-to-point queue
+        example: 0
+      SEQUENCE:
+        type: integer
+        format: int64
+        description: Last sequence number assigned by the bus
+        example: 7
+    required:
+      - NAME
+      - AVAILABLE
   ProcessInfoDto:
     type: object
     properties:

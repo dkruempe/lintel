@@ -44,30 +44,18 @@ AuthService::AuthService(const std::shared_ptr<ProcessName> &processName,
   : PropertyRegistration(processName->getProcessName()), m_userRepository(std::move(userRepository)),
     m_scheduler(std::move(schedulerService))
 {
-  m_scheduleRate = registerProperty<std::chrono::seconds>("m_scheduleRate",
-    std::chrono::seconds(2),
-    "schedule rate of user tokens checks in seconds",
-    true,
-    __FILE__,
-    __LINE__);
+  m_scheduleRate = registerProperty<std::chrono::seconds>(
+    "m_scheduleRate", std::chrono::seconds(2), "schedule rate of user tokens checks in seconds", true);
   m_timeoutLogin = registerProperty<std::chrono::minutes>(
-    "m_timeoutLogin", std::chrono::minutes(5), "timeout of user login in minutes", true, __FILE__, __LINE__);
-  m_maxLoginFailures = registerProperty<int32_t>(
-    "m_maxLoginFailures", 5, "maximum failed login attempts per IP before lockout", true, __FILE__, __LINE__);
-  m_loginLockout = registerProperty<std::chrono::seconds>("m_loginLockout",
-    std::chrono::seconds(60),
-    "lockout duration after too many failed login attempts",
-    true,
-    __FILE__,
-    __LINE__);
+    "m_timeoutLogin", std::chrono::minutes(5), "timeout of user login in minutes", true);
+  m_maxLoginFailures =
+    registerProperty<int32_t>("m_maxLoginFailures", 5, "maximum failed login attempts per IP before lockout", true);
+  m_loginLockout = registerProperty<std::chrono::seconds>(
+    "m_loginLockout", std::chrono::seconds(60), "lockout duration after too many failed login attempts", true);
   m_maxLoginAttempts = registerProperty<int32_t>(
-    "m_maxLoginAttempts", 20, "maximum login attempts per IP within the rate limit window", true, __FILE__, __LINE__);
-  m_rateLimitWindow = registerProperty<std::chrono::seconds>("m_rateLimitWindow",
-    std::chrono::seconds(60),
-    "sliding window for login attempt rate limiting in seconds",
-    true,
-    __FILE__,
-    __LINE__);
+    "m_maxLoginAttempts", 20, "maximum login attempts per IP within the rate limit window", true);
+  m_rateLimitWindow = registerProperty<std::chrono::seconds>(
+    "m_rateLimitWindow", std::chrono::seconds(60), "sliding window for login attempt rate limiting in seconds", true);
 }
 
 std::optional<UserToken> AuthService::onLoginOf(const UserLogin &userLogin)

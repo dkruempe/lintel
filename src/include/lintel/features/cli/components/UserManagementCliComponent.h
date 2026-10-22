@@ -24,9 +24,6 @@ private:
     Undefined,
     // group operations
     AllGroups,
-    AddGroup,
-    RemoveGroup,
-    UpdateGroup,
     // user operations
     AllUsers,
     AddUser,

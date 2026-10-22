@@ -137,22 +137,21 @@ void CommandLineService::onPrompt()
   if (!m_terminalService->getLine().empty()) { std::cout << m_terminalService->getLine(); }
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) — named out-params, both mutated by the prompt loop.
-void CommandLineService::handleCommandInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt)
+CommandLineService::InputOutcome CommandLineService::handleCommandInput(const SymbolEvent &symbolEvent)
 {
-  tabPressed = false;
-  printPrompt = true;
+  // a command always resets the tab cycle and redraws the prompt
+  InputOutcome const outcome;
   std::string temp = symbolEvent.second;
   bool isLoggedIn = m_userApi->isLoggedIn();
   if (!isLoggedIn) {
     std::cout << "WARNING: timeout of login server wise => shutdown cli\n";
     SignalService::raiseSignal(SIGINT);
     m_running.store(false);
-    return;
+    return outcome;
   }
   if (std::cin.eof()) {
     onEndOfFile();
-    return;
+    return outcome;
   }
   LOG_TRACE("received input >{}<", temp);
   std::vector<std::string> flags = StringUtils::split(temp, ' ');
@@ -163,19 +162,17 @@ void CommandLineService::handleCommandInput(const SymbolEvent &symbolEvent, bool
   }
   if (m_menu.currentOf() != nullptr) {
     onComponentCommand(input, flags);
-    return;
+    return outcome;
   }
   onCommand(input, flags);
+  return outcome;
 }
 
-// NOLINTNEXTLINE(bugprone-easily-swappable-parameters) — named out-params, both mutated by the prompt loop.
-void CommandLineService::handleTabInput(const SymbolEvent &symbolEvent, bool &tabPressed, bool &printPrompt)
+CommandLineService::InputOutcome CommandLineService::handleTabInput(const SymbolEvent &symbolEvent, bool tabPressed)
 {
   if (symbolEvent.second.empty() && !tabPressed) {
     CommandLineUtils::beep();
-    tabPressed = true;
-    printPrompt = false;
-    return;
+    return { .m_tabPressed = true, .m_printPrompt = false };
   }
   if (!symbolEvent.second.empty()) {
     std::vector<std::string> commands;
@@ -195,15 +192,11 @@ void CommandLineService::handleTabInput(const SymbolEvent &symbolEvent, bool &ta
     if (commands.size() == 1) {
       std::string const missingPart = commands[0].substr(symbolEvent.second.length());
       for (char const c : missingPart) { m_terminalService->onKeyPressed({ KeyType::Ascii, c }, menuNameOf()); }
-      printPrompt = false;
-      tabPressed = false;
-      return;
+      return { .m_tabPressed = false, .m_printPrompt = false };
     }
     if (commands.empty()) {
       CommandLineUtils::beep();
-      tabPressed = true;
-      printPrompt = false;
-      return;
+      return { .m_tabPressed = true, .m_printPrompt = false };
     }
     std::cout << "\n\t";
     int32_t i = 0;
@@ -214,17 +207,14 @@ void CommandLineService::handleTabInput(const SymbolEvent &symbolEvent, bool &ta
       if (i % 10 > 0) { std::cout << "\t"; }
     }
     std::cout << "\n";
-    printPrompt = true;
-    tabPressed = false;
-    return;
+    return { .m_tabPressed = false, .m_printPrompt = true };
   }
-  printPrompt = true;
-  tabPressed = false;
   if (m_menu.currentOf() != nullptr) {
     m_menu.printCommandList();
-    return;
+    return { .m_tabPressed = false, .m_printPrompt = true };
   }
   m_commandParser.printCommandList(m_menu.allMenuEntriesOf());
+  return { .m_tabPressed = false, .m_printPrompt = true };
 }
 
 void CommandLineService::run()
@@ -260,12 +250,18 @@ void CommandLineService::run()
       tabPressed = false;
       break;
     }
-    case Symbol::Tab:
-      handleTabInput(symbolEvent, tabPressed, printPrompt);
+    case Symbol::Tab: {
+      InputOutcome const outcome = handleTabInput(symbolEvent, tabPressed);
+      tabPressed = outcome.m_tabPressed;
+      printPrompt = outcome.m_printPrompt;
       break;
-    case Symbol::Command:
-      handleCommandInput(symbolEvent, tabPressed, printPrompt);
+    }
+    case Symbol::Command: {
+      InputOutcome const outcome = handleCommandInput(symbolEvent);
+      tabPressed = outcome.m_tabPressed;
+      printPrompt = outcome.m_printPrompt;
       break;
+    }
     case Symbol::Up:
     case Symbol::Down: {
       auto commandHistoryEntry = symbolEvent.first == Symbol::Up ? m_commandLineHistoryService->previousOf(menuNameOf())

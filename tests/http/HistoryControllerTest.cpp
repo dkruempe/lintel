@@ -16,7 +16,6 @@
 #include <lintel/features/base/models/Group.h>
 #include <lintel/features/base/models/HistoryEntry.h>
 #include <lintel/features/base/models/User.h>
-#include <lintel/features/base/repositories/GroupRepository.h>
 #include <lintel/features/base/repositories/HistoryRepository.h>
 #include <lintel/features/http/controllers/HistoryController.h>
 #include <lintel/features/http/service/ContentType.h>
@@ -92,7 +91,6 @@ namespace {
     std::shared_ptr<EnvironmentConfiguration> m_envConfig;
     std::shared_ptr<Configuration> m_configuration;
     std::shared_ptr<DatabaseConnectionConfigurations> m_connectionConfigurations;
-    std::shared_ptr<GroupRepository> m_groupRepository;
     std::shared_ptr<HistoryRepository> m_historyRepository;
     std::shared_ptr<MockAuthService> m_authService;
     std::shared_ptr<httplib::Server> m_server = std::make_shared<httplib::Server>();
@@ -133,7 +131,6 @@ namespace {
         type_name<DatabaseConnectionComponent>(), m_dbPath, "", "", db::ConnectionType::SQLite, "default", 0, "", true);
       m_configuration->setEntries(std::vector<std::shared_ptr<Entry>>{ entry });
       m_connectionConfigurations = std::make_shared<DatabaseConnectionConfigurations>(m_configuration);
-      m_groupRepository = std::make_shared<GroupRepository>(m_connectionConfigurations);
       m_historyRepository = std::make_shared<HistoryRepository>(m_connectionConfigurations);
       m_authService = std::make_shared<MockAuthService>();
     }
@@ -149,10 +146,7 @@ namespace {
     HistoryControllerFixture &operator=(const HistoryControllerFixture &) = delete;
 
     /** @return a controller wired to the real SQLite history repository */
-    HistoryController makeController() const
-    {
-      return HistoryController(m_authService, m_groupRepository, m_historyRepository);
-    }
+    HistoryController makeController() const { return HistoryController(m_authService, m_historyRepository); }
 
     /** Register the routes of the controller, bind an ephemeral port and serve */
     void startServing(Controller &controller)

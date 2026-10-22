@@ -135,10 +135,7 @@ public:
 
   std::vector<std::shared_ptr<PropertyBase>> awake() override;
 
-  std::vector<std::shared_ptr<PropertyBase>> allOf(const std::string &processName,
-    const std::string &className,
-    const std::string &instanceName,
-    const std::string &name) override;
+  std::vector<std::shared_ptr<PropertyBase>> allOf(const PropertyFilter &filter) override;
 
   void onMigrate(int32_t currentActiveVersion) override;
 

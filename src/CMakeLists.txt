@@ -128,7 +128,6 @@ set(headers
     include/lintel/core/services/ISharedMemoryService.h
     include/lintel/core/services/PropertyRegistration.h
     include/lintel/features/base/services/SharedMemoryService.h
-    include/lintel/features/base/services/SharedMemoryRepositoryRegistry.h
     include/lintel/features/base/services/ShmConstructors.h
     include/lintel/core/services/SignalService.h
     include/lintel/core/services/StopWatchService.h
@@ -173,6 +172,7 @@ set(headers
     include/lintel/features/base/configuration/SharedMemorySegmentComponent.h
     include/lintel/features/base/configuration/SharedMemorySegmentEntry.h
     # features - base - controller
+    include/lintel/features/base/controller/EventBusDtos.h
     include/lintel/features/base/controller/GroupDto.h
     include/lintel/features/base/controller/HistoryDto.h
     include/lintel/features/base/controller/HistoryDtos.h
@@ -219,8 +219,10 @@ set(headers
     include/lintel/features/base/events/EventBus.h
     include/lintel/core/shm/BoostSegmentAllocator.h
     include/lintel/core/shm/ShmSegmentAccessor.h
+    include/lintel/core/shm/SegmentLayoutPolicy.h
     include/lintel/core/shm/ShmView.h
     include/lintel/core/shm/SharedMemoryRepository.h
+    include/lintel/core/shm/SharedMemoryRepositoryRegistry.h
     include/lintel/core/shm/containers/ArrayShm.h
     include/lintel/core/shm/containers/QueueShm.h
     include/lintel/core/shm/containers/RingBufferShm.h
@@ -266,6 +268,8 @@ set(headers
     include/lintel/features/cli/services/InputService.h
     include/lintel/features/cli/services/TerminalService.h
     include/lintel/features/cli/utils/CommandLineUtils.h
+    include/lintel/features/cli/components/AdminCliComponent.h
+    include/lintel/features/cli/components/EventBusCliComponent.h
     include/lintel/features/cli/components/HistoryCliComponent.h
     include/lintel/features/cli/components/MessageQueueCliComponent.h
     include/lintel/features/cli/components/ProcessCliComponent.h
@@ -293,7 +297,10 @@ set(headers
     include/lintel/features/http/service/HttpClientHelper.h
     include/lintel/features/http/service/Server.h
     include/lintel/features/http/service/TlsReloadRegistry.h
+    include/lintel/features/http/controllers/AdminApi.h
     include/lintel/features/http/controllers/AdminController.h
+    include/lintel/features/http/controllers/EventBusApi.h
+    include/lintel/features/http/controllers/EventBusController.h
     include/lintel/features/http/controllers/HistoryApi.h
     include/lintel/features/http/controllers/HistoryController.h
     include/lintel/features/http/controllers/MessageQueueApi.h
@@ -425,6 +432,7 @@ set(sources
     features/base/configuration/SharedMemorySegmentComponent.cpp
     features/base/configuration/SharedMemorySegmentEntry.cpp
     # features - base - controller
+    features/base/controller/EventBusDtos.cpp
     features/base/controller/GroupDto.cpp
     features/base/controller/HistoryDto.cpp
     features/base/controller/HistoryDtos.cpp
@@ -488,6 +496,8 @@ set(sources
     features/cli/services/InputService.cpp
     features/cli/services/TerminalService.cpp
     features/cli/utils/CommandLineUtils.cpp
+    features/cli/components/AdminCliComponent.cpp
+    features/cli/components/EventBusCliComponent.cpp
     features/cli/components/HistoryCliComponent.cpp
     features/cli/components/MessageQueueCliComponent.cpp
     features/cli/components/ProcessCliComponent.cpp
@@ -510,7 +520,10 @@ set(sources
     features/http/service/HttpStatusCode.cpp
     features/http/service/Server.cpp
     features/http/service/TlsReloadRegistry.cpp
+    features/http/controllers/AdminApi.cpp
     features/http/controllers/AdminController.cpp
+    features/http/controllers/EventBusApi.cpp
+    features/http/controllers/EventBusController.cpp
     features/http/controllers/HistoryApi.cpp
     features/http/controllers/HistoryController.cpp
     features/http/controllers/MessageQueueApi.cpp

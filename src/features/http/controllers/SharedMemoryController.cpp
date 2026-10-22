@@ -2,25 +2,94 @@
 
 #include <utility>
 
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
+#include "lintel/core/exceptions/ShmSegmentNotFound.h"
 #include "lintel/core/utils/MemorySize.h"
 #include "lintel/core/utils/RegexUtils.h"
 #include "lintel/features/base/controller/SharedMemoryRepositoriesDto.h"
 #include "lintel/features/base/controller/SharedMemorySegmentDto.h"
 #include "lintel/features/base/controller/SharedMemorySegmentsDto.h"
+#include "lintel/features/base/models/SharedMemorySegmentStats.h"
 
 namespace lintel {
+namespace {
+  /** Serialize the statistics of one segment.
+   *  @param stats statistics to write
+   *  @return JSON object with the uppercase field names used by the other DTOs */
+  std::string shmStatsJsonOf(const SharedMemorySegmentStats &stats)
+  {
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer writer(buffer);
+    writer.StartObject();
+    writer.String("NAME");
+    writer.String(stats.name.c_str());
+    writer.String("ALLOCATED_BYTES");
+    writer.Uint64(stats.allocatedBytes);
+    writer.String("CAPACITY_BYTES");
+    writer.Uint64(stats.capacityBytes);
+    writer.String("FREE_BYTES");
+    writer.Uint64(stats.freeBytes);
+    writer.String("GROW_COUNT");
+    writer.Uint64(stats.growCount);
+    writer.String("SHRINK_COUNT");
+    writer.Uint64(stats.shrinkCount);
+    writer.String("RECOVERY_COUNT");
+    writer.Uint64(stats.recoveryCount);
+    writer.String("GENERATION");
+    writer.Uint64(stats.generation);
+    writer.EndObject();
+    return std::string(buffer.GetString());
+  }
+
+  /** Serialize the counts of one cleanup run.
+   *  @param report report of scan() or apply()
+   *  @return JSON object with the uppercase field names used by the other DTOs */
+  std::string shmCleanupJsonOf(const SharedMemoryCleanupReport &report)
+  {
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer writer(buffer);
+    writer.StartObject();
+    writer.String("DRY_RUN");
+    writer.Bool(report.dryRun);
+    writer.String("SCANNED");
+    writer.Uint64(report.scanned);
+    writer.String("ORPHANS");
+    writer.Uint64(report.orphanCount());
+    writer.String("REMOVED");
+    writer.Uint64(report.removed.size());
+    writer.String("FAILED");
+    writer.Uint64(report.failed);
+    writer.EndObject();
+    return std::string(buffer.GetString());
+  }
+}// namespace
+
 SharedMemoryController::SharedMemoryController(const std::shared_ptr<IAuthService> &authServicie,
   std::shared_ptr<ISharedMemoryService> sharedMemoryService,
   std::shared_ptr<ISharedMemorySegmentManager> sharedMemorySegmentManager,
-  std::vector<std::shared_ptr<SharedMemoryRepository>> sharedMemoryRepositories)
+  std::vector<std::shared_ptr<SharedMemoryRepository>> sharedMemoryRepositories,
+  std::shared_ptr<SharedMemoryCleanupService> sharedMemoryCleanupService)
   : Controller(authServicie), m_sharedMemoryService(std::move(sharedMemoryService)),
     m_sharedMemorySegmentManager(std::move(sharedMemorySegmentManager)),
+    m_sharedMemoryCleanupService(std::move(sharedMemoryCleanupService)),
     m_sharedMemoryRepositories(std::move(sharedMemoryRepositories)),
     m_uuidSharedMemoryRepositories(build(m_sharedMemoryRepositories)), m_adminGroup("Admin-Shm", {}, true),
     m_userGroup("User-Shm", {}, true)
 {
   add(m_adminGroup);
   add(m_userGroup);
+}
+
+bool SharedMemoryController::canRead(const std::optional<UserToken> &user) const
+{
+  return user.has_value() && (user->m_user.has(m_userGroup) || user->m_user.has(m_adminGroup));
+}
+
+bool SharedMemoryController::canAdminister(const std::optional<UserToken> &user) const
+{
+  return user.has_value() && user->m_user.has(m_adminGroup);
 }
 
 std::map<std::string, std::shared_ptr<SharedMemoryRepository>> SharedMemoryController::build(
@@ -222,5 +291,111 @@ void SharedMemoryController::growSegmentOfPut(const httplib::Request &request,
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
   }
+}
+
+void SharedMemoryController::statsOfGet(const httplib::Request &request,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!canRead(user)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const std::string segmentName = request.matches[1];
+  const std::shared_ptr<SharedMemorySegment> segment = m_sharedMemorySegmentManager->of(segmentName);
+  if (segment == nullptr) {
+    LOG_WARN("statsOf: segment {} not found", segmentName);
+    response.status = HttpStatusCodes::NotFound;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  SharedMemorySegmentStats stats;
+  try {
+    stats = m_sharedMemoryService->statsOf(segment);
+  } catch (const ShmSegmentNotFound &error) {
+    // the segment manager knows the segment, but this process does not map it
+    LOG_WARN("statsOf: {}", error.what());
+    response.status = HttpStatusCodes::NotFound;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  response.set_content(shmStatsJsonOf(stats), contentType.getName());
+}
+
+void SharedMemoryController::cleanupOfPost(const httplib::Request & /*request*/,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  // cleanup removes objects, so only administrators may run it
+  if (!canAdminister(user)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (m_sharedMemoryCleanupService == nullptr) {
+    LOG_ERROR("cleanupOf: no cleanup service is registered");
+    response.status = HttpStatusCodes::InternalServerError;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const SharedMemoryCleanupReport report = m_sharedMemoryCleanupService->apply();
+  LOG_INFO("cleanupOf: scanned {} entries, removed {} orphans, {} failures",
+    report.scanned,
+    report.removed.size(),
+    report.failed);
+  response.set_content(shmCleanupJsonOf(report), contentType.getName());
+}
+
+void SharedMemoryController::recoverOfPost(const httplib::Request & /*request*/,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  // reclaiming a stuck remap lock changes the lock state of a segment, so only
+  // administrators may run it
+  if (!canAdminister(user)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  // One pass over the segments this process maps: locks whose holder is gone
+  // are reclaimed, locks of a living holder stay untouched.
+  const std::size_t recovered = m_sharedMemoryService->recover();
+  LOG_INFO("recoverOf: reclaimed {} orphaned remap locks", recovered);
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer writer(buffer);
+  writer.StartObject();
+  writer.String("RECOVERED");
+  writer.Uint64(recovered);
+  writer.EndObject();
+  response.set_content(std::string(buffer.GetString()), contentType.getName());
 }
 }// namespace lintel

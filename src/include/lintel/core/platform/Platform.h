@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <string>
+#include <string_view>
 
 #if defined(_WIN32)
 // Keep the transitive Windows headers from defining the min/max macros: the
@@ -75,6 +76,25 @@ inline std::string homeDirectory()
   const char *home = std::getenv("HOME");
   return home != nullptr ? home : std::string{};
 #endif
+}
+
+/**
+ * Expand a leading "~" to the user's home directory.
+ *
+ * Only a leading separator-less tilde is a home directory; a tilde elsewhere is
+ * a literal character. Windows short names such as "C:\Users\RUNNER~1\..."
+ * contain one, and replacing it unconditionally turned that path into garbage.
+ * @param path a path that may start with "~"
+ * @return the path with a leading "~" replaced by the home directory, unchanged
+ *         otherwise (or when the home directory cannot be resolved)
+ */
+inline std::string expandHomeDirectory(std::string_view path)
+{
+  if (path.empty() || path.front() != '~') { return std::string(path); }
+  if (path.size() > 1 && path[1] != '/' && path[1] != '\\') { return std::string(path); }
+  const std::string home = homeDirectory();
+  if (home.empty()) { return std::string(path); }
+  return home + std::string(path.substr(1));
 }
 
 /** @return the character that separates entries in the PATH environment variable */

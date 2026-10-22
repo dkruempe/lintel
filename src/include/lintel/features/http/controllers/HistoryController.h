@@ -20,7 +20,6 @@ private:
 
 public:
   explicit HistoryController(const std::shared_ptr<IAuthService> &authService,
-    std::shared_ptr<GroupRepository> groupRepository,
     std::shared_ptr<HistoryRepository> historyRepository);
 };
 

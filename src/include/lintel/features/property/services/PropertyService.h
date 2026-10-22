@@ -21,7 +21,7 @@
 
 #define DEFINE_PROPERTY(name, type, defaultValue, description, runtime) \
   std::shared_ptr<lintel::Property<type>> name =                        \
-    registerProperty<type>(std::string(#name), defaultValue, description, runtime, __FILE__, __LINE__)
+    registerProperty<type>(std::string(#name), defaultValue, description, runtime)
 #define LOAD_PROPERTIES() \
   if (propertyService != nullptr) { propertyService->getOrCreate(m_properties); }
 

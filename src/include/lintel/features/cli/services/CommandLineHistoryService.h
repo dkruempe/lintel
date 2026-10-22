@@ -4,6 +4,7 @@
 #include "lintel/core/services/PropertyRegistration.h"
 #include "lintel/features/cli/models/CommandHistoryEntry.h"
 #include <optional>
+#include <string_view>
 
 namespace lintel {
 /**
@@ -44,7 +45,7 @@ public:
    * @param menu
    * @return returns match if found
    */
-  std::optional<CommandHistoryEntry> startsWith(const std::string &command, const std::string &menu);
+  std::optional<CommandHistoryEntry> startsWith(const std::string &command, std::string_view menu);
 
   /**
    * historizes the last entered command in the local file
