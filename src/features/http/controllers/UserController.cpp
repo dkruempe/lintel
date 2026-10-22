@@ -1,9 +1,14 @@
 #include "lintel/features/http/controllers/UserController.h"
 
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
 #include <algorithm>
 #include <utility>
 
 #include "lintel/core/utils/Cryption.h"
+#include "lintel/core/utils/JsonUtils.h"
 #include "lintel/core/utils/StringUtils.h"
 #include "lintel/features/base/controller/UserDto.h"
 #include "lintel/features/base/controller/UserGroupDto.h"
@@ -16,6 +21,53 @@
 #include "lintel/features/http/service/HttpStatusCodes.h"
 
 namespace lintel {
+namespace {
+  /**
+   * @return {"group_name":"<group>","removed":<removed>}
+   *
+   * rapidjson writes the body so that a group name coming from the request
+   * (quotes, backslashes, control characters) cannot break the JSON.
+   */
+  std::string userGroupRemovedBody(const std::string &groupName, bool removed)
+  {
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    writer.StartObject();
+    writer.Key("group_name");
+    writer.String(groupName.c_str(), static_cast<rapidjson::SizeType>(groupName.size()));
+    writer.Key("removed");
+    writer.Bool(removed);
+    writer.EndObject();
+    return std::string(buffer.GetString(), buffer.GetSize());
+  }
+
+  /** @return {"group_name":"<group>","sub_group_name":"<sub>","<key>":<value>} */
+  std::string
+    userSubGroupBody(const std::string &groupName, const std::string &subGroupName, const char *key, bool value)
+  {
+    rapidjson::StringBuffer buffer;
+    rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
+    writer.StartObject();
+    writer.Key("group_name");
+    writer.String(groupName.c_str(), static_cast<rapidjson::SizeType>(groupName.size()));
+    writer.Key("sub_group_name");
+    writer.String(subGroupName.c_str(), static_cast<rapidjson::SizeType>(subGroupName.size()));
+    writer.Key(key);
+    writer.Bool(value);
+    writer.EndObject();
+    return std::string(buffer.GetString(), buffer.GetSize());
+  }
+
+  /** @return true if the group already lists @p subGroupName as a member */
+  bool hasSubGroupOf(const Group &group, const std::string &subGroupName)
+  {
+    const std::vector<Group> &members = group.getGroups();
+    return std::any_of(members.begin(), members.end(), [&subGroupName](const Group &member) -> bool {
+      return member.getGroupName() == subGroupName;
+    });
+  }
+}// namespace
+
 void UserController::loginOfPost(const httplib::Request &request,
   httplib::Response &response,
   const ContentType &contentType,
@@ -161,6 +213,202 @@ void UserController::allGroupsOfGroupNameAndIsVirtualGroupGet(const httplib::Req
     response.status = HttpStatusCodes::Forbidden;
     response.set_content("", contentType.getName());
   }
+}
+
+void UserController::createGroupOfPost(const httplib::Request &request,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  rapidjson::Document document;
+  document.Parse(request.body.c_str());
+  if (document.HasParseError() || !document.IsObject()) {
+    LOG_WARN("{} sent an unparsable group body", user->m_user.getUserName());
+    response.status = HttpStatusCodes::BadRequest;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  std::string groupName;
+  if (!json::getString(document, "group_name", groupName) || groupName.empty()) {
+    LOG_WARN("{} sent a group without a name", user->m_user.getUserName());
+    response.status = HttpStatusCodes::BadRequest;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  // The virtual flag is optional and defaults to a regular (persisted) group.
+  bool isVirtual = false;
+  json::getBool(document, "virtual", isVirtual);
+  if (isVirtual) {
+    // Virtual groups carry access rights and are defined in the code, so the
+    // repository rejects creating them over the API.
+    LOG_WARN("{} tried to create the virtual group {}", user->m_user.getUserName(), groupName);
+    response.status = HttpStatusCodes::BadRequest;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (m_groupRepository->of(groupName).has_value()) {
+    LOG_WARN("{} tried to create the existing group {}", user->m_user.getUserName(), groupName);
+    response.status = HttpStatusCodes::Conflict;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const Group group(groupName, {}, false);
+  m_groupRepository->createOf(group);
+  GroupDto groupDto(group);
+  response.status = HttpStatusCodes::OK;
+  response.set_content(groupDto.JsonSerializable::serialize(), contentType.getName());
+}
+
+void UserController::deleteGroupOfDelete(const httplib::Request &request,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const std::string groupName = request.matches[1];
+  const std::optional<Group> group = m_groupRepository->of(groupName);
+  if (!group.has_value()) {
+    response.status = HttpStatusCodes::NotFound;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  try {
+    m_groupRepository->deleteOf(group.value());
+  } catch (const std::exception &exception) {
+    // deleteOf() refuses groups that are still assigned to a user
+    LOG_WARN("{} failed to delete group {}: {}", user->m_user.getUserName(), groupName, exception.what());
+    response.status = HttpStatusCodes::Conflict;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  LOG_INFO("{} deleted group {}", user->m_user.getUserName(), groupName);
+  response.status = HttpStatusCodes::OK;
+  response.set_content(userGroupRemovedBody(groupName, true), contentType.getName());
+}
+
+void UserController::addGroupMemberOfPost(const httplib::Request &request,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const std::string groupName = request.matches[1];
+  const std::string subGroupName = request.matches[2];
+  const std::optional<Group> group = m_groupRepository->of(groupName);
+  if (!group.has_value()) {
+    response.status = HttpStatusCodes::NotFound;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const std::optional<Group> subGroup = m_groupRepository->of(subGroupName);
+  if (!subGroup.has_value()) {
+    response.status = HttpStatusCodes::NotFound;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (group->isVirtual()) {
+    // Virtual groups are the leaves of the hierarchy, they cannot collect members
+    LOG_WARN("{} tried to add a member to the virtual group {}", user->m_user.getUserName(), groupName);
+    response.status = HttpStatusCodes::BadRequest;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (!subGroup->isVirtual()) {
+    // Only virtual groups can be a member: they carry the access rights
+    LOG_WARN("{} tried to add the non virtual group {} to {}", user->m_user.getUserName(), subGroupName, groupName);
+    response.status = HttpStatusCodes::BadRequest;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const bool alreadyMember = hasSubGroupOf(group.value(), subGroupName);
+  if (!alreadyMember) { m_groupRepository->addGroupOf(group.value(), subGroup.value()); }
+  response.status = HttpStatusCodes::OK;
+  response.set_content(userSubGroupBody(groupName, subGroupName, "added", !alreadyMember), contentType.getName());
+}
+
+void UserController::removeGroupMemberOfDelete(const httplib::Request &request,
+  httplib::Response &response,
+  const ContentType &contentType,
+  const std::optional<UserToken> &user)
+{
+  if (!user.has_value()) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (!user->m_user.has(m_adminUser)) {
+    response.status = HttpStatusCodes::Unauthorized;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  if (contentType != ContentType::ApplicationJson) {
+    response.status = HttpStatusCodes::Forbidden;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const std::string groupName = request.matches[1];
+  const std::string subGroupName = request.matches[2];
+  const std::optional<Group> group = m_groupRepository->of(groupName);
+  if (!group.has_value()) {
+    response.status = HttpStatusCodes::NotFound;
+    response.set_content("", contentType.getName());
+    return;
+  }
+  const bool wasMember = hasSubGroupOf(group.value(), subGroupName);
+  if (wasMember) {
+    const std::optional<Group> subGroup = m_groupRepository->of(subGroupName);
+    if (!subGroup.has_value()) {
+      response.status = HttpStatusCodes::NotFound;
+      response.set_content("", contentType.getName());
+      return;
+    }
+    m_groupRepository->removeGroupOf(group.value(), subGroup.value());
+  }
+  response.status = HttpStatusCodes::OK;
+  response.set_content(userSubGroupBody(groupName, subGroupName, "removed", wasMember), contentType.getName());
 }
 
 void UserController::allUsersOfGet(const httplib::Request &request,

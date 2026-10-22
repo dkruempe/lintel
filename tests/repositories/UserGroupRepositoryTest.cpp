@@ -217,6 +217,34 @@ TEST_CASE("GroupRepository::deleteOf removes group", "[group_repository]")
   REQUIRE_FALSE(found.has_value());
 }
 
+TEST_CASE("GroupRepository::deleteOf removes the sub-group relations", "[group_repository]")
+{
+  // A deleted group may be the sub-group of another one. Leaving those rows in
+  // group_groups_relation made the next initGroups() dereference the gone group
+  // (m_groupMap.at) and abort the start.
+  RepoFixture fixture;
+  fixture.insertVirtualGroup("Child");
+  fixture.groupRepository->onAwake();
+  fixture.groupRepository->createOf(fixture.makeGroup("Parent"));
+
+  auto parent = fixture.groupRepository->of("Parent");
+  auto child = fixture.groupRepository->of("Child");
+  REQUIRE(parent.has_value());
+  REQUIRE(child.has_value());
+  fixture.groupRepository->addGroupOf(*parent, *child);
+  REQUIRE(fixture.groupRepository->of("Parent")->getGroups().size() == 1);
+
+  fixture.groupRepository->deleteOf(*child);
+
+  // a fresh repository on the same database is what a restart does
+  auto restarted = std::make_shared<GroupRepository>(fixture.connectionConfigurations);
+  REQUIRE_NOTHROW(restarted->onAwake());
+  REQUIRE_FALSE(restarted->of("Child").has_value());
+  auto parentAfterRestart = restarted->of("Parent");
+  REQUIRE(parentAfterRestart.has_value());
+  REQUIRE(parentAfterRestart->getGroups().empty());
+}
+
 TEST_CASE("GroupRepository::deleteOf fails when group is in use by user", "[group_repository]")
 {
   RepoFixture fixture;

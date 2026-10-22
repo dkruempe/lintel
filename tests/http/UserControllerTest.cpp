@@ -116,7 +116,12 @@ namespace {
     int m_port = -1;
     std::unique_ptr<httplib::Client> m_client;
 
-    UserControllerFixture()
+    /**
+     * @param withVirtualGroup seed an additional virtual group "ucVirtual" for
+     *        the subgroup tests; it stays absent for the listing tests, which
+     *        assert the seeded set of non-virtual groups
+     */
+    explicit UserControllerFixture(bool withVirtualGroup = false)
     {
       static int counter = 0;
       m_dbPath = (std::filesystem::temp_directory_path()
@@ -179,6 +184,10 @@ namespace {
           db::ParameterBuilder(connectionEntry).add(std::string("ucAdmins")).add(false));
         seedStatement.execute("insert into groups(name, virtual) values(?, ?)",
           db::ParameterBuilder(connectionEntry).add(std::string("ucUsers")).add(false));
+        if (withVirtualGroup) {
+          seedStatement.execute("insert into groups(name, virtual) values(?, ?)",
+            db::ParameterBuilder(connectionEntry).add(std::string("ucVirtual")).add(true));
+        }
       }
       m_groupRepository->onAwake();
     }
@@ -573,6 +582,332 @@ TEST_CASE("UserController::allGroupsOfGroupNameAndIsVirtualGroupGet combines nam
   REQUIRE(notMatching != nullptr);
   REQUIRE(notMatching->status == 200);
   REQUIRE(notMatching->body == "[]");
+}
+
+// --------------------------------------------------------------------------------------
+// /user/groups (write operations)
+// --------------------------------------------------------------------------------------
+
+TEST_CASE("UserController::createGroupOfPost stores a new group", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Post(
+    "/user/groups", ucAuthHeaders(ucTokenAdmin), R"({"group_name":"ucCreated","virtual":false})", "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+  REQUIRE(response->body.find("ucCreated") != std::string::npos);
+
+  const auto created = fixture.m_groupRepository->of("ucCreated");
+  REQUIRE(created.has_value());
+  REQUIRE_FALSE(created->isVirtual());
+}
+
+TEST_CASE("UserController::createGroupOfPost returns 409 for an existing group", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Post(
+    "/user/groups", ucAuthHeaders(ucTokenAdmin), R"({"group_name":"ucAdmins","virtual":false})", "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 409);
+  REQUIRE(response->body.empty());
+}
+
+TEST_CASE("UserController::createGroupOfPost returns 400 for an empty or missing group name", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  ALLOW_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto emptyName = fixture.m_client->Post(
+    "/user/groups", ucAuthHeaders(ucTokenAdmin), R"({"group_name":"","virtual":false})", "application/json");
+  REQUIRE(emptyName != nullptr);
+  REQUIRE(emptyName->status == 400);
+
+  auto missingName =
+    fixture.m_client->Post("/user/groups", ucAuthHeaders(ucTokenAdmin), R"({"virtual":false})", "application/json");
+  REQUIRE(missingName != nullptr);
+  REQUIRE(missingName->status == 400);
+
+  auto malformed = fixture.m_client->Post("/user/groups", ucAuthHeaders(ucTokenAdmin), "not json", "application/json");
+  REQUIRE(malformed != nullptr);
+  REQUIRE(malformed->status == 400);
+}
+
+TEST_CASE("UserController::createGroupOfPost returns 400 for a virtual group", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Post(
+    "/user/groups", ucAuthHeaders(ucTokenAdmin), R"({"group_name":"ucVirtualNew","virtual":true})", "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 400);
+  REQUIRE_FALSE(fixture.m_groupRepository->of("ucVirtualNew").has_value());
+}
+
+TEST_CASE("UserController::createGroupOfPost returns 401 for a caller without Admin-User", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucPlainUser, ucTokenPlain));
+
+  auto response = fixture.m_client->Post(
+    "/user/groups", ucAuthHeaders(ucTokenPlain), R"({"group_name":"ucDenied","virtual":false})", "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 401);
+  REQUIRE_FALSE(fixture.m_groupRepository->of("ucDenied").has_value());
+}
+
+TEST_CASE("UserController::createGroupOfPost returns 403 for a non json content type", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Post(
+    "/user/groups", ucAuthHeaders(ucTokenAdmin), R"({"group_name":"ucPlainBody","virtual":false})", "text/plain");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 403);
+  REQUIRE_FALSE(fixture.m_groupRepository->of("ucPlainBody").has_value());
+}
+
+TEST_CASE("UserController::deleteGroupOfDelete removes a group", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Delete("/user/groups/ucUsers", ucAuthHeaders(ucTokenAdmin));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+  REQUIRE(response->body.find("\"removed\":true") != std::string::npos);
+  REQUIRE_FALSE(fixture.m_groupRepository->of("ucUsers").has_value());
+}
+
+TEST_CASE("UserController::deleteGroupOfDelete returns 404 for an unknown group", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Delete("/user/groups/ucGhost", ucAuthHeaders(ucTokenAdmin));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 404);
+}
+
+TEST_CASE("UserController::deleteGroupOfDelete returns 409 for a group still in use", "[user_controller]")
+{
+  UserControllerFixture fixture;
+  const User member("Mem", "Ber", User::Male, "member@uc.test", "ucMember", "hash", {});
+  fixture.m_userRepository->createOf(member);
+  fixture.m_userRepository->addGroupsOf(member, { Group("ucAdmins", {}, false) });
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Delete("/user/groups/ucAdmins", ucAuthHeaders(ucTokenAdmin));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 409);
+  REQUIRE(fixture.m_groupRepository->of("ucAdmins").has_value());
+}
+
+TEST_CASE("UserController::addGroupMemberOfPost adds a virtual group to a collecting group", "[user_controller]")
+{
+  UserControllerFixture fixture(true);
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Post(
+    "/user/groups/ucAdmins/subgroups/ucVirtual", ucAuthHeaders(ucTokenAdmin), "", "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+  REQUIRE(response->body.find("\"added\":true") != std::string::npos);
+
+  const auto group = fixture.m_groupRepository->of("ucAdmins");
+  REQUIRE(group.has_value());
+  REQUIRE(group->getGroups().size() == 1);
+  REQUIRE(group->getGroups()[0].getGroupName() == "ucVirtual");
+}
+
+TEST_CASE("UserController::addGroupMemberOfPost is idempotent for an existing member", "[user_controller]")
+{
+  UserControllerFixture fixture(true);
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  ALLOW_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto first = fixture.m_client->Post(
+    "/user/groups/ucAdmins/subgroups/ucVirtual", ucAuthHeaders(ucTokenAdmin), "", "application/json");
+  REQUIRE(first != nullptr);
+  REQUIRE(first->status == 200);
+
+  auto second = fixture.m_client->Post(
+    "/user/groups/ucAdmins/subgroups/ucVirtual", ucAuthHeaders(ucTokenAdmin), "", "application/json");
+  REQUIRE(second != nullptr);
+  REQUIRE(second->status == 200);
+  REQUIRE(second->body.find("\"added\":false") != std::string::npos);
+
+  const auto group = fixture.m_groupRepository->of("ucAdmins");
+  REQUIRE(group.has_value());
+  REQUIRE(group->getGroups().size() == 1);
+}
+
+TEST_CASE("UserController::addGroupMemberOfPost returns 404 for an unknown group or subgroup", "[user_controller]")
+{
+  UserControllerFixture fixture(true);
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  ALLOW_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto unknownGroup = fixture.m_client->Post(
+    "/user/groups/ucGhost/subgroups/ucVirtual", ucAuthHeaders(ucTokenAdmin), "", "application/json");
+  REQUIRE(unknownGroup != nullptr);
+  REQUIRE(unknownGroup->status == 404);
+
+  auto unknownSubGroup = fixture.m_client->Post(
+    "/user/groups/ucAdmins/subgroups/ucGhost", ucAuthHeaders(ucTokenAdmin), "", "application/json");
+  REQUIRE(unknownSubGroup != nullptr);
+  REQUIRE(unknownSubGroup->status == 404);
+}
+
+TEST_CASE("UserController::addGroupMemberOfPost rejects a non virtual subgroup with 400", "[user_controller]")
+{
+  UserControllerFixture fixture(true);
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Post(
+    "/user/groups/ucAdmins/subgroups/ucUsers", ucAuthHeaders(ucTokenAdmin), "", "application/json");
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 400);
+
+  const auto group = fixture.m_groupRepository->of("ucAdmins");
+  REQUIRE(group.has_value());
+  REQUIRE(group->getGroups().empty());
+}
+
+TEST_CASE("UserController::removeGroupMemberOfDelete removes a member", "[user_controller]")
+{
+  UserControllerFixture fixture(true);
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  ALLOW_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto added = fixture.m_client->Post(
+    "/user/groups/ucAdmins/subgroups/ucVirtual", ucAuthHeaders(ucTokenAdmin), "", "application/json");
+  REQUIRE(added != nullptr);
+  REQUIRE(added->status == 200);
+
+  auto removed = fixture.m_client->Delete("/user/groups/ucAdmins/subgroups/ucVirtual", ucAuthHeaders(ucTokenAdmin));
+  REQUIRE(removed != nullptr);
+  REQUIRE(removed->status == 200);
+  REQUIRE(removed->body.find("\"removed\":true") != std::string::npos);
+
+  const auto group = fixture.m_groupRepository->of("ucAdmins");
+  REQUIRE(group.has_value());
+  REQUIRE(group->getGroups().empty());
+}
+
+TEST_CASE("UserController::removeGroupMemberOfDelete reports an absent member as not removed", "[user_controller]")
+{
+  UserControllerFixture fixture(true);
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Delete("/user/groups/ucAdmins/subgroups/ucVirtual", ucAuthHeaders(ucTokenAdmin));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 200);
+  REQUIRE(response->body.find("\"removed\":false") != std::string::npos);
+}
+
+TEST_CASE("UserController::removeGroupMemberOfDelete returns 404 for an unknown group", "[user_controller]")
+{
+  UserControllerFixture fixture(true);
+  auto controller = fixture.makeController();
+  fixture.startServing(controller);
+  REQUIRE(fixture.isReady());
+
+  REQUIRE_CALL(*fixture.m_authService, onAccessOf(ANY(const UserTokenLogin &)))
+    .TIMES(1)
+    .LR_RETURN(ucTokenOf(ucAdminUser, ucTokenAdmin));
+
+  auto response = fixture.m_client->Delete("/user/groups/ucGhost/subgroups/ucVirtual", ucAuthHeaders(ucTokenAdmin));
+  REQUIRE(response != nullptr);
+  REQUIRE(response->status == 404);
 }
 
 // --------------------------------------------------------------------------------------
@@ -1174,6 +1509,10 @@ TEST_CASE("UserController: every guarded handler rejects a missing bearer token 
   REQUIRE(fixture.m_client->Post("/user/add", "{}", "application/json")->status == 401);
   REQUIRE(fixture.m_client->Put("/user/update", "{}", "application/json")->status == 401);
   REQUIRE(fixture.m_client->Put("/user/password", "{}", "application/json")->status == 401);
+  REQUIRE(fixture.m_client->Post("/user/groups", "{}", "application/json")->status == 401);
+  REQUIRE(fixture.m_client->Delete("/user/groups/ucAdmins")->status == 401);
+  REQUIRE(fixture.m_client->Post("/user/groups/ucAdmins/subgroups/ucUsers", "", "application/json")->status == 401);
+  REQUIRE(fixture.m_client->Delete("/user/groups/ucAdmins/subgroups/ucUsers")->status == 401);
   for (const auto &[path, status] : plainDeletes) { REQUIRE(fixture.m_client->Delete(path)->status == status); }
 }
 
@@ -1240,6 +1579,13 @@ TEST_CASE("UserController: every json-only handler rejects a non json content ty
   REQUIRE(fixture.m_client->Put("/user/update", ucAuthHeaders(ucTokenAdmin), "{}", "text/plain")->status == 403);
   REQUIRE(fixture.m_client->Put("/user/password", ucAuthHeaders(ucTokenAdmin), "{}", "text/plain")->status == 403);
   REQUIRE(fixture.m_client->Delete("/user/delete", getHeaders)->status == 403);
+  REQUIRE(fixture.m_client->Post("/user/groups", ucAuthHeaders(ucTokenAdmin), "{}", "text/plain")->status == 403);
+  REQUIRE(fixture.m_client->Delete("/user/groups/ucAdmins", getHeaders)->status == 403);
+  REQUIRE(
+    fixture.m_client->Post("/user/groups/ucAdmins/subgroups/ucUsers", ucAuthHeaders(ucTokenAdmin), "", "text/plain")
+      ->status
+    == 403);
+  REQUIRE(fixture.m_client->Delete("/user/groups/ucAdmins/subgroups/ucUsers", getHeaders)->status == 403);
 }
 
 TEST_CASE("UserController::allUsersOfUserNameGet returns the paging envelope when a limit is given",

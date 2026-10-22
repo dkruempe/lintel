@@ -19,6 +19,10 @@ public:
   MAKE_MOCK1(allOf, std::vector<GroupDto>(const std::string &), override);
   MAKE_MOCK2(allOf, std::vector<GroupDto>(const std::string &, bool), override);
   MAKE_MOCK1(allOf, std::vector<GroupDto>(bool), override);
+  MAKE_MOCK1(createGroupOf, bool(const GroupDto &), override);
+  MAKE_MOCK1(deleteGroupOf, bool(const std::string &), override);
+  MAKE_MOCK2(addSubGroupOf, bool(const std::string &, const std::string &), override);
+  MAKE_MOCK2(removeSubGroupOf, bool(const std::string &, const std::string &), override);
   MAKE_MOCK0(allUsersOf, std::vector<UserDto>(), override);
   MAKE_MOCK1(allUsersOf, std::vector<UserDto>(const std::string &), override);
   MAKE_MOCK1(createOf, void(const UserDto &), override);

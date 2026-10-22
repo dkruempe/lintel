@@ -24,6 +24,10 @@ private:
     Undefined,
     // group operations
     AllGroups,
+    AddGroup,
+    RemoveGroup,
+    AddSubGroup,
+    RemoveSubGroup,
     // user operations
     AllUsers,
     AddUser,
@@ -45,6 +49,11 @@ private:
    */
   std::optional<std::string> m_groupName;
   std::optional<bool> m_isVirtualGroup;
+  /*
+   * Command: AddSubGroup
+   * Command: RemoveSubGroup
+   */
+  std::optional<std::string> m_subGroupName;
   /*
    * Command: AllUsers
    * Command: AddUser

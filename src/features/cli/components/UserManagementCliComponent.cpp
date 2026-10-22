@@ -18,6 +18,25 @@ UserManagementCliComponent::UserManagementCliComponent(std::shared_ptr<UserApi> 
         { "--is-virtual", "-v" }, &m_isVirtualGroup, "Limits search result to virtual or non virtual groups"),
     AllGroups);
   m_commandParser.addCommand(
+    Command("group_add", "Creates a group!")
+      .addArgument({ "--group", "-g" }, &m_groupName, "Name of the group which should be created", false)
+      .addArgument({ "--virtual", "-v" }, &m_isVirtualGroup, "Creates a virtual group", true),
+    AddGroup);
+  m_commandParser.addCommand(
+    Command("group_remove", "Deletes a group!")
+      .addArgument({ "--group", "-g" }, &m_groupName, "Name of the group which should be deleted", false),
+    RemoveGroup);
+  m_commandParser.addCommand(
+    Command("group_add_subgroup", "Adds a virtual group as member of a collecting group!")
+      .addArgument({ "--group", "-g" }, &m_groupName, "Name of the collecting group", false)
+      .addArgument({ "--subgroup", "-s" }, &m_subGroupName, "Name of the virtual group to add", false),
+    AddSubGroup);
+  m_commandParser.addCommand(
+    Command("group_remove_subgroup", "Removes a virtual group from a collecting group!")
+      .addArgument({ "--group", "-g" }, &m_groupName, "Name of the collecting group", false)
+      .addArgument({ "--subgroup", "-s" }, &m_subGroupName, "Name of the virtual group to remove", false),
+    RemoveSubGroup);
+  m_commandParser.addCommand(
     Command("show_users", "Show all available users!")
       .addArgument(
         { "--user-name", "-u" }, &m_userName, "Limits search result to given user name or pattern matching", true),
@@ -60,10 +79,12 @@ UserManagementCliComponent::UserManagementCliComponent(std::shared_ptr<UserApi> 
  * Dispatches an entered CLI command to the UserApi.
  *
  * Flow: the parser splits the input into a command and its parameters, then a
- * switch over the eight commands executes the matching UserApi operation and
- * prints the result. All filters (group name, virtual group) are taken from the
- * previously set session context, not from the parameters - the CLI session
- * carries them.
+ * switch over the registered commands executes the matching UserApi operation
+ * and prints the result. Filter flags (group name, virtual group) of the
+ * listing commands are taken from the parsed parameters of that command, not
+ * from previously executed ones - the parser resets them for every command.
+ * The group management commands take the target names from the parameters as
+ * well.
  *
  * Every call is wrapped in a try/catch: a failed UserApi operation should not
  * end the menu loop but show up as an error message. The handler therefore
@@ -80,7 +101,7 @@ void UserManagementCliComponent::onCommand(const UserDto &userDto,
   try {
     Commands command = m_commandParser.parse(input, parameters);
     switch (command) {
-      // groups: filters come from the session context, not from the parameters.
+      // groups: the four listing filter combinations of name and virtual flag.
     case AllGroups:
       if (!m_groupName.has_value() && !m_isVirtualGroup.has_value()) {
         printGroups(m_userApi->allOf());
@@ -92,6 +113,46 @@ void UserManagementCliComponent::onCommand(const UserDto &userDto,
         printGroups(m_userApi->allOf(m_groupName.value(), m_isVirtualGroup.value()));
       }
       break;
+      // groups: create and delete take the name from the parameters; the
+      // virtual flag is only meaningful for the creation.
+    case AddGroup: {
+      if (!m_groupName.has_value()) {
+        std::cerr << "ERROR: please set the group name\n";
+        break;
+      }
+      GroupDto groupDto(Group(m_groupName.value(), {}, m_isVirtualGroup.value_or(false)));
+      if (!m_userApi->createGroupOf(groupDto)) { std::cerr << "ERROR: failed to create group\n"; }
+      break;
+    }
+    case RemoveGroup: {
+      if (!m_groupName.has_value()) {
+        std::cerr << "ERROR: please set the group name\n";
+        break;
+      }
+      if (!m_userApi->deleteGroupOf(m_groupName.value())) { std::cerr << "ERROR: failed to delete group\n"; }
+      break;
+    }
+      // subgroups: a collecting group plus the virtual group to add or remove.
+    case AddSubGroup: {
+      if (!m_groupName.has_value() || !m_subGroupName.has_value()) {
+        std::cerr << "ERROR: please set the group and subgroup name\n";
+        break;
+      }
+      if (!m_userApi->addSubGroupOf(m_groupName.value(), m_subGroupName.value())) {
+        std::cerr << "ERROR: failed to add subgroup\n";
+      }
+      break;
+    }
+    case RemoveSubGroup: {
+      if (!m_groupName.has_value() || !m_subGroupName.has_value()) {
+        std::cerr << "ERROR: please set the group and subgroup name\n";
+        break;
+      }
+      if (!m_userApi->removeSubGroupOf(m_groupName.value(), m_subGroupName.value())) {
+        std::cerr << "ERROR: failed to remove subgroup\n";
+      }
+      break;
+    }
       // users: same, the same four filter combinations.
     case AllUsers: {
       if (m_userName.has_value()) {

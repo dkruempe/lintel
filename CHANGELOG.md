@@ -8,6 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Group management over HTTP and in the CLI.** `POST /user/groups`, `DELETE /user/groups/{name}`
+  and `POST`/`DELETE` `/user/groups/{name}/subgroups/{sub}` (all `Admin-User`) expose the group
+  operations `GroupRepository` already had; the CLI gains `group_add`, `group_remove`,
+  `group_add_subgroup` and `group_remove_subgroup`. Virtual groups stay code-defined and are
+  rejected with 400, and a group that a user still belongs to cannot be deleted (409).
 - **Migration hook for shared memory segments.** `lintel::shm::SegmentLayoutPolicy` lets the
   application decide what happens when a segment was written with another object layout: refuse
   (default), recreate, or run a registered migrator that sees the untouched segment file and can
@@ -297,6 +302,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Hypodermic was an unmaintained dependency; `lintel::di` replaces it.
 
 ### Fixed
+- **Deleting a group left dangling sub-group relations.** `GroupRepository::deleteOf()` removed the
+  `groups` row but not the `group_groups_relation` rows pointing at it, so the next `initGroups()`
+  dereferenced the gone group (`m_groupMap.at`) and aborted the start. It now removes the relations
+  in both directions and drops the group from the member lists of its parents.
 - **The SHM message queue was not an IPC mechanism.** Every process built its own ring in the
   segment, so `MessageQueueShmCore` only worked inside one process. A fork-based test now proves
   that a child process finds the queue by name and that a message crosses the boundary.

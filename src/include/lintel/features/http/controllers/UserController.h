@@ -29,6 +29,14 @@ private:
 
   ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+)/([^\/]+))", Get, allGroupsOfGroupNameAndIsVirtualGroup);
 
+  ADD_HANDLER_METHOD(R"(/user/groups)", Post, createGroupOf);
+
+  ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+))", Delete, deleteGroupOf);
+
+  ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+)/subgroups/([^\/]+))", Post, addGroupMemberOf);
+
+  ADD_HANDLER_METHOD(R"(/user/groups/([^\/]+)/subgroups/([^\/]+))", Delete, removeGroupMemberOf);
+
   ADD_HANDLER_METHOD(R"(/user/users)", Get, allUsersOf);
 
   ADD_HANDLER_METHOD(R"(/user/users/([^\/]+))", Get, allUsersOfUserName);
