@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <memory>
+#include <new>
 #include <string>
 #include <vector>
 
@@ -18,6 +19,8 @@
 #include "lintel/core/persistence/DatabaseConnectionConfigurations.h"
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/shm/BoostSegmentAllocator.h"
+#include "lintel/core/shm/ShmObjectHeader.h"
+#include "lintel/core/shm/ShmSegmentAccessor.h"
 #include "lintel/core/utils/TypeName.h"
 #include "lintel/features/base/configuration/EventBusComponent.h"
 #include "lintel/features/base/configuration/EventBusEntry.h"
@@ -120,7 +123,14 @@ namespace {
   {
     Segment mapping(boost::interprocess::open_only, path.string().c_str());
     BoostSegmentAllocator allocator(*mapping.get_segment_manager());
-    mapping.find_or_construct<EventBus>(name)(name, config, ShmSegmentAccessor(allocator));
+    const ShmSegmentAccessor accessor(allocator);
+    void *payload = accessor.findOrConstructPayload(name,
+      sizeof(EventBus),
+      alignof(EventBus),
+      shm::payloadTypeIdOf<EventBus>(),
+      shm::ShmObjectOptions{ .payloadVersion = 1, .persistence = shm::ShmPersistence::Volatile });
+    REQUIRE(payload != nullptr);
+    ::new (payload) EventBus(name, config, accessor);
   }
 
   std::shared_ptr<DatabaseConnectionEntry> sqliteEntry(const std::filesystem::path &dbPath)

@@ -121,6 +121,7 @@ class SharedMemoryArrayRepository : public SharedMemoryRepository
 private:
   mutable std::array<DATA, MaxSize> *m_array;
   mutable std::size_t m_generation;
+  shm::ShmObjectOptions m_options;
 
 protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -131,7 +132,7 @@ protected:
     const auto generation = m_sharedMemoryService->getGeneration();
     if (generation != m_generation) {
       m_array = &shm::constructArray<DATA, MaxSize>(
-        *m_sharedMemoryService, getSharedMemorySegment(), getSharedMemoryRepository());
+        *m_sharedMemoryService, getSharedMemorySegment(), getSharedMemoryRepository(), m_options);
       m_generation = generation;
     }
     return *m_array;
@@ -141,10 +142,11 @@ public:
   SharedMemoryArrayRepository(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
     const std::shared_ptr<SharedMemorySegment> &segment,
     int32_t codeVersion,
-    std::string uuid)
+    std::string uuid,
+    shm::ShmObjectOptions options = {})
     : SharedMemoryRepository(segment, sizeof(DATA), std::string(type_name<DATA>()), codeVersion, uuid),
-      m_array(&shm::constructArray<DATA, MaxSize>(*sharedMemoryService, segment, getSharedMemoryRepository())),
-      m_generation(sharedMemoryService->getGeneration()), m_sharedMemoryService(sharedMemoryService)
+      m_array(&shm::constructArray<DATA, MaxSize>(*sharedMemoryService, segment, getSharedMemoryRepository(), options)),
+      m_generation(sharedMemoryService->getGeneration()), m_options(options), m_sharedMemoryService(sharedMemoryService)
   {}
 
   [[nodiscard]] SharedMemoryType getType() const override { return SharedMemoryType::Array; }
@@ -186,6 +188,7 @@ private:
     boost::interprocess::allocator<DATA, boost::interprocess::managed_mapped_file::segment_manager>>;
   mutable Vector *m_vector;
   mutable std::size_t m_generation;
+  shm::ShmObjectOptions m_options;
 
 protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -194,8 +197,8 @@ protected:
   {
     const auto generation = m_sharedMemoryService->getGeneration();
     if (generation != m_generation) {
-      m_vector =
-        &shm::constructVector<DATA>(*m_sharedMemoryService, getSharedMemorySegment(), getSharedMemoryRepository());
+      m_vector = &shm::constructVector<DATA>(
+        *m_sharedMemoryService, getSharedMemorySegment(), getSharedMemoryRepository(), m_options);
       m_generation = generation;
     }
     return *m_vector;
@@ -205,10 +208,11 @@ public:
   SharedMemoryVectorRepository(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
     const std::shared_ptr<SharedMemorySegment> &segment,
     int32_t codeVersion,
-    std::string uuid)
+    std::string uuid,
+    shm::ShmObjectOptions options = {})
     : SharedMemoryRepository(segment, sizeof(DATA), std::string(type_name<DATA>()), codeVersion, uuid),
-      m_vector(&shm::constructVector<DATA>(*sharedMemoryService, segment, getSharedMemoryRepository())),
-      m_generation(sharedMemoryService->getGeneration()), m_sharedMemoryService(sharedMemoryService)
+      m_vector(&shm::constructVector<DATA>(*sharedMemoryService, segment, getSharedMemoryRepository(), options)),
+      m_generation(sharedMemoryService->getGeneration()), m_options(options), m_sharedMemoryService(sharedMemoryService)
   {}
 
   [[nodiscard]] SharedMemoryType getType() const override { return SharedMemoryType::Vector; }
@@ -255,6 +259,7 @@ private:
       boost::interprocess::managed_mapped_file::segment_manager>>;
   mutable Map *m_map;
   mutable std::size_t m_generation;
+  shm::ShmObjectOptions m_options;
 
 protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -263,8 +268,8 @@ protected:
   {
     const auto generation = m_sharedMemoryService->getGeneration();
     if (generation != m_generation) {
-      m_map =
-        &shm::constructMap<KEY, VALUE>(*m_sharedMemoryService, getSharedMemorySegment(), getSharedMemoryRepository());
+      m_map = &shm::constructMap<KEY, VALUE>(
+        *m_sharedMemoryService, getSharedMemorySegment(), getSharedMemoryRepository(), m_options);
       m_generation = generation;
     }
     return *m_map;
@@ -275,10 +280,11 @@ public:
     const std::shared_ptr<SharedMemorySegment> &segment,
     int32_t codeVersion,
     std::string uuid,
-    int32_t sizeOfData = sizeof(VALUE))
+    int32_t sizeOfData = sizeof(VALUE),
+    shm::ShmObjectOptions options = {})
     : SharedMemoryRepository(segment, sizeOfData, std::string(type_name<VALUE>()), codeVersion, uuid),
-      m_map(&shm::constructMap<KEY, VALUE>(*sharedMemoryService, segment, getSharedMemoryRepository())),
-      m_generation(sharedMemoryService->getGeneration()), m_sharedMemoryService(sharedMemoryService)
+      m_map(&shm::constructMap<KEY, VALUE>(*sharedMemoryService, segment, getSharedMemoryRepository(), options)),
+      m_generation(sharedMemoryService->getGeneration()), m_options(options), m_sharedMemoryService(sharedMemoryService)
   {
     static_assert(isSerializable<KeyDao>());
     static_assert(isSerializable<ValueDao>());
@@ -334,6 +340,7 @@ class SharedMemoryObjectRepository : public SharedMemoryRepository
 private:
   mutable DATA *m_data;
   mutable std::size_t m_generation;
+  shm::ShmObjectOptions m_options;
 
 protected:
   std::shared_ptr<SharedMemoryService> m_sharedMemoryService;
@@ -342,8 +349,8 @@ protected:
   {
     const auto generation = m_sharedMemoryService->getGeneration();
     if (generation != m_generation) {
-      m_data =
-        &shm::constructObject<DATA>(*m_sharedMemoryService, getSharedMemorySegment(), getSharedMemoryRepository());
+      m_data = &shm::constructObject<DATA>(
+        *m_sharedMemoryService, getSharedMemorySegment(), getSharedMemoryRepository(), m_options);
       m_generation = generation;
     }
     return *m_data;
@@ -353,10 +360,11 @@ public:
   SharedMemoryObjectRepository(const std::shared_ptr<SharedMemoryService> &sharedMemoryService,
     const std::shared_ptr<SharedMemorySegment> &segment,
     int32_t codeVersion,
-    std::string uuid)
+    std::string uuid,
+    shm::ShmObjectOptions options = {})
     : SharedMemoryRepository(segment, sizeof(DATA), std::string(type_name<DATA>()), codeVersion, uuid),
-      m_data(&shm::constructObject<DATA>(*sharedMemoryService, segment, getSharedMemoryRepository())),
-      m_generation(sharedMemoryService->getGeneration()), m_sharedMemoryService(sharedMemoryService)
+      m_data(&shm::constructObject<DATA>(*sharedMemoryService, segment, getSharedMemoryRepository(), options)),
+      m_generation(sharedMemoryService->getGeneration()), m_options(options), m_sharedMemoryService(sharedMemoryService)
   {}
 
   [[nodiscard]] SharedMemoryType getType() const override { return SharedMemoryType::Object; }

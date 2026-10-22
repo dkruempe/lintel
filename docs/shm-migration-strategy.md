@@ -1,6 +1,6 @@
 # Migrationsstrategie für Shared-Memory-Segmente
 
-Stand: 22. Oktober 2026 · gilt ab Layout-Version 2 (`lintel_segment_layout`)
+Stand: 22. Oktober 2026 · gilt ab Layout-Version 3 (`lintel_segment_layout`)
 
 Ein Segment ist eine Datei mit einem Layout, das die Bibliothek definiert. Ändert sich
 dieses Layout (in 0.2 zum Beispiel: `ShmSegmentAccessor` von einem Zeiger auf 40 Byte,
@@ -29,10 +29,12 @@ folgende Reihenfolge (`SharedMemoryService.cpp`, `create()`):
 
 1. **Migrator registriert** (`lintel::shm::SegmentLayoutPolicy::setMigrator`) → er
    entscheidet. `true` = Inhalte dürfen weg, `false` = Start abbrechen.
-2. **Policy `Recreate`** (`set(LayoutMismatchPolicy::Recreate)`) oder
+2. **Alle Objekte `Volatile`/`Derived`** (und ihre Header lesbar) → das Segment wird
+   ohne Operator-Eingriff neu angelegt.
+3. **Policy `Recreate`** (`set(LayoutMismatchPolicy::Recreate)`) oder
    `LINTEL_SHM_RECREATE=1` → Inhalt wird verworfen.
-3. Sonst **`Fail`** (Default): `std::runtime_error` mit Segmentname und Dateipfad, die
-   Datei bleibt unangetastet.
+4. Sonst **`Fail`** (Default): `std::runtime_error` mit Segmentname, Dateipfad und den
+   blockierenden Objekten; die Datei bleibt unangetastet.
 
 Der Migrator läuft, **bevor** irgendetwas gelöscht wird, und bekommt den Pfad der
 aktuellen Datei sowie die gefundene und die erwartete Layout-Version.
@@ -69,21 +71,85 @@ Regeln für den Migrator:
 
 ## 4. Grenze der aktuellen Umsetzung
 
-Die Entscheidung gilt **pro Segment, nicht pro Objekt**: die Objekte im Segment tragen
-keine eigene Version, also kann der Migrator nur „alles retten" oder „alles aufgeben".
-Für die typisierten Repositories ist das ausreichend, weil ihr Payload ohnehin über
-`serialize()`/`deserialize()` der DTOs geht.
+Die segmentweite Entscheidung bleibt der letzte Fallback. Ab Layout-Version 3
+trägt jedes benannte Objekt einen eigenen `ShmObjectHeader`; die Bibliothek kann
+damit **pro Objekt** entscheiden statt nur pro Segment:
+
+- `Volatile` und `Derived` dürfen ohne Migrator neu angelegt werden.
+- `Persistent` verlangt eine registrierte Migration oder einen Migrator.
+- Ein Objekt ohne lesbaren Header (Segment aus einem älteren Build) gilt
+  weiterhin als `Persistent`, weil seine Persistenzklasse unbekannt ist.
+
+Der Header liegt am Anfang des benannten Objekts; die Nutzdaten selbst sind eine
+separate Allokation, die über `payloadOffset` adressiert wird. Änderungen an der
+internen Buchhaltung (Accessor, Header, Record) verschieben die Nutzdaten daher
+nicht mehr.
 
 ## 5. Nächste Stufen (Backlog)
 
-| Stufe | Inhalt | Nutzen |
+| Stufe | Inhalt | Status |
 |-------|--------|--------|
-| **2** | `ShmObjectHeader { magic, version, payloadBytes }` vor jedem benannten Objekt; pro Typ eine Migrationsfunktion `v(n) → v(n+1)` | echte Teil-Migration, ohne Export/Import |
-| **3** | Persistenzklasse pro Objekt beim Registrieren: `Volatile` (darf weg), `Derived` (aus DB/XML rekonstruierbar), `Persistent` (muss migriert werden, sonst Startabbruch) | die Bibliothek weiß selbst, was sie verwerfen darf |
-| **4** | stabile Payload-ABI: Nutzdaten als versionierte Blobs, interne Buchhaltung (Accessor, Header) versioniert getrennt | Layout-Änderungen der Bibliothek invalidieren Nutzdaten nie wieder |
+| **2** | `ShmObjectHeader { magic, headerVersion, payloadVersion, payloadBytes, … }` vor jedem benannten Objekt; pro Typ eine Migrationsfunktion `v(n) → v(n+1)` | **umgesetzt** (Layout-Version 3) |
+| **3** | Persistenzklasse pro Objekt beim Registrieren: `Volatile`, `Derived`, `Persistent` | **umgesetzt** |
+| **4** | stabile Payload-ABI: Nutzdaten als versionierte, separat allokierte Blobs; interne Buchhaltung (Accessor, Header) versioniert getrennt | **umgesetzt** (Header v1, Payload v1) |
 
-Stufe 2 ist die Voraussetzung für 3 und 4; ohne sie bleibt es beim Segment als
-Ganzes.
+Die Umsetzung ist in `docs/shm-payload-abi-plan.md` in Phasen und
+Akzeptanzkriterien zerlegt.
+
+### 5.1 Objekt registrieren
+
+```cpp
+#include <lintel/core/shm/ShmObjectHeader.h>
+
+lintel::shm::ShmObjectOptions options{
+  .payloadVersion = 2,
+  .persistence = lintel::shm::ShmPersistence::Persistent,
+};
+
+lintel::shm::SharedMemoryRepository<MyDto> repository(
+  service, segment, "my-dto", options, MyDto{});
+```
+
+Ohne explizite Angabe bleibt `payloadVersion = 1` und `Persistent` der Default.
+Das ist die sichere Variante: ein bestehender Aufrufer verliert nie
+stillschweigend Daten. Der Property-Spiegel registriert sich als `Derived`,
+EventBus und MessageQueue als `Volatile`.
+
+### 5.2 Payload migrieren
+
+```cpp
+lintel::shm::registerPayloadMigration<MyDto>(1, 2,
+  [](const void *oldBytes, std::size_t oldSize, void *newPayload) {
+    // alten Stand lesen und den neuen Typ an newPayload konstruieren
+  });
+```
+
+Die Registry verkettet `1 → 2 → 3` automatisch. Der alte Payload bleibt
+unangetastet, bis die Migration vollständig durchgelaufen ist; schlägt sie fehl,
+öffnet sich das Objekt beim nächsten Versuch erneut mit dem alten Stand.
+
+### 5.3 Segmentweite Entscheidung
+
+`SharedMemoryService` prüft bei einem Layout-Konflikt zuerst den Migrator, dann
+die Objekt-Header:
+
+1. Migrator registriert → er entscheidet.
+2. Alle Objekte sind `Volatile`/`Derived` und lesbar → Segment wird neu angelegt.
+3. Policy `Recreate` bzw. `LINTEL_SHM_RECREATE=1` → Inhalt wird verworfen.
+4. Sonst → `std::runtime_error` mit Segmentname, Pfad und den blockierenden
+   Objekten; die Datei bleibt unangetastet.
+
+### 5.4 Grenzen
+
+- Eine Payload-Migration kann den Destruktor des alten Typs nicht aufrufen, weil
+  dessen Layout im neuen Build nicht mehr existiert. Verschachtelte Allokationen
+  des alten Stands werden erst beim nächsten Neuanlegen des Segments frei.
+- Die Typ-ID ist ein FNV-1a-Hash des vollqualifizierten Typnamens. Bei einem
+  Compiler-/ABI-Wechsel kann sie sich ändern; dann ist `payloadTypeId` explizit
+  zu setzen.
+- `Derived` heißt „die Anwendung kann den Inhalt rekonstruieren“. Die Bibliothek
+  ruft keinen Rebuild-Hook auf; das bleibt Aufgabe der besitzenden
+  Service-Schicht (z. B. `PropertyService`).
 
 ## 6. Betrieb
 

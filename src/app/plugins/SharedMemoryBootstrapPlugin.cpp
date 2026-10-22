@@ -1,5 +1,8 @@
 #include "lintel/app/plugins/SharedMemoryBootstrapPlugin.h"
 
+#include <bit>
+#include <cstdint>
+#include <cstring>
 #include <filesystem>
 #include <map>
 #include <stdexcept>
@@ -17,6 +20,7 @@
 #include "lintel/core/persistence/Statement.h"
 #include "lintel/core/persistence/Transaction.h"
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/shm/ShmObjectHeader.h"
 #include "lintel/features/base/configuration/EventBusComponent.h"
 
 namespace lintel {
@@ -110,9 +114,24 @@ void SharedMemoryBootstrapPlugin::validateEventBuses()
     // boost::interprocess takes a narrow file name; path::c_str() is wchar_t on Windows.
     const std::string filePath = path.string();
     boost::interprocess::managed_mapped_file mapping(boost::interprocess::open_only, filePath.c_str());
-    const auto bus = mapping.find<EventBus>(eventBusEntry->getName().c_str());
-    if (bus.first == nullptr) { continue; }
-    const EventBusConfig persisted = bus.first->getConfig();
+    // The named object is a shm::ShmObjectHeader; the bus itself is a separate
+    // allocation the header points at. An object without such a header was
+    // written by a build that predates the header, so it is skipped here and its
+    // bytes must never be interpreted as an EventBus - SharedMemoryService
+    // decides whether the segment may be recreated.
+    const auto named = mapping.find<char>(eventBusEntry->getName().c_str());
+    if (named.first == nullptr || named.second < sizeof(shm::ShmObjectHeader)) { continue; }
+    // Read the header as bytes first: a pre-header object is not guaranteed to
+    // be aligned like a ShmObjectHeader, so it is only reinterpreted after the
+    // magic proved that boost created it as one.
+    shm::ShmObjectHeader header{};
+    std::memcpy(&header, named.first, sizeof(header));
+    if (!header.isCompatible() || !header.isReady()) { continue; }
+    if (header.payloadOffset == 0 || header.payloadBytes < sizeof(EventBus)) { continue; }
+    const std::uintptr_t payloadAddress =
+      reinterpret_cast<std::uintptr_t>(named.first) + static_cast<std::uintptr_t>(header.payloadOffset);
+    const auto *bus = std::bit_cast<const EventBus *>(payloadAddress);
+    const EventBusConfig persisted = bus->getConfig();
     if (persisted.busCapacity != config.busCapacity || persisted.subscriberCapacity != config.subscriberCapacity
         || persisted.maxTopics != config.maxTopics || persisted.maxSubscribers != config.maxSubscribers) {
       const std::string message =

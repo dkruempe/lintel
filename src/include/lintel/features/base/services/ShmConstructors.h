@@ -21,14 +21,18 @@
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <string_view>
 #include <thread>
+#include <tuple>
+#include <type_traits>
 #include <utility>
 
 #include "lintel/core/models/SharedMemorySegment.h"
 #include "lintel/core/platform/Platform.h"
+#include "lintel/core/shm/ShmObject.h"
 #include "lintel/core/shm/ShmSegmentAccessor.h"
 #include "lintel/features/base/services/SharedMemoryService.h"
 
@@ -432,90 +436,290 @@ namespace shm {
     }
   }
 
+  /** Payload types and payload constructors of the named-object helpers below.
+   *
+   *  The named object itself is a ShmObjectHeader; the payload is a separate
+   *  allocation of the segment. ShmObject stores its payload constructor as a
+   *  plain function pointer, so every constructor here is a non-capturing
+   *  function template instantiation and its arguments travel through a
+   *  shared_ptr<tuple<...>> resp. SegmentInitArguments. */
+  namespace detail {
+
+    /** Constructor arguments of a container payload: its allocator has to come
+     *  from the segment manager of the mapping the object is created in, so the
+     *  constructor reads that manager from the service instead of keeping a
+     *  pointer that a remap would invalidate. */
+    struct SegmentInitArguments
+    {
+      /** service mapping the segment; non-owning, because the binding that
+       *  runs the payload constructor does not outlive the helper call */
+      SharedMemoryService *service = nullptr;
+      /** segment the object is created in */
+      std::shared_ptr<SharedMemorySegment> segment;
+    };
+
+    /** @param arguments constructor arguments of a container payload
+     *  @return segment manager of the mapping the object is created in
+     *  @throws ShmSegmentNotFound if the service does not map the segment */
+    inline SegmentManager *mappedSegmentManagerOf(const SegmentInitArguments &arguments)
+    {
+      // The payload constructor runs inside ShmObject::resolve(), which holds
+      // segmentsMutexOf() and the segment's construct semaphore: the mapping
+      // cannot be replaced while we run, and locking again would deadlock.
+      SharedMemorySegmentHandle &handle = arguments.service->segmentOf(arguments.segment->getName());
+      return handle.m_managedMappedFile->get_segment_manager();
+    }
+
+    /** Placement-construct Object from a stored argument tuple.
+     *  @tparam Object    the object type
+     *  @tparam Arguments the decayed constructor argument types
+     *  @tparam Indices   index sequence selecting the tuple elements
+     *  @param payload   raw payload memory
+     *  @param arguments stored constructor arguments
+     *  @param indices   selects the tuple elements */
+    template<class Object, class... Arguments, std::size_t... Indices>
+    void constructFromTuple(void *payload,
+      const std::tuple<Arguments...> &arguments,
+      std::index_sequence<Indices...> /*indices*/)
+    {
+      ::new (payload) Object(std::get<Indices>(arguments)...);
+    }
+
+    /** Payload constructor of a single object with constructor arguments.
+     *  @tparam Object the object type
+     *  @tparam Args   the constructor argument types
+     *  @param payload      raw payload memory
+     *  @param initArgument the decayed argument tuple of the binding */
+    template<class Object, class... Args> void initObjectPayload(void *payload, ShmObject::InitArgument initArgument)
+    {
+      using Arguments = std::tuple<std::decay_t<Args>...>;
+      const auto &arguments = *static_cast<const Arguments *>(initArgument.value);
+      constructFromTuple<Object>(payload, arguments, std::index_sequence_for<Args...>{});
+    }
+
+    /** Payload constructor of a fixed-size array. Value initialises the array,
+     *  exactly like the former find_or_construct<std::array<...>>() call.
+     *  @tparam Object the element type
+     *  @tparam Size   the array size
+     *  @param payload      raw payload memory
+     *  @param initArgument unused: an array takes no constructor arguments */
+    template<class Object, std::size_t Size> void initArrayPayload(void *payload, ShmObject::InitArgument initArgument)
+    {
+      static_cast<void>(initArgument);
+      ::new (payload) std::array<Object, Size>();
+    }
+
+    /** Payload constructor of a shared memory map.
+     *  @tparam Key   the map key type
+     *  @tparam Value the map value type
+     *  @param payload      raw payload memory
+     *  @param initArgument the SegmentInitArguments of the binding */
+    template<class Key, class Value> void initMapPayload(void *payload, ShmObject::InitArgument initArgument)
+    {
+      const auto &arguments = *static_cast<const SegmentInitArguments *>(initArgument.value);
+      SegmentAllocator<std::pair<const Key, Value>> allocator(mappedSegmentManagerOf(arguments));
+      ::new (payload) Map<Key, Value>(std::less<Key>(), allocator);
+    }
+
+    /** Payload constructor of a shared memory vector.
+     *  @tparam Object the element type
+     *  @param payload      raw payload memory
+     *  @param initArgument the SegmentInitArguments of the binding */
+    template<class Object> void initVectorPayload(void *payload, ShmObject::InitArgument initArgument)
+    {
+      const auto &arguments = *static_cast<const SegmentInitArguments *>(initArgument.value);
+      SegmentAllocator<Object> allocator(mappedSegmentManagerOf(arguments));
+      ::new (payload) Vector<Object>(allocator);
+    }
+
+    /** @param service service the caller keeps alive for the whole call
+     *  @return non-owning shared_ptr to that service, for bindings that end
+     *          with the helper call */
+    inline std::shared_ptr<SharedMemoryService> serviceBindingOf(SharedMemoryService &service)
+    {
+      return std::shared_ptr<SharedMemoryService>(&service, [](SharedMemoryService *) {});
+    }
+
+    /** @tparam Payload the stored payload type
+     *  @param options registration options of the object
+     *  @return the explicit type id, or the id derived from the payload type */
+    template<class Payload> constexpr std::uint32_t payloadTypeIdFor(const ShmObjectOptions &options) noexcept
+    {
+      return options.payloadTypeId != 0 ? options.payloadTypeId : shm::payloadTypeIdOf<Payload>();
+    }
+
+    /** @param service  service mapping the segment
+     *  @param segment  segment the object lives in
+     *  @param name     name of the object
+     *  @param layout   payload layout
+     *  @param payloadTypeId type id stored in the header
+     *  @param options  registration options
+     *  @param init     payload constructor
+     *  @param arguments constructor arguments of the payload constructor
+     *  @return the payload of the object in the current mapping */
+    template<class Payload>
+    Payload &resolvePayload(SharedMemoryService &service,
+      const std::shared_ptr<SharedMemorySegment> &segment,
+      const std::string &name,
+      ShmObject::Layout layout,
+      std::uint32_t payloadTypeId,
+      const ShmObjectOptions &options,
+      ShmObject::InitFunction init,
+      std::shared_ptr<void> arguments)
+    {
+      ShmObject object(
+        serviceBindingOf(service), segment, name, layout, payloadTypeId, options, init, std::move(arguments));
+      return *static_cast<Payload *>(object.resolve());
+    }
+
+  }// namespace detail
+
   /** Find or construct a fixed-size array in the given shared memory segment.
+   *
+   * The named object is a ShmObjectHeader; the array itself is a separate
+   * payload allocation of the segment.
    * @tparam Object the element type
    * @tparam Size   the array size
    * @param service the shared memory service
    * @param segment the shared memory segment
    * @param name    the name of the array object
+   * @param options payload version, persistence class and optional type id
    * @return reference to the constructed or found array
    * @throws ShmSegmentNotFound if the segment does not exist */
   template<class Object, std::size_t Size>
   std::array<Object, Size> &constructArray(SharedMemoryService &service,
     const std::shared_ptr<SharedMemorySegment> &segment,
-    const std::string &name)
+    const std::string &name,
+    ShmObjectOptions options = {})
   {
-    std::lock_guard<std::mutex> lock(service.segmentsMutexOf());
-    auto &handle = service.segmentOf(segment->getName());
-    SegmentSemaphoreGuard gate(handle);
-    return *(handle.m_managedMappedFile->find_or_construct<std::array<Object, Size>>(name.c_str())());
+    using Payload = std::array<Object, Size>;
+    return detail::resolvePayload<Payload>(service,
+      segment,
+      name,
+      ShmObject::Layout{ sizeof(Payload), alignof(Payload) },
+      detail::payloadTypeIdFor<Payload>(options),
+      options,
+      &detail::initArrayPayload<Object, Size>,
+      std::make_shared<detail::SegmentInitArguments>(detail::SegmentInitArguments{ &service, segment }));
   }
 
   /** Find or construct a map in the given shared memory segment.
+   *
+   * The named object is a ShmObjectHeader; the map itself is a separate
+   * payload allocation of the segment.
    * @tparam Key   the map key type
    * @tparam Value the map value type
    * @param service the shared memory service
    * @param segment the shared memory segment
    * @param name    the name of the map object
+   * @param options payload version, persistence class and optional type id
    * @return reference to the constructed or found map
    * @throws ShmSegmentNotFound if the segment does not exist */
   template<class Key, class Value>
   Map<Key, Value> &constructMap(SharedMemoryService &service,
     const std::shared_ptr<SharedMemorySegment> &segment,
-    const std::string &name)
+    const std::string &name,
+    ShmObjectOptions options = {})
   {
-    using pairType = std::pair<const Key, Value>;
-    using persistentMapAllocator = SegmentAllocator<pairType>;
-    std::lock_guard<std::mutex> lock(service.segmentsMutexOf());
-    auto &handle = service.segmentOf(segment->getName());
-    SegmentSemaphoreGuard gate(handle);
-    persistentMapAllocator allocator(handle.m_managedMappedFile->get_segment_manager());
-    Map<Key, Value> *map =
-      handle.m_managedMappedFile->find_or_construct<Map<Key, Value>>(name.c_str())(std::less<Key>(), allocator);
-    LOG_TRACE("map {}", map->size());
-    return *map;
+    using Payload = Map<Key, Value>;
+    Payload &map = detail::resolvePayload<Payload>(service,
+      segment,
+      name,
+      ShmObject::Layout{ sizeof(Payload), alignof(Payload) },
+      detail::payloadTypeIdFor<Payload>(options),
+      options,
+      &detail::initMapPayload<Key, Value>,
+      std::make_shared<detail::SegmentInitArguments>(detail::SegmentInitArguments{ &service, segment }));
+    LOG_TRACE("map {}", map.size());
+    return map;
   }
 
   /** Find or construct a vector in the given shared memory segment.
+   *
+   * The named object is a ShmObjectHeader; the vector itself is a separate
+   * payload allocation of the segment.
    * @tparam Object the element type
    * @param service the shared memory service
    * @param segment the shared memory segment
    * @param name    the name of the vector object
+   * @param options payload version, persistence class and optional type id
    * @return reference to the constructed or found vector
    * @throws ShmSegmentNotFound if the segment does not exist */
   template<class Object>
   Vector<Object> &constructVector(SharedMemoryService &service,
     const std::shared_ptr<SharedMemorySegment> &segment,
-    const std::string &name)
+    const std::string &name,
+    ShmObjectOptions options = {})
   {
-    using persistentVectorAllocator = SegmentAllocator<Object>;
-    std::lock_guard<std::mutex> lock(service.segmentsMutexOf());
-    auto &handle = service.segmentOf(segment->getName());
-    SegmentSemaphoreGuard gate(handle);
-    persistentVectorAllocator allocator(handle.m_managedMappedFile->get_segment_manager());
-    return *(handle.m_managedMappedFile->find_or_construct<Vector<Object>>(name.c_str())(allocator));
+    using Payload = Vector<Object>;
+    return detail::resolvePayload<Payload>(service,
+      segment,
+      name,
+      ShmObject::Layout{ sizeof(Payload), alignof(Payload) },
+      detail::payloadTypeIdFor<Payload>(options),
+      options,
+      &detail::initVectorPayload<Object>,
+      std::make_shared<detail::SegmentInitArguments>(detail::SegmentInitArguments{ &service, segment }));
   }
 
   /** Find or construct a single object in the given shared memory segment.
+   *
+   * The named object is a ShmObjectHeader; the object itself is a separate
+   * payload allocation of the segment.
    * @tparam Object the object type
    * @param service the shared memory service
    * @param segment the shared memory segment
    * @param name    the name of the object
+   * @param options payload version, persistence class and optional type id
    * @return reference to the constructed or found object
    * @throws ShmSegmentNotFound if the segment does not exist */
   template<class Object>
   Object &constructObject(SharedMemoryService &service,
     const std::shared_ptr<SharedMemorySegment> &segment,
-    const std::string &name)
+    const std::string &name,
+    ShmObjectOptions options = {})
   {
-    std::lock_guard<std::mutex> lock(service.segmentsMutexOf());
-    auto &handle = service.segmentOf(segment->getName());
-    SegmentSemaphoreGuard gate(handle);
-    return *(handle.m_managedMappedFile->find_or_construct<Object>(name.c_str())());
+    return detail::resolvePayload<Object>(service,
+      segment,
+      name,
+      ShmObject::Layout{ sizeof(Object), alignof(Object) },
+      detail::payloadTypeIdFor<Object>(options),
+      options,
+      &detail::initObjectPayload<Object>,
+      std::make_shared<std::tuple<>>());
+  }
+
+  /** Find or construct a single object with constructor arguments and explicit
+   * registration options in the given shared memory segment.
+   * @tparam Object the object type
+   * @tparam Args   the constructor argument types
+   * @param service the shared memory service
+   * @param segment the shared memory segment
+   * @param name    the name of the object
+   * @param options payload version, persistence class and optional type id
+   * @param args    arguments forwarded to the constructor
+   * @return reference to the constructed or found object
+   * @throws ShmSegmentNotFound if the segment does not exist */
+  template<class Object, class... Args>
+  Object &constructObjectWith(SharedMemoryService &service,
+    const std::shared_ptr<SharedMemorySegment> &segment,
+    const std::string &name,
+    ShmObjectOptions options,
+    Args &&...args)
+  {
+    using Arguments = std::tuple<std::decay_t<Args>...>;
+    return detail::resolvePayload<Object>(service,
+      segment,
+      name,
+      ShmObject::Layout{ sizeof(Object), alignof(Object) },
+      detail::payloadTypeIdFor<Object>(options),
+      options,
+      &detail::initObjectPayload<Object, Args...>,
+      std::make_shared<Arguments>(std::forward<Args>(args)...));
   }
 
   /** Find or construct a single object with constructor arguments in the
-   * given shared memory segment.
+   * given shared memory segment, using the default registration options.
    * @tparam Object the object type
    * @tparam Args   the constructor argument types
    * @param service the shared memory service
@@ -530,10 +734,7 @@ namespace shm {
     const std::string &name,
     Args &&...args)
   {
-    std::lock_guard<std::mutex> lock(service.segmentsMutexOf());
-    auto &handle = service.segmentOf(segment->getName());
-    SegmentSemaphoreGuard gate(handle);
-    return *(handle.m_managedMappedFile->find_or_construct<Object>(name.c_str())(std::forward<Args>(args)...));
+    return constructObjectWith<Object>(service, segment, name, ShmObjectOptions{}, std::forward<Args>(args)...);
   }
 
   /** Find or construct a string in the given shared memory segment.

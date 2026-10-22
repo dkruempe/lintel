@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Stable shared-memory object headers, payload migrations and persistence classes.** Every
+  named object in a segment now starts with a 64-byte `lintel::shm::ShmObjectHeader`
+  (`headerVersion`, `payloadVersion`, type id, persistence class); the payload is a separate
+  allocation addressed by a relative offset, so a change to the library's bookkeeping no longer
+  moves the payload. `shm::registerPayloadMigration<T>(n, n+1, …)` chains per-type migrations,
+  and `shm::ShmObjectOptions { payloadVersion, persistence, payloadTypeId }` is accepted by
+  `shm::SharedMemoryRepository<T>`, the `shm::construct*` helpers and the JSON mirror repositories.
+  `Volatile`/`Derived` objects may be recreated without operator input, `Persistent` (the default)
+  aborts instead. The segment layout marker is now version 3. See
+  `docs/shm-payload-abi-plan.md` and `docs/shm-migration-strategy.md`.
 - **Group management over HTTP and in the CLI.** `POST /user/groups`, `DELETE /user/groups/{name}`
   and `POST`/`DELETE` `/user/groups/{name}/subgroups/{sub}` (all `Admin-User`) expose the group
   operations `GroupRepository` already had; the CLI gains `group_add`, `group_remove`,
@@ -212,6 +222,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `shm::SharedMemoryRepository<T>` and the containers it stores - is exactly what such a migrator is
   for; properties (database or bootstrap XML, the shared memory repository is a mirror that is
   rebuilt), users, groups and history live outside the segment and stay untouched.
+- **In-segment layout is version 3 (breaking).** Named shared-memory objects are now
+  `ShmObjectHeader` + separately allocated payload instead of a raw `find_or_construct<T>()`
+  object. Segments written by an older build have no readable per-object header and are treated
+  as `Persistent`; they still need the existing migrator/`LINTEL_SHM_RECREATE=1` path. See
+  `docs/shm-payload-abi-plan.md`.
 - **`SharedMemoryRepositoryRegistry.h` moved** from `features/base/services/` to `core/shm/`; the
   typed repository header may not depend on a feature header.
 - **Logging and property registration use `std::source_location` (breaking).**

@@ -1,6 +1,7 @@
 #include "lintel/features/property/repositories/SharedMemoryPropertyRepository.h"
 
 #include <lintel/core/models/PropertyRepositoryType.h>
+#include <lintel/core/shm/ShmObjectHeader.h>
 
 #include <boost/interprocess/creation_tags.hpp>
 #include <boost/interprocess/interprocess_fwd.hpp>
@@ -22,7 +23,12 @@ SharedMemoryPropertyRepository::SharedMemoryPropertyRepository(
       sharedMemorySegmentManager->of("shm_property"),
       m_version,
       std::string{ UUID },
-      PropertyDataDto::getSize()),
+      PropertyDataDto::getSize(),
+      // The mirror is derived state: the properties can be rebuilt from their
+      // source of truth, so the library may recreate the map instead of
+      // aborting the start. The payload version is the first version of the
+      // layout this repository writes.
+      shm::ShmObjectOptions{ .payloadVersion = 1, .persistence = shm::ShmPersistence::Derived }),
     PropertyRepository(PropertyRepositoryType::SHM_REPOSITORY, configuration), m_processName(std::move(processName)),
     m_upgradableMutex(boost::interprocess::open_or_create, "shm_property_mutex_upgradable")
 {}
@@ -136,11 +142,15 @@ void SharedMemoryPropertyRepository::deleteOf(const std::vector<std::shared_ptr<
 }
 
 /**
- * Deliberate no-op: there is nothing to migrate. SharedMemoryBootstrapPlugin
- * compares only currentVersion and currentDataSize in onStart() and throws on
- * a mismatch. There is no caller of onMigrate() in the repo
- * (src/ and tests/), m_version stays constant at 0 and getSize() unchanged.
- * The method is kept as the implementation of the pure interface OnMigrate.
+ * Deliberate no-op: there is nothing to migrate here. The shared memory mirror
+ * is registered as shm::ShmPersistence::Derived, so the library inserts its own
+ * payload envelope (ShmObjectHeader) and may recreate the map when its payload
+ * cannot be read - the owning service rebuilds the properties from their source
+ * of truth. SharedMemoryBootstrapPlugin compares only currentVersion and
+ * currentDataSize in onStart() and throws on a mismatch. There is no caller of
+ * onMigrate() in the repo (src/ and tests/), m_version stays constant at 0 and
+ * getSize() unchanged. The method is kept as the implementation of the pure
+ * interface OnMigrate.
  * @param currentActiveVersion version stored in the Shared Memory, unused
  */
 void SharedMemoryPropertyRepository::onMigrate(int32_t currentActiveVersion) {}
