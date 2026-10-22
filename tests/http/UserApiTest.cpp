@@ -467,4 +467,74 @@ TEST_CASE("UserApi: deleteOf covers OK, unauthorized and error")
   api.deleteOf({ "ada" });
 }
 
+TEST_CASE("UserApi: createGroupOf covers OK, unauthorized and error")
+{
+  userApiBackend backend;
+  UserApi api(userApiProviderOf(backend.port()));
+  GroupDto groupDto(Group("ops", std::vector<Group>{}, false));
+
+  backend.answerWithStatus(200, "{}");
+  REQUIRE(api.createGroupOf(groupDto));
+  REQUIRE(backend.paths.back() == "/user/groups");
+  REQUIRE(backend.methods.back() == "POST");
+  REQUIRE(backend.bodies.back().find("\"group_name\":\"ops\"") != std::string::npos);
+
+  backend.answerWithStatus(401, "{}");
+  REQUIRE_THROWS_AS(api.createGroupOf(groupDto), HttpUnauthorizedException);
+
+  backend.answerWithStatus(409, "{}");
+  REQUIRE_FALSE(api.createGroupOf(groupDto));
+}
+
+TEST_CASE("UserApi: deleteGroupOf covers OK, unauthorized and error")
+{
+  userApiBackend backend;
+  UserApi api(userApiProviderOf(backend.port()));
+
+  backend.answerWithStatus(200, "{}");
+  REQUIRE(api.deleteGroupOf("ops"));
+  REQUIRE(backend.paths.back() == "/user/groups/ops");
+  REQUIRE(backend.methods.back() == "DELETE");
+
+  backend.answerWithStatus(401, "{}");
+  REQUIRE_THROWS_AS(api.deleteGroupOf("ops"), HttpUnauthorizedException);
+
+  backend.answerWithStatus(404, "{}");
+  REQUIRE_FALSE(api.deleteGroupOf("ops"));
+}
+
+TEST_CASE("UserApi: addSubGroupOf covers OK, unauthorized and error")
+{
+  userApiBackend backend;
+  UserApi api(userApiProviderOf(backend.port()));
+
+  backend.answerWithStatus(200, "{}");
+  REQUIRE(api.addSubGroupOf("ops", "admin"));
+  REQUIRE(backend.paths.back() == "/user/groups/ops/subgroups/admin");
+  REQUIRE(backend.methods.back() == "POST");
+
+  backend.answerWithStatus(401, "{}");
+  REQUIRE_THROWS_AS(api.addSubGroupOf("ops", "admin"), HttpUnauthorizedException);
+
+  backend.answerWithStatus(400, "{}");
+  REQUIRE_FALSE(api.addSubGroupOf("ops", "admin"));
+}
+
+TEST_CASE("UserApi: removeSubGroupOf covers OK, unauthorized and error")
+{
+  userApiBackend backend;
+  UserApi api(userApiProviderOf(backend.port()));
+
+  backend.answerWithStatus(200, "{}");
+  REQUIRE(api.removeSubGroupOf("ops", "admin"));
+  REQUIRE(backend.paths.back() == "/user/groups/ops/subgroups/admin");
+  REQUIRE(backend.methods.back() == "DELETE");
+
+  backend.answerWithStatus(401, "{}");
+  REQUIRE_THROWS_AS(api.removeSubGroupOf("ops", "admin"), HttpUnauthorizedException);
+
+  backend.answerWithStatus(404, "{}");
+  REQUIRE_FALSE(api.removeSubGroupOf("ops", "admin"));
+}
+
 }// namespace lintel

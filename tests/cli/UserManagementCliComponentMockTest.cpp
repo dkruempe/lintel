@@ -387,4 +387,148 @@ TEST_CASE("UserManagementCliComponent: an exception from the api is caught and p
   std::cerr.rdbuf(oldBuf);
   REQUIRE(oss.str().find("boom") != std::string::npos);
 }
+TEST_CASE("UserManagementCliComponent: group_add with -g calls createGroupOf")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, createGroupOf(ANY(const GroupDto &)))
+    .WITH(_1.getGroupName() == "ops" && !_1.isVirtual())
+    .TIMES(1)
+    .LR_RETURN(true);
+
+  UserDto userDto;
+  component.onCommand(userDto, "group_add", { "-g", "ops" });
+}
+
+TEST_CASE("UserManagementCliComponent: group_add with -g -v calls createGroupOf for a virtual group")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, createGroupOf(ANY(const GroupDto &)))
+    .WITH(_1.getGroupName() == "ops" && _1.isVirtual())
+    .TIMES(1)
+    .LR_RETURN(true);
+
+  UserDto userDto;
+  component.onCommand(userDto, "group_add", { "-g", "ops", "-v" });
+}
+
+TEST_CASE("UserManagementCliComponent: group_add without -g prints error")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  FORBID_CALL(*mockUserApi, createGroupOf(ANY(const GroupDto &)));
+
+  UserDto userDto;
+  std::ostringstream oss;
+  auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+  component.onCommand(userDto, "group_add", {});
+
+  std::cerr.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: a failed group_add prints an error")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, createGroupOf(ANY(const GroupDto &))).TIMES(1).LR_RETURN(false);
+
+  std::ostringstream oss;
+  auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+  component.onCommand(UserDto{}, "group_add", { "-g", "ops" });
+
+  std::cerr.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: group_remove calls deleteGroupOf")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, deleteGroupOf(std::string{ "ops" })).TIMES(1).LR_RETURN(true);
+
+  UserDto userDto;
+  component.onCommand(userDto, "group_remove", { "-g", "ops" });
+}
+
+TEST_CASE("UserManagementCliComponent: group_remove without -g prints error")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  FORBID_CALL(*mockUserApi, deleteGroupOf(ANY(std::string)));
+
+  UserDto userDto;
+  std::ostringstream oss;
+  auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+  component.onCommand(userDto, "group_remove", {});
+
+  std::cerr.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: group_add_subgroup calls addSubGroupOf")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, addSubGroupOf(std::string{ "ops" }, std::string{ "admin" })).TIMES(1).LR_RETURN(true);
+
+  UserDto userDto;
+  component.onCommand(userDto, "group_add_subgroup", { "-g", "ops", "-s", "admin" });
+}
+
+TEST_CASE("UserManagementCliComponent: group_add_subgroup without -s prints error")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  FORBID_CALL(*mockUserApi, addSubGroupOf(ANY(std::string), ANY(std::string)));
+
+  UserDto userDto;
+  std::ostringstream oss;
+  auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+  component.onCommand(userDto, "group_add_subgroup", { "-g", "ops" });
+
+  std::cerr.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}
+
+TEST_CASE("UserManagementCliComponent: group_remove_subgroup calls removeSubGroupOf")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  REQUIRE_CALL(*mockUserApi, removeSubGroupOf(std::string{ "ops" }, std::string{ "admin" })).TIMES(1).LR_RETURN(true);
+
+  UserDto userDto;
+  component.onCommand(userDto, "group_remove_subgroup", { "-g", "ops", "-s", "admin" });
+}
+
+TEST_CASE("UserManagementCliComponent: group_remove_subgroup without -g prints error")
+{
+  auto mockUserApi = std::make_shared<MockUserApi>();
+  UserManagementCliComponent component(mockUserApi);
+
+  FORBID_CALL(*mockUserApi, removeSubGroupOf(ANY(std::string), ANY(std::string)));
+
+  UserDto userDto;
+  std::ostringstream oss;
+  auto oldBuf = std::cerr.rdbuf(oss.rdbuf());
+
+  component.onCommand(userDto, "group_remove_subgroup", { "-s", "admin" });
+
+  std::cerr.rdbuf(oldBuf);
+  REQUIRE(oss.str().find("ERROR") != std::string::npos);
+}
 }// namespace lintel

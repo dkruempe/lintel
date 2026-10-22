@@ -6,6 +6,7 @@
 #include <set>
 #include <vector>
 
+#include "lintel/features/base/controller/GroupDto.h"
 #include "lintel/features/base/controller/UserDto.h"
 #include "lintel/features/base/controller/UserLoginDto.h"
 #include "lintel/features/base/controller/UserPasswordChangeDto.h"
@@ -65,6 +66,36 @@ public:
 
   /** @param isVirtualGroup filter by virtual flag; return matching groups */
   virtual std::vector<GroupDto> allOf(bool isVirtualGroup);
+
+  /**
+   * Create a group.
+   * @param groupDto name and virtual flag of the new group
+   * @return true on success
+   */
+  virtual bool createGroupOf(const GroupDto &groupDto);
+
+  /**
+   * Delete a group.
+   * @param groupName name of the group to delete
+   * @return true on success
+   */
+  virtual bool deleteGroupOf(const std::string &groupName);
+
+  /**
+   * Add a virtual group as member of a collecting group.
+   * @param groupName name of the collecting group
+   * @param subGroupName name of the virtual group to add
+   * @return true on success
+   */
+  virtual bool addSubGroupOf(const std::string &groupName, const std::string &subGroupName);
+
+  /**
+   * Remove a virtual group from a collecting group.
+   * @param groupName name of the collecting group
+   * @param subGroupName name of the virtual group to remove
+   * @return true on success
+   */
+  virtual bool removeSubGroupOf(const std::string &groupName, const std::string &subGroupName);
 
   /** @return all users */
   virtual std::vector<UserDto> allUsersOf();

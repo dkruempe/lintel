@@ -248,6 +248,79 @@ std::vector<GroupDto> UserApi::allOf(bool isVirtualGroup)
   return groupsDto.getGroups();
 }
 
+bool UserApi::createGroupOf(const GroupDto &groupDto)
+{
+  std::string body;
+  try {
+    body = groupDto.JsonSerializable::serialize();
+  } catch (const std::exception &exception) {
+    LOG_ERROR("failed to create group {}", groupDto.getGroupName());
+    return false;
+  }
+  httplib::Result result = m_client->post("/user/groups", body, "application/json");
+  if (!HttpClientHelper::hasResponse(result)) { return false; }
+  HttpStatusCodes status(result->status);
+  switch (status) {
+  case HttpStatusCodes::Unauthorized:
+    throw HttpUnauthorizedException();
+  case HttpStatusCodes::OK:
+    return true;
+  default:
+    LOG_ERROR("failed to create group {} ({})", groupDto.getGroupName(), status.getCode());
+    return false;
+  }
+}
+
+bool UserApi::deleteGroupOf(const std::string &groupName)
+{
+  httplib::Result result = m_client->deletes("/user/groups/" + groupName, "", "application/json");
+  if (!HttpClientHelper::hasResponse(result)) { return false; }
+  HttpStatusCodes status(result->status);
+  switch (status) {
+  case HttpStatusCodes::Unauthorized:
+    throw HttpUnauthorizedException();
+  case HttpStatusCodes::OK:
+    return true;
+  default:
+    LOG_ERROR("failed to delete group {} ({})", groupName, status.getCode());
+    return false;
+  }
+}
+
+bool UserApi::addSubGroupOf(const std::string &groupName, const std::string &subGroupName)
+{
+  httplib::Result result =
+    m_client->post("/user/groups/" + groupName + "/subgroups/" + subGroupName, "", "application/json");
+  if (!HttpClientHelper::hasResponse(result)) { return false; }
+  HttpStatusCodes status(result->status);
+  switch (status) {
+  case HttpStatusCodes::Unauthorized:
+    throw HttpUnauthorizedException();
+  case HttpStatusCodes::OK:
+    return true;
+  default:
+    LOG_ERROR("failed to add group {} to {} ({})", subGroupName, groupName, status.getCode());
+    return false;
+  }
+}
+
+bool UserApi::removeSubGroupOf(const std::string &groupName, const std::string &subGroupName)
+{
+  httplib::Result result =
+    m_client->deletes("/user/groups/" + groupName + "/subgroups/" + subGroupName, "", "application/json");
+  if (!HttpClientHelper::hasResponse(result)) { return false; }
+  HttpStatusCodes status(result->status);
+  switch (status) {
+  case HttpStatusCodes::Unauthorized:
+    throw HttpUnauthorizedException();
+  case HttpStatusCodes::OK:
+    return true;
+  default:
+    LOG_ERROR("failed to remove group {} from {} ({})", subGroupName, groupName, status.getCode());
+    return false;
+  }
+}
+
 void UserApi::createOf(const UserDto &userDto)
 {
   std::string body;

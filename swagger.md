@@ -1093,6 +1093,38 @@ Get all groups
 | --------------- | ------ |
 | bearerAuth |  |
 
+#### POST
+##### Summary
+
+Create a group
+
+##### Description
+
+Creates a non-virtual (collecting) group. Virtual groups carry the access rights and are defined in the code itself, so "virtual": true is rejected with 400. The response is the created GroupDto.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| body | body |  | Yes | GroupDto |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | A successful response (the created GroupDto) |
+| 400 | Bad request (malformed body, empty group_name, or virtual=true) |
+| 401 | Unauthorized |
+| 403 | Forbidden (wrong content type) |
+| 409 | Conflict (a group with this name already exists) |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
 ### /user/groups/{groupNameOrIsVirtual}
 
 #### GET
@@ -1113,6 +1145,38 @@ Get all groups by name or virtual flag
 | 200 | A successful response |
 | 401 | Unauthorized |
 | 403 | Forbidden (wrong content type) |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
+#### DELETE
+##### Summary
+
+Delete a group
+
+##### Description
+
+Deletes the group named by the path segment (the parameter name is shared with the GET operation of this path). The response reports the outcome as {"group_name":"<name>","removed":true}.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| groupNameOrIsVirtual | path | Name of the group to delete | Yes | string |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | A successful response ({"group_name":...,"removed":true}) |
+| 401 | Unauthorized |
+| 403 | Forbidden (wrong content type) |
+| 404 | Unknown group |
+| 409 | Conflict (the group is still assigned to a user) |
 | 500 | Internal server error |
 
 ##### Security
@@ -1142,6 +1206,73 @@ Get all groups by name and virtual flag
 | 200 | A successful response |
 | 401 | Unauthorized |
 | 403 | Forbidden (wrong content type) |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
+### /user/groups/{groupName}/subgroups/{subGroupName}
+
+#### POST
+##### Summary
+
+Add a subgroup to a group
+
+##### Description
+
+Adds a virtual group as member of a non-virtual (collecting) group. Both groups must exist; the parent group must not be virtual and the added group must be virtual, otherwise the request is rejected with 400. Adding an existing member is idempotent: the response then reports "added": false.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| groupName | path | Collecting group | Yes | string |
+| subGroupName | path | Virtual group to add | Yes | string |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | A successful response ({"group_name":...,"sub_group_name":...,"added":true\|false}) |
+| 400 | Bad request (virtual parent group or non-virtual subgroup) |
+| 401 | Unauthorized |
+| 403 | Forbidden (wrong content type) |
+| 404 | Unknown group or subgroup |
+| 500 | Internal server error |
+
+##### Security
+
+| Security Schema | Scopes |
+| --------------- | ------ |
+| bearerAuth |  |
+
+#### DELETE
+##### Summary
+
+Remove a subgroup from a group
+
+##### Description
+
+Removes a virtual group from a non-virtual (collecting) group. Removing a member that is not listed is idempotent: the response then reports "removed": false.
+
+##### Parameters
+
+| Name | Located in | Description | Required | Schema |
+| ---- | ---------- | ----------- | -------- | ------ |
+| groupName | path | Collecting group | Yes | string |
+| subGroupName | path | Virtual group to remove | Yes | string |
+
+##### Responses
+
+| Code | Description |
+| ---- | ----------- |
+| 200 | A successful response ({"group_name":...,"sub_group_name":...,"removed":true\|false}) |
+| 401 | Unauthorized |
+| 403 | Forbidden (wrong content type) |
+| 404 | Unknown group or subgroup |
 | 500 | Internal server error |
 
 ##### Security
@@ -1490,6 +1621,14 @@ Update a property
 | bearerAuth |  |
 
 ## Models
+
+### GroupDto
+
+| Name | Type | Description | Required |
+| ---- | ---- | ----------- | -------- |
+| group_name | string | Unique group name | Yes |
+| groups | array[GroupDto] | Members of a collecting group (omitted while empty) | No |
+| virtual | boolean | True for virtual groups, which are defined in the code and not persisted | No |
 
 ### EventBusDto
 

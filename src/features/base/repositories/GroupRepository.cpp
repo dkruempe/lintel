@@ -175,12 +175,38 @@ void GroupRepository::deleteOf(const Group &group)
     "group_name = ?",
     builder);
   if (result.getSize() > 0) { throw std::runtime_error("cannot remove group which is in usage of an user"); }
+  // A group can be the sub-group of another one. Those rows point at it from
+  // both directions, and leaving them behind makes the next initGroups()
+  // dereference a group that no longer exists (m_groupMap.at).
+  db::ParameterBuilder relationBuilder(m_connectionEntry);
+  relationBuilder.add(group.getGroupName()).add(group.getGroupName());
+  statement.execute("delete from group_groups_relation where group_name = ? or base_group_name = ?", relationBuilder);
   statement.execute("delete from groups where name = ?", builder);
   m_groupMap.erase(group.getGroupName());
   m_groups.erase(
     std::remove_if(
       m_groups.begin(), m_groups.end(), [&](const Group &g) { return g.getGroupName() == group.getGroupName(); }),
     m_groups.end());
+  // drop it from the member lists of the groups that contained it, so that
+  // allOf() does not keep reporting a group that is gone
+  const auto withoutDeleted = [&group](const std::vector<Group> &members) {
+    std::vector<Group> kept;
+    kept.reserve(members.size());
+    for (const auto &member : members) {
+      if (member.getGroupName() != group.getGroupName()) { kept.push_back(member); }
+    }
+    return kept;
+  };
+  for (auto &[name, candidate] : m_groupMap) {
+    const std::vector<Group> members = withoutDeleted(candidate.getGroups());
+    if (members.size() == candidate.getGroups().size()) { continue; }
+    candidate = Group(candidate.getGroupName(), members, candidate.isVirtual());
+  }
+  for (auto &candidate : m_groups) {
+    const std::vector<Group> members = withoutDeleted(candidate.getGroups());
+    if (members.size() == candidate.getGroups().size()) { continue; }
+    candidate = Group(candidate.getGroupName(), members, candidate.isVirtual());
+  }
 }
 
 void GroupRepository::addGroupOf(const Group &group, const Group &add)
