@@ -90,10 +90,11 @@ namespace shm {
       void *payload = payloadAddressOf(&header);
       try {
         segment.deallocate(payload);
-      } catch (...) {
+      } catch (const std::exception &error) {
         // The segment is being torn down or the block was already released;
         // leaking is the only safe option here and the segment owns the bytes
         // anyway.
+        LOG_DEBUG("cannot release a shared memory payload: {}", error.what());
       }
       header.payloadOffset = 0;
       header.payloadBytes = 0;
@@ -248,18 +249,20 @@ namespace shm {
 
       // Older payload. A registered chain wins; otherwise the persistence class
       // decides whether the object may be recreated.
-      if (ShmPayloadMigrations::canMigrate(typeId, header->payloadVersion, options.payloadVersion)) {
+      if (ShmPayloadMigrations::canMigrate(
+            typeId, { .fromVersion = header->payloadVersion, .toVersion = options.payloadVersion })) {
         LOG_WARN("migrating shared memory object '{}' of segment '{}' from payload version {} to {}",
           name,
           segment->getName(),
           header->payloadVersion,
           options.payloadVersion);
-        const std::vector<std::byte> migrated = ShmPayloadMigrations::migrate(typeId,
-          header->payloadVersion,
-          options.payloadVersion,
-          payloadAddressOf(header),
-          static_cast<std::size_t>(header->payloadBytes),
-          layout.size);
+        const std::vector<std::byte> migrated = ShmPayloadMigrations::migrate({
+          .typeId = typeId,
+          .versions = { .fromVersion = header->payloadVersion, .toVersion = options.payloadVersion },
+          .source = payloadAddressOf(header),
+          .sourceBytes = static_cast<std::size_t>(header->payloadBytes),
+          .targetBytes = layout.size,
+        });
         void *payload = allocatePayload(accessor, layout);
         std::memcpy(payload, migrated.data(), layout.size);
         // Publish the new payload first, then release the old block: a process
@@ -274,8 +277,9 @@ namespace shm {
         header->state = ShmObjectHeader::kStateReady;
         try {
           accessor.deallocate(oldPayload);
-        } catch (...) {
+        } catch (const std::exception &error) {
           // See releasePayload(): the segment owns the bytes.
+          LOG_DEBUG("cannot release the previous shared memory payload: {}", error.what());
         }
         return header;
       }
@@ -319,12 +323,12 @@ namespace shm {
     }
   }
 
-  bool ShmPayloadMigrations::canMigrate(std::uint32_t typeId, std::uint16_t fromVersion, std::uint16_t toVersion)
+  bool ShmPayloadMigrations::canMigrate(std::uint32_t typeId, ShmPayloadVersionRange versions)
   {
-    if (fromVersion >= toVersion) { return fromVersion == toVersion; }
+    if (versions.fromVersion >= versions.toVersion) { return versions.fromVersion == versions.toVersion; }
     const std::vector<ShmPayloadMigrationStep> steps = stepsOf(typeId);
-    std::uint16_t version = fromVersion;
-    while (version < toVersion) {
+    std::uint16_t version = versions.fromVersion;
+    while (version < versions.toVersion) {
       const ShmPayloadMigrationStep *step = stepFrom(steps, version);
       if (step == nullptr || step->toVersion <= version) { return false; }
       version = step->toVersion;
@@ -332,35 +336,35 @@ namespace shm {
     return true;
   }
 
-  std::vector<std::byte> ShmPayloadMigrations::migrate(std::uint32_t typeId,
-    std::uint16_t fromVersion,
-    std::uint16_t toVersion,
-    const void *source,
-    std::size_t sourceBytes,
-    std::size_t finalBytes)
+  std::vector<std::byte> ShmPayloadMigrations::migrate(const ShmPayloadMigrationInput &input)
   {
-    if (fromVersion >= toVersion) {
-      std::vector<std::byte> unchanged(sourceBytes);
-      if (sourceBytes > 0 && source != nullptr) { std::memcpy(unchanged.data(), source, sourceBytes); }
+    if (input.versions.fromVersion >= input.versions.toVersion) {
+      std::vector<std::byte> unchanged(input.sourceBytes);
+      if (input.sourceBytes > 0 && input.source != nullptr) {
+        std::memcpy(unchanged.data(), input.source, input.sourceBytes);
+      }
       return unchanged;
     }
-    const std::vector<ShmPayloadMigrationStep> steps = stepsOf(typeId);
-    std::vector<std::byte> current(sourceBytes);
-    if (sourceBytes > 0 && source != nullptr) { std::memcpy(current.data(), source, sourceBytes); }
-    std::uint16_t version = fromVersion;
-    while (version < toVersion) {
+    const std::vector<ShmPayloadMigrationStep> steps = stepsOf(input.typeId);
+    std::vector<std::byte> current(input.sourceBytes);
+    if (input.sourceBytes > 0 && input.source != nullptr) {
+      std::memcpy(current.data(), input.source, input.sourceBytes);
+    }
+    std::uint16_t version = input.versions.fromVersion;
+    while (version < input.versions.toVersion) {
       const ShmPayloadMigrationStep *step = stepFrom(steps, version);
       if (step == nullptr || step->toVersion <= version) {
         throw std::runtime_error(
-          "no payload migration from version " + std::to_string(version) + " for type " + std::to_string(typeId));
+          "no payload migration from version " + std::to_string(version) + " for type " + std::to_string(input.typeId));
       }
       if (step->sourceBytes != 0 && step->sourceBytes != current.size()) {
         throw std::runtime_error("payload migration from version " + std::to_string(version) + " expects "
                                  + std::to_string(step->sourceBytes) + " bytes but got "
                                  + std::to_string(current.size()));
       }
-      const std::size_t targetBytes =
-        step->targetBytes != 0 ? step->targetBytes : (step->toVersion == toVersion ? finalBytes : 0);
+      const std::size_t targetBytes = step->targetBytes != 0
+                                        ? step->targetBytes
+                                        : (step->toVersion == input.versions.toVersion ? input.targetBytes : 0);
       if (targetBytes == 0) {
         throw std::runtime_error(
           "payload migration from version " + std::to_string(version) + " does not name an intermediate size");
@@ -370,9 +374,9 @@ namespace shm {
       current = std::move(next);
       version = step->toVersion;
     }
-    if (current.size() != finalBytes) {
+    if (current.size() != input.targetBytes) {
       throw std::runtime_error("payload migration ended with " + std::to_string(current.size()) + " bytes but "
-                               + std::to_string(finalBytes) + " were expected");
+                               + std::to_string(input.targetBytes) + " were expected");
     }
     return current;
   }

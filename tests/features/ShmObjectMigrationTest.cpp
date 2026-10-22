@@ -147,10 +147,10 @@ TEST_CASE("a typed repository migrates its payload through a registered chain")
   fixture.restart();
 
   shm::registerPayloadMigration<VersionedPayload>(
-    1, 2, [](const void *source, std::size_t /*sourceBytes*/, void *target) {
-      const auto *oldValue = static_cast<const VersionedPayload *>(source);
-      ::new (target) VersionedPayload{ oldValue->value * 2, 7 };
-    });
+    { .fromVersion = 1, .toVersion = 2, .apply = [](const void *source, std::size_t /*sourceBytes*/, void *target) {
+       const auto *oldValue = static_cast<const VersionedPayload *>(source);
+       ::new (target) VersionedPayload{ oldValue->value * 2, 7 };
+     } });
 
   shm::SharedMemoryRepository<VersionedPayload> migrated(
     fixture.service, fixture.segment, "versioned", optionsOf(2), VersionedPayload{});

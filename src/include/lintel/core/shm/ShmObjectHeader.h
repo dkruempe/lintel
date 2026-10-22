@@ -43,6 +43,44 @@ namespace shm {
     std::uint32_t payloadTypeId = 0;
   };
 
+  /** Size and alignment of one payload allocation.
+   *
+   *  A single aggregate instead of two adjacent sizes: the two values are easy
+   *  to swap at a call site (`{ sizeof(T), alignof(T) }`), and a mistake there
+   *  only shows up as a misaligned payload much later. */
+  struct ShmPayloadLayout
+  {
+    /** payload size in bytes */
+    std::size_t size = 0;
+    /** payload alignment in bytes (power of two) */
+    std::size_t alignment = 1;
+  };
+
+  /** Payload version stored in the segment and the version this build writes. */
+  struct ShmPayloadVersionRange
+  {
+    /** version written by the build that created the stored payload */
+    std::uint16_t fromVersion = 0;
+    /** version this build expects and writes */
+    std::uint16_t toVersion = 0;
+  };
+
+  /** Input of one payload migration: the stored representation and the size
+   *  this build expects. */
+  struct ShmPayloadMigrationInput
+  {
+    /** id of the payload type */
+    std::uint32_t typeId = 0;
+    /** version currently stored and version this build writes */
+    ShmPayloadVersionRange versions;
+    /** old payload bytes; nullptr is allowed when sourceBytes is 0 */
+    const void *source = nullptr;
+    /** size of the old payload in bytes */
+    std::size_t sourceBytes = 0;
+    /** size the migrated payload must have (sizeof(T)) */
+    std::size_t targetBytes = 0;
+  };
+
   /**
    * Stable header of every named object in a shared memory segment.
    *
@@ -171,29 +209,42 @@ namespace shm {
     static void registerStep(std::uint32_t typeId, ShmPayloadMigrationStep step);
 
     /** @return true when a complete chain from fromVersion to toVersion exists */
-    [[nodiscard]] static bool canMigrate(std::uint32_t typeId, std::uint16_t fromVersion, std::uint16_t toVersion);
+    [[nodiscard]] static bool canMigrate(std::uint32_t typeId, ShmPayloadVersionRange versions);
 
     /**
      * Run the chain and return the migrated payload bytes.
      *
-     * @param typeId       id of the payload type
-     * @param fromVersion  version stored in the segment
-     * @param toVersion    version of this build
-     * @param source       old payload bytes
-     * @param sourceBytes  size of the old payload
-     * @param finalBytes   size the final payload must have (sizeof(T))
-     * @return the migrated bytes, exactly finalBytes long
+     * @param input type id, version range, old payload bytes and target size
+     * @return the migrated bytes, exactly input.targetBytes long
      * @throws std::runtime_error when no chain exists or a step is broken
      */
-    [[nodiscard]] static std::vector<std::byte> migrate(std::uint32_t typeId,
-      std::uint16_t fromVersion,
-      std::uint16_t toVersion,
-      const void *source,
-      std::size_t sourceBytes,
-      std::size_t finalBytes);
+    [[nodiscard]] static std::vector<std::byte> migrate(const ShmPayloadMigrationInput &input);
 
     /** Drop every registered step. Intended for tests. */
     static void reset() noexcept;
+  };
+
+  /**
+   * Registration of one migration step for T.
+   *
+   * A single aggregate instead of six positional parameters: the version pair
+   * and the two byte counts are easy to swap, and a swapped pair would only
+   * surface as a corrupted payload long after registration.
+   */
+  struct ShmPayloadMigrationRegistration
+  {
+    /** version stored in the segment */
+    std::uint16_t fromVersion = 0;
+    /** version this build writes */
+    std::uint16_t toVersion = 0;
+    /** places a T into the target buffer */
+    std::function<void(const void *source, std::size_t sourceBytes, void *target)> apply;
+    /** type id; 0 derives it from T */
+    std::uint32_t typeId = 0;
+    /** expected size of the old payload; 0 uses the header */
+    std::size_t sourceBytes = 0;
+    /** size after this step; 0 uses sizeof(T) */
+    std::size_t targetBytes = 0;
   };
 
   /**
@@ -204,31 +255,21 @@ namespace shm {
    * into the target.
    *
    * @tparam T payload type
-   * @param fromVersion version stored in the segment
-   * @param toVersion   version this build writes
-   * @param apply       migration callback
-   * @param typeId      type id; defaults to payloadTypeIdOf<T>()
-   * @param sourceBytes expected size of the old payload (0 = use the header)
-   * @param targetBytes size after this step (defaults to sizeof(T))
+   * @param registration versions, callback and optional sizes/type id
    */
-  template<typename T>
-  void registerPayloadMigration(std::uint16_t fromVersion,
-    std::uint16_t toVersion,
-    std::function<void(const void *source, std::size_t sourceBytes, void *target)> apply,
-    std::uint32_t typeId = payloadTypeIdOf<T>(),
-    std::size_t sourceBytes = 0,
-    std::size_t targetBytes = sizeof(T))
+  template<typename T> void registerPayloadMigration(ShmPayloadMigrationRegistration registration)
   {
     ShmPayloadMigrationStep step;
-    step.fromVersion = fromVersion;
-    step.toVersion = toVersion;
-    step.sourceBytes = sourceBytes;
-    step.targetBytes = targetBytes;
-    step.apply = [callback = std::move(apply)](
+    step.fromVersion = registration.fromVersion;
+    step.toVersion = registration.toVersion;
+    step.sourceBytes = registration.sourceBytes;
+    step.targetBytes = registration.targetBytes != 0 ? registration.targetBytes : sizeof(T);
+    step.apply = [callback = std::move(registration.apply)](
                    const void *source, std::size_t sourceBytes, void *target, std::size_t /*targetBytes*/) {
       if (callback) { callback(source, sourceBytes, target); }
     };
-    ShmPayloadMigrations::registerStep(typeId, std::move(step));
+    ShmPayloadMigrations::registerStep(
+      registration.typeId != 0 ? registration.typeId : payloadTypeIdOf<T>(), std::move(step));
   }
 
 }// namespace shm

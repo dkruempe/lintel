@@ -118,10 +118,13 @@ EventBus und MessageQueue als `Volatile`.
 ### 5.2 Payload migrieren
 
 ```cpp
-lintel::shm::registerPayloadMigration<MyDto>(1, 2,
-  [](const void *oldBytes, std::size_t oldSize, void *newPayload) {
+lintel::shm::registerPayloadMigration<MyDto>({
+  .fromVersion = 1,
+  .toVersion = 2,
+  .apply = [](const void *oldBytes, std::size_t oldSize, void *newPayload) {
     // alten Stand lesen und den neuen Typ an newPayload konstruieren
-  });
+  },
+});
 ```
 
 Die Registry verkettet `1 → 2 → 3` automatisch. Der alte Payload bleibt

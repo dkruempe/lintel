@@ -257,17 +257,23 @@ namespace shm {
       acquireOrThrow(timeout);
     }
 
-    ~SegmentSemaphoreGuard()
+    ~SegmentSemaphoreGuard() noexcept
     {
       // A timed-out guard never took the semaphore (acquireOrThrow cleared it):
       // it must not post on destruction - that would hand the lock to the next
       // waiter even though we never owned it.
       if (m_semaphore == nullptr) { return; }
-      // clearIf, not clear: the next holder writes its own record as soon as it
-      // owns the lock, so an unconditional clear could wipe a live holder and
-      // make the next recovery reclaim a lock that is in use.
-      if (m_owner != nullptr) { m_owner->clearIf(m_holderIdentity); }
-      m_semaphore->post();
+      // post() reports a broken semaphore through an exception, but a destructor
+      // must not let it escape: log it and keep the segment usable.
+      try {
+        // clearIf, not clear: the next holder writes its own record as soon as it
+        // owns the lock, so an unconditional clear could wipe a live holder and
+        // make the next recovery reclaim a lock that is in use.
+        if (m_owner != nullptr) { m_owner->clearIf(m_holderIdentity); }
+        m_semaphore->post();
+      } catch (const std::exception &error) {
+        LOG_ERROR("cannot release the construct lock of a shared memory segment: {}", error.what());
+      }
     }
 
     SegmentSemaphoreGuard(const SegmentSemaphoreGuard &) = delete;
@@ -413,8 +419,12 @@ namespace shm {
 
       semaphoreRemoved = boost::interprocess::named_semaphore::remove(semaphoreName.c_str());
       // open_or_create: another process may have recreated the lock in between,
-      // in which case we open it instead of failing on a duplicate.
-      boost::interprocess::named_semaphore(boost::interprocess::open_or_create, semaphoreName.c_str(), 1u);
+      // in which case we open it instead of failing on a duplicate. The handle is
+      // only needed for its side effect - it creates the named semaphore - so it
+      // stays alive until the end of this scope and is then closed.
+      const boost::interprocess::named_semaphore recreated(
+        boost::interprocess::open_or_create, semaphoreName.c_str(), 1u);
+      static_cast<void>(recreated);
       // clearIf, not clear: a process that took the lock in the meantime has
       // recorded itself and must keep that record.
       owner.clearIf(holder);

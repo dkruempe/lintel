@@ -38,14 +38,9 @@ namespace shm {
     /** Highest payload alignment the relative addressing supports. */
     static constexpr std::size_t kMaxAlignment = 4096;
 
-    /** Payload size and alignment. */
-    struct Layout
-    {
-      /** payload size in bytes (> 0) */
-      std::size_t size = 0;
-      /** payload alignment in bytes (power of two, <= kMaxAlignment) */
-      std::size_t alignment = 1;
-    };
+    /** Payload size and alignment (a single aggregate so the two values cannot
+     *  be swapped at a call site). */
+    using Layout = ShmPayloadLayout;
 
     /** Type-erased pointer to the payload constructor's arguments. */
     struct InitArgument

@@ -12,7 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   named object in a segment now starts with a 64-byte `lintel::shm::ShmObjectHeader`
   (`headerVersion`, `payloadVersion`, type id, persistence class); the payload is a separate
   allocation addressed by a relative offset, so a change to the library's bookkeeping no longer
-  moves the payload. `shm::registerPayloadMigration<T>(n, n+1, …)` chains per-type migrations,
+  moves the payload. `shm::registerPayloadMigration<T>({ .fromVersion = n, .toVersion = n + 1, .apply = … })`
+  chains per-type migrations,
   and `shm::ShmObjectOptions { payloadVersion, persistence, payloadTypeId }` is accepted by
   `shm::SharedMemoryRepository<T>`, the `shm::construct*` helpers and the JSON mirror repositories.
   `Volatile`/`Derived` objects may be recreated without operator input, `Persistent` (the default)

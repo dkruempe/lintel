@@ -3,6 +3,7 @@
 
 #include <lintel/core/models/JsonSerializable.h>
 
+#include <cstdint>
 #include <memory>
 
 #include <boost/container/map.hpp>
@@ -16,7 +17,7 @@
 
 namespace lintel {
 /** Types of shared memory data structures. */
-enum SharedMemoryType { Map, Vector, Array, Object };
+enum SharedMemoryType : std::uint8_t { Map, Vector, Array, Object };
 
 /**
  * Base class for shared-memory-backed repositories with JSON serialization.

@@ -15,6 +15,7 @@
 #include <string_view>
 #include <thread>
 
+#include "lintel/core/services/LoggerService.h"
 #include "lintel/core/shm/ShmObjectHeader.h"
 
 namespace lintel {
@@ -208,7 +209,7 @@ public:
     std::uint32_t typeId,
     shm::ShmObjectOptions options) const
   {
-    validatePayloadRequest(name, bytes, alignment);
+    validatePayloadRequest(name, shm::ShmPayloadLayout{ bytes, alignment });
     auto *header = static_cast<shm::ShmObjectHeader *>(findOrConstructArray(name, sizeof(shm::ShmObjectHeader)));
     if (header == nullptr) { return nullptr; }
 
@@ -221,7 +222,7 @@ public:
       if (state.compare_exchange_strong(
             expected, shm::ShmObjectHeader::kStateConstructing, std::memory_order_acq_rel, std::memory_order_acquire)) {
         try {
-          initialisePayload(*header, bytes, alignment, typeId, options);
+          initialisePayload(*header, shm::ShmPayloadLayout{ bytes, alignment }, typeId, options);
         } catch (...) {
           // Release the claim: a header stuck in "constructing" would make
           // every later open wait for a payload that will never be published.
@@ -268,23 +269,22 @@ private:
                                 + " characters");
   }
 
-  /** @param name      name of the payload object
-   *  @param bytes     requested payload size
-   *  @param alignment requested payload alignment
+  /** @param name   name of the payload object
+   *  @param layout requested payload size and alignment
    *  @throws std::invalid_argument on a request the segment cannot serve */
-  static void validatePayloadRequest(const char *name, std::size_t bytes, std::size_t alignment)
+  static void validatePayloadRequest(const char *name, shm::ShmPayloadLayout layout)
   {
     if (name == nullptr || name[0] == '\0') {
       throw std::invalid_argument("a named shared memory payload needs a name");
     }
-    if (bytes == 0) {
+    if (layout.size == 0) {
       throw std::invalid_argument("the payload of shared memory object '" + std::string(name) + "' must not be empty");
     }
-    if (alignment == 0 || (alignment & (alignment - 1u)) != 0) {
+    if (layout.alignment == 0 || (layout.alignment & (layout.alignment - 1u)) != 0) {
       throw std::invalid_argument(
         "the payload alignment of shared memory object '" + std::string(name) + "' must be a power of two");
     }
-    if (alignment > alignof(std::max_align_t)) {
+    if (layout.alignment > alignof(std::max_align_t)) {
       // The segment allocator aligns to max_align_t, so a larger alignment would
       // make the payload pointer differ from the allocated block start - and a
       // later deallocate() on the payload pointer would then be invalid.
@@ -368,7 +368,7 @@ private:
     }
     // Volatile or Derived: recreate the payload zeroed. No destructor of the
     // old payload runs - the old type may not exist in this build.
-    initialisePayload(header, bytes, alignment, typeId, options);
+    initialisePayload(header, shm::ShmPayloadLayout{ bytes, alignment }, typeId, options);
   }
 
   /** Release the payload block a header describes, if any, and put the header
@@ -384,9 +384,10 @@ private:
       void *payload = shm::payloadAddressOf(&header);
       try {
         deallocate(payload);
-      } catch (...) {
+      } catch (const std::exception &error) {
         // The segment is being torn down or the block was already released;
         // leaking is the only safe option and the segment owns the bytes.
+        LOG_DEBUG("cannot release a shared memory payload: {}", error.what());
       }
     }
     // Back to the blank state of a freshly created header: a failed
@@ -403,18 +404,18 @@ private:
   /** Allocate the payload, publish it into the header and mark the header ready.
    *  The caller claimed the header with state == kStateConstructing.
    *
-   *  @param header    header of the object
-   *  @param bytes     payload size in bytes
-   *  @param alignment payload alignment in bytes
-   *  @param typeId    payload type id
-   *  @param options   version and persistence class to record
+   *  @param header  header of the object
+   *  @param layout  payload size and alignment in bytes
+   *  @param typeId  payload type id
+   *  @param options version and persistence class to record
    *  @throws std::bad_alloc when the segment cannot serve the allocation */
   void initialisePayload(shm::ShmObjectHeader &header,
-    std::size_t bytes,
-    std::size_t alignment,
+    shm::ShmPayloadLayout layout,
     std::uint32_t typeId,
     const shm::ShmObjectOptions &options) const
   {
+    const std::size_t bytes = layout.size;
+    const std::size_t alignment = layout.alignment;
     releasePayload(header);
     const std::size_t allocationBytes = bytes + alignment - 1u;
     void *raw = allocate(allocationBytes);

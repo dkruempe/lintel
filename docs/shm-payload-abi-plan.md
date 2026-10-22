@@ -90,10 +90,13 @@ lintel::shm::ShmObjectOptions options{
   .persistence = lintel::shm::ShmPersistence::Persistent,
 };
 
-lintel::shm::registerPayloadMigration<MyDto>(1, 2,
-  [](const void *oldBytes, std::size_t oldSize, void *newPayload) {
+lintel::shm::registerPayloadMigration<MyDto>({
+  .fromVersion = 1,
+  .toVersion = 2,
+  .apply = [](const void *oldBytes, std::size_t oldSize, void *newPayload) {
     // alten Stand lesen, neuen Stand an newPayload konstruieren
-  });
+  },
+});
 
 lintel::shm::SharedMemoryRepository<MyDto> repository(
   service, segment, "my-dto", options, MyDto{});
