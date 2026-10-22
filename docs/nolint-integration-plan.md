@@ -723,6 +723,17 @@ Alle drei blockierten `scripts/run-example.sh` bzw. hinterließen Prozesse und s
 | 5 | **B.2 #11 + A.1.5** `ShmView`/`ShmSlice`, Lifecycle-Hooks, typisierte Payloads, Segmentbasis-Adressierung | exponiert die restlichen SHM-Bausteine; ersetzt `std::bit_cast` durch `reinterpret_cast<T *>(segmentBase + offset)` und entfernt die formale Unsicherheit aus A.1 | groß | B.4 (erledigt) |
 | – | *Kandidat, nicht im Plan* | Paging-Items von `/messageQueue` liefern `MESSAGES = 0` (`MessageQueuesPageDto` reicht `0` durch), obwohl `/messageQueue/stats` dasselbe Payload mit echten Werten verspricht | klein | – |
 
+### Layout-Marker: Verwerfen statt Migrieren
+
+Der Marker (`lintel_segment_layout`, Wert 2) verhindert, dass ein Segment aus einem älteren
+Build mit dem neuen Objektlayout fehlinterpretiert wird. Bewusst **keine Migration**: die
+Objekte im Segment tragen keine eigene Layoutversion, ein byteweiser Umbau wäre nicht
+verifizierbar. Verworfen wird nur flüchtiger Zustand (EventBus-Ringe, Sticky-Werte,
+Inhalte von SHM-Queues); Properties (DB bzw. Bootstrap-XML — der SHM-Repository ist ein
+Spiegel, der neu aufgebaut wird), Users, Groups und History liegen außerhalb des Segments.
+Der Test `SharedMemoryService discards a segment written with an older layout` pinnt beides:
+alte Segmente werden ersetzt, Segmente mit aktuellem Marker bleiben unangetastet.
+
 ### Offene Entscheidungen
 
 Keine aus §5 mehr offen. Neu zu entscheiden, sobald #5 angegangen wird: ob die

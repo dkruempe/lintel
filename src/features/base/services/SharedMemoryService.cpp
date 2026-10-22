@@ -158,7 +158,15 @@ std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> SharedMemorySe
       handle->m_managedMappedFile = std::make_shared<boost::interprocess::managed_mapped_file>(
         boost::interprocess::open_or_create, filePath.c_str(), segment->getSize());
       if (!layoutIsCurrent(*handle->m_managedMappedFile)) {
-        LOG_WARN("shared memory segment '{}' was written with an older object layout - recreating '{}'",
+        // Deliberately no migration: the objects in the segment have no layout
+        // version of their own, so their bytes cannot be reinterpreted safely.
+        // Everything durable lives in the database or the bootstrap XML (the
+        // shared memory property repository is a mirror that is rebuilt), so
+        // only volatile state - event bus rings and sticky values, shared
+        // memory queue contents - is lost here.
+        LOG_WARN(
+          "shared memory segment '{}' was written with an older object layout - "
+          "recreating '{}' (its contents are discarded, not migrated)",
           segment->getName(),
           filePath);
         handle->m_managedMappedFile.reset();

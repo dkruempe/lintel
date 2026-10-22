@@ -194,8 +194,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   allocator of the calling process, so an accessor copied into a segment is usable from every
   process. `MessageQueueShmCore` keeps its header and ring in the segment under a stable name
   instead of a process-local map, which means two processes now really share one queue. Segments
-  written by an older build are recognised by a layout marker and recreated on open (the previous
-  layout would be reinterpreted and corrupted).
+  written by an older build are recognised by a layout marker and recreated on open; the previous
+  layout cannot be reinterpreted safely and is **not** migrated. What that costs is the volatile
+  state only - event bus rings and sticky values, and the contents of shared memory queues - while
+  properties (database or bootstrap XML, the shared memory repository is a mirror that is rebuilt),
+  users, groups and history live outside the segment and are untouched.
 - **`SharedMemoryRepositoryRegistry.h` moved** from `features/base/services/` to `core/shm/`; the
   typed repository header may not depend on a feature header.
 - **Logging and property registration use `std::source_location` (breaking).**
