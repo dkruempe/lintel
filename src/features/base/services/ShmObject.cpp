@@ -141,6 +141,18 @@ namespace shm {
       header.state = ShmObjectHeader::kStateReady;
     }
 
+    /** @param header  existing object header
+     *  @param options registration options of this build
+     *  @return true when both the stored and the requested persistence class
+     *          allow discarding the payload */
+    bool mayDiscardPayload(const ShmObjectHeader &header, const ShmObjectOptions &options) noexcept
+    {
+      // An object the old build wrote as Volatile may still be authoritative for
+      // a build that now registers it as Persistent - never discard in that case.
+      return header.persistenceClass() != ShmPersistence::Persistent
+             && options.persistence != ShmPersistence::Persistent;
+    }
+
     /** Why an existing object cannot be used by this build. */
     std::string incompatibilityOf(const ShmObjectHeader &header, const ShmObject::Layout &layout, std::uint32_t typeId)
     {
@@ -215,7 +227,7 @@ namespace shm {
       if (header->payloadVersion == options.payloadVersion) {
         if (header->payloadTypeId != typeId || header->payloadBytes != layout.size) {
           const std::string reason = incompatibilityOf(*header, layout, typeId);
-          if (header->persistenceClass() == ShmPersistence::Persistent) {
+          if (!mayDiscardPayload(*header, options)) {
             throw std::invalid_argument(
               "shared memory object '" + name + "' of segment '" + segment->getName() + "' is incompatible: " + reason);
           }
@@ -268,9 +280,9 @@ namespace shm {
         return header;
       }
 
-      if (header->persistenceClass() == ShmPersistence::Persistent) {
+      if (!mayDiscardPayload(*header, options)) {
         throw std::runtime_error("shared memory object '" + name + "' of segment '" + segment->getName()
-                                 + "' is persistent and was written with payload version "
+                                 + "' may not be recreated and was written with payload version "
                                  + std::to_string(header->payloadVersion) + " (current "
                                  + std::to_string(options.payloadVersion)
                                  + "); register a payload migration or remove the segment");

@@ -196,8 +196,9 @@ public:
    * @param options   payload version and persistence class
    * @return pointer to the payload, or nullptr when the allocator does not
    *         support named objects
-   * @throws std::invalid_argument on an invalid request, or when a persistent
-   *         object stores a payload this build cannot use
+   * @throws std::invalid_argument on an invalid request, or when an
+   *         incompatible payload may not be recreated because of its
+   *         persistence class
    * @throws std::runtime_error when the named object was written by an
    *         incompatible build or its initialisation does not finish in time
    */
@@ -338,7 +339,8 @@ private:
    *  @param alignment payload alignment this build expects
    *  @param typeId    payload type id this build expects
    *  @param options   version and persistence class this build registers
-   *  @throws std::invalid_argument when a persistent object is incompatible */
+   *  @throws std::invalid_argument when the persistence class does not allow
+   *          recreating an incompatible payload */
   void reconcilePayload(shm::ShmObjectHeader &header,
     const char *name,
     std::size_t bytes,
@@ -350,13 +352,19 @@ private:
                              && header.payloadBytes == static_cast<std::uint64_t>(bytes)
                              && header.payloadAlignment == static_cast<std::uint64_t>(alignment);
     if (samePayload) { return; }
-    if (header.persistenceClass() == shm::ShmPersistence::Persistent) {
+    // Discard only when *both* the stored and the requested class allow it: an
+    // object the old build wrote as Volatile may still be authoritative for a
+    // build that registers it as Persistent.
+    const bool discardable = header.persistenceClass() != shm::ShmPersistence::Persistent
+                             && options.persistence != shm::ShmPersistence::Persistent;
+    if (!discardable) {
       throw std::invalid_argument("shared memory object '" + std::string(name) + "' is incompatible: it stores payload "
                                   "type " + std::to_string(header.payloadTypeId) + " version "
                                   + std::to_string(header.payloadVersion) + " with "
                                   + std::to_string(header.payloadBytes) + " bytes, but this build expects type "
                                   + std::to_string(typeId) + " version " + std::to_string(options.payloadVersion)
-                                  + " with " + std::to_string(bytes) + " bytes");
+                                  + " with " + std::to_string(bytes) + " bytes, and its persistence class does not allow "
+                                  "recreating it");
     }
     // Volatile or Derived: recreate the payload zeroed. No destructor of the
     // old payload runs - the old type may not exist in this build.
