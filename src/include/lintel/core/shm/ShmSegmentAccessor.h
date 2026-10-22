@@ -90,7 +90,10 @@ public:
      * @param bytes size of the array in bytes (must be positive)
      * @return pointer to the array, or nullptr when named objects are not supported
      */
-    virtual void *findOrConstructArray(const char * /*name*/, std::size_t /*bytes*/) { return nullptr; }
+    virtual void *findOrConstructArray([[maybe_unused]] const char *name, [[maybe_unused]] std::size_t bytes)
+    {
+      return nullptr;
+    }
   };
 
   /**

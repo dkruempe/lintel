@@ -30,7 +30,8 @@ public:
    * @param pattern The log pattern
    * @param level The log level
    * @param isAsync Whether logging is asynchronous
-   * @param loggerSinks The sink configurations */
+   * @param loggerSinks The sink configurations
+   * @param isJson Whether to format log messages as JSON */
   LoggerConfiguration(std::string processName,
     std::string pattern,
     std::string level,
