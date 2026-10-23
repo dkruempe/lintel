@@ -16,6 +16,8 @@
 #include <thread>
 #include <utility>
 
+#include "lintel/core/shm/ShmObjectHeader.h"
+
 namespace lintel {
 namespace mqshm_detail {
 
@@ -42,6 +44,15 @@ namespace mqshm_detail {
   constexpr std::uint64_t kQueueMagicInitialising = 1;
   /** Upper bound for waiting until another process finished that construction. */
   constexpr std::chrono::milliseconds kInitWaitTimeout{ 5000 };
+  /** Payload version of the queue header wrapper; bumped when QueueHeader or the
+   *  ring layout stored in the payload changes. */
+  constexpr std::uint16_t kQueuePayloadVersion = 1;
+  /** Type id of the queue payload: a fixed name, so the id does not depend on
+   *  the (possibly local) full type name of QueueHeader. */
+  constexpr std::uint32_t kQueuePayloadTypeId = shm::fnv1a32("lintel::MessageQueueShmCore::QueueHeader");
+  /** The payload must be aligned for the ring; the segment allocator aligns to
+   *  max_align_t, which the static_assert below checks. */
+  constexpr std::size_t kQueuePayloadAlignment = alignof(std::max_align_t);
 
   [[nodiscard]] std::size_t alignUp(std::size_t value, std::size_t alignment)
   {
@@ -274,21 +285,26 @@ namespace mqshm_detail {
     [[nodiscard]] static std::byte *payloadOf(SlotHeader *slot) { return reinterpret_cast<std::byte *>(slot + 1); }
   };
 
-  // The block comes from find_or_construct<char>, whose allocation is aligned
-  // to the segment's memory alignment (max_align_t), and the ring is placed at
-  // a multiple of its own alignment behind the header - which only works while
-  // that alignment does not exceed the block alignment.
+  // The payload block is allocated by ShmSegmentAccessor::findOrConstructPayload(),
+  // which aligns it to max_align_t, and the ring is placed at a multiple of its
+  // own alignment behind the header - which only works while that alignment does
+  // not exceed the block alignment.
   static_assert(alignof(ShmRing) <= alignof(std::max_align_t),
-    "the named queue block must be aligned enough for the ring");
+    "the named queue payload must be aligned enough for the ring");
 
   /**
    * Cross-process anchor of one queue inside the segment.
    *
-   * The header is a named object of the segment ("lintel_mq_" + queue name) and
-   * is what a second process finds first: it describes where the ring sits and
-   * which layout it has. Everything in here is either a scalar or a byte
-   * offset, never a pointer - the segment is mapped at a different virtual
-   * address in every process.
+   * The queue lives in the versioned payload of the named object
+   * ("lintel_mq_" + queue name): the named object itself is a ShmObjectHeader,
+   * the payload behind it is this header followed by the ring. The wrapper
+   * records the payload version and the persistence class (Volatile), so a
+   * build with a different queue layout discards the queue instead of failing
+   * the whole segment.
+   *
+   * This header describes where the ring sits and which layout it has.
+   * Everything in here is either a scalar or a byte offset, never a pointer -
+   * the segment is mapped at a different virtual address in every process.
    *
    * The header is never constructed as a C++ object: the allocator hands out a
    * zero initialised block (magic == 0), which is exactly the "not
@@ -455,13 +471,21 @@ namespace mqshm_detail {
 
     // The header is the cross-process anchor of the queue: it lives in the
     // segment under a name derived from the queue name, so a second process
-    // finds the very same ring instead of creating one of its own. The ring
-    // and its slot array follow the header inside the same segment, which is
-    // why only byte offsets are stored - a pointer would be process local.
+    // finds the very same ring instead of creating one of its own. The named
+    // object is a stable ShmObjectHeader, the queue header and the ring follow
+    // it in the payload allocation - which is why only byte offsets are stored,
+    // a pointer would be process local.
     const std::size_t ringOffset = alignUp(sizeof(QueueHeader), alignof(ShmRing));
     const std::size_t blockSize = ringOffset + sizeof(ShmRing);
     const std::string headerName = headerNameOf(name);
-    void *block = segment.findOrConstructArray(headerName.c_str(), blockSize);
+    // A queue is ephemeral state: when this build cannot use the payload of the
+    // previous one, the queue is recreated zeroed instead of failing the
+    // segment (ShmPersistence::Volatile).
+    void *block = segment.findOrConstructPayload(headerName.c_str(),
+      blockSize,
+      kQueuePayloadAlignment,
+      kQueuePayloadTypeId,
+      shm::ShmObjectOptions{ .payloadVersion = kQueuePayloadVersion, .persistence = shm::ShmPersistence::Volatile });
     if (block == nullptr) {
       throw std::runtime_error("cannot create the queue header '" + headerName
                                + "' in the shared memory segment: the allocator does not support named objects");

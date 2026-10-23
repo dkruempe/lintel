@@ -615,7 +615,7 @@ TEST_CASE("SharedMemoryService recreates a segment when the policy allows it")
     REQUIRE(current.find<int>("stale_object").first == nullptr);
     const auto marker = current.find<std::uint64_t>("lintel_segment_layout");
     REQUIRE(marker.first != nullptr);
-    REQUIRE(*marker.first == 2);
+    REQUIRE(*marker.first == 3);
     current.construct<int>("survivor")(7);
   }
 
@@ -682,7 +682,7 @@ TEST_CASE("SharedMemoryService lets a registered migrator decide what happens")
 
   REQUIRE(seen.path == path);
   REQUIRE(seen.found == 0);// a segment from before the marker existed
-  REQUIRE(seen.current == 2);
+  REQUIRE(seen.current == 3);
   REQUIRE(seen.value == 42);
 
   {

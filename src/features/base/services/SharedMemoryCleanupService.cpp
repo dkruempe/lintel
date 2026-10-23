@@ -1,11 +1,15 @@
 #include "lintel/features/base/services/SharedMemoryCleanupService.h"
 
+#include <bit>
+#include <cstdint>
+#include <cstring>
 #include <exception>
 #include <stdexcept>
 
 #include "lintel/core/persistence/Connection.h"
 #include "lintel/core/persistence/ParameterBuilder.h"
 #include "lintel/core/persistence/Statement.h"
+#include "lintel/core/shm/ShmObjectHeader.h"
 #include "lintel/features/base/services/SchedulerService.h"
 #include "lintel/features/base/services/SharedMemoryService.h"
 #include "lintel/features/base/services/ShmConstructors.h"
@@ -21,13 +25,36 @@ namespace shm {
     std::lock_guard<std::mutex> lock(service.segmentsMutexOf());
     auto &handle = service.segmentOf(segment->getName());
     SegmentSemaphoreGuard gate(handle);
-    // The byte-wise lookup works for every object size. destroy_ptr() on the
-    // resulting char pointer is safe because trackObject<T>() restricts the
-    // type-erased removal to trivially destructible types, for which running the
-    // destructor is a no-op; the block itself is released by the segment manager.
-    auto found = handle.m_managedMappedFile->find<char>(name.c_str());
-    if (found.first == nullptr) { return true; }// already gone: idempotent
-    handle.m_managedMappedFile->destroy_ptr(found.first);
+    // The byte-wise lookup works for every object size. An object with a
+    // compatible header keeps its payload in a separate allocation: release it,
+    // then destroy the named header. trackObject<T>() restricts the tracking to
+    // trivially destructible types, for which running the payload destructor is
+    // a no-op, so none is run here.
+    const auto named = handle.m_managedMappedFile->find<char>(name.c_str());
+    if (named.first == nullptr) { return true; }// already gone: idempotent
+    if (named.second >= sizeof(shm::ShmObjectHeader)) {
+      // Read the header as bytes first: a pre-header object is not guaranteed to
+      // be aligned like a ShmObjectHeader. Only after the magic proved that the
+      // block is a header does the address become one.
+      shm::ShmObjectHeader probe{};
+      std::memcpy(&probe, named.first, sizeof(probe));
+      if (probe.isCompatible()) {
+        auto *header = std::bit_cast<shm::ShmObjectHeader *>(named.first);
+        if (header->isReady() && header->payloadOffset != 0 && header->payloadBytes != 0) {
+          void *payload = shm::payloadAddressOf(header);
+          // Stop readers before the payload disappears.
+          header->state = shm::ShmObjectHeader::kStateConstructing;
+          handle.m_managedMappedFile->get_segment_manager()->deallocate(payload);
+        }
+        // The header is trivially destructible, so destroying it runs no payload
+        // destructor; the segment manager releases the block and the name.
+        handle.m_managedMappedFile->destroy<shm::ShmObjectHeader>(name.c_str());
+        return true;
+      }
+    }
+    // Pre-header object: destroy_ptr() on the char pointer keeps working for any
+    // size, and the segment manager releases the block itself.
+    handle.m_managedMappedFile->destroy_ptr(named.first);
     return true;
   }
 

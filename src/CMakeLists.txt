@@ -221,6 +221,8 @@ set(headers
     include/lintel/core/shm/ShmSegmentAccessor.h
     include/lintel/core/shm/SegmentLayoutPolicy.h
     include/lintel/core/shm/ShmView.h
+    include/lintel/core/shm/ShmObject.h
+    include/lintel/core/shm/ShmObjectHeader.h
     include/lintel/core/shm/SharedMemoryRepository.h
     include/lintel/core/shm/SharedMemoryRepositoryRegistry.h
     include/lintel/core/shm/containers/ArrayShm.h
@@ -397,7 +399,7 @@ set(sources
     core/services/ReadinessRegistry.cpp
     features/base/services/ProcessService.cpp
     features/base/services/SharedMemoryService.cpp
-    features/base/services/SharedMemoryRepository.cpp
+    features/base/services/ShmObject.cpp
     features/base/services/SharedMemoryRepositoryRegistry.cpp
     core/services/StopWatchService.cpp
     # core - utils

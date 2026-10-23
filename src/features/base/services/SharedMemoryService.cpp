@@ -6,7 +6,11 @@
 #include <lintel/core/services/ReadinessRegistry.h>
 #include <lintel/core/shm/BoostSegmentAllocator.h>
 #include <lintel/core/shm/SegmentLayoutPolicy.h>
+#include <lintel/core/shm/ShmObjectHeader.h>
 #include <lintel/features/base/services/ShmConstructors.h>
+
+#include <string>
+#include <vector>
 
 namespace lintel {
 namespace {
@@ -16,9 +20,69 @@ namespace {
    * ShmSegmentAccessor grew from one pointer to a named 40 byte value in 0.2,
    * for example). A segment written by an older build is recreated instead of
    * being reinterpreted with the new layout, which would corrupt it silently.
+   *
+   * Version 3 introduced the per-object ShmObjectHeader. Objects written by
+   * earlier builds have no readable header and are therefore still treated as
+   * authoritative unless the operator opts in.
    */
-  constexpr std::uint64_t kSegmentLayoutVersion = 2;
+  constexpr std::uint64_t kSegmentLayoutVersion = 3;
   constexpr char kSegmentLayoutName[] = "lintel_segment_layout";
+
+  /** What a stale segment contains, as far as the stable object headers say. */
+  struct SegmentContent
+  {
+    /** number of named objects besides the layout marker */
+    std::size_t objects = 0;
+    /** true when every object has a readable header and is Volatile/Derived */
+    bool allDiscardable = true;
+    /** names that prevent an automatic discard, for the error message */
+    std::vector<std::string> blocking;
+  };
+
+  /** Inspect the named objects of a mapped segment.
+   *
+   * Only the stable ShmObjectHeader is read; the payload types are irrelevant
+   * for the decision. An object without a compatible header (a segment written
+   * before version 3) is unknown and therefore blocks an automatic discard.
+   *
+   * @param file mapped segment
+   * @return summary used for the persistence-class decision */
+  SegmentContent inspectContent(boost::interprocess::managed_mapped_file &file)
+  {
+    SegmentContent content;
+    auto *manager = file.get_segment_manager();
+    for (auto iterator = manager->named_begin(); iterator != manager->named_end(); ++iterator) {
+      const std::string name(iterator->name());
+      if (name == kSegmentLayoutName) { continue; }
+      ++content.objects;
+      // The named index does not hand out the allocation size, so ask the
+      // segment manager: a pre-header object can be smaller than the header and
+      // must not be read past its end.
+      const auto *bytes = static_cast<const char *>(iterator->value());
+      const auto length = manager->get_instance_length(bytes);
+      if (bytes == nullptr || length < sizeof(shm::ShmObjectHeader)) {
+        content.allDiscardable = false;
+        content.blocking.push_back(name + " (no object header)");
+        continue;
+      }
+      const auto *header = static_cast<const shm::ShmObjectHeader *>(iterator->value());
+      if (header == nullptr) {
+        content.allDiscardable = false;
+        content.blocking.push_back(name + " (no object header)");
+        continue;
+      }
+      if (!header->isCompatible() || !header->isReady()) {
+        content.allDiscardable = false;
+        content.blocking.push_back(name + " (unreadable object header)");
+        continue;
+      }
+      if (header->persistenceClass() == shm::ShmPersistence::Persistent) {
+        content.allDiscardable = false;
+        content.blocking.push_back(name + " (persistent)");
+      }
+    }
+    return content;
+  }
 
   /** @param file mapped segment
    *  @return the layout version stored in the segment; empty for a segment that
@@ -176,13 +240,15 @@ std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> SharedMemorySe
         boost::interprocess::open_or_create, filePath.c_str(), segment->getSize());
       const std::optional<std::uint64_t> storedVersion = layoutVersionOf(*handle->m_managedMappedFile);
       if (storedVersion.has_value() && *storedVersion != kSegmentLayoutVersion) {
-        // The objects in a segment have no layout version of their own, so
-        // their bytes cannot be reinterpreted safely - but only the operator
-        // knows whether the contents can be recomputed. So the operator
-        // decides: an explicit migrator, an explicit policy, or
-        // LINTEL_SHM_RECREATE=1. Without either of them nothing is discarded.
-        // See docs/shm-migration-strategy.md.
+        // The layout marker covers the library's bookkeeping. On top of that,
+        // every object carries its own persistence class. A segment whose
+        // objects are all Volatile or Derived may be recreated without asking
+        // the operator; a Persistent object (or one without a readable header,
+        // i.e. written before object headers existed) keeps the old fail-safe
+        // behaviour.
+        // See docs/shm-payload-abi-plan.md.
         bool mayDiscard = false;
+        const SegmentContent content = inspectContent(*handle->m_managedMappedFile);
         if (shm::SegmentLayoutPolicy::hasMigrator()) {
           LOG_WARN(
             "shared memory segment '{}' was written with layout {} (current {}) - asking the registered "
@@ -196,19 +262,31 @@ std::map<std::string, std::shared_ptr<SharedMemorySegmentHandle>> SharedMemorySe
             throw std::runtime_error("the migrator refused to hand over shared memory segment '" + segment->getName()
                                      + "' at '" + filePath + "'");
           }
+        } else if (*storedVersion < kSegmentLayoutVersion && content.allDiscardable) {
+          mayDiscard = true;
+          LOG_WARN("recreating shared memory segment '{}' at '{}': all {} object(s) are volatile or derived",
+            segment->getName(),
+            filePath,
+            content.objects);
         } else if (shm::SegmentLayoutPolicy::policy() == shm::LayoutMismatchPolicy::Recreate || recreateAllowed()) {
           mayDiscard = true;
         }
         if (!mayDiscard) {
+          std::string blocking;
+          for (const std::string &name : content.blocking) {
+            if (!blocking.empty()) { blocking.append(", "); }
+            blocking.append(name);
+          }
           throw std::runtime_error("shared memory segment '" + segment->getName() + "' at '" + filePath
-                                   + "' was written with an older object layout and cannot be opened. Delete the "
-                                     "file to start with an empty segment, register a migrator "
+                                   + "' was written with an older object layout and cannot be opened"
+                                   + (blocking.empty() ? std::string() : " (blocking objects: " + blocking + ")")
+                                   + ". Delete the file to start with an empty segment, register a migrator "
                                      "(lintel::shm::SegmentLayoutPolicy) or set LINTEL_SHM_RECREATE=1 to have it "
                                      "discarded automatically.");
         }
         LOG_WARN(
-          "shared memory segment '{}' was written with an older object layout - recreating '{}' because "
-          "LINTEL_SHM_RECREATE is set (its contents are discarded, not migrated)",
+          "shared memory segment '{}' was written with an older object layout - recreating '{}' "
+          "(its contents are discarded, not migrated)",
           segment->getName(),
           filePath);
         handle->m_managedMappedFile.reset();

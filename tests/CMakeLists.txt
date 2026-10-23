@@ -59,6 +59,7 @@ ADD_EXECUTABLE(base_tests
     features/SharedMemorySegmentComponentTest.cpp
     features/SharedMemoryServiceTest.cpp
     features/SharedMemoryRepositoryTest.cpp
+    features/ShmObjectMigrationTest.cpp
     features/ShmViewTest.cpp
     features/SharedMemoryCleanupServiceTest.cpp
     features/UserDtoTest.cpp

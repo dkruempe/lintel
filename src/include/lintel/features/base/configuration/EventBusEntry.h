@@ -50,7 +50,10 @@ public:
    * @param component The configuration component name
    * @param eventBusName The bus name
    * @param segmentName The shared memory segment name
-   * @param capacities The bus/subscriber/topic/subscriber limits */
+   * @param capacities The bus/subscriber/topic/subscriber limits
+   * @param pubPolicy What a producer does when the bus queue is full
+   * @param sticky Enable sticky/last-value events for topics
+   * @param stickyTtlMs TTL for sticky events in milliseconds */
   EventBusEntry(const std::string_view &component,
     std::string eventBusName,
     std::string segmentName,

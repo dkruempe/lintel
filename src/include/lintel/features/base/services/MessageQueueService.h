@@ -42,6 +42,7 @@ public:
    * @param configuration parsed bootstrap configuration
    * @param processName name of the current process
    * @param messageQueueRepository repository holding the queue metadata
+   * @param schedulerService scheduler that runs the queue heartbeat (may be null)
    */
   MessageQueueService(const std::shared_ptr<Configuration> &configuration,
     std::shared_ptr<ProcessName> processName,

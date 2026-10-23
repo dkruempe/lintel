@@ -12,131 +12,30 @@
 
 #include "lintel/core/models/SharedMemorySegment.h"
 #include "lintel/core/shm/SharedMemoryRepositoryRegistry.h"
+#include "lintel/core/shm/ShmObject.h"
 
 namespace lintel {
 
 class SharedMemoryService;
 
-/**
- * Process local binding of one named cell inside a shared memory segment.
+/** Backwards compatible name of the type-erased object binding.
  *
- * A cell consists of two parts, both living inside the segment:
- * - a fixed size record that the segment manager can find by name (boost
- *   interprocess find_or_construct), and
- * - a payload of `payloadSize` bytes that the record allocated from the
- *   segment through ShmSegmentAccessor while the cell was created.
- *
- * The record refers to its payload by a byte offset relative to itself.
- * Both addresses shift by the same amount in every mapping of the segment,
- * so the relative layout is identical in every process and each one resolves
- * the same payload regardless of the address it mapped the segment at (the
- * same pattern EventBus::ShmRing uses for its node buffer).
- *
- * The boost interprocess types stay out of this header: finding/constructing
- * the record, allocating the payload and reading the offsets is done by the
- * out-of-line methods in SharedMemoryRepository.cpp. The header only needs
- * ShmSegmentAccessor-sized building blocks - see ShmSegmentAccessor.h for the
- * same "keep boost in one .cpp" approach.
- *
- * A cell lives as long as its segment: neither the record nor the payload is
- * destroyed when the binding goes out of scope, and T's destructor is never
- * called by the repository (T therefore has to tolerate being torn down with
- * the segment file, as every shared memory type does).
- *
- * The binding is not internally synchronized: concurrent access to one cell
- * from several threads of this process needs external locking. Across
- * processes the segment's construct lock serializes the single creation of
- * the record; everything above it is up to the payload type (lock-free
- * containers such as RingBufferShm synchronize themselves).
+ * The binding used to be a dedicated ShmCell implementation; it is now
+ * shm::ShmObject, which adds the stable ShmObjectHeader and payload
+ * migrations. Existing code may keep using ShmCell.
  */
-class ShmCell
-{
-public:
-  /** Highest payload alignment the relative addressing supports. A mapping
-   *  base is page aligned, so an offset stays comparable across processes
-   *  only while the payload alignment does not exceed one page. */
-  static constexpr std::size_t kMaxAlignment = 4096;
-
-  /** Payload size and alignment of a cell. Grouping the two same-typed sizes
-   *  keeps them from being swapped at every construction and lookup. */
-  struct Layout
-  {
-    /** payload size in bytes (> 0) */
-    std::size_t size = 0;
-    /** payload alignment in bytes (power of two, <= kMaxAlignment) */
-    std::size_t alignment = 1;
-  };
-
-  /** Type-erased pointer to the payload constructor's arguments. Wrapping the
-   *  raw pointer in a distinct type keeps the two pointer parameters of
-   *  InitFunction from being swapped by mistake. */
-  struct InitArgument
-  {
-    const void *value = nullptr;
-  };
-
-  /** Runs the payload constructor of T. Invoked exactly once - by the process
-   *  that creates the cell, while the segment's construct lock is held - and
-   *  never by a process that only finds the cell again.
-   *  @param payload      raw, not yet constructed payload memory
-   *  @param initArgument type erased constructor arguments; the binding keeps
-   *                      them alive for as long as it exists */
-  using InitFunction = void (*)(void *payload, InitArgument initArgument);
-
-  /** Bind to the named cell without touching the segment yet; the first
-   *  resolve() finds the cell or creates it (record + payload constructor).
-   *  @param service       shared memory service owning the segment
-   *  @param segment       segment the cell lives in
-   *  @param name          name of the cell inside the segment
-   *  @param layout        payload size and alignment
-   *  @param init          payload constructor, run when the cell is created
-   *  @param initArgument  constructor arguments for init, kept alive by this binding
-   *  @throws std::invalid_argument on null service/segment, empty name, empty
-   *          payload, unsupported alignment or missing constructor */
-  ShmCell(std::shared_ptr<SharedMemoryService> service,
-    std::shared_ptr<SharedMemorySegment> segment,
-    std::string name,
-    Layout layout,
-    InitFunction init,
-    std::shared_ptr<void> initArgument);
-
-  ShmCell(const ShmCell &) = delete;
-  ShmCell &operator=(const ShmCell &) = delete;
-
-  /** Locate the payload, creating the cell on first use and re-reading the
-   *  record after the segment was remapped (generation change).
-   *  @return pointer to the payload, valid until the next remap of the segment */
-  [[nodiscard]] void *resolve() const;
-
-  /** @return true when the segment was remapped since the last resolve(),
-   *  i.e. the cached record address has to be refreshed */
-  [[nodiscard]] bool isStale() const;
-
-  /** @return the service generation observed by the last resolve() */
-  [[nodiscard]] std::size_t generation() const;
-
-  /** @return name of the cell inside the segment */
-  [[nodiscard]] const std::string &getName() const { return m_name; }
-
-  /** @return segment the cell lives in */
-  [[nodiscard]] const std::shared_ptr<SharedMemorySegment> &getSegment() const { return m_segment; }
-
-private:
-  std::shared_ptr<SharedMemoryService> m_service;
-  std::shared_ptr<SharedMemorySegment> m_segment;
-  std::string m_name;
-  std::size_t m_payloadSize;
-  std::size_t m_alignment;
-  InitFunction m_init;
-  std::shared_ptr<void> m_initArgument;
-  /** Record inside the segment; opaque because its type (ShmCellRecord) is an
-   *  implementation detail of SharedMemoryRepository.cpp. Mutable, because
-   *  resolving refreshes the cache from const read access. */
-  mutable void *m_record = nullptr;
-  mutable std::size_t m_generation = 0;
-};
+using ShmCell = shm::ShmObject;
 
 namespace shm {
+
+  /** @return true when the first type of a parameter pack is ShmObjectOptions */
+  template<typename... Args> struct FirstIsObjectOptions : std::false_type
+  {
+  };
+  template<typename First, typename... Rest>
+  struct FirstIsObjectOptions<First, Rest...> : std::is_same<std::decay_t<First>, ShmObjectOptions>
+  {
+  };
 
   /**
    * Typed repository for a single object of type T inside a shared memory
@@ -156,7 +55,9 @@ namespace shm {
    * base class of features/base/repositories/SharedMemoryRepository.h.
    *
    * The header is boost free: the boost interprocess find_or_construct lives
-   * in ShmCell / SharedMemoryRepository.cpp.
+   * in ShmObject / ShmObject.cpp. The on-disk object is a ShmObjectHeader plus
+   * a separate payload allocation; see ShmObjectHeader.h for the layout and
+   * migration contract.
    *
    * Requirements on T: usable in shared memory (no process local pointers, no
    * throwing destructor), identical in every process that uses the same cell
@@ -170,7 +71,7 @@ namespace shm {
       "the payload alignment of a shared memory repository must not exceed one page");
 
   public:
-    /** Find or create the cell holding one T.
+    /** Find or create the cell holding one T with default options.
      *  @param service shared memory service of the segment
      *  @param segment segment the object lives in
      *  @param name    name of the object inside the segment
@@ -178,14 +79,37 @@ namespace shm {
      *  @throws std::invalid_argument on invalid arguments
      *  @throws ShmSegmentNotFound when the service does not know the segment */
     template<typename... Args>
+      requires(!FirstIsObjectOptions<Args...>::value)
     SharedMemoryRepository(std::shared_ptr<SharedMemoryService> service,
       std::shared_ptr<SharedMemorySegment> segment,
       std::string name,
+      Args &&...args)
+      : SharedMemoryRepository(std::move(service),
+          std::move(segment),
+          std::move(name),
+          ShmObjectOptions{},
+          std::forward<Args>(args)...)
+    {}
+
+    /** Find or create the cell holding one T with explicit registration options.
+     *
+     * @param service  shared memory service of the segment
+     * @param segment  segment the object lives in
+     * @param name     name of the object inside the segment
+     * @param options  payload version, persistence class and optional type id
+     * @param args     constructor arguments, used only when the cell is created */
+    template<typename... Args>
+    SharedMemoryRepository(std::shared_ptr<SharedMemoryService> service,
+      std::shared_ptr<SharedMemorySegment> segment,
+      std::string name,
+      ShmObjectOptions options,
       Args &&...args)
       : m_cell(std::move(service),
           std::move(segment),
           std::move(name),
           ShmCell::Layout{ sizeof(T), alignof(T) },
+          options.payloadTypeId != 0 ? options.payloadTypeId : payloadTypeIdOf<T>(),
+          options,
           &SharedMemoryRepository<T>::template construct<Args...>,
           std::make_shared<std::tuple<std::decay_t<Args>...>>(std::forward<Args>(args)...))
     {
@@ -216,9 +140,29 @@ namespace shm {
      *         already registered with another payload type
      * @throws ShmSegmentNotFound when the service does not know the segment */
     template<typename... Args>
+      requires(!FirstIsObjectOptions<Args...>::value)
     static std::shared_ptr<SharedMemoryRepository<T>> of(std::shared_ptr<SharedMemoryService> service,
       std::shared_ptr<SharedMemorySegment> segment,
       std::string name,
+      Args &&...args)
+    {
+      return of(
+        std::move(service), std::move(segment), std::move(name), ShmObjectOptions{}, std::forward<Args>(args)...);
+    }
+
+    /** Bind to the named cell with explicit registration options.
+     *
+     * @param service shared memory service of the segment
+     * @param segment segment the object lives in
+     * @param name    name of the object inside the segment
+     * @param options payload version, persistence class and optional type id
+     * @param args    constructor arguments, used only when the cell is created
+     * @return the repository bound to the cell */
+    template<typename... Args>
+    static std::shared_ptr<SharedMemoryRepository<T>> of(std::shared_ptr<SharedMemoryService> service,
+      std::shared_ptr<SharedMemorySegment> segment,
+      std::string name,
+      ShmObjectOptions options,
       Args &&...args)
     {
       if (service == nullptr || segment == nullptr) {
@@ -231,7 +175,7 @@ namespace shm {
       std::shared_ptr<SharedMemoryRepository<T>> existing = registry.getAs<SharedMemoryRepository<T>>(key);
       if (existing != nullptr) { return existing; }
       std::shared_ptr<SharedMemoryRepository<T>> repository = std::make_shared<SharedMemoryRepository<T>>(
-        std::move(service), std::move(segment), std::move(name), std::forward<Args>(args)...);
+        std::move(service), std::move(segment), std::move(name), options, std::forward<Args>(args)...);
       registry.registerRepository(key, repository);
       return repository;
     }
@@ -265,6 +209,15 @@ namespace shm {
 
     /** @return segment the object lives in */
     [[nodiscard]] const std::shared_ptr<SharedMemorySegment> &getSegment() const { return m_cell.getSegment(); }
+
+    /** @return the stable header of the object inside the segment */
+    [[nodiscard]] const ShmObjectHeader &getHeader() const { return m_cell.header(); }
+
+    /** @return persistence class recorded in the segment */
+    [[nodiscard]] ShmPersistence getPersistence() const { return m_cell.persistence(); }
+
+    /** @return payload version recorded in the segment */
+    [[nodiscard]] std::uint16_t getPayloadVersion() const { return m_cell.payloadVersion(); }
 
   private:
     /** Placement-construct the payload from the stored constructor arguments.

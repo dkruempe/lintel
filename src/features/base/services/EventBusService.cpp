@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include "lintel/core/services/LoggerService.h"
+#include "lintel/core/shm/ShmObjectHeader.h"
 #include "lintel/core/shm/ShmSegmentAccessor.h"
 #include "lintel/features/base/configuration/EventBusComponent.h"
 #include "lintel/features/base/services/ShmConstructors.h"
@@ -66,8 +67,17 @@ EventBus &EventBusService::resolve(const std::shared_ptr<EventBusEntry> &entry)
       required);
   }
   const ShmSegmentAccessor accessor = m_sharedMemoryService->getSegmentAccessor(segment);
-  EventBus &bus = shm::constructObjectWith<EventBus>(
-    *m_sharedMemoryService, segment, entry->getName(), entry->getName(), config, accessor);
+  // The bus is transient state, and its address inside the segment is not
+  // stable across builds: the object gets a header that carries the payload
+  // version, and an incompatible payload may be recreated without asking the
+  // operator (ShmPersistence::Volatile).
+  EventBus &bus = shm::constructObjectWith<EventBus>(*m_sharedMemoryService,
+    segment,
+    entry->getName(),
+    shm::ShmObjectOptions{ .payloadVersion = 1, .persistence = shm::ShmPersistence::Volatile },
+    entry->getName(),
+    config,
+    accessor);
   m_buses[entry->getName()] = &bus;
   m_generations[entry->getName()] = generation;
   return bus;
