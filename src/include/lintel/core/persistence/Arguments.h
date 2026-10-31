@@ -1,6 +1,7 @@
 #ifndef LINTEL_ARGUMENTS_H
 #define LINTEL_ARGUMENTS_H
 
+#include <iterator>
 #include <map>
 #include <ostream>
 #include <string>
@@ -86,8 +87,14 @@ namespace db {
      * Mutable random-access iterator over Arguments.
      */
     class Iterator
-      : public std::iterator<std::random_access_iterator_tag, Argument, std::ptrdiff_t, Argument *, Argument &>
     {
+    public:
+      using iterator_category = std::random_access_iterator_tag;
+      using value_type = Argument;
+      using difference_type = std::ptrdiff_t;
+      using pointer = Argument *;
+      using reference = Argument &;
+
     private:
       Arguments &m_arguments;
       std::size_t m_pos;
@@ -126,9 +133,14 @@ namespace db {
      * Const random-access iterator over Arguments.
      */
     class ConstIterator
-      : public std::
-          iterator<std::random_access_iterator_tag, Argument, std::ptrdiff_t, const Argument *, const Argument &>
     {
+    public:
+      using iterator_category = std::random_access_iterator_tag;
+      using value_type = Argument;
+      using difference_type = std::ptrdiff_t;
+      using pointer = const Argument *;
+      using reference = const Argument &;
+
     private:
       const Arguments &m_arguments;
       std::size_t m_pos;

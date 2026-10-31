@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 cmake_policy(SET CMP0025 NEW)
 if(NOT DEFINED LINTEL_VERSION)
     set(LINTEL_VERSION "0.1.0")
@@ -641,7 +641,7 @@ list(FILTER LINTEL_APP_SOURCES INCLUDE REGEX "^app/")
 # $<BUILD_INTERFACE:...> so it stays out of the install export while keeping the
 # flags in the build tree.
 function(lintel_setup_module target)
-    target_compile_features(${target} PUBLIC cxx_std_20)
+    target_compile_features(${target} PUBLIC cxx_std_23)
     if(MSVC)
         # Defined on the command line (PUBLIC, so it also reaches consumers of the
         # installed package): <Windows.h> must never define the min/max macros,
