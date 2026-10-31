@@ -54,7 +54,7 @@ namespace db {
         return *this;
       }
 
-      Iterator operator++(int)
+      const Iterator operator++(int)
       {
         Iterator tmp = *this;
         ++m_pos;
@@ -100,7 +100,7 @@ namespace db {
         return *this;
       }
 
-      ConstIterator operator++(int)
+      const ConstIterator operator++(int)
       {
         ConstIterator tmp = *this;
         ++m_pos;

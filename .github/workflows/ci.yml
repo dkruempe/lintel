@@ -237,6 +237,7 @@ jobs:
             --build=missing \
             -s build_type=${{ env.BUILD_TYPE }} \
             -s compiler.cppstd=23 \
+            -o "boost/*:without_cobalt=True" \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
       - name: Configure CMake
