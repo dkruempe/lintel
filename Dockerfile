@@ -30,6 +30,7 @@ RUN conan profile detect --force \
        --output-folder=build \
        --build=missing \
        -s build_type=Release \
+       -s compiler.cppstd=23 \
        -c tools.cmake.cmaketoolchain:generator=Ninja
 
 # ── Build layer ──────────────────────────────────────────────────────

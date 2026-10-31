@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 
 # Fuzzing harnesses for the library's parsers.
 #
@@ -18,7 +18,7 @@ set(LINTEL_FUZZ_TARGETS
 
 foreach(target IN LISTS LINTEL_FUZZ_TARGETS)
     add_executable(${target} ${target}.cpp)
-    target_compile_features(${target} PRIVATE cxx_std_20)
+    target_compile_features(${target} PRIVATE cxx_std_23)
     target_link_libraries(${target} PRIVATE
         lintel::lintel
         project_warnings
