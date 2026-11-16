@@ -2,7 +2,6 @@
 
 #include "lintel/core/exceptions/FileServiceFileExists.h"
 #include "lintel/core/exceptions/FileServiceIsNotFileException.h"
-#include <boost/next_prior.hpp>
 #include <streambuf>
 
 namespace lintel {

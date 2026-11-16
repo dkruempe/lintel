@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.16)
+# cxx_std_23 (see lintel_setup_module in src/CMakeLists.txt) exists since CMake 3.20.
+cmake_minimum_required(VERSION 3.20)
 set(LINTEL_VERSION "0.2.0" CACHE STRING "Release version of lintel (SemVer)")
 project(lintel VERSION ${LINTEL_VERSION})
 

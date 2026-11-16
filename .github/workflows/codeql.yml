@@ -100,6 +100,7 @@ jobs:
             --output-folder=build \
             --build=missing \
             -s build_type=Release \
+            -s compiler.cppstd=23 \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
       # Full instrumented build: resolves macro/constexpr/template contexts

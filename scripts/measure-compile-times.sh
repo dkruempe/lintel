@@ -43,6 +43,7 @@ rm -rf "$BUILD_DIR" "$CONFIG_DIR/generators"
 # 2. Restore/refetch Conan deps (fast if cached) into the fresh layout
 if [[ "$CONAN_PRESENT" == "1" ]]; then
     conan install . --output-folder=build --build=missing -s build_type=Release \
+        -s compiler.cppstd=23 \
         -c tools.cmake.cmaketoolchain:generator=Ninja
 fi
 

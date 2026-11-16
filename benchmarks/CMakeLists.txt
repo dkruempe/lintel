@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.20)
 project(base_benchmarks)
 cmake_policy(SET CMP0025 NEW)
 
@@ -14,7 +14,7 @@ add_executable(base_benchmarks
     MessageQueueBenchmark.cpp
     HttpBenchmark.cpp
 )
-target_compile_features(base_benchmarks PUBLIC cxx_std_20)
+target_compile_features(base_benchmarks PUBLIC cxx_std_23)
 target_link_libraries(base_benchmarks PRIVATE
     lintel::lintel
     benchmark::benchmark_main

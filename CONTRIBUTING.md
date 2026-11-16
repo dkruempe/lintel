@@ -6,8 +6,8 @@ Thank you for your interest in `lintel`! We accept contributions in the form of 
 
 ## Prerequisites
 
-- C++20-compatible compiler (CI tests GCC 14 and Clang 18; GCC 14 / libstdc++ 14 is required for `std::chrono::parse`)
-- CMake 3.16+
+- C++23-compatible compiler (CI tests GCC 14 and Clang 18; GCC 14 / libstdc++ 14 is required for `std::chrono::parse`)
+- CMake 3.20+
 - Conan 2
 - Ninja
 - Optional: ccache, Docker (for PostgreSQL tests), PostgreSQL (local)
@@ -27,7 +27,7 @@ Thank you for your interest in `lintel`! We accept contributions in the form of 
 
 ```bash
 # 1. Conan dependencies
-conan install . --output-folder=build --build=missing -s build_type=Release -c tools.cmake.cmaketoolchain:generator=Ninja
+conan install . --output-folder=build --build=missing -s build_type=Release -s compiler.cppstd=23 -c tools.cmake.cmaketoolchain:generator=Ninja
 
 # 2. Configure CMake
 cmake -S . -B build/build/Release \

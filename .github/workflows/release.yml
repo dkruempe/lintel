@@ -133,6 +133,7 @@ jobs:
             --output-folder=build \
             --build=missing \
             -s build_type=${{ env.BUILD_TYPE }} \
+            -s compiler.cppstd=23 \
             -c tools.cmake.cmaketoolchain:generator=Ninja
 
       - name: Configure CMake

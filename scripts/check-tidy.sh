@@ -13,7 +13,7 @@
 # inside a unity TU, and a GCC-built PCH cannot be read by Clang:
 #
 #   conan install . --output-folder=build --build=missing -s build_type=Release \
-#     -c tools.cmake.cmaketoolchain:generator=Ninja
+#     -s compiler.cppstd=23 -c tools.cmake.cmaketoolchain:generator=Ninja
 #   cmake -S . -B build/tidy -G Ninja \
 #     -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake \
 #     -DCMAKE_BUILD_TYPE=Release \

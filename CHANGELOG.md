@@ -207,6 +207,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the `postgres:17` service.
 
 ### Changed
+- **C++23 is the required standard now.** Every target requests `cxx_std_23` (CMake 3.20+), all
+  CI jobs pin `compiler.cppstd=23`, and the `Arguments`/`Result` iterators define their traits
+  directly instead of inheriting the `std::iterator` base that C++23 removed.
+- **The `fmt` dependency is gone.** spdlog now formats through `std::format`
+  (`spdlog/*:use_std_fmt=True`) instead of the external fmt package; the project itself never
+  called `fmt` directly, `LoggerService` already used `std::vformat`. This requires the Conan
+  profile to request `compiler.cppstd=23`, which CI, README and CONTRIBUTING pin.
 - **Publishing on the event bus needs its own right (breaking).** `POST /eventBus/publish/{name}`
   accepts a token of `Publisher-EventBus` or `Admin-EventBus`; `User-EventBus` is read-only and
   gets 401. The group is a virtual group like the other two, so it is seeded automatically.

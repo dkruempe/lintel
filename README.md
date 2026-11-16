@@ -158,8 +158,8 @@ The `<Loggers>` section of the bootstrap XML decides what a process writes:
 
 ### Prerequisites
 
-- C++20 (or newer) compatible compiler (CI uses GCC 14 and Clang 18; GCC 14 is required for `std::chrono::parse`, i.e. libstdc++ 14)
-- [CMake](https://cmake.org/) (version 3.16 or newer)
+- C++23 (or newer) compatible compiler (CI uses GCC 14 and Clang 18; GCC 14 is required for `std::chrono::parse`, i.e. libstdc++ 14)
+- [CMake](https://cmake.org/) (version 3.20 or newer)
 - [Conan](https://conan.io/) version 2 (C/C++ Package Manager)
 - [Ninja](https://ninja-build.org/) (the generator used by CI)
 - Optionally [ccache](https://ccache.dev/) to speed up repeated builds
@@ -179,6 +179,7 @@ The commands below are identical to the ones the CI pipeline runs (`Release`, GC
     ```bash
     conan install . --output-folder=build --build=missing \
         -s build_type=Release \
+        -s compiler.cppstd=23 \
         -c tools.cmake.cmaketoolchain:generator=Ninja
     ```
 

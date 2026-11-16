@@ -46,7 +46,7 @@ services:
     working_dir: /workspace
     command: >
       bash -c "conan profile detect --force &&
-      conan install . --output-folder=build --build=missing -s build_type=Release &&
+      conan install . --output-folder=build --build=missing -s build_type=Release -s compiler.cppstd=23 &&
       cmake -S . -B build/build/Release
       -DCMAKE_TOOLCHAIN_FILE=build/build/Release/generators/conan_toolchain.cmake
       -DCMAKE_BUILD_TYPE=Release &&
